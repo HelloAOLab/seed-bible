@@ -1274,5 +1274,19 @@
   "loading-translations": "Fordítások betöltése…",
   "translations-load-failed": "Nem sikerült betölteni a fordítások teljes listáját, ezért előfordulhat, hogy néhány hiányzik.",
   "verse-of-the-day": "A NAP VERSE",
-  "verse-of-the-day-loading": "A nap versének betöltése…"
+  "verse-of-the-day-loading": "A nap versének betöltése…",
+  "delete-bookmark-confirm-title": "Könyvjelző törlése?",
+  "delete-bookmark-confirm-message": "Törölni kell a(z) „ {{name}} ” fájlt?",
+  "scripture-font": "Szentírás betűtípus",
+  "ai-limits-title": "Mielőtt beszélgetnél a mesterséges intelligenciával",
+  "ai-limits-intro": "A mesterséges intelligencia hasznos kiindulópont lehet, de ne feledkezzünk meg a korlátairól:",
+  "ai-limits-mistakes": "Hibázik, és magabiztosnak tud tűnni, amikor téved.",
+  "ai-limits-agreeable": "Hajlamos azt mondani, amit hallani akarsz, és a népszerű válaszok felé hajlik.",
+  "ai-limits-scripture": "Nem egy megbízható forrás. Ellenőrizd a Szentírással, hogy mit mond.",
+  "ai-limits-study": "Tanulmányozd a Bibliát magad, és ne hagyd, hogy a mesterséges intelligencia gondolkodjon helyetted.",
+  "ai-limits-confirm": "Megértem, hogy a mesterséges intelligencia hibákat követhet el, és nem helyettesíti a Biblia személyes tanulmányozását.",
+  "friends-playlists-filter": "Barátok lejátszási listái",
+  "friend-link-social-title": "{{name}} hozzáadása ismerősként",
+  "friend-link-meta-description": "{{name}} a barátod szeretne lenni a {{brand}} on",
+  "friend-link-title": "Add hozzá {{name}} felhasználót ismerősként {{brand}} oldalon"
 }

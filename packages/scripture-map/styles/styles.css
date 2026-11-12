@@ -44,10 +44,11 @@
 }
 
 .settings-button {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 1.375rem !important;
   height: 2.5rem;
   min-width: 2.5rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   padding: 0;
   color: inherit;
 }
@@ -69,7 +70,7 @@
   background-color: var(--sb-reader-background);
   color: var(--sb-reader-font-color);
   padding: 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   gap: 0.25rem;
   border: 1px solid var(--sb-secondary-color);
   display: flex;
@@ -89,13 +90,13 @@
 }
 
 .settings-options-container > span:nth-of-type(1) {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 500;
   padding: 0.25rem 0.5rem 0;
 }
 
 .settings-options-container > span:nth-of-type(2) {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 100;
   padding: 0 0.5rem 0.5rem;
 }
@@ -108,7 +109,7 @@
   border: none;
   cursor: pointer;
   text-align: start;
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -116,10 +117,11 @@
   white-space: nowrap;
   font-weight: 400;
   padding: 0.25rem 0.5rem;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .settings-options-container > button > span {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 1.25rem;
 }
 
@@ -177,7 +179,7 @@
 
 .project-state-setter > div:nth-of-type(2) > span:nth-of-type(1) {
   font-family: system-ui;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .selection-mode-toggle {
@@ -192,17 +194,17 @@
   border: solid 2px black;
   width: 1rem;
   height: 1rem;
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .selection-mode-toggle > span:nth-of-type(1).checked {
-  background-color: #d36433;
-  border-color: #d36433;
-  color: white;
+  background-color: var(--sb-primary-color, #d36433);
+  border-color: var(--sb-primary-color, #d36433);
+  color: var(--sb-primary-font-color, white);
 }
 
 .selection-mode-toggle > span:nth-of-type(2) {
@@ -210,7 +212,7 @@
 }
 
 .selection-mode-toggle > span:nth-of-type(3) {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .selection-options {
@@ -235,10 +237,11 @@
 }
 
 .selection-options > button:nth-of-type(2) {
-  color: #d36433;
+  color: var(--sb-primary-color, #d36433);
 }
 
 .selection-options > button > span {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 1rem;
 }
 
@@ -283,8 +286,8 @@
   padding: 0.375rem 0.75rem;
   background-color: var(--sb-divider-color);
   border: solid 2px var(--sb-divider-color);
-  border-radius: 1.5625rem;
-  font-size: 0.75rem;
+  border-radius: var(--sb-radius-full);
+  font-size: var(--sb-font-size-12);
   font-weight: 500;
   display: flex;
   justify-content: center;
@@ -303,7 +306,7 @@
 .filter-option-icon {
   width: 0.75rem;
   height: 0.75rem;
-  border-radius: 1.25rem;
+  border-radius: var(--sb-radius-full);
   border-width: 2px;
 }
 
@@ -327,7 +330,7 @@
   background-color: var(--toolbarBackground);
   box-shadow: 0 0 6px 0 #0000002e;
   display: flex;
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
   padding: 0.25rem;
 }
 
@@ -338,7 +341,7 @@
   align-items: center;
   height: 2rem;
   border: none;
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
   padding: 0 0.5rem;
   position: relative;
   background-color: transparent;
@@ -381,6 +384,7 @@
   .zoom-container
   > button:nth-of-type(3)
   > span {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 1rem;
 }
 
@@ -400,7 +404,7 @@
   bottom: calc(100% + 0.75rem);
   background-color: var(--sb-reader-background);
   padding: 0.25rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -417,7 +421,7 @@
 }
 
 .zoom-level-selector > span {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   text-align: start;
   /* margin-bottom: 8px; */
@@ -430,7 +434,7 @@
   appearance: none;
   border: none;
   background-color: transparent;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   border-radius: calc(var(--scale-factor) * 4px);
 }
 
@@ -443,7 +447,7 @@
 }
 
 .zoom-level-selector > button > span:nth-of-type(2) {
-  border-radius: 1.5625rem;
+  border-radius: var(--sb-radius-full);
   width: 1rem;
   height: 1rem;
   background-color: transparent;
@@ -583,14 +587,14 @@
 
 @media (prefers-reduced-motion: reduce) {
   .book-container .book-cover-front {
-    transition: opacity 0.25s ease;
+    transition: opacity var(--sb-duration-slow) ease;
   }
   .book-container.book-open .book-cover-front {
     transform: none;
     opacity: 0;
   }
   .book-header .book-caret {
-    transition: opacity 0.2s ease;
+    transition: opacity var(--sb-duration-base) ease;
   }
 }
 
@@ -628,7 +632,7 @@
   opacity: 0.45;
   transition:
     transform 0.35s cubic-bezier(0.25, 0.75, 0.25, 1),
-    opacity 0.2s ease;
+    opacity var(--sb-duration-base) ease;
 }
 
 .book-container.book-open .book-header .book-caret {
@@ -798,7 +802,7 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   gap: 0.375rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -820,7 +824,7 @@
 .sb-tooltip .user-presence-tooltip-content > div > div {
   height: 1.5rem;
   width: 1.5rem;
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   margin-left: -0.75rem;
   border: solid 3px var(--sb-reader-font-color);
 }
@@ -832,17 +836,17 @@
 }
 
 .sb-tooltip .tooltip-reading-history-content > span:nth-of-type(1) {
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-full);
   width: 0.875rem;
   height: 0.875rem;
 }
 
 .sb-tooltip .tooltip-reading-history-content > span:nth-of-type(2) {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-tooltip .tooltip-reading-history-content > span:nth-of-type(3) {
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   color: var(--gray2-color);
 }
 

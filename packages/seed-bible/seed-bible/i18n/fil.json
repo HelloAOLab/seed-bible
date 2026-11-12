@@ -1274,5 +1274,19 @@
   "loading-translations": "Naglo-load ng mga pagsasalin…",
   "translations-load-failed": "Hindi ma-load ang buong listahan ng mga pagsasalin, kaya maaaring may ilan na nawawala.",
   "verse-of-the-day": "BERDORA NG ARAW",
-  "verse-of-the-day-loading": "Nilo-load ang bersikulo ng araw…"
+  "verse-of-the-day-loading": "Nilo-load ang bersikulo ng araw…",
+  "delete-bookmark-confirm-title": "Burahin ang bookmark?",
+  "delete-bookmark-confirm-message": "Burahin ang \" {{name}} \"?",
+  "scripture-font": "Font ng Banal na Kasulatan",
+  "ai-limits-title": "Bago ka makipag-chat sa AI",
+  "ai-limits-intro": "Ang AI ay maaaring maging isang kapaki-pakinabang na panimulang punto, ngunit tandaan ang mga limitasyon nito:",
+  "ai-limits-mistakes": "Nakakagawa ito ng mga pagkakamali, at maaaring magmukhang may kumpiyansa kahit na mali.",
+  "ai-limits-agreeable": "May tendensiya itong sabihin sa iyo kung ano ang gusto mong marinig, at nakahilig sa mga popular na sagot.",
+  "ai-limits-scripture": "Hindi ito mapagkakatiwalaang sanggunian. Suriin ang sinasabi nito laban sa Kasulatan.",
+  "ai-limits-study": "Pag-aralan mo mismo ang Bibliya, at huwag mong hayaang ang AI ang mag-isip para sa iyo.",
+  "ai-limits-confirm": "Nauunawaan ko na ang AI ay maaaring magkamali at hindi ito kapalit ng pag-aaral ko mismo ng Bibliya.",
+  "friends-playlists-filter": "Mga playlist ng mga kaibigan",
+  "friend-link-social-title": "Idagdag {{name}} bilang kaibigan",
+  "friend-link-meta-description": "Gusto ni {{name}} na maging kaibigan mo sa {{brand}}",
+  "friend-link-title": "Idagdag {{name}} bilang kaibigan sa {{brand}}"
 }

@@ -1274,5 +1274,19 @@
   "loading-translations": "ژباړې بارېږي…",
   "translations-load-failed": "د ژباړو بشپړ لیست نه شو پورته کولی، نو ممکن ځینې یې ورک وي.",
   "verse-of-the-day": "د ورځې آیت",
-  "verse-of-the-day-loading": "د ورځې آیت پورته کول…"
+  "verse-of-the-day-loading": "د ورځې آیت پورته کول…",
+  "delete-bookmark-confirm-title": "بک مارک ړنګ کړئ؟",
+  "delete-bookmark-confirm-message": "\" {{name}} \" ړنګ کړئ؟",
+  "scripture-font": "د کلام پاک فونټ",
+  "ai-limits-title": "مخکې له دې چې تاسو له AI سره خبرې وکړئ",
+  "ai-limits-intro": "مصنوعي ذهانت کولی شي یو ګټور پیل ټکی وي، مګر د هغې محدودیتونه په پام کې ونیسئ:",
+  "ai-limits-mistakes": "دا غلطۍ کوي، او کله چې غلط وي نو ډاډه غږیدلی شي.",
+  "ai-limits-agreeable": "دا تاسو ته هغه څه وایي چې تاسو یې اوریدل غواړئ، او د مشهورو ځوابونو په لور تکیه کوي.",
+  "ai-limits-scripture": "دا د باور وړ سرچینه نه ده. وګورئ چې دا د مقدس کتاب خلاف څه وايي.",
+  "ai-limits-study": "د ځان لپاره انجیل مطالعه کړئ، او اجازه مه ورکوئ چې مصنوعي ذهانت ستاسو لپاره ستاسو فکر وکړي.",
+  "ai-limits-confirm": "زه پوهېږم چې مصنوعي ذهانت کولی شي تېروتنې وکړي او دا د انجیل د مطالعې بدیل نه دی.",
+  "friends-playlists-filter": "د ملګرو د لوبو لیستونه",
+  "friend-link-social-title": "د ملګري په توګه {{name}} اضافه کړئ",
+  "friend-link-meta-description": "{{name}} غواړي چې په {{brand}} کې ستاسو ملګری شي",
+  "friend-link-title": "په {{brand}} کې د ملګري په توګه {{name}} اضافه کړئ."
 }

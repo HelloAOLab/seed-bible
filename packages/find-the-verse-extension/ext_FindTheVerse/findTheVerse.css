@@ -1,0 +1,582 @@
+/* Find the Verse. Colours come from the theme's `--sb-*` variables, so the
+   panel, the reader bar, and the creator follow light, dark, and custom
+   themes. The fallbacks are only for a theme that leaves a variable out. */
+
+.ftv-btn {
+  padding: 8px 14px;
+  border-radius: var(--sb-radius-sm);
+  border: none;
+  cursor: pointer;
+  font-size: var(--sb-font-size-14);
+  font-weight: 500;
+  background: var(--sb-tertiary-color, #f0f0f0);
+  color: var(--sb-font-color, #333);
+}
+
+.ftv-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.ftv-btn--primary {
+  background: var(--sb-primary-color, #e07b4c);
+  color: var(--sb-primary-font-color, #fff);
+}
+
+.ftv-btn--large {
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: var(--sb-font-size-15);
+}
+
+.ftv-btn--block {
+  width: 100%;
+}
+
+.ftv-btn--start {
+  align-self: flex-start;
+}
+
+.ftv-sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.ftv-sound-toggle .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+.ftv-notice {
+  margin: 0;
+  color: var(--sb-error-color, #d64545);
+  font-size: var(--sb-font-size-14);
+}
+
+/* Start screen */
+
+.ftv-home {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: var(--sb-font-color, #333);
+}
+
+.ftv-home-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.ftv-home-icon {
+  font-size: 2.5rem;
+}
+
+.ftv-home-title {
+  margin: 0;
+  font-weight: 600;
+  font-size: var(--sb-font-size-18);
+}
+
+.ftv-home-intro {
+  margin: 0;
+  opacity: 0.6;
+  text-align: center;
+  font-size: var(--sb-font-size-14);
+}
+
+/* Saved games */
+
+.ftv-saved {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ftv-saved-heading {
+  margin: 0;
+  font-size: var(--sb-font-size-12);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.5;
+}
+
+.ftv-saved-card {
+  padding: 10px 12px;
+  border-radius: var(--sb-radius-md);
+  background: var(--sb-tertiary-color, #f0f0f0);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.ftv-saved-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ftv-saved-ref {
+  font-weight: 600;
+  font-size: var(--sb-font-size-14);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ftv-saved-meta {
+  font-size: var(--sb-font-size-12);
+  opacity: 0.55;
+}
+
+.ftv-saved-action {
+  padding: 6px 12px;
+  border-radius: var(--sb-radius-sm);
+  border: none;
+  cursor: pointer;
+  font-size: var(--sb-font-size-14);
+  font-weight: 600;
+  flex-shrink: 0;
+  background: transparent;
+  color: var(--sb-font-color, #333);
+}
+
+.ftv-saved-action--primary {
+  background: var(--sb-primary-color, #e07b4c);
+  color: var(--sb-primary-font-color, #fff);
+}
+
+.ftv-show-reference {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color, #333);
+  font-weight: 600;
+  font-size: var(--sb-font-size-14);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ftv-show-reference--link {
+  font-weight: 500;
+  font-size: var(--sb-font-size-13);
+  opacity: 0.7;
+  width: fit-content;
+}
+
+/* Creator */
+
+.ftv-creator {
+  padding: 16px;
+  color: var(--sb-font-color, #333);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ftv-creator-heading {
+  margin: 0;
+  font-size: var(--sb-font-size-18);
+  font-weight: 600;
+}
+
+.ftv-label {
+  margin-bottom: 6px;
+  font-size: var(--sb-font-size-13);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+}
+
+.ftv-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: var(--sb-radius-sm);
+  border: 1px solid var(--sb-divider-color, rgb(0 0 0 / 12%));
+  background: var(--sb-background, #fff);
+  color: var(--sb-font-color, #333);
+  font-size: var(--sb-font-size-15);
+}
+
+.ftv-input--invalid {
+  border-color: var(--sb-error-color, #d64545);
+}
+
+.ftv-verse-preview {
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border-radius: var(--sb-radius-md);
+  background: var(--sb-tertiary-color, #f0f0f0);
+  font-size: var(--sb-font-size-14);
+}
+
+.ftv-verse-preview-text {
+  margin: 6px 0 0;
+  font-style: italic;
+  opacity: 0.85;
+  font-size: var(--sb-font-size-14);
+}
+
+.ftv-reference-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ftv-reference-row .ftv-input {
+  flex: 1;
+}
+
+.ftv-selecting-banner {
+  padding: 10px 12px;
+  border-radius: var(--sb-radius-md);
+  background: var(--sb-primary-color, #e07b4c);
+  color: var(--sb-primary-font-color, #fff);
+  font-size: var(--sb-font-size-14);
+}
+
+.ftv-selecting-banner .ftv-btn {
+  display: block;
+  margin-top: 8px;
+}
+
+.ftv-chances-help {
+  margin: 0 0 8px;
+  opacity: 0.6;
+  font-size: var(--sb-font-size-14);
+}
+
+.ftv-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ftv-step-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.ftv-step-num {
+  min-width: 24px;
+  padding-top: 8px;
+  font-weight: 600;
+  opacity: 0.5;
+  font-size: var(--sb-font-size-14);
+}
+
+.ftv-hint-box {
+  flex: 1;
+  resize: none;
+  overflow: hidden;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.ftv-step-remove {
+  margin-top: 4px;
+  padding: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--sb-error-color, #d64545);
+  font-size: var(--sb-font-size-16);
+  line-height: 1;
+}
+
+.ftv-add-step {
+  margin-top: 8px;
+}
+
+.ftv-creator-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ftv-creator-actions .ftv-btn--grow {
+  flex: 1 1 8rem;
+}
+
+/* Form field error */
+
+@keyframes ftv-error-zoom {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+
+  15% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+
+  30% {
+    transform: scale(1);
+  }
+
+  55% {
+    transform: scale(1.12);
+  }
+
+  75%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.ftv-field--error {
+  border-radius: var(--sb-radius-md);
+  outline: 2px solid var(--sb-error-color, #d64545);
+  outline-offset: 4px;
+}
+
+.ftv-field-error {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: var(--sb-radius-md);
+  background: var(--sb-background, #fff);
+  color: var(--sb-error-color, #d64545);
+  border: 1px solid var(--sb-error-color, #d64545);
+  font-size: var(--sb-font-size-14);
+  transform-origin: center top;
+  box-shadow: var(--sb-shadow-popover);
+}
+
+.ftv-field-error--zoom {
+  animation: ftv-error-zoom 0.72s ease;
+}
+
+/* Player panel */
+
+.ftv-player {
+  padding: 16px;
+  color: var(--sb-font-color, #333);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ftv-game-name {
+  margin: 0;
+  font-weight: 700;
+  font-size: var(--sb-font-size-16);
+}
+
+.ftv-bar .ftv-game-name {
+  font-size: var(--sb-font-size-15);
+}
+
+.ftv-chance-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ftv-pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--sb-radius-full);
+  background: var(--sb-primary-color, #e07b4c);
+  color: var(--sb-primary-font-color, #fff);
+  font-size: var(--sb-font-size-13);
+  font-weight: 600;
+}
+
+.ftv-pill--spent {
+  background: var(--sb-error-color, #d64545);
+}
+
+.ftv-card {
+  padding: 12px 14px;
+  border-radius: var(--sb-radius-md);
+  background: var(--sb-tertiary-color, #f0f0f0);
+}
+
+.ftv-card--result {
+  border-left: 3px solid var(--sb-primary-color, #e07b4c);
+}
+
+.ftv-card--revealed {
+  border-left: 3px dashed var(--sb-primary-color, #e07b4c);
+}
+
+.ftv-card-label {
+  margin-bottom: 4px;
+  font-size: var(--sb-font-size-12);
+  font-weight: 600;
+  opacity: 0.55;
+}
+
+.ftv-card-text {
+  margin: 0;
+  font-size: var(--sb-font-size-14);
+}
+
+.ftv-card-text--italic {
+  font-style: italic;
+}
+
+.ftv-card-text--faint {
+  opacity: 0.6;
+}
+
+.ftv-card-footnote {
+  margin: 8px 0 0;
+  font-size: var(--sb-font-size-14);
+  opacity: 0.65;
+}
+
+.ftv-reveal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ftv-tap-hint {
+  margin: 0;
+  opacity: 0.5;
+  font-size: var(--sb-font-size-13);
+}
+
+.ftv-win {
+  text-align: center;
+}
+
+.ftv-win-emoji {
+  font-size: 2rem;
+}
+
+.ftv-win-title {
+  margin: 8px 0 4px;
+  font-weight: 700;
+  font-size: var(--sb-font-size-18);
+}
+
+.ftv-win-reference {
+  margin: 0;
+  opacity: 0.7;
+}
+
+.ftv-win-verse {
+  margin: 8px 0 0;
+  font-style: italic;
+  opacity: 0.8;
+  font-size: var(--sb-font-size-14);
+}
+
+.ftv-win-guesses {
+  margin: 4px 0 0;
+  opacity: 0.6;
+  font-size: var(--sb-font-size-14);
+}
+
+/* Hint ? button */
+
+.ftv-hint-text {
+  font-size: var(--sb-font-size-14);
+  white-space: pre-wrap;
+}
+
+.ftv-hint-button {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: var(--sb-radius-full);
+  border: 1px solid var(--sb-divider-color, rgb(0 0 0 / 12%));
+  background: var(--sb-tertiary-color, #f0f0f0);
+  color: var(--sb-font-color, #333);
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ftv-bar .ftv-hint-button {
+  background: var(--sb-secondary-color, #f3f3f3);
+}
+
+/* Reader bar. Its position is set inline: it follows the phone toolbar. */
+
+.ftv-bar {
+  position: fixed;
+  z-index: calc(var(--sb-layer-chrome) - 10);
+  left: 12px;
+  right: 12px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 10px 12px;
+  background: var(--sb-reader-toolbar-background, #fff);
+  color: var(--sb-reader-toolbar-font-color, var(--sb-font-color, #333));
+  border: var(--sb-reader-toolbar-border, 1px solid rgb(0 0 0 / 14%));
+  box-shadow: var(--sb-reader-toolbar-box-shadow, 0 8px 32px rgb(0 0 0 / 12%));
+  border-radius: var(--sb-radius-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform var(--sb-duration-slow) ease;
+}
+
+.ftv-bar-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ftv-bar-title {
+  margin: 0;
+  flex: 1;
+  font-weight: 700;
+}
+
+.ftv-bar-chances {
+  font-weight: 700;
+  font-size: var(--sb-font-size-14);
+}
+
+.ftv-bar-text {
+  margin: 0;
+  font-size: var(--sb-font-size-14);
+}
+
+.ftv-bar-text--italic {
+  font-style: italic;
+}
+
+.ftv-bar-button {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: var(--sb-radius-lg);
+  border: 1px solid
+    color-mix(in srgb, var(--sb-font-color, #333) 16%, transparent);
+  background: var(--sb-secondary-color, #f3f3f3);
+  color: var(--sb-font-color, #333);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--sb-font-size-14);
+  line-height: 1.2;
+}
+
+.ftv-bar-button--end {
+  margin-left: auto;
+}
+
+/* The verse the player found, in the round's tab, until the round ends. */
+.ftv-round .ftv-found-verse {
+  border-radius: 0.2em;
+  background-color: color-mix(
+    in srgb,
+    var(--sb-primary-color, #e07b4c) 30%,
+    transparent
+  );
+}

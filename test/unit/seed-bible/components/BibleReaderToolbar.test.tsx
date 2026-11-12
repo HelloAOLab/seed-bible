@@ -115,6 +115,58 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
     });
   }
 
+  it("acts on a compare step's second passage while its verses are selected", async () => {
+    const tab = state.app.currentReadingState.value!.tab;
+    const chapter = tab.readingState.chapterData.value!;
+    const second = state.tabs.createDetachedReadingState({
+      initialTranslationId: chapter.translation.id,
+      initialBookId: chapter.book.id,
+      initialChapterNumber: chapter.chapter.number,
+    });
+    const detach = state.tabs.attachReadingState(tab, second);
+    try {
+      await waitFor(() => second.chapterData.value !== null, 2000);
+      await selectFirstVerse();
+      await renderToolbar();
+      const verses = second.chapterData.value!.chapter.content.filter(
+        (entry): entry is ChapterVerse => entry.type === "verse"
+      );
+      const verse = verses[1]!;
+
+      await act(async () => {
+        second.selectVerse(
+          {
+            bookId: chapter.book.id,
+            chapterNumber: chapter.chapter.number,
+            verse,
+            translationId: chapter.translation.id,
+          },
+          10,
+          10
+        );
+      });
+
+      // The toolbar names the second passage's verse, and the tab's own
+      // selection made way for it.
+      expect(
+        container.querySelector(".sb-verse-toolbar-ref-text")?.textContent
+      ).toBe(`${chapter.book.name} ${chapter.chapter.number}:${verse.number}`);
+      expect(tab.readingState.selectedVerses.value).toEqual([]);
+
+      // Selecting in the tab's own passage takes the toolbar back.
+      await selectFirstVerse();
+      expect(
+        container.querySelector(".sb-verse-toolbar-ref-text")?.textContent
+      ).toBe(
+        `${chapter.book.name} ${chapter.chapter.number}:${verses[0]!.number}`
+      );
+      expect(second.selectedVerses.value).toEqual([]);
+    } finally {
+      detach();
+      second.dispose();
+    }
+  });
+
   it("keeps an open pane open when the verse selection is cleared", async () => {
     expect(state.app.isMobile.value).toBe(true);
 
@@ -303,6 +355,80 @@ describe("BibleReaderToolbar — verse toolbar vs. fullscreen panes", () => {
     } finally {
       verse.remove();
     }
+  });
+
+  it("opens no verse sheet over the playlist editor, so tapping its Apply keeps the picked verses", async () => {
+    const readingState = state.app.currentReadingState.value!.tab.readingState;
+    await act(async () => {
+      state.playlists.editPlaylist({
+        id: "playlist_1",
+        recordName: "user-1",
+        authorUserId: "user-1",
+        title: "Psalms",
+        description: null,
+        items: [{ type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } }],
+        createdAtMs: 1,
+        updatedAtMs: 1,
+      });
+      state.playlists.selectEditorStep(0);
+    });
+    await selectFirstVerse();
+    await renderToolbar();
+
+    // Picking verses for the step: the editor's pick bar is the way to use
+    // them, and the verse sheet stays closed, as on desktop.
+    expect(state.playlists.editorVersePickIndex.value).toBe(0);
+    expect(container.querySelector(".sb-verse-toolbar")).toBeNull();
+
+    // A finger landing on the pick bar's Apply is outside the verses; it
+    // must not clear them before Apply's click can use them.
+    const apply = document.createElement("button");
+    apply.className = "sb-pe-pickbar-apply";
+    document.body.appendChild(apply);
+    try {
+      await act(async () => {
+        apply.dispatchEvent(
+          new window.PointerEvent("pointerdown", {
+            bubbles: true,
+            pointerType: "touch",
+          })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+      expect(state.playlists.editorVersePickRef.value).not.toBeNull();
+    } finally {
+      apply.remove();
+    }
+  });
+
+  it("floats the chapter pill over a playlist scripture step's page, not over the editor's list", async () => {
+    await act(async () => {
+      state.playlists.editPlaylist({
+        id: "playlist_1",
+        recordName: "user-1",
+        authorUserId: "user-1",
+        title: "Psalms",
+        description: null,
+        items: [
+          { type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } },
+          { type: "html", html: "<p>Reflect</p>" },
+        ],
+        createdAtMs: 1,
+        updatedAtMs: 1,
+      });
+    });
+    await renderToolbar();
+
+    // The list covers the reader.
+    expect(container.querySelector(".sb-reader-floating-nav")).toBeNull();
+
+    await act(async () => state.playlists.selectEditorStep(0));
+    expect(container.querySelector(".sb-reader-floating-nav")).not.toBeNull();
+
+    // A note's card covers the reader too.
+    await act(async () => state.playlists.selectEditorStep(1));
+    expect(container.querySelector(".sb-reader-floating-nav")).toBeNull();
   });
 
   it("does not clear the verse selection when a touch tap lands in a poetry verse's blank space", async () => {
@@ -650,6 +776,8 @@ describe("BibleReaderToolbar — clearing highlights", () => {
       allUsers: signal([]),
       connectedUsers: signal([]),
       currentUser: signal(null),
+      isAwayFromGroup: signal(false),
+      incomingComeBackRequest: signal(null),
       document: {} as never,
       updateOptions: vi.fn(),
       dispose: vi.fn(),
@@ -5676,6 +5804,32 @@ describe("BibleReaderToolbar — compact embed", () => {
     }
   );
 
+  it("has no stop button for a playing playlist on a phone", async () => {
+    const state = await renderToolbar({ width: MOBILE_VIEWPORT_WIDTH });
+    await act(async () => {
+      state.playlists.startPlaying(
+        {
+          id: "p",
+          title: "P",
+          description: null,
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 1, verse: 1 },
+            },
+          ],
+        },
+        0,
+        { history: false, openItem: true }
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-reader-floating-nav-label")?.textContent
+    ).toContain("1:1");
+    expect(container.querySelector('[aria-label="Stop"]')).toBeNull();
+  });
+
   it("reserves room below the chapter for a playing passage's note sheet", async () => {
     // jsdom does no layout and has no ResizeObserver: stand in for both, with
     // the nav 50px tall and the note sheet above it 300px.
@@ -5726,7 +5880,7 @@ describe("BibleReaderToolbar — compact embed", () => {
             ],
           },
           0,
-          { history: false }
+          { history: false, openItem: true }
         );
       });
       expect(
@@ -5757,6 +5911,76 @@ describe("BibleReaderToolbar — compact embed", () => {
         );
       }
       document.documentElement.style.removeProperty("--sb-reader-bottom-inset");
+    }
+  });
+
+  it("measures the phone's tab bar apart from the chapter pill above it", async () => {
+    // Scrolling the reader down slides only the tab bar off the screen, so
+    // chrome riding on the pill (the playlist editor's bars) needs its height
+    // alone. jsdom does no layout: the pill is 50px, the tab bar 70px.
+    const originalResizeObserver = globalThis.ResizeObserver;
+    const originalOffsetHeight = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetHeight"
+    );
+    const resizeCallbacks: (() => void)[] = [];
+    globalThis.ResizeObserver = class {
+      constructor(callback: () => void) {
+        resizeCallbacks.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+      configurable: true,
+      get(this: HTMLElement) {
+        if (this.classList.contains("sb-reader-floating-nav")) return 50;
+        if (this.classList.contains("sb-reader-toolbar")) return 70;
+        return 0;
+      },
+    });
+    const value = (name: string) =>
+      document.documentElement.style.getPropertyValue(name);
+
+    try {
+      await renderToolbar({ width: MOBILE_VIEWPORT_WIDTH });
+      expect(container.querySelector(".sb-reader-floating-nav")).not.toBeNull();
+      expect(container.querySelector(".sb-reader-toolbar")).not.toBeNull();
+
+      const deadline = Date.now() + 2000;
+      while (
+        value("--sb-reader-bottom-tabs") !== "70px" &&
+        Date.now() < deadline
+      ) {
+        await act(async () => {
+          resizeCallbacks.forEach((callback) => callback());
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        });
+      }
+      expect(value("--sb-reader-bottom-chrome")).toBe("120px");
+      expect(value("--sb-reader-bottom-tabs")).toBe("70px");
+    } finally {
+      if (originalResizeObserver) {
+        globalThis.ResizeObserver = originalResizeObserver;
+      } else {
+        // @ts-expect-error -- restore absence; jsdom has no ResizeObserver
+        delete globalThis.ResizeObserver;
+      }
+      if (originalOffsetHeight) {
+        Object.defineProperty(
+          HTMLElement.prototype,
+          "offsetHeight",
+          originalOffsetHeight
+        );
+      }
+      for (const name of [
+        "--sb-reader-bottom-inset",
+        "--sb-reader-bottom-chrome",
+        "--sb-reader-bottom-tabs",
+      ]) {
+        document.documentElement.style.removeProperty(name);
+      }
     }
   });
 
@@ -5837,6 +6061,46 @@ describe("BibleReaderToolbar — a playing passage's hidden note on desktop", ()
     window.innerWidth = originalInnerWidth;
   });
 
+  it("has no stop button for a playing playlist", async () => {
+    const state = await createTestSeedBibleState();
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    await act(async () => {
+      state.playlists.startPlaying(
+        {
+          id: "p",
+          title: "P",
+          description: null,
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 1, verse: 1 },
+            },
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 1, verse: 2 },
+            },
+          ],
+        },
+        0,
+        { history: false }
+      );
+    });
+
+    expect(container.querySelector(".sb-reader-toolbar")).not.toBeNull();
+    expect(container.querySelector('[aria-label="Next"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Stop"]')).toBeNull();
+  });
+
   it("offers Show note on the toolbar itself once the note is hidden", async () => {
     const state = await createTestSeedBibleState();
     await act(async () => {
@@ -5882,5 +6146,415 @@ describe("BibleReaderToolbar — a playing passage's hidden note on desktop", ()
     act(() => showNote()!.click());
     expect(playing.noteExpanded.value).toBe(true);
     expect(showNote()).toBeNull();
+  });
+
+  it("carries a playlist scripture step's note and bars on the toolbar, and hides on the editor's other pages", async () => {
+    const state = await createTestSeedBibleState();
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    expect(state.app.isMobile.value).toBe(false);
+    await act(async () => {
+      state.playlists.editPlaylist({
+        id: "playlist_1",
+        recordName: "user-1",
+        authorUserId: "user-1",
+        title: "Psalms",
+        description: null,
+        items: [
+          {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 1 },
+            noteTitle: "Beginnings",
+            note: "<p>A note</p>",
+          },
+          { type: "html", html: "<p>Reflect</p>" },
+        ],
+        createdAtMs: 1,
+        updatedAtMs: 1,
+      });
+    });
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    const toolbar = () => container.querySelector(".sb-reader-toolbar");
+
+    // The step list covers the reader.
+    expect(toolbar()).toBeNull();
+
+    await act(async () => state.playlists.selectEditorStep(0));
+    const stack = toolbar()?.querySelector(".sb-pe-toolbar-stack");
+    expect(
+      stack?.querySelector(".sb-scripture-note-sheet-header")?.textContent
+    ).toContain("Beginnings");
+
+    // Picking verses puts the highlight bar above the note.
+    const readingState = state.app.currentReadingState.value!.tab.readingState;
+    await act(async () => {
+      readingState.selectedVerses.value = [
+        {
+          bookId: "GEN",
+          chapterNumber: 1,
+          verse: { type: "verse", number: 2, content: [] },
+          translationId: "BSB",
+        },
+      ];
+    });
+    const children = Array.from(
+      toolbar()!.querySelector(".sb-pe-toolbar-stack")!.children
+    );
+    const pickBar = children.findIndex((el) =>
+      el.textContent?.includes("Highlight verse 2")
+    );
+    const note = children.findIndex((el) =>
+      el.classList.contains("sb-pe-note-sheet")
+    );
+    expect(pickBar).toBeGreaterThanOrEqual(0);
+    expect(pickBar).toBeLessThan(note);
+
+    // A note step's card covers the reader.
+    await act(async () => state.playlists.selectEditorStep(1));
+    expect(toolbar()).toBeNull();
+  });
+});
+
+describe("BibleReaderToolbar — answers to a playing question in a shared session", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  async function playQuestion(options: { width: number; shared: boolean }) {
+    window.innerWidth = options.width;
+    const state = await createTestSeedBibleState();
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    const tab = state.app.currentReadingState.value!.tab;
+    if (options.shared) {
+      tab.sharedSession = {
+        id: "group-abc",
+        options: signal({
+          allowedNavigators: null,
+          allowedDecorators: null,
+          hostUserId: null,
+          coHostUserIds: null,
+          highlightDurationSeconds: 16,
+          shareTranslation: true,
+          endedAt: null,
+        }),
+        localSessionId: signal("user-me"),
+        userCanDecorate: () => true,
+        userCanNavigate: () => true,
+        isHost: () => false,
+        readingState: tab.readingState,
+        allUsers: signal([]),
+        connectedUsers: signal([]),
+        currentUser: signal(null),
+        participantPositions: signal(new Map()),
+        questionAnswers: signal([
+          {
+            stepKey: "p#0",
+            authorId: "user-maria",
+            text: "In the waiting room.",
+            updatedAtMs: 1,
+            name: "Maria",
+            pictureUrl: null,
+            visual: {
+              color: "#3b6fb6",
+              defaultIcon: "pets",
+              colorName: "blue",
+            },
+          },
+        ]),
+        setQuestionAnswer: vi.fn(),
+        // With the group, so its bar stays out of the way.
+        isAwayFromGroup: signal(false),
+        incomingComeBackRequest: signal(null),
+        document: {} as never,
+        updateOptions: vi.fn(),
+        dispose: vi.fn(),
+      } as unknown as NonNullable<typeof tab.sharedSession>;
+    }
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    await act(async () => {
+      state.playlists.startPlaying(
+        {
+          id: "p",
+          title: "P",
+          description: null,
+          items: [
+            { type: "html", html: "<p>Where?</p>", question: {} },
+            { type: "html", html: "<p>Pray</p>" },
+          ],
+        },
+        0,
+        { history: false, openItem: true }
+      );
+    });
+    return state;
+  }
+
+  const sheet = () => container.querySelector(".sb-question-answers");
+
+  it("rides on a phone's chapter pill", async () => {
+    await playQuestion({ width: MOBILE_VIEWPORT_WIDTH, shared: true });
+
+    expect(
+      container.querySelector(".sb-reader-floating-nav .sb-question-answers")
+        ?.textContent
+    ).toContain("1 answer");
+  });
+
+  it("stacks above the toolbar on desktop", async () => {
+    await playQuestion({ width: 1200, shared: true });
+
+    expect(
+      container.querySelector(".sb-reader-toolbar .sb-pe-toolbar-stack")
+        ?.textContent
+    ).toContain("1 answer");
+  });
+
+  it("isn't offered outside a shared session, or on a step that isn't a question", async () => {
+    await playQuestion({ width: MOBILE_VIEWPORT_WIDTH, shared: false });
+    expect(sheet()).toBeNull();
+
+    render(null, container);
+    const shared = await playQuestion({
+      width: MOBILE_VIEWPORT_WIDTH,
+      shared: true,
+    });
+    await act(async () => shared.playlists.playing.value!.next());
+    expect(sheet()).toBeNull();
+  });
+});
+
+describe("BibleReaderToolbar — away from the session group", () => {
+  let container: HTMLDivElement;
+  let originalInnerWidth: number;
+
+  beforeEach(() => {
+    originalInnerWidth = window.innerWidth;
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    window.innerWidth = originalInnerWidth;
+  });
+
+  /**
+   * Puts the selected tab in a session whose group is on Exodus 2. The host is
+   * a connected peer; `isAwayFromGroup` stands in for the session's own
+   * comparison, which `SessionsManager.test.ts` covers.
+   */
+  async function renderInSession(
+    viewportWidth: number,
+    away: boolean,
+    { askedToComeBack = false } = {}
+  ) {
+    window.innerWidth = viewportWidth;
+    const state = await createTestSeedBibleState({
+      responses: createPrivateEndpointResponses(),
+    });
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    const tab = state.app.currentReadingState.value!.tab;
+    await waitFor(() => !!tab.readingState.translationBooks.value);
+    const isAwayFromGroup = signal(away);
+    const incomingComeBackRequest = signal(
+      askedToComeBack
+        ? {
+            id: "request-1",
+            fromConnectionId: "conn-host",
+            fromUserId: "host-user",
+            sentAtMs: Date.now(),
+          }
+        : null
+    );
+    const rejoinGroup = vi.fn(async () => {
+      isAwayFromGroup.value = false;
+      incomingComeBackRequest.value = null;
+    });
+    const dismissComeBackRequest = vi.fn(() => {
+      incomingComeBackRequest.value = null;
+    });
+    tab.sharedSession = {
+      id: "group-abc",
+      options: signal({
+        allowedNavigators: ["host-user"],
+        allowedDecorators: null,
+        hostUserId: "host-user",
+        coHostUserIds: null,
+        highlightDurationSeconds: 16,
+        shareTranslation: true,
+        endedAt: null,
+      }),
+      localSessionId: signal("user-1"),
+      userCanDecorate: () => true,
+      userCanNavigate: (id: string) => id === "host-user",
+      isHost: () => false,
+      readingState: tab.readingState,
+      allUsers: signal([]),
+      connectedUsers: signal([
+        {
+          isSelf: false,
+          connectionId: "conn-host",
+          userId: "host-user",
+          profile: { name: "Grace" },
+          visual: {
+            defaultIcon: "pets",
+            color: "#8B5CF6",
+            colorName: "purple",
+          },
+          isActive: true,
+          joinedAtMs: null,
+        },
+      ]),
+      currentUser: signal(null),
+      groupPosition: signal({
+        translationId: "AAB",
+        bookId: "EXO",
+        chapterNumber: 2,
+        scrollToVerse: null,
+      }),
+      isAwayFromGroup,
+      rejoinGroup,
+      incomingComeBackRequest,
+      dismissComeBackRequest,
+      document: {} as never,
+      updateOptions: vi.fn(),
+      dispose: vi.fn(),
+    } as unknown as NonNullable<typeof tab.sharedSession>;
+
+    await act(async () => {
+      render(
+        <TestHost state={state}>
+          <BibleReaderToolbar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+
+    return { state, rejoinGroup, dismissComeBackRequest };
+  }
+
+  const groupBar = () =>
+    container.querySelector<HTMLElement>(".sb-session-group-bar");
+
+  it("shows where the group is above the chapter nav on mobile and rejoins it", async () => {
+    const { rejoinGroup } = await renderInSession(MOBILE_VIEWPORT_WIDTH, true);
+
+    const bar = groupBar();
+    expect(bar).not.toBeNull();
+    expect(bar!.parentElement?.classList).toContain("sb-reader-floating-nav");
+    expect(bar!.textContent).toContain("Group is on Exodus 2");
+    // The person leading the group is shown beside the label.
+    expect(bar!.querySelectorAll(".sb-session-group-bar-leader")).toHaveLength(
+      1
+    );
+
+    const rejoin = bar!.querySelector<HTMLButtonElement>(
+      ".sb-session-group-bar-rejoin"
+    )!;
+    expect(rejoin.getAttribute("aria-label")).toBe(
+      "Rejoin the group at Exodus 2"
+    );
+    await act(async () => {
+      rejoin.click();
+    });
+
+    expect(rejoinGroup).toHaveBeenCalledTimes(1);
+    expect(groupBar()).toBeNull();
+  });
+
+  it("tops the floating toolbar with the group bar on desktop", async () => {
+    await renderInSession(1200, true);
+
+    const bar = groupBar();
+    expect(bar).not.toBeNull();
+    const toolbar = bar!.parentElement!;
+    expect(toolbar.classList).toContain("sb-reader-toolbar");
+    expect(toolbar.classList).toContain("sb-reader-toolbar-has-group-bar");
+    expect(bar!.textContent).toContain("Group is on Exodus 2");
+  });
+
+  it("shows a host's request to come back and answers it with Not now", async () => {
+    const { dismissComeBackRequest } = await renderInSession(
+      MOBILE_VIEWPORT_WIDTH,
+      true,
+      { askedToComeBack: true }
+    );
+
+    const bar = groupBar()!;
+    expect(bar.getAttribute("role")).toBe("alert");
+    expect(bar.textContent).toContain("Grace asked you to come back");
+    expect(bar.textContent).toContain("The group is reading Exodus 2");
+
+    const notNow = Array.from(bar.querySelectorAll("button")).find(
+      (button) => button.textContent === "Not now"
+    )!;
+    await act(async () => {
+      notNow.click();
+    });
+
+    expect(dismissComeBackRequest).toHaveBeenCalledTimes(1);
+    // Back to the plain bar, which still offers the way back.
+    expect(groupBar()!.textContent).toContain("Group is on Exodus 2");
+    expect(groupBar()!.textContent).not.toContain("asked you to come back");
+  });
+
+  it("rejoins the group from a host's request on desktop", async () => {
+    const { rejoinGroup } = await renderInSession(1200, true, {
+      askedToComeBack: true,
+    });
+
+    const rejoin = groupBar()!.querySelector<HTMLButtonElement>(
+      ".sb-session-group-bar-rejoin"
+    )!;
+    expect(rejoin.textContent).toContain("Rejoin group");
+    await act(async () => {
+      rejoin.click();
+    });
+
+    expect(rejoinGroup).toHaveBeenCalledTimes(1);
+    expect(groupBar()).toBeNull();
+  });
+
+  it("shows nothing while the reader is with the group", async () => {
+    await renderInSession(1200, false);
+
+    expect(groupBar()).toBeNull();
+    expect(
+      container
+        .querySelector(".sb-reader-toolbar")
+        ?.classList.contains("sb-reader-toolbar-has-group-bar")
+    ).toBe(false);
   });
 });

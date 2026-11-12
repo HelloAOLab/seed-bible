@@ -1274,5 +1274,19 @@
   "loading-translations": "S'estan carregant les traduccions…",
   "translations-load-failed": "No s'ha pogut carregar la llista completa de traduccions, per tant, és possible que faltin algunes.",
   "verse-of-the-day": "VERSO DEL DIA",
-  "verse-of-the-day-loading": "S'està carregant el vers del dia..."
+  "verse-of-the-day-loading": "S'està carregant el vers del dia...",
+  "delete-bookmark-confirm-title": "Vols suprimir el marcador?",
+  "delete-bookmark-confirm-message": "Voleu suprimir \" {{name}} \"?",
+  "scripture-font": "Font de les Escriptures",
+  "ai-limits-title": "Abans de xatejar amb la IA",
+  "ai-limits-intro": "La IA pot ser un punt de partida útil, però tingueu en compte els seus límits:",
+  "ai-limits-mistakes": "Comet errors i pot semblar segur quan s'equivoca.",
+  "ai-limits-agreeable": "Tendeix a dir-te el que vols sentir i s'inclina cap a les respostes populars.",
+  "ai-limits-scripture": "No és una font fiable. Comprova què diu en contrast amb les Escriptures.",
+  "ai-limits-study": "Estudia la Bíblia pel teu compte i no deixis que la IA pensi per tu.",
+  "ai-limits-confirm": "Entenc que la IA pot cometre errors i no és un substitut de l'estudi personal de la Bíblia.",
+  "friends-playlists-filter": "Llistes de reproducció d'amics",
+  "friend-link-social-title": "Afegeix {{name}} com a amic/ga",
+  "friend-link-meta-description": "{{name}} vol ser amic teu a {{brand}}",
+  "friend-link-title": "Afegeix {{name}} com a amic a {{brand}}"
 }

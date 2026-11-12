@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
 import { useOverlayDismiss } from "../useOverlayDismiss";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 /** A press that moves less than this is a tap, not a drag. */
 const TAP_SLOP_PX = 6;
@@ -352,12 +353,21 @@ export function BottomSheet(props: BottomSheetProps) {
     }
   };
 
-  const closeButton = showClose && (
+  const closePlacement = `sb-bottom-sheet-close${
+    title === undefined ? " sb-bottom-sheet-close-corner" : ""
+  }`;
+  const closeButton = !showClose ? null : closeIcon === "close" ? (
+    <CloseButton
+      className={closePlacement}
+      look="tinted"
+      label={closeLabel}
+      onClose={onCloseButton ?? onClose}
+    />
+  ) : (
+    // Not a close: the shared button's look, with its own icon and label.
     <button
       type="button"
-      className={`sb-bottom-sheet-close${
-        title === undefined ? " sb-bottom-sheet-close-corner" : ""
-      }`}
+      className={`sb-close-button sb-close-button-md sb-close-button-tinted ${closePlacement}`}
       onClick={onCloseButton ?? onClose}
       aria-label={closeLabel}
       title={closeLabel}
@@ -387,7 +397,7 @@ export function BottomSheet(props: BottomSheetProps) {
         ref={setSheetEl}
         className={`sb-bottom-sheet${
           dragSurface === "sheet" ? " sb-bottom-sheet-drag-anywhere" : ""
-        }${isDragging.value ? " sb-bottom-sheet-dragging" : ""}${
+        }${modal ? " sb-bottom-sheet-modal" : ""}${isDragging.value ? " sb-bottom-sheet-dragging" : ""}${
           className ? ` ${className}` : ""
         }`}
         role="dialog"

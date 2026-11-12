@@ -72,7 +72,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
           aria-label={t("decrease-scripture-font-size", {
             defaultValue: "Decrease scripture font size",
           })}
-          style={{ fontSize: "0.875rem" }}
+          style={{ fontSize: "var(--sb-font-size-14)" }}
           // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
         >
           A
@@ -85,7 +85,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
           aria-label={t("increase-scripture-font-size", {
             defaultValue: "Increase scripture font size",
           })}
-          style={{ fontSize: "1.25rem", fontWeight: 500 }}
+          style={{ fontSize: "var(--sb-font-size-20)", fontWeight: 500 }}
           // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
         >
           A

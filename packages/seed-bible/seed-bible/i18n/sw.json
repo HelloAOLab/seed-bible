@@ -1274,5 +1274,19 @@
   "loading-translations": "Inapakia tafsiri…",
   "translations-load-failed": "Haikuweza kupakia orodha kamili ya tafsiri, kwa hivyo baadhi zinaweza kuwa hazipo.",
   "verse-of-the-day": "AYA YA SIKU",
-  "verse-of-the-day-loading": "Inapakia mstari wa siku..."
+  "verse-of-the-day-loading": "Inapakia mstari wa siku...",
+  "delete-bookmark-confirm-title": "Futa alamisho?",
+  "delete-bookmark-confirm-message": "Futa \" {{name}} \"?",
+  "scripture-font": "Fonti ya Maandiko",
+  "ai-limits-title": "Kabla ya kupiga gumzo na AI",
+  "ai-limits-intro": "AI inaweza kuwa sehemu muhimu ya kuanzia, lakini kumbuka mipaka yake:",
+  "ai-limits-mistakes": "Hufanya makosa, na inaweza kujiamini inapokosea.",
+  "ai-limits-agreeable": "Huelekea kukuambia unachotaka kusikia, na huegemea kwenye majibu maarufu.",
+  "ai-limits-scripture": "Sio chanzo cha kuaminika. Angalia kile kinachosema dhidi ya Maandiko.",
+  "ai-limits-study": "Jifunze Biblia mwenyewe, na usiruhusu akili bandia ifanye mawazo yako kwa ajili yako.",
+  "ai-limits-confirm": "Ninaelewa kwamba akili bandia (AI) inaweza kufanya makosa na si mbadala wa kujifunza Biblia mwenyewe.",
+  "friends-playlists-filter": "Orodha za kucheza za marafiki",
+  "friend-link-social-title": "Ongeza {{name}} kama rafiki",
+  "friend-link-meta-description": "{{name}} anataka kuwa rafiki yako kwenye {{brand}}",
+  "friend-link-title": "Ongeza {{name}} kama rafiki kwenye {{brand}}"
 }

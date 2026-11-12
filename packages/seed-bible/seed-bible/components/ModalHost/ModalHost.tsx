@@ -3,6 +3,7 @@ import type { ManagedModal, ModalManager } from "../../managers/ModalManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
 import { useOverlayDismiss } from "../useOverlayDismiss";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 export function ModalHost(props: { manager: ModalManager }) {
   const { manager } = props;
@@ -48,13 +49,11 @@ function HostedModal(props: { manager: ModalManager; modal: ManagedModal }) {
           <h3 className="sb-footnote-modal-title">
             {translateTitle(t, modal.title)}
           </h3>
-          <button
+          <CloseButton
             className="sb-footnote-modal-close"
-            aria-label={t("close", { defaultValue: "Close" })}
-            onClick={dismiss}
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+            disabled={!modal.canDismiss()}
+            onClose={dismiss}
+          />
         </div>
 
         <div className="sb-footnote-modal-content">{modal.content({ t })}</div>

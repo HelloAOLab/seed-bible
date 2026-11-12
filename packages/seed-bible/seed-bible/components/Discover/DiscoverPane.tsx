@@ -4,11 +4,21 @@ import type { TabsManager } from "../../managers/TabsManager";
 import type { PlaylistManager } from "../../managers/PlaylistManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { AnnotationsManager } from "../../managers/AnnotationsManager";
-import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
+import type { ChatsManager } from "../../managers/ChatsManager";
+import { PlaylistEditorPanel } from "../PlaylistEditor/PlaylistEditorPanel";
+import { PublishButton } from "../PlaylistEditor/PlaylistEditorWorkspace";
 import { CreateAnnotationForm } from "../CreateAnnotationForm/CreateAnnotationForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { DiscoverContentPanel } from "./DiscoverContentPanel";
+import { useI18n } from "../../i18n/I18nManager";
+import { translateTitle } from "../../app/utils";
+import { v4 as uuid } from "uuid";
+import {
+  ContextMenuWithButton,
+  ContextMenuItem,
+} from "../ContextMenu/ContextMenu";
+import { MaterialIcon } from "../icons";
 
 export const DISCOVER_PANE_ID = "discover-pane";
 
@@ -38,17 +48,17 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
   if (view === "create_playlist") {
     return (
-      <CreatePlaylistForm
+      <PlaylistEditorPanel
         playlists={playlists}
         tabs={tabs}
         modals={modals}
-        chats={state.chats}
-        openChatPanel={state.sidebar.openChatPanel}
-        onClose={close}
-        bibleData={state.bibleData}
-        os={state.os}
-        login={state.login}
-        gallery={state.gallery}
+        headerActions={
+          <EditPlaylistWithAiButton
+            chats={state.chats}
+            openChatPanel={state.sidebar.openChatPanel}
+          />
+        }
+        footerActions={<PublishButton state={state} />}
       />
     );
   }
@@ -71,7 +81,6 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         playlists={playlists}
         tabs={tabs}
         modals={modals}
-        onClose={close}
       />
     );
   }
@@ -87,5 +96,90 @@ export function DiscoverPane(props: DiscoverPaneProps) {
       state={state}
       tab={selectedTab}
     />
+  );
+}
+
+/**
+ * Starts a chat with an AI that can edit the open playlist, when an AI that
+ * can use tools is available. `PlaylistManager` hands every chat the
+ * playlist-editing tools while a playlist is being edited, so replying lets
+ * the AI add, change and remove steps and rename the playlist.
+ */
+export function EditPlaylistWithAiButton(props: {
+  chats: ChatsManager;
+  openChatPanel: () => void;
+}) {
+  const { chats, openChatPanel } = props;
+  const { t } = useI18n();
+  const providers = chats.providers.value.filter((p) => p.supportsToolCalling);
+  const singleProvider = providers.length === 1 ? providers[0] : undefined;
+  // Opens the chat panel on a fresh local chat, seeded with a prompt message
+  // inviting the user to describe what they want changed, with the given AI
+  // provider already added as a participant.
+  const startAiChat = (providerId: string) => {
+    let chat = chats.chats.value.find(
+      (c) =>
+        c.participants.value.every((p) => !p.isRemote) &&
+        c.participants.value.some((p) => p.isAI && p.providerId === providerId)
+    );
+    if (!chat) {
+      chat = chats.createLocalSession({
+        messages: [
+          {
+            id: uuid(),
+            authors: [providerId],
+            timeMs: Date.now(),
+            targets: [],
+            type: "text",
+            text: t("ai-playlist-chat-prompt", {
+              defaultValue: "What do you want to add/change?",
+            }),
+          },
+        ],
+        providerIds: [],
+      });
+    }
+    chat.addParticipant(providerId);
+    chats.selectChat(chat.id);
+    openChatPanel();
+  };
+  const aiButtonLabel = t("ai", { defaultValue: "AI" });
+  const aiButtonAriaLabel = t("ai-edit-playlist", {
+    defaultValue: "Edit playlist with AI",
+  });
+
+  if (providers.length > 1) {
+    // Multiple providers: let the user pick which one starts the chat.
+    return (
+      <ContextMenuWithButton
+        buttonClassName="sb-discover-title-ai"
+        aria-label={aiButtonAriaLabel}
+        title={aiButtonLabel}
+        icon={<MaterialIcon>auto_awesome</MaterialIcon>}
+      >
+        {providers.map((provider) => (
+          <ContextMenuItem
+            key={provider.id}
+            onClick={() => startAiChat(provider.id)}
+          >
+            {translateTitle(t, provider.name)}
+          </ContextMenuItem>
+        ))}
+      </ContextMenuWithButton>
+    );
+  }
+  if (!singleProvider) {
+    return null;
+  }
+  return (
+    <button
+      type="button"
+      className="sb-discover-title-ai"
+      aria-label={aiButtonAriaLabel}
+      title={aiButtonLabel}
+      onClick={() => startAiChat(singleProvider.id)}
+    >
+      <MaterialIcon>auto_awesome</MaterialIcon>
+    </button>
   );
 }

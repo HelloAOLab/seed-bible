@@ -48,6 +48,18 @@ describe("MobileSessionParticipants sheet", () => {
         guest("conn-ben", "Ben"),
         guest("conn-ada", "Ada"),
       ]),
+      // Everyone on the same chapter, so the list stays a single section.
+      readingState: {
+        bookId: signal("JHN"),
+        chapterNumber: signal(3),
+        visibleVerseRange: signal(null),
+        translationBooks: signal({ books: [{ id: "JHN", name: "John" }] }),
+      },
+      groupPosition: signal({ bookId: "JHN", chapterNumber: 3 }),
+      participantPositions: signal(new Map()),
+      participantsAwayFromGroup: signal(new Set()),
+      isAwayFromGroup: signal(false),
+      comeBackCooldownRemainingMs: () => 0,
     } as unknown as BibleReadingSession;
     const state = {
       login: { userId: signal(null) },

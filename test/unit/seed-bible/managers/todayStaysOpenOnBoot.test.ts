@@ -63,13 +63,12 @@ function storeTabOnExodus2(): void {
 }
 
 /**
- * A visitor arriving with no reading position in the URL should land on Today
- * and stay there. A returning visitor also brings a saved reading position from
- * `localStorage`, which the app restores just after the first render — and the
- * reader writes that restored book/chapter into the address bar. That write is
- * the tail end of the same page load, not a navigation, so it must not count as
- * one: treating it as a navigation closed the fullscreen pane Today had just
- * opened, and the screen appeared and vanished again.
+ * A visitor arriving with no reading position in the URL should land on the
+ * Today page and stay there. A returning visitor also brings a saved reading
+ * position from `localStorage`, which the app restores underneath Today just
+ * after the first render. That restore is the tail end of the same page load,
+ * not a navigation, so it must neither close Today nor write the reader's
+ * position over the Today page's address.
  */
 describe("Today on a cold load with no reading position in the URL", () => {
   afterEach(() => {
@@ -91,7 +90,7 @@ describe("Today on a cold load with no reading position in the URL", () => {
       () => state.app.selectedTab.value?.readingState.bookId.value === "EXO",
       2000
     );
-    expect(window.location.pathname).toBe("/en/AAB/exodus/2");
+    expect(window.location.pathname).toBe("/en/today");
 
     expect(state.today.isOpen.value).toBe(true);
     expect(
@@ -122,7 +121,7 @@ describe("Today on a cold load with no reading position in the URL", () => {
       () => state.app.selectedTab.value?.readingState.bookId.value === "MAT",
       2000
     );
-    expect(window.location.pathname).toBe("/en/NIV/matthew/1");
+    expect(window.location.pathname).toBe("/en/today");
 
     expect(state.today.isOpen.value).toBe(true);
     expect(

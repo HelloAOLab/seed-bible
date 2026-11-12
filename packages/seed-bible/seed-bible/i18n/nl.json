@@ -1274,5 +1274,19 @@
   "loading-translations": "Vertalingen worden geladen…",
   "translations-load-failed": "Het lukte niet om de volledige lijst met vertalingen te laden, dus mogelijk ontbreken er enkele.",
   "verse-of-the-day": "VERS VAN DE DAG",
-  "verse-of-the-day-loading": "Het vers van de dag wordt geladen..."
+  "verse-of-the-day-loading": "Het vers van de dag wordt geladen...",
+  "delete-bookmark-confirm-title": "Bladwijzer verwijderen?",
+  "delete-bookmark-confirm-message": "Verwijder \" {{name}} \"?",
+  "scripture-font": "Schriftlettertype",
+  "ai-limits-title": "Voordat je met AI gaat chatten",
+  "ai-limits-intro": "AI kan een nuttig uitgangspunt zijn, maar houd de beperkingen ervan in gedachten:",
+  "ai-limits-mistakes": "Het maakt fouten en kan zelfverzekerd overkomen, zelfs als het fout zit.",
+  "ai-limits-agreeable": "Het vertelt je vaak wat je wilt horen en neigt naar populaire antwoorden.",
+  "ai-limits-scripture": "Het is geen betrouwbare bron. Vergelijk de beweringen met de Schrift.",
+  "ai-limits-study": "Bestudeer de Bijbel zelf en laat AI niet voor je denken.",
+  "ai-limits-confirm": "Ik begrijp dat AI fouten kan maken en geen vervanging is voor het zelf bestuderen van de Bijbel.",
+  "friends-playlists-filter": "Afspeellijsten van vrienden",
+  "friend-link-social-title": "Voeg {{name}} toe als vriend",
+  "friend-link-meta-description": "{{name}} wil graag je vriend(in) zijn op {{brand}}",
+  "friend-link-title": "Voeg {{name}} toe als vriend op {{brand}}"
 }

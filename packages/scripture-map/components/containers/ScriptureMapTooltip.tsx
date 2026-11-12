@@ -72,7 +72,7 @@ const UserPresenceTooltipContent = ({
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              fontSize: "0.75rem",
+              fontSize: "var(--sb-font-size-12)",
               zIndex: "3",
               fontWeight: "600",
             }}

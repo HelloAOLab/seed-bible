@@ -1274,5 +1274,19 @@
   "loading-translations": "અનુવાદો લોડ કરી રહ્યું છે…",
   "translations-load-failed": "અનુવાદોની સંપૂર્ણ સૂચિ લોડ કરી શકાઈ નથી, તેથી કેટલાક ખૂટતા હોઈ શકે છે.",
   "verse-of-the-day": "દિવસનો શ્લોક",
-  "verse-of-the-day-loading": "આજનું શ્લોક લોડ કરી રહ્યું છે..."
+  "verse-of-the-day-loading": "આજનું શ્લોક લોડ કરી રહ્યું છે...",
+  "delete-bookmark-confirm-title": "બુકમાર્ક ડિલીટ કરીએ?",
+  "delete-bookmark-confirm-message": "\" {{name}} \" કાઢી નાખીએ?",
+  "scripture-font": "સ્ક્રિપ્ચર ફોન્ટ",
+  "ai-limits-title": "AI સાથે ચેટ કરતા પહેલા",
+  "ai-limits-intro": "AI એક મદદરૂપ શરૂઆત હોઈ શકે છે, પરંતુ તેની મર્યાદાઓ ધ્યાનમાં રાખો:",
+  "ai-limits-mistakes": "તે ભૂલો કરે છે, અને જ્યારે તે ખોટું હોય ત્યારે આત્મવિશ્વાસથી ભરપૂર લાગે છે.",
+  "ai-limits-agreeable": "તે તમને જે સાંભળવા માંગે છે તે કહેવાનું વલણ ધરાવે છે, અને લોકપ્રિય જવાબો તરફ ઝુકે છે.",
+  "ai-limits-scripture": "તે વિશ્વસનીય સ્ત્રોત નથી. તે શાસ્ત્ર વિરુદ્ધ શું કહે છે તે તપાસો.",
+  "ai-limits-study": "જાતે બાઇબલનો અભ્યાસ કરો, અને AI ને તમારા માટે વિચારવા ન દો.",
+  "ai-limits-confirm": "હું સમજું છું કે AI ભૂલો કરી શકે છે અને તે બાઇબલનો જાતે અભ્યાસ કરવાનો વિકલ્પ નથી.",
+  "friends-playlists-filter": "મિત્રોની પ્લેલિસ્ટ",
+  "friend-link-social-title": "{{name}} ને મિત્ર તરીકે ઉમેરો",
+  "friend-link-meta-description": "{{name}} {{brand}} પર તમારા મિત્ર બનવા માંગે છે.",
+  "friend-link-title": "{ {{brand}} {{name}} ને મિત્ર તરીકે ઉમેરો."
 }

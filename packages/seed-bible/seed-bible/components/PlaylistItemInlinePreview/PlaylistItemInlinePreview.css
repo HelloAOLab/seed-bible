@@ -7,9 +7,9 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 8px 10px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   background: color-mix(in srgb, var(--sb-primary-color), transparent 94%);
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.5;
   text-align: start;
 }
@@ -58,7 +58,7 @@
 
 .sb-item-inline-preview-note-label {
   display: block;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   margin-bottom: 2px;
 }

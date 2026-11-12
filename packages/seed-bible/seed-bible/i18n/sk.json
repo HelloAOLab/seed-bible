@@ -1274,5 +1274,19 @@
   "loading-translations": "Načítavajú sa preklady…",
   "translations-load-failed": "Nepodarilo sa načítať celý zoznam prekladov, takže niektoré môžu chýbať.",
   "verse-of-the-day": "VERŠ DŇA",
-  "verse-of-the-day-loading": "Načítava sa verš dňa…"
+  "verse-of-the-day-loading": "Načítava sa verš dňa…",
+  "delete-bookmark-confirm-title": "Odstrániť záložku?",
+  "delete-bookmark-confirm-message": "Odstrániť „ {{name}} “?",
+  "scripture-font": "Písmo Písma",
+  "ai-limits-title": "Predtým, ako sa porozprávate s AI",
+  "ai-limits-intro": "Umelá inteligencia môže byť užitočným východiskovým bodom, ale majte na pamäti jej obmedzenia:",
+  "ai-limits-mistakes": "Robí chyby a vie znieť sebavedomo, keď sa mýli.",
+  "ai-limits-agreeable": "Zvyčajne vám hovorí to, čo chcete počuť, a prikláňa sa k populárnym odpovediam.",
+  "ai-limits-scripture": "Nie je to spoľahlivý zdroj. Overte si, čo sa tam píše v porovnaní s Písmom.",
+  "ai-limits-study": "Študujte Bibliu sami a nenechajte umelú inteligenciu, aby za vás myslela.",
+  "ai-limits-confirm": "Chápem, že umelá inteligencia môže robiť chyby a nie je náhradou za štúdium Biblie.",
+  "friends-playlists-filter": "Playlisty priateľov",
+  "friend-link-social-title": "Pridajte si {{name}} ako priateľa",
+  "friend-link-meta-description": "{{name}} sa chce stať vaším priateľom na {{brand}}",
+  "friend-link-title": "Pridajte si {{name}} ako priateľa na {{brand}}"
 }

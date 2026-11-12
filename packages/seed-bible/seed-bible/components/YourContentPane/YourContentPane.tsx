@@ -32,7 +32,14 @@ import {
 } from "../Discover/AnnotationsSection";
 import { PlaylistRow } from "../Discover/PlaylistRow";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
+import type { Bookmark } from "../../managers/BookmarksManager";
 import { openSaveModalForLocation } from "../Tabs/Tabs";
+import {
+  BookmarkGlyph,
+  confirmDeleteBookmark,
+  openEditBookmarkModal,
+  useBookmarkLocationText,
+} from "../Bookmarks/Bookmarks";
 import {
   ContextMenuItem,
   ContextMenuWithButton,
@@ -566,6 +573,77 @@ function SavePill(props: {
   );
 }
 
+function BookmarkRow(props: {
+  state: SeedBibleState;
+  bookmark: Bookmark;
+  /** "John 3", named in the bookmark's own translation. */
+  chapterText: string;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) {
+  const { state, bookmark } = props;
+  const { t } = useI18n();
+  const translation = useTranslationShortName(state, bookmark.translationId);
+
+  return (
+    <div className="sb-content-bookmark-row">
+      <button
+        type="button"
+        className="sb-content-bookmark"
+        onClick={() =>
+          props.onOpenPassage({
+            bookId: bookmark.bookId,
+            chapter: bookmark.chapterNumber,
+            translationId: bookmark.translationId,
+          })
+        }
+      >
+        <BookmarkGlyph colorId={bookmark.colorId} size={16} />
+        {/* The save card's name and details styles, not BookmarkLabel's, so
+            the two kinds of card read alike on this screen. */}
+        <span className="sb-content-bookmark-text">
+          <span className="sb-content-bookmark-name">{bookmark.name}</span>
+          <span className="sb-content-bookmark-meta">
+            <span className="sb-content-bookmark-chapter" dir="auto">
+              {props.chapterText}
+            </span>
+            <MetaSeparator />
+            <span className="sb-content-bookmark-translation">
+              {translation}
+            </span>
+          </span>
+        </span>
+      </button>
+      <ContextMenuWithButton
+        buttonClassName="sb-content-save-menu"
+        aria-label={t("bookmark-options-named", {
+          defaultValue: "Options for {{name}}",
+          name: bookmark.name,
+        })}
+        title={t("bookmark-options", { defaultValue: "Bookmark options" })}
+      >
+        <ContextMenuItem onClick={() => openEditBookmarkModal(state, bookmark)}>
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
+            edit
+          </MaterialIcon>
+          <span>{t("edit", { defaultValue: "Edit" })}</span>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={() => confirmDeleteBookmark(state, bookmark)}>
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
+            delete
+          </MaterialIcon>
+          <span>{t("delete", { defaultValue: "Delete" })}</span>
+        </ContextMenuItem>
+      </ContextMenuWithButton>
+    </div>
+  );
+}
+
 function ReadingPlanRow(props: {
   state: SeedBibleState;
   plan: ReadingPlanMetadata;
@@ -669,7 +747,7 @@ function readingPlanStatusLabel(
 
 /**
  * The "Your content" screen (issue #1553): everything the reader has made —
- * annotations, highlights, saves, playlists, reading plans, branding
+ * annotations, highlights, saves, bookmarks, playlists, reading plans, branding
  * customizations and uploaded images — in one place, filtered by a search box and a row of chips.
  *
  * "All" shows the first few of each section with a "See all" that switches
@@ -680,6 +758,7 @@ export function YourContentPane(props: YourContentScreenProps) {
   const {
     yourContent,
     saves,
+    bookmarks,
     playlists,
     annotations,
     readingPlans,
@@ -701,12 +780,29 @@ export function YourContentPane(props: YourContentScreenProps) {
     void yourContent.load({ force: true });
   }, []);
 
-  // Uploaded images and customizations each have their own store, not what
-  // `load` reads.
+  // Bookmarks load on sign-in by themselves; asking again here retries one
+  // that failed then. Tracked so the Bookmarks chip can tell "none yet" from
+  // "still loading" and "couldn't load" — the list is empty in all three.
+  const bookmarksLoad = useSignal<"loading" | "loaded" | "failed">("loading");
+  const loadBookmarks = () => {
+    bookmarksLoad.value = "loading";
+    bookmarks.ensureLoaded().then(
+      (loaded) => {
+        bookmarksLoad.value = loaded ? "loaded" : "failed";
+      },
+      () => {
+        bookmarksLoad.value = "failed";
+      }
+    );
+  };
+
+  // Uploaded images, customizations and bookmarks each have their own store,
+  // not what `load` reads.
   useEffect(() => {
     if (userId) {
       void gallery.syncPhotos();
       void customizations.load();
+      loadBookmarks();
     }
   }, [userId]);
 
@@ -732,6 +828,10 @@ export function YourContentPane(props: YourContentScreenProps) {
     fields.some((field) => field?.toLowerCase().includes(needle));
 
   const bookNames = state.today.bookNames.value;
+  // A bookmark is named in its own translation, as in the sidebar and on
+  // Today, rather than in the reader's like the rest of this screen: the same
+  // bookmark should read the same wherever it shows.
+  const bookmarkLocationText = useBookmarkLocationText(state);
 
   /**
    * What a reference is searchable by: the reference exactly as its own row
@@ -781,6 +881,17 @@ export function YourContentPane(props: YourContentScreenProps) {
       )
     )
     .sort(compareSaves);
+  // Most recently moved first, as in the sidebar and on Today. The chapter
+  // text is worked out once here and handed to the card, since each lookup
+  // of a translation not yet loaded also starts a request for it.
+  const visibleBookmarks = bookmarks.bookmarks.value
+    .map((bookmark) => ({
+      bookmark,
+      chapterText: bookmarkLocationText(bookmark),
+    }))
+    .filter(({ bookmark, chapterText }) =>
+      matches(bookmark.name, chapterText, bookmark.bookId)
+    );
   const visiblePlaylists = playlists.userPlaylists.value.filter((p) =>
     matches(p.title, p.description)
   );
@@ -794,7 +905,9 @@ export function YourContentPane(props: YourContentScreenProps) {
     : [];
   // An image has no words to search, so any search hides them all.
   const visibleImages =
-    userId && needle.length === 0 ? gallery.photos.value : [];
+    userId && needle.length === 0
+      ? [...gallery.photos.value].sort((a, b) => b.createdAtMs - a.createdAtMs)
+      : [];
 
   const showing = (section: ContentFilter) =>
     filter === "all" || filter === section;
@@ -818,6 +931,8 @@ export function YourContentPane(props: YourContentScreenProps) {
         return t("highlights", { defaultValue: "Highlights" });
       case "saves":
         return t("saves", { defaultValue: "Saves" });
+      case "bookmarks":
+        return t("bookmarks", { defaultValue: "Bookmarks" });
       case "playlists":
         return t("playlists", { defaultValue: "Playlists" });
       case "reading-plans":
@@ -833,6 +948,7 @@ export function YourContentPane(props: YourContentScreenProps) {
     annotations: visibleAnnotations.length,
     highlights: visibleHighlights.length,
     saves: visibleSaves.length,
+    bookmarks: visibleBookmarks.length,
     playlists: visiblePlaylists.length,
     "reading-plans": visibleReadingPlans.length,
     branding: visibleCustomizations.length,
@@ -847,9 +963,20 @@ export function YourContentPane(props: YourContentScreenProps) {
   const stillSearching =
     needle.length > 0 && yourContent.isReadingHighlightVerseText.value;
 
+  // Only the Bookmarks chip waits on bookmarks: under "all" they are one
+  // section among many, and simply appear when they arrive.
+  const onBookmarksChip = filter === "bookmarks" && !!userId;
+  const bookmarksPending = onBookmarksChip && bookmarksLoad.value === "loading";
+  const bookmarksFailed =
+    onBookmarksChip &&
+    bookmarksLoad.value === "failed" &&
+    sectionCounts.bookmarks === 0;
+
   const nothingToShow =
     status === "ready" &&
     !stillSearching &&
+    !bookmarksPending &&
+    !bookmarksFailed &&
     (filter === "all"
       ? Object.values(sectionCounts).every((count) => count === 0)
       : sectionCounts[filter] === 0);
@@ -873,6 +1000,11 @@ export function YourContentPane(props: YourContentScreenProps) {
         return t("your-content-empty-saves", {
           defaultValue: "Passages you save will show up here.",
         });
+      case "bookmarks":
+        return t("bookmarks-empty", {
+          defaultValue:
+            "No bookmarks yet. Use the bookmark button above a chapter to place one.",
+        });
       case "playlists":
         return t("your-content-empty-playlists", {
           defaultValue: "Playlists you create will show up here.",
@@ -893,7 +1025,7 @@ export function YourContentPane(props: YourContentScreenProps) {
       case "all":
         return t("your-content-empty", {
           defaultValue:
-            "Notes, highlights, saves, playlists and reading plans you make will show up here.",
+            "Notes, highlights, bookmarks, saves, playlists and reading plans you make will show up here.",
         });
     }
   };
@@ -960,7 +1092,7 @@ export function YourContentPane(props: YourContentScreenProps) {
           </div>
         </div>
 
-        {status === "loading" || stillSearching ? (
+        {status === "loading" || stillSearching || bookmarksPending ? (
           <p className="sb-content-status sb-content-status--loading">
             <Spinner />
             {t("loading-your-content", {
@@ -980,6 +1112,23 @@ export function YourContentPane(props: YourContentScreenProps) {
               type="button"
               className="sb-content-retry"
               onClick={() => void yourContent.load({ force: true })}
+            >
+              {t("try-again", { defaultValue: "Try again" })}
+            </button>
+          </div>
+        ) : null}
+
+        {bookmarksFailed ? (
+          <div className="sb-content-status">
+            <p>
+              {t("bookmarks-load-failed", {
+                defaultValue: "Couldn't load your bookmarks. Please try again.",
+              })}
+            </p>
+            <button
+              type="button"
+              className="sb-content-retry"
+              onClick={loadBookmarks}
             >
               {t("try-again", { defaultValue: "Try again" })}
             </button>
@@ -1059,6 +1208,28 @@ export function YourContentPane(props: YourContentScreenProps) {
                     key={`${stored.translationId}/${stored.bookId}/${stored.chapterNumber}/${index}`}
                     state={state}
                     stored={stored}
+                    onOpenPassage={onOpenPassage}
+                  />
+                ))}
+            </div>
+          </section>
+        ) : null}
+
+        {showing("bookmarks") && visibleBookmarks.length > 0 ? (
+          <section className="sb-content-section">
+            <SectionHeader
+              title={t("bookmarks", { defaultValue: "Bookmarks" })}
+              onSeeAll={seeAll("bookmarks", visibleBookmarks)}
+            />
+            <div className="sb-content-bookmarks">
+              {visibleBookmarks
+                .slice(0, limit(visibleBookmarks))
+                .map(({ bookmark, chapterText }) => (
+                  <BookmarkRow
+                    key={bookmark.id}
+                    state={state}
+                    bookmark={bookmark}
+                    chapterText={chapterText}
                     onOpenPassage={onOpenPassage}
                   />
                 ))}

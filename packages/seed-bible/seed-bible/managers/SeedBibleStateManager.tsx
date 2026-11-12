@@ -15,8 +15,10 @@ import { buildReadingPath, parseReadingPath } from "../managers/ReadingUrlPath";
 import {
   TODAY_PANE_ID,
   createTodayManager,
+  getTodayPageRedirect,
+  isTodayPagePath,
   openTodayPassage,
-  todayWillAutoOpenForUrl,
+  shouldRedirectToTodayPage,
   type TodayManager,
   type TodayPassageTarget,
 } from "../managers/TodayManager";
@@ -30,6 +32,9 @@ import {
   SharedPageNotFoundModalContent,
   type SharedPageModalAction,
 } from "../components/SharedPageModal/SharedPageModal";
+import { PlaylistPagePane } from "../components/PlaylistPagePane/PlaylistPagePane";
+import { PlaylistFinishedPane } from "../components/PlaylistFinishedPane/PlaylistFinishedPane";
+import { openDeletePlaylistConfirm } from "../components/Discover/PlaylistRow";
 import {
   buildSharedPagePath,
   parseSharedPagePath,
@@ -101,6 +106,7 @@ import {
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import {
   createBibleToolsManager,
+  openShareModal,
   openReadingPlansPane,
   READING_PLANS_PANE_ID,
 } from "../managers/BibleToolsManager";
@@ -153,6 +159,7 @@ import {
   computed,
   effect,
   signal,
+  untracked,
   type ReadonlySignal,
 } from "@preact/signals";
 import {
@@ -226,6 +233,8 @@ import { type AppConfig } from "../app/appConfig";
 import {
   createI18nManager,
   getBrandedAppText,
+  getInitialLanguage,
+  getUrlLanguage,
   type I18nManager,
 } from "../i18n";
 import {
@@ -266,6 +275,9 @@ type SearchManager = ReturnType<typeof createSearchManager>;
  */
 export const MOBILE_BREAKPOINT = 480;
 
+/** Widest viewport (CSS px) the playlist editor uses its phone layout on. */
+export const PLAYLIST_EDITOR_COMPACT_BREAKPOINT = 768;
+
 /**
  * Upper bound of the "compact desktop" band. For viewports above
  * {@link MOBILE_BREAKPOINT} but at or below this width the screen is too narrow
@@ -287,6 +299,11 @@ const APP_META_DESCRIPTION =
 /** Pane id for the "/{lang}/about" page's fullscreen pane (see `isAboutPage`). */
 export const ABOUT_PANE_ID = "about-page-pane";
 export const SHARED_PAGE_MODAL_ID = "shared-page";
+/** The fullscreen pane a shared playlist link opens on. */
+export const PLAYLIST_PAGE_PANE_ID = "playlist-page-pane";
+
+/** The fullscreen page a playlist ends on. */
+export const PLAYLIST_FINISHED_PANE_ID = "playlist-finished-pane";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -375,6 +392,13 @@ export interface AppState {
    * header, and floating chapter nav — not pane placement or the sidebar.
    */
   isCompactReader: ReadonlySignal<boolean>;
+  /**
+   * Whether the playlist editor uses its phone layout (its list of steps in
+   * the reader's place, no side pane): wherever the reader is compact, and
+   * on screens up to {@link PLAYLIST_EDITOR_COMPACT_BREAKPOINT} wide, too
+   * narrow for the side pane beside a step.
+   */
+  isCompactPlaylistEditor: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
   isMobileLandscape: ReadonlySignal<boolean>;
   /**
@@ -747,6 +771,7 @@ import {
   DiscoverPane,
   DISCOVER_PANE_ID,
 } from "../components/Discover/DiscoverPane";
+import { PlaylistDraftChoice } from "../components/PlaylistEditor/PlaylistDraftChoice";
 import {
   AIBibleVerseRefSchema,
   convertToPlaylistItem,
@@ -848,6 +873,29 @@ export function createSeedBibleState(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const features = createFeaturesManager((globalThis as any).posthog ?? null);
+
+  // The server answers a URL that should show Today with a redirect to the
+  // Today page, but a page the service worker served from its cache never
+  // reached the server, so the same redirect is applied here, before anything
+  // reads the URL.
+  if (
+    !import.meta.env.SSR &&
+    options.initialHref === undefined &&
+    typeof window !== "undefined"
+  ) {
+    const basePath = options.config?.basePath ?? "";
+    const url = new URL(window.location.href);
+    const todayPage = getTodayPageRedirect(
+      url,
+      basePath,
+      getUrlLanguage(url, basePath) ??
+        getInitialLanguage(options.config?.acceptedLanguages ?? [])
+    );
+    if (todayPage) {
+      window.history.replaceState(window.history.state, "", todayPage);
+    }
+  }
+
   const navigation = createNavigationManager({
     initialHref: options.initialHref,
     basePath: options.config?.basePath,
@@ -1189,8 +1237,7 @@ export function createSeedBibleState(
     extensionsOpen.value ? extensionsPageEntry.value : null
   );
   const openExtensions = (extensionId: string | null = null) => {
-    // Today's URL binding would otherwise turn it straight back on over this
-    // page; see `openProfile` below.
+    // Leave the Today page first; see `openProfile` below.
     if (today.isOpen.peek()) {
       today.close();
     }
@@ -1233,8 +1280,11 @@ export function createSeedBibleState(
     if (!profileOpen.value || options?.fromToday !== undefined) {
       returnToToday = options?.fromToday ?? today.isOpen.peek();
     }
+    // Leave the Today page before the profile flag flips, so `?profile=open`
+    // lands on the reader's URL. Left to the displaced-pane effect instead,
+    // it would be written onto "/{lang}/today" first, and Back would then
+    // return to a URL that opens Today and the profile together.
     if (today.isOpen.peek()) {
-      // Close Today so its URL binding doesn't reopen it over the Profile pane.
       today.close();
     }
     profileOpen.value = true;
@@ -1406,6 +1456,11 @@ export function createSeedBibleState(
   const isCompactReader = computed(
     () => isMobile.value || isMinimalEmbed.value
   );
+  const isCompactPlaylistEditor = computed(
+    () =>
+      isCompactReader.value ||
+      viewportWidth.value <= PLAYLIST_EDITOR_COMPACT_BREAKPOINT
+  );
 
   // Created after `isMobile` so panes can enforce a single fullscreen pane:
   // on mobile every pane is displayed fullscreen, so opening one closes the
@@ -1423,7 +1478,21 @@ export function createSeedBibleState(
     discover,
     chats,
     options.initialPlaylistPageSeed,
-    { friendReads }
+    {
+      friendReads,
+      pickChapter: (onPick, bookId) => {
+        const slot = tabsLayout.slots
+          .peek()
+          .find(
+            (candidate) => candidate.id === tabsLayout.selectedSlotId.peek()
+          );
+        if (!slot) {
+          return;
+        }
+        selector.selectingTranslation.value = false;
+        void selector.setOpen(true, slot, { onChapterPick: onPick, bookId });
+      },
+    }
   );
   // True only while `hydrateFromStorage` below is applying the saved tab state.
   // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits
@@ -1437,7 +1506,7 @@ export function createSeedBibleState(
   // so navigating reveals the reader (every navigation path writes this
   // position into the path — see `commitSelectedTabToUrl` in TabsManager).
   // The first location only sets a baseline, so load-time init doesn't close a
-  // pane auto-opened for the same load (e.g. Today via `?today=open`).
+  // pane auto-opened for the same load.
   //
   // `?verse` is deliberately NOT part of the location: TabsManager mirrors the
   // verse *selection* into that param, so counting it here made selecting (or
@@ -1476,30 +1545,23 @@ export function createSeedBibleState(
     if (restoringStoredState || tabs.isRestoringProfileTranslation()) {
       return;
     }
+    // A phone starts a playlist on its list of steps, which fills the screen,
+    // while the reader moves to the first step behind it. Only the playlist
+    // can move the reader then: opening a step puts the list away first.
+    if (
+      isMobile.peek() &&
+      playlists.view.peek() === "play_playlist" &&
+      playlists.playing.peek()
+    ) {
+      return;
+    }
     panes.closeFullscreenPanes();
   });
 
-  // Today opens only after mount (`hydrateAutoOpen`, so the client's first
-  // render matches the server's), but the chapter can already be loaded from
-  // the server's API snapshot and the tutorial offer armed before then. For
-  // that gap the reader would read as visible with Welcome about to cover it,
-  // so until Today's pane has opened once on a load where it will auto-open,
-  // the reader doesn't count as visible.
-  const todayWillAutoOpen = todayWillAutoOpenForUrl(
-    navigation.initialUrl,
-    navigation.basePath
-  );
-  const todayHasOpened = signal(false);
-  effect(() => {
-    if (panes.panes.value.some((pane) => pane.id === TODAY_PANE_ID)) {
-      todayHasOpened.value = true;
-    }
-  });
-
-  // The reader is visible when a chapter is loaded, no fullscreen pane covers
-  // it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on mobile
-  // any open pane covers the reader), and Today isn't about to auto-open over
-  // it. `todayCoversReader.test.ts` guards both orderings.
+  // The reader is visible when a chapter is loaded and no fullscreen pane
+  // covers it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on
+  // mobile any open pane covers the reader). `todayCoversReader.test.ts`
+  // guards that Today counts.
   const readerVisible = computed<boolean>(() => {
     const chapterLoaded =
       selectedTab.value?.readingState.chapterData.value != null;
@@ -1509,13 +1571,7 @@ export function createSeedBibleState(
     const coveredByPane = panes.panes.value.some(
       (pane) => pane.placement === "fullscreen" || isMobile.value
     );
-    if (coveredByPane) {
-      return false;
-    }
-    if (todayWillAutoOpen && !todayHasOpened.value) {
-      return false;
-    }
-    return true;
+    return !coveredByPane;
   });
 
   // Dialogs that cover the reader. Pop-ups opened through `modals` are only
@@ -1956,6 +2012,32 @@ export function createSeedBibleState(
       )?.page === "about"
   );
 
+  /** Whether the current URL is the Today page, "/{lang}/today". */
+  const isTodayPage = computed(() =>
+    isTodayPagePath(navigation.currentUrl.value.pathname, navigation.basePath)
+  );
+
+  // A static page names the UI language in its path ("/es/today"), so a
+  // language change made on one moves the page to the new language's path.
+  // Otherwise a reload would bring the old language back. The reader keeps
+  // its own paths in step the same way (see `commitSelectedTabToUrl`).
+  if (!import.meta.env.SSR) {
+    effect(() => {
+      const language = i18n.language.value;
+      const staticPage = parseStaticPagePath(
+        navigation.currentUrl.peek().pathname,
+        navigation.basePath
+      );
+      if (staticPage && staticPage.language !== language) {
+        navigation.updatePathAndQueryParams(
+          buildStaticPagePath({ language, page: staticPage.page }),
+          {},
+          true
+        );
+      }
+    });
+  }
+
   /**
    * One-time correction of every `localStorage`-derived value that feeds the
    * first render. See `AppState.hydrateFromStorage`.
@@ -2166,6 +2248,23 @@ export function createSeedBibleState(
         return `${t("about-title", { defaultValue: "About Seed Bible" })} | ${seedBibleTitle}`;
       }
 
+      // Server only: in the browser the friend link prompt is a one-off over
+      // the page, so the tab is titled after the page from the start. Ahead
+      // of Today because a friend link lands there (`/?addFriend=` redirects
+      // to the Today page).
+      const person = friendLinkPerson.value;
+      if (import.meta.env.SSR && person) {
+        return t("friend-link-title", {
+          name: person.name,
+          brand: seedBibleTitle,
+          defaultValue: "Add {{name}} as a friend on {{brand}}",
+        });
+      }
+
+      if (isTodayPage.value) {
+        return `${t("today", { defaultValue: "Today" })} | ${seedBibleTitle}`;
+      }
+
       // Only on the shared page itself: while a playlist plays at its own
       // path, the tab is titled after the chapter like any other reading.
       if (sharedPageTitle.value && sharedPageStep.value == null) {
@@ -2178,17 +2277,6 @@ export function createSeedBibleState(
 
       if (sharedPageLoadFailedTitle.value) {
         return `${sharedPageLoadFailedTitle.value} | ${seedBibleTitle}`;
-      }
-
-      // Server only: in the browser the friend link prompt is a one-off over
-      // the reader, so the tab follows the chapter from the start.
-      const person = friendLinkPerson.value;
-      if (import.meta.env.SSR && person) {
-        return t("friend-link-title", {
-          name: person.name,
-          brand: seedBibleTitle,
-          defaultValue: "Add {{name}} as a friend on {{brand}}",
-        });
       }
 
       if (!selectedTab.value) {
@@ -2205,7 +2293,20 @@ export function createSeedBibleState(
     void i18n.language.value;
     const { t } = i18n;
 
-    if (isAboutPage.value) {
+    // Ahead of Today, which is where a friend link lands.
+    const person = friendLinkPerson.value;
+    if (person) {
+      return truncateForMeta(
+        t("friend-link-meta-description", {
+          name: person.name,
+          brand: siteName.value,
+          defaultValue: "{{name}} wants to be your friend on {{brand}}",
+        }),
+        META_DESCRIPTION_MAX_GRAPHEMES
+      );
+    }
+
+    if (isAboutPage.value || isTodayPage.value) {
       return truncateForMeta(
         t("about-meta-description", {
           defaultValue:
@@ -2226,18 +2327,6 @@ export function createSeedBibleState(
             : t("reading-plan-page-meta-description", {
                 defaultValue: "A Bible reading plan on Seed Bible.",
               })),
-        META_DESCRIPTION_MAX_GRAPHEMES
-      );
-    }
-
-    const person = friendLinkPerson.value;
-    if (person) {
-      return truncateForMeta(
-        t("friend-link-meta-description", {
-          name: person.name,
-          brand: siteName.value,
-          defaultValue: "{{name}} wants to be your friend on {{brand}}",
-        }),
         META_DESCRIPTION_MAX_GRAPHEMES
       );
     }
@@ -2359,16 +2448,21 @@ export function createSeedBibleState(
       return t("about-title", { defaultValue: "About Seed Bible" });
     }
 
-    if (sharedPageTitle.value) {
-      return sharedPageTitle.value;
-    }
-
+    // Ahead of Today, which is where a friend link lands.
     const person = friendLinkPerson.value;
     if (person) {
       return t("friend-link-social-title", {
         name: person.name,
         defaultValue: "Add {{name}} as a friend",
       });
+    }
+
+    if (isTodayPage.value) {
+      return t("today", { defaultValue: "Today" });
+    }
+
+    if (sharedPageTitle.value) {
+      return sharedPageTitle.value;
     }
 
     const chapter = selectedTab.value?.readingState.chapterData.value;
@@ -2385,14 +2479,21 @@ export function createSeedBibleState(
     });
   });
 
-  /** The friend link's own address, when the page previews as one. */
+  /**
+   * The friend link's address, when the page previews as one: the Today page
+   * it lands on, not the shared `/?addFriend=` form, which redirects there
+   * (see `canonicalUrl` on why a canonical mustn't name a redirect).
+   */
   const friendLinkPageUrl = computed<string | null>(() => {
     const userId = friendLinkPreview.result.value?.userId;
     if (!friendLinkPerson.value || !userId) {
       return null;
     }
     const query = new URLSearchParams({ [ADD_FRIEND_PARAM]: userId });
-    return `${navigation.basePath || "/"}?${query}`;
+    return `${navigation.basePath}${buildStaticPagePath({
+      language: i18n.language.value,
+      page: "today",
+    })}?${query}`;
   });
 
   /**
@@ -2422,13 +2523,17 @@ export function createSeedBibleState(
    * would point every canonical at a URL that redirects.
    */
   const canonicalUrl = computed(() => {
-    if (isAboutPage.value) {
+    if (friendLinkPageUrl.value) {
+      return friendLinkPageUrl.value;
+    }
+
+    if (isAboutPage.value || isTodayPage.value) {
       // Uses the *resolved* i18n language, not the raw URL segment, so a
       // garbage/unsupported language in the URL still canonicalizes to a
       // real page instead of echoing back something that doesn't exist.
       return `${navigation.basePath}${buildStaticPagePath({
         language: i18n.language.value,
-        page: "about",
+        page: isAboutPage.value ? "about" : "today",
       })}`;
     }
 
@@ -2440,10 +2545,6 @@ export function createSeedBibleState(
         locator: page.locator,
         title: page.title,
       })}`;
-    }
-
-    if (friendLinkPageUrl.value) {
-      return friendLinkPageUrl.value;
     }
 
     const readingState = selectedTab.value?.readingState;
@@ -3191,8 +3292,10 @@ export function createSeedBibleState(
 
   const handleCreateSharedSession = async () => {
     closeSidebarAndSettings();
-    // Start the session where the user is reading, not at the default book.
+    // Start the session where the user is reading, not at the default book,
+    // and carry on with the playlist they're playing, from the same step.
     const activeReadingState = selectedTab.value?.readingState ?? null;
+    const carriedPlayback = playlists.playbackToCarry();
     const session = await sessions.createSession(
       activeReadingState
         ? getSessionStartPosition(activeReadingState)
@@ -3209,6 +3312,9 @@ export function createSeedBibleState(
     void invitations.publishSession(session);
     const tab = tabs.addTab(session);
     tabsLayout.setSelectedSlotTab(tab.id);
+    if (carriedPlayback) {
+      playlists.carryPlaybackToActiveTab(carriedPlayback);
+    }
     return session;
   };
 
@@ -3717,6 +3823,8 @@ export function createSeedBibleState(
     bibleData: data,
     annotations,
     defaultLanguage: i18n.defaultLanguage,
+    language: i18n.language,
+    leaveTodayPage: () => tabs.leaveStaticPage({ push: true }),
     currentReadingState,
   });
 
@@ -3822,6 +3930,7 @@ export function createSeedBibleState(
       isMobile,
       isMinimalEmbed,
       isCompactReader,
+      isCompactPlaylistEditor,
       isMobileLandscape,
       isCompactDesktop,
       currentReadingState,
@@ -3859,6 +3968,34 @@ export function createSeedBibleState(
   // which sub-view shows inside it; DiscoverPane routes discover/create/play
   // internally off the same signal.
 
+  // Going to edit a playlist with unsaved edits kept from before asks first
+  // whether to carry on from them (see `playlists.editorDraftChoice`).
+  const PLAYLIST_DRAFT_CHOICE_MODAL_ID = "playlist-draft-choice";
+  effect(() => {
+    const choice = playlists.editorDraftChoice.value;
+    if (!choice) {
+      modals.closeModal(PLAYLIST_DRAFT_CHOICE_MODAL_ID);
+      return;
+    }
+    untracked(() =>
+      modals.openModal({
+        id: PLAYLIST_DRAFT_CHOICE_MODAL_ID,
+        title: {
+          key: "playlist-editor-draft-found",
+          defaultValue: "Continue your draft?",
+        },
+        content: () => (
+          <PlaylistDraftChoice
+            editedAtMs={choice.editedAtMs}
+            onContinue={playlists.continueEditorDraft}
+            onDiscard={playlists.discardEditorDraft}
+          />
+        ),
+        onDismiss: playlists.dismissEditorDraftChoice,
+      })
+    );
+  });
+
   // view -> pane: open (or refresh, by reusing the id) while a view is set,
   // close when it clears. The pane commands read pane state via peek()
   // internally (see PanesManager), so this effect does NOT subscribe to
@@ -3866,12 +4003,18 @@ export function createSeedBibleState(
   // this effect and re-open the pane mid-update, which would trip preact's
   // "Cycle detected". The pane -> view effect below clears `view` on close.
   effect(() => {
-    if (playlists.view.value) {
+    const view = playlists.view.value;
+    if (
+      view &&
+      !(view === "create_playlist" && isCompactPlaylistEditor.value)
+    ) {
+      const editingPlaylist = view === "create_playlist";
       panes.openPane({
         id: DISCOVER_PANE_ID,
         placement: "side",
         // Never shown: each Discover view renders its own header.
         title: "Discover",
+        shellClassName: editingPlaylist ? "sb-pe-pane-shell" : undefined,
         onClose: (reason) => {
           if (reason !== "user") {
             return;
@@ -3893,6 +4036,13 @@ export function createSeedBibleState(
         ),
         showHeader: false,
       });
+    } else if (view === "create_playlist") {
+      // On a phone (or a narrow tablet) the editor takes over the reader, with
+      // its steps in its place, rather than filling the screen as a pane — so every pane is
+      // closed, or one already on screen (Today, say) would cover the editor.
+      for (const pane of panes.panes.peek()) {
+        panes.closePane(pane.id, "displaced");
+      }
     } else {
       panes.closePane(DISCOVER_PANE_ID); // no-op when already closed
     }
@@ -3906,15 +4056,19 @@ export function createSeedBibleState(
     const paneOpen = panes.panes.value.some(
       (pane) => pane.id === DISCOVER_PANE_ID
     );
-    if (!paneOpen && playlists.view.peek()) {
+    const view = playlists.view.peek();
+    // On a phone (or a narrow tablet) the editor runs without the pane.
+    const editingOnPhone =
+      view === "create_playlist" && isCompactPlaylistEditor.peek();
+    if (!paneOpen && view && !editingOnPhone) {
       playlists.view.value = null;
     }
   });
 
-  // Today is the app's fullscreen "home" pane, mirrored from `today.isOpen`
-  // (which is itself bound to `?today=`). Same reconciling-effect pair as
-  // Discover above, and here too the pane -> state direction must `peek()` so
-  // closing the pane can't retrigger the opening effect.
+  // Today is the app's fullscreen "home" pane, shown while the URL is the
+  // Today page ("/{lang}/today" — see `today.isOpen`). Same reconciling-effect
+  // pair as Discover above, and here too the pane -> state direction must
+  // `peek()` so closing the pane can't retrigger the opening effect.
   //
   // The thunks are hoisted out of the effect so their identity is stable —
   // rebuilding them on every reopen would remount the whole Today tree.
@@ -3951,8 +4105,8 @@ export function createSeedBibleState(
         placement: "fullscreen",
         title: renderTodayPaneTitle,
         component: renderTodayPane,
-        // Today's own close button (TodayCloseButton) stands in for the
-        // header's.
+        // Today's own close button (in its Header) stands in for the
+        // pane header's.
         showHeader: false,
       });
     } else {
@@ -4127,19 +4281,23 @@ export function createSeedBibleState(
     closeProfile();
     openTodayPassage(state, today, target);
   };
-  const playPlaylistFromContent = (playlist: Playlist) => {
-    closeYourContent();
-    closeProfile();
-    playlists.startPlaying(playlist, 0);
-  };
-  const editPlaylistFromContent = (playlist: Playlist) => {
-    closeYourContent();
-    closeProfile();
-    // `editPlaylist` only sets the Discover pane's view, and that pane docks
-    // beside the reader — so the fullscreen screens above it have to close
-    // first, or the editor opens behind them.
-    playlists.editPlaylist(playlist, { onBack: openYourContent });
-  };
+  // One history entry for closing these screens and opening the playlist, so
+  // Back returns straight to them.
+  const playPlaylistFromContent = (playlist: Playlist) =>
+    navigation.batchWrites(() => {
+      closeYourContent();
+      closeProfile();
+      playlists.openPlaylistPage(playlist);
+    });
+  const editPlaylistFromContent = (playlist: Playlist) =>
+    navigation.batchWrites(() => {
+      closeYourContent();
+      closeProfile();
+      // `editPlaylist` only sets the Discover pane's view, and that pane docks
+      // beside the reader — so the fullscreen screens above it have to close
+      // first, or the editor opens behind them.
+      playlists.editPlaylist(playlist, { onBack: openYourContent });
+    });
   const editAnnotationFromContent = (annotation: Annotation) => {
     closeYourContent();
     closeProfile();
@@ -4358,9 +4516,8 @@ export function createSeedBibleState(
     }
   });
 
-  // Unlike Today's `isOpen` (a plain writable boolean), `isAboutPage` is a
-  // read-only computed derived from the URL — closing the pane can't just
-  // flip a signal back. Instead, leave "/about" for the current tab's
+  // `isAboutPage` is a read-only computed derived from the URL — closing the
+  // pane can't just flip a signal back. Instead, leave "/about" for the current tab's
   // reading position, mirroring how a genuine tab-focus change already does
   // (see TabsManager.leaveStaticPage). This fires whether the pane was
   // closed via its header's close button, `closeFullscreenPanes()` (e.g.
@@ -4412,7 +4569,107 @@ export function createSeedBibleState(
     }
   }
 
-  // A shared playlist or reading plan link opens on a modal describing it.
+  const renderPlaylistPagePane = () => {
+    const page = playlists.playlistPage.value;
+    if (!page) {
+      return null;
+    }
+    const books =
+      selectedTab.value?.readingState.translationBooks.value?.books ?? [];
+    const playlist = page.item;
+    // Back where it was opened from in the app (My content, say), whose
+    // address it replaced; else closing it leaves for the reader.
+    const leave = () => {
+      if (!playlists.backFromPlaylistPage()) {
+        panes.closePane(PLAYLIST_PAGE_PANE_ID, "user");
+      }
+    };
+    const isOwner =
+      !!login.userId.value && playlist.authorUserId === login.userId.value;
+    return (
+      <PlaylistPagePane
+        playlist={playlist}
+        authorName={page.authorName}
+        resolveBookName={(bookId) => {
+          const book = books.find((b) => b.id === bookId);
+          return book?.name ?? book?.commonName ?? bookId;
+        }}
+        onStart={startSharedPage}
+        onBack={leave}
+        onShare={() => sharePlaylist(playlist)}
+        {...(isOwner
+          ? {
+              // As Start Reading does, so Back from the editor returns here.
+              onEdit: () => {
+                tabs.leaveStaticPage({ push: true });
+                playlists.editPlaylist(playlist);
+              },
+              onDelete: () =>
+                openDeletePlaylistConfirm(
+                  modals,
+                  playlists,
+                  playlist,
+                  state.app.toast,
+                  leave
+                ),
+            }
+          : {})}
+      />
+    );
+  };
+
+  const sharePlaylist = (
+    playlist: Parameters<typeof playlists.getPlaylistUrl>[0]
+  ) =>
+    openShareModal(
+      {
+        modals,
+        app: state.app,
+        toast: state.app.toast,
+        sharedSession: selectedTab.peek()?.sharedSession ?? null,
+        embedThemes: state.theme.themes,
+        customizationLocator: state.customizations.activeCustomizationLocator,
+      },
+      new URL(playlists.getPlaylistUrl(playlist))
+    );
+
+  const renderPlaylistFinishedPane = () => {
+    const playlist = playlists.finishedPlaylist.value;
+    if (!playlist) {
+      return null;
+    }
+    return (
+      <PlaylistFinishedPane
+        playlist={playlist}
+        authorName={playlists.playingAuthorName.value}
+        onDone={() => playlists.closeFinishedPlaylist()}
+        onShare={() => sharePlaylist(playlist)}
+      />
+    );
+  };
+
+  // A finished playlist ends on its own fullscreen page. Done (or its back
+  // button) leaves the playlist; anything else taking the page away, such as
+  // another pane on a phone, only puts it away.
+  effect(() => {
+    if (playlists.finishedPlaylist.value) {
+      panes.openPane({
+        id: PLAYLIST_FINISHED_PANE_ID,
+        placement: "fullscreen",
+        title: i18n.t("playlist-finished", {
+          defaultValue: "Playlist finished",
+        }),
+        showHeader: false,
+        component: renderPlaylistFinishedPane,
+        onClose: () => playlists.dismissFinishedPlaylist(),
+      });
+    } else {
+      panes.closePane(PLAYLIST_FINISHED_PANE_ID);
+    }
+  });
+
+  // A shared playlist link opens on a fullscreen page describing it, and a
+  // reading plan link on a modal.
   // Start begins it; closing it any other way (Close, the header's X, the
   // backdrop) leaves for the home screen. A link to one that doesn't exist
   // opens a "not found" modal in the same place, and one that failed to load
@@ -4492,107 +4749,109 @@ export function createSeedBibleState(
       ) {
         modals.closeModal(SHARED_PAGE_MODAL_ID);
       }
+      panes.closePane(PLAYLIST_PAGE_PANE_ID); // no-op when already closed
       return;
     }
     const { t } = i18n;
     const playlistPage = playlists.playlistPage.value;
+    // A playlist opens on its own fullscreen page rather than the modal.
+    if (playlistPage) {
+      if (
+        modals.modals.peek().some((modal) => modal.id === SHARED_PAGE_MODAL_ID)
+      ) {
+        modals.closeModal(SHARED_PAGE_MODAL_ID);
+      }
+      panes.openPane({
+        id: PLAYLIST_PAGE_PANE_ID,
+        placement: "fullscreen",
+        title: name,
+        showHeader: false,
+        component: renderPlaylistPagePane,
+      });
+      return;
+    }
     const planPage = readingPlans.readingPlanPage.value;
     let lengthLabel: string;
     let status: string | null = null;
     let actions: SharedPageModalAction[];
-    if (playlistPage) {
-      lengthLabel = t("playlist-page-item-count", {
-        count: playlistPage.item.items.length,
-        defaultValue: "{{count}} items",
+    const plan = planPage?.item;
+    const sessionCount = t("reading-plan-session-count-sessions", {
+      count: plan?.sessions.length ?? 0,
+      defaultValue: "{{count}} sessions",
+    });
+    // Estimated at the loaded translation's own chapter lengths when its
+    // catalog is there, else at a typical chapter length.
+    const books =
+      selectedTab.value?.readingState.translationBooks.value?.books ?? [];
+    const minutes = plan
+      ? averageSessionMinutes(plan, (bookId) =>
+          books.find((book) => book.id === bookId)
+        )
+      : null;
+    lengthLabel =
+      minutes != null
+        ? `${sessionCount} · ${t("reading-plan-page-minutes-per-session", {
+            count: minutes,
+            defaultValue: "About {{count}} min per session",
+          })}`
+        : sessionCount;
+
+    const startFresh = {
+      label: t("reading-plan-page-start", {
+        defaultValue: "Start Reading Plan",
+      }),
+      primary: true,
+      disabled: minutes == null,
+      onClick: startSharedPage,
+    };
+    const place = readingPlans.readingPlanPageProgress.value;
+    if (!place) {
+      actions = [startFresh];
+    } else if (place.resumeAt == null) {
+      status = t("reading-plan-page-finished", {
+        defaultValue: "You've finished this plan.",
       });
       actions = [
         {
-          label: t("playlist-page-start", { defaultValue: "Start Playlist" }),
-          primary: true,
-          disabled: playlistPage.item.items.length === 0,
-          onClick: startSharedPage,
+          ...startFresh,
+          label: t("reading-plan-page-start-over", {
+            defaultValue: "Start from beginning",
+          }),
         },
       ];
     } else {
-      const plan = planPage?.item;
-      const sessionCount = t("reading-plan-session-count-sessions", {
-        count: plan?.sessions.length ?? 0,
-        defaultValue: "{{count}} sessions",
-      });
-      // Estimated at the loaded translation's own chapter lengths when its
-      // catalog is there, else at a typical chapter length.
-      const books =
-        selectedTab.value?.readingState.translationBooks.value?.books ?? [];
-      const minutes = plan
-        ? averageSessionMinutes(plan, (bookId) =>
-            books.find((book) => book.id === bookId)
-          )
-        : null;
-      lengthLabel =
-        minutes != null
-          ? `${sessionCount} · ${t("reading-plan-page-minutes-per-session", {
-              count: minutes,
-              defaultValue: "About {{count}} min per session",
-            })}`
-          : sessionCount;
-
-      const startFresh = {
-        label: t("reading-plan-page-start", {
-          defaultValue: "Start Reading Plan",
-        }),
-        primary: true,
-        disabled: minutes == null,
-        onClick: startSharedPage,
-      };
-      const place = readingPlans.readingPlanPageProgress.value;
-      if (!place) {
-        actions = [startFresh];
-      } else if (place.resumeAt == null) {
-        status = t("reading-plan-page-finished", {
-          defaultValue: "You've finished this plan.",
-        });
-        actions = [
-          {
-            ...startFresh,
-            label: t("reading-plan-page-start-over", {
-              defaultValue: "Start from beginning",
-            }),
-          },
-        ];
-      } else {
-        const isDay = place.unit === "day";
-        status = isDay
-          ? t("reading-plan-page-on-day", {
-              day: place.resumeAt,
-              defaultValue: "You're on day {{day}}",
-            })
-          : t("reading-plan-page-on-session", {
-              session: place.resumeAt,
-              defaultValue: "You're on session {{session}}",
-            });
-        actions = [
-          {
-            ...startFresh,
-            primary: false,
-            label: t("reading-plan-page-start-over", {
-              defaultValue: "Start from beginning",
-            }),
-          },
-          {
-            label: isDay
-              ? t("reading-plan-page-resume-day", {
-                  day: place.resumeAt,
-                  defaultValue: "Resume day {{day}}",
-                })
-              : t("reading-plan-page-resume-session", {
-                  session: place.resumeAt,
-                  defaultValue: "Resume session {{session}}",
-                }),
-            primary: true,
-            onClick: resumeSharedPage,
-          },
-        ];
-      }
+      const isDay = place.unit === "day";
+      status = isDay
+        ? t("reading-plan-page-on-day", {
+            day: place.resumeAt,
+            defaultValue: "You're on day {{day}}",
+          })
+        : t("reading-plan-page-on-session", {
+            session: place.resumeAt,
+            defaultValue: "You're on session {{session}}",
+          });
+      actions = [
+        {
+          ...startFresh,
+          primary: false,
+          label: t("reading-plan-page-start-over", {
+            defaultValue: "Start from beginning",
+          }),
+        },
+        {
+          label: isDay
+            ? t("reading-plan-page-resume-day", {
+                day: place.resumeAt,
+                defaultValue: "Resume day {{day}}",
+              })
+            : t("reading-plan-page-resume-session", {
+                session: place.resumeAt,
+                defaultValue: "Resume session {{session}}",
+              }),
+          primary: true,
+          onClick: resumeSharedPage,
+        },
+      ];
     }
     modals.openModal({
       id: SHARED_PAGE_MODAL_ID,
@@ -4618,7 +4877,9 @@ export function createSeedBibleState(
   const closedSharedPageForHome = signal(false);
 
   // Starting leaves the shared page (a playlist for its first step's path)
-  // before the modal closes, so this only sees a close that should go home.
+  // before its pane or modal closes, so this only sees a close that should go
+  // home: the page's back button, the modal's Close, or another fullscreen
+  // pane displacing the playlist page.
   // Going home is what a fresh visit to "/"
   // would do: the reader takes the address bar back, Today opens over it
   // when a visit to "/" would open it, and a visit that began on this page
@@ -4627,9 +4888,13 @@ export function createSeedBibleState(
     const modalOpen = modals.modals.value.some(
       (modal) => modal.id === SHARED_PAGE_MODAL_ID
     );
+    const pageOpen = panes.panes.value.some(
+      (pane) => pane.id === PLAYLIST_PAGE_PANE_ID
+    );
     const onSharedPage = !!sharedPage.peek() && sharedPageStep.peek() == null;
     if (
       modalOpen ||
+      pageOpen ||
       !(
         onSharedPage ||
         sharedPageNotFoundKind.peek() ||
@@ -4641,7 +4906,7 @@ export function createSeedBibleState(
     const home = new URL(navigation.initialUrl.href);
     home.pathname = `${navigation.basePath}/`;
     tabs.leaveStaticPage();
-    if (todayWillAutoOpenForUrl(home, navigation.basePath)) {
+    if (shouldRedirectToTodayPage(home, navigation.basePath)) {
       today.open();
     }
     if (openedViaSharedPage) {
