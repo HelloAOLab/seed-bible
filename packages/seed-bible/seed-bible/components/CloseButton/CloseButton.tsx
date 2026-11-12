@@ -1,7 +1,7 @@
 import "./CloseButton.css";
 import type { JSX } from "preact";
 import { MaterialIcon } from "../icons";
-import { useI18n } from "../../i18n";
+import { useOptionalI18n } from "../../i18n";
 
 export type CloseButtonSize = "sm" | "md" | "lg";
 export type CloseButtonLook = "plain" | "tinted";
@@ -32,8 +32,10 @@ export function CloseButton({
   className,
   ...rest
 }: CloseButtonProps) {
-  const { t } = useI18n();
-  const name = label ?? t("close", { defaultValue: "Close" });
+  // Optional, so an extension rendering into its own root (no I18nProvider)
+  // still gets a working button.
+  const i18n = useOptionalI18n();
+  const name = label ?? i18n?.t("close", { defaultValue: "Close" }) ?? "Close";
   return (
     <button
       {...rest}
