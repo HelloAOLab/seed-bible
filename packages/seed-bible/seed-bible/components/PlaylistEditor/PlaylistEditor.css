@@ -12,6 +12,7 @@
   --pe-accent: #d36433;
   --pe-accent-strong: #e2673a;
   --pe-accent-text: #c9572b;
+  --pe-on-accent: #fff;
   --pe-add: #ed6535;
   --pe-danger: #c24a2a;
   --pe-surface: var(--sb-reader-background, #fff);
@@ -483,8 +484,12 @@
 }
 
 .sb-pe-add-option-icon--scripture {
-  background: color-mix(in srgb, #e2673a 20%, var(--pe-surface));
-  color: #c9572b;
+  background: color-mix(
+    in srgb,
+    var(--pe-accent-strong) 20%,
+    var(--pe-surface)
+  );
+  color: var(--pe-accent-text);
 }
 .sb-pe-add-option-icon--note {
   background: color-mix(in srgb, var(--pe-text) 8%, var(--pe-surface));
@@ -919,8 +924,13 @@
 
 /* The first verse tapped, until the last one is. */
 .sb-pe-compare-verse--picked {
-  background: color-mix(in srgb, #e2673a 22%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, #e2673a 22%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--pe-accent-strong, #e2673a) 22%,
+    transparent
+  );
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--pe-accent-strong, #e2673a) 22%, transparent);
   color: var(--sb-font-color);
 }
 
@@ -1106,7 +1116,7 @@
   padding: 0 12px;
   border-radius: 8px;
   background: var(--pe-accent-strong);
-  color: #fff;
+  color: var(--pe-on-accent);
   font-size: 13px;
 }
 
@@ -1254,7 +1264,7 @@
   padding: 11px 18px;
   border-radius: 10px;
   background: var(--pe-accent-strong);
-  color: #fff;
+  color: var(--pe-on-accent);
   font-family: var(--pe-font-ui);
   font-weight: 500;
   font-size: 13px;
