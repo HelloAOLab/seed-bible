@@ -74,6 +74,13 @@
   }
 }
 
+/* Keyboard focus gets the hover tint on any device, alongside the browser's
+   focus ring, since the muted × alone is easy to miss. */
+.sb-close-button:focus-visible {
+  background: var(--sb-close-button-hover-background);
+  color: var(--sb-close-button-color);
+}
+
 .sb-close-button:disabled {
   opacity: 0.4;
   cursor: default;
