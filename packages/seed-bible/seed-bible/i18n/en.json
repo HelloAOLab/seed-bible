@@ -321,7 +321,7 @@
   "tutorial.themeBaseTitle": "Base theme",
   "tutorial.themeBaseBody": "Every theme starts from a preset. Pick one here, then fine-tune individual colors below — your edits are kept even if you switch presets later.",
   "tutorial.themeBrandTitle": "Brand colors",
-  "tutorial.themeBrandBody": "Your primary, secondary, and link colors — the colors that carry your site's identity.",
+  "tutorial.themeBrandBody": "Your primary, secondary, and link colors — the colors that carry your site's identity — and the red used for delete buttons.",
   "tutorial.themeSurfacesTitle": "Surfaces",
   "tutorial.themeSurfacesBody": "Backgrounds for the app, reader, sidebar, and toolbar.",
   "tutorial.themeTextTitle": "Text colors",

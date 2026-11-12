@@ -741,10 +741,10 @@ button.sb-cz-logo:disabled {
    look is see-through) with a hairline ring. Two classes, to outrank the
    CloseButton's own custom properties. */
 .sb-close-button.sb-cz-floating-preview-close {
-  --sb-close-button-background: var(--sb-reader-background);
-  --sb-close-button-hover-background: color-mix(
+  --sb-icon-button-background: var(--sb-reader-background);
+  --sb-icon-button-hover-background: color-mix(
     in srgb,
-    var(--sb-close-button-color) 12%,
+    var(--sb-icon-button-color) 12%,
     var(--sb-reader-background)
   );
 
@@ -753,7 +753,7 @@ button.sb-cz-logo:disabled {
   inset-inline-end: -0.625rem;
   z-index: 1;
   box-shadow: 0 0 0 1px
-    color-mix(in srgb, var(--sb-close-button-color), transparent 80%);
+    color-mix(in srgb, var(--sb-icon-button-color), transparent 80%);
 }
 
 @keyframes sb-cz-floating-preview-in {

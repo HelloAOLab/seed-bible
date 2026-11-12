@@ -33,7 +33,7 @@
 /* Matches the icon size of this pane's own header button. */
 .sb-pane-header:has(.sb-references-header-button) .sb-close-button {
   /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
-  --sb-close-button-icon-size: 1.125rem;
+  --sb-icon-button-icon-size: 1.125rem;
 }
 
 /* Two classes, to outrank the app-wide `body .material-symbols-outlined`

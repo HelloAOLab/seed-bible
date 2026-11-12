@@ -1,0 +1,120 @@
+/* The shared text button. Its colors and sizes are custom properties, so a
+   surface that needs it to look different sets those on the button instead
+   of overriding the rules:
+   - `--sb-button-accent` / `--sb-button-accent-font-color`: the fill and
+     label of a primary button, the text and outline of a danger one (for a
+     pane with its own accent color).
+   - `--sb-button-color`: the label and outline of secondary and ghost
+     buttons (for a colored surface).
+   - `--sb-button-height`, `--sb-button-padding-inline`,
+     `--sb-button-font-size`: the size, when a surface needs one between the
+     steps. */
+.sb-button {
+  --sb-button-accent: var(--sb-primary-color);
+  --sb-button-accent-font-color: var(--sb-primary-font-color);
+  --sb-button-color: var(--sb-font-color);
+  --sb-button-height: 2.25rem;
+  --sb-button-padding-inline: 1rem;
+  --sb-button-font-size: var(--sb-font-size-14);
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-button-icon-size: 1.125rem;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: var(--sb-button-height);
+  padding: 0.25rem var(--sb-button-padding-inline);
+  border: 1px solid transparent;
+  border-radius: var(--sb-radius-md);
+  background: transparent;
+  color: var(--sb-button-color);
+  font: inherit;
+  font-size: var(--sb-button-font-size);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background-color var(--sb-duration-fast) ease,
+    border-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease,
+    opacity var(--sb-duration-fast) ease;
+}
+
+.sb-button-sm {
+  --sb-button-height: 2rem;
+  --sb-button-padding-inline: 0.75rem;
+  --sb-button-font-size: var(--sb-font-size-13);
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-button-icon-size: 1rem;
+}
+
+.sb-button-lg {
+  --sb-button-height: 2.75rem;
+  --sb-button-padding-inline: 1.25rem;
+  --sb-button-font-size: var(--sb-font-size-15);
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-button-icon-size: 1.25rem;
+}
+
+.sb-button-pill {
+  border-radius: var(--sb-radius-full);
+}
+
+.sb-button-danger {
+  --sb-button-accent: var(--sb-danger-color);
+  --sb-button-accent-font-color: var(--sb-danger-font-color);
+  --sb-button-color: var(--sb-danger-color);
+}
+
+.sb-button-primary {
+  background: var(--sb-button-accent);
+  color: var(--sb-button-accent-font-color);
+}
+
+.sb-button-secondary {
+  border-color: color-mix(in srgb, var(--sb-button-color), transparent 75%);
+}
+
+.sb-button-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+}
+
+/* Two classes, to outrank the app-wide icon font size. */
+.sb-button .sb-button-icon.material-symbols-outlined {
+  font-size: var(--sb-button-icon-size);
+}
+
+.sb-button-icon > svg {
+  width: var(--sb-button-icon-size);
+  height: var(--sb-button-icon-size);
+}
+
+/* Hover only where there's a pointer, so a tap on a phone doesn't leave the
+   tint stuck on. */
+@media (hover: hover) {
+  .sb-button-primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--sb-button-accent), #000 8%);
+  }
+
+  .sb-button-secondary:hover:not(:disabled),
+  .sb-button-ghost:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--sb-button-color), transparent 92%);
+  }
+}
+
+.sb-button:focus-visible {
+  outline: 2px solid var(--sb-button-accent);
+  outline-offset: 2px;
+}
+
+.sb-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.sb-button[aria-busy="true"] {
+  cursor: progress;
+}

@@ -500,6 +500,11 @@ describe("CustomizationsManager", () => {
       (p) => p.foreground === "primaryFontColor"
     );
     expect(primaryPair?.background).toBe("primaryColor");
+    expect(
+      CUSTOMIZATION_CONTRAST_PAIRS.find(
+        (p) => p.foreground === "dangerFontColor"
+      )?.background
+    ).toBe("dangerColor");
 
     // Every pair references two fields that actually exist in the
     // customization color field list — guards against a typo'd key that

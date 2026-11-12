@@ -210,7 +210,7 @@ export function buildCustomizationTutorialSteps(
       titleDefault: "Brand colors",
       bodyKey: "tutorial.themeBrandBody",
       bodyDefault:
-        "Your primary, secondary, and link colors — the colors that carry your site's identity.",
+        "Your primary, secondary, and link colors — the colors that carry your site's identity — and the red used for delete buttons.",
       placement: "right",
       onEnter: enterVariantEditor,
       onLeave: leaveVariantEditor,

@@ -78,9 +78,10 @@ describe("CloseButton", () => {
     });
 
     expect([...button().classList]).toEqual([
+      "sb-icon-button",
+      "sb-icon-button-md",
+      "sb-icon-button-plain",
       "sb-close-button",
-      "sb-close-button-md",
-      "sb-close-button-plain",
       "sb-x",
     ]);
   });
@@ -102,7 +103,7 @@ describe("CloseButton", () => {
       );
     });
 
-    expect(button().classList).toContain("sb-close-button-lg");
-    expect(button().classList).toContain("sb-close-button-tinted");
+    expect(button().classList).toContain("sb-icon-button-lg");
+    expect(button().classList).toContain("sb-icon-button-tinted");
   });
 });
