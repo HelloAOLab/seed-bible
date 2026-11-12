@@ -782,6 +782,59 @@ describe("createBibleSelectorState", () => {
     expect(readingState.chapterNumber.value).toBe(1);
   });
 
+  describe("setOpen({onChapterPick})", () => {
+    const openForPick = async () => {
+      setWebResponses(createExampleManagerResponseMap());
+      const managers = await createManagersWithSelectedSlot();
+      const selector = createSelectorState(
+        managers.dataManager,
+        managers.tabsManager,
+        managers.tabsLayoutManager
+      );
+      const onChapterPick = vi.fn();
+      await selector.setOpen(true, managers.slot, { onChapterPick });
+      return { ...managers, selector, onChapterPick };
+    };
+
+    it("opens the picked chapter, closes, and reports the pick", async () => {
+      const { selector, readingState, onChapterPick } = await openForPick();
+
+      await selector.selectChapter("EXO", 2);
+
+      expect(readingState.bookId.value).toBe("EXO");
+      expect(readingState.chapterNumber.value).toBe(2);
+      expect(selector.isOpen.value).toBe(false);
+      expect(onChapterPick).toHaveBeenCalledExactlyOnceWith("EXO", 2);
+    });
+
+    it("keeps the selector open on a translation switch, and opens the pick in that translation", async () => {
+      const { selector, readingState, onChapterPick } = await openForPick();
+      const startingTranslation = readingState.translationId.value;
+
+      await selector.selectTranslation("NIV");
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(startingTranslation).not.toBe("NIV");
+      expect(readingState.translationId.value).toBe(startingTranslation);
+      expect(onChapterPick).not.toHaveBeenCalled();
+
+      await selector.selectChapter("MAT", 1);
+
+      expect(readingState.translationId.value).toBe("NIV");
+      expect(onChapterPick).toHaveBeenCalledExactlyOnceWith("MAT", 1);
+    });
+
+    it("drops the pick when the selector closes without one", async () => {
+      const { selector, slot, onChapterPick } = await openForPick();
+
+      await selector.setOpen(false);
+      await selector.setOpen(true, slot);
+      await selector.selectChapter("EXO", 2);
+
+      expect(onChapterPick).not.toHaveBeenCalled();
+    });
+  });
+
   it("setOpen({forNewTab}) flips forceNewTab and selectChapter creates a new tab bound to the slot", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { dataManager, slot, tabsManager, tabsLayoutManager } =

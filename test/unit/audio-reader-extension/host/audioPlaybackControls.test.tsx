@@ -470,4 +470,67 @@ describe("audio-reader playback controls", () => {
       expect(controlsFor(second)?.isPlaying.value).toBe(true);
     });
   });
+
+  describe("during a playlist", () => {
+    async function playStep(verse: number) {
+      const playing = state.playlists.startPlaying(
+        {
+          id: "p",
+          title: "P",
+          description: null,
+          items: [
+            { type: "bible-verse", ref: { bookId: "GEN", chapter: 1, verse } },
+          ],
+        },
+        0,
+        { history: false, openItem: true }
+      );
+      await playing!.whenSettled();
+    }
+
+    it("plays from where the step's verse starts, counting from there, silent until it gets there", async () => {
+      await playStep(2);
+      pressPlay();
+      fire("play");
+      // Started at once, but kept quiet until the timings say where verse 2 is.
+      expect(audio.current!.muted).toBe(true);
+      const playback = state.audioPlayback.controllerFor(
+        getReadingState(state)
+      )!;
+
+      await vi.waitFor(() => expect(audio.current!.muted).toBe(false));
+      expect(audio.current!.currentTime).toBe(5);
+      reportDuration(10);
+      expect(playback.currentTime.value).toBe(0);
+      expect(playback.duration.value).toBe(5);
+
+      // The element reports arriving where it was sent, then plays on.
+      playAt(5);
+      playAt(7);
+      expect(playback.currentTime.value).toBe(2);
+      expect(getReadingState(state).readAlongVerse.value).toEqual({
+        verse: 2,
+      });
+    });
+
+    it("stops at the end of the step's verses", async () => {
+      await playStep(1);
+      pressPlay();
+      fire("play");
+      await vi.waitFor(() => expect(audio.current!.muted).toBe(false));
+      reportDuration(10);
+      const playback = state.audioPlayback.controllerFor(
+        getReadingState(state)
+      )!;
+      expect(playback.duration.value).toBe(5);
+
+      playAt(3);
+      expect(playback.isPlaying.value).toBe(true);
+      playAt(5);
+
+      expect(
+        state.audioPlayback.controllerFor(getReadingState(state))
+      ).toBeNull();
+    });
+  });
 });

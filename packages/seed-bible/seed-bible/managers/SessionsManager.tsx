@@ -11,6 +11,7 @@ import {
   type InitialBibleReadingOptions,
   type VerseDecoration,
   type VerseDecorationInput,
+  type VisibleVerseRange,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
 import type { BibleReadingExtensionManager } from "../managers/BibleReadingExtensionManager";
@@ -285,6 +286,28 @@ export interface ParticipantReadingPosition {
    */
   firstVerse?: number;
   lastVerse?: number;
+  /**
+   * What else that participant has on screen, by area (see
+   * `BibleReadingState.visibleAreas`): the first and last unit of each.
+   * Absent when there's nothing else, and in entries from older clients.
+   */
+  areas?: Record<string, { first: number; last: number }>;
+}
+
+function parseAreas(
+  value: unknown
+): Record<string, { first: number; last: number }> | null {
+  if (!value || typeof value !== "object") return null;
+  const areas: Record<string, { first: number; last: number }> = {};
+  for (const [key, range] of Object.entries(value)) {
+    if (!range || typeof range !== "object") continue;
+    const first = toPositiveIntOrNull((range as Record<string, unknown>).first);
+    const last = toPositiveIntOrNull((range as Record<string, unknown>).last);
+    if (first !== null && last !== null && last >= first) {
+      areas[key] = { first, last };
+    }
+  }
+  return Object.keys(areas).length > 0 ? areas : null;
 }
 
 function parseParticipantReadingPosition(
@@ -299,10 +322,82 @@ function parseParticipantReadingPosition(
   const lastVerse = toPositiveIntOrNull(record.lastVerse);
   // A half-written range says nothing, so both ends have to be there and in
   // order before it is reported.
+  const areas = parseAreas(record.areas);
+  const withAreas = areas ? { areas } : {};
   if (firstVerse === null || lastVerse === null || lastVerse < firstVerse) {
-    return { bookId, chapterNumber };
+    return { bookId, chapterNumber, ...withAreas };
   }
-  return { bookId, chapterNumber, firstVerse, lastVerse };
+  return { bookId, chapterNumber, firstVerse, lastVerse, ...withAreas };
+}
+
+/** The longest answer to a question step the session keeps, in characters. */
+export const MAX_QUESTION_ANSWER_LENGTH = 4000;
+
+/**
+ * One participant's answer to a playlist's question step, as kept in the
+ * session's `question_answers` map. Who wrote it is copied in when it's
+ * written, so it still reads right after they leave.
+ */
+export interface SessionQuestionAnswer {
+  /** Which question, as the caller names it (see `questionAnswerStepKey`). */
+  stepKey: string;
+  /** The author's user id, or their connection id when signed out. */
+  authorId: string;
+  text: string;
+  updatedAtMs: number;
+  name: string;
+  pictureUrl: string | null;
+  visual: ConnectionSessionUserVisual;
+}
+
+/**
+ * Names a playlist's question step for its answers: everyone in a session
+ * plays the same queue, so its place there (with the playlist, in case the
+ * session plays another) means the same question for all of them.
+ */
+export function questionAnswerStepKey(
+  playlistId: string | null | undefined,
+  index: number
+): string {
+  return `${playlistId ?? "queue"}#${index}`;
+}
+
+function parseQuestionAnswer(value: unknown): SessionQuestionAnswer | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const stepKey = toStringOrNull(record.stepKey);
+  const authorId = toStringOrNull(record.authorId);
+  const text =
+    typeof record.text === "string"
+      ? record.text.slice(0, MAX_QUESTION_ANSWER_LENGTH)
+      : null;
+  const name = toStringOrNull(record.name);
+  const visual = record.visual as Record<string, unknown> | undefined;
+  const color = toStringOrNull(visual?.color);
+  const defaultIcon = toStringOrNull(visual?.defaultIcon);
+  if (!stepKey || !authorId || !text?.trim() || !name || !color) return null;
+  if (!defaultIcon) return null;
+  const pictureUrl = toStringOrNull(record.pictureUrl);
+  return {
+    stepKey,
+    authorId,
+    text,
+    updatedAtMs:
+      typeof record.updatedAtMs === "number" ? record.updatedAtMs : 0,
+    name,
+    // Shown as an <img>, so only a web address is taken from a peer.
+    pictureUrl:
+      pictureUrl && /^https?:\/\//.test(pictureUrl) ? pictureUrl : null,
+    visual: {
+      color,
+      defaultIcon,
+      colorName: toStringOrNull(visual?.colorName) ?? "",
+    },
+  };
+}
+
+function questionAnswerKey(stepKey: string, authorId: string): string {
+  return `${stepKey}|${authorId}`;
 }
 
 /**
@@ -667,6 +762,18 @@ export interface BibleReadingSession {
   >;
 
   /**
+   * Everyone's answers to the playlist's question steps, oldest first. Kept
+   * for as long as the session is, so someone joining late sees them too.
+   */
+  questionAnswers: ReadonlySignal<readonly SessionQuestionAnswer[]>;
+
+  /**
+   * Shares this participant's answer to a question step, replacing the one
+   * they shared before. Blank text takes their answer back.
+   */
+  setQuestionAnswer: (stepKey: string, text: string) => void;
+
+  /**
    * Where the group is: the session-wide position that navigators publish
    * and everyone else follows. Null book/chapter until one has been set.
    */
@@ -853,6 +960,12 @@ async function createBibleReadingSession(
   // in for this.
   const readingPositionsMap =
     document.getMap<ParticipantReadingPosition>("reading_positions");
+  // Answers to playlist question steps, keyed by question and author. Unlike
+  // positions they outlive their author's connection, so a late joiner reads
+  // the whole discussion.
+  const questionAnswersMap =
+    document.getMap<SessionQuestionAnswer>("question_answers");
+  const questionAnswers = signal<readonly SessionQuestionAnswer[]>([]);
   // Keyed by the connection being asked, so asking someone again replaces the
   // previous request instead of piling them up.
   const comeBackRequestsMap =
@@ -1393,14 +1506,29 @@ async function createBibleReadingSession(
     const range = tabVisible.value
       ? readingState.visibleVerseRange.value
       : null;
+    const visibleAreas = tabVisible.value
+      ? readingState.visibleAreas.value
+      : new Map<string, VisibleVerseRange>();
+    const areas =
+      visibleAreas.size > 0
+        ? {
+            areas: Object.fromEntries(
+              Array.from(visibleAreas, ([key, area]) => [
+                key,
+                { first: area.first, last: area.last },
+              ])
+            ),
+          }
+        : {};
     const next: ParticipantReadingPosition = range
       ? {
           bookId,
           chapterNumber,
           firstVerse: range.first,
           lastVerse: range.last,
+          ...areas,
         }
-      : { bookId, chapterNumber };
+      : { bookId, chapterNumber, ...areas };
     const currentEntry = parseParticipantReadingPosition(
       readingPositionsMap.get(localConnectionId)
     );
@@ -1409,7 +1537,9 @@ async function createBibleReadingSession(
       currentEntry.bookId === next.bookId &&
       currentEntry.chapterNumber === next.chapterNumber &&
       currentEntry.firstVerse === next.firstVerse &&
-      currentEntry.lastVerse === next.lastVerse
+      currentEntry.lastVerse === next.lastVerse &&
+      JSON.stringify(currentEntry.areas ?? {}) ===
+        JSON.stringify(next.areas ?? {})
     ) {
       return;
     }
@@ -1435,6 +1565,7 @@ async function createBibleReadingSession(
     const chapterNumber = readingState.chapterNumber.value;
     const visible = tabVisible.value;
     void readingState.visibleVerseRange.value;
+    void readingState.visibleAreas.value;
 
     // A navigation is always chased by range changes — the old chapter's
     // verses leave the screen and the new one's are measured — so whether this
@@ -1471,6 +1602,51 @@ async function createBibleReadingSession(
       syncParticipantPositions();
     }
   );
+
+  const syncQuestionAnswers = () => {
+    const answers: SessionQuestionAnswer[] = [];
+    questionAnswersMap.forEach((value, key) => {
+      const answer = parseQuestionAnswer(value);
+      // An entry only counts under its own key, so nobody can write one in
+      // someone else's name.
+      if (
+        answer &&
+        key === questionAnswerKey(answer.stepKey, answer.authorId)
+      ) {
+        answers.push(answer);
+      }
+    });
+    answers.sort((a, b) => a.updatedAtMs - b.updatedAtMs);
+    questionAnswers.value = answers;
+  };
+  syncQuestionAnswers();
+  const questionAnswersSubscription = questionAnswersMap.changes.subscribe(
+    () => {
+      syncQuestionAnswers();
+    }
+  );
+
+  const setQuestionAnswer = (stepKey: string, text: string) => {
+    const authorId = localSessionId.peek();
+    const key = questionAnswerKey(stepKey, authorId);
+    const trimmed = text.trim();
+    if (!trimmed) {
+      questionAnswersMap.delete(key);
+      return;
+    }
+    const self = currentUser.peek();
+    const visual = self?.visual ?? getUserAnimalVisual(authorId);
+    const answer: SessionQuestionAnswer = {
+      stepKey,
+      authorId,
+      text: trimmed.slice(0, MAX_QUESTION_ANSWER_LENGTH),
+      updatedAtMs: Date.now(),
+      name: self?.profile?.name ?? `User ${authorId.slice(0, 8)}`,
+      pictureUrl: self?.profile?.pictureUrl ?? null,
+      visual,
+    };
+    questionAnswersMap.set(key, answer);
+  };
 
   const subscribeToRemoteClients = () =>
     document.remoteClients.subscribe((event) => {
@@ -1984,6 +2160,7 @@ async function createBibleReadingSession(
     extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
     readingPositionsSubscription.unsubscribe();
+    questionAnswersSubscription.unsubscribe();
     comeBackRequestsSubscription.unsubscribe();
     stopSettlingComeBackRequests();
     remoteClientsSubscription.unsubscribe();
@@ -2195,6 +2372,8 @@ async function createBibleReadingSession(
     connectedUsers,
     currentUser,
     participantPositions,
+    questionAnswers,
+    setQuestionAnswer,
     groupPosition,
     isAwayFromGroup,
     participantsAwayFromGroup,
