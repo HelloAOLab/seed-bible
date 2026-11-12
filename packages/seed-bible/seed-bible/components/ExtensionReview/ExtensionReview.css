@@ -3,15 +3,15 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.125rem 0.5625rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
+  border-radius: var(--sb-radius-full);
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
 }
 
 .sb-extension-review-badge .material-symbols-outlined {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-extension-review-badge-verified {
@@ -46,7 +46,7 @@
 
 .sb-extension-review-controls-note {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
@@ -68,11 +68,11 @@
   gap: 0.375rem;
   padding: 0.5rem 1rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   cursor: pointer;
 }
@@ -84,7 +84,7 @@
 .sb-extension-review-button-primary {
   border-color: transparent;
   background: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
-  color: #ffffff;
+  color: var(--sb-primary-font-color);
 }
 
 .sb-extension-review-button:disabled {
@@ -100,7 +100,7 @@
 
 .sb-extension-review-modal-intro {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-extension-review-field {
@@ -110,12 +110,12 @@
 }
 
 .sb-extension-review-field-label {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
 .sb-extension-review-field-hint {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
@@ -123,16 +123,16 @@
 .sb-extension-review-field textarea {
   padding: 0.5rem 0.625rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: inherit;
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   resize: vertical;
 }
 
 .sb-extension-review-error {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: #b3261e;
 }
