@@ -191,7 +191,11 @@ export function SandboxCaptureDialog({
           autoPlay
           muted
           playsInline
-          style={{ width: "100%", maxHeight: "50vh", borderRadius: "8px" }}
+          style={{
+            width: "100%",
+            maxHeight: "50vh",
+            borderRadius: "var(--sb-radius-md)",
+          }}
         />
       )}
       {phase === "opening" && <p>{t("extension-capture-opening")}</p>}

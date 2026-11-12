@@ -56,6 +56,18 @@ export interface BibleSelectorSetOpenOptions {
    * Cleared automatically when the selector closes.
    */
   forNewTab?: boolean;
+  /**
+   * Called with the chapter the user picks, after the reader has opened it.
+   * Until then, switching translation in the selector doesn't move the reader
+   * or close the selector, so the pick isn't taken as made. Dropped if the
+   * selector closes without a pick.
+   */
+  onChapterPick?: (bookId: string, chapterNumber: number) => void;
+  /**
+   * The book to open on, when it isn't the one the reader is in: what's being
+   * picked for is somewhere else in the Bible.
+   */
+  bookId?: string;
 }
 
 export interface GhostBook {
@@ -308,6 +320,8 @@ export function createBibleSelectorState(
   const isOpen = signal(false);
   const slot = signal<TabSlot | null>(null);
   const forceNewTab = signal(false);
+  let chapterPick: BibleSelectorSetOpenOptions["onChapterPick"] | null = null;
+  let openOnBookId: string | null = null;
   const showApocryphaInfo = signal(false);
   const availableSlots = computed(() => tabsLayoutManager.slots.value);
   const availableTranslations = computed(
@@ -424,8 +438,8 @@ export function createBibleSelectorState(
 
       await loadTranslation(nextTranslationId, { fromSync: true });
 
-      if (sync === latestSync && currentBookId.value) {
-        expandedBookId.value = currentBookId.value;
+      if (sync === latestSync && (openOnBookId ?? currentBookId.value)) {
+        expandedBookId.value = openOnBookId ?? currentBookId.value;
       }
     } catch (err) {
       if (sync === latestSync) {
@@ -464,6 +478,8 @@ export function createBibleSelectorState(
 
       slot.value = effectiveSlot;
       forceNewTab.value = options?.forNewTab === true;
+      chapterPick = options?.onChapterPick ?? null;
+      openOnBookId = options?.bookId ?? null;
 
       // Opened before the sync so a load that has to reach the network shows
       // the panel's loading state instead of a tap that seems to do nothing.
@@ -523,7 +539,10 @@ export function createBibleSelectorState(
 
   effect(() => {
     if (isOpen.value) {
-      expandedBookId.value = currentBookId.value;
+      expandedBookId.value = openOnBookId ?? currentBookId.value;
+    } else {
+      chapterPick = null;
+      openOnBookId = null;
     }
   });
 
@@ -544,6 +563,10 @@ export function createBibleSelectorState(
     selectedBookId: string,
     chapter: number
   ) => {
+    // Taken before the first await: some callers close the selector right
+    // after calling this, which drops the pick.
+    const pick = chapterPick;
+    chapterPick = null;
     if (!slot.value) {
       return;
     }
@@ -564,6 +587,7 @@ export function createBibleSelectorState(
         chapter
       );
       setOpen(false);
+      pick?.(selectedBookId, chapter);
       return;
     }
 
@@ -574,6 +598,7 @@ export function createBibleSelectorState(
     });
     tabsLayoutManager.openTabInSlot(slot.value.id, newTab.id);
     setOpen(false);
+    pick?.(selectedBookId, chapter);
   };
 
   /**
@@ -640,7 +665,7 @@ export function createBibleSelectorState(
       search.value = "";
       languageQuery.value = "";
       selectingTranslation.value = false;
-      if (previousTranslation && isOpen.value) {
+      if (previousTranslation && isOpen.value && !chapterPick) {
         const currentBook = books.books.find(
           (b) => b.id === currentBookId.value
         );

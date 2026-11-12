@@ -26,13 +26,11 @@
 .sb-about-card {
   border: 0.05rem solid var(--sb-divider-color);
   padding: 1.2rem 2rem;
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
   position: relative;
   display: flex;
   background-color: var(--sb-reader-background);
-  box-shadow:
-    0 1px 2px var(--sb-shadow-color),
-    0 6px 16px -6px var(--sb-shadow-color);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-about-card-wide {
@@ -115,18 +113,18 @@
 
 .sb-about-card-highlight h2 {
   font-weight: 800;
-  font-size: 1.25rem;
+  font-size: var(--sb-font-size-20);
 }
 
 .sb-about-card-feature h2 {
   font-weight: 700;
-  font-size: 1.15rem;
+  font-size: var(--sb-font-size-18);
 }
 
 .sb-about-content .sb-about-card p {
   line-height: 1.5;
   font-weight: 400;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-family: var(--sb-font-family);
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
   margin: 0;
@@ -152,9 +150,9 @@
 
 .sb-about-action {
   padding: 0.5rem 0.9rem;
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
   text-decoration: none;
   cursor: pointer;
   display: flex;

@@ -47,6 +47,7 @@ import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { MOBILE_BREAKPOINT } from "../../managers/SeedBibleStateManager";
 import { SearchBar as SearchField } from "../SearchBar/SearchBar";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 /**
  * CSS-only spotlight: the huge translucent box-shadow dims everything around
@@ -61,7 +62,7 @@ import { SearchBar as SearchField } from "../SearchBar/SearchBar";
 const SPOTLIGHT_STYLE = {
   position: "relative",
   zIndex: 2,
-  borderRadius: "0.5rem",
+  borderRadius: "var(--sb-radius-md)",
   boxShadow: "0 0 0 9999px rgba(0,0,0,0.6)",
 } as const;
 
@@ -219,7 +220,7 @@ export function BibleSelector(props: BibleSelectorProps) {
               ? {
                   position: "fixed",
                   boxSizing: "border-box",
-                  zIndex: 10000,
+                  zIndex: "calc(var(--sb-layer-tour) + 1)",
                   ...layout.style,
                 }
               : {
@@ -230,7 +231,7 @@ export function BibleSelector(props: BibleSelectorProps) {
                   width: "100%",
                   maxWidth: "28.625rem",
                   boxSizing: "border-box",
-                  zIndex: 10000,
+                  zIndex: "calc(var(--sb-layer-tour) + 1)",
                 }
           }
           onClick={(event: MouseEvent) => event.stopPropagation()}
@@ -308,7 +309,7 @@ const SearchBar = (props: {
                 </span>
                 <span
                   style={{
-                    transition: "transform 0.3s",
+                    transition: "transform var(--sb-duration-slow)",
                   }}
                   class={`material-symbols-outlined ${selectingTranslation.value ? "upside-down" : ""}`}
                   // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
@@ -377,21 +378,18 @@ const SearchBar = (props: {
           )}
           {isMobile.value && (
             <>
-              <button
-                class="sb-selector-mobile-close"
-                onClick={() => {
+              <CloseButton
+                size="lg"
+                onClose={() => {
                   setOpen(false);
                   selectingTranslation.value = false;
                 }}
-                aria-label={t("close", { defaultValue: "Close" })}
-              >
-                <span class="material-symbols-outlined">close</span>
-              </button>
+              />
               <span class="sb-bible-reader-mobile-header-title">
                 {t("books", { defaultValue: "Books" })}
               </span>
               <button
-                class="sb-selector-mobile-close"
+                class="sb-selector-mobile-tabs"
                 onClick={() => openTabs()}
               >
                 <SbTabsIcon />
@@ -701,7 +699,7 @@ const SideBarBooks = (props: {
               </span>
               <span
                 style={{
-                  transition: "transform 0.3s",
+                  transition: "transform var(--sb-duration-slow)",
                   color: isSelected ? "var(--sb-primary-color)" : "",
                 }}
                 class={`material-symbols-outlined ${isSelected ? "upside-down" : ""}`}
@@ -1963,17 +1961,12 @@ const ApocryphaInfo = (props: { bibleSelectorState: BibleSelectorState }) => {
               })}
             </h2>
 
-            <button
-              type="button"
-              class="sb-apocrypha-info-close"
-              aria-label={t("close", { defaultValue: "Close" })}
-              onClick={(event) => {
+            <CloseButton
+              onClose={(event) => {
                 event.stopPropagation();
                 showApocryphaInfo.value = false;
               }}
-            >
-              <span class="material-symbols-outlined">close</span>
-            </button>
+            />
           </div>
 
           <div class="sb-apocrypha-info-content">

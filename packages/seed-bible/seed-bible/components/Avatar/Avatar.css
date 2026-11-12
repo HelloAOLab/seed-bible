@@ -2,7 +2,7 @@
   position: relative;
   width: 1.375rem;
   height: 1.375rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   border: 2px solid transparent;
   background: transparent;
   display: inline-flex;
@@ -33,7 +33,7 @@
   text-transform: uppercase;
   letter-spacing: 0.02em;
   padding: 1px 0.1875rem;
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
   white-space: nowrap;
   pointer-events: none;
   box-shadow: 0 0 0 1.5px var(--sb-background, #ffffff);

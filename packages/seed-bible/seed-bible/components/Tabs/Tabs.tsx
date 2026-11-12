@@ -67,12 +67,14 @@ import {
 import { openReaderLocation } from "./openReaderLocation";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import { useScrollEdgeFadeRef } from "../useScrollEdgeFade";
+import { durationMs } from "../../app/styles/sharedTokens";
 import {
   BookmarkGlyph,
   BookmarkStackIcon,
   BookmarksPanel,
   bookmarkButtonLabel,
 } from "../Bookmarks/Bookmarks";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -1072,14 +1074,11 @@ export function TabsHeader(props: TabsHeaderProps) {
         )}
       </div>
 
-      <button
-        onClick={sidebar.closeSidebar}
+      <CloseButton
         className="sb-sidebar-close-button"
-        aria-label={t("close-sidebar", { defaultValue: "Close sidebar" })}
-        title={t("close-sidebar", { defaultValue: "Close sidebar" })}
-      >
-        <span className="material-symbols-outlined">close</span>
-      </button>
+        label={t("close-sidebar", { defaultValue: "Close sidebar" })}
+        onClose={sidebar.closeSidebar}
+      />
     </div>
   );
 }
@@ -1093,14 +1092,10 @@ export function Settings(props: SettingsProps) {
     <div className="sb-sidebar-settings-view">
       <div className="sb-sidebar-tabs-header">
         <h3 className="sb-sidebar-tabs-title">{t("settings")}</h3>
-        <button
-          onClick={sidebar.closeSettings}
-          className="sb-sidebar-tabs-header-icon-button"
-          aria-label={t("close-settings", { defaultValue: "Close Settings" })}
-          title={t("close-settings", { defaultValue: "Close Settings" })}
-        >
-          <span className="material-symbols-outlined">close</span>
-        </button>
+        <CloseButton
+          label={t("close-settings", { defaultValue: "Close Settings" })}
+          onClose={sidebar.closeSettings}
+        />
       </div>
 
       <div className="sb-sidebar-settings-content">
@@ -2655,15 +2650,10 @@ export function Tabs(props: TabsProps) {
           >
             <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
           </button>
-          <button
-            type="button"
-            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
-            onClick={state.sidebar.closeSidebar}
-            aria-label={t("close", { defaultValue: "Close" })}
-            title={t("close", { defaultValue: "Close" })}
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+          <CloseButton
+            className="sb-sidebar-tabs-header-close-button"
+            onClose={state.sidebar.closeSidebar}
+          />
           <button
             onClick={() => {
               app.addTab();
@@ -2763,17 +2753,15 @@ export function SharedSessionsToasts(props: { state: SeedBibleState }) {
                 </span>
               </div>
             </button>
-            <button
+            <CloseButton
               className="sb-shared-toast-dismiss"
-              aria-label={t("dismiss", { defaultValue: "Dismiss" })}
-              title={t("dismiss", { defaultValue: "Dismiss" })}
-              onClick={(event: Event) => {
+              size="sm"
+              label={t("dismiss", { defaultValue: "Dismiss" })}
+              onClose={(event) => {
                 event.stopPropagation();
                 invitations.dismissAvailableSession(entry);
               }}
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
+            />
           </div>
         );
       })}
@@ -2897,8 +2885,8 @@ function SelfAvatarButton(props: { state: SeedBibleState }) {
   );
 }
 
-/** How long the sidebar's width transition runs; matches Tabs.css. */
-const SIDEBAR_RESIZE_MS = 250;
+/** How long the sidebar's width transition runs (the CSS uses the same token). */
+const SIDEBAR_RESIZE_MS = durationMs("--sb-duration-slow");
 
 export function Sidebar(props: SidebarProps) {
   const { state } = props;

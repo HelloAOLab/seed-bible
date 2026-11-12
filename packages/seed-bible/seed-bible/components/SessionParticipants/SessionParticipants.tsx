@@ -31,6 +31,7 @@ import {
   ParticipantName,
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 /** How many avatars the compact stack shows before collapsing into a "+N" chip. */
 const MAX_STACK_AVATARS = 3;
@@ -137,16 +138,11 @@ export function MobileSessionParticipants({
                   </span>
                 </div>
 
-                <button
-                  type="button"
-                  className="sb-mobile-settings-sheet-close"
-                  onClick={() => {
+                <CloseButton
+                  onClose={() => {
                     isSheetOpen.value = false;
                   }}
-                  aria-label={t("close", { defaultValue: "Close" })}
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
+                />
               </div>
               <div className="sb-mobile-settings-sheet-body">
                 <SessionParticipantList
