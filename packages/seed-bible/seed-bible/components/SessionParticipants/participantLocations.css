@@ -5,12 +5,12 @@
   gap: 0.25rem;
   min-height: 2.25rem;
   padding: 0 0.75rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   border: 1px solid color-mix(in srgb, var(--sb-primary-color) 55%, transparent);
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;

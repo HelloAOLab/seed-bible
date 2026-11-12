@@ -29,7 +29,7 @@ This project requires **pnpm v10+**. Do not use npm or yarn.
 pnpm dev               # Run the SSR dev server (Express + Vite, HMR)
 pnpm test              # Run Vitest test suite
 pnpm test:watch        # Vitest in watch mode
-pnpm lint              # ESLint (includes i18n translation key validation) + stylelint (duplicate selectors/declarations, fixed colors paired with theme colors)
+pnpm lint              # ESLint (includes i18n translation key validation) + stylelint (duplicate selectors/declarations, fixed colors paired with theme colors, raw values that have a design token)
 pnpm lint:fix          # Auto-fix linting issues
 pnpm check:ts          # TypeScript type check — client + patterns (non-emit)
 pnpm build             # Production build (client + SSR + server bundles)
@@ -109,4 +109,6 @@ The app deploys as a **web app, not a pattern**: `pnpm build` makes client + SSR
 
 **Formatting**: Prettier with 2-space indent, double quotes, trailing commas (es5). Enforced by a Husky + pretty-quick pre-commit hook.
 
-**Theming**: `managers/ThemeManager.tsx` (`LIGHT_THEME`/`DARK_THEME`) duplicates many of the same `--sb-*` CSS variables as `app/main.css`'s `:root` block, and `ThemeManager`'s values silently win (it's injected `body`-scoped, which beats an inherited `:root` value). When editing a `--sb-*` value in `main.css`, grep `ThemeManager.tsx` for it and update both, or the CSS change won't render.
+**Theming**: `managers/ThemeManager.tsx` (`LIGHT_THEME`/`DARK_THEME`) duplicates many of the same `--sb-*` CSS variables as `app/styles/base.inline.css`'s `:root` block, and `ThemeManager`'s values silently win (it's injected `body`-scoped, which beats an inherited `:root` value). When editing a `--sb-*` value in `base.inline.css`, grep `ThemeManager.tsx` for it and update both, or the CSS change won't render.
+
+**Design tokens**: Shared scales (corners, stacking layers, animation speeds, font sizes, shadows, and any added later) are `--sb-*` tokens defined in `app/styles/base.inline.css`; the comment beside each family says what its steps are for. Use a token instead of a raw value, picking the nearest step rather than inventing one, and add a step or a family there when nothing fits. Some values stay raw on purpose (icon sizes, reader text, hairlines, em values, z-indexes that only order things inside one component); give those a `stylelint-disable-next-line` comment with the reason, since stylelint's `seed-bible/use-design-tokens` warns on a raw value that equals a token. Every token also goes in `app/styles/sharedTokens.ts`, because sandboxed extension frames only get that copy; a unit test checks the two match. A new family needs a line in `script/stylelint/useDesignTokensRule.mjs` too, saying which properties it covers, before the lint can flag raw values for it. A token built on a theme variable (like the shadows on `--sb-shadow-color`) must be declared on `body`, where ThemeManager sets the theme, not `:root`, or it locks in the light value.

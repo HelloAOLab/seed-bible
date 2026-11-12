@@ -10,13 +10,14 @@
  * re-declaration), not enforcing a formatting style Prettier already owns.
  */
 import themeColorPairRule from "./script/stylelint/themeColorPairRule.mjs";
+import useDesignTokensRule from "./script/stylelint/useDesignTokensRule.mjs";
 
 export default {
   // Build output (e.g. the published `seed-bible` package's bundled
   // `dist/style.css`) concatenates many source files, so it trips the
   // duplicate-selector rules even when every source file is clean.
   ignoreFiles: ["**/dist/**"],
-  plugins: [themeColorPairRule],
+  plugins: [themeColorPairRule, useDesignTokensRule],
   rules: {
     "no-duplicate-selectors": true,
     "declaration-block-no-duplicate-properties": [
@@ -28,5 +29,8 @@ export default {
     // A fixed text color on a themed background (or the reverse) only looks
     // right in the theme it was written against.
     "seed-bible/theme-color-pair": true,
+    // A raw corner, layer, speed, text size or shadow that already has a
+    // `--sb-*` name. A warning, not an error: it nudges without blocking.
+    "seed-bible/use-design-tokens": [true, { severity: "warning" }],
   },
 };

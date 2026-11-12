@@ -67,6 +67,7 @@ import {
 import { openReaderLocation } from "./openReaderLocation";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import { useScrollEdgeFadeRef } from "../useScrollEdgeFade";
+import { durationMs } from "../../app/styles/sharedTokens";
 import {
   BookmarkGlyph,
   BookmarkStackIcon,
@@ -2897,8 +2898,8 @@ function SelfAvatarButton(props: { state: SeedBibleState }) {
   );
 }
 
-/** How long the sidebar's width transition runs; matches Tabs.css. */
-const SIDEBAR_RESIZE_MS = 250;
+/** How long the sidebar's width transition runs (the CSS uses the same token). */
+const SIDEBAR_RESIZE_MS = durationMs("--sb-duration-slow");
 
 export function Sidebar(props: SidebarProps) {
   const { state } = props;

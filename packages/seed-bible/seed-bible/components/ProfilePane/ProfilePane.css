@@ -7,7 +7,7 @@
 .sb-profile-screen {
   --sb-profile-padding: 16px;
   --sb-profile-gap: 12px;
-  --sb-profile-card-radius: 16px;
+  --sb-profile-card-radius: var(--sb-radius-xl);
   --sb-profile-tile-size: 44px;
 
   /* Card fill, one step off the page background. */
@@ -81,7 +81,7 @@
   gap: 12px;
   margin: 8px 35px 12px;
   padding: 24px;
-  border-radius: 24px;
+  border-radius: var(--sb-radius-2xl);
   background: var(--sb-profile-surface);
 }
 
@@ -128,7 +128,7 @@
 
 .sb-profile-name {
   margin: 0;
-  font-size: 1.375rem;
+  font-size: var(--sb-font-size-22);
   font-weight: 700;
   line-height: 1.2;
   text-align: center;
@@ -167,7 +167,7 @@
 .sb-profile-plans-title {
   flex: 1;
   min-width: 0;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
 }
 
@@ -177,7 +177,7 @@
   gap: 4px;
   flex-shrink: 0;
   color: var(--sb-profile-accent);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
@@ -220,13 +220,13 @@ button.sb-profile-plans-link {
   align-items: center;
   gap: 6px;
   color: var(--sb-profile-accent);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 700;
 }
 
 .sb-profile-progress {
   height: 6px;
-  border-radius: 3px;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-primary-color), transparent 80%);
   overflow: hidden;
 }
@@ -248,7 +248,7 @@ button.sb-profile-plans-link {
   min-width: 0;
   overflow: hidden;
   color: var(--sb-profile-muted);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -259,7 +259,7 @@ button.sb-profile-plans-link {
   gap: 4px;
   flex-shrink: 0;
   color: var(--sb-profile-accent);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -298,7 +298,7 @@ button.sb-profile-plans-link {
   flex-shrink: 0;
   width: var(--sb-profile-tile-size);
   height: var(--sb-profile-tile-size);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-profile-accent-tint);
   color: var(--sb-profile-accent);
 }
@@ -314,7 +314,7 @@ button.sb-profile-plans-link {
 
 .sb-profile-row-title {
   display: block;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
   line-height: 1.3;
 }
@@ -322,7 +322,7 @@ button.sb-profile-plans-link {
 .sb-profile-row-subtitle {
   display: block;
   color: var(--sb-profile-muted);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.4;
 }
 
@@ -343,7 +343,7 @@ button.sb-profile-plans-link {
   margin-top: 20px;
   padding: 0.75rem 1rem;
   border: 2px solid var(--sb-profile-danger);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   background: transparent;
   color: var(--sb-profile-danger);
   font-family: inherit;
@@ -359,11 +359,11 @@ button.sb-profile-plans-link {
 .sb-profile-signin {
   padding: 13px 24px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-profile-accent);
   color: var(--sb-primary-font-color);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   cursor: pointer;
 }
@@ -371,7 +371,7 @@ button.sb-profile-plans-link {
 .sb-profile-signin-hint {
   margin: 0;
   color: var(--sb-profile-muted);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   text-align: center;
 }
 
@@ -423,7 +423,7 @@ button.sb-profile-plans-link {
   gap: 4px 10px;
   margin: 0;
   color: var(--sb-profile-muted);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   text-align: center;
   overflow-wrap: anywhere;
 }
@@ -453,7 +453,7 @@ button.sb-profile-plans-link {
 
 .sb-profile-description {
   color: var(--sb-profile-muted);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   text-align: center;
 }
 
@@ -466,7 +466,7 @@ button.sb-profile-plans-link {
 }
 
 .sb-profile-field-label {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
@@ -479,12 +479,12 @@ button.sb-profile-plans-link {
   width: 100%;
   padding: 12px 14px;
   border: 1px solid var(--sb-profile-border);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-reader-background);
   box-sizing: border-box;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .sb-profile-field-textarea {
@@ -497,11 +497,11 @@ button.sb-profile-plans-link {
   margin-top: 8px;
   padding: 14px;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-profile-accent);
   color: var(--sb-primary-font-color);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   cursor: pointer;
 }
