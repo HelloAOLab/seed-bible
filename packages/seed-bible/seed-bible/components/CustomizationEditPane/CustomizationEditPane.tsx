@@ -21,10 +21,13 @@ import {
   getExtensionAvailability,
   getExtensionSettingDefault,
   getFontPresetsForField,
+  getVariantDefaultRole,
+  isDefaultVariant,
   type CustomizationThemeVariant,
   type CustomizationsManager,
   type DefaultExtensionAvailability,
   type ExtensionAvailability,
+  type VariantDefaultRole,
 } from "../../managers/CustomizationsManager";
 import {
   DEFAULT_HIGHLIGHT_IDS,
@@ -42,7 +45,7 @@ import {
 import { UI_TO_BIBLE_LANGUAGE_CODES } from "../../managers/BibleReadingManager";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { i18n } from "../../i18n";
-import { useI18n } from "../../i18n/I18nManager";
+import { useI18n, type I18nHook } from "../../i18n/I18nManager";
 import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
@@ -779,7 +782,8 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           </h3>
           <ul className="sb-cz-theme-grid">
             {record.variants.map((variant) => {
-              const isDefault = variant.id === record.defaultVariantId;
+              const defaultRole = getVariantDefaultRole(variant);
+              const isDefault = isDefaultVariant(record, variant);
               const basePreset =
                 customizations.resolveVariantBaseTheme(variant);
               return (
@@ -796,18 +800,13 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                       <span className="sb-cz-card-title" dir="auto">
                         {variant.name}
                       </span>
-                      {isDefault ? (
-                        <span className="sb-cz-card-subtitle sb-cz-card-subtitle-accent">
-                          {t("default", { defaultValue: "Default" })}
-                        </span>
-                      ) : (
-                        <span className="sb-cz-card-subtitle">
-                          {t("based-on-theme", {
-                            name: localizedThemeName(t, basePreset),
-                            defaultValue: "Based on {{name}}",
-                          })}
-                        </span>
-                      )}
+                      <span className="sb-cz-card-subtitle">
+                        {t("based-on-theme", {
+                          name: localizedThemeName(t, basePreset),
+                          defaultValue: "Based on {{name}}",
+                        })}
+                      </span>
+                      {isDefault && <VariantDefaultChip role={defaultRole} />}
                     </span>
                   </button>
                   {(!isDefault || record.variants.length > 1) && (
@@ -825,12 +824,10 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                           }
                         >
                           <MaterialIcon className="sb-context-menu-item-icon">
-                            star
+                            {VARIANT_DEFAULT_ICONS[defaultRole]}
                           </MaterialIcon>
                           <span>
-                            {t("set-as-default-variant", {
-                              defaultValue: "Set as default",
-                            })}
+                            {setAsDefaultVariantLabel(t, defaultRole)}
                           </span>
                         </ContextMenuItem>
                       )}
@@ -1519,7 +1516,8 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
     );
   }
 
-  const isDefault = variant.id === record.defaultVariantId;
+  const defaultRole = getVariantDefaultRole(variant);
+  const isDefault = isDefaultVariant(record, variant);
   const canDelete = record.variants.length > 1;
   const resolvedTheme = customizations.resolveEditingVariantTheme(variant);
 
@@ -1815,7 +1813,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
             className="sb-cz-button"
             onClick={() => customizations.setEditingDefaultVariant(variant.id)}
           >
-            {t("set-as-default-variant", { defaultValue: "Set as default" })}
+            {setAsDefaultVariantLabel(t, defaultRole)}
           </button>
         )}
         <SaveButton
@@ -1824,6 +1822,48 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
         />
       </footer>
     </div>
+  );
+}
+
+const VARIANT_DEFAULT_ICONS: Record<VariantDefaultRole, string> = {
+  light: "light_mode",
+  dark: "dark_mode",
+  fallback: "star",
+};
+
+function setAsDefaultVariantLabel(
+  t: I18nHook["t"],
+  role: VariantDefaultRole
+): string {
+  switch (role) {
+    case "light":
+      return t("set-as-light-default-variant", {
+        defaultValue: "Set as light default",
+      });
+    case "dark":
+      return t("set-as-dark-default-variant", {
+        defaultValue: "Set as dark default",
+      });
+    case "fallback":
+      return t("set-as-default-variant", { defaultValue: "Set as default" });
+  }
+}
+
+function VariantDefaultChip(props: { role: VariantDefaultRole }) {
+  const { t } = useI18n();
+  const label =
+    props.role === "light"
+      ? t("light-default-variant", { defaultValue: "Light default" })
+      : props.role === "dark"
+        ? t("dark-default-variant", { defaultValue: "Dark default" })
+        : t("default", { defaultValue: "Default" });
+  return (
+    <span className="sb-cz-default-chip">
+      <MaterialIcon aria-hidden="true">
+        {VARIANT_DEFAULT_ICONS[props.role]}
+      </MaterialIcon>
+      {label}
+    </span>
   );
 }
 

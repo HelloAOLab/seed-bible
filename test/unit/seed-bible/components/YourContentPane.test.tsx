@@ -387,6 +387,7 @@ function createState(options: StateOptions = {}) {
       remove: removeCustomization,
       editingCustomization,
       resolveEditingVariantTheme: () => LIGHT_THEME,
+      getPreviewVariant: (c: SeedBibleCustomization) => c.variants[0],
       getShareLink: (c: SeedBibleCustomization) =>
         `https://example.com/?customization=${c.id}`,
     },
