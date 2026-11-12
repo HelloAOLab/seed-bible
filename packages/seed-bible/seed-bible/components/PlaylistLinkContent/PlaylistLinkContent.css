@@ -28,7 +28,7 @@
 }
 
 .sb-play-playlist-content-link {
-  font-size: 13px;
+  font-size: var(--sb-font-size-13);
   color: var(--sb-primary-color);
   overflow-wrap: anywhere;
 }
@@ -53,12 +53,12 @@
 }
 
 .sb-play-playlist-link-preview-site {
-  font-size: 12px;
+  font-size: var(--sb-font-size-12);
   color: var(--sb-secondary-font-color);
 }
 
 .sb-play-playlist-link-preview-title {
-  font-size: 16px;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   color: var(--sb-font-color);
   overflow-wrap: anywhere;
@@ -66,7 +66,7 @@
 
 .sb-play-playlist-link-preview-description {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--sb-font-size-14);
   color: var(--sb-font-color);
   opacity: 0.8;
   overflow-wrap: anywhere;

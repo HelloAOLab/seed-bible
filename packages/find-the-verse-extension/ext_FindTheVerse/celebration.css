@@ -85,7 +85,7 @@
 .ftv-celebration-title {
   margin: 6px 0 4px;
   font-weight: 700;
-  font-size: 1.35rem;
+  font-size: var(--sb-font-size-22);
 }
 
 .ftv-celebration-reference {
@@ -98,13 +98,13 @@
   margin: 8px 0 0;
   font-style: italic;
   opacity: 0.85;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-celebration-guesses {
   margin: 6px 0 0;
   opacity: 0.6;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-celebration-actions {
@@ -126,7 +126,7 @@
   background: transparent;
   color: var(--sb-font-color, #333);
   opacity: 0.7;
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
   cursor: pointer;
 }
 

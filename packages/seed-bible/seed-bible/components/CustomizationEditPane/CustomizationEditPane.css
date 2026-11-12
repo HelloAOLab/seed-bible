@@ -945,7 +945,7 @@ button.sb-cz-tile-swatch:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
 }
 
 /* A native select dressed as a pill, with an optional leading status icon

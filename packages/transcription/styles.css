@@ -65,13 +65,13 @@
 }
 .sbd-title {
   margin: 1.25rem 0 0;
-  font-size: 1.4rem;
+  font-size: var(--sb-font-size-22);
   font-weight: 700;
   line-height: 1.25;
 }
 .sbd-body {
   margin: 0.6rem 0 0;
-  font-size: 0.95rem;
+  font-size: var(--sb-font-size-15);
   line-height: 1.55;
   color: color-mix(in srgb, var(--sb-font-color, #1f2937), transparent 25%);
 }
@@ -135,7 +135,7 @@
   background: var(--sb-primary-color, #e8623a);
   color: var(--sb-primary-font-color, #ffffff);
   font: inherit;
-  font-size: 1.05rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
   cursor: pointer;
   transition: background var(--sb-duration-fast);
@@ -152,7 +152,7 @@
   background: none;
   color: color-mix(in srgb, var(--sb-font-color, #1f2937), transparent 40%);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
   text-decoration: underline;
   cursor: pointer;
   transition: color var(--sb-duration-fast);
@@ -172,7 +172,7 @@
   gap: 0.4rem;
   margin-top: 1rem;
   color: color-mix(in srgb, var(--sb-font-color, #1f2937), transparent 55%);
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
 }
 .sbd-overlay .sbd-lock-icon {
   font-size: 0.95rem;

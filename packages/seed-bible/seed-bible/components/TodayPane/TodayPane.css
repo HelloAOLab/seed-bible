@@ -294,7 +294,7 @@
   grid-row: 2 / 3;
   margin: 0;
   text-box: auto;
-  font-size: 1.5625rem;
+  font-size: var(--sb-font-size-24);
   font-weight: 500;
   color: var(--sb-font-color);
 }
@@ -482,7 +482,7 @@
   font-family: var(--sb-scripture-font-override, var(--sb-verse-font-family));
   font-weight: var(--text-verse-weight);
   font-style: var(--text-verse-font-style);
-  font-size: 1.1rem;
+  font-size: var(--sb-font-size-18);
   line-height: 1.5;
   color: var(--sb-secondary-font-color);
 }
@@ -494,7 +494,7 @@
   padding: 0;
   border: none;
   background-color: transparent;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   color: var(--sb-primary-color);
 }
@@ -529,7 +529,7 @@
   .sb-today-titled-section
   .sb-today-titled-section-header
   > h5 {
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   /* Lighter than body text so the headings label the sections without
      competing with what's in them. */
@@ -565,7 +565,7 @@
   border: none;
   background-color: transparent;
   color: var(--sb-font-color);
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
   text-decoration: underline;
   text-underline-offset: 0.25rem;
   cursor: pointer;
@@ -815,7 +815,7 @@
 
 .sb-today-container .sb-today-feed-card .sb-today-date-label {
   color: var(--sb-font-color);
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-today-container .sb-today-feed-list {
@@ -862,7 +862,7 @@
 
 .sb-today-container .sb-today-feed-sentence {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--sb-font-size-15);
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -893,7 +893,7 @@
   margin: 0;
   padding-left: 0.75rem;
   border-left: solid 2px var(--sb-divider-color);
-  font-size: 0.95rem;
+  font-size: var(--sb-font-size-15);
   line-height: 1.45;
   color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
   white-space: pre-line;
@@ -906,7 +906,7 @@
 
 .sb-today-container .sb-today-feed-time {
   flex-shrink: 0;
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
   color: var(--sb-today-muted-font-color);
 }
 
@@ -926,7 +926,7 @@
   margin: 0;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
   text-decoration: underline;
   text-underline-offset: 0.25rem;
   cursor: pointer;
@@ -967,7 +967,7 @@
 .sb-today-container .sb-today-feed-avatars-extra {
   margin-left: 0.25rem;
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-today-container .reading-history-timeline-container {
@@ -1045,7 +1045,7 @@
     gap: 1rem;
   }
   .sb-today-header > h1 {
-    font-size: 1.2rem;
+    font-size: var(--sb-font-size-20);
   }
   .sb-today-welcome-screen .sb-today-welcome-screen-navigation {
     flex-direction: column-reverse;
@@ -1097,7 +1097,7 @@
     }
 
     .sb-search-bar-input {
-      font-size: 0.9rem;
+      font-size: var(--sb-font-size-14);
     }
   }
 
@@ -1112,7 +1112,7 @@
   .sb-today-container
     .sb-today-search-container
     .sb-today-book-selector-button {
-    font-size: 0.85rem;
+    font-size: var(--sb-font-size-14);
     padding: 0.4rem 0.65rem;
   }
   .sb-today-container .sb-today-feed-card .sb-today-feed-kind-option {

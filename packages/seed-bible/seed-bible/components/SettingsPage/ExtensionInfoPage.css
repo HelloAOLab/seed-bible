@@ -139,7 +139,7 @@
 
 .sb-extension-info-heading {
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
 }
 
@@ -260,7 +260,7 @@
 
 .sb-extension-info-wide .sb-extension-info-install {
   min-height: 3.25rem;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .sb-extension-info-install-note {

@@ -43,7 +43,7 @@
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
   background: #2f6f73;
 }

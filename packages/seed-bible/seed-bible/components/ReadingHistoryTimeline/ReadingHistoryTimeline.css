@@ -53,7 +53,7 @@
 
 .reading-history-timeline-label {
   font-family: system-ui;
-  font-size: 12px;
+  font-size: var(--sb-font-size-12);
   color: var(--sb-font-color);
 }
 
@@ -88,7 +88,7 @@
 
 .reading-history-timeline-footer > .legend > span:first-child,
 .reading-history-timeline-footer > .legend > span:last-child {
-  font-size: 12px;
+  font-size: var(--sb-font-size-12);
 }
 
 .reading-history-timeline-footer > .legend > span:nth-of-type(2),
@@ -102,7 +102,7 @@
 }
 
 .reading-history-timeline-footer > .year-selector {
-  font-size: 12px;
+  font-size: var(--sb-font-size-12);
   position: relative;
 }
 

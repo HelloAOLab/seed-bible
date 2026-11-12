@@ -18,7 +18,7 @@
 .twitchBtn {
   margin-top: 5px;
   padding: 10px 20px;
-  font-size: 16px;
+  font-size: var(--sb-font-size-16);
   background-color: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   border: none;
@@ -45,7 +45,7 @@
 
 .twitchPub-title {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--sb-font-size-16);
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -118,7 +118,7 @@
   border-radius: var(--sb-radius-full);
   background: var(--sb-secondary-color, #e6e6e6);
   color: var(--sb-secondary-font-color, #333);
-  font-size: 13px;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   text-align: center;
   white-space: nowrap;
@@ -176,7 +176,7 @@
   border-radius: var(--sb-radius-sm);
   border: var(--sb-reader-toolbar-border);
   padding: 8px;
-  font-size: 14px;
+  font-size: var(--sb-font-size-14);
 }
 
 .animate-spin {
@@ -233,7 +233,7 @@
 }
 
 .label {
-  font-size: 14px;
+  font-size: var(--sb-font-size-14);
   color: #555;
   user-select: none;
 }
@@ -272,7 +272,7 @@
   padding: 8px 10px;
   background: rgba(20, 20, 20, 0.95);
   color: #fff;
-  font-size: 12px;
+  font-size: var(--sb-font-size-12);
   font-weight: normal;
   line-height: 1.4;
   text-align: left;
@@ -300,7 +300,7 @@
   height: 24px;
   padding: 3px 0px 0px 0px;
   width: 65px;
-  font-size: 12px;
+  font-size: var(--sb-font-size-12);
   outline: none;
 }
 
@@ -330,14 +330,14 @@
 .twitch-custom-timer-suffix {
   position: absolute;
   right: 10px;
-  font-size: 14px;
+  font-size: var(--sb-font-size-14);
   color: #888;
   pointer-events: none;
 }
 
 /* Primary heading shown on the QR-share screen. */
 .twitchPub-qr-title {
-  font-size: 20px;
+  font-size: var(--sb-font-size-20);
   font-weight: bold;
   text-align: center;
   transition: opacity var(--sb-duration-slow) ease;
@@ -345,13 +345,13 @@
 
 /* Secondary/instructional text (QR-share and authorization screens). */
 .twitchPub-subtitle {
-  font-size: 14px;
+  font-size: var(--sb-font-size-14);
   text-align: center;
   transition: opacity var(--sb-duration-slow) ease;
 }
 
 .twitchPub-auth-title {
-  font-size: 20px;
+  font-size: var(--sb-font-size-20);
   font-weight: bold;
   margin-top: 16px;
   text-align: center;
@@ -375,7 +375,7 @@
 
 .twitchPub-logout-btn {
   padding: 6px 14px;
-  font-size: 14px;
+  font-size: var(--sb-font-size-14);
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   border: none;

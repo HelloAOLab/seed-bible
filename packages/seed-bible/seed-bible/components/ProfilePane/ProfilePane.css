@@ -167,7 +167,7 @@
 .sb-profile-plans-title {
   flex: 1;
   min-width: 0;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
 }
 
@@ -314,7 +314,7 @@ button.sb-profile-plans-link {
 
 .sb-profile-row-title {
   display: block;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
   line-height: 1.3;
 }

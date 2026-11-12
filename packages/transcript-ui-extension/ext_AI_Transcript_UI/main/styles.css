@@ -50,7 +50,7 @@
   margin-bottom: 15px;
 }
 .ts_live__label {
-  font-size: 0.95rem;
+  font-size: var(--sb-font-size-15);
 }
 .ts_live__dot {
   width: 10px;
@@ -110,7 +110,7 @@
 }
 .ts_corpus__meta {
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 .ts_corpus__dot {
   width: 10px;
@@ -131,7 +131,7 @@
 }
 .ts_corpus__hint,
 .ts_corpus__field {
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 .ts_corpus__field,
@@ -150,7 +150,7 @@ input[type="range"] {
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-md);
   padding: 6px 8px;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 /* Picker */
@@ -177,17 +177,17 @@ input[type="range"] {
 }
 .ts_dropzone__title {
   margin: 0 0 6px;
-  font-size: 1.1rem;
+  font-size: var(--sb-font-size-18);
   font-weight: 700;
 }
 .ts_dropzone__hint {
   margin: 0;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 .ts_dropzone__name {
   margin: 0 0 6px;
-  font-size: 1.05rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
   word-break: break-word;
 }
@@ -198,7 +198,7 @@ input[type="range"] {
 .ts_dropzone__error {
   margin: 10px 0 0;
   color: #ef6a6a;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ts_picker__footer {
@@ -211,12 +211,12 @@ input[type="range"] {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
   cursor: pointer;
 }
 .ts_check .ts_muted {
   font-style: italic;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 
 /* Buttons */
@@ -229,7 +229,7 @@ input[type="range"] {
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-md);
   padding: 8px 14px;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
   cursor: pointer;
   transition:
     background var(--sb-duration-fast),
@@ -253,7 +253,7 @@ input[type="range"] {
 }
 .ts_btn--sm {
   padding: 4px 10px;
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
 }
 .ts_btn--ghost {
   background: transparent;
@@ -264,7 +264,7 @@ input[type="range"] {
   color: var(--sb-primary-color);
   cursor: pointer;
   padding: 6px 0;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 
 /* Progress bars */
@@ -296,7 +296,7 @@ input[type="range"] {
 .ts_queue__title,
 .ts_results__head h2 {
   margin: 0 0 12px;
-  font-size: 1.1rem;
+  font-size: var(--sb-font-size-18);
 }
 .ts_queue__list {
   list-style: none;
@@ -331,7 +331,7 @@ input[type="range"] {
   flex: 1;
 }
 .ts_queue__status {
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
   white-space: nowrap;
 }
@@ -343,7 +343,7 @@ input[type="range"] {
 }
 .ts_queue__error {
   color: #ef6a6a;
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
   margin-top: 6px;
 }
 .ts_queue__actions {
@@ -382,7 +382,7 @@ input[type="range"] {
 }
 .ts_result__stats {
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 .ts_result__body {
   padding: 0 12px 14px;
@@ -410,7 +410,7 @@ input[type="range"] {
   background: var(--sb-background);
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-sm);
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 .ts_refrow--inferred {
   border-left: 3px solid #e0a64c;
@@ -434,7 +434,7 @@ input[type="range"] {
 
 /* Tags + badges */
 .ts_tag {
-  font-size: 0.72rem;
+  font-size: var(--sb-font-size-12);
   padding: 1px 7px;
   border-radius: var(--sb-radius-full);
   border: 1px solid var(--sb-divider-color);
@@ -452,7 +452,7 @@ input[type="range"] {
 }
 .ts_badge--ref {
   font-family: ui-monospace, monospace;
-  font-size: 0.72rem;
+  font-size: var(--sb-font-size-12);
   background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
   border: 1px solid var(--sb-primary-color);
   color: var(--sb-primary-color);
@@ -478,7 +478,7 @@ input[type="range"] {
   gap: 10px;
   padding: 6px 8px;
   border-radius: var(--sb-radius-sm);
-  font-size: 0.88rem;
+  font-size: var(--sb-font-size-14);
   cursor: pointer;
 }
 .ts_seg:nth-child(odd) {

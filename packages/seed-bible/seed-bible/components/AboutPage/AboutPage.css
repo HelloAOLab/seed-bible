@@ -120,7 +120,7 @@
 
 .sb-about-card-feature h2 {
   font-weight: 700;
-  font-size: 1.15rem;
+  font-size: var(--sb-font-size-18);
 }
 
 .sb-about-content .sb-about-card p {
@@ -154,7 +154,7 @@
   padding: 0.5rem 0.9rem;
   border-radius: var(--sb-radius-xs);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
   text-decoration: none;
   cursor: pointer;
   display: flex;

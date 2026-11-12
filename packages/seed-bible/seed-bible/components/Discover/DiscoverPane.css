@@ -179,7 +179,7 @@
 }
 
 .sb-annotation-item-preview {
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 
   & p {
     margin: 0;

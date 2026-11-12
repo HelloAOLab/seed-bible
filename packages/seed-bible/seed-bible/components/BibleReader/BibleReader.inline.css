@@ -320,7 +320,7 @@
 
 .sb-bible-reader-mobile-header-title {
   margin: 0;
-  font-size: 1.1875rem;
+  font-size: var(--sb-font-size-18);
   font-weight: 600;
   font-family: var(
     --sb-scripture-font-override,
@@ -605,7 +605,7 @@
 
 .sb-bible-reader-mobile-content-title .sb-bible-reader-book {
   display: block;
-  font-size: 1.3rem;
+  font-size: var(--sb-font-size-20);
   line-height: 1.15;
   opacity: 0.6;
 }

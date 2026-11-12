@@ -7,7 +7,7 @@
   border-radius: var(--sb-radius-sm);
   border: none;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   background: var(--sb-tertiary-color, #f0f0f0);
   color: var(--sb-font-color, #333);
@@ -26,7 +26,7 @@
 .ftv-btn--large {
   padding: 10px 20px;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: var(--sb-font-size-15);
 }
 
 .ftv-btn--block {
@@ -51,7 +51,7 @@
 .ftv-notice {
   margin: 0;
   color: var(--sb-error-color, #d64545);
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 /* Start screen */
@@ -78,14 +78,14 @@
 .ftv-home-title {
   margin: 0;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: var(--sb-font-size-18);
 }
 
 .ftv-home-intro {
   margin: 0;
   opacity: 0.6;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 /* Saved games */
@@ -124,7 +124,7 @@
 
 .ftv-saved-ref {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -140,7 +140,7 @@
   border-radius: var(--sb-radius-sm);
   border: none;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   flex-shrink: 0;
   background: transparent;
@@ -158,14 +158,14 @@
   background: transparent;
   color: var(--sb-font-color, #333);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
   text-align: left;
   cursor: pointer;
 }
 
 .ftv-show-reference--link {
   font-weight: 500;
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
   opacity: 0.7;
   width: fit-content;
 }
@@ -182,13 +182,13 @@
 
 .ftv-creator-heading {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: var(--sb-font-size-18);
   font-weight: 600;
 }
 
 .ftv-label {
   margin-bottom: 6px;
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -203,7 +203,7 @@
   border: 1px solid var(--sb-divider-color, rgb(0 0 0 / 12%));
   background: var(--sb-background, #fff);
   color: var(--sb-font-color, #333);
-  font-size: 0.95rem;
+  font-size: var(--sb-font-size-15);
 }
 
 .ftv-input--invalid {
@@ -215,14 +215,14 @@
   padding: 10px 12px;
   border-radius: var(--sb-radius-md);
   background: var(--sb-tertiary-color, #f0f0f0);
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-verse-preview-text {
   margin: 6px 0 0;
   font-style: italic;
   opacity: 0.85;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-reference-row {
@@ -240,7 +240,7 @@
   border-radius: var(--sb-radius-md);
   background: var(--sb-primary-color, #e07b4c);
   color: var(--sb-primary-font-color, #fff);
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-selecting-banner .ftv-btn {
@@ -251,7 +251,7 @@
 .ftv-chances-help {
   margin: 0 0 8px;
   opacity: 0.6;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-steps {
@@ -271,7 +271,7 @@
   padding-top: 8px;
   font-weight: 600;
   opacity: 0.5;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-hint-box {
@@ -348,7 +348,7 @@
   background: var(--sb-background, #fff);
   color: var(--sb-error-color, #d64545);
   border: 1px solid var(--sb-error-color, #d64545);
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
   transform-origin: center top;
   box-shadow: 0 8px 20px var(--sb-shadow-color, rgb(0 0 0 / 15%));
 }
@@ -374,7 +374,7 @@
 }
 
 .ftv-bar .ftv-game-name {
-  font-size: 0.95rem;
+  font-size: var(--sb-font-size-15);
 }
 
 .ftv-chance-row {
@@ -389,7 +389,7 @@
   border-radius: var(--sb-radius-full);
   background: var(--sb-primary-color, #e07b4c);
   color: var(--sb-primary-font-color, #fff);
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
 }
 
@@ -420,7 +420,7 @@
 
 .ftv-card-text {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-card-text--italic {
@@ -433,7 +433,7 @@
 
 .ftv-card-footnote {
   margin: 8px 0 0;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
   opacity: 0.65;
 }
 
@@ -446,7 +446,7 @@
 .ftv-tap-hint {
   margin: 0;
   opacity: 0.5;
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .ftv-win {
@@ -460,7 +460,7 @@
 .ftv-win-title {
   margin: 8px 0 4px;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: var(--sb-font-size-18);
 }
 
 .ftv-win-reference {
@@ -472,19 +472,19 @@
   margin: 8px 0 0;
   font-style: italic;
   opacity: 0.8;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-win-guesses {
   margin: 4px 0 0;
   opacity: 0.6;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 
 /* Hint ? button */
 
 .ftv-hint-text {
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
   white-space: pre-wrap;
 }
 
@@ -541,12 +541,12 @@
 
 .ftv-bar-chances {
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-bar-text {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-bar-text--italic {
@@ -563,7 +563,7 @@
   color: var(--sb-font-color, #333);
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.2;
 }
 
