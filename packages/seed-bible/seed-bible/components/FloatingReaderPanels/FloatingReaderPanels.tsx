@@ -30,6 +30,7 @@ import { formatRelativeTime, translateTitle } from "../../app/utils";
 import { Avatar } from "../Avatar/Avatar";
 import { ChatParticipantsIcon, MaterialIcon } from "../icons";
 import { SearchBar } from "../SearchBar/SearchBar";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 interface SearchResult {
   id: string;
@@ -959,19 +960,13 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
           </ContextMenuWithButton>
         ) : null}
 
-        <button
-          type="button"
-          className="sb-floating-chat-header-close"
-          onClick={() => {
+        <CloseButton
+          size="sm"
+          look="tinted"
+          onClose={() => {
             sidebar.closeChatPanel();
           }}
-          aria-label={t("close", { defaultValue: "Close" })}
-          title={t("close", { defaultValue: "Close" })}
-        >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            close
-          </span>
-        </button>
+        />
       </header>
 
       {selectedChat ? (

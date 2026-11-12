@@ -16,6 +16,7 @@ import {
   findScrollContainer,
   readBottomChromeInset,
 } from "../BibleReader/readerViewport";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 
@@ -470,16 +471,13 @@ function ScriptureNotePopoverBody(props: {
         ) : null}
         <div className="sb-scripture-note-header">
           <NoteHeading title={item.noteTitle} passage={label} as="h3" />
-          <button
-            type="button"
-            className="sb-scripture-note-hide"
-            onClick={() => playing.setNoteExpanded(false)}
-            aria-label={t("playlist-scripture-note-hide", {
+          <CloseButton
+            size="sm"
+            label={t("playlist-scripture-note-hide", {
               defaultValue: "Hide note",
             })}
-          >
-            <MaterialIcon>close</MaterialIcon>
-          </button>
+            onClose={() => playing.setNoteExpanded(false)}
+          />
         </div>
         {item.note?.trim() ? (
           <div className="sb-scripture-note-body">
