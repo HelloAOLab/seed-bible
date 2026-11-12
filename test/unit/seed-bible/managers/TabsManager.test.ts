@@ -251,6 +251,20 @@ function createMockSharedSession(
     participantPositions: signal(new Map()),
     questionAnswers: signal([]),
     setQuestionAnswer: vi.fn(),
+    groupPosition: signal({
+      translationId: null,
+      bookId: null,
+      chapterNumber: null,
+      scrollToVerse: null,
+    }),
+    isAwayFromGroup: signal(false),
+    participantsAwayFromGroup: signal(new Set()),
+    rejoinGroup: vi.fn(async () => undefined),
+    comeBackRequests: signal(new Map()),
+    comeBackCooldownRemainingMs: () => 0,
+    incomingComeBackRequest: signal(null),
+    askToComeBack: vi.fn(),
+    dismissComeBackRequest: vi.fn(),
     localSessionId: signal(id),
     userCanDecorate: vi.fn().mockReturnValue(true),
     userCanNavigate: vi.fn().mockReturnValue(true),
@@ -1291,6 +1305,28 @@ describe("createTabs", () => {
     // The profile-apply effect runs synchronously off the profile signal; a
     // differing saved value must not override an explicit URL translation.
     expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("names the translation a reader with no tab open would get: the saved one, then the customization's, then the language default", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const activeCustomizationDefaultTranslationId = signal<string | undefined>(
+      undefined
+    );
+    const { tabs: manager, login } = createTabsManager({
+      activeCustomizationDefaultTranslationId,
+    });
+
+    expect(manager.preferredTranslationId()).toBe(
+      manager.defaultTranslation.id
+    );
+
+    activeCustomizationDefaultTranslationId.value = "NIV";
+    expect(manager.preferredTranslationId()).toBe("NIV");
+
+    login.profile.value = { name: "", config: { translationId: "AAB" } };
+    expect(manager.preferredTranslationId()).toBe("AAB");
+
+    await waitForInitialLoad(manager.tabs.value[0]!.readingState);
   });
 
   it("applies the active customization's default translation once it becomes known, overriding Seed Bible's own default", async () => {

@@ -340,6 +340,15 @@ function createSharedChatOrNull(
 export interface TabsManager {
   defaultTranslation: TranslationWithLanguage;
 
+  /**
+   * The translation a reader would be on with nothing else to go by, for code
+   * that needs one while no tab is open: the profile's saved translation, then
+   * the active Customization's default, then the branding default, then the
+   * default for the current UI language. A deep link's translation only ever
+   * applies to the tab it opened, so it isn't considered.
+   */
+  preferredTranslationId: () => string;
+
   /** Ordered tab list used by the tabs UI. */
   tabs: Signal<ReaderTab[]>;
 
@@ -1362,8 +1371,24 @@ export function createTabs(
   const { attachReadingState, activeReadingState, focusReadingState } =
     createAttachedReadingStates();
 
+  const preferredTranslationId = (): string => {
+    const savedTranslationId = getProfileConfigValue(
+      login.profile.peek(),
+      PROFILE_TRANSLATION_ID
+    );
+    if (typeof savedTranslationId === "string" && savedTranslationId) {
+      return savedTranslationId;
+    }
+    return (
+      activeCustomizationDefaultTranslationId?.peek() ||
+      branding?.defaultTranslationId ||
+      getDefaultTranslationForLanguage(i18nManager.language.peek()).id
+    );
+  };
+
   return {
     defaultTranslation,
+    preferredTranslationId,
     tabs,
     selectedTabId,
     addTab,

@@ -819,6 +819,17 @@ describe("sandboxed extension services", () => {
     });
   });
 
+  describe("theme", () => {
+    it("gives frames the shared corner scale along with the theme", async () => {
+      await install({ id: "ext.theme" });
+
+      const themeCss = h.frames[0]!.init.state.themeCss;
+      expect(themeCss).toContain("--sb-radius-md: 0.5rem;");
+      expect(themeCss).toContain("--sb-radius-full: 999px;");
+      expect(themeCss).toContain("--sb-font-color: #111;");
+    });
+  });
+
   describe("permissions in Settings", () => {
     it("can't take back a required permission", async () => {
       await install({ id: "ext.req", permissions: ["reading:position"] });

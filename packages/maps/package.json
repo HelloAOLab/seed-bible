@@ -1,0 +1,20 @@
+{
+  "name": "@seed-bible/maps",
+  "version": "1.0.0",
+  "description": "Maps of Bible places, drawn with Leaflet on demand. Shared by the extensions that show places on a map.",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": {
+      "import": "./index.ts"
+    }
+  },
+  "dependencies": {
+    "leaflet": "1.9.4",
+    "seed-bible": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/leaflet": "1.9.20"
+  },
+  "license": "ISC"
+}

@@ -110,6 +110,7 @@ import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslati
 import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
 import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
 import { OffscreenHighlightCueLayer } from "./OffscreenHighlightCueLayer";
+import { durationMs } from "../../app/styles/sharedTokens";
 import {
   collectHighlightCueMarks,
   decorationHighlightsByVerse,
@@ -1635,7 +1636,8 @@ interface Ribbon {
   enter: boolean;
   exiting: boolean;
 }
-const RIBBON_FADE_MS = 250;
+/** How long the ribbon fade runs (the CSS uses the same token). */
+const RIBBON_FADE_MS = durationMs("--sb-duration-slow");
 
 /**
  * How long the chapter the reader has left stays on screen, dimmed, before the
@@ -3341,10 +3343,10 @@ export function BibleReader(props: BibleReaderProps) {
   const handleAnnotationVerseClick = annotationVerseClickIn(readingState);
 
   // Reader glyph size is its own knob, independent of the UI-scale (`rem`)
-  // system. Anchoring `.sb-font-size-*` here (rather than on the chrome root)
-  // keeps `.sb-chapter-content { font-size: 1em }` and reader-`em` spacing
+  // system. Anchoring `.sb-reader-font-size-*` here (rather than on the chrome
+  // root) keeps `.sb-chapter-content { font-size: 1em }` and reader-`em` spacing
   // tied to the reader setting, while chrome inherits the UI scale from `html`.
-  const readerFontSizeClass = `sb-font-size-${(
+  const readerFontSizeClass = `sb-reader-font-size-${(
     state?.settings?.settings.value.fontSize ?? "M"
   ).toLowerCase()}`;
 

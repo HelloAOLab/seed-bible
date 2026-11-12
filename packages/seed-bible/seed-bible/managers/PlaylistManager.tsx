@@ -455,6 +455,14 @@ export type StartPlayingOptions = {
   openItem?: true;
 };
 
+export type PlaylistEditorOptions = {
+  /**
+   * Another screen opened the editor; backing out of it returns there instead
+   * of to the Discover list.
+   */
+  onBack?: () => void;
+};
+
 export type PlaylistManager = ReturnType<typeof createPlaylistManager>;
 export type PlayingState = ReturnType<typeof createPlayingState>;
 
@@ -1471,6 +1479,11 @@ export function createPlaylistManager(
   const editingPlaylist = signal<Playlist | null>(null);
   /** Copy of the draft when the editor opened, for unsaved-change detection. */
   const editingPlaylistBaseline = signal<Playlist | null>(null);
+  /**
+   * Returns to the screen that opened the editor, once the user backs out of
+   * it. Null when the editor was opened from the Discover pane itself.
+   */
+  const editingPlaylistOnBack = signal<(() => void) | null>(null);
 
   /**
    * The step open in the editor, as an index into the draft; -1 for none,
@@ -2346,7 +2359,8 @@ export function createPlaylistManager(
    * signed in.
    */
   const createNewPlaylist = async (
-    initial?: Pick<Playlist, "title" | "description" | "items">
+    initial?: Pick<Playlist, "title" | "description" | "items">,
+    options?: PlaylistEditorOptions
   ): Promise<Signal<Playlist | null> | null> => {
     let userId = login.userId.value;
     if (!userId) {
@@ -2370,6 +2384,7 @@ export function createPlaylistManager(
       updatedAtMs: now,
     });
     openDraft(draft, clonePlaylist(draft), false);
+    editingPlaylistOnBack.value = options?.onBack ?? null;
 
     return editingPlaylist;
   };
@@ -2409,6 +2424,8 @@ export function createPlaylistManager(
     playlist: Playlist;
     /** When the draft was last edited, when that's known. */
     editedAtMs: number | null;
+    /** Where backing out of the editor returns, as `editPlaylist` was asked. */
+    onBack: (() => void) | null;
   } | null>(null);
 
   /**
@@ -2417,34 +2434,41 @@ export function createPlaylistManager(
    * later via `saveEditingPlaylist`. When unsaved edits were kept from before,
    * asks first whether to continue from them (see `editorDraftChoice`).
    */
-  const editPlaylist = (playlist: Playlist): void => {
+  const editPlaylist = (
+    playlist: Playlist,
+    options?: PlaylistEditorOptions
+  ): void => {
     const kept = currentDraftFor(playlist);
     if (kept) {
       editorDraftChoice.value = {
         playlist,
         editedAtMs: kept.editedAtMs ?? null,
+        onBack: options?.onBack ?? null,
       };
       return;
     }
     restorePlaylistForEditing(playlist);
+    editingPlaylistOnBack.value = options?.onBack ?? null;
   };
 
   /** Opens the playlist being asked about, carrying on from its draft. */
   const continueEditorDraft = (): void => {
-    const playlist = editorDraftChoice.peek()?.playlist;
+    const choice = editorDraftChoice.peek();
     editorDraftChoice.value = null;
-    if (playlist) {
-      restorePlaylistForEditing(playlist);
+    if (choice) {
+      restorePlaylistForEditing(choice.playlist);
+      editingPlaylistOnBack.value = choice.onBack;
     }
   };
 
   /** Forgets the draft of the playlist being asked about, and opens it as saved. */
   const discardEditorDraft = (): void => {
-    const playlist = editorDraftChoice.peek()?.playlist;
+    const choice = editorDraftChoice.peek();
     editorDraftChoice.value = null;
-    if (playlist) {
-      clearPlaylistDraft(getPlaylistLocator(playlist));
-      restorePlaylistForEditing(playlist);
+    if (choice) {
+      clearPlaylistDraft(getPlaylistLocator(choice.playlist));
+      restorePlaylistForEditing(choice.playlist);
+      editingPlaylistOnBack.value = choice.onBack;
     }
   };
 
@@ -2466,15 +2490,23 @@ export function createPlaylistManager(
    * else back where the editor opened from.
    */
   const closeEditor = (page: Playlist | null): void => {
+    // A playlist with a page closes to it; one without goes back to the
+    // screen that opened the editor, when one asked to be returned to.
+    const onBack = page ? null : editingPlaylistOnBack.peek();
     // Worked out first: closing the editor forgets where it opened from.
-    const next = page ? null : viewAfterEditor();
+    const next = page || onBack ? null : viewAfterEditor();
     closeEditorUi();
     closingToPage = page;
     try {
-      batch(() => {
-        editingPlaylist.value = null;
-        editingPlaylistBaseline.value = null;
-        view.value = next;
+      // One history entry for leaving the editor and returning there.
+      navigation.batchWrites(() => {
+        batch(() => {
+          editingPlaylist.value = null;
+          editingPlaylistBaseline.value = null;
+          editingPlaylistOnBack.value = null;
+          view.value = next;
+        });
+        onBack?.();
       });
     } finally {
       closingToPage = null;
@@ -2510,6 +2542,7 @@ export function createPlaylistManager(
   ): void => {
     keepDraftNow();
     editingSaved = saved;
+    editingPlaylistOnBack.value = null;
     linkPreviews.cancel();
     if (view.peek() !== "create_playlist") {
       viewBeforeEditor = view.peek();
@@ -4348,6 +4381,9 @@ export function createPlaylistManager(
     view,
     actualView,
     editingPlaylist,
+    editingPlaylistOnBack: editingPlaylistOnBack as ReadonlySignal<
+      (() => void) | null
+    >,
     playing,
     openingPlayback,
     openQueueItem,

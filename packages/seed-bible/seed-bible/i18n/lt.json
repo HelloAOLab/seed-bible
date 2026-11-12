@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Nukopijuota vertimo bendrinimo nuoroda",
   "less": "Mažiau",
   "swipe-up-more": "Braukite aukštyn, kad pamatytumėte daugiau",
-  "plans": "Planai",
   "reading-plans": "Skaitymo planai",
   "create-reading-plan": "Sukurkite skaitymo planą",
   "reading-plans-empty": "Dar neturite jokių skaitymo planų. Sukurkite vieną, kad pradėtumėte.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Įkeliami vertimai…",
   "translations-load-failed": "Nepavyko įkelti viso vertimų sąrašo, todėl kai kurių gali trūkti.",
   "verse-of-the-day": "DIENOS EILIŠĖ",
-  "verse-of-the-day-loading": "Kraunama dienos eilėraštis…"
+  "verse-of-the-day-loading": "Kraunama dienos eilėraštis…",
+  "delete-bookmark-confirm-title": "Ištrinti žymę?",
+  "delete-bookmark-confirm-message": "Ištrinti „ {{name}} “?",
+  "scripture-font": "Šventojo Rašto šriftas",
+  "ai-limits-title": "Prieš kalbėdamiesi su AI",
+  "ai-limits-intro": "Dirbtinis intelektas gali būti naudingas atspirties taškas, tačiau nepamirškite jo apribojimų:",
+  "ai-limits-mistakes": "Daro klaidas ir gali skambėti užtikrintai, kai klysta.",
+  "ai-limits-agreeable": "Jis linkęs pasakyti tai, ką norite išgirsti, ir labiau linkęs į populiarius atsakymus.",
+  "ai-limits-scripture": "Tai nėra patikimas šaltinis. Patikrinkite, kas jame parašyta, palygindami jį su Šventuoju Raštu.",
+  "ai-limits-study": "Studijuokite Bibliją patys ir neleiskite dirbtiniam intelektui mąstyti už jus.",
+  "ai-limits-confirm": "Suprantu, kad dirbtinis intelektas gali daryti klaidas ir negali pakeisti Biblijos studijavimo.",
+  "friends-playlists-filter": "Draugų grojaraščiai",
+  "friend-link-social-title": "Pridėti {{name}} kaip draugą",
+  "friend-link-meta-description": "{{name}} nori būti tavo draugu {{brand}} platformoje",
+  "friend-link-title": "Pridėti {{name}} kaip draugą {{brand}} platformoje"
 }

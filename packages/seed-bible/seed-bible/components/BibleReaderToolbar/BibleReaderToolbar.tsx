@@ -47,6 +47,7 @@ import {
   openSaveModalForLocation,
 } from "../Tabs/Tabs";
 import { BookmarkStackIcon } from "../Bookmarks/Bookmarks";
+import { SessionGroupBar } from "../SessionGroupBar/SessionGroupBar";
 import { playlistItemLabel } from "../playlistItemLabel";
 import {
   ScriptureNoteSheet,
@@ -2378,6 +2379,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       root.style.setProperty("--sb-reader-bottom-tabs", `${tabsPx}px`);
     };
 
+    // The session group bar also sits outside its host's box (on top of the
+    // nav on mobile, on top of the toolbar on desktop), so it's added on too.
+    const groupBarHeight = (host: HTMLElement) => {
+      const bar = host.querySelector(":scope > .sb-session-group-bar");
+      return bar instanceof HTMLElement ? bar.offsetHeight : 0;
+    };
+
     // A playing passage's note sheet rides on top of the floating nav, outside
     // its box, so it's added on: a long note would otherwise cover the end of
     // the chapter and the discovered content after it.
@@ -2385,7 +2393,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       const noteSheet = nav.querySelector(".sb-scripture-note-sheet");
       return (
         nav.offsetHeight +
-        (noteSheet instanceof HTMLElement ? noteSheet.offsetHeight : 0)
+        (noteSheet instanceof HTMLElement ? noteSheet.offsetHeight : 0) +
+        groupBarHeight(nav)
       );
     };
 
@@ -2405,7 +2414,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       }
       if (!(toolbar instanceof HTMLElement)) return;
 
-      let insetPx = toolbar.offsetHeight;
+      let insetPx = toolbar.offsetHeight + groupBarHeight(toolbar);
       if (nav instanceof HTMLElement) {
         insetPx += navHeight(nav);
         write(insetPx, toolbar.offsetHeight);
@@ -2451,8 +2460,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           observer.observe(toolbar);
           const stack = toolbar.querySelector(".sb-pe-toolbar-stack");
           if (stack instanceof HTMLElement) observer.observe(stack);
-          // The stack comes and goes with the playlist editor's step.
+          // The playlist editor's stack comes and goes with its step, and the
+          // desktop group bar with the session.
           mutationObserver?.observe(toolbar, { childList: true });
+          const groupBar = toolbar.querySelector(
+            ":scope > .sb-session-group-bar"
+          );
+          if (groupBar instanceof HTMLElement) observer.observe(groupBar);
         }
         if (nav instanceof HTMLElement) {
           observer.observe(nav);
@@ -2460,6 +2474,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           // as it collapses or its note loads.
           const noteSheet = nav.querySelector(".sb-scripture-note-sheet");
           if (noteSheet instanceof HTMLElement) observer.observe(noteSheet);
+          const groupBar = nav.querySelector(":scope > .sb-session-group-bar");
+          if (groupBar instanceof HTMLElement) observer.observe(groupBar);
           mutationObserver?.observe(nav, { childList: true });
         }
         mutationObserver?.observe(wrap, { childList: true });
@@ -3091,6 +3107,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               // can be scrubbed; paused, it shrinks to a ring around the play
               // button so the pill area goes back to plain navigation.
               const isScrubbing = !!playback?.isPlaying.value;
+              // A host asking this reader to come back can't wait for the
+              // playlist to finish, so it takes the note sheet's place.
+              const showsGroupBar =
+                !!sessionState.value &&
+                (!playing ||
+                  !!sessionState.value.incomingComeBackRequest.value);
 
               return (
                 <div
@@ -3102,19 +3124,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     defaultValue: "Chapter navigation",
                   })}
                 >
-                  {playing && (
+                  {playing && !showsGroupBar && (
                     <ScriptureNoteSheet
                       playing={playing}
                       resolveBookName={resolveBookName}
                     />
                   )}
-                  {playing && sessionState.value && (
+                  {playing && sessionState.value && !showsGroupBar && (
                     <QuestionAnswersSheet
                       session={sessionState.value}
                       playing={playing}
                     />
                   )}
                   {!playing &&
+                    !showsGroupBar &&
                     (() => {
                       // The playlist editor's scripture step keeps its note
                       // where playback shows one.
@@ -3132,6 +3155,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         />
                       ) : null;
                     })()}
+                  {/* Shares the spot above the nav with the note sheets, so
+                      only one of them is ever shown. */}
+                  {showsGroupBar && sessionState.value && (
+                    <SessionGroupBar
+                      session={sessionState.value}
+                      resolveBookName={resolveBookName}
+                      layout="mobile"
+                    />
+                  )}
                   {audio && AudioIcon && (
                     <div className="sb-reader-floating-nav-play-wrap">
                       <button
@@ -3256,8 +3288,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 !isSmallScreen.value && audioPlayback.value
                   ? " sb-reader-toolbar-has-audio"
                   : ""
+              }${
+                !isSmallScreen.value &&
+                sessionState.value?.isAwayFromGroup.value
+                  ? " sb-reader-toolbar-has-group-bar"
+                  : ""
               }`}
             >
+              {!isSmallScreen.value && sessionState.value && (
+                <SessionGroupBar
+                  session={sessionState.value}
+                  resolveBookName={resolveBookName}
+                  layout="desktop"
+                />
+              )}
               {!isSmallScreen.value &&
                 (() => {
                   // Desktop: a shared session's answers to the playing

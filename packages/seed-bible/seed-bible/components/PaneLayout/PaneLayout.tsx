@@ -4,6 +4,7 @@ import { PaneHeader } from "../PaneHeader/PaneHeader";
 import type { Pane, PanesManager } from "../../managers/PanesManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { UI_SIZE_SCALE_MAP } from "../../managers/SettingsManager";
+import { durationMs } from "../../app/styles/sharedTokens";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 
@@ -202,10 +203,10 @@ export function PaneLayout(props: PaneLayoutProps) {
             top: `${pane.y}px`,
             width: `${pane.width}px`,
             height: `${pane.height}px`,
-            zIndex:
-              pane.id === selectedPaneId
-                ? 170 + overlayPanes.length
-                : 150 + index,
+            // Floating panes stack above the toolbars and sidebar, like windows.
+            zIndex: `calc(var(--sb-layer-chrome) + ${
+              pane.id === selectedPaneId ? 70 + overlayPanes.length : 50 + index
+            })`,
           }}
           ref={(element: HTMLElement | null) =>
             registerPaneElement(pane.id, element)
@@ -305,8 +306,8 @@ interface SidePaneProps {
   pane: Pane;
 }
 
-/** How long a docked pane takes to slide in or out; matches PaneLayout.css. */
-const SIDE_PANE_SLIDE_MS = 250;
+/** How long a docked pane takes to slide in or out (the CSS uses the same token). */
+const SIDE_PANE_SLIDE_MS = durationMs("--sb-duration-slow");
 
 /**
  * How soon after a click or key press a pane change still counts as the

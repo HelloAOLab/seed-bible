@@ -8,13 +8,13 @@
 
 .sb-references-title-reference {
   font-family: var(--sb-reader-font-family);
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   letter-spacing: 0;
 }
 
 .sb-references-title-count {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 400;
   letter-spacing: 0;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
@@ -28,7 +28,7 @@
   width: 2rem;
   min-width: 2rem;
   height: 2rem;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }
 
@@ -98,7 +98,7 @@
 .sb-references-section-title {
   margin: 0;
   padding: 0.875rem 0.75rem 0.375rem;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -136,7 +136,7 @@
 .sb-references-row.is-expanded {
   margin: 0.125rem 0;
   background: color-mix(in srgb, var(--sb-primary-color), transparent 88%);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
 }
 
 .sb-references-row-head {
@@ -170,14 +170,14 @@
 }
 
 .sb-references-row-reference {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 700;
 }
 
 .sb-references-row-preview {
   display: block;
   overflow: hidden;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   white-space: nowrap;
   text-overflow: ellipsis;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
@@ -194,7 +194,7 @@
   justify-content: center;
   width: var(--sb-references-control-size);
   height: var(--sb-references-control-size);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
 }
 
 .sb-references-row-chevron .material-symbols-outlined {
@@ -229,7 +229,7 @@
 
 .sb-references-row.is-expanded .sb-references-row-chevron {
   background: var(--sb-primary-color);
-  color: #fff;
+  color: var(--sb-primary-font-color);
   display: flex;
   transform: rotate(180deg);
 }
@@ -242,7 +242,7 @@
   border: none;
   background: var(--sb-reader-background);
   color: var(--sb-references-accent-text);
-  box-shadow: 0 1px 2px color-mix(in srgb, #000, transparent 88%);
+  box-shadow: var(--sb-shadow-raised);
   cursor: pointer;
   opacity: 0;
   visibility: hidden;
@@ -367,7 +367,7 @@
   width: 100%;
   padding: 0.625rem 0.75rem;
   border: none;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: inherit;
   font: inherit;
@@ -381,11 +381,11 @@
 }
 
 .sb-references-index-item .sb-references-row-reference {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-references-index-item .sb-references-row-preview {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 @media (hover: hover) {
@@ -396,7 +396,7 @@
 
 .sb-references-index-item[aria-current="true"] {
   background: var(--sb-reader-background);
-  box-shadow: 0 1px 3px color-mix(in srgb, #000, transparent 90%);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-references-index-item[aria-current="true"] .sb-references-row-preview {
@@ -446,7 +446,7 @@
 
 .sb-references-detail-eyebrow {
   margin: 0 0 0.25rem;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -456,7 +456,7 @@
 .sb-references-detail-title {
   margin: 0 0 0.875rem;
   font-family: var(--sb-reader-font-family);
-  font-size: 1.25rem;
+  font-size: var(--sb-font-size-20);
   font-weight: 600;
 }
 
@@ -484,7 +484,7 @@
 .sb-references-title-link:focus-visible {
   outline: 2px solid var(--sb-primary-color);
   outline-offset: 2px;
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
 }
 
 .sb-references-detail-footer {
@@ -504,7 +504,7 @@
   height: var(--sb-references-control-size);
   padding: 0;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
@@ -533,7 +533,7 @@
 
 .sb-references-pager-position {
   margin-left: 0.25rem;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
@@ -544,7 +544,7 @@
   background: transparent;
   color: var(--sb-primary-color);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 700;
   cursor: pointer;
 }
@@ -560,7 +560,7 @@
 .sb-references-text {
   margin: 0;
   font-family: var(--sb-reader-font-family);
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.5;
   overflow-wrap: break-word;
   color: color-mix(in srgb, var(--sb-font-color), transparent 8%);
@@ -581,7 +581,7 @@
 
 .sb-references-note {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-style: italic;
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
@@ -603,7 +603,7 @@
   margin: 0.625rem auto 0;
   padding: 0;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
   cursor: pointer;
@@ -646,7 +646,7 @@
 .sb-references-empty-text {
   margin: 0;
   max-width: 20rem;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }

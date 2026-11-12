@@ -5,7 +5,7 @@
   align-items: center;
   gap: 0.25rem;
   opacity: 1;
-  transition: opacity 0.25s ease;
+  transition: opacity var(--sb-duration-slow) ease;
 }
 
 /* Desktop: sits in the header's action cluster, just after the save and
@@ -61,13 +61,13 @@
   height: 2.25rem;
   padding: 0;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
   cursor: pointer;
   transition:
-    color 0.15s ease,
-    background-color 0.15s ease;
+    color var(--sb-duration-fast) ease,
+    background-color var(--sb-duration-fast) ease;
 }
 
 /* The same as the save and bookmark buttons beside it. */

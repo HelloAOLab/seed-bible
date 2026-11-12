@@ -44,17 +44,15 @@ export interface CreateTestSeedBibleStateOptions {
   /** Deployment config passed through to `createSeedBibleState`. */
   config?: AppConfig;
   /**
-   * Whether the Today screen auto-opens over the reader, as it does in
-   * production for a URL with no reading position. Defaults to `false` so the
-   * fixture models a reader looking at a chapter — otherwise Today's fullscreen
-   * pane covers the reader in every test that isn't about Today.
+   * Whether the app boots on the Today page, as it does in production for a
+   * URL with no reading position. Defaults to `false` so the fixture models a
+   * reader looking at a chapter — otherwise Today's fullscreen pane covers the
+   * reader in every test that isn't about Today.
    *
-   * Applied through the real `?today=` param rather than a bespoke flag, so
-   * tests exercise the same path a user's URL would.
-   *
-   * `"fromUrl"` stamps no param at all and lets the boot heuristic decide from
-   * whatever URL the test navigated to — which is the only way to reach that
-   * heuristic, since an explicit `?today=` short-circuits it.
+   * `true` moves the URL to "/en/today" (keeping its query); `false` adds the
+   * legacy `?today=closed`, which keeps a bare URL on the reader. `"fromUrl"`
+   * leaves the URL alone so the app's own redirect decides from whatever URL
+   * the test navigated to.
    */
   todayOpen?: boolean | "fromUrl";
   /**
@@ -81,14 +79,6 @@ export interface CreateTestSeedBibleStateOptions {
    * `"unset"` removes any saved choice and lets the new-visitor default run.
    */
   sidebarCollapsed?: boolean | "unset";
-  /**
-   * Skips the internal `state.today.hydrateAutoOpen()` call below, leaving
-   * `today.isOpen` at its pre-hydrate seed (`false`) instead of the URL's
-   * real open/closed state. For a test asserting the seed-then-correct
-   * invariant itself; every other test wants the fully-loaded-app behavior
-   * this helper otherwise mirrors, so this defaults to `false`.
-   */
-  skipHydrateAutoOpen?: boolean;
   /** A playlist-page load to seed, as the server would embed it. */
   initialPlaylistPageSeed?: PlaylistPageSeed;
   /** A reading-plan-page load to seed, as the server would embed it. */
@@ -288,13 +278,15 @@ export async function createTestSeedBibleState(
   installFreeUseBibleApiMock(globalThis as TestGlobalScope, responses);
   await ensureI18nInitialized();
 
-  // `TodayManager` reads `initialUrl` (captured from `window.location` at
-  // construction) when `hydrateAutoOpen` runs below, so the URL has to be
-  // pinned before the state is built. Keeps whatever path the caller already
-  // navigated to.
+  // The state reads the URL as it is built, so it has to be pinned first.
   if (typeof window !== "undefined" && options.todayOpen !== "fromUrl") {
     const url = new URL(window.location.href);
-    url.searchParams.set("today", options.todayOpen ? "open" : "closed");
+    if (options.todayOpen) {
+      url.pathname = "/en/today";
+      url.searchParams.delete("today");
+    } else {
+      url.searchParams.set("today", "closed");
+    }
     window.history.replaceState(null, "", `${url.pathname}${url.search}`);
   }
 
@@ -368,13 +360,6 @@ export async function createTestSeedBibleState(
   // to match SSR and only become real once this runs. Without it, anything
   // gated behind `tutorial.armAutoStart()` (called from here) never arms.
   state.app.hydrateFromStorage();
-  // Mirrors the same post-mount sequence's third one-time correction:
-  // `today.isOpen` seeds `false` to match SSR (which always renders Today
-  // closed), and only reflects the URL's real open/closed state once this
-  // runs.
-  if (!options.skipHydrateAutoOpen) {
-    state.today.hydrateAutoOpen();
-  }
   // Tabs first: awaiting anything else here would let asynchronously-created
   // tabs (e.g. an auto-joined shared session) appear before this runs, and those
   // tabs' reading states are mocked without a `loading` signal.

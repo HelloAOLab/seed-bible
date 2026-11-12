@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Kopierad länk för delning av översättning",
   "less": "Mindre",
   "swipe-up-more": "Svep uppåt för att se mer",
-  "plans": "Planer",
   "reading-plans": "Läsplaner",
   "create-reading-plan": "Skapa läsplan",
   "reading-plans-empty": "Du har inga läsplaner än. Skapa en för att komma igång.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Läser in översättningar…",
   "translations-load-failed": "Kunde inte ladda hela listan med översättningar, så vissa kan saknas.",
   "verse-of-the-day": "DAGENS VERS",
-  "verse-of-the-day-loading": "Laddar dagens vers…"
+  "verse-of-the-day-loading": "Laddar dagens vers…",
+  "delete-bookmark-confirm-title": "Ta bort bokmärke?",
+  "delete-bookmark-confirm-message": "Ta bort \" {{name}} \"?",
+  "scripture-font": "Skrifttypsnitt",
+  "ai-limits-title": "Innan du chattar med AI",
+  "ai-limits-intro": "AI kan vara en bra utgångspunkt, men ha dess begränsningar i åtanke:",
+  "ai-limits-mistakes": "Den gör misstag, och kan låta självsäker när den har fel.",
+  "ai-limits-agreeable": "Den tenderar att säga vad du vill höra och lutar åt populära svar.",
+  "ai-limits-scripture": "Det är inte en pålitlig källa. Kontrollera vad den säger mot Skriften.",
+  "ai-limits-study": "Studera Bibeln själv, och låt inte AI tänka åt dig.",
+  "ai-limits-confirm": "Jag förstår att AI kan göra misstag och inte ersätter att jag själv studerar Bibeln.",
+  "friends-playlists-filter": "Vänners spellistor",
+  "friend-link-social-title": "Lägg till {{name}} som vän",
+  "friend-link-meta-description": "{{name}} vill vara din vän på {{brand}}",
+  "friend-link-title": "Lägg till {{name}} som vän på {{brand}}"
 }

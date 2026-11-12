@@ -1,0 +1,198 @@
+/*
+ * Leaflet stacks its layers and controls at z-index 400–1000. Isolating the map
+ * keeps them inside it, under the app's panes, menus and modals, and under
+ * anything its parent lays on top of it.
+ */
+.sb-geojson-map {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  min-height: 8rem;
+  overflow: hidden;
+}
+
+/* The map in its phone sheet. The sheet sizes to its content, so this sets
+   how much of the screen the map takes, leaving the sheet's header room
+   within its own height limit. */
+.sb-map-sheet {
+  position: relative;
+  height: min(65dvh, 30rem);
+  overflow: hidden;
+  border-radius: var(--sb-radius-sm);
+}
+
+.sb-geojson-map-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.sb-geojson-map .leaflet-container {
+  background: var(--sb-reader-background);
+  font-family: inherit;
+}
+
+/* The base map's tiles have no dark version; the theme dims them instead.
+
+   Each tile rather than the pane they sit in: Leaflet hides Chrome's hairline
+   gaps between tiles by blending them additively, which only works when each
+   tile is already dimmed as it blends; dimming the whole pane afterwards
+   showed the gaps as lines one tile apart. This also out-ranks the verse
+   toolbar's dark-theme inversion of every image inside it (meant for
+   extensions' raster icons), which would undo the dimming. */
+.sb-geojson-map .leaflet-container img.leaflet-tile {
+  filter: var(--sb-map-tile-filter);
+}
+
+.sb-geojson-map-shape {
+  stroke: var(--sb-primary-color);
+  stroke-width: 2;
+  fill: var(--sb-primary-color);
+  fill-opacity: 0.2;
+}
+
+/* A river or road: a path has no inside, and a fill would close it into a
+   wedge between its ends. */
+.sb-geojson-map-line {
+  stroke: var(--sb-primary-color);
+  stroke-width: 3;
+  fill: none;
+}
+
+/* Seen on zooming in, such as a town's ancient remains: lighter than the
+   place itself. */
+.sb-geojson-map-detail {
+  stroke: var(--sb-primary-color);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  fill: var(--sb-primary-color);
+  fill-opacity: 0.12;
+}
+
+/* Strength comes from each feature's `mapShade`, which Leaflet sets as the
+   path's `fill-opacity`; setting it here would override that. */
+.sb-geojson-map-shade {
+  fill: var(--sb-primary-color);
+}
+
+.sb-geojson-map-point {
+  stroke: var(--sb-reader-background);
+  stroke-width: 2;
+  fill: var(--sb-primary-color);
+  fill-opacity: 0.9;
+}
+
+.sb-geojson-map .sb-geojson-map-label {
+  border: none;
+  background: var(--sb-menu-background);
+  color: var(--sb-menu-font-color);
+  font-size: var(--sb-font-size-13);
+  font-weight: 600;
+  box-shadow: var(--sb-shadow-raised);
+}
+
+.sb-geojson-map .sb-geojson-map-label::before {
+  border-top-color: var(--sb-menu-background);
+}
+
+/* Leaflet's stylesheet loads after this one, when a map first opens, so these
+   rules out-rank its own (`.leaflet-bar a:hover`, `.leaflet-bar
+   a.leaflet-disabled`, `.leaflet-container .leaflet-control-attribution`)
+   rather than tie with them and lose: its light defaults are unreadable in a
+   dark theme. */
+.sb-geojson-map .leaflet-container .leaflet-bar a {
+  background: var(--sb-menu-background);
+  color: var(--sb-menu-font-color);
+  border-bottom-color: var(--sb-divider-color);
+}
+
+/* Only where there's a real pointer: a phone keeps `:hover` on whatever was
+   last tapped, which would leave a pressed button tinted. */
+@media (hover: hover) {
+  .sb-geojson-map .leaflet-container .leaflet-bar a:hover {
+    background: color-mix(
+      in srgb,
+      var(--sb-menu-font-color) 10%,
+      var(--sb-menu-background)
+    );
+  }
+}
+
+.sb-geojson-map .leaflet-container .leaflet-bar a.leaflet-disabled {
+  background: var(--sb-menu-background);
+  color: color-mix(in srgb, var(--sb-menu-font-color), transparent 65%);
+}
+
+.sb-geojson-map .leaflet-container .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--sb-reader-background), transparent 15%);
+  color: var(--sb-primary-color);
+  font-size: var(--sb-font-size-10);
+}
+
+.sb-geojson-map .leaflet-container .leaflet-control-attribution a {
+  color: var(--sb-primary-color);
+}
+
+/* Above Leaflet's own controls (z-index 1000), in the corner they leave free. */
+.sb-geojson-map-controls {
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-end: 6px;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-geojson-map-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  border-radius: var(--sb-radius-xs);
+  background: color-mix(in srgb, var(--sb-reader-background), transparent 10%);
+  color: var(--sb-primary-color);
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  font-size: 1.125rem;
+  cursor: pointer;
+}
+
+/* Only where there's a real pointer, like the zoom buttons' hover. */
+@media (hover: hover) {
+  .sb-geojson-map-control:hover {
+    background: var(--sb-reader-background);
+  }
+}
+
+.sb-geojson-map-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.sb-geojson-map-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-sizing: border-box;
+  height: 100%;
+  margin: 0;
+  padding: 1rem;
+  text-align: center;
+  background: var(--sb-reader-background);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  font-size: var(--sb-font-size-14);
+}
+
+.sb-geojson-map-retry {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: var(--sb-radius-sm);
+  background: none;
+  color: var(--sb-primary-color);
+  font: inherit;
+  cursor: pointer;
+}
