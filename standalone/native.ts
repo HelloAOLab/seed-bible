@@ -19,6 +19,7 @@ function getSessionStorage(): Storage | null {
   }
 }
 
+const pageStartedAt = Date.now();
 const { publicOrigin } = readInjectedConfig();
 
 if (publicOrigin) {
@@ -26,9 +27,9 @@ if (publicOrigin) {
     publicOrigin,
     currentHref: () => window.location.href,
     reloadAt: (href, { replace }) => {
-      // Setting `location` directly would be caught by the app's own
-      // Navigation API handler (NavigationManager) and turned into an
-      // in-page update instead of a fresh start.
+      // Setting `location` to the new address would be caught by the app's
+      // own Navigation API handler (NavigationManager) and turned into an
+      // in-page update. A reload is the one navigation it lets through.
       if (replace) {
         window.history.replaceState(null, "", href);
       } else {
@@ -38,6 +39,7 @@ if (publicOrigin) {
     },
     storage: getSessionStorage(),
     now: () => Date.now(),
+    pageStartedAt,
   };
 
   document.addEventListener("click", (event) => {

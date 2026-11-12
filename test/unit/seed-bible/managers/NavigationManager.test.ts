@@ -415,14 +415,19 @@ describe("createNavigationManager history state", () => {
       });
       return {
         target,
-        dispatch: (url: string, navigationType: string) => {
+        /** Fires a `navigate` event; returns whether it was intercepted. */
+        dispatch: (url: string, navigationType: string): boolean => {
+          let intercepted = false;
           const event = Object.assign(new Event("navigate"), {
             destination: { url, getState: () => undefined },
             navigationType,
             downloadRequest: null,
-            intercept: () => undefined,
+            intercept: () => {
+              intercepted = true;
+            },
           });
           target.dispatchEvent(event);
+          return intercepted;
         },
         remove: () => {
           delete (window as { navigation?: unknown }).navigation;
@@ -464,9 +469,32 @@ describe("createNavigationManager history state", () => {
         "/leviticus/3",
         navigation.currentUrl.peek().href
       ).href;
-      api.dispatch(destination, "push");
+      const intercepted = api.dispatch(destination, "push");
 
       expect(navigation.currentUrl.peek().href).toBe(destination);
+      expect(intercepted).toBe(true);
+
+      navigation.dispose();
+      api.remove();
+    });
+
+    // The native apps open a link handed to them by the OS by moving to its
+    // address and reloading, so that things read only at startup (a session
+    // to join, a customization) take effect. Intercepting the reload turned
+    // it into an in-page update and skipped them.
+    it("lets a reload really reload instead of handling it in place", () => {
+      const api = installNavigationApi();
+      const navigation = createNavigationManager();
+      navigation.push("/genesis/1");
+      const before = navigation.currentUrl.peek().href;
+
+      const intercepted = api.dispatch(
+        new URL("/?sessionId=abc", before).href,
+        "reload"
+      );
+
+      expect(intercepted).toBe(false);
+      expect(navigation.currentUrl.peek().href).toBe(before);
 
       navigation.dispose();
       api.remove();

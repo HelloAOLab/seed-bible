@@ -116,7 +116,9 @@ Tapping a `https://seedbible.org/...` link on a phone with the app installed ope
 
 - **The app wasn't running:** it starts on the linked page.
 - **The app was running:** it reloads at the linked page, so things only read at startup (a session to join, a customization) take effect.
-- **A seedbible.org link tapped inside the app** (for example a verse link in a note written on the website): it stays in the app, like any in-app link.
+- **A seedbible.org link tapped inside the app** (for example a link in a note written on the website): it stays in the app. A passage link (no query, or only `?verse=`) opens in place, like any in-app link. Anything else, such as a session invite, reloads the app at it, as above.
+
+The reload works because `NavigationManager` lets reloads through. It handles every other same-site address change in place, which would otherwise skip what a link carries.
 
 Each platform only lets an app claim a website's links after checking a file on that website that names the app:
 

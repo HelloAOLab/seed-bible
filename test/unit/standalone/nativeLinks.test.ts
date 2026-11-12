@@ -5,7 +5,10 @@ import {
   type NativeLinkContext,
 } from "../../../standalone/nativeLinks";
 
-/** An in-memory stand-in for one app session: the page reloads, storage stays. */
+/**
+ * An in-memory stand-in for one app session: each restart starts a new page
+ * at the current time, and storage survives it.
+ */
 function createApp(startHref = "capacitor://localhost/en/BSB/genesis/1") {
   const store = new Map<string, string>();
   let href = startHref;
@@ -17,7 +20,11 @@ function createApp(startHref = "capacitor://localhost/en/BSB/genesis/1") {
     reloadAt: (next, { replace }) => {
       reloads.push({ href: next, replace });
       href = next;
+      // A real reload takes some milliseconds before the new page starts.
+      time += 1;
+      context.pageStartedAt = time;
     },
+    pageStartedAt: time,
     storage: {
       getItem: (key) => store.get(key) ?? null,
       setItem: (key, value) => void store.set(key, value),
@@ -54,23 +61,52 @@ describe("openLinkInApp", () => {
     expect(app.reloads).toEqual([]);
   });
 
-  it("acts on a link reported twice in quick succession only once", () => {
+  // The OS can report one tap twice; the first report restarts the page, and
+  // the repeat arrives in the restarted page as soon as it starts listening.
+  it("acts on one tap reported twice only once", () => {
     const app = createApp();
 
     openLinkInApp(INVITE, app.context);
-    app.advance(500);
+    app.advance(300);
     openLinkInApp(INVITE, app.context);
 
     expect(app.reloads).toHaveLength(1);
   });
 
-  it("opens the same link again when the reader taps it again later", () => {
+  it("ignores a repeat that arrives before the page has restarted", () => {
+    const app = createApp();
+    app.context.reloadAt = (next, { replace }) => {
+      app.reloads.push({ href: next, replace });
+    };
+
+    openLinkInApp(INVITE, app.context);
+    app.advance(50);
+    openLinkInApp(INVITE, app.context);
+
+    expect(app.reloads).toHaveLength(1);
+  });
+
+  // Regression: any repeat within 10 seconds used to be swallowed, so opening
+  // an invite, going back, and tapping it again right away did nothing.
+  it("opens the same link again when the reader taps it again soon after", () => {
     const app = createApp();
 
     openLinkInApp(INVITE, app.context);
-    app.advance(60_000);
+    app.advance(4_000);
     app.setHref("capacitor://localhost/en/BSB/genesis/1");
     openLinkInApp(INVITE, app.context);
+
+    expect(app.reloads).toHaveLength(2);
+  });
+
+  it("swallows only one repeat, so a quick second tap after it still works", () => {
+    const app = createApp();
+
+    openLinkInApp(INVITE, app.context);
+    app.advance(200);
+    openLinkInApp(INVITE, app.context); // the OS's repeat
+    app.advance(1_500);
+    openLinkInApp(INVITE, app.context); // the reader again
 
     expect(app.reloads).toHaveLength(2);
   });
@@ -129,11 +165,17 @@ describe("handleLinkClick", () => {
   function clickOn(
     html: string,
     init: MouseEventInit = {}
-  ): { handled: boolean; navigated: string[]; event: MouseEvent } {
+  ): {
+    handled: boolean;
+    navigated: string[];
+    restarted: string[];
+    event: MouseEvent;
+  } {
     const container = document.createElement("div");
     container.innerHTML = html;
     document.body.appendChild(container);
     const navigated: string[] = [];
+    const restarted: string[] = [];
     const event = new MouseEvent("click", {
       bubbles: true,
       cancelable: true,
@@ -147,14 +189,15 @@ describe("handleLinkClick", () => {
       {
         publicOrigin: "https://seedbible.org",
         currentHref: () => "https://localhost/en/BSB/genesis/1",
+        reloadAt: (href) => restarted.push(href),
       },
       (href) => navigated.push(href)
     );
     container.remove();
-    return { handled, navigated, event };
+    return { handled, navigated, restarted, event };
   }
 
-  it("keeps a tapped seedbible.org link inside the app", () => {
+  it("opens a tapped seedbible.org passage link in place, inside the app", () => {
     const result = clickOn(
       '<a href="https://seedbible.org/en/BSB/john/3?verse=16" target="_blank"><span data-target>John 3:16</span></a>'
     );
@@ -163,6 +206,19 @@ describe("handleLinkClick", () => {
     expect(result.event.defaultPrevented).toBe(true);
     expect(result.navigated).toEqual([
       "https://localhost/en/BSB/john/3?verse=16",
+    ]);
+    expect(result.restarted).toEqual([]);
+  });
+
+  it("restarts the app for a link carrying something read only at startup", () => {
+    const result = clickOn(
+      '<a data-target href="https://seedbible.org/en/BSB/john/3?sessionId=abc">Join</a>'
+    );
+
+    expect(result.handled).toBe(true);
+    expect(result.navigated).toEqual([]);
+    expect(result.restarted).toEqual([
+      "https://localhost/en/BSB/john/3?sessionId=abc",
     ]);
   });
 
@@ -183,6 +239,7 @@ describe("handleLinkClick", () => {
         {
           publicOrigin: "https://seedbible.org",
           currentHref: () => "https://localhost/",
+          reloadAt: () => {},
         },
         () => {}
       )
