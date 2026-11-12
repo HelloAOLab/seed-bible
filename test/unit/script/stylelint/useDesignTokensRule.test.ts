@@ -39,6 +39,24 @@ describe(ruleName, () => {
     expect(warnings[0]).toContain(`var(${token})`);
   });
 
+  it.each([
+    [".a { font: 600 0.875rem/1.2 sans-serif; }", "--sb-font-size-14"],
+    [".a { font: 12px Inter; }", "--sb-font-size-12"],
+    [".sb-panel-narrow .title { font-size: 1rem; }", "--sb-font-size-16"],
+    [".lexicon-entry { font-size: 1rem; }", "--sb-font-size-16"],
+  ])("reports %s", async (code, token) => {
+    const warnings = await lint(code);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain(`var(${token})`);
+  });
+
+  it("says when following the warning makes a px value scale", async () => {
+    const [px] = await lint(".a { font-size: 14px; }");
+    const [rem] = await lint(".a { font-size: 0.875rem; }");
+    expect(px).toContain("grows with UI Size");
+    expect(rem).not.toContain("grows with UI Size");
+  });
+
   it("reports each raw corner in a shorthand", async () => {
     const warnings = await lint(".a { border-radius: 0.5rem 0.5rem 0 0; }");
     expect(warnings).toHaveLength(2);
@@ -55,6 +73,10 @@ describe(ruleName, () => {
     ["a delay", ".a { transition: opacity 0.4s 0.15s; }"],
     ["a long animation", ".a { animation: spin 1s linear infinite; }"],
     ["an icon size", ".a .material-symbols-outlined { font-size: 1.25rem; }"],
+    ["an icon class", ".sb-tab-icons { font-size: 1rem; }"],
+    ["an icon in the font shorthand", ".sb-icon { font: 1rem Symbols; }"],
+    ["a font shorthand without a size", ".a { font: inherit; }"],
+    ["an off-scale font shorthand", ".a { font: 600 0.85rem/1.2 serif; }"],
     ["a focus ring", ".a { box-shadow: 0 0 0 2px var(--sb-primary-color); }"],
     [
       "keyframes",

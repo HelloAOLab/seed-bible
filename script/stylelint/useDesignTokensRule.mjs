@@ -11,8 +11,11 @@ const {
 export const ruleName = "seed-bible/use-design-tokens";
 
 export const messages = ruleMessages(ruleName, {
-  rawValue: (raw, token) =>
-    `"${raw}" has a name: use var(${token}) so it follows the shared scale.`,
+  rawValue: (raw, token, scales) =>
+    `"${raw}" has a name: use var(${token}) so it follows the shared scale.` +
+    (scales
+      ? " The token is in rem, so unlike this px value it grows with UI Size."
+      : ""),
 });
 
 /**
@@ -122,8 +125,10 @@ function topLevelParts(value) {
 }
 
 // Icons are drawn with a font, so their size is a `font-size` too, but it's
-// an icon size rather than a text size and isn't on the text scale.
-const ICON_SELECTOR = /icon|material-symbols|glyph|emoji|chevron|caret|arrow/i;
+// an icon size rather than a text size and isn't on the text scale. Matched as
+// a whole word of the selector, so `.sb-narrow` or `.lexicon` don't count.
+const ICON_SELECTOR =
+  /(^|[^a-z0-9])(icon|material-symbols|glyph|emoji|chevron|caret|arrow)s?([^a-z0-9]|$)/i;
 
 function propKind(prop) {
   const p = prop.toLowerCase();
@@ -131,6 +136,7 @@ function propKind(prop) {
   if (p === "z-index" || /-z-index$/.test(p)) return "layer";
   if (/^(transition|animation)(-duration)?$/.test(p)) return "duration";
   if (p === "font-size" || /-font-size$/.test(p)) return "fontSize";
+  if (p === "font") return "font";
   if (p === "box-shadow" || /-box-shadow$/.test(p)) return "shadow";
   return null;
 }
@@ -157,13 +163,25 @@ function findRawTokens(kind, decl, lookups) {
     const token = lookups.layer.get(value.trim());
     return token ? [[value.trim(), token]] : [];
   }
-  if (kind === "fontSize") {
+  if (kind === "fontSize" || kind === "font") {
     const selector = decl.parent?.selector ?? "";
     if (ICON_SELECTOR.test(selector)) return [];
   }
 
   const hits = [];
   const parts = topLevelParts(value);
+  if (kind === "font") {
+    // `font: 600 0.875rem/1.2 sans-serif`: the size is the first length, and
+    // the part before a `/` (the rest is the line height).
+    for (const part of parts) {
+      if (part.type !== "word") continue;
+      const size = part.value.split("/")[0];
+      if (toPx(size) === null) continue;
+      const token = lookups.fontSize.get(toPx(size));
+      return token ? [[size, token]] : [];
+    }
+    return [];
+  }
   if (kind === "duration") {
     const shorthand = !decl.prop.toLowerCase().endsWith("-duration");
     let group = [];
@@ -194,9 +212,16 @@ function findRawTokens(kind, decl, lookups) {
   return hits;
 }
 
+// Built on first use and kept: stylelint calls the rule once per file. A
+// long-running stylelint (an editor extension) needs a restart to see a
+// changed token.
+let tokens;
+let lookups;
+
 /** @type {import("stylelint").Rule} */
 const rule = (primary) => {
-  const lookups = buildLookups(readSharedTokens());
+  tokens ??= readSharedTokens();
+  lookups ??= buildLookups(tokens);
   return (root, result) => {
     if (!validateOptions(result, ruleName, { actual: primary })) return;
 
@@ -206,12 +231,13 @@ const rule = (primary) => {
       // The token definitions themselves.
       if (tokenFamily(decl.prop)) return;
       for (const [raw, token] of findRawTokens(kind, decl, lookups)) {
+        const scales = /px$/.test(raw) && /rem$/.test(tokens[token] ?? "");
         report({
           ruleName,
           result,
           node: decl,
           word: raw,
-          message: messages.rawValue(raw, token),
+          message: messages.rawValue(raw, token, scales),
         });
       }
     });
