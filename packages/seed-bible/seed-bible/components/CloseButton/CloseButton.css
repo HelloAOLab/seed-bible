@@ -1,0 +1,111 @@
+/* The shared × button. Its size, colors and backgrounds are custom properties,
+   so a surface that needs it to look different sets those on the button
+   instead of overriding the rules:
+   - `--sb-close-button-color`: the × and the tints are built on it (for a
+     colored header or a photo).
+   - `--sb-close-button-background` / `--sb-close-button-hover-background`:
+     the circle at rest and on hover (for a solid circle over content).
+   The circle is drawn behind the ×, centered and `--sb-close-button-size`
+   across, so a surface can make the button itself taller or wider (a bigger
+   tap area) without the circle growing. */
+.sb-close-button {
+  --sb-close-button-size: 2rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-close-button-icon-size: 1.25rem;
+  --sb-close-button-color: var(--sb-font-color);
+  --sb-close-button-background: transparent;
+  --sb-close-button-hover-background: color-mix(
+    in srgb,
+    var(--sb-close-button-color),
+    transparent 88%
+  );
+
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sb-close-button-size);
+  height: var(--sb-close-button-size);
+  padding: 0;
+  border: none;
+  border-radius: var(--sb-radius-full);
+  background: none;
+  color: color-mix(in srgb, var(--sb-close-button-color), transparent 25%);
+  cursor: pointer;
+  transition: color var(--sb-duration-fast) ease;
+
+  /* Keeps the circle's negative z-index inside the button. */
+  position: relative;
+  isolation: isolate;
+}
+
+.sb-close-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: var(--sb-close-button-size);
+  height: var(--sb-close-button-size);
+  margin: auto;
+  border-radius: var(--sb-radius-full);
+  background: var(--sb-close-button-background);
+  transition: background-color var(--sb-duration-fast) ease;
+}
+
+.sb-close-button .material-symbols-outlined {
+  font-size: var(--sb-close-button-icon-size);
+}
+
+.sb-close-button-sm {
+  --sb-close-button-size: 1.75rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-close-button-icon-size: 1.125rem;
+}
+
+.sb-close-button-lg {
+  --sb-close-button-size: 2.5rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-close-button-icon-size: 1.5rem;
+}
+
+.sb-close-button-tinted {
+  --sb-close-button-background: color-mix(
+    in srgb,
+    var(--sb-close-button-color),
+    transparent 91%
+  );
+  --sb-close-button-hover-background: color-mix(
+    in srgb,
+    var(--sb-close-button-color),
+    transparent 84%
+  );
+
+  color: var(--sb-close-button-color);
+}
+
+/* Hover only where there's a pointer, so a tap on a phone doesn't leave the
+   tint stuck on. */
+@media (hover: hover) {
+  .sb-close-button:hover:not(:disabled) {
+    color: var(--sb-close-button-color);
+  }
+
+  .sb-close-button:hover:not(:disabled)::before {
+    background: var(--sb-close-button-hover-background);
+  }
+}
+
+/* Keyboard focus gets the hover tint on any device, alongside the browser's
+   focus ring, since the muted × alone is easy to miss. */
+.sb-close-button:focus-visible {
+  color: var(--sb-close-button-color);
+}
+
+.sb-close-button:focus-visible::before {
+  background: var(--sb-close-button-hover-background);
+}
+
+.sb-close-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

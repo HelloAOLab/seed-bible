@@ -973,18 +973,6 @@
   line-height: 1.2;
 }
 
-.sb-apocrypha-info-close {
-  padding: 0;
-  margin: 0;
-  border: 0;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--sb-font-color);
-}
-
 /* ─── Offline translation downloads ──────────────────────────────────────── */
 
 .sb-offline-btn {

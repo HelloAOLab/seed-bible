@@ -218,6 +218,7 @@ export function PaneLayout(props: PaneLayoutProps) {
             icon={pane.icon}
             leading={pane.leading}
             header={pane.header}
+            closeButtonLook={pane.closeButtonLook}
             onClose={() => closePaneFromHeader(panesManager, pane)}
             onPointerDown={(event: PointerEvent) => startMove(pane, event)}
           />
@@ -289,6 +290,7 @@ export function FullscreenPane(props: FullscreenPaneProps) {
           icon={pane.icon}
           leading={pane.leading}
           header={pane.header}
+          closeButtonLook={pane.closeButtonLook}
           onClose={() => closePaneFromHeader(panesManager, pane)}
         />
       )}
@@ -428,7 +430,9 @@ export function SidePane(props: SidePaneProps) {
 
   return (
     <div
-      className={`sb-pane-side-shell${isEntering.value ? " sb-pane-side-shell-entering" : ""}`}
+      className={`sb-pane-side-shell${isEntering.value ? " sb-pane-side-shell-entering" : ""}${
+        pane.shellClassName ? ` ${pane.shellClassName}` : ""
+      }`}
       data-placement="side"
       style={{
         width: `${pane.width}px`,
@@ -446,6 +450,7 @@ export function SidePane(props: SidePaneProps) {
           icon={pane.icon}
           leading={pane.leading}
           header={pane.header}
+          closeButtonLook={pane.closeButtonLook}
           onClose={() => closePaneFromHeader(panesManager, pane)}
         />
       )}

@@ -32,6 +32,9 @@ import {
   SharedPageNotFoundModalContent,
   type SharedPageModalAction,
 } from "../components/SharedPageModal/SharedPageModal";
+import { PlaylistPagePane } from "../components/PlaylistPagePane/PlaylistPagePane";
+import { PlaylistFinishedPane } from "../components/PlaylistFinishedPane/PlaylistFinishedPane";
+import { openDeletePlaylistConfirm } from "../components/Discover/PlaylistRow";
 import {
   buildSharedPagePath,
   parseSharedPagePath,
@@ -103,6 +106,7 @@ import {
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import {
   createBibleToolsManager,
+  openShareModal,
   openReadingPlansPane,
   READING_PLANS_PANE_ID,
 } from "../managers/BibleToolsManager";
@@ -155,6 +159,7 @@ import {
   computed,
   effect,
   signal,
+  untracked,
   type ReadonlySignal,
 } from "@preact/signals";
 import {
@@ -270,6 +275,9 @@ type SearchManager = ReturnType<typeof createSearchManager>;
  */
 export const MOBILE_BREAKPOINT = 480;
 
+/** Widest viewport (CSS px) the playlist editor uses its phone layout on. */
+export const PLAYLIST_EDITOR_COMPACT_BREAKPOINT = 768;
+
 /**
  * Upper bound of the "compact desktop" band. For viewports above
  * {@link MOBILE_BREAKPOINT} but at or below this width the screen is too narrow
@@ -291,6 +299,11 @@ const APP_META_DESCRIPTION =
 /** Pane id for the "/{lang}/about" page's fullscreen pane (see `isAboutPage`). */
 export const ABOUT_PANE_ID = "about-page-pane";
 export const SHARED_PAGE_MODAL_ID = "shared-page";
+/** The fullscreen pane a shared playlist link opens on. */
+export const PLAYLIST_PAGE_PANE_ID = "playlist-page-pane";
+
+/** The fullscreen page a playlist ends on. */
+export const PLAYLIST_FINISHED_PANE_ID = "playlist-finished-pane";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -379,6 +392,13 @@ export interface AppState {
    * header, and floating chapter nav — not pane placement or the sidebar.
    */
   isCompactReader: ReadonlySignal<boolean>;
+  /**
+   * Whether the playlist editor uses its phone layout (its list of steps in
+   * the reader's place, no side pane): wherever the reader is compact, and
+   * on screens up to {@link PLAYLIST_EDITOR_COMPACT_BREAKPOINT} wide, too
+   * narrow for the side pane beside a step.
+   */
+  isCompactPlaylistEditor: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
   isMobileLandscape: ReadonlySignal<boolean>;
   /**
@@ -751,6 +771,7 @@ import {
   DiscoverPane,
   DISCOVER_PANE_ID,
 } from "../components/Discover/DiscoverPane";
+import { PlaylistDraftChoice } from "../components/PlaylistEditor/PlaylistDraftChoice";
 import {
   AIBibleVerseRefSchema,
   convertToPlaylistItem,
@@ -1435,6 +1456,11 @@ export function createSeedBibleState(
   const isCompactReader = computed(
     () => isMobile.value || isMinimalEmbed.value
   );
+  const isCompactPlaylistEditor = computed(
+    () =>
+      isCompactReader.value ||
+      viewportWidth.value <= PLAYLIST_EDITOR_COMPACT_BREAKPOINT
+  );
 
   // Created after `isMobile` so panes can enforce a single fullscreen pane:
   // on mobile every pane is displayed fullscreen, so opening one closes the
@@ -1452,7 +1478,21 @@ export function createSeedBibleState(
     discover,
     chats,
     options.initialPlaylistPageSeed,
-    { friendReads }
+    {
+      friendReads,
+      pickChapter: (onPick, bookId) => {
+        const slot = tabsLayout.slots
+          .peek()
+          .find(
+            (candidate) => candidate.id === tabsLayout.selectedSlotId.peek()
+          );
+        if (!slot) {
+          return;
+        }
+        selector.selectingTranslation.value = false;
+        void selector.setOpen(true, slot, { onChapterPick: onPick, bookId });
+      },
+    }
   );
   // True only while `hydrateFromStorage` below is applying the saved tab state.
   // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits
@@ -1503,6 +1543,16 @@ export function createSeedBibleState(
     // baseline above is updated first in both cases, so the restored position
     // becomes the position everything after it is compared against.
     if (restoringStoredState || tabs.isRestoringProfileTranslation()) {
+      return;
+    }
+    // A phone starts a playlist on its list of steps, which fills the screen,
+    // while the reader moves to the first step behind it. Only the playlist
+    // can move the reader then: opening a step puts the list away first.
+    if (
+      isMobile.peek() &&
+      playlists.view.peek() === "play_playlist" &&
+      playlists.playing.peek()
+    ) {
       return;
     }
     panes.closeFullscreenPanes();
@@ -3242,8 +3292,10 @@ export function createSeedBibleState(
 
   const handleCreateSharedSession = async () => {
     closeSidebarAndSettings();
-    // Start the session where the user is reading, not at the default book.
+    // Start the session where the user is reading, not at the default book,
+    // and carry on with the playlist they're playing, from the same step.
     const activeReadingState = selectedTab.value?.readingState ?? null;
+    const carriedPlayback = playlists.playbackToCarry();
     const session = await sessions.createSession(
       activeReadingState
         ? getSessionStartPosition(activeReadingState)
@@ -3260,6 +3312,9 @@ export function createSeedBibleState(
     void invitations.publishSession(session);
     const tab = tabs.addTab(session);
     tabsLayout.setSelectedSlotTab(tab.id);
+    if (carriedPlayback) {
+      playlists.carryPlaybackToActiveTab(carriedPlayback);
+    }
     return session;
   };
 
@@ -3875,6 +3930,7 @@ export function createSeedBibleState(
       isMobile,
       isMinimalEmbed,
       isCompactReader,
+      isCompactPlaylistEditor,
       isMobileLandscape,
       isCompactDesktop,
       currentReadingState,
@@ -3912,6 +3968,34 @@ export function createSeedBibleState(
   // which sub-view shows inside it; DiscoverPane routes discover/create/play
   // internally off the same signal.
 
+  // Going to edit a playlist with unsaved edits kept from before asks first
+  // whether to carry on from them (see `playlists.editorDraftChoice`).
+  const PLAYLIST_DRAFT_CHOICE_MODAL_ID = "playlist-draft-choice";
+  effect(() => {
+    const choice = playlists.editorDraftChoice.value;
+    if (!choice) {
+      modals.closeModal(PLAYLIST_DRAFT_CHOICE_MODAL_ID);
+      return;
+    }
+    untracked(() =>
+      modals.openModal({
+        id: PLAYLIST_DRAFT_CHOICE_MODAL_ID,
+        title: {
+          key: "playlist-editor-draft-found",
+          defaultValue: "Continue your draft?",
+        },
+        content: () => (
+          <PlaylistDraftChoice
+            editedAtMs={choice.editedAtMs}
+            onContinue={playlists.continueEditorDraft}
+            onDiscard={playlists.discardEditorDraft}
+          />
+        ),
+        onDismiss: playlists.dismissEditorDraftChoice,
+      })
+    );
+  });
+
   // view -> pane: open (or refresh, by reusing the id) while a view is set,
   // close when it clears. The pane commands read pane state via peek()
   // internally (see PanesManager), so this effect does NOT subscribe to
@@ -3919,12 +4003,18 @@ export function createSeedBibleState(
   // this effect and re-open the pane mid-update, which would trip preact's
   // "Cycle detected". The pane -> view effect below clears `view` on close.
   effect(() => {
-    if (playlists.view.value) {
+    const view = playlists.view.value;
+    if (
+      view &&
+      !(view === "create_playlist" && isCompactPlaylistEditor.value)
+    ) {
+      const editingPlaylist = view === "create_playlist";
       panes.openPane({
         id: DISCOVER_PANE_ID,
         placement: "side",
         // Never shown: each Discover view renders its own header.
         title: "Discover",
+        shellClassName: editingPlaylist ? "sb-pe-pane-shell" : undefined,
         onClose: (reason) => {
           if (reason !== "user") {
             return;
@@ -3946,6 +4036,13 @@ export function createSeedBibleState(
         ),
         showHeader: false,
       });
+    } else if (view === "create_playlist") {
+      // On a phone (or a narrow tablet) the editor takes over the reader, with
+      // its steps in its place, rather than filling the screen as a pane — so every pane is
+      // closed, or one already on screen (Today, say) would cover the editor.
+      for (const pane of panes.panes.peek()) {
+        panes.closePane(pane.id, "displaced");
+      }
     } else {
       panes.closePane(DISCOVER_PANE_ID); // no-op when already closed
     }
@@ -3959,7 +4056,11 @@ export function createSeedBibleState(
     const paneOpen = panes.panes.value.some(
       (pane) => pane.id === DISCOVER_PANE_ID
     );
-    if (!paneOpen && playlists.view.peek()) {
+    const view = playlists.view.peek();
+    // On a phone (or a narrow tablet) the editor runs without the pane.
+    const editingOnPhone =
+      view === "create_playlist" && isCompactPlaylistEditor.peek();
+    if (!paneOpen && view && !editingOnPhone) {
       playlists.view.value = null;
     }
   });
@@ -4004,8 +4105,8 @@ export function createSeedBibleState(
         placement: "fullscreen",
         title: renderTodayPaneTitle,
         component: renderTodayPane,
-        // Today's own close button (TodayCloseButton) stands in for the
-        // header's.
+        // Today's own close button (in its Header) stands in for the
+        // pane header's.
         showHeader: false,
       });
     } else {
@@ -4180,19 +4281,23 @@ export function createSeedBibleState(
     closeProfile();
     openTodayPassage(state, today, target);
   };
-  const playPlaylistFromContent = (playlist: Playlist) => {
-    closeYourContent();
-    closeProfile();
-    playlists.startPlaying(playlist, 0);
-  };
-  const editPlaylistFromContent = (playlist: Playlist) => {
-    closeYourContent();
-    closeProfile();
-    // `editPlaylist` only sets the Discover pane's view, and that pane docks
-    // beside the reader — so the fullscreen screens above it have to close
-    // first, or the editor opens behind them.
-    playlists.editPlaylist(playlist, { onBack: openYourContent });
-  };
+  // One history entry for closing these screens and opening the playlist, so
+  // Back returns straight to them.
+  const playPlaylistFromContent = (playlist: Playlist) =>
+    navigation.batchWrites(() => {
+      closeYourContent();
+      closeProfile();
+      playlists.openPlaylistPage(playlist);
+    });
+  const editPlaylistFromContent = (playlist: Playlist) =>
+    navigation.batchWrites(() => {
+      closeYourContent();
+      closeProfile();
+      // `editPlaylist` only sets the Discover pane's view, and that pane docks
+      // beside the reader — so the fullscreen screens above it have to close
+      // first, or the editor opens behind them.
+      playlists.editPlaylist(playlist, { onBack: openYourContent });
+    });
   const editAnnotationFromContent = (annotation: Annotation) => {
     closeYourContent();
     closeProfile();
@@ -4464,7 +4569,107 @@ export function createSeedBibleState(
     }
   }
 
-  // A shared playlist or reading plan link opens on a modal describing it.
+  const renderPlaylistPagePane = () => {
+    const page = playlists.playlistPage.value;
+    if (!page) {
+      return null;
+    }
+    const books =
+      selectedTab.value?.readingState.translationBooks.value?.books ?? [];
+    const playlist = page.item;
+    // Back where it was opened from in the app (My content, say), whose
+    // address it replaced; else closing it leaves for the reader.
+    const leave = () => {
+      if (!playlists.backFromPlaylistPage()) {
+        panes.closePane(PLAYLIST_PAGE_PANE_ID, "user");
+      }
+    };
+    const isOwner =
+      !!login.userId.value && playlist.authorUserId === login.userId.value;
+    return (
+      <PlaylistPagePane
+        playlist={playlist}
+        authorName={page.authorName}
+        resolveBookName={(bookId) => {
+          const book = books.find((b) => b.id === bookId);
+          return book?.name ?? book?.commonName ?? bookId;
+        }}
+        onStart={startSharedPage}
+        onBack={leave}
+        onShare={() => sharePlaylist(playlist)}
+        {...(isOwner
+          ? {
+              // As Start Reading does, so Back from the editor returns here.
+              onEdit: () => {
+                tabs.leaveStaticPage({ push: true });
+                playlists.editPlaylist(playlist);
+              },
+              onDelete: () =>
+                openDeletePlaylistConfirm(
+                  modals,
+                  playlists,
+                  playlist,
+                  state.app.toast,
+                  leave
+                ),
+            }
+          : {})}
+      />
+    );
+  };
+
+  const sharePlaylist = (
+    playlist: Parameters<typeof playlists.getPlaylistUrl>[0]
+  ) =>
+    openShareModal(
+      {
+        modals,
+        app: state.app,
+        toast: state.app.toast,
+        sharedSession: selectedTab.peek()?.sharedSession ?? null,
+        embedThemes: state.theme.themes,
+        customizationLocator: state.customizations.activeCustomizationLocator,
+      },
+      new URL(playlists.getPlaylistUrl(playlist))
+    );
+
+  const renderPlaylistFinishedPane = () => {
+    const playlist = playlists.finishedPlaylist.value;
+    if (!playlist) {
+      return null;
+    }
+    return (
+      <PlaylistFinishedPane
+        playlist={playlist}
+        authorName={playlists.playingAuthorName.value}
+        onDone={() => playlists.closeFinishedPlaylist()}
+        onShare={() => sharePlaylist(playlist)}
+      />
+    );
+  };
+
+  // A finished playlist ends on its own fullscreen page. Done (or its back
+  // button) leaves the playlist; anything else taking the page away, such as
+  // another pane on a phone, only puts it away.
+  effect(() => {
+    if (playlists.finishedPlaylist.value) {
+      panes.openPane({
+        id: PLAYLIST_FINISHED_PANE_ID,
+        placement: "fullscreen",
+        title: i18n.t("playlist-finished", {
+          defaultValue: "Playlist finished",
+        }),
+        showHeader: false,
+        component: renderPlaylistFinishedPane,
+        onClose: () => playlists.dismissFinishedPlaylist(),
+      });
+    } else {
+      panes.closePane(PLAYLIST_FINISHED_PANE_ID);
+    }
+  });
+
+  // A shared playlist link opens on a fullscreen page describing it, and a
+  // reading plan link on a modal.
   // Start begins it; closing it any other way (Close, the header's X, the
   // backdrop) leaves for the home screen. A link to one that doesn't exist
   // opens a "not found" modal in the same place, and one that failed to load
@@ -4544,107 +4749,109 @@ export function createSeedBibleState(
       ) {
         modals.closeModal(SHARED_PAGE_MODAL_ID);
       }
+      panes.closePane(PLAYLIST_PAGE_PANE_ID); // no-op when already closed
       return;
     }
     const { t } = i18n;
     const playlistPage = playlists.playlistPage.value;
+    // A playlist opens on its own fullscreen page rather than the modal.
+    if (playlistPage) {
+      if (
+        modals.modals.peek().some((modal) => modal.id === SHARED_PAGE_MODAL_ID)
+      ) {
+        modals.closeModal(SHARED_PAGE_MODAL_ID);
+      }
+      panes.openPane({
+        id: PLAYLIST_PAGE_PANE_ID,
+        placement: "fullscreen",
+        title: name,
+        showHeader: false,
+        component: renderPlaylistPagePane,
+      });
+      return;
+    }
     const planPage = readingPlans.readingPlanPage.value;
     let lengthLabel: string;
     let status: string | null = null;
     let actions: SharedPageModalAction[];
-    if (playlistPage) {
-      lengthLabel = t("playlist-page-item-count", {
-        count: playlistPage.item.items.length,
-        defaultValue: "{{count}} items",
+    const plan = planPage?.item;
+    const sessionCount = t("reading-plan-session-count-sessions", {
+      count: plan?.sessions.length ?? 0,
+      defaultValue: "{{count}} sessions",
+    });
+    // Estimated at the loaded translation's own chapter lengths when its
+    // catalog is there, else at a typical chapter length.
+    const books =
+      selectedTab.value?.readingState.translationBooks.value?.books ?? [];
+    const minutes = plan
+      ? averageSessionMinutes(plan, (bookId) =>
+          books.find((book) => book.id === bookId)
+        )
+      : null;
+    lengthLabel =
+      minutes != null
+        ? `${sessionCount} · ${t("reading-plan-page-minutes-per-session", {
+            count: minutes,
+            defaultValue: "About {{count}} min per session",
+          })}`
+        : sessionCount;
+
+    const startFresh = {
+      label: t("reading-plan-page-start", {
+        defaultValue: "Start Reading Plan",
+      }),
+      primary: true,
+      disabled: minutes == null,
+      onClick: startSharedPage,
+    };
+    const place = readingPlans.readingPlanPageProgress.value;
+    if (!place) {
+      actions = [startFresh];
+    } else if (place.resumeAt == null) {
+      status = t("reading-plan-page-finished", {
+        defaultValue: "You've finished this plan.",
       });
       actions = [
         {
-          label: t("playlist-page-start", { defaultValue: "Start Playlist" }),
-          primary: true,
-          disabled: playlistPage.item.items.length === 0,
-          onClick: startSharedPage,
+          ...startFresh,
+          label: t("reading-plan-page-start-over", {
+            defaultValue: "Start from beginning",
+          }),
         },
       ];
     } else {
-      const plan = planPage?.item;
-      const sessionCount = t("reading-plan-session-count-sessions", {
-        count: plan?.sessions.length ?? 0,
-        defaultValue: "{{count}} sessions",
-      });
-      // Estimated at the loaded translation's own chapter lengths when its
-      // catalog is there, else at a typical chapter length.
-      const books =
-        selectedTab.value?.readingState.translationBooks.value?.books ?? [];
-      const minutes = plan
-        ? averageSessionMinutes(plan, (bookId) =>
-            books.find((book) => book.id === bookId)
-          )
-        : null;
-      lengthLabel =
-        minutes != null
-          ? `${sessionCount} · ${t("reading-plan-page-minutes-per-session", {
-              count: minutes,
-              defaultValue: "About {{count}} min per session",
-            })}`
-          : sessionCount;
-
-      const startFresh = {
-        label: t("reading-plan-page-start", {
-          defaultValue: "Start Reading Plan",
-        }),
-        primary: true,
-        disabled: minutes == null,
-        onClick: startSharedPage,
-      };
-      const place = readingPlans.readingPlanPageProgress.value;
-      if (!place) {
-        actions = [startFresh];
-      } else if (place.resumeAt == null) {
-        status = t("reading-plan-page-finished", {
-          defaultValue: "You've finished this plan.",
-        });
-        actions = [
-          {
-            ...startFresh,
-            label: t("reading-plan-page-start-over", {
-              defaultValue: "Start from beginning",
-            }),
-          },
-        ];
-      } else {
-        const isDay = place.unit === "day";
-        status = isDay
-          ? t("reading-plan-page-on-day", {
-              day: place.resumeAt,
-              defaultValue: "You're on day {{day}}",
-            })
-          : t("reading-plan-page-on-session", {
-              session: place.resumeAt,
-              defaultValue: "You're on session {{session}}",
-            });
-        actions = [
-          {
-            ...startFresh,
-            primary: false,
-            label: t("reading-plan-page-start-over", {
-              defaultValue: "Start from beginning",
-            }),
-          },
-          {
-            label: isDay
-              ? t("reading-plan-page-resume-day", {
-                  day: place.resumeAt,
-                  defaultValue: "Resume day {{day}}",
-                })
-              : t("reading-plan-page-resume-session", {
-                  session: place.resumeAt,
-                  defaultValue: "Resume session {{session}}",
-                }),
-            primary: true,
-            onClick: resumeSharedPage,
-          },
-        ];
-      }
+      const isDay = place.unit === "day";
+      status = isDay
+        ? t("reading-plan-page-on-day", {
+            day: place.resumeAt,
+            defaultValue: "You're on day {{day}}",
+          })
+        : t("reading-plan-page-on-session", {
+            session: place.resumeAt,
+            defaultValue: "You're on session {{session}}",
+          });
+      actions = [
+        {
+          ...startFresh,
+          primary: false,
+          label: t("reading-plan-page-start-over", {
+            defaultValue: "Start from beginning",
+          }),
+        },
+        {
+          label: isDay
+            ? t("reading-plan-page-resume-day", {
+                day: place.resumeAt,
+                defaultValue: "Resume day {{day}}",
+              })
+            : t("reading-plan-page-resume-session", {
+                session: place.resumeAt,
+                defaultValue: "Resume session {{session}}",
+              }),
+          primary: true,
+          onClick: resumeSharedPage,
+        },
+      ];
     }
     modals.openModal({
       id: SHARED_PAGE_MODAL_ID,
@@ -4670,7 +4877,9 @@ export function createSeedBibleState(
   const closedSharedPageForHome = signal(false);
 
   // Starting leaves the shared page (a playlist for its first step's path)
-  // before the modal closes, so this only sees a close that should go home.
+  // before its pane or modal closes, so this only sees a close that should go
+  // home: the page's back button, the modal's Close, or another fullscreen
+  // pane displacing the playlist page.
   // Going home is what a fresh visit to "/"
   // would do: the reader takes the address bar back, Today opens over it
   // when a visit to "/" would open it, and a visit that began on this page
@@ -4679,9 +4888,13 @@ export function createSeedBibleState(
     const modalOpen = modals.modals.value.some(
       (modal) => modal.id === SHARED_PAGE_MODAL_ID
     );
+    const pageOpen = panes.panes.value.some(
+      (pane) => pane.id === PLAYLIST_PAGE_PANE_ID
+    );
     const onSharedPage = !!sharedPage.peek() && sharedPageStep.peek() == null;
     if (
       modalOpen ||
+      pageOpen ||
       !(
         onSharedPage ||
         sharedPageNotFoundKind.peek() ||

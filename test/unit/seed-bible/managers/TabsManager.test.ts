@@ -249,6 +249,8 @@ function createMockSharedSession(
     allUsers: signal([]),
     connectedUsers: signal([]),
     participantPositions: signal(new Map()),
+    questionAnswers: signal([]),
+    setQuestionAnswer: vi.fn(),
     groupPosition: signal({
       translationId: null,
       bookId: null,

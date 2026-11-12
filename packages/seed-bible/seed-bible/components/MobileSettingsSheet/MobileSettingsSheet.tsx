@@ -7,6 +7,7 @@ import {
 } from "../../managers/SettingsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { ScriptureLineHeightIcon, SettingsIcon } from "../icons";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 const FONT_SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
@@ -73,14 +74,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
             </span>
             <span>{t("theme-and-text", { defaultValue: "Theme & text" })}</span>
           </div>
-          <button
-            type="button"
-            className="sb-mobile-settings-sheet-close"
-            onClick={onClose}
-            aria-label={t("close", { defaultValue: "Close" })}
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+          <CloseButton onClose={onClose} />
         </div>
         <div className="sb-mobile-settings-sheet-body">
           <div className="sb-mobile-settings-sheet-section-label">

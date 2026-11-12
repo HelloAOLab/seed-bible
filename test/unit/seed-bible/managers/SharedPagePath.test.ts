@@ -18,6 +18,7 @@ describe("parseSharedPagePath", () => {
       locator: "user-1.playlist_abc",
       slug: "my-list",
       step: null,
+      edit: null,
     });
   });
 
@@ -29,6 +30,7 @@ describe("parseSharedPagePath", () => {
         locator: "user-1.playlist_abc",
         slug: null,
         step: null,
+        edit: null,
       }
     );
   });
@@ -42,6 +44,7 @@ describe("parseSharedPagePath", () => {
       locator: "user-1.plan_abc",
       slug: "advent",
       step: null,
+      edit: null,
     });
   });
 
@@ -100,6 +103,7 @@ describe("buildSharedPagePath", () => {
       locator: "user-1.playlist_abc",
       slug: "psalms-for-hard-days",
       step: null,
+      edit: null,
     });
   });
 
@@ -158,6 +162,7 @@ describe("playing paths", () => {
       locator: "u.p",
       slug: "my-list",
       step: 3,
+      edit: null,
     });
   });
 
@@ -189,6 +194,82 @@ describe("playing paths", () => {
         step: 1,
       })
     ).toBe("/en/playlist/u.p/-/1");
+  });
+});
+
+describe("playlist editor paths", () => {
+  const parse = (path: string) => parseSharedPagePath(path, "");
+
+  it.each([
+    ["/en/playlist/u.p/my-list/edit", { screen: "steps" }],
+    ["/en/playlist/u.p/my-list/edit/details", { screen: "details" }],
+    [
+      "/en/playlist/u.p/my-list/edit/step/3",
+      { screen: "step", step: 3, settings: false },
+    ],
+    [
+      "/en/playlist/u.p/my-list/edit/step/3/settings",
+      { screen: "step", step: 3, settings: true },
+    ],
+  ])("reads %s as an editor screen, not playback", (path, edit) => {
+    expect(parse(path)).toEqual({
+      kind: "playlist",
+      language: "en",
+      locator: "u.p",
+      slug: "my-list",
+      step: null,
+      edit,
+    });
+    expect(
+      playbackRequestFromUrl(new URL(path, "http://localhost"), "")
+    ).toBeNull();
+    expect(isNonReadingPagePath(path, "")).toBe(true);
+  });
+
+  it.each([
+    "/en/playlist/u.p/my-list/edit/step",
+    "/en/playlist/u.p/my-list/edit/step/0",
+    "/en/playlist/u.p/my-list/edit/step/two",
+    "/en/playlist/u.p/my-list/edit/step/2/other",
+    "/en/playlist/u.p/my-list/edit/details/more",
+    "/en/playlist/u.p/my-list/edit/elsewhere",
+    "/en/playlist/u.p/my-list/3/edit",
+    "/en/reading-plan/u.p/my-plan/edit",
+  ])("rejects %s", (path) => {
+    expect(parse(path)).toBeNull();
+  });
+
+  it('reads a playlist titled "Edit" as its slug, not the editor', () => {
+    expect(parse("/en/playlist/u.p/edit")).toMatchObject({
+      slug: "edit",
+      edit: null,
+    });
+  });
+
+  it("builds each screen's path, with a placeholder slug for an untitled playlist", () => {
+    const build = (
+      title: string | null,
+      edit: Parameters<typeof buildSharedPagePath>[0]["edit"]
+    ) =>
+      buildSharedPagePath({
+        kind: "playlist",
+        language: "en",
+        locator: "u.p",
+        title,
+        edit,
+      });
+    expect(build("My List", { screen: "steps" })).toBe(
+      "/en/playlist/u.p/my-list/edit"
+    );
+    expect(build("My List", { screen: "details" })).toBe(
+      "/en/playlist/u.p/my-list/edit/details"
+    );
+    expect(build("My List", { screen: "step", step: 2, settings: false })).toBe(
+      "/en/playlist/u.p/my-list/edit/step/2"
+    );
+    expect(build(null, { screen: "step", step: 2, settings: true })).toBe(
+      "/en/playlist/u.p/-/edit/step/2/settings"
+    );
   });
 });
 

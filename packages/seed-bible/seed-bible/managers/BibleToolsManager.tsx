@@ -1,9 +1,4 @@
-import {
-  AskIcon,
-  MaterialIcon,
-  SeedBibleIcon,
-  StopIcon,
-} from "../components/icons";
+import { AskIcon, MaterialIcon, SeedBibleIcon } from "../components/icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
@@ -889,20 +884,30 @@ function NowPlayingIcon({
     t("untitled-playlist", { defaultValue: "Untitled playlist" });
   return (
     <span className="sb-now-playing-icon">
-      <h4 className="sb-now-playing-icon-title">{title}</h4>
+      <h4 className="sb-now-playing-icon-title" dir="auto">
+        {title}
+      </h4>
       {currentItem && (
-        <span>{playlistItemLabel(currentItem, t, resolveBookName)}</span>
+        <span dir="auto">
+          {playlistItemLabel(currentItem, t, resolveBookName)}
+        </span>
       )}
     </span>
   );
 }
+
+/**
+ * The quick tool showing the playing playlist and its current step. The phone
+ * reader shows it beside its back arrow rather than with the other tools.
+ */
+export const CURRENT_PLAYLIST_TOOL_ID = "current-playlist";
 
 function getDefaultQuickToolbarTools(
   branding?: BrandingConfig
 ): ManagedBibleQuickToolbarTool[] {
   const tools: ManagedBibleQuickToolbarTool[] = [
     {
-      id: "current-playlist",
+      id: CURRENT_PLAYLIST_TOOL_ID,
       priority: 0,
       title: {
         key: "current-playlist",
@@ -1110,7 +1115,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
             startIndex,
             // Reading plans reuse the playlist player but keep their own
             // progress records — don't also write playlist play history.
-            { history: false }
+            { history: false, openItem: true }
           );
         }}
         toast={toast}
@@ -1124,18 +1129,6 @@ function getDefaultToolbarTools(
   branding?: BrandingConfig
 ): ManagedBibleToolbarTool[] {
   const tools: ManagedBibleToolbarTool[] = [
-    {
-      id: "stop-playing",
-      priority: -1,
-      hideLabel: true,
-      title: { key: "stop", defaultValue: "Stop" },
-      icon: () => <StopIcon />,
-      isVisible: (context) => !!context.playlists?.playing?.value,
-      onSelect: (context) => {
-        context.playlists?.stopPlaying();
-      },
-      isControllable: false,
-    },
     {
       id: "previous-chapter",
       priority: 0,
