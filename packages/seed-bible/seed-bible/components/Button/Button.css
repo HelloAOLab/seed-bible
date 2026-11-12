@@ -34,6 +34,7 @@
   font-weight: 600;
   line-height: 1.2;
   text-align: center;
+  text-decoration: none;
   cursor: pointer;
   transition:
     background-color var(--sb-duration-fast) ease,
@@ -70,6 +71,16 @@
 
 .sb-button-primary {
   background: var(--sb-button-accent);
+  color: var(--sb-button-accent-font-color);
+}
+
+/* A Button drawn as a link: outrank the app-wide `a` and `a:visited` colors,
+   so a visited Donate link doesn't turn link-colored. */
+a.sb-button:is(:link, :visited) {
+  color: var(--sb-button-color);
+}
+
+a.sb-button-primary:is(:link, :visited) {
   color: var(--sb-button-accent-font-color);
 }
 

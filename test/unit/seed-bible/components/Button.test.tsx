@@ -144,4 +144,40 @@ describe("Button", () => {
     act(() => button().click());
     expect(onClick).toHaveBeenCalledTimes(1);
   });
+
+  it("draws a link instead when given an href, keeping link behavior", () => {
+    act(() => {
+      render(
+        <Button
+          href="https://example.com/donate"
+          target="_blank"
+          icon="favorite"
+        >
+          Donate
+        </Button>,
+        container
+      );
+    });
+
+    const link = container.querySelector("a")!;
+    expect(container.querySelector("button")).toBeNull();
+    expect(link.getAttribute("href")).toBe("https://example.com/donate");
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(link.hasAttribute("type")).toBe(false);
+    expect(link.classList).toContain("sb-button");
+    expect(link.querySelector(".sb-button-label")?.textContent).toBe("Donate");
+
+    act(() => {
+      render(null, container);
+      render(
+        <Button href="/about" rel="author">
+          About
+        </Button>,
+        container
+      );
+    });
+    expect(container.querySelector("a")!.getAttribute("rel")).toBe("author");
+    expect(container.querySelector("a")!.hasAttribute("target")).toBe(false);
+  });
 });

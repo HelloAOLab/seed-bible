@@ -10,7 +10,7 @@ export type ButtonShape = "rect" | "pill";
 
 export type ButtonProps = Omit<
   JSX.ButtonHTMLAttributes<HTMLButtonElement>,
-  "size" | "type" | "class" | "className" | "icon"
+  "size" | "type" | "class" | "className" | "icon" | "href" | "target" | "rel"
 > & {
   children: ComponentChildren;
   /** `primary` is the one main action (filled); `secondary` is outlined, for Cancel and other actions beside it; `ghost` has no outline, for quiet actions in a row or toolbar. */
@@ -29,12 +29,22 @@ export type ButtonProps = Omit<
   loading?: boolean;
   /** `submit` for a form's main button. */
   type?: "button" | "submit" | "reset";
+  /**
+   * Draws a link that looks like a button, for an action that goes to
+   * another page or site (Donate, Release notes), so it keeps link behavior:
+   * the address on hover, "Copy link", middle-click. A link can't be
+   * disabled or loading.
+   */
+  href?: string;
+  /** With `href`: `"_blank"` opens a new tab, and adds `rel="noopener noreferrer"` unless `rel` is given. */
+  target?: string;
+  rel?: string;
   /** Extra classes, for placement. `class` and `className` both work. */
   className?: string;
   class?: string;
 };
 
-/** A button with a text label: Save, Cancel, Retry, Sign in. */
+/** A button with a text label: Save, Cancel, Retry, Sign in. With `href`, a link drawn the same way. */
 export function Button({
   children,
   variant = "secondary",
@@ -45,6 +55,9 @@ export function Button({
   iconPosition = "start",
   loading = false,
   type = "button",
+  href,
+  target,
+  rel,
   disabled,
   className,
   class: classAttribute,
@@ -61,27 +74,46 @@ export function Button({
       {icon}
     </span>
   ) : null;
+  const classes = [
+    "sb-button",
+    `sb-button-${variant}`,
+    `sb-button-${size}`,
+    shape === "pill" && "sb-button-pill",
+    tone === "danger" && "sb-button-danger",
+    className,
+    classAttribute,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const content = (
+    <>
+      {iconPosition === "start" && iconNode}
+      <span className="sb-button-label">{children}</span>
+      {iconPosition === "end" && iconNode}
+    </>
+  );
+  if (href !== undefined) {
+    return (
+      <a
+        {...(rest as JSX.HTMLAttributes<HTMLAnchorElement>)}
+        href={href}
+        target={target}
+        rel={rel ?? (target === "_blank" ? "noopener noreferrer" : undefined)}
+        className={classes}
+      >
+        {content}
+      </a>
+    );
+  }
   return (
     <button
       {...rest}
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={[
-        "sb-button",
-        `sb-button-${variant}`,
-        `sb-button-${size}`,
-        shape === "pill" && "sb-button-pill",
-        tone === "danger" && "sb-button-danger",
-        className,
-        classAttribute,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className={classes}
     >
-      {iconPosition === "start" && iconNode}
-      <span className="sb-button-label">{children}</span>
-      {iconPosition === "end" && iconNode}
+      {content}
     </button>
   );
 }
