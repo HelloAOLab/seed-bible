@@ -2527,13 +2527,11 @@ export function Tabs(props: TabsProps) {
                 bookmarks.togglePanel();
               }}
             >
-              <CustomizableIcon id="bookmarks">
-                <BookmarkStackIcon
-                  bookmarks={allBookmarks}
-                  size={24}
-                  paint={isBookmarksPanelOpen ? "current" : "outline"}
-                />
-              </CustomizableIcon>
+              <BookmarkStackIcon
+                bookmarks={allBookmarks}
+                size={24}
+                paint={isBookmarksPanelOpen ? "current" : "outline"}
+              />
             </button>
             <button
               type="button"
@@ -2552,9 +2550,7 @@ export function Tabs(props: TabsProps) {
                 saves.toggleFilter();
               }}
             >
-              <CustomizableIcon id="saves">
-                <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
-              </CustomizableIcon>
+              <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
             </button>
             <button
               type="button"
@@ -2616,13 +2612,11 @@ export function Tabs(props: TabsProps) {
               bookmarks.togglePanel();
             }}
           >
-            <CustomizableIcon id="bookmarks">
-              <BookmarkStackIcon
-                bookmarks={allBookmarks}
-                size={24}
-                paint={isBookmarksPanelOpen ? "current" : "outline"}
-              />
-            </CustomizableIcon>
+            <BookmarkStackIcon
+              bookmarks={allBookmarks}
+              size={24}
+              paint={isBookmarksPanelOpen ? "current" : "outline"}
+            />
           </button>
           <button
             type="button"
@@ -2642,9 +2636,7 @@ export function Tabs(props: TabsProps) {
               saves.toggleFilter();
             }}
           >
-            <CustomizableIcon id="saves">
-              <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
-            </CustomizableIcon>
+            <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
           </button>
           <button
             type="button"

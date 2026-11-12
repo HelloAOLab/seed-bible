@@ -2917,9 +2917,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   };
 
   const savesTabIcon = (filled: boolean) => (
-    <CustomizableIcon id="saves">
-      <SaveStarIcon isSaved={filled} size={24} />
-    </CustomizableIcon>
+    <SaveStarIcon isSaved={filled} size={24} />
   );
 
   /**
@@ -3331,9 +3329,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                               defaultValue: "Bookmarks",
                             }),
                             iconNode: (
-                              <CustomizableIcon id="bookmarks">
-                                <BookmarkStackIcon bookmarks={[]} size={24} />
-                              </CustomizableIcon>
+                              <BookmarkStackIcon bookmarks={[]} size={24} />
                             ),
                             onClick: openBookmarksView,
                           },

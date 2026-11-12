@@ -368,8 +368,6 @@ export const CUSTOMIZATION_ICON_IDS = [
   "books",
   "search",
   "today",
-  "saves",
-  "bookmarks",
   "share",
   "chat",
   "discover",

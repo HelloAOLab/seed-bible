@@ -48,11 +48,9 @@ import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { i18n } from "../../i18n";
 import { useI18n } from "../../i18n/I18nManager";
 import {
-  BookmarkIcon,
   FiltersIcon,
   MaterialIcon,
   SeedBibleIcon,
-  StarIcon,
   TickIcon,
   TodayIcon,
 } from "../icons";
@@ -985,8 +983,6 @@ const DEFAULT_CUSTOMIZATION_ICONS: Record<
   books: <SeedBibleIcon size={24} />,
   search: <MaterialIcon>search</MaterialIcon>,
   today: <TodayIcon />,
-  saves: <StarIcon />,
-  bookmarks: <BookmarkIcon />,
   share: <MaterialIcon>share</MaterialIcon>,
   chat: <MaterialIcon>chat_bubble_outline</MaterialIcon>,
   discover: <MaterialIcon>explore</MaterialIcon>,
@@ -1008,8 +1004,6 @@ function CustomizationEditIconsView(props: { state: SeedBibleState }) {
     books: t("books", { defaultValue: "Books" }),
     search: t("search", { defaultValue: "Search" }),
     today: t("today", { defaultValue: "Today" }),
-    saves: t("saves", { defaultValue: "Saves" }),
-    bookmarks: t("bookmarks", { defaultValue: "Bookmarks" }),
     share: t("share", { defaultValue: "Share" }),
     chat: t("chat", { defaultValue: "Chat" }),
     discover: t("discover", { defaultValue: "Discover" }),

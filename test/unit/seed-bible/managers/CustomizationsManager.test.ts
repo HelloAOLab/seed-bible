@@ -2010,24 +2010,24 @@ describe("CustomizationsManager", () => {
     manager.startEditing(created.id);
     recordFileMock.mockResolvedValueOnce({
       success: true,
-      url: "https://files.example.com/saves.svg",
+      url: "https://files.example.com/search.svg",
     });
-    await manager.uploadIcon("saves", svgFile());
+    await manager.uploadIcon("search", svgFile());
     recordFileMock.mockResolvedValueOnce({
       success: true,
-      url: "https://files.example.com/bookmarks.svg",
+      url: "https://files.example.com/discover.svg",
     });
-    await manager.uploadIcon("bookmarks", svgFile());
+    await manager.uploadIcon("discover", svgFile());
     recordDataMock.mockClear();
 
-    await manager.removeEditingIcon("saves");
+    await manager.removeEditingIcon("search");
 
     expect(recordDataMock).toHaveBeenCalledTimes(1);
     expect(manager.customizations.value[0]?.icons).toEqual({
-      bookmarks: "https://files.example.com/bookmarks.svg",
+      discover: "https://files.example.com/discover.svg",
     });
     expect(manager.activeIcons.value).toEqual({
-      bookmarks: "https://files.example.com/bookmarks.svg",
+      discover: "https://files.example.com/discover.svg",
     });
   });
 
@@ -2047,6 +2047,8 @@ describe("CustomizationsManager", () => {
         icons: {
           discover: "https://files.example.com/discover.svg",
           "some-future-icon": "https://files.example.com/future.svg",
+          // Saved while Saves could still have a custom icon.
+          saves: "https://files.example.com/saves.svg",
         },
       },
     });
