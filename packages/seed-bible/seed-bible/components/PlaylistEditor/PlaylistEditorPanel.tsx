@@ -245,8 +245,6 @@ export function PlaylistStepList(props: {
     <ul className="sb-discover-list sb-playlist-page-items sb-pe-steps">
       {items.map((item, index) => {
         const active = index === openIndex;
-        // On the list page no step is open, so every step can be dragged.
-        const draggable = active || openIndex < 0;
         return (
           <PlaylistStepRow
             key={index}
@@ -258,7 +256,7 @@ export function PlaylistStepList(props: {
             className={`sb-pe-step${active ? " sb-pe-step--active" : ""}${
               invalid.has(index) ? " sb-pe-step--invalid" : ""
             }${getRowClassName(index)}`}
-            dragHandleProps={draggable ? getHandleProps(index) : undefined}
+            dragHandleProps={getHandleProps(index)}
             dragLabel={t("drag-to-reorder-playlist-item", {
               defaultValue: "Drag to reorder",
             })}

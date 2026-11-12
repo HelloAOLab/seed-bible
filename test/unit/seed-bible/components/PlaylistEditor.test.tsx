@@ -214,6 +214,44 @@ describe("the playlist editor", () => {
       expect(items()[1]!.type).toBe("link");
     });
 
+    it("lets any step be dragged while another is open beside the list on desktop", () => {
+      const rowHeight = vi
+        .spyOn(HTMLLIElement.prototype, "offsetHeight", "get")
+        .mockReturnValue(40);
+      openDesktopEditor(STEPS, 0);
+
+      const handles = container.querySelectorAll<HTMLElement>(
+        ".sb-pe-step .sb-pe-step-handle"
+      );
+      expect(handles).toHaveLength(3);
+
+      // Drags the third step, which isn't the open one, up above the first.
+      act(() => {
+        handles[2]!.dispatchEvent(
+          new PointerEvent("pointerdown", {
+            bubbles: true,
+            pointerId: 1,
+            clientY: 80,
+          })
+        );
+        window.dispatchEvent(
+          new PointerEvent("pointermove", { pointerId: 1, clientY: 0 })
+        );
+        window.dispatchEvent(
+          new PointerEvent("pointerup", { pointerId: 1, clientY: 0 })
+        );
+      });
+      rowHeight.mockRestore();
+
+      expect(items().map((item) => item.type)).toEqual([
+        "html",
+        "bible-verse",
+        "link",
+      ]);
+      // The open step is still the one that was open, now one row down.
+      expect(state.playlists.editorStepIndex.value).toBe(1);
+    });
+
     it("shows a step that can't be saved yet as needing attention", () => {
       openPanel();
       // A new video step has no link until one is typed in.
