@@ -1,10 +1,19 @@
 import { signal } from "@preact/signals";
+import { render } from "preact";
+import { act } from "preact/test-utils";
 import {
   buildCustomizationTutorialSteps,
+  CustomizationEditPaneHelp,
   openCustomizationEditPane,
 } from "@packages/seed-bible/seed-bible/components/CustomizationEditPane/CustomizationEditPane";
+import type { TutorialStep } from "@packages/seed-bible/seed-bible/managers/TutorialManager";
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../testUtils/mockI18n");
+  return mockI18nManager();
+});
 
 /**
  * Fakes only the two `customizations` members a tutorial step's `onEnter`
@@ -138,5 +147,94 @@ describe("openCustomizationEditPane", () => {
     expect(panes.panes.value).toHaveLength(1);
     expect(panes.panes.value[0]?.placement).toBe("side");
     expect(panes.selectedPaneId.value).toBe(panes.panes.value[0]?.id);
+  });
+});
+
+describe("CustomizationEditPaneHelp", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  function createHelpState(editingVariantId: string | null) {
+    const replayContextual = vi.fn().mockReturnValue(true);
+    const selectActiveVariant = vi.fn().mockResolvedValue(undefined);
+    const editingCustomization = signal<unknown>({
+      id: "customization-1",
+      defaultVariantId: "light-theme",
+      variants: [{ id: "light-theme" }, { id: "dark-theme" }],
+    });
+    const state = {
+      customizations: {
+        editingCustomization,
+        editingVariantId: signal(editingVariantId),
+        selectActiveVariant,
+      },
+      tutorial: { replayContextual },
+    } as unknown as SeedBibleState;
+    return {
+      state,
+      replayContextual,
+      selectActiveVariant,
+      editingCustomization,
+    };
+  }
+
+  function clickHelp() {
+    const button = container.querySelector("button")!;
+    expect(button.getAttribute("aria-label")).toBe("Take a tour");
+    act(() => button.click());
+  }
+
+  it("replays the editor tour, touring the theme being edited", () => {
+    const { state, replayContextual, selectActiveVariant } =
+      createHelpState("dark-theme");
+    act(() => {
+      render(<CustomizationEditPaneHelp state={state} />, container);
+    });
+
+    clickHelp();
+
+    expect(replayContextual).toHaveBeenCalledTimes(1);
+    const [featureId, steps] = replayContextual.mock.calls[0] as [
+      string,
+      TutorialStep[],
+    ];
+    expect(featureId).toBe("customization-created");
+    expect(steps[0]?.id).toBe("customization-tutorial-name");
+    steps[3]?.onEnter?.();
+    expect(selectActiveVariant).toHaveBeenLastCalledWith("dark-theme");
+  });
+
+  it("tours the default theme when no theme of this Custom Branding is open", () => {
+    const { state, replayContextual, selectActiveVariant } = createHelpState(
+      "a-theme-from-another-branding"
+    );
+    act(() => {
+      render(<CustomizationEditPaneHelp state={state} />, container);
+    });
+
+    clickHelp();
+
+    const steps = replayContextual.mock.calls[0]?.[1] as TutorialStep[];
+    steps[3]?.onEnter?.();
+    expect(selectActiveVariant).toHaveBeenLastCalledWith("light-theme");
+  });
+
+  it("isn't shown while no Custom Branding is open", () => {
+    const { state, editingCustomization } = createHelpState(null);
+    editingCustomization.value = null;
+    act(() => {
+      render(<CustomizationEditPaneHelp state={state} />, container);
+    });
+
+    expect(container.querySelector("button")).toBeNull();
   });
 });

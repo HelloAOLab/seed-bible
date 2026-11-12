@@ -44,6 +44,7 @@ import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { i18n } from "../../i18n";
 import { useI18n } from "../../i18n/I18nManager";
 import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
+import { IconButton } from "../IconButton/IconButton";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
 import { SearchBar } from "../SearchBar/SearchBar";
@@ -361,6 +362,40 @@ export function CustomizationEditPaneTitle(props: {
   return <span dir="auto">{record.name}</span>;
 }
 
+/**
+ * Pane header help button: replays the editor tour on the open Custom
+ * Branding, whether or not it was seen before. The tour starts on the main
+ * screen, so it goes back there first.
+ */
+export function CustomizationEditPaneHelp(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { t } = useI18n();
+  const record = state.customizations.editingCustomization.value;
+  if (!record) {
+    return null;
+  }
+  return (
+    <IconButton
+      icon="help"
+      label={t("take-a-tour", { defaultValue: "Take a tour" })}
+      onClick={() => {
+        // Tour the theme being edited, if there is one, so the walk-through
+        // shows the colors the user is actually working on.
+        const editing = state.customizations.editingVariantId.value;
+        const variantId =
+          editing && record.variants.some((v) => v.id === editing)
+            ? editing
+            : record.defaultVariantId;
+        customizationEditView.value = "edit";
+        state.tutorial.replayContextual(
+          "customization-created",
+          buildCustomizationTutorialSteps(state, variantId)
+        );
+      }}
+    />
+  );
+}
+
 /** Pane header back button, shown on every screen except the main editor. */
 export function CustomizationEditPaneLeading() {
   const { t } = useI18n();
@@ -540,6 +575,7 @@ export function openCustomizationEditPane(
     ),
     icon: () => <CustomizationEditPaneIcon />,
     leading: () => <CustomizationEditPaneLeading />,
+    header: () => <CustomizationEditPaneHelp state={state} />,
     component: () => <CustomizationEditPane state={state} />,
     onClose: () => {
       state.customizations.stopEditing();
