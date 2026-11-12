@@ -358,6 +358,67 @@ describe("the playlist editor", () => {
       );
     });
 
+    describe("leaving with unsaved changes", () => {
+      const leave = () => {
+        openWorkspace(STEPS, -1, true);
+        act(() => {
+          state.playlists.updateEditingPlaylistMetadata({ title: "Changed" });
+        });
+        click(back());
+      };
+      const choose = (label: string) =>
+        click(
+          byText(document.body, ".sb-unsaved-changes-actions button", label)
+        );
+
+      it("offers to discard them, keep them as a draft, or publish them", () => {
+        leave();
+
+        expect(
+          Array.from(
+            document.body.querySelectorAll(
+              ".sb-unsaved-changes-actions button"
+            ),
+            (button) => button.textContent
+          )
+        ).toEqual(["Discard Changes", "Save Draft", "Save & Publish"]);
+      });
+
+      it("keeps them for next time with Save Draft", () => {
+        leave();
+
+        choose("Save Draft");
+
+        expect(state.playlists.editingPlaylist.value).toBeNull();
+        act(() => state.playlists.editPlaylist(makePlaylist(STEPS)));
+        expect(state.playlists.editingPlaylist.value?.title).toBe("Changed");
+      });
+
+      it("throws them away with Discard Changes", () => {
+        leave();
+
+        choose("Discard Changes");
+
+        expect(state.playlists.editingPlaylist.value).toBeNull();
+        act(() => state.playlists.editPlaylist(makePlaylist(STEPS)));
+        expect(state.playlists.editingPlaylist.value?.title).toBeNull();
+      });
+
+      it("saves them with Save & Publish", async () => {
+        const recordData = vi
+          .spyOn(state.os, "recordData")
+          .mockResolvedValue(undefined as never);
+        leave();
+
+        choose("Save & Publish");
+
+        await waitFor(() => state.playlists.editingPlaylist.value === null);
+        expect((recordData.mock.calls[0]![2] as Playlist).title).toBe(
+          "Changed"
+        );
+      });
+    });
+
     it("opens a step from the list", () => {
       openWorkspace(STEPS, -1, true);
 

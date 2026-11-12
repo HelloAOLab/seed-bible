@@ -20,11 +20,11 @@ import {
 const UNSAVED_CHANGES_CONFIRM_MODAL_ID = "playlist-unsaved-changes-confirm";
 
 function UnsavedChangesConfirmModalContent(props: {
-  onConfirm: () => void;
-  onGoBack: () => void;
-  onSaveAndExit: () => void;
+  onDiscard: () => void;
+  onSaveDraft: () => void;
+  onPublish: () => void;
 }) {
-  const { onConfirm, onGoBack, onSaveAndExit } = props;
+  const { onDiscard, onSaveDraft, onPublish } = props;
   const { t } = useI18n();
 
   return (
@@ -38,23 +38,27 @@ function UnsavedChangesConfirmModalContent(props: {
         <button
           type="button"
           className="sb-photo-modal-button"
-          onClick={onConfirm}
+          onClick={onDiscard}
         >
-          {t("confirm", { defaultValue: "Confirm" })}
+          {t("playlist-editor-discard-changes", {
+            defaultValue: "Discard Changes",
+          })}
         </button>
         <button
           type="button"
           className="sb-photo-modal-button"
-          onClick={onGoBack}
+          onClick={onSaveDraft}
         >
-          {t("go-back", { defaultValue: "Go back" })}
+          {t("playlist-editor-save-draft", { defaultValue: "Save Draft" })}
         </button>
         <button
           type="button"
           className="sb-photo-modal-button sb-photo-modal-button-primary"
-          onClick={onSaveAndExit}
+          onClick={onPublish}
         >
-          {t("save-and-exit", { defaultValue: "Save & exit" })}
+          {t("playlist-editor-save-and-publish", {
+            defaultValue: "Save & Publish",
+          })}
         </button>
       </div>
     </div>
@@ -121,13 +125,23 @@ export function requestCancelPlaylistEditor(
     },
     content: () => (
       <UnsavedChangesConfirmModalContent
-        onConfirm={() => {
+        onDiscard={() => {
           modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID);
           playlists.cancelEditingPlaylist();
         }}
-        onGoBack={() => modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID)}
-        onSaveAndExit={() => {
+        onSaveDraft={() => {
           modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID);
+          playlists.leaveEditorKeepingDraft();
+        }}
+        onPublish={() => {
+          modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID);
+          // A playlist with an unfinished step can't be saved: stay, on the
+          // first such step, to finish it.
+          const [unfinished] = playlists.editingPlaylistInvalidSteps();
+          if (unfinished !== undefined) {
+            playlists.selectEditorStep(unfinished);
+            return;
+          }
           playlists.saveEditingPlaylist().catch((error: unknown) => {
             console.error("Failed to save playlist:", error);
           });

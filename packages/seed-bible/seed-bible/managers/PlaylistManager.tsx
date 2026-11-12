@@ -2887,6 +2887,16 @@ export function createPlaylistManager(
   };
 
   /**
+   * Leaves the editor as discarding does, but keeps its unsaved edits in this
+   * browser for when the playlist is next opened in the editor.
+   */
+  const leaveEditorKeepingDraft = (): void => {
+    linkPreviews.cancel();
+    keepDraftNow();
+    closeEditor(editingSaved ? editingPlaylistBaseline.peek() : null);
+  };
+
+  /**
    * True when the open draft's name, description, cover, or items differ from
    * what they were when the editor opened.
    */
@@ -4243,6 +4253,7 @@ export function createPlaylistManager(
     reorderEditingPlaylistItem,
     duplicateEditingPlaylistItem,
     cancelEditingPlaylist,
+    leaveEditorKeepingDraft,
     isEditingPlaylistDirty,
     editingPlaylistInvalidSteps,
     editorStepIndex,
