@@ -126,6 +126,7 @@ import {
   isPlaylistEditorTab,
   PlaylistReaderHint,
 } from "../PlaylistEditor/PlaylistEditorWorkspace";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 interface ReaderChapterActionProps {
   state: SeedBibleState;
@@ -4565,17 +4566,15 @@ export function BibleReader(props: BibleReaderProps) {
                 {openFootnote.chapter.chapter.number}
                 {openFootnote.verse ? ":" + openFootnote.verse.number : ""}
               </h3>
-              <button
+              <CloseButton
                 className="sb-footnote-modal-close"
-                aria-label={t("close-footnote", {
+                label={t("close-footnote", {
                   defaultValue: "Close footnote",
                 })}
-                onClick={() => {
+                onClose={() => {
                   closeFootnote();
                 }}
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
+              />
             </div>
 
             <div className="sb-footnote-modal-content">

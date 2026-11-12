@@ -5,7 +5,7 @@ import type { BibleTheme, HighlightId } from "../../managers/ThemeManager";
 import type { SeedBibleCustomization } from "../../managers/CustomizationsManager";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { useI18n, type I18nHook } from "../../i18n/I18nManager";
-import { MaterialIcon } from "../icons";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 /**
  * Theme values that aren't a paintable color on their own (a sidebar that
@@ -392,16 +392,15 @@ export function DockableThemeLivePreview(props: {
               width: `${FLOATING_PREVIEW_WIDTH_PX}px`,
             }}
           >
-            <button
-              type="button"
+            <CloseButton
               className="sb-cz-floating-preview-close"
-              aria-label={t("customization-preview-hide", {
+              size="sm"
+              look="tinted"
+              label={t("customization-preview-hide", {
                 defaultValue: "Hide preview",
               })}
-              onClick={() => setDismissed(true)}
-            >
-              <MaterialIcon>close</MaterialIcon>
-            </button>
+              onClose={() => setDismissed(true)}
+            />
             <ThemeLivePreview
               theme={props.theme}
               highlightId={props.highlightId}

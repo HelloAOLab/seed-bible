@@ -1,5 +1,6 @@
 import { signal, type ReadonlySignal, type Signal } from "@preact/signals";
 import type { ComponentChild } from "preact";
+import type { CloseButtonLook } from "../components/CloseButton/CloseButton";
 
 /**
  * Placement mode for a pane. Chosen at creation time and immutable
@@ -48,6 +49,11 @@ export interface Pane {
    * hooks (i18n, signals). Omit for a plain title-and-close header.
    */
   header?: () => ComponentChild;
+  /**
+   * The header close button's look: `plain` (the default) or `tinted`, for a
+   * pane whose other header buttons sit on tinted circles.
+   */
+  closeButtonLook?: CloseButtonLook;
   /**
    * Optional callback invoked once when the pane closes, by any path: the
    * header's close (X) button, a programmatic `closePane`/`closeAll`/
@@ -116,6 +122,11 @@ export interface PaneOpenOptions {
    * hooks (i18n, signals). Omit for a plain title-and-close header.
    */
   header?: () => ComponentChild;
+  /**
+   * The header close button's look: `plain` (the default) or `tinted`, for a
+   * pane whose other header buttons sit on tinted circles.
+   */
+  closeButtonLook?: CloseButtonLook;
   /**
    * Optional callback invoked once when the pane closes, by any path: the
    * header's close (X) button, a programmatic `closePane`/`closeAll`/
@@ -334,6 +345,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
           icon: options.icon,
           leading: options.leading,
           header: options.header,
+          closeButtonLook: options.closeButtonLook,
           onClose: options.onClose,
           confirmClose: options.confirmClose,
           showHeader: options.showHeader ?? true,

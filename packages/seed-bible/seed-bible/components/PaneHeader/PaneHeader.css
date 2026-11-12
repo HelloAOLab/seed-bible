@@ -61,8 +61,8 @@
   gap: 4px;
 }
 
-/* The close button, and the buttons panes put in the header (their back
-   buttons), share one look: the sidebar's icon buttons' size and hover. */
+/* The buttons panes put in the header (their back buttons): the sidebar's
+   icon buttons' size and hover. The close button is the shared CloseButton. */
 .sb-pane-header-button {
   flex: 0 0 auto;
   border: none;

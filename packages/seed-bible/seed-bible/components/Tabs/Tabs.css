@@ -243,8 +243,9 @@
 }
 
 /* The X close button inside the Tabs header-actions is mobile-only.
- * On desktop the drawer doesn't need it (it lives next to the sidebar). */
-.sb-sidebar-tabs-header-close-button {
+ * On desktop the drawer doesn't need it (it lives next to the sidebar).
+ * Two classes, to outrank the CloseButton's own `display`. */
+.sb-close-button.sb-sidebar-tabs-header-close-button {
   display: none;
 }
 
@@ -1546,19 +1547,11 @@
   color: var(--sb-primary-color);
 }
 
-.sb-sidebar-close-button {
+/* Phone only (shown in the media query below). Two classes, to outrank the
+   CloseButton's own `display`. */
+.sb-close-button.sb-sidebar-close-button {
   display: none;
-  border: none;
-  background: transparent;
-  color: var(--sb-font-color);
-  cursor: pointer;
-  width: 2rem;
-  height: 2rem;
   margin-inline-start: auto;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border-radius: var(--sb-radius-sm);
 }
 
 @media (max-width: 480px) {
@@ -1619,7 +1612,7 @@
     }
   }
 
-  .sb-sidebar-close-button {
+  .sb-close-button.sb-sidebar-close-button {
     display: inline-flex;
   }
 
@@ -1671,8 +1664,10 @@
     display: none;
   }
 
-  /* Show the mobile X close inside the header-actions. */
-  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header-close-button {
+  /* Show the mobile X close inside the header-actions. Outranks the
+     two-class rule that hides it on desktop, whatever order they load in. */
+  .sb-tabs-sidebar-mobile-open
+    .sb-close-button.sb-sidebar-tabs-header-close-button {
     display: inline-flex;
   }
 
@@ -1833,12 +1828,13 @@
     width: 100%;
   }
 
-  .sb-selector-mobile-close {
+  /* The Tabs button opposite the Books close button, and the same size. */
+  .sb-selector-mobile-tabs {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
     border: none;
     background: transparent;
     color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
