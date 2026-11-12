@@ -87,8 +87,8 @@
   font-weight: 600;
   cursor: pointer;
   transition:
-    filter 0.15s ease,
-    background 0.15s ease;
+    filter var(--sb-duration-fast) ease,
+    background var(--sb-duration-fast) ease;
 }
 
 .sb-offline-prompt-btn:hover {

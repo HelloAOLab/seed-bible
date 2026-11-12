@@ -672,7 +672,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           readingState.loadPreviousChapter()
         );
       } else {
-        track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transition =
+          "transform var(--sb-duration-slow) cubic-bezier(0.4, 0, 0.2, 1)";
         track.style.transform = centreTransform();
       }
     };
@@ -690,7 +691,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       const track = swipeTrackRef.current;
       if (track) {
         setSwipeTrackDragging(track, false);
-        track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transition =
+          "transform var(--sb-duration-slow) cubic-bezier(0.4, 0, 0.2, 1)";
         track.style.transform = centreTransform();
       }
     };

@@ -17,13 +17,13 @@
   font-family: var(--sb-reader-toolbar-font-family);
   color: var(--sb-reader-toolbar-font-color);
 
-  transition: transform 0.3s ease;
+  transition: transform var(--sb-duration-slow) ease;
   user-select: none;
 }
 
 .sb-reader-toolbar-wrap {
   position: static;
-  transition: transform 0.3s ease;
+  transition: transform var(--sb-duration-slow) ease;
   /* Both mobile rows (chapter nav + tabs) derive their text, icons and tints
      from --sb-font-color, so re-pointing it here makes them follow the reader
      toolbar's text color instead of the page's. The pill border is re-declared
@@ -41,7 +41,7 @@
   flex: 0 0 2.75rem;
   height: 100%;
   position: relative;
-  transition: transform 0.25s ease;
+  transition: transform var(--sb-duration-slow) ease;
 }
 
 .sb-reader-toolbar-labeled .sb-reader-toolbar-item {
@@ -65,8 +65,8 @@
   color: inherit;
 
   transition:
-    background-color 0.2s ease,
-    transform 0.25s ease;
+    background-color var(--sb-duration-base) ease,
+    transform var(--sb-duration-slow) ease;
 }
 
 /* The chapter controls render as real `<a>` elements, which pulls in the
@@ -231,7 +231,7 @@
 /* Opens like the ⋯ menus (`sb-context-menu-open`, in ContextMenu.css). */
 @media (prefers-reduced-motion: no-preference) {
   .sb-tool-context-menu {
-    animation: sb-context-menu-open 0.15s ease-out;
+    animation: sb-context-menu-open var(--sb-duration-fast) ease-out;
   }
 }
 
@@ -326,7 +326,7 @@
   background: var(--sb-reader-toolbar-background);
   color: var(--sb-font-color);
   height: 3.125rem;
-  transition: transform 0.3s ease;
+  transition: transform var(--sb-duration-slow) ease;
 }
 
 /* Room above the chapter pill for the narration scrubber. Grows upwards, since
@@ -571,7 +571,7 @@
 /* Opens like the ⋯ menus (`sb-context-menu-open`, in ContextMenu.css). */
 @media (prefers-reduced-motion: no-preference) {
   .sb-more-menu {
-    animation: sb-context-menu-open 0.15s ease-out;
+    animation: sb-context-menu-open var(--sb-duration-fast) ease-out;
   }
 }
 
@@ -588,7 +588,7 @@
   border-radius: var(--sb-radius-md);
   cursor: pointer;
   text-align: start;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 .sb-more-menu-item:hover {
@@ -713,7 +713,7 @@
     background: transparent;
     color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
     border-radius: var(--sb-radius-md);
-    transition: color 0.15s ease;
+    transition: color var(--sb-duration-fast) ease;
   }
 
   /* Exclude the active tab from hover: on touch devices `:hover` sticks after
@@ -931,7 +931,7 @@
   height: 1.5rem;
   border-radius: 50%;
   border: 1px solid var(--sb-divider-color);
-  transition: transform 0.15s ease;
+  transition: transform var(--sb-duration-fast) ease;
 }
 
 .sb-verse-toolbar-color-button:hover .sb-verse-toolbar-color {
@@ -955,7 +955,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 .sb-verse-toolbar-back:hover {
@@ -985,8 +985,8 @@
   font-weight: 600;
   white-space: nowrap;
   transition:
-    background-color 0.15s ease,
-    filter 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    filter var(--sb-duration-fast) ease;
 }
 
 .sb-verse-toolbar-plus {
@@ -1084,7 +1084,7 @@
   font-size: 0.6875rem;
   line-height: 1;
   border-radius: var(--sb-radius-sm);
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 .sb-verse-toolbar-action:hover:not(:disabled) {
@@ -1151,7 +1151,7 @@
      an ancestor `none` would block that scroller. */
   touch-action: none;
 
-  transition: transform 0.2s ease;
+  transition: transform var(--sb-duration-base) ease;
 }
 
 /* Drag target around the grab handle. The pill is only 4px tall, so the
@@ -1357,7 +1357,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
   z-index: 1;
 }
 

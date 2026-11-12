@@ -123,7 +123,7 @@
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: filter 0.15s ease;
+  transition: filter var(--sb-duration-fast) ease;
 }
 
 .sb-annotation-conflict-confirm:hover:not(:disabled) {

@@ -38,7 +38,7 @@
 }
 
 .sb-translation-list-chevron {
-  transition: transform 0.3s;
+  transition: transform var(--sb-duration-slow);
 }
 
 .sb-translation-list-chevron--open {

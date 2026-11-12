@@ -78,7 +78,7 @@
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 .sb-session-group-bar-rejoin:hover {

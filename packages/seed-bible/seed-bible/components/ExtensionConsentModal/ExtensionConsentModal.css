@@ -510,7 +510,7 @@
   border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-font-color), transparent 70%);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--sb-duration-fast);
 }
 
 .sb-extension-permissions-switch[aria-checked="true"] {
@@ -536,7 +536,7 @@
   border-radius: 50%;
   background: #ffffff;
   box-shadow: 0 1px 2px rgb(0 0 0 / 25%);
-  transition: inset-inline-start 0.15s;
+  transition: inset-inline-start var(--sb-duration-fast);
 }
 
 .sb-extension-permissions-switch[aria-checked="true"]

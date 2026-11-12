@@ -45,8 +45,8 @@
   text-align: start;
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    border-color var(--sb-duration-fast) ease;
 }
 
 .sb-hotl-exhibit-primary:hover {
@@ -102,9 +102,9 @@
   font-size: 0.75rem;
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    border-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
 }
 
 .sb-hotl-exhibit-piece:hover,

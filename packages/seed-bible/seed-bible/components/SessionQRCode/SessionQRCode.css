@@ -73,7 +73,7 @@
   color: #000000;
   font-size: 0.875rem;
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--sb-duration-fast) ease;
 }
 
 .sb-session-qr-code:hover:not(:disabled) .sb-session-qr-enlarge-icon,

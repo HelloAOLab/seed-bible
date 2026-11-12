@@ -9,7 +9,7 @@
   flex-wrap: wrap;
   padding-bottom: var(--sb-reader-bottom-inset);
   opacity: 1;
-  transition: opacity 0.25s ease;
+  transition: opacity var(--sb-duration-slow) ease;
 }
 
 .sb-below-reader-toolbar::before {
@@ -47,7 +47,7 @@
   font: inherit;
   height: 2.25rem;
   min-width: 2.75rem;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--sb-duration-base) ease;
 }
 
 .sb-below-reader-toolbar-button:hover:not(:disabled) {

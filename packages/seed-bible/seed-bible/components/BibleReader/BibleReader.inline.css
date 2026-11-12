@@ -33,8 +33,8 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
   cursor: pointer;
   transition:
-    color 0.15s ease,
-    background-color 0.15s ease;
+    color var(--sb-duration-fast) ease,
+    background-color var(--sb-duration-fast) ease;
   z-index: 1;
 }
 .sb-verse-number-flare {
@@ -226,8 +226,8 @@
   line-height: 1;
   letter-spacing: 0;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
 }
 
 .sb-bible-reader-translation:hover,
@@ -307,10 +307,10 @@
   max-height: 3.5rem;
   overflow: hidden;
   transition:
-    transform 0.25s ease,
-    max-height 0.25s ease,
-    padding-top 0.25s ease,
-    padding-bottom 0.25s ease;
+    transform var(--sb-duration-slow) ease,
+    max-height var(--sb-duration-slow) ease,
+    padding-top var(--sb-duration-slow) ease,
+    padding-bottom var(--sb-duration-slow) ease;
 }
 
 .sb-bible-reader-mobile-header-text {
@@ -380,7 +380,7 @@
   cursor: pointer;
   padding: 0;
   margin-inline-start: 0.5rem;
-  transition: filter 0.15s ease;
+  transition: filter var(--sb-duration-fast) ease;
   display: none;
 }
 
@@ -678,8 +678,8 @@
 .sb-highlight-ribbon {
   opacity: 1;
   transition:
-    opacity 0.25s ease,
-    fill 0.25s ease;
+    opacity var(--sb-duration-slow) ease,
+    fill var(--sb-duration-slow) ease;
 }
 
 /* Only genuinely-new ribbons (`-enter`) start transparent and fade in; reshaped
@@ -701,9 +701,9 @@
   fill-opacity: 0.5;
   stroke-width: 2;
   transition:
-    opacity 0.25s ease,
-    fill 0.25s ease,
-    stroke 0.25s ease;
+    opacity var(--sb-duration-slow) ease,
+    fill var(--sb-duration-slow) ease,
+    stroke var(--sb-duration-slow) ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -738,7 +738,7 @@
   margin-right: var(--text-heading-margin-right);
   font-size: 1.125em;
   line-height: 1;
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity var(--sb-duration-slow) ease-in-out;
 }
 
 .sb-line-break {
@@ -770,10 +770,10 @@
   cursor: var(--sb-verse-cursor);
 
   transition:
-    background-color 0.2s ease,
-    background 0.3s ease,
-    color 0.2s ease,
-    opacity 0.3s ease-in-out;
+    background-color var(--sb-duration-base) ease,
+    background var(--sb-duration-slow) ease,
+    color var(--sb-duration-base) ease,
+    opacity var(--sb-duration-slow) ease-in-out;
 
   &:has(.sb-verse-decoration-diminish) {
     opacity: 1;
@@ -782,9 +782,9 @@
 
 .sb-verse-decorator {
   transition:
-    background-color 0.2s ease,
-    background 0.3s ease,
-    color 0.2s ease;
+    background-color var(--sb-duration-base) ease,
+    background var(--sb-duration-slow) ease,
+    color var(--sb-duration-base) ease;
 }
 
 /* Wrapper around a highlighted run (one prose run, or one poetry verse). It
@@ -1019,7 +1019,7 @@
   cursor: pointer;
   transition:
     transform 0.1s ease,
-    background-color 0.2s ease;
+    background-color var(--sb-duration-base) ease;
 }
 
 .sb-reader-error-retry {
@@ -1155,8 +1155,8 @@
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   transition:
-    filter 0.15s ease,
-    background 0.15s ease;
+    filter var(--sb-duration-fast) ease,
+    background var(--sb-duration-fast) ease;
 }
 
 .sb-reader-not-found-action:hover {
@@ -1232,11 +1232,11 @@
    have their own entrances, which take precedence. */
 @media (prefers-reduced-motion: no-preference) {
   .sb-footnote-modal-overlay {
-    animation: sb-modal-fade-in 0.3s ease-out;
+    animation: sb-modal-fade-in var(--sb-duration-slow) ease-out;
   }
 
   .sb-footnote-modal {
-    animation: sb-modal-rise 0.3s ease-out;
+    animation: sb-modal-rise var(--sb-duration-slow) ease-out;
   }
 }
 
@@ -1383,7 +1383,7 @@
 
   @media (prefers-reduced-motion: no-preference) {
     .sb-footnote-modal-overlay-mobile-sheet > .sb-footnote-modal {
-      animation: sb-modal-sheet-slide-up 0.25s ease-out;
+      animation: sb-modal-sheet-slide-up var(--sb-duration-slow) ease-out;
     }
   }
 

@@ -67,6 +67,12 @@
   --sb-layer-prompt: 1100;
   --sb-layer-tour: 1200;
   --sb-layer-toast: 1300;
+  /* UI animation speeds: quick feedback (hover, press), most open/close and
+     fade changes, and larger moves (sheets, modals, slides). Long or looping
+     animations keep their own timings. */
+  --sb-duration-fast: 0.15s;
+  --sb-duration-base: 0.2s;
+  --sb-duration-slow: 0.3s;
 
   /* Matches DEFAULT_SCRIPTURE_WIDTH in SettingsManager; the runtime value only
      replaces it when the reader has chosen a different width. */

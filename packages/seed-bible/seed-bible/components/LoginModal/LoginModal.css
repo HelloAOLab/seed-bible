@@ -187,8 +187,8 @@
   cursor: pointer;
   width: 100%;
   transition:
-    filter 0.2s ease,
-    opacity 0.2s ease;
+    filter var(--sb-duration-base) ease,
+    opacity var(--sb-duration-base) ease;
 }
 
 .sb-login-submit:hover:not(:disabled) {
@@ -211,7 +211,7 @@
   font-family: inherit;
   cursor: pointer;
   width: 100%;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--sb-duration-base) ease;
 }
 
 .sb-login-secondary:hover:not(:disabled) {
@@ -265,7 +265,7 @@
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
-  transition: filter 0.2s ease;
+  transition: filter var(--sb-duration-base) ease;
 }
 
 .sb-login-resend:hover:not(:disabled) {

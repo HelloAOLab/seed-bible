@@ -24,7 +24,7 @@
 
   /* Sidebar is hidden by inline styles */
   opacity: 1;
-  transition: opacity 0.25s ease;
+  transition: opacity var(--sb-duration-slow) ease;
 }
 
 /* Docked on desktop, the user's own expand or collapse slides the width (and
@@ -35,9 +35,9 @@
 @media (min-width: 769px) and (prefers-reduced-motion: no-preference) {
   .sb-tabs-sidebar-resizing {
     transition:
-      width 0.25s ease,
-      padding 0.25s ease,
-      opacity 0.25s ease;
+      width var(--sb-duration-slow) ease,
+      padding var(--sb-duration-slow) ease,
+      opacity var(--sb-duration-slow) ease;
     overflow: hidden;
 
     &:not(.sb-tabs-sidebar-collapsed) > * {
@@ -229,8 +229,8 @@
   justify-content: center;
   padding: 0;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
 }
 
 .sb-sidebar-tabs-header-icon-button:hover {
@@ -283,8 +283,8 @@
   align-self: center;
   flex-shrink: 0;
   transition:
-    color 0.15s ease,
-    background-color 0.15s ease;
+    color var(--sb-duration-fast) ease,
+    background-color var(--sb-duration-fast) ease;
 }
 
 .sb-tab-save-button:hover {
@@ -332,7 +332,7 @@
   align-items: center;
   padding-inline-end: calc(0.375rem + 1px);
   border-radius: var(--sb-radius-md);
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 .sb-save-category-header:hover {
@@ -379,7 +379,7 @@
   display: inline-flex;
   align-items: center;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  transition: transform 0.15s ease;
+  transition: transform var(--sb-duration-fast) ease;
 }
 
 .sb-save-category-chevron .material-symbols-outlined {
@@ -521,8 +521,8 @@
   cursor: pointer;
   text-align: start;
   transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
+    border-color var(--sb-duration-fast) ease,
+    background-color var(--sb-duration-fast) ease;
 }
 
 .sb-save-picker-category:hover {
@@ -548,8 +548,8 @@
   position: relative;
   box-sizing: border-box;
   transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
+    border-color var(--sb-duration-fast) ease,
+    background-color var(--sb-duration-fast) ease;
 }
 
 .sb-save-picker-checkbox-checked {
@@ -644,8 +644,8 @@
   background: transparent;
   color: #b91c1c;
   transition:
-    background-color 0.15s ease,
-    opacity 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    opacity var(--sb-duration-fast) ease;
 }
 
 .sb-save-picker-remove:hover:not(:disabled) {
@@ -670,9 +670,9 @@
   background: transparent;
   color: var(--sb-font-color);
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    opacity 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    border-color var(--sb-duration-fast) ease,
+    opacity var(--sb-duration-fast) ease;
 }
 
 .sb-save-picker-stage-folder:hover:not(:disabled) {
@@ -700,9 +700,9 @@
   cursor: pointer;
   border: 1px solid transparent;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease,
-    opacity 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease,
+    opacity var(--sb-duration-fast) ease;
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   border-color: var(--sb-primary-color);
@@ -766,8 +766,8 @@
   padding: 0.375rem 0;
   font: inherit;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
 }
 
 .sb-collapsed-tab-tile:hover:not(.sb-collapsed-tab-tile-selected) {
@@ -918,8 +918,8 @@
   background: var(--sb-tab-background);
   color: var(--sb-tab-font-color);
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
 }
 
 .sb-tab-row:hover:not(.sb-tab-row-selected) {
@@ -975,7 +975,7 @@
   :is(.sb-save-category-header, .sb-save-item, .sb-bookmarks-panel-row)
     > :is(.sb-save-category-menu-anchor, .sb-tab-menu-anchor) {
     transition:
-      opacity 0.15s ease,
+      opacity var(--sb-duration-fast) ease,
       visibility 0s;
   }
 
@@ -991,8 +991,8 @@
     visibility: hidden;
     opacity: 0;
     transition:
-      opacity 0.15s ease,
-      visibility 0s 0.15s;
+      opacity var(--sb-duration-fast) ease,
+      visibility 0s var(--sb-duration-fast);
   }
 }
 
@@ -1128,7 +1128,7 @@
   background-color: color-mix(in srgb, var(--sb-font-color), transparent 78%);
   position: relative;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--sb-duration-base) ease;
   flex-shrink: 0;
   margin: 0;
   border: none;
@@ -1145,7 +1145,7 @@
   border-radius: 50%;
   background-color: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  transition: left 0.2s ease;
+  transition: left var(--sb-duration-base) ease;
 }
 
 .sb-session-settings-row input[type="checkbox"]:checked {
@@ -1192,8 +1192,8 @@
   font-weight: 500;
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    border-color var(--sb-duration-fast) ease;
 }
 
 .sb-session-settings-duration-option:hover:not(:disabled) {
@@ -1232,7 +1232,7 @@
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 .sb-session-settings-cancel {
@@ -1394,7 +1394,7 @@
   font-family: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 .sb-session-cohost-option:hover {
@@ -1412,7 +1412,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease;
+  transition: transform var(--sb-duration-fast) ease;
 }
 
 .sb-sidebar-self-avatar:hover {
@@ -1524,8 +1524,8 @@
 .sb-sidebar-icon-button,
 .sb-sidebar-top-actions .sb-sidebar-top-icon-button {
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
 }
 
 @media (hover: hover) {

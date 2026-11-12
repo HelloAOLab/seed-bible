@@ -79,11 +79,11 @@
    rather than squeezing. */
 @media (prefers-reduced-motion: no-preference) {
   .sb-pane-side-shell-entering {
-    animation: sb-pane-side-in 0.25s ease;
+    animation: sb-pane-side-in var(--sb-duration-slow) ease;
   }
 
   .sb-pane-side-shell-leaving {
-    animation: sb-pane-side-out 0.25s ease forwards;
+    animation: sb-pane-side-out var(--sb-duration-slow) ease forwards;
     pointer-events: none;
   }
 
@@ -324,8 +324,8 @@
   cursor: pointer;
   font: inherit;
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
+    background-color var(--sb-duration-base) ease,
+    border-color var(--sb-duration-base) ease;
 }
 
 .sb-empty-pane-toolbar-button:hover {
@@ -416,7 +416,7 @@
 /* Opens like the ⋯ menus (`sb-context-menu-open`, in ContextMenu.css). */
 @media (prefers-reduced-motion: no-preference) {
   .sb-pane-layout-menu {
-    animation: sb-context-menu-open 0.15s ease-out;
+    animation: sb-context-menu-open var(--sb-duration-fast) ease-out;
   }
 }
 
@@ -441,8 +441,8 @@
   border-radius: var(--sb-radius-md);
   cursor: pointer;
   transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease;
+    border-color var(--sb-duration-base) ease,
+    background-color var(--sb-duration-base) ease;
   font-family: inherit;
 }
 
@@ -520,7 +520,7 @@
   font-size: 0.75rem;
   font-weight: 500;
   border-radius: var(--sb-radius-xs);
-  transition: background-color 0.2s ease;
+  transition: background-color var(--sb-duration-base) ease;
 }
 
 .sb-pane-layout-option-selected .sb-pane-layout-preview-cell {

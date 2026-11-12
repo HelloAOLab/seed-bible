@@ -305,8 +305,8 @@ interface SidePaneProps {
   pane: Pane;
 }
 
-/** How long a docked pane takes to slide in or out; matches PaneLayout.css. */
-const SIDE_PANE_SLIDE_MS = 250;
+/** How long a docked pane takes to slide in or out; matches `--sb-duration-slow`. */
+const SIDE_PANE_SLIDE_MS = 300;
 
 /**
  * How soon after a click or key press a pane change still counts as the

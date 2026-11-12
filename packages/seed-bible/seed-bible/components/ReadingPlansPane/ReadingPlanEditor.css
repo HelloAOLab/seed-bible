@@ -124,8 +124,8 @@
   text-align: start;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
+    border-color var(--sb-duration-fast) ease,
+    background var(--sb-duration-fast) ease;
 }
 
 .sb-rp-choice:hover {
@@ -542,7 +542,7 @@
   font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--sb-duration-fast) ease;
 }
 
 .sb-rp-button:disabled {

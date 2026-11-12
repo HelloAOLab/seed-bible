@@ -59,7 +59,7 @@
   color: var(--sb-font-color);
   font-size: 0.9375rem;
   font-family: inherit;
-  transition: border-color 0.2s ease;
+  transition: border-color var(--sb-duration-base) ease;
 }
 
 .sb-cz-input:focus {
@@ -86,7 +86,7 @@
   font-size: 0.875rem;
   text-align: start;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--sb-duration-base) ease;
 }
 
 .sb-cz-row:hover,
@@ -177,8 +177,8 @@
   font-weight: 600;
   cursor: pointer;
   transition:
-    background-color 0.2s ease,
-    opacity 0.2s ease;
+    background-color var(--sb-duration-base) ease,
+    opacity var(--sb-duration-base) ease;
 }
 
 .sb-cz-button:hover:not(:disabled) {
@@ -290,7 +290,7 @@
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
   border-radius: var(--sb-radius-lg);
   overflow: hidden;
-  transition: border-color 0.2s ease;
+  transition: border-color var(--sb-duration-base) ease;
 }
 
 .sb-cz-card:hover,
@@ -418,7 +418,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--sb-duration-base) ease;
 }
 
 .sb-cz-new-button:hover {
@@ -447,8 +447,8 @@
   text-align: start;
   cursor: pointer;
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
+    background-color var(--sb-duration-base) ease,
+    border-color var(--sb-duration-base) ease;
 }
 
 button.sb-cz-logo:hover:not(:disabled) {
@@ -568,7 +568,7 @@ button.sb-cz-logo:disabled {
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--sb-duration-base) ease;
 }
 
 .sb-cz-add-card:hover {
@@ -602,7 +602,7 @@ button.sb-cz-logo:disabled {
   height: 3.25rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
   border-radius: var(--sb-radius-md);
-  transition: border-color 0.2s ease;
+  transition: border-color var(--sb-duration-base) ease;
 }
 
 .sb-cz-preset:hover .sb-cz-theme-thumb {
@@ -1038,7 +1038,7 @@ button.sb-cz-tile-swatch:focus-visible {
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
   border: none;
   background: transparent;
   color: #dc2626;

@@ -43,7 +43,7 @@
    `ContextMenuWithButton` sets as the `transform-origin`. */
 @media (prefers-reduced-motion: no-preference) {
   .sb-context-menu {
-    animation: sb-context-menu-open 0.15s ease-out;
+    animation: sb-context-menu-open var(--sb-duration-fast) ease-out;
   }
 }
 

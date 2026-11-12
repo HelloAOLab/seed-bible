@@ -1612,7 +1612,8 @@ interface Ribbon {
   enter: boolean;
   exiting: boolean;
 }
-const RIBBON_FADE_MS = 250;
+/** Matches the ribbon fade, `--sb-duration-slow`. */
+const RIBBON_FADE_MS = 300;
 
 /**
  * How long the chapter the reader has left stays on screen, dimmed, before the

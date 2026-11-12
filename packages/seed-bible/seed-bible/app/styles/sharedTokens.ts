@@ -1,5 +1,5 @@
 /**
- * The shared size scale and stacking layers, as `--sb-*` custom properties. The app gets these
+ * The shared size scale, stacking layers and animation speeds, as `--sb-*` custom properties. The app gets these
  * from `:root` in `base.inline.css`; sandboxed extension frames don't load
  * that file, so the host sends them this copy alongside the theme instead.
  * Keep the two in step (a unit test compares them).
@@ -18,6 +18,9 @@ export const SHARED_TOKENS = {
   "--sb-layer-prompt": "1100",
   "--sb-layer-tour": "1200",
   "--sb-layer-toast": "1300",
+  "--sb-duration-fast": "0.15s",
+  "--sb-duration-base": "0.2s",
+  "--sb-duration-slow": "0.3s",
 } as const;
 
 export const SHARED_TOKENS_CSS = Object.entries(SHARED_TOKENS)

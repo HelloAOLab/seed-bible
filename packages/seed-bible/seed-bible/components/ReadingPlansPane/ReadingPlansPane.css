@@ -218,8 +218,8 @@
   text-align: start;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color var(--sb-duration-fast) ease,
+    box-shadow var(--sb-duration-fast) ease;
 }
 
 .sb-rp-card:hover {

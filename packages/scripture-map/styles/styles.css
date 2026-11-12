@@ -583,14 +583,14 @@
 
 @media (prefers-reduced-motion: reduce) {
   .book-container .book-cover-front {
-    transition: opacity 0.25s ease;
+    transition: opacity var(--sb-duration-slow) ease;
   }
   .book-container.book-open .book-cover-front {
     transform: none;
     opacity: 0;
   }
   .book-header .book-caret {
-    transition: opacity 0.2s ease;
+    transition: opacity var(--sb-duration-base) ease;
   }
 }
 
@@ -628,7 +628,7 @@
   opacity: 0.45;
   transition:
     transform 0.35s cubic-bezier(0.25, 0.75, 0.25, 1),
-    opacity 0.2s ease;
+    opacity var(--sb-duration-base) ease;
 }
 
 .book-container.book-open .book-header .book-caret {

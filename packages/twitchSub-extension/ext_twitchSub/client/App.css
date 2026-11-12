@@ -6,7 +6,7 @@
   height: 100%;
   width: 100%;
   padding: 10px 15px 15px 15px;
-  transition: all 0.3s ease;
+  transition: all var(--sb-duration-slow) ease;
   color: var(--sb-font-color);
 }
 
@@ -110,7 +110,7 @@
   inset: 0;
   background: #ccc;
   border-radius: var(--sb-radius-full);
-  transition: background 0.25s;
+  transition: background var(--sb-duration-base);
 }
 
 .thumb {
@@ -122,7 +122,7 @@
   background: #fff;
   border-radius: 50%;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  transition: transform 0.25s;
+  transition: transform var(--sb-duration-base);
 }
 
 .label {
@@ -222,7 +222,7 @@
   z-index: 20;
   visibility: hidden;
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--sb-duration-fast) ease;
   pointer-events: none;
 }
 

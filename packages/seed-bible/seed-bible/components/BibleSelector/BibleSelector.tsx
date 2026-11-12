@@ -308,7 +308,7 @@ const SearchBar = (props: {
                 </span>
                 <span
                   style={{
-                    transition: "transform 0.3s",
+                    transition: "transform var(--sb-duration-slow)",
                   }}
                   class={`material-symbols-outlined ${selectingTranslation.value ? "upside-down" : ""}`}
                   // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
@@ -701,7 +701,7 @@ const SideBarBooks = (props: {
               </span>
               <span
                 style={{
-                  transition: "transform 0.3s",
+                  transition: "transform var(--sb-duration-slow)",
                   color: isSelected ? "var(--sb-primary-color)" : "",
                 }}
                 class={`material-symbols-outlined ${isSelected ? "upside-down" : ""}`}

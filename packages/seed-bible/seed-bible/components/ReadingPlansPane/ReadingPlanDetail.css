@@ -97,7 +97,7 @@
   height: 100%;
   border-radius: var(--sb-radius-full);
   background: var(--rp-accent);
-  transition: width 0.3s ease;
+  transition: width var(--sb-duration-slow) ease;
 }
 
 .sb-rpd-progress-count {

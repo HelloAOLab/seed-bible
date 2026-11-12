@@ -55,7 +55,7 @@
   background: none;
   cursor: pointer;
   color: color-mix(in srgb, var(--sb-font-color, #1f2937), transparent 45%);
-  transition: color 0.15s;
+  transition: color var(--sb-duration-fast);
 }
 .sbd-close:hover {
   color: var(--sb-font-color, #1f2937);
@@ -95,8 +95,8 @@
   font-size: 1rem;
   cursor: pointer;
   transition:
-    border-color 0.15s,
-    background 0.15s;
+    border-color var(--sb-duration-fast),
+    background var(--sb-duration-fast);
 }
 .sbd-amount:hover {
   border-color: var(--sb-primary-color, #e8623a);
@@ -138,7 +138,7 @@
   font-size: 1.05rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--sb-duration-fast);
 }
 .sbd-donate:hover {
   background: color-mix(in srgb, var(--sb-primary-color, #e8623a), #000 10%);
@@ -155,7 +155,7 @@
   font-size: 0.9rem;
   text-decoration: underline;
   cursor: pointer;
-  transition: color 0.15s;
+  transition: color var(--sb-duration-fast);
 }
 .sbd-dismiss:hover {
   color: var(--sb-font-color, #1f2937);

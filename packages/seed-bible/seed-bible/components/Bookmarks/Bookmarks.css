@@ -136,7 +136,7 @@
   align-items: center;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
   border-radius: var(--sb-radius-md);
-  transition: border-color 0.15s ease;
+  transition: border-color var(--sb-duration-fast) ease;
 }
 
 /* Tapping a bookmark moves it, so hovering one previews that choice. Only the
@@ -299,8 +299,8 @@
   cursor: pointer;
   border: 1px solid transparent;
   transition:
-    background-color 0.15s ease,
-    opacity 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    opacity var(--sb-duration-fast) ease;
 }
 
 .sb-bookmark-picker-save {

@@ -12,8 +12,8 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
 }
 
 .sb-search-clear-button:hover {

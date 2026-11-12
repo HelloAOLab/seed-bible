@@ -88,8 +88,8 @@
   text-align: left;
   font: inherit;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    border-color var(--sb-duration-fast) ease;
 }
 
 .sb-floating-search-result:hover,
@@ -135,9 +135,9 @@
   cursor: pointer;
   opacity: 0;
   transition:
-    opacity 0.15s ease,
-    background-color 0.15s ease,
-    color 0.15s ease;
+    opacity var(--sb-duration-fast) ease,
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
   flex-shrink: 0;
 }
 
@@ -241,8 +241,8 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
 }
 
 .sb-floating-chat-header-back:hover,
@@ -283,8 +283,8 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
 }
 
 .sb-floating-chat-header-close:hover,
@@ -463,8 +463,8 @@
   padding: 0.625rem 1.125rem;
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    transform 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    transform var(--sb-duration-fast) ease;
 }
 
 .sb-floating-chat-list-item:hover,

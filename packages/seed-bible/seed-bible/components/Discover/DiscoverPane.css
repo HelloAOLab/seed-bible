@@ -164,7 +164,7 @@
 @media (hover: hover) and (min-width: 481px) {
   .sb-annotation-item > .sb-context-menu-anchor {
     transition:
-      opacity 0.15s ease,
+      opacity var(--sb-duration-fast) ease,
       visibility 0s;
   }
 
@@ -173,8 +173,8 @@
     visibility: hidden;
     opacity: 0;
     transition:
-      opacity 0.15s ease,
-      visibility 0s 0.15s;
+      opacity var(--sb-duration-fast) ease,
+      visibility 0s var(--sb-duration-fast);
   }
 }
 
@@ -310,7 +310,7 @@
 .sb-annotation-group-header-icon {
   flex-shrink: 0;
   font-size: 1.125rem;
-  transition: transform 0.15s ease;
+  transition: transform var(--sb-duration-fast) ease;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 

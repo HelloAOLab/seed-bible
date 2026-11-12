@@ -98,8 +98,8 @@
   cursor: pointer;
   min-width: 7.5rem;
   transition:
-    filter 0.15s ease,
-    background 0.15s ease;
+    filter var(--sb-duration-fast) ease,
+    background var(--sb-duration-fast) ease;
 }
 
 .sb-onboarding-btn:hover {

@@ -30,7 +30,7 @@
   height: 0.1875rem;
   border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  transition: height 0.15s ease;
+  transition: height var(--sb-duration-fast) ease;
 }
 
 .sb-audio-scrubber-handle-visible .sb-audio-scrubber-track {
@@ -57,8 +57,8 @@
   opacity: 0;
   transform: translateY(-50%) scale(0.4);
   transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
+    opacity var(--sb-duration-fast) ease,
+    transform var(--sb-duration-fast) ease;
   pointer-events: none;
 }
 
@@ -89,7 +89,7 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 40%);
   transform: translateY(-50%);
   pointer-events: none;
-  animation: sb-audio-scrubber-tick-in 0.15s ease-out;
+  animation: sb-audio-scrubber-tick-in var(--sb-duration-fast) ease-out;
 }
 
 /* A verse that starts a section. */

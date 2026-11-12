@@ -315,7 +315,7 @@
   background-color: var(--sb-today-surface);
   color: var(--sb-font-color);
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 @media (hover: hover) {
@@ -411,7 +411,7 @@
    `translate` rather than `transform`, which `.rtl-mirror` already uses. */
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .sb-today-container .sb-today-resume-card > button {
-    transition: transform 0.2s ease;
+    transition: transform var(--sb-duration-base) ease;
   }
 
   .sb-today-container .sb-today-resume-card > button:hover {
@@ -588,7 +588,7 @@
   border-color: transparent;
   color: var(--sb-secondary-font-color);
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 /* Goes fully solid, so it brightens to the full secondary colour. */
@@ -672,8 +672,8 @@
   text-align: left;
   font: inherit;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    border-color var(--sb-duration-fast) ease;
 }
 
 .sb-today-container
@@ -1010,7 +1010,7 @@
   font-size: 0.875rem;
   background-color: var(--sb-today-surface-light);
   color: var(--sb-font-color);
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 /* Steps up to the stronger tint, like Your content's save rows. Hover-capable

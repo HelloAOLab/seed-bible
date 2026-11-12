@@ -20,10 +20,10 @@
   border: 2px solid var(--sb-primary-color);
   pointer-events: none;
   transition:
-    top 0.2s ease,
-    left 0.2s ease,
-    width 0.2s ease,
-    height 0.2s ease;
+    top var(--sb-duration-base) ease,
+    left var(--sb-duration-base) ease,
+    width var(--sb-duration-base) ease,
+    height var(--sb-duration-base) ease;
 }
 
 .sb-tour-popover {
@@ -56,8 +56,8 @@
   border-radius: var(--sb-radius-full);
   background: var(--sb-font-color);
   transition:
-    width 0.2s ease,
-    background 0.2s ease;
+    width var(--sb-duration-base) ease,
+    background var(--sb-duration-base) ease;
   opacity: 0.2;
 }
 

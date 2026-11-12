@@ -264,7 +264,7 @@
   font-size: 0.75rem;
   font-family: inherit;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 .sb-session-participant-action:hover {

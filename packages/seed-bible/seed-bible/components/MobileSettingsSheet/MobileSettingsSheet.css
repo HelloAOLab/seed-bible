@@ -26,7 +26,7 @@
   flex-direction: column;
   padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   font-family: var(--sb-reader-font-family);
-  animation: sb-mobile-settings-slide-up 0.25s ease-out;
+  animation: sb-mobile-settings-slide-up var(--sb-duration-slow) ease-out;
 }
 
 @keyframes sb-mobile-settings-slide-up {

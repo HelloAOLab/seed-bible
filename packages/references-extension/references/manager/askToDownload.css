@@ -65,7 +65,7 @@
   font-size: 0.9em;
   font-weight: 600;
   cursor: pointer;
-  transition: filter 0.15s ease;
+  transition: filter var(--sb-duration-fast) ease;
 }
 
 .sb-references-download-btn:hover {

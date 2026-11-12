@@ -162,8 +162,8 @@ input[type="range"] {
   text-align: center;
   cursor: pointer;
   transition:
-    border-color 0.15s,
-    background 0.15s;
+    border-color var(--sb-duration-fast),
+    background var(--sb-duration-fast);
 }
 .ts_dropzone:hover {
   border-color: var(--sb-primary-color);
@@ -232,8 +232,8 @@ input[type="range"] {
   font-size: 0.9rem;
   cursor: pointer;
   transition:
-    background 0.15s,
-    border-color 0.15s;
+    background var(--sb-duration-fast),
+    border-color var(--sb-duration-fast);
 }
 .ts_btn:hover:not(:disabled) {
   border-color: var(--sb-primary-color);
@@ -289,7 +289,7 @@ input[type="range"] {
     var(--sb-primary-color),
     color-mix(in srgb, var(--sb-primary-color), #fff 25%)
   );
-  transition: width 0.2s ease;
+  transition: width var(--sb-duration-base) ease;
 }
 
 /* Queue */

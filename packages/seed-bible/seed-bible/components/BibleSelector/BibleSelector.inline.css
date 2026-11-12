@@ -19,5 +19,5 @@
   z-index: var(--sb-layer-modal);
   padding: 1.25rem;
 
-  transition: background 0.3s ease;
+  transition: background var(--sb-duration-slow) ease;
 }

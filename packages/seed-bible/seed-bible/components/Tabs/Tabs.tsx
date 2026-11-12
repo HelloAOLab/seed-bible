@@ -2868,8 +2868,8 @@ function SelfAvatarButton(props: { state: SeedBibleState }) {
   );
 }
 
-/** How long the sidebar's width transition runs; matches Tabs.css. */
-const SIDEBAR_RESIZE_MS = 250;
+/** How long the sidebar's width transition runs; matches `--sb-duration-slow`. */
+const SIDEBAR_RESIZE_MS = 300;
 
 export function Sidebar(props: SidebarProps) {
   const { state } = props;
