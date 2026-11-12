@@ -75,6 +75,11 @@ const clientOutDir = "standalone/dist/client";
 /**
  * Reads this build's Vite client manifest, which is written before the service
  * worker is compiled, and works out which emitted files the app needs to boot.
+ *
+ * That ordering holds through vite 8.1 but not 8.3, where the manifest isn't on
+ * disk yet when this runs and the build fails. This is why the root and
+ * `packages/seed-bible` pin vite to `~8.1.x`. Taking the manifest from the
+ * bundle in a plugin hook instead of reading it from disk would lift the pin.
  */
 function readCoreAssetFiles(): Set<string> {
   const manifestPath = path.resolve(
