@@ -13,17 +13,17 @@
 /* Generic pane back button (reading plans, play view, create form, item input). */
 .sb-reading-plans-back {
   border: none;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.625rem 1.25rem;
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   transition:
     transform 0.1s ease,
-    background-color 0.2s ease;
+    background-color var(--sb-duration-base) ease;
 }
 
 .sb-reading-plans-back:hover {
@@ -62,7 +62,7 @@
 
 .sb-playlist-add-error {
   margin-top: 6px;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--sb-error-color, #d64545);
 }
 
@@ -75,9 +75,9 @@
 
   padding: 12px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-background);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-play-playlist-content .sb-discover-section {

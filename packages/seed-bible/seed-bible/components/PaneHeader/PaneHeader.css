@@ -69,7 +69,7 @@
   background: transparent;
   height: 2rem;
   min-width: 2rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   display: inline-flex;
   align-items: center;
   justify-content: center;
