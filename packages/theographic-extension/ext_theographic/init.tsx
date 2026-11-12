@@ -1,7 +1,12 @@
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { THEOGRAPHIC_EXTENSION_ID } from "./contentTypes";
 import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
-import { findLocation, getPlaceGeoJsonUrl } from "@seed-bible/bible-locations";
+import {
+  findLocation,
+  getPlaceAttribution,
+  getPlaceGeoJsonUrl,
+  toMapGeoJson,
+} from "@seed-bible/bible-locations";
 import {
   createIndexedDbTheographicStore,
   createTheographicClient,
@@ -60,8 +65,14 @@ export default function initTheographicExtension() {
           onReferenceClick: (ref, origin) =>
             openInSameTab(context, ref, origin),
           panes: context.panes,
-          locations: { findLocation, getPlaceGeoJsonUrl },
+          locations: {
+            findLocation,
+            getPlaceGeoJsonUrl,
+            toMapGeoJson,
+            getPlaceAttribution,
+          },
           isMobile: context.app.isMobile,
+          modals: context.modals,
         })
       );
     },

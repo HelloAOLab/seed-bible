@@ -14,8 +14,16 @@ import {
   type BibleToolContext,
   type QuickToolContext,
 } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
-import type { ReadingPlan } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
-import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import {
+  createReadingPlan,
+  type ReadingPlan,
+  type ReadingPlanDraft,
+  type ReadingPlansManager,
+} from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
+import type {
+  BibleReadingState,
+  BibleSelectedVerse,
+} from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { formatSelectedVerses } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import {
   createPlayingState,
@@ -23,6 +31,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 import { extractContentText } from "@packages/seed-bible/seed-bible/managers/ChapterText";
+import { injectNativeAppConfig } from "../testUtils/nativeAppConfig";
 
 const CUSTOM_TOOL_ID = "test-toolbar-tool";
 const CUSTOM_VERSE_TOOL_ID = "test-verse-toolbar-tool";
@@ -226,6 +235,18 @@ describe("getShareUrl", () => {
     expect(url.toString()).toBe(
       "https://example.test/en/NIV/genesis/1?verse=1%2C3"
     );
+  });
+
+  it("points at the public website when shared from the native apps", () => {
+    jsdom.reconfigure({ url: "https://localhost/en/NIV/genesis/1" });
+    const remove = injectNativeAppConfig();
+    try {
+      const url = getShareUrl(createShareUrlReadingState() as any);
+
+      expect(url.toString()).toBe("https://seedbible.org/en/NIV/genesis/1");
+    } finally {
+      remove();
+    }
   });
 
   it("builds supports consecutive verses", () => {
@@ -2163,6 +2184,79 @@ describe("createBibleToolsManager", () => {
       await tool?.onSelect();
 
       expect(clearSelectedVerses).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("add-to-reading-plan", () => {
+    function selectedVerse(): BibleSelectedVerse {
+      return {
+        bookId: "GEN",
+        chapterNumber: 1,
+        translationId: "BSB",
+        verse: {
+          type: "verse",
+          number: 1,
+          content: ["In the beginning"],
+        },
+      };
+    }
+
+    function planContext(options: {
+      editing?: boolean;
+      verses?: BibleSelectedVerse[];
+    }) {
+      const draft: ReadingPlanDraft = {
+        plan: createReadingPlan(
+          "user-1",
+          "user-1",
+          "plan_1",
+          Date.UTC(2026, 0, 1),
+          { status: "draft" }
+        ),
+        selectedSessionIndex: 0,
+        persisted: false,
+        isNew: true,
+      };
+      const readingPlans: Pick<ReadingPlansManager, "editingReadingPlan"> = {
+        editingReadingPlan: signal(options.editing ? draft : null),
+      };
+      const context = createContext({
+        // Every flag off, so the tool can't be leaning on one to show.
+        features: { isFeatureEnabled: vi.fn(() => signal(false)) },
+        readingPlans: readingPlans as ReadingPlansManager,
+      });
+      context.readingState.selectedVerses.value = options.verses ?? [];
+      return context;
+    }
+
+    function toolFor(context: BibleToolContext) {
+      return createBibleToolsManager(testBranding)
+        .getVerseToolbarTools(context)
+        .find((entry) => entry.id === "add-to-reading-plan");
+    }
+
+    it("is visible while a plan draft is open and verses are selected", () => {
+      const context = planContext({
+        editing: true,
+        verses: [selectedVerse()],
+      });
+
+      expect(toolFor(context)?.visible.value).toBe(true);
+    });
+
+    it("stays hidden when no plan draft is open", () => {
+      const context = planContext({
+        editing: false,
+        verses: [selectedVerse()],
+      });
+
+      expect(toolFor(context)?.visible.value).toBe(false);
+    });
+
+    it("stays hidden when a draft is open but no verses are selected", () => {
+      const context = planContext({ editing: true, verses: [] });
+
+      expect(toolFor(context)?.visible.value).toBe(false);
     });
   });
 });

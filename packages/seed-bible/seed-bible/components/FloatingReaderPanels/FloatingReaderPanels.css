@@ -11,11 +11,11 @@
   transform: translateX(-50%);
   /* Above the mobile reader toolbar wrap (z-index 101) so Ask AI / Chat are
      not trapped under the bottom chrome after the verse sheet dismisses. */
-  z-index: 102;
+  z-index: calc(var(--sb-layer-chrome) + 2);
   background: var(--sb-reader-toolbar-background);
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.875rem;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  border-radius: var(--sb-radius-xl);
+  box-shadow: var(--sb-shadow-modal);
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
   animation: sb-floating-panel-rise 0.18s ease-out;
@@ -61,7 +61,7 @@
 
 .sb-floating-search-status {
   padding: 0.875rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
@@ -81,15 +81,15 @@
   gap: 0.5rem;
   padding: 0.75rem 0.875rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-reader-background);
   color: inherit;
   cursor: pointer;
   text-align: left;
   font: inherit;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    border-color var(--sb-duration-fast) ease;
 }
 
 .sb-floating-search-result:hover,
@@ -102,7 +102,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-floating-search-result-ref {
@@ -112,7 +112,7 @@
 
 .sb-floating-search-result-sep {
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   line-height: 1;
 }
 
@@ -130,14 +130,14 @@
   justify-content: center;
   width: 1.5rem;
   height: 1.5rem;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
   cursor: pointer;
   opacity: 0;
   transition:
-    opacity 0.15s ease,
-    background-color 0.15s ease,
-    color 0.15s ease;
+    opacity var(--sb-duration-fast) ease,
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
   flex-shrink: 0;
 }
 
@@ -158,7 +158,7 @@
 
 .sb-floating-search-result-text {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
 }
@@ -177,7 +177,7 @@
 }
 
 .sb-floating-search-section-title {
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -205,7 +205,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   animation: sb-floating-chat-panel-rise 0.18s ease-out;
 }
 
@@ -233,7 +233,7 @@
   width: 1.75rem;
   height: 1.75rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -241,8 +241,8 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
 }
 
 .sb-floating-chat-header-back:hover,
@@ -255,7 +255,7 @@
   margin: 0;
   min-width: 0;
   flex: 1;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   line-height: 1.3;
   font-weight: 700;
   color: var(--sb-font-color);
@@ -268,29 +268,6 @@
   flex-shrink: 0;
   font-size: 1.25rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
-}
-
-.sb-floating-chat-header-close {
-  flex-shrink: 0;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  border-radius: 0.5rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
-  cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.sb-floating-chat-header-close:hover,
-.sb-floating-chat-header-close:focus-visible {
-  color: var(--sb-font-color);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
 }
 
 @media (max-width: 480px) {
@@ -359,7 +336,7 @@
 }
 
 .sb-floating-chat-ai-context-item-tools {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-menu-font-color), transparent 40%);
 }
 
@@ -373,7 +350,7 @@
 .sb-floating-chat-members-avatar {
   width: 1.5rem;
   height: 1.5rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   object-fit: cover;
   flex: 0 0 auto;
 }
@@ -384,7 +361,7 @@
   justify-content: center;
   background: color-mix(in srgb, var(--sb-font-color), transparent 87%);
   color: color-mix(in srgb, var(--sb-font-color), transparent 14%);
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -424,7 +401,7 @@
 .sb-floating-chat-list-create-button {
   width: 2.125rem;
   height: 2.125rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
   background: var(--sb-primary-color);
   color: var(--sb-tertiary-color);
@@ -435,7 +412,11 @@
 .sb-floating-chat-list-create-button:hover,
 .sb-floating-chat-list-create-button:focus-visible {
   border-color: color-mix(in srgb, var(--sb-primary-color), transparent 10%);
-  background: color-mix(in srgb, var(--sb-primary-color), white 8%);
+  background: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    var(--sb-font-color) 15%
+  );
 }
 
 .sb-floating-chat-list-create-menu {
@@ -459,8 +440,8 @@
   padding: 0.625rem 1.125rem;
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    transform 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    transform var(--sb-duration-fast) ease;
 }
 
 .sb-floating-chat-list-item:hover,
@@ -621,7 +602,7 @@
 .sb-floating-chat-list-item-title {
   flex: 1;
   min-width: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   color: var(--sb-font-color);
   white-space: nowrap;
@@ -637,27 +618,27 @@
 }
 
 .sb-floating-chat-list-item-time {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
 .sb-floating-chat-list-item-unread {
   min-width: 1.25rem;
   height: 1.25rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0 0.375rem;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 700;
-  color: #fff;
+  color: var(--sb-primary-font-color);
   background: var(--sb-primary-color);
 }
 
 .sb-floating-chat-list-item-preview {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.45;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
   white-space: nowrap;
@@ -684,14 +665,14 @@
 
 .sb-floating-chat-empty-title {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   color: var(--sb-font-color);
 }
 
 .sb-floating-chat-empty-body {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
@@ -762,7 +743,7 @@
     margin-top: auto;
     box-shadow:
       0 0 0 1px var(--sb-divider-color),
-      0 2px 4px var(--sb-shadow-color);
+      var(--sb-shadow-raised);
   }
 
   /* No hover on touch — keep the action icon visible on each card. */
@@ -781,7 +762,7 @@
     animation: sb-floating-panel-rise 0.18s ease-out;
     border-radius: 0;
     border: none;
-    box-shadow: 0px -3px 8px 0px rgba(0, 0, 0, 0.18);
+    box-shadow: var(--sb-shadow-sheet);
   }
 }
 

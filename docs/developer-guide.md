@@ -243,7 +243,7 @@ Declare them in `extension.json`. The user sees them, in plain language, before 
 
 **Icon.** `icon` is a square image in your project (`.png`, `.svg`, `.webp` or `.jpg`, under 256 KB; 256 pixels across is plenty). Seed Bible shows it wherever your extension is listed, on its page and in the install dialog, in place of the colored initials it shows otherwise. `publish` uploads it to its own link and puts that link in the manifest; `package` copies it next to the bundle and `dev` serves it. You can also give a full `https:` link to an image hosted elsewhere. `check` refuses an icon Seed Bible couldn't show.
 
-**Needs no permission:** `sb.identity` (an id for the user that's the same every time for your extension, different for every extension, not their real id, and null when signed out), `sb.bible.chapter({ translationId, bookId, chapter })` for public Bible text, `sb.sensitive.fetch(...)` for requests that carry the user's sensitive settings such as API keys (see the [`sensitive` section](./extension-api.md#sensitive-settings) of `extension.json`), `sb.modals.alert`/`open`, and `sb.settings.registerPanel(view)` for a view on your extension's Settings page.
+**Needs no permission:** `sb.identity` (an id for the user that's the same every time for your extension, different for every extension, not their real id, and null when signed out), `sb.bible` for public Bible text, search, commentaries and datasets (translations, books, chapters, verse search, cross-references; downloaded translations work offline), `sb.sensitive.fetch(...)` for requests that carry the user's sensitive settings such as API keys (see the [`sensitive` section](./extension-api.md#sensitive-settings) of `extension.json`), `sb.modals.alert`/`open`, and `sb.settings.registerPanel(view)` for a view on your extension's Settings page.
 
 ### Asking for optional permissions
 
@@ -330,7 +330,7 @@ it("toasts from its verse tool", async () => {
 - `host.tools`, `host.panes`, `host.toasts`, `host.storage`, `host.opened`, `host.clipboard` and `host.calls` record what the extension did.
 - `host.renderView(name)` renders a view into the test's document; `host.setState({ position })` moves the reader; `host.discover(...)` and `host.chat(...)` ask its providers.
 - `allowRequests: false` makes the "user" decline optional permissions.
-- For anything the stand-in doesn't simulate (Bible text, highlights, sensitive requests…), pass an answer in `answers: { "bible.chapter": () => ({ verses: [...] }) }`. Without one, the call fails with a message saying so.
+- For anything the stand-in doesn't simulate (Bible text, highlights, sensitive requests…), pass an answer in `answers: { "bible.chapter": () => chapter }`. Without one, the call fails with a message saying so.
 
 The [API reference](./extension-api.md#9-testing-with-createtesthost) lists every option.
 
@@ -403,7 +403,7 @@ A user pastes your link into **Settings → Extensions → Add extensions from a
 
 ## 8. Built-in extensions: contributing to this repo
 
-Everything above is about extensions you build in your own project and ship from a link. Seed Bible also has **built-in extensions**: ones whose source lives in this repo under `packages/`, is reviewed in a pull request, and is compiled into the app. Every extension that ships with Seed Bible today works this way (`locations-extension`, `audio-reader-extension`, `apologist-extension`, `bonfire-extension`, `transcript-ui-extension`, `twitchPub-extension`, `twitchSub-extension`, and the reference template, `seed-bible-refresh-example-extension`).
+Everything above is about extensions you build in your own project and ship from a link. Seed Bible also has **built-in extensions**: ones whose source lives in this repo under `packages/`, is reviewed in a pull request, and is compiled into the app. Every extension that ships with Seed Bible today works this way (for example `theographic-extension`, `audio-reader-extension`, `apologist-extension`, `bonfire-extension`, `transcript-ui-extension`, and the reference template, `seed-bible-refresh-example-extension`).
 
 The difference that matters: **a built-in extension isn't sandboxed.** It runs in the app's own page, written with `registerExtension` from `seed-bible` instead of `defineExtension`, and gets the app's entire internal state, the same objects the app itself uses. That's why it can only ship through a reviewed pull request. If you're not a Seed Bible contributor, you want the sandboxed extensions in §§1–6 instead.
 
@@ -555,13 +555,14 @@ registerExtension({
 
 Circular dependencies are detected and rejected (with a console error) rather than causing an infinite loop.
 
-**The extensions in this repo don't depend on each other.** A dependency installs the other extension too, with everything it adds to the app, which is rarely what someone turning on the first one wanted: turning on Theographic used to turn on the Locations verse tool as well. When two built-in extensions need the same code, it goes in a _shared package_ instead: a folder under `packages/` with a `package.json` but no `extension.json`, so the app never lists or installs it. Each extension imports it like any other module:
+**The extensions in this repo don't depend on each other.** A dependency installs the other extension too, with everything it adds to the app, which is rarely what someone turning on the first one wanted: turning on Theographic once installed a separate verse tool for places too. When two built-in extensions need the same code, it goes in a _shared package_ instead: a folder under `packages/` with a `package.json` but no `extension.json`, so the app never lists or installs it. Each extension imports it like any other module:
 
-| Shared package                 | What it holds                                              | Used by                            |
-| ------------------------------ | ---------------------------------------------------------- | ---------------------------------- |
-| `@seed-bible/bible-locations`  | The known Bible places and where their map outlines live   | Locations, Theographic             |
-| `@seed-bible/transcription`    | Transcribing sermon audio and finding the references in it | AI Transcript UI, Twitch publisher |
-| `@seed-bible/seed-bible-utils` | Book arrangements, reading history and presence services   | Bible Stack, Scripture Map         |
+| Shared package                 | What it holds                                              | Used by                                                |
+| ------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------ |
+| `@seed-bible/bible-locations`  | The known Bible places and where their map outlines live   | Theographic (kept separate for any future map feature) |
+| `@seed-bible/maps`             | Maps of places, drawn with Leaflet when one first opens    | Theographic                                            |
+| `@seed-bible/transcription`    | Transcribing sermon audio and finding the references in it | AI Transcript UI, Twitch publisher                     |
+| `@seed-bible/seed-bible-utils` | Book arrangements, reading history and presence services   | Bible Stack, Scripture Map                             |
 
 Nothing has to load these by hand. Every extension's code is already loaded on demand, through an `import()` per extension, and the bundler puts a module that two of those imports share into its own chunk. That chunk downloads the first time any extension that needs it is installed, and the browser reuses it for the next one.
 
@@ -603,7 +604,7 @@ yield context.tools.registerToolbarTool({
 
 `context.tools.registerVerseToolbarTool({...})` adds an action that appears when the user has selected one or more verses. `isVisible` can be a function returning `true`/`false` (or a signal), so the tool can hide itself unless it's relevant.
 
-The **locations extension** (`packages/locations-extension/`) uses this well: it scans the currently-selected verses' text for place names it recognizes, and only shows a "Locations" tool (with a submenu listing each found place) when at least one match was found. Selecting a place fetches GeoJSON boundary data and opens it on a map (rendered via a CasualOS _pattern_ — see [§8.4](#84-extensions-vs-patterns)) inside a floating pane.
+The **compare extension** (`packages/compare-extension/`) uses this: its "Compare" tool only shows while at least one verse is selected, and selecting it opens a pane that shows them next to the same verses in another translation. Its `priority` of 250 places it between the built-in Copy (200) and Share (300) tools.
 
 #### Quick tools — compact icons above the reader
 
@@ -615,7 +616,15 @@ The **locations extension** (`packages/locations-extension/`) uses this well: it
 
 #### Custom panes — your own UI, anywhere in the app's pane system
 
-`context.panes.openPane({...})` opens an arbitrary Preact component in one of three placements: `"side"` (a docked side panel), `"floating"` (a draggable/resizable window), or `"fullscreen"` (covers the reader). This is how a toolbar tool's `onSelect` typically shows its actual content. Panes can also embed a CasualOS grid or map portal via the `<PortalComponent>` helper (as the locations extension and the example extension both do), which is how an extension can render a whole separate CasualOS "pattern" application inside the main app.
+`context.panes.openPane({...})` opens an arbitrary Preact component in one of three placements: `"side"` (a docked side panel), `"floating"` (a draggable/resizable window), or `"fullscreen"` (covers the reader). This is how a toolbar tool's `onSelect` typically shows its actual content. Panes can also embed a CasualOS grid or map portal via the `<PortalComponent>` helper (as the example extension does), which is how an extension can render a whole separate CasualOS "pattern" application inside the main app.
+
+#### Maps — show places without starting CasualOS
+
+Maps come from the `@seed-bible/maps` shared package (add it to your extension's `package.json` dependencies as `"workspace:*"`). `openMap({ panes: context.panes, modals: context.modals, isMobile: context.app.isMobile }, { id, title, label, load })` opens a place's map in a floating pane, or on a phone, in a sheet over whatever is open. `load()` fetches `{ data, attribution }`: the place's GeoJSON (in standard `[longitude, latitude]` order) and the credits that data needs. Opening an `id` that's already open brings it forward instead of reloading it, and `isMapOpen(host, id)` tells you whether it's open.
+
+To put a map inside your own UI instead, such as a card, render `<GeoJsonMap data={...} />`. Pass `inline` when it sits in scrolling content, so the mouse wheel and swipes scroll past it; on a phone an inline map is then a still preview, and `onTap` can open the full map.
+
+The map is drawn with [Leaflet](https://leafletjs.com), which the package downloads the first time any map is shown and never at startup. Don't import `leaflet` yourself: a static import would put it back in the startup bundle. The base map (currently OpenStreetMap's public tiles) and its credit are set once, in `MAP_TILE_SOURCE` in `packages/maps/leaflet.ts`. The Theographic extension draws its maps this way.
 
 #### Discover providers — contribute content to the Discover panel
 
@@ -652,7 +661,7 @@ These are two different mechanisms and it's easy to conflate them because both l
 - An **extension** (`packages/*-extension/`, this guide) runs _inside_ the main Seed Bible app, in the same page, with full access to `SeedBibleState`. It's written the same way the app itself is (Preact/JSX/signals).
 - A **pattern** (`patterns/`) is a separate CasualOS application — bot scripts packaged into a `.aux` file — that gets embedded as a _cross-origin_ `ao.bot` iframe via `<PortalComponent>`. It runs in its own sandboxed context with its own CasualOS runtime (`os`, `thisBot`, `configBot` globals), and it communicates with the host page only through the iframe boundary (query params in, and whatever CasualOS's cross-frame APIs allow).
 
-The reason both show up together in the same example: a pane opened by an extension can embed a pattern. The locations extension does exactly this — it's an _extension_ (runs in the main app, reacts to verse selection) that opens a pane whose content is the `geo-importer` _pattern_ (a separate CasualOS map applet) to actually render the map. If you need custom code running inside a grid/map portal, you need a pattern; if you need to add a feature to the main app's UI or behavior, you need an extension. Patterns are out of scope for this guide — see `DEVELOPERS.md` for the basics of building one.
+The reason both show up together in the same example: a pane opened by an extension can embed a pattern. The example extension does exactly this — it's an _extension_ (runs in the main app) that opens a pane whose content is a CasualOS _pattern_. The `geo-importer` pattern is a richer CasualOS map applet that can be embedded this way, though the everyday maps of places use the lighter `@seed-bible/maps` instead. If you need custom code running inside a grid/map portal, you need a pattern; if you need to add a feature to the main app's UI or behavior, you need an extension. Patterns are out of scope for this guide — see `DEVELOPERS.md` for the basics of building one.
 
 #### A note on overloaded terminology
 

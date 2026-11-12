@@ -1,0 +1,145 @@
+/* Win celebration. Loaded with `WinCelebration.tsx`, only after a win. */
+
+@keyframes ftv-confetti-fall {
+  0% {
+    transform: translate3d(0, -5vh, 0) rotate(0deg);
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate3d(var(--ftv-drift, 0), 105vh, 0)
+      rotate(var(--ftv-spin, 540deg));
+    opacity: 0;
+  }
+}
+
+@keyframes ftv-celebration-pop {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.ftv-celebration {
+  position: fixed;
+  inset: 0;
+  z-index: var(--sb-layer-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  pointer-events: none;
+}
+
+.ftv-confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.ftv-confetti-piece {
+  position: absolute;
+  top: 0;
+  border-radius: 2px;
+  animation-name: ftv-confetti-fall;
+  animation-timing-function: cubic-bezier(0.25, 0.6, 0.5, 1);
+  animation-fill-mode: both;
+}
+
+.ftv-confetti-piece--round {
+  border-radius: 50%;
+}
+
+.ftv-celebration-card {
+  position: relative;
+  width: min(22rem, 100%);
+  padding: 20px 20px 14px;
+  border-radius: var(--sb-radius-2xl);
+  background: var(--sb-background, #fff);
+  color: var(--sb-font-color, #333);
+  border: 1px solid var(--sb-divider-color, rgb(0 0 0 / 12%));
+  box-shadow: var(--sb-shadow-modal);
+  text-align: center;
+  pointer-events: auto;
+  animation: ftv-celebration-pop 0.45s ease-out both;
+}
+
+.ftv-celebration-emoji {
+  font-size: 2.5rem;
+}
+
+.ftv-celebration-title {
+  margin: 6px 0 4px;
+  font-weight: 700;
+  font-size: var(--sb-font-size-22);
+}
+
+.ftv-celebration-reference {
+  margin: 0;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.ftv-celebration-verse {
+  margin: 8px 0 0;
+  font-style: italic;
+  opacity: 0.85;
+  font-size: var(--sb-font-size-14);
+}
+
+.ftv-celebration-guesses {
+  margin: 6px 0 0;
+  opacity: 0.6;
+  font-size: var(--sb-font-size-14);
+}
+
+.ftv-celebration-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.ftv-celebration-sound {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: var(--sb-radius-sm);
+  background: transparent;
+  color: var(--sb-font-color, #333);
+  opacity: 0.7;
+  font-size: var(--sb-font-size-13);
+  cursor: pointer;
+}
+
+.ftv-celebration-sound .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ftv-confetti {
+    display: none;
+  }
+
+  .ftv-celebration-card {
+    animation: none;
+  }
+}

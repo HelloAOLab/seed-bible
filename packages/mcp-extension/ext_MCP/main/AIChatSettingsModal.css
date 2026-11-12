@@ -7,7 +7,7 @@
 
 .sb-ai-chat-settings-description {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
@@ -18,7 +18,7 @@
 }
 
 .sb-mcp-server-warning {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--sb-error-color, #d64545);
 }
 

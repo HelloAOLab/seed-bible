@@ -14,6 +14,7 @@ import type {
   LoginManager,
   UserProfile,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import type { FriendLinkSeed } from "@packages/seed-bible/seed-bible/managers/FriendLinkPreviewLoader";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import {
   fail,
@@ -41,6 +42,7 @@ describe("friend links", () => {
   let updateQueryParams: ReturnType<typeof vi.fn>;
   let toast: Mock<(message: string) => void>;
   let openModalId: string | null;
+  let friendLinkPreview: FriendLinkDeps["friendLinkPreview"];
 
   const deps = (): FriendLinkDeps => ({
     navigation: {
@@ -50,6 +52,7 @@ describe("friend links", () => {
     login,
     friends,
     toast,
+    friendLinkPreview,
     // Renders whichever prompt is open into `dialog`, as the app's modal host
     // would, so tests can read it and click it.
     modals: {
@@ -122,6 +125,11 @@ describe("friend links", () => {
     updateQueryParams = vi.fn();
     toast = vi.fn<(message: string) => void>();
     openModalId = null;
+    // A loader with nothing loaded, so the prompt reads the profile itself.
+    friendLinkPreview = {
+      result: signal<FriendLinkSeed | null>(null),
+      initialLoadPromise: Promise.resolve(),
+    };
   });
 
   afterEach(() => {
@@ -186,6 +194,28 @@ describe("friend links", () => {
       release();
       await settle();
       expect(openModalId).toBeNull();
+    });
+
+    // Coming back to the app re-reads the lists; someone with no friends
+    // shouldn't see the question swapped for "Loading…" each time.
+    it("keeps showing the question while the lists refresh in the background", async () => {
+      await openWith(`?addFriend=${ADA_ID}`);
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const listRecords = server.spies.listRecords.getMockImplementation()!;
+      server.spies.listRecords.mockImplementationOnce(async () => {
+        await gate;
+        return listRecords();
+      });
+
+      const refreshing = friends.refresh();
+      await act(async () => {});
+      expect(friends.isLoading.value).toBe(true);
+      expect(text()).toContain("Send Ada a friend request?");
+      expect(button("Send request")).toBeDefined();
+
+      release();
+      await act(() => refreshing);
     });
 
     it("shows where they are and what they wrote about themselves", async () => {
@@ -371,6 +401,35 @@ describe("friend links", () => {
       expect(toast).toHaveBeenCalledWith("You're now friends with Ada.");
     });
 
+    // Same wording as answering from the Friends screen or the profile card.
+    it("says when their request expired before it was accepted", async () => {
+      const request = server.requestFrom(ADA_ID);
+      await openWith(`?addFriend=${ADA_ID}`);
+      request.expireTimeMs = Date.now() - 1;
+
+      await click("Accept");
+
+      expect(toast).toHaveBeenCalledWith("That request has expired.");
+    });
+
+    it("says so when accepting fails, and stays open to try again", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      server.requestFrom(ADA_ID);
+      await openWith(`?addFriend=${ADA_ID}`);
+      server.spies.accept.mockResolvedValueOnce(fail("server_error") as never);
+
+      await click("Accept");
+
+      expect(toast).toHaveBeenCalledWith(
+        "Couldn't answer the request. Try again."
+      );
+      expect(openModalId).not.toBeNull();
+      expect(button("Accept")!.disabled).toBe(false);
+      consoleError.mockRestore();
+    });
+
     it("signs a signed-out visitor in first, then carries on", async () => {
       userId.value = null;
       await openWith(`?addFriend=${ADA_ID}`);
@@ -390,6 +449,86 @@ describe("friend links", () => {
       await click("Log in");
 
       expect(openModalId).toBeNull();
+    });
+
+    describe("with the profile the friend link loader already has", () => {
+      const loaderWith = (loaded: FriendLinkSeed | null) => {
+        friendLinkPreview = {
+          result: signal(loaded),
+          initialLoadPromise: Promise.resolve(),
+        };
+      };
+
+      it("shows that profile without reading it again", async () => {
+        loaderWith({
+          userId: ADA_ID,
+          profile: { name: "Ada Lovelace", location: "London" },
+        });
+        await openWith(`?addFriend=${ADA_ID}`);
+
+        expect(text()).toContain("Send Ada Lovelace a friend request?");
+        expect(text()).toContain("London");
+        expect(login.getPublicProfile).not.toHaveBeenCalledWith(ADA_ID);
+      });
+
+      it("explains a link the loader found matches no account, without reading it again", async () => {
+        loaderWith({ userId: ADA_ID, profile: null });
+        await openWith(`?addFriend=${ADA_ID}`);
+
+        expect(text()).toContain(
+          "This friend link doesn't match anyone's account."
+        );
+        expect(button("Send request")).toBeUndefined();
+        expect(login.getPublicProfile).not.toHaveBeenCalledWith(ADA_ID);
+      });
+
+      it("reads the profile itself when the loader has someone else's", async () => {
+        loaderWith({
+          userId: "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff",
+          profile: { name: "Beth" },
+        });
+        await openWith(`?addFriend=${ADA_ID}`);
+
+        expect(login.getPublicProfile).toHaveBeenCalledWith(ADA_ID);
+        expect(text()).toContain("Send Ada a friend request?");
+        expect(text()).not.toContain("Beth");
+      });
+
+      it("reads the profile itself when the loader couldn't load it", async () => {
+        loaderWith(null);
+        await openWith(`?addFriend=${ADA_ID}`);
+
+        expect(login.getPublicProfile).toHaveBeenCalledWith(ADA_ID);
+        expect(text()).toContain("Send Ada a friend request?");
+      });
+
+      it("waits for a load already in flight instead of starting a second one", async () => {
+        const loaded = signal<FriendLinkSeed | null>(null);
+        let finishLoad!: () => void;
+        friendLinkPreview = {
+          result: loaded,
+          initialLoadPromise: new Promise<void>(
+            (resolve) => (finishLoad = resolve)
+          ),
+        };
+        currentUrl.value = new URL(
+          `https://seedbible.test/?addFriend=${ADA_ID}`
+        );
+
+        const opening = setupFriendLinks(deps());
+        await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+        expect(openModalId).toBeNull();
+
+        await act(async () => {
+          loaded.value = { userId: ADA_ID, profile: { name: "Ada Lovelace" } };
+          finishLoad();
+          await opening;
+        });
+        await settle();
+
+        expect(text()).toContain("Send Ada Lovelace a friend request?");
+        expect(login.getPublicProfile).not.toHaveBeenCalledWith(ADA_ID);
+      });
     });
   });
 
@@ -457,6 +596,50 @@ describe("friend links", () => {
 
       expect(text()).toContain("This friend request isn't available.");
       expect(button("Accept")).toBeUndefined();
+    });
+
+    it("says when the requests couldn't be loaded, and tries again on request", async () => {
+      const consoleError = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      userId.value = null;
+      const request = server.requestFrom(ADA_ID);
+      const listRecords = server.spies.listRecords.getMockImplementation()!;
+      server.spies.listRecords.mockRejectedValue(new Error("offline"));
+      await openWith(`?friendRequest=${request.id}`);
+      await click("Log in");
+
+      expect(text()).toContain("Couldn't load your friend requests.");
+      expect(text()).not.toContain("isn't available");
+
+      // Still offline: it says so again, and can be tried once more.
+      await click("Try again");
+      expect(text()).toContain("Couldn't load your friend requests.");
+
+      server.spies.listRecords.mockImplementation(listRecords);
+      await click("Try again");
+      expect(text()).toContain("Ada wants to be friends.");
+      consoleError.mockRestore();
+    });
+
+    it("keeps saying a request isn't available while the lists refresh", async () => {
+      const request = server.requestFrom(ADA_ID, { status: "rejected" });
+      await openWith(`?friendRequest=${request.id}`);
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const listRecords = server.spies.listRecords.getMockImplementation()!;
+      server.spies.listRecords.mockImplementationOnce(async () => {
+        await gate;
+        return listRecords();
+      });
+
+      const refreshing = friends.refresh();
+      await act(async () => {});
+      expect(friends.isLoading.value).toBe(true);
+      expect(text()).toContain("This friend request isn't available.");
+
+      release();
+      await act(() => refreshing);
     });
 
     it("tells the sender the link is for the person they asked", async () => {

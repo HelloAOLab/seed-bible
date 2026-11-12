@@ -31,14 +31,6 @@ describe("initTheographicExtension", () => {
     unregisterExtension("theographic-extension");
   });
 
-  it("installs without the locations extension", () => {
-    const discover = install();
-
-    expect(discover.providers.value.map((provider) => provider.id)).toEqual([
-      "theographic",
-    ]);
-  });
-
   it("files people, places and events under core's shared sections", () => {
     const discover = install();
 

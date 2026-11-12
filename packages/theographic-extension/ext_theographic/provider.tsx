@@ -14,6 +14,7 @@ import type {
   Dataset,
   TranslationBookChapter,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { ModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { ReadonlySignal } from "@preact/signals";
 import {
@@ -209,15 +210,16 @@ export const THEOGRAPHIC_NOT_FOUND_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
  * What the cache holds for one path: the record itself, or the fact that
- * there is nothing usable there — far smaller than the 1 MB outline of Crete
- * it can stand in for.
+ * there is nothing there.
  */
 export interface CachedRecord {
   value?: unknown;
-  /** Set when `value` is absent. Records written before this field have neither. */
+  /**
+   * Set when `value` is absent. "too-large" only comes from older versions,
+   * which capped a file's size for the old map; it's read as a miss, so the
+   * file is fetched again.
+   */
   outcome?: "not-found" | "too-large";
-  /** For "too-large": how long the body was, in characters. */
-  length?: number;
   fetchedAtMs: number;
 }
 
@@ -345,12 +347,12 @@ export function createIndexedDbTheographicStore(): TheographicStore | null {
 /**
  * A request the client couldn't answer with data. Callers branch on `reason`:
  * "not-found" is the dataset's normal answer for a chapter it has nothing
- * for, and "too-large" a body longer than the caller's `maxLength`.
+ * for.
  */
 export class TheographicRequestError extends Error {
   constructor(
     readonly url: string,
-    readonly reason: "not-found" | "too-large" | "failed",
+    readonly reason: "not-found" | "failed",
     readonly status: number | null = null,
     detail = ""
   ) {
@@ -363,14 +365,6 @@ export class TheographicRequestError extends Error {
   }
 }
 
-export interface ReadOptions {
-  /**
-   * The longest body, in characters, the caller can use. A longer one rejects
-   * with a "too-large" error, and only that fact is cached.
-   */
-  maxLength?: number;
-}
-
 /** Reads the dataset, preferring the on-device cache over the network. */
 export interface TheographicClient {
   getChapter(
@@ -381,9 +375,9 @@ export interface TheographicClient {
   getEntity<T>(apiLink: string): Promise<T>;
   /**
    * Any other JSON file, by absolute URL, through the same cache: the
-   * locations extension's GeoJSON files.
+   * known places' GeoJSON files.
    */
-  getResource<T>(url: string, options?: ReadOptions): Promise<T>;
+  getResource<T>(url: string): Promise<T>;
 }
 
 /** The path one chapter of the dataset lives at. Doubles as its cache key. */
@@ -435,8 +429,7 @@ export function createTheographicClient(
 
   const fromCache = async (
     path: string,
-    url: string,
-    options: ReadOptions
+    url: string
   ): Promise<{ value: unknown } | null> => {
     let cached: CachedRecord | null;
     try {
@@ -451,14 +444,6 @@ export function createTheographicClient(
       throw new TheographicRequestError(url, "not-found", 404);
     }
     if (cached.outcome === "too-large") {
-      // Only known to be too long for a caller as strict as the one that
-      // cached it; one allowing more has to fetch it to find out.
-      if (
-        options.maxLength !== undefined &&
-        (cached.length ?? Infinity) > options.maxLength
-      ) {
-        throw new TheographicRequestError(url, "too-large");
-      }
       return null;
     }
     return { value: cached.value };
@@ -466,8 +451,7 @@ export function createTheographicClient(
 
   const fetchAndRemember = async (
     path: string,
-    url: string,
-    options: ReadOptions
+    url: string
   ): Promise<unknown> => {
     const response = await fetch(url);
     if (response.status === 404) {
@@ -483,20 +467,12 @@ export function createTheographicClient(
       );
     }
 
-    const text = await response.text();
-    if (options.maxLength !== undefined && text.length > options.maxLength) {
-      await remember(path, { outcome: "too-large", length: text.length });
-      throw new TheographicRequestError(url, "too-large");
-    }
-    const value: unknown = JSON.parse(text);
+    const value: unknown = JSON.parse(await response.text());
     await remember(path, { value });
     return value;
   };
 
-  const read = async <T,>(
-    path: string,
-    options: ReadOptions = {}
-  ): Promise<T> => {
+  const read = async <T,>(path: string): Promise<T> => {
     if (store && !hasPruned) {
       // Expired records are otherwise only replaced when revisited, so the
       // ones that never are would stay on the device for good.
@@ -513,8 +489,8 @@ export function createTheographicClient(
 
     const url = new URL(path, endpoint).href;
     const request = (async () => {
-      const cached = await fromCache(path, url, options);
-      return cached ? cached.value : fetchAndRemember(path, url, options);
+      const cached = await fromCache(path, url);
+      return cached ? cached.value : fetchAndRemember(path, url);
     })();
 
     inFlight.set(path, request);
@@ -529,8 +505,7 @@ export function createTheographicClient(
     getChapter: (book, chapter) =>
       read<TheographicBookChapter>(theographicChapterPath(book, chapter)),
     getEntity: <T,>(apiLink: string) => read<T>(apiLink),
-    getResource: <T,>(url: string, options?: ReadOptions) =>
-      read<T>(url, options),
+    getResource: <T,>(url: string) => read<T>(url),
   };
 }
 
@@ -595,10 +570,12 @@ export interface TheographicProviderDeps {
   onReferenceClick: (ref: VerseRef, origin?: ReferenceOrigin) => void;
   /** Where a place's map opens. Omit and the map control is not offered. */
   panes?: PanesManager;
-  /** The locations extension's lookup, for places it has a file for. */
+  /** The known places' lookup (`@seed-bible/bible-locations`), for places with a file. */
   locations?: PlaceLocations;
-  /** Whether the reader is on a phone-sized screen; hides "Open in map". */
+  /** Whether the reader is on a phone-sized screen, where the map opens in a sheet. */
   isMobile?: ReadonlySignal<boolean>;
+  /** Where the map opens on a phone, as a sheet over Discover. */
+  modals?: ModalManager;
 }
 
 /** The chapter a card was discovered for. */
@@ -749,11 +726,14 @@ export function createTheographicDiscoverProvider(
   deps: TheographicProviderDeps
 ): DiscoverProvider {
   let hasWarned = false;
-  const openPlace = createOpenPlace(deps.panes, {
+  const mapHost = deps.panes
+    ? { panes: deps.panes, modals: deps.modals, isMobile: deps.isMobile }
+    : undefined;
+  const openPlace = createOpenPlace(mapHost, {
     client: deps.client,
     locations: deps.locations,
   });
-  const isPlaceOpen = createIsPlaceOpen(deps.panes);
+  const isPlaceOpen = createIsPlaceOpen(mapHost);
 
   return {
     id: "theographic",

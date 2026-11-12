@@ -13,8 +13,8 @@
 .sb-extension-info-tile .sb-extension-consent-tile {
   width: 4rem;
   height: 4rem;
-  border-radius: 1.125rem;
-  font-size: 1.375rem;
+  border-radius: var(--sb-radius-xl);
+  font-size: var(--sb-font-size-22);
 }
 
 .sb-extension-info-identity {
@@ -37,7 +37,7 @@
 
 .sb-extension-info-title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: var(--sb-font-size-24);
   font-weight: 600;
   line-height: 1.25;
 }
@@ -47,8 +47,8 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.125rem 0.5625rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
+  border-radius: var(--sb-radius-full);
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
@@ -71,18 +71,18 @@
   );
   gap: 0.25rem;
   padding: 0.25rem;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
 }
 
 .sb-extension-info-tab {
   min-height: 2.5rem;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   cursor: pointer;
 }
@@ -90,7 +90,7 @@
 .sb-extension-info-tab[aria-selected="true"] {
   background: var(--sb-reader-background, #ffffff);
   color: var(--sb-font-color);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-extension-info-tab:focus-visible {
@@ -106,18 +106,18 @@
 
 .sb-extension-info-description {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   line-height: 1.55;
 }
 
 .sb-extension-info-install {
   min-height: 3rem;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
-  color: #ffffff;
+  color: var(--sb-primary-font-color);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   cursor: pointer;
 }
@@ -139,7 +139,7 @@
 
 .sb-extension-info-heading {
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
 }
 
@@ -149,7 +149,7 @@
   grid-template-columns: max-content minmax(0, 1fr);
   column-gap: 1rem;
   row-gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-extension-info-details dt {
@@ -163,7 +163,7 @@
 
 .sb-extension-info-id {
   font-family: ui-monospace, monospace;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-extension-info-uninstall {
@@ -171,11 +171,11 @@
   min-height: 2.75rem;
   padding: 0 1.125rem;
   border: 1px solid color-mix(in srgb, #c62828, transparent 65%);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: transparent;
   color: color-mix(in srgb, #c62828, var(--sb-font-color) 20%);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
   cursor: pointer;
 }
@@ -208,14 +208,14 @@
   align-items: flex-start;
   padding: 1.75rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 1.5rem;
+  border-radius: var(--sb-radius-2xl);
   background: color-mix(in srgb, var(--sb-font-color), transparent 97%);
 }
 
 .sb-extension-info-wide .sb-extension-info-tile .sb-extension-consent-tile {
   width: 5rem;
   height: 5rem;
-  border-radius: 1.375rem;
+  border-radius: var(--sb-radius-2xl);
   font-size: 1.75rem;
 }
 
@@ -225,7 +225,7 @@
   .sb-extension-consent-tile {
   width: 6rem;
   height: 6rem;
-  border-radius: 1.625rem;
+  border-radius: var(--sb-radius-2xl);
   font-size: 2.125rem;
 }
 
@@ -235,12 +235,12 @@
 }
 
 .sb-extension-info-wide .sb-extension-info-title {
-  font-size: 2rem;
+  font-size: var(--sb-font-size-32);
 }
 
 .sb-extension-info-wide .sb-extension-info-description {
   max-width: 64ch;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   line-height: 1.6;
 }
 
@@ -260,11 +260,11 @@
 
 .sb-extension-info-wide .sb-extension-info-install {
   min-height: 3.25rem;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .sb-extension-info-install-note {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.5;
   text-align: center;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
@@ -288,7 +288,7 @@
 }
 
 .sb-extension-info-wide .sb-extension-info-heading {
-  font-size: 1.25rem;
+  font-size: var(--sb-font-size-20);
 }
 
 .sb-extension-info-wide .sb-extension-info-abilities {
@@ -306,11 +306,11 @@
   gap: 0.75rem;
   padding: 1.125rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
 }
 
 .sb-extension-info-wide .sb-extension-info-card .sb-extension-info-heading {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .sb-extension-info-wide .sb-extension-info-tabs {
@@ -330,9 +330,9 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0 0.875rem;
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   text-align: start;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 500;
   color: var(--sb-font-color);
 }
@@ -380,5 +380,5 @@
 
 .sb-extension-info-wide .sb-extension-permissions .sb-extension-consent-card {
   border: 1px solid var(--sb-divider-color);
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
 }

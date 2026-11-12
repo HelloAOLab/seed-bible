@@ -698,7 +698,18 @@ export function createSettings(
   // effect, and the profile's still-unsaved previous language would revert
   // `i18n.language` (leaving only `?translation=` applied). Only read
   // `login.profile` here so the effect subscribes to the profile alone.
+  //
+  // A `?lang=` link the visitor arrived on wins over the saved language for
+  // the whole session, matching how `TabsManager` keeps the link's translation
+  // over the saved one — otherwise the menus would revert while the text
+  // stayed in the link's language. Read from the frozen arrival snapshot
+  // because the reader rewrites the live URL into its canonical path.
+  const hadExplicitInitialUrlLanguage =
+    !!navigation.initialUrl.searchParams.get("lang");
   effect(() => {
+    if (hadExplicitInitialUrlLanguage) {
+      return;
+    }
     const profileLanguage = getProfileConfigValue(login.profile.value, "lang");
     const nextLanguage =
       typeof profileLanguage === "string" && profileLanguage.trim().length > 0
@@ -983,9 +994,10 @@ export function createSettings(
   };
 
   // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`
-  // (see app/styles/base.css). Chrome sized in `rem` tracks this; reader text keeps its
-  // own font-size knob (`.sb-bible-reader` carries `.sb-font-size-*`), so it
-  // stays independent without the old root-`zoom` + counter-zoom hack.
+  // (see app/styles/base.inline.css). Chrome sized in `rem` tracks this; reader
+  // text keeps its own font-size knob (`.sb-bible-reader` carries
+  // `.sb-reader-font-size-*`), so it stays independent without the old
+  // root-`zoom` + counter-zoom hack.
   const skipUiScaleWrite = skipFirstWriteAfterEarlyConfig();
   effect(() => {
     if (typeof document === "undefined") {
@@ -1013,8 +1025,8 @@ export function createSettings(
   });
 
   // The early-config script sizes the reader through a CSS rule keyed on
-  // `EARLY_CONFIG_ATTR` instead of the `.sb-font-size-*` class (which doesn't
-  // exist yet); once the real settings are in, the class takes over again.
+  // `EARLY_CONFIG_ATTR` instead of the `.sb-reader-font-size-*` class (which
+  // doesn't exist yet); once the real settings are in, the class takes over again.
   const skipFontSizeWrite = skipFirstWriteAfterEarlyConfig();
   effect(() => {
     if (typeof document === "undefined") return;

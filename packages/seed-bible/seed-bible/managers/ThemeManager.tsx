@@ -314,6 +314,13 @@ export interface BibleThemeVariables {
   toolbarIconInvert?: string | null;
 
   /**
+   * CSS `filter` applied to a map's base imagery (`@seed-bible/maps`). Tile
+   * servers draw one light map, so a dark theme dims and inverts it to sit
+   * with the rest of the page; `none` shows the tiles as drawn.
+   */
+  mapTileFilter?: string | null;
+
+  /**
    * Background for popover surfaces — context menus, tab menus, sidebar
    * search results, dropdown panels. Should generally be opaque and have
    * good contrast against the menu's text color in both themes.
@@ -628,29 +635,29 @@ export const LIGHT_THEME: BibleTheme = {
     readerToolbarBottom: "1.125rem",
     readerToolbarGap: "0.25rem",
     readerToolbarPadding: "1px 0.3125rem",
-    readerToolbarBorderRadius: "1.25rem",
+    readerToolbarBorderRadius: "var(--sb-radius-2xl)",
     readerToolbarBackground: "#ffffff",
     readerToolbarBorder: "1px solid #00000024",
     readerToolbarBoxShadow:
       "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
-    readerToolbarZIndex: "99",
+    readerToolbarZIndex: "calc(var(--sb-layer-chrome) - 1)",
     readerToolbarHeight: "auto",
 
     readerToolbarFloatingButtonTop: "-4.25rem",
     readerToolbarFloatingButtonWidth: "3rem",
     readerToolbarFloatingButtonHeight: "3rem",
     readerToolbarFloatingButtonBorder: "1px solid #00000024",
-    readerToolbarFloatingButtonBorderRadius: "62.4375rem",
+    readerToolbarFloatingButtonBorderRadius: "var(--sb-radius-full)",
     readerToolbarFloatingButtonBackground: "#ffffff",
     readerToolbarFloatingButtonFontColor: "#333",
     readerToolbarFloatingButtonBoxShadow: "0 10px 24px #0000001a",
 
     verseToolbarGap: "0.125rem",
     verseToolbarPadding: "0.25rem 0.5rem",
-    verseToolbarBorderRadius: "0.625rem",
+    verseToolbarBorderRadius: "var(--sb-radius-md)",
     verseToolbarBorder: "1px solid var(--sb-divider-color)",
     verseToolbarBoxShadow: "0 26px 10px var(--sb-shadow-color)",
-    verseToolbarZIndex: "100",
+    verseToolbarZIndex: "var(--sb-layer-chrome)",
     verseToolbarMinHeight: "0",
 
     readerToolbarMobileLayoutHeight: "auto",
@@ -659,7 +666,7 @@ export const LIGHT_THEME: BibleTheme = {
     readerToolbarMobileLayoutItemSize: "2.75rem",
     readerToolbarMobileLayoutCenterButtonWidth: "5.4375rem",
     readerToolbarMobileLayoutCenterButtonHeight: "2.625rem",
-    readerToolbarMobileLayoutButtonBorderRadius: "2.5rem",
+    readerToolbarMobileLayoutButtonBorderRadius: "var(--sb-radius-full)",
 
     readerToolbarFloatingButtonSideOffset: "1rem",
 
@@ -670,6 +677,7 @@ export const LIGHT_THEME: BibleTheme = {
     menuFontColor: "#333",
 
     toolbarIconInvert: "0",
+    mapTileFilter: "none",
 
     readerToolbarFontColor: "#333",
     readerToolbarFontFamily: "system-ui, sans-serif",
@@ -775,16 +783,16 @@ export const DARK_THEME: BibleTheme = {
   id: "dark",
   name: "Dark",
   variables: {
-    primaryColor: "#e07b4c",
+    primaryColor: "#f5f5f5",
     primaryFontColor: "#111111",
 
-    secondaryColor: "#433228",
+    secondaryColor: "#2a2a2a",
     secondaryFontColor: "#f5f5f5",
 
     tertiaryColor: "#1c1c1c",
 
-    linkColor: "#e07b4c",
-    linkVisitedColor: "#d99bb0",
+    linkColor: "#f5f5f5",
+    linkVisitedColor: "#a3a3a3",
 
     background: "#0a0a0a",
 
@@ -823,27 +831,27 @@ export const DARK_THEME: BibleTheme = {
     readerToolbarBottom: "1.125rem",
     readerToolbarGap: "0.25rem",
     readerToolbarPadding: "1px 0.3125rem",
-    readerToolbarBorderRadius: "1.25rem",
+    readerToolbarBorderRadius: "var(--sb-radius-2xl)",
     readerToolbarBackground: "#181818",
     readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.1)",
     readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.5)",
-    readerToolbarZIndex: "99",
+    readerToolbarZIndex: "calc(var(--sb-layer-chrome) - 1)",
     readerToolbarHeight: "auto",
     readerToolbarFloatingButtonTop: "-4.25rem",
     readerToolbarFloatingButtonWidth: "3rem",
     readerToolbarFloatingButtonHeight: "3rem",
     readerToolbarFloatingButtonBorder: "1px solid rgba(255, 255, 255, 0.1)",
-    readerToolbarFloatingButtonBorderRadius: "62.4375rem",
+    readerToolbarFloatingButtonBorderRadius: "var(--sb-radius-full)",
     readerToolbarFloatingButtonBackground: "#181818",
     readerToolbarFloatingButtonFontColor: "#e6e6e6",
     readerToolbarFloatingButtonBoxShadow: "0 10px 24px rgba(0, 0, 0, 0.5)",
 
     verseToolbarGap: "0.125rem",
     verseToolbarPadding: "0.25rem 0.5rem",
-    verseToolbarBorderRadius: "0.625rem",
+    verseToolbarBorderRadius: "var(--sb-radius-md)",
     verseToolbarBorder: "1px solid var(--sb-divider-color)",
     verseToolbarBoxShadow: "0 26px 10px var(--sb-shadow-color)",
-    verseToolbarZIndex: "100",
+    verseToolbarZIndex: "var(--sb-layer-chrome)",
     verseToolbarMinHeight: "0",
 
     readerToolbarMobileLayoutHeight: "auto",
@@ -852,7 +860,7 @@ export const DARK_THEME: BibleTheme = {
     readerToolbarMobileLayoutItemSize: "2.75rem",
     readerToolbarMobileLayoutCenterButtonWidth: "5.4375rem",
     readerToolbarMobileLayoutCenterButtonHeight: "2.625rem",
-    readerToolbarMobileLayoutButtonBorderRadius: "2.5rem",
+    readerToolbarMobileLayoutButtonBorderRadius: "var(--sb-radius-full)",
 
     readerToolbarFloatingButtonSideOffset: "1rem",
 
@@ -863,6 +871,8 @@ export const DARK_THEME: BibleTheme = {
     menuFontColor: "#e6e6e6",
 
     toolbarIconInvert: "1",
+    mapTileFilter:
+      "invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9)",
 
     readerToolbarFontColor: "#e6e6e6",
     readerToolbarFontFamily: "system-ui, sans-serif",

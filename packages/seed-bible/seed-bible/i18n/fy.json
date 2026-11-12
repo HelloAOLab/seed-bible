@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Kopiearre oersettingsdielingslink",
   "less": "Minder",
   "swipe-up-more": "Swipe omheech om mear te sjen",
-  "plans": "Plannen",
   "reading-plans": "Lêsplannen",
   "create-reading-plan": "Lêsplan meitsje",
   "reading-plans-empty": "Jo hawwe noch gjin lêsplannen. Meitsje ien oan om te begjinnen.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Oersettings laden…",
   "translations-load-failed": "Koe de folsleine list mei oersettings net lade, dus guon kinne ûntbrekke.",
   "verse-of-the-day": "FERS FAN DE DEI",
-  "verse-of-the-day-loading": "It fers fan 'e dei oan it laden…"
+  "verse-of-the-day-loading": "It fers fan 'e dei oan it laden…",
+  "delete-bookmark-confirm-title": "Blêdwizer wiskje?",
+  "delete-bookmark-confirm-message": "\" {{name}} \" wiskje?",
+  "scripture-font": "Skriftlettertype",
+  "ai-limits-title": "Foardat jo mei AI petearje",
+  "ai-limits-intro": "KI kin in nuttich útgongspunt wêze, mar hâld de grinzen yn gedachten:",
+  "ai-limits-mistakes": "It makket flaters, en kin selsbetrouwen klinke as it ferkeard is.",
+  "ai-limits-agreeable": "It hat de neiging om jo te fertellen wat jo hearre wolle, en leanet nei populêre antwurden.",
+  "ai-limits-scripture": "It is gjin betroubere boarne. Kontrolearje wat it seit tsjin de Skrift.",
+  "ai-limits-study": "Bestudearje de Bibel sels, en lit AI jo tinken net foar jo dwaan.",
+  "ai-limits-confirm": "Ik begryp dat AI flaters meitsje kin en gjin ferfanging is foar it sels bestudearjen fan 'e Bibel.",
+  "friends-playlists-filter": "Playlists fan freonen",
+  "friend-link-social-title": "Foegje {{name}} ta as freon",
+  "friend-link-meta-description": "{{name}} wol dyn freon wêze op {{brand}}",
+  "friend-link-title": "Foegje {{name}} ta as freon op {{brand}}"
 }
