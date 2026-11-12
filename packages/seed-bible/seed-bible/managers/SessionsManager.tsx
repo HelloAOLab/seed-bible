@@ -1063,9 +1063,19 @@ async function createBibleReadingSession(
   let appliedBookId = "";
   let appliedChapter = 0;
   /**
+   * A leader position whose chapter failed to load. Kept separate from
+   * `appliedPositionKey` so a later signal change does not look like the
+   * reader scrolled away, and so the same position is not requested again
+   * on every signal change. A new position from the leader, or follow
+   * starting over, clears it.
+   */
+  let failedPositionKey = "";
+  /**
    * Chapter a follow navigation moved this reader to. Publishing that same
    * chapter would drag the whole session along behind one person's follow,
-   * so local publish is suppressed while the reader is still there.
+   * so local publish is suppressed while the reader is still there. Cleared
+   * when follow ends and when the reader leaves that chapter, so a later
+   * visit publishes normally.
    */
   let followLockedPosition: { bookId: string; chapterNumber: number } | null =
     null;
@@ -1426,14 +1436,21 @@ async function createBibleReadingSession(
   syncDecorationsFromSession();
 
   const mapSubscription = stateMap.changes.subscribe(() => {
-    // While actively following, the leader's own position is the source of
-    // truth. Applying the session chapter here would pull the reader off
-    // that person whenever anyone else navigates.
+    // The "Group is on …" label, Rejoin, and the participants list all
+    // read this. It has to move while following too, or they keep offering
+    // the chapter the group has already left.
+    refreshGroupPosition();
+
+    // The group's chapter must not pull the reader off the person they
+    // follow. When follow ends they stay where they are; Rejoin, now
+    // pointing at the current group chapter, is the way back. A local echo
+    // that arrives during the follow is dropped so the next real group
+    // move is not mistaken for our own write.
     if (followState.peek()?.status === "active") {
+      lastLocallyWrittenState = null;
       return;
     }
 
-    refreshGroupPosition();
     const nextSessionData = getSessionDataFromMap(stateMap);
 
     if (
@@ -1683,14 +1700,17 @@ async function createBibleReadingSession(
       return null;
     }
 
-    // Still sitting on the chapter follow moved us to. A later navigation to
-    // a different chapter does not match and publishes as usual.
-    if (
-      followLockedPosition &&
-      nextSessionData.bookId === followLockedPosition.bookId &&
-      nextSessionData.chapterNumber === followLockedPosition.chapterNumber
-    ) {
-      return null;
+    // The lock covers only the chapter follow moved us onto, and only while
+    // we are still on it. Leaving that chapter drops the lock, so coming
+    // back later publishes like any other navigation.
+    if (followLockedPosition) {
+      if (
+        nextSessionData.bookId === followLockedPosition.bookId &&
+        nextSessionData.chapterNumber === followLockedPosition.chapterNumber
+      ) {
+        return null;
+      }
+      followLockedPosition = null;
     }
 
     return nextSessionData;
@@ -1983,6 +2003,8 @@ async function createBibleReadingSession(
 
   const clearFollow = () => {
     clearFollowDetachTimer();
+    followLockedPosition = null;
+    failedPositionKey = "";
     followAnchor.value = null;
     appliedPositionKey = "";
     appliedBookId = "";
@@ -1997,6 +2019,7 @@ async function createBibleReadingSession(
     // Clicking follow or resume is a decision to jump there now, even if a
     // scroll gesture was still marked active.
     userScrollActive = false;
+    failedPositionKey = "";
     followAnchor.value = null;
     appliedPositionKey = "";
     appliedBookId = "";
@@ -2014,9 +2037,9 @@ async function createBibleReadingSession(
       readingState.bookId.peek() === leader.bookId &&
       readingState.chapterNumber.peek() === leader.chapterNumber;
     const range = readingState.visibleVerseRange.peek();
-    if (!force && followScroll.peek()?.verse === verse) {
-      return;
-    }
+    // Skip only when the screen already starts on this verse. The last
+    // request is not enough: a hand scroll can leave the reader elsewhere
+    // and the next request can be the same verse number again.
     if (!force && sameChapter && range?.first === verse) {
       return;
     }
@@ -2070,6 +2093,12 @@ async function createBibleReadingSession(
       leader.firstVerse ?? "",
       leader.lastVerse ?? "",
     ].join(":");
+    // This chapter already failed to load. Wait for a new position, or for
+    // follow to start over, instead of treating the miss as a hand scroll
+    // or requesting it again on every signal change.
+    if (failedPositionKey !== "" && positionKey === failedPositionKey) {
+      return;
+    }
     const localBook = readingState.bookId.peek();
     const localChapter = readingState.chapterNumber.peek();
     const userMoved =
@@ -2141,6 +2170,10 @@ async function createBibleReadingSession(
     if (localBook !== leader.bookId || localChapter !== leader.chapterNumber) {
       const translationId = readingState.translationId.peek();
       if (!translationId) {
+        failedPositionKey = positionKey;
+        appliedPositionKey = "";
+        appliedBookId = "";
+        appliedChapter = 0;
         followLockedPosition = previousLock;
         return;
       }
@@ -2153,8 +2186,13 @@ async function createBibleReadingSession(
           { updateUrl: false }
         );
       } catch {
-        // Keep the key so a failed load is not retried on every signal
-        // change. A new position from the leader gets a new key.
+        // Remember the position so it is not requested on every signal
+        // change, but do not leave it as the applied key. That key is what
+        // a later run uses to decide the reader scrolled away on purpose.
+        failedPositionKey = positionKey;
+        appliedPositionKey = "";
+        appliedBookId = "";
+        appliedChapter = 0;
         followLockedPosition = previousLock;
         return;
       } finally {
@@ -2179,6 +2217,7 @@ async function createBibleReadingSession(
       }
     }
 
+    failedPositionKey = "";
     if (anchor !== null && !userScrollActive) {
       requestFollowScroll(anchor, fresh || resetAnchor);
     }

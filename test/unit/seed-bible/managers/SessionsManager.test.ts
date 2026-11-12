@@ -3243,6 +3243,183 @@ describe("SessionsManager", () => {
       expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 3);
     });
 
+    it("publishes the followed chapter again after stopping, leaving, and coming back", async () => {
+      const session = await join();
+      await connect(session, "conn-1", "user-1");
+      publishPosition("conn-1", {
+        bookId: "REV",
+        chapterNumber: 22,
+        firstVerse: 1,
+        lastVerse: 5,
+      });
+      await waitFor(() => session.participantPositions.value.has("conn-1"));
+      await flushPublishDebounce();
+      mockMap.set.mockClear();
+
+      session.followUser("conn-1");
+      await waitFor(() => session.readingState.chapterNumber.value === 22);
+      await flushPublishDebounce();
+      expect(mockMap.set).not.toHaveBeenCalled();
+
+      session.stopFollowing();
+      // Still on the chapter follow opened. The lock from that move has to
+      // be gone, or this publish — and a later return to it — is dropped.
+      session.readingState.scrollToVerse.value = 8;
+      await flushPublishDebounce();
+      expect(mockMap.set).toHaveBeenCalledWith("bookId", "REV");
+      expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 22);
+
+      mockMap.set.mockClear();
+      session.readingState.bookId.value = "EXO";
+      session.readingState.chapterNumber.value = 3;
+      await flushPublishDebounce();
+      expect(mockMap.set).toHaveBeenCalledWith("bookId", "EXO");
+      expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 3);
+
+      mockMap.set.mockClear();
+      session.readingState.bookId.value = "REV";
+      session.readingState.chapterNumber.value = 22;
+      await flushPublishDebounce();
+      expect(mockMap.set).toHaveBeenCalledWith("bookId", "REV");
+      expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 22);
+    });
+
+    it("publishes a return to the chapter follow locked after the reader leaves it", async () => {
+      const session = await join();
+      await connect(session, "conn-1", "user-1");
+      publishPosition("conn-1", {
+        bookId: "REV",
+        chapterNumber: 22,
+        firstVerse: 1,
+        lastVerse: 5,
+      });
+      await waitFor(() => session.participantPositions.value.has("conn-1"));
+      await flushPublishDebounce();
+      mockMap.set.mockClear();
+
+      session.followUser("conn-1");
+      await waitFor(() => session.readingState.chapterNumber.value === 22);
+
+      session.readingState.bookId.value = "EXO";
+      session.readingState.chapterNumber.value = 3;
+      await flushPublishDebounce();
+      expect(session.follow.value?.status).toBe("paused");
+      expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 3);
+
+      mockMap.set.mockClear();
+      session.readingState.bookId.value = "REV";
+      session.readingState.chapterNumber.value = 22;
+      await flushPublishDebounce();
+      expect(mockMap.set).toHaveBeenCalledWith("bookId", "REV");
+      expect(mockMap.set).toHaveBeenCalledWith("chapterNumber", 22);
+    });
+
+    it("keeps tracking the group's chapter while following, without jumping there", async () => {
+      const session = await join();
+      await connect(session, "conn-1", "user-1");
+      publishPosition("conn-1", {
+        bookId: "GEN",
+        chapterNumber: 1,
+        firstVerse: 1,
+        lastVerse: 5,
+      });
+      await waitFor(() => session.participantPositions.value.has("conn-1"));
+      session.followUser("conn-1");
+      await waitFor(() => session.follow.value?.status === "active");
+
+      const select = session.readingState.selectTranslationAndChapter as Mock;
+      select.mockClear();
+      mockMap.set("bookId", "JHN");
+      mockMap.set("chapterNumber", 5);
+      mockMap.emitChange();
+
+      expect(session.groupPosition.value).toMatchObject({
+        bookId: "JHN",
+        chapterNumber: 5,
+      });
+      expect(session.readingState.bookId.value).toBe("GEN");
+      expect(session.readingState.chapterNumber.value).toBe(1);
+      expect(select).not.toHaveBeenCalled();
+
+      session.stopFollowing();
+      expect(session.readingState.bookId.value).toBe("GEN");
+      expect(session.readingState.chapterNumber.value).toBe(1);
+    });
+
+    it("scrolls back when the leader's view shrinks past a hand-chosen verse", async () => {
+      const session = await join();
+      await connect(session, "conn-1", "user-1");
+      publishPosition("conn-1", {
+        bookId: "GEN",
+        chapterNumber: 1,
+        firstVerse: 10,
+        lastVerse: 20,
+      });
+      await waitFor(() => session.participantPositions.value.has("conn-1"));
+      session.followUser("conn-1");
+      await waitFor(() => session.followScroll.value?.verse === 10);
+
+      session.setFollowScrollGesture(true);
+      session.readingState.visibleVerseRange.value = { first: 15, last: 18 };
+      session.noteFollowScroll();
+      expect(session.followAnchor.value).toBe(15);
+
+      const token = session.followScroll.value?.token ?? 0;
+      publishPosition("conn-1", {
+        bookId: "GEN",
+        chapterNumber: 1,
+        firstVerse: 10,
+        lastVerse: 13,
+      });
+      session.setFollowScrollGesture(false);
+
+      await waitFor(() => session.followAnchor.value === 10);
+      expect(session.follow.value?.status).toBe("active");
+      expect(session.followScroll.value?.verse).toBe(10);
+      expect(session.followScroll.value?.token ?? 0).toBeGreaterThan(token);
+    });
+
+    it("stays in follow when the leader's chapter fails to load, and retries the next one", async () => {
+      const session = await join();
+      await connect(session, "conn-1", "user-1");
+      publishPosition("conn-1", {
+        bookId: "REV",
+        chapterNumber: 22,
+        firstVerse: 1,
+        lastVerse: 5,
+      });
+      await waitFor(() => session.participantPositions.value.has("conn-1"));
+
+      const select = session.readingState.selectTranslationAndChapter as Mock;
+      select.mockRejectedValueOnce(new Error("offline"));
+      session.followUser("conn-1");
+      await waitFor(() => select.mock.calls.length >= 1);
+      await select.mock.results[0]?.value?.catch(() => undefined);
+
+      // A later signal change for the same position must not look like the
+      // reader scrolled away, and must not request the chapter again.
+      publishPosition("conn-1", {
+        bookId: "REV",
+        chapterNumber: 22,
+        firstVerse: 1,
+        lastVerse: 5,
+      });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(session.follow.value?.status).toBe("active");
+      expect(session.readingState.bookId.value).toBe("GEN");
+      expect(select.mock.calls.length).toBe(1);
+
+      publishPosition("conn-1", {
+        bookId: "EXO",
+        chapterNumber: 4,
+        firstVerse: 1,
+        lastVerse: 3,
+      });
+      await waitFor(() => session.readingState.bookId.value === "EXO");
+      expect(session.readingState.chapterNumber.value).toBe(4);
+      expect(session.follow.value?.status).toBe("active");
+    });
+
     it("lets anyone follow anyone until the host says otherwise", async () => {
       const session = await join();
       await connect(session, "conn-1", "user-1");

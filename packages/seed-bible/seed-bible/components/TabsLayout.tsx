@@ -319,8 +319,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
   // Keep up with someone this reader is following. A new token is a new
   // request, so resuming follow jumps back even when the verse number has
-  // not changed. Chapter content is read with peek: the session sets the
-  // request only after the chapter it points at has loaded.
+  // not changed. Chapter content is watched too: a request that arrives
+  // before the chapter has loaded has to run once the verses exist.
   useEffect(() => {
     const session = tab.sharedSession;
     if (!scroller || !session?.followScroll) {
@@ -328,21 +328,26 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     }
 
     let frame = 0;
+    let appliedToken = 0;
     const dispose = effect(() => {
       const request = session.followScroll.value;
-      if (!request || !readingState.chapterData.peek()) {
+      const chapter = readingState.chapterData.value;
+      if (!request || !chapter || request.token === appliedToken) {
         return;
       }
+      const token = request.token;
+      const verseNumber = request.verse;
 
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         frame = requestAnimationFrame(() => {
           frame = 0;
           const verse = scroller.querySelector(
-            `.sb-verse[data-verse-number="${request.verse}"]`
+            `.sb-verse[data-verse-number="${verseNumber}"]`
           );
           if (verse instanceof HTMLElement) {
             alignVerseToReaderTop(verse, scroller);
+            appliedToken = token;
           }
         });
       });
@@ -384,13 +389,12 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       }, 150);
     };
 
-    const onScroll = (event: Event) => {
-      if (!event.isTrusted && !gesture) {
-        return;
-      }
+    const onScroll = () => {
+      // Browsers mark every scroll event as trusted, including the one from
+      // setting scrollTop to catch up with someone. Only a wheel, touch,
+      // key, or pointer that already armed this gesture is a hand scroll.
       if (!gesture) {
-        gesture = true;
-        session.setFollowScrollGesture?.(true);
+        return;
       }
       window.clearTimeout(armTimer);
       session.noteFollowScroll();
