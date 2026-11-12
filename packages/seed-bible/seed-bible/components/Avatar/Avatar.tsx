@@ -6,6 +6,7 @@ import {
   type ConnectionSessionUserVisual,
   type SessionOptions,
 } from "../../managers/SessionsManager";
+import type { useI18n } from "../../i18n/I18nManager";
 
 /** Session leadership role for a connected user, shown as an avatar badge. */
 export type SessionRole = "host" | "co-host";
@@ -45,6 +46,35 @@ export function getUserSessionRole(
 /** Host first, then co-hosts, then everyone else. */
 export function sessionRoleRank(role: SessionRole | null): number {
   return role === "host" ? 0 : role === "co-host" ? 1 : 2;
+}
+
+/**
+ * A sorted copy of `users`: host first, then co-hosts, then everyone else.
+ * The sort is stable, so people keep their existing order within a rank.
+ */
+export function sortUsersByRole<T extends ConnectedSessionUser>(
+  users: readonly T[],
+  options: SessionOptions
+): T[] {
+  return [...users].sort(
+    (a, b) =>
+      sessionRoleRank(getUserSessionRole(options, a)) -
+      sessionRoleRank(getUserSessionRole(options, b))
+  );
+}
+
+/** "Host" / "Co-host" for a role badge, or undefined for a plain participant. */
+export function sessionRoleLabel(
+  role: SessionRole | null,
+  t: ReturnType<typeof useI18n>["t"]
+): string | undefined {
+  if (role === "host") {
+    return t("host", { defaultValue: "Host" });
+  }
+  if (role === "co-host") {
+    return t("co-host", { defaultValue: "Co-host" });
+  }
+  return undefined;
 }
 
 /** Material icon shown when there is no profile picture and nobody else to tell apart. */
@@ -123,23 +153,32 @@ export function SessionUserAvatar({
   user,
   role,
   roleLabel,
+  elsewherePassage,
 }: {
   user: ConnectedSessionUser;
   role?: SessionRole | null;
   roleLabel?: string;
+  /** Set when they're reading away from the group: where they are instead. */
+  elsewherePassage?: string;
 }) {
+  const title = [getUserDisplayName(user), roleLabel, elsewherePassage]
+    .filter(Boolean)
+    .join(" · ");
   return (
-    <span className="sb-tab-user">
+    <span
+      className={`sb-tab-user${elsewherePassage ? " sb-tab-user-away" : ""}`}
+    >
       <Avatar
         imageUrl={user.profile?.pictureUrl ?? null}
         visual={user.visual}
-        title={
-          roleLabel
-            ? `${getUserDisplayName(user)} · ${roleLabel}`
-            : getUserDisplayName(user)
-        }
+        title={title}
         isSelf={user.isSelf}
       />
+      {elsewherePassage && (
+        <span className="sb-tab-user-away-badge" aria-hidden="true">
+          <span className="material-symbols-outlined">arrow_forward</span>
+        </span>
+      )}
       {role && roleLabel && (
         <span
           className={`sb-tab-user-role sb-tab-user-role-${role === "co-host" ? "cohost" : "host"}`}

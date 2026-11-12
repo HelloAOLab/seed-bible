@@ -3,7 +3,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.3);
-  z-index: 9998;
+  z-index: var(--sb-layer-modal);
 }
 
 .sb-mobile-settings-sheet {
@@ -11,12 +11,12 @@
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 9999;
+  z-index: calc(var(--sb-layer-modal) + 1);
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  border-top-left-radius: 1rem;
-  border-top-right-radius: 1rem;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+  border-top-left-radius: var(--sb-radius-xl);
+  border-top-right-radius: var(--sb-radius-xl);
+  box-shadow: var(--sb-shadow-sheet);
   padding: 1rem;
   /* Cap to the viewport; the header stays pinned and .sb-mobile-settings-sheet-body
      (below) is the part that actually scrolls, so a tall sheet (or one opened
@@ -26,7 +26,7 @@
   flex-direction: column;
   padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   font-family: var(--sb-reader-font-family);
-  animation: sb-mobile-settings-slide-up 0.25s ease-out;
+  animation: sb-mobile-settings-slide-up var(--sb-duration-slow) ease-out;
 }
 
 @keyframes sb-mobile-settings-slide-up {
@@ -61,23 +61,12 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1.125rem;
+  font-size: var(--sb-font-size-18);
   font-weight: 600;
 }
 
-.sb-mobile-settings-sheet-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: inherit;
-  padding: 0.25rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .sb-mobile-settings-sheet-section-label {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   margin-bottom: 0.5rem;
 }
@@ -92,7 +81,7 @@
 .sb-mobile-settings-sheet-size-button {
   flex: 1;
   height: 3rem;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
   background: var(--sb-reader-background);
   color: inherit;
@@ -119,7 +108,7 @@
 .sb-mobile-settings-sheet-scripture-button {
   flex: 1;
   height: 3rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
   background: var(--sb-reader-background);
   color: inherit;
@@ -150,7 +139,7 @@
   background: none;
   cursor: pointer;
   color: var(--sb-primary-color);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   font-family: inherit;
   padding: 0.25rem 0;

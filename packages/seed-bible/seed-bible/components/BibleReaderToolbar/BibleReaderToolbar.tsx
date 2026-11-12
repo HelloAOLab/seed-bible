@@ -11,6 +11,13 @@ import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import {
+  isPlaylistEditorTab,
+  playlistEditorScriptureStep,
+} from "../PlaylistEditor/PlaylistEditorWorkspace";
+import { PlaylistEditorToolbarStack } from "../PlaylistEditor/PlaylistEditorToolbarStack";
+import { PlaylistStepNoteSheet } from "../PlaylistEditor/PlaylistStepNoteSheet";
+import { QuestionAnswersSheet } from "../QuestionAnswers/QuestionAnswersSheet";
+import {
   MAX_CUSTOM_HIGHLIGHT_COLORS,
   UI_SIZE_SCALE_MAP,
 } from "../../managers/SettingsManager";
@@ -41,6 +48,7 @@ import {
 } from "../Tabs/Tabs";
 import { BookmarkStackIcon } from "../Bookmarks/Bookmarks";
 import { CustomizableIcon } from "../CustomizableIcon/CustomizableIcon";
+import { SessionGroupBar } from "../SessionGroupBar/SessionGroupBar";
 import { playlistItemLabel } from "../playlistItemLabel";
 import {
   ScriptureNoteSheet,
@@ -128,11 +136,7 @@ function applyChatFirstDesktopTools(
 }
 
 /** Navigation tools that sit before Today at the start of the desktop toolbar. */
-const LEADING_NAV_TOOL_IDS = new Set([
-  "stop-playing",
-  "previous-chapter",
-  "previous-item",
-]);
+const LEADING_NAV_TOOL_IDS = new Set(["previous-chapter", "previous-item"]);
 
 /** Places in the desktop toolbar's primary group, the More button included. */
 const DESKTOP_PRIMARY_SLOTS = 4;
@@ -153,6 +157,8 @@ function indexOrEnd(index: number, list: readonly unknown[]): number {
  * "Powered by" row) ends flush against the toolbar's top edge.
  */
 const BOTTOM_CHROME_GAP_PX = 48;
+/** Space between the desktop toolbar and the playlist editor's stack above it (CSS too). */
+const PE_TOOLBAR_STACK_GAP_PX = 8;
 
 /**
  * Spawns a Material-style ripple inside the pressed button: a circle centered on
@@ -1000,11 +1006,28 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const readingState = useComputed(
     () => selectedTab.value?.readingState ?? null
   );
+  // What the verse toolbar acts on: the tab's own reading state, or the one
+  // shown beside it (a compare step's second passage) when the user is
+  // working there. Chapter navigation stays with the tab's own.
+  const selectionState = useComputed(() =>
+    selectedTab.value ? tabs.activeReadingState(selectedTab.value) : null
+  );
   const sessionState = useComputed(
     () => selectedTab.value?.sharedSession ?? null
   );
 
   if (!readingState.value) {
+    return null;
+  }
+
+  // On desktop the playlist editor keeps this toolbar only over a scripture
+  // step's page, where moving chapters can re-point the step; its list and
+  // other steps' cards cover the reader.
+  if (
+    !props.state.app.isMobile.value &&
+    isPlaylistEditorTab(props.state, selectedTab.value) &&
+    !playlistEditorScriptureStep(props.state, selectedTab.value)
+  ) {
     return null;
   }
 
@@ -1205,7 +1228,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const verseToolbarTools = useComputed(() => {
     const resolved = toolsManager.getVerseToolbarTools({
-      readingState: readingState.value!,
+      readingState: selectionState.value!,
       sharedSession: sessionState.value,
       selectorState: selector,
       tabs: tabs,
@@ -1248,14 +1271,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   });
 
   const hasVerseSelection = useComputed(
-    () => readingState.value!.selectedVerses.value.length > 0
+    () => selectionState.value!.selectedVerses.value.length > 0
   );
   const isMinimalEmbed = useComputed(
     () => props.state.app.isMinimalEmbed?.value ?? false
   );
 
   const selectionDiscoveredContent = useComputed(() => {
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (
       !rs ||
       !props.state.app.isMobile.value ||
@@ -1283,7 +1306,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     () =>
       hasVerseSelection.value &&
       !isFullscreenPaneVisible.value &&
-      !props.state.annotations?.isDraftingNewAnnotation.value
+      !props.state.annotations?.isDraftingNewAnnotation.value &&
+      // In the playlist editor, picked verses are a step's passage, applied
+      // from the editor's own pick bar; as on desktop (where this whole
+      // toolbar steps aside), no verse toolbar opens over it. Its "tap
+      // outside clears the selection" would also empty the pick the moment
+      // Apply is touched.
+      !isPlaylistEditorTab(props.state, selectedTab.value)
   );
   const shouldReplaceDefaultToolbar = useComputed(
     () => isSmallScreen.value && isVerseToolbarVisible.value
@@ -1374,7 +1403,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       await action();
 
       if (!preserveSelection) {
-        readingState.value?.clearSelectedVerses();
+        selectionState.value?.clearSelectedVerses();
       }
     } catch (error) {
       console.error("Verse toolbar action failed:", error);
@@ -1414,7 +1443,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       (showHighlightCard.value ? 1 : 0) +
       (showSaveCard.value ? 1 : 0);
     const annotationCount =
-      readingState.value?.selectionAnnotations.value.length ?? 0;
+      selectionState.value?.selectionAnnotations.value.length ?? 0;
     return (
       cardCount > VERSE_SHEET_COLLAPSED_COUNT ||
       annotationCount > 0 ||
@@ -1624,13 +1653,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       ? props.state.audioPlayback.controllerFor(readingState.value)
       : null
   );
-  // A playing playlist owns the toolbar's transport controls.
-  const desktopPlayback = useComputed(() =>
-    playingPlaylist.value ? null : audioPlayback.value
-  );
 
   const floatingAnchor = useComputed(() =>
-    readingState.value!.selectedVerses.value.reduce<{
+    selectionState.value!.selectedVerses.value.reduce<{
       x: number;
       y: number;
       selectedAt: number;
@@ -2030,7 +2055,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
 
     if (dismissOffset >= VERSE_SHEET_DISMISS_THRESHOLD) {
-      readingState.value?.clearSelectedVerses();
+      selectionState.value?.clearSelectedVerses();
       return;
     }
 
@@ -2108,7 +2133,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const applyCustomColor = (color: string) => {
     settings.addCustomHighlightColor(color);
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (!rs) return;
 
     // Confirming a colour is not navigation. Applying the highlight still
@@ -2136,7 +2161,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // session meant the button greyed itself out the moment the session's
   // highlight timer expired, with the saved highlight still on screen.
   const hasAnyHighlighted = useComputed(() => {
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (!rs) return false;
 
     const hasSavedHighlight = rs.selectedVerses.value.some((verse) =>
@@ -2171,7 +2196,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   });
 
   const selectedVersesReference = useComputed(() => {
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (!rs) return "";
     const verses = rs.selectedVerses.value;
     const firstVerse = verses[0];
@@ -2202,12 +2227,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // reading state itself (see `BibleReadingManager.tsx`), which already
   // tracks both the active chapter's annotations and the live selection.
   const selectionAnnotations = useComputed(
-    () => readingState.value?.selectionAnnotations.value ?? []
+    () => selectionState.value?.selectionAnnotations.value ?? []
   );
   // Friends' notes are in the sheet too, so only these get the edit/delete
   // menu. Decided by which list a note came from, as in Discover's list.
   const ownSelectionAnnotations = useComputed(() => {
-    const verse = readingState.value?.selectedVerses.value[0];
+    const verse = selectionState.value?.selectedVerses.value[0];
     return new Set<Annotation>(
       verse
         ? props.state.annotations.getAnnotationsForChapter(
@@ -2236,7 +2261,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // to a specific note (below) opts that selection out of the rewind: in a
   // browser the rewind can run after the jump has already placed the note.
   const verseSheetSelectionKey = useComputed(() => {
-    const verses = readingState.value?.selectedVerses.value ?? [];
+    const verses = selectionState.value?.selectedVerses.value ?? [];
     return verses
       .map(
         (verse) =>
@@ -2273,7 +2298,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // expand the sheet and scroll to that verse's annotation group, then clear
   // it. Mirrors `readingState.scrollToVerse`'s consumer in TabsLayout.tsx.
   useEffect(() => {
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (!rs) return;
 
     let frame = 0;
@@ -2315,7 +2340,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       cancelAnimationFrame(frame);
       dispose();
     };
-  }, [readingState.value]);
+  }, [selectionState.value]);
 
   // Keep `--sb-reader-bottom-inset` in sync with the open bottom chrome so
   // chapter content / end-of-chapter controls clear it when the toolbar grows
@@ -2339,12 +2364,27 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     // observer's initial callback), so only write on a real change.
     // `--sb-reader-bottom-chrome` is the same without the gap, for things that
     // sit right against the toolbar (the off-screen highlight notices).
-    const write = (chromePx: number) => {
-      const next = `${chromePx + BOTTOM_CHROME_GAP_PX}px`;
+    // `--sb-reader-bottom-tabs` is the part of it that slides off the screen
+    // when the reader is scrolled down (`body.sb-scroll-hide-bars`): the
+    // phone's tab bar, under the chapter pill. Chrome riding on the pill (the
+    // playlist editor's bars) drops by this much with it.
+    const write = (chromePx: number, tabsPx = 0) => {
+      const next = `${chromePx + BOTTOM_CHROME_GAP_PX}px/${tabsPx}px`;
       if (next === lastValue) return;
       lastValue = next;
-      root.style.setProperty("--sb-reader-bottom-inset", next);
+      root.style.setProperty(
+        "--sb-reader-bottom-inset",
+        `${chromePx + BOTTOM_CHROME_GAP_PX}px`
+      );
       root.style.setProperty("--sb-reader-bottom-chrome", `${chromePx}px`);
+      root.style.setProperty("--sb-reader-bottom-tabs", `${tabsPx}px`);
+    };
+
+    // The session group bar also sits outside its host's box (on top of the
+    // nav on mobile, on top of the toolbar on desktop), so it's added on too.
+    const groupBarHeight = (host: HTMLElement) => {
+      const bar = host.querySelector(":scope > .sb-session-group-bar");
+      return bar instanceof HTMLElement ? bar.offsetHeight : 0;
     };
 
     // A playing passage's note sheet rides on top of the floating nav, outside
@@ -2354,7 +2394,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       const noteSheet = nav.querySelector(".sb-scripture-note-sheet");
       return (
         nav.offsetHeight +
-        (noteSheet instanceof HTMLElement ? noteSheet.offsetHeight : 0)
+        (noteSheet instanceof HTMLElement ? noteSheet.offsetHeight : 0) +
+        groupBarHeight(nav)
       );
     };
 
@@ -2374,13 +2415,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       }
       if (!(toolbar instanceof HTMLElement)) return;
 
-      let insetPx = toolbar.offsetHeight;
+      let insetPx = toolbar.offsetHeight + groupBarHeight(toolbar);
       if (nav instanceof HTMLElement) {
         insetPx += navHeight(nav);
-      } else {
-        // Desktop: toolbar floats above the viewport bottom.
-        const bottom = parseFloat(getComputedStyle(toolbar).bottom);
-        if (!Number.isNaN(bottom)) insetPx += bottom;
+        write(insetPx, toolbar.offsetHeight);
+        return;
+      }
+      // Desktop: toolbar floats above the viewport bottom.
+      const bottom = parseFloat(getComputedStyle(toolbar).bottom);
+      if (!Number.isNaN(bottom)) insetPx += bottom;
+      // The playlist editor's banners and note, stacked above it.
+      const stack = toolbar.querySelector(".sb-pe-toolbar-stack");
+      if (stack instanceof HTMLElement) {
+        insetPx += stack.offsetHeight + PE_TOOLBAR_STACK_GAP_PX;
       }
 
       write(insetPx);
@@ -2410,13 +2457,26 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         observer.observe(wrap);
         const toolbar = wrap.querySelector(".sb-reader-toolbar");
         const nav = wrap.querySelector(".sb-reader-floating-nav");
-        if (toolbar instanceof HTMLElement) observer.observe(toolbar);
+        if (toolbar instanceof HTMLElement) {
+          observer.observe(toolbar);
+          const stack = toolbar.querySelector(".sb-pe-toolbar-stack");
+          if (stack instanceof HTMLElement) observer.observe(stack);
+          // The playlist editor's stack comes and goes with its step, and the
+          // desktop group bar with the session.
+          mutationObserver?.observe(toolbar, { childList: true });
+          const groupBar = toolbar.querySelector(
+            ":scope > .sb-session-group-bar"
+          );
+          if (groupBar instanceof HTMLElement) observer.observe(groupBar);
+        }
         if (nav instanceof HTMLElement) {
           observer.observe(nav);
           // The note sheet comes and goes with the playing step, and resizes
           // as it collapses or its note loads.
           const noteSheet = nav.querySelector(".sb-scripture-note-sheet");
           if (noteSheet instanceof HTMLElement) observer.observe(noteSheet);
+          const groupBar = nav.querySelector(":scope > .sb-session-group-bar");
+          if (groupBar instanceof HTMLElement) observer.observe(groupBar);
           mutationObserver?.observe(nav, { childList: true });
         }
         mutationObserver?.observe(wrap, { childList: true });
@@ -2436,6 +2496,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       // Drop the runtime override so the CSS fallback in base.css takes over.
       root.style.removeProperty("--sb-reader-bottom-inset");
       root.style.removeProperty("--sb-reader-bottom-chrome");
+      root.style.removeProperty("--sb-reader-bottom-tabs");
     };
   }, []);
 
@@ -2533,7 +2594,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       // as "outside" and clear the selection out from under the picker.
       if (target.closest(".sb-color-picker-layer, #sb-color-picker-host"))
         return;
-      readingState.value?.clearSelectedVerses();
+      selectionState.value?.clearSelectedVerses();
     };
 
     document.addEventListener("pointerdown", handleDocumentPointerDown);
@@ -3021,6 +3082,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         >
           {isSmallScreen.value &&
             activeMobileTab.value === "bible" &&
+            // In the playlist editor, chapter nav floats only over a
+            // scripture step's page, where moving chapters can re-point the
+            // step; the list and the other steps' cards cover the reader.
+            (!isPlaylistEditorTab(props.state, selectedTab.value) ||
+              !!playlistEditorScriptureStep(props.state, selectedTab.value)) &&
             (() => {
               const audio =
                 audioPlayTool.value && audioPlayTool.value.visible.value
@@ -3039,11 +3105,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               const PrevIcon = prev?.icon;
               const NextIcon = next?.icon;
 
-              const playback = playing ? null : audioPlayback.value;
+              const playback = audioPlayback.value;
               // While playing, progress runs above the chapter pill where it
               // can be scrubbed; paused, it shrinks to a ring around the play
               // button so the pill area goes back to plain navigation.
               const isScrubbing = !!playback?.isPlaying.value;
+              // A host asking this reader to come back can't wait for the
+              // playlist to finish, so it takes the note sheet's place.
+              const showsGroupBar =
+                !!sessionState.value &&
+                (!playing ||
+                  !!sessionState.value.incomingComeBackRequest.value);
 
               return (
                 <div
@@ -3055,13 +3127,47 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     defaultValue: "Chapter navigation",
                   })}
                 >
-                  {playing && (
+                  {playing && !showsGroupBar && (
                     <ScriptureNoteSheet
                       playing={playing}
                       resolveBookName={resolveBookName}
                     />
                   )}
-                  {!playing && audio && AudioIcon && (
+                  {playing && sessionState.value && !showsGroupBar && (
+                    <QuestionAnswersSheet
+                      session={sessionState.value}
+                      playing={playing}
+                    />
+                  )}
+                  {!playing &&
+                    !showsGroupBar &&
+                    (() => {
+                      // The playlist editor's scripture step keeps its note
+                      // where playback shows one.
+                      const step = playlistEditorScriptureStep(
+                        props.state,
+                        selectedTab.value
+                      );
+                      return step ? (
+                        <PlaylistStepNoteSheet
+                          key={step.index}
+                          state={props.state}
+                          index={step.index}
+                          item={step.item}
+                          resolveBookName={resolveBookName}
+                        />
+                      ) : null;
+                    })()}
+                  {/* Shares the spot above the nav with the note sheets, so
+                      only one of them is ever shown. */}
+                  {showsGroupBar && sessionState.value && (
+                    <SessionGroupBar
+                      session={sessionState.value}
+                      resolveBookName={resolveBookName}
+                      layout="mobile"
+                    />
+                  )}
+                  {audio && AudioIcon && (
                     <div className="sb-reader-floating-nav-play-wrap">
                       <button
                         type="button"
@@ -3076,16 +3182,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         <AudioProgressRing playback={playback} />
                       )}
                     </div>
-                  )}
-                  {playing && (
-                    <button
-                      type="button"
-                      onClick={() => props.state.playlists.stopPlaying()}
-                      className="sb-reader-floating-nav-play"
-                      aria-label={t("stop", { defaultValue: "Stop" })}
-                    >
-                      <StopIcon />
-                    </button>
                   )}
 
                   {(prev || next || selector || playing) && (
@@ -3192,11 +3288,60 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           {!isMinimalEmbed.value && (
             <div
               className={`sb-reader-toolbar${isSmallScreen.value ? " sb-reader-toolbar-mobile-layout" : " sb-reader-toolbar-labeled"}${
-                !isSmallScreen.value && desktopPlayback.value
+                !isSmallScreen.value && audioPlayback.value
                   ? " sb-reader-toolbar-has-audio"
+                  : ""
+              }${
+                !isSmallScreen.value &&
+                sessionState.value?.isAwayFromGroup.value
+                  ? " sb-reader-toolbar-has-group-bar"
                   : ""
               }`}
             >
+              {!isSmallScreen.value && sessionState.value && (
+                <SessionGroupBar
+                  session={sessionState.value}
+                  resolveBookName={resolveBookName}
+                  layout="desktop"
+                />
+              )}
+              {!isSmallScreen.value &&
+                (() => {
+                  // Desktop: a shared session's answers to the playing
+                  // question stack above this toolbar.
+                  const playing = playingPlaylist.value;
+                  const step = playing?.currentItem.value;
+                  return playing &&
+                    sessionState.value &&
+                    step?.type === "html" &&
+                    step.question ? (
+                    <div className="sb-pe-toolbar-stack sb-question-answers-dock">
+                      <QuestionAnswersSheet
+                        session={sessionState.value}
+                        playing={playing}
+                        docked
+                      />
+                    </div>
+                  ) : null;
+                })()}
+              {!isSmallScreen.value &&
+                (() => {
+                  // Desktop: the playlist editor's scripture step stacks its
+                  // banners and its note above this toolbar, as a phone
+                  // stacks them above the chapter pill.
+                  const step = playlistEditorScriptureStep(
+                    props.state,
+                    selectedTab.value
+                  );
+                  return step ? (
+                    <PlaylistEditorToolbarStack
+                      state={props.state}
+                      index={step.index}
+                      item={step.item}
+                      resolveBookName={resolveBookName}
+                    />
+                  ) : null;
+                })()}
               {isSmallScreen.value ? (
                 <>
                   <MobileBottomTab
@@ -3355,8 +3500,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   {playingPlaylist.value && (
                     <ScriptureNoteShowTab playing={playingPlaylist.value} />
                   )}
-                  {desktopPlayback.value &&
-                    renderDesktopAudioControls(desktopPlayback.value)}
+                  {audioPlayback.value &&
+                    renderDesktopAudioControls(audioPlayback.value)}
                   {(() => {
                     const bar = desktopBarTools.value;
                     // Today leads the primary group, right after the leading
@@ -3480,7 +3625,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     isHighlightPickerOpen.value = false;
                     return;
                   }
-                  readingState.value?.clearSelectedVerses();
+                  selectionState.value?.clearSelectedVerses();
                 }}
                 aria-label={
                   isHighlightPickerOpen.value
@@ -3579,7 +3724,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     type="button"
                     className="sb-verse-toolbar-color-button"
                     onClick={() => {
-                      const rs = readingState.value;
+                      const rs = selectionState.value;
                       if (!rs) return;
                       applyHighlightWithSession(
                         rs,
@@ -3630,7 +3775,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         type="button"
                         className="sb-verse-toolbar-color-button"
                         onClick={() => {
-                          const rs = readingState.value;
+                          const rs = selectionState.value;
                           if (!rs) return;
                           applyHighlightWithSession(
                             rs,
@@ -3726,7 +3871,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   className="sb-verse-toolbar-clear"
                   disabled={!hasAnyHighlighted.value}
                   onClick={() => {
-                    const rs = readingState.value;
+                    const rs = selectionState.value;
                     if (!rs) return;
                     const session = sessionState.value;
                     if (
@@ -3890,7 +4035,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 const highlightLabel = t("highlight", {
                   defaultValue: "Highlight",
                 });
-                const rs = readingState.value;
+                const rs = selectionState.value;
                 const selectedVerseNumbers =
                   rs?.selectedVerses.value.map((v) => v.verse.number) ?? [];
                 const verseTarget =

@@ -1,4 +1,5 @@
 export * from "./icons";
+export * from "./CloseButton/CloseButton";
 export {
   ContextMenuWithButton,
   ContextMenuItem,

@@ -1,0 +1,74 @@
+/* Set in the reader's own type, as scripture is. */
+.sb-playlist-step-page {
+  padding-inline: 0.625rem;
+  padding-bottom: 2rem;
+  font-family: var(--sb-scripture-font-override, var(--sb-verse-font-family));
+  line-height: var(--text-verse-line-height, 1.7);
+}
+
+.sb-playlist-step-page-title {
+  margin: 2rem auto;
+  text-align: center;
+  font-family: var(
+    --sb-scripture-font-override,
+    var(--sb-book-title-font-family)
+  );
+  color: var(--sb-book-title-font-color);
+  font-weight: var(--text-bookTitle-weight);
+  font-style: var(--text-bookTitle-font-style);
+  font-size: 2rem;
+  line-height: 1.2;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+.sb-playlist-step-page-body .sb-play-playlist-content-html {
+  font-size: 1em;
+  line-height: inherit;
+}
+
+/* A question's hint and answer, each behind its own button. */
+.sb-playlist-question-reveal {
+  margin-top: 1.25rem;
+}
+
+.sb-playlist-question-reveal-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-family: var(--sb-font-family);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.sb-playlist-question-reveal-button:hover,
+.sb-playlist-question-reveal-button:focus-visible {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-playlist-question-reveal-content {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-inline-start: 3px solid var(--sb-primary-color);
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
+}
+
+.sb-playlist-question-reveal-content .sb-play-playlist-content-html {
+  font-size: 1em;
+  line-height: inherit;
+}
+
+/* A video step's player, across the page at a video's shape. Its iframe and
+   video only fill their box (see PlaylistLinkContent.css), which has no
+   height of its own here, so without one they shrink to the browser's
+   default 300×150. Narrowed on a short screen to stay in view whole. */
+.sb-playlist-step-page .sb-play-playlist-content-embed {
+  width: min(100%, calc(70vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  margin-inline: auto;
+}

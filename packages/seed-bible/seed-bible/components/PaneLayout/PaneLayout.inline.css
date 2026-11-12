@@ -7,7 +7,7 @@
   background: var(--sb-reader-background);
   overflow: hidden;
   scrollbar-width: none;
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
 }
 
 .sb-panes-layout {
