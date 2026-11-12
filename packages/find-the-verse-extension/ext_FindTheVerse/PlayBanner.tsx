@@ -145,7 +145,7 @@ function PlacedBar({ children }: { children: ComponentChildren }) {
   if (moreMenuOpen) return null;
   const style = anchor
     ? {
-        zIndex: 102,
+        zIndex: "calc(var(--sb-layer-chrome) + 2)",
         bottom: `${anchor.bottom}px`,
         transform: anchor.follow
           ? `translateY(${anchor.slide}px)`

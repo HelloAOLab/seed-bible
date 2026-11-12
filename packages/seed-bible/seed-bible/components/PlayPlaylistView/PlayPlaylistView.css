@@ -26,13 +26,13 @@
 
 .sb-play-playlist-author {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
 .sb-play-playlist-description {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   opacity: 0.8;
   white-space: pre-line;
 }
@@ -59,7 +59,7 @@
 }
 
 .sb-play-playlist-item--current {
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
 }
 
@@ -76,9 +76,9 @@
   margin-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   padding: 12px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-background);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-play-controls-label {
@@ -87,7 +87,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
 }
 
@@ -105,7 +105,7 @@
   height: 40px;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;

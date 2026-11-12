@@ -62,7 +62,7 @@ import { SearchBar as SearchField } from "../SearchBar/SearchBar";
 const SPOTLIGHT_STYLE = {
   position: "relative",
   zIndex: 2,
-  borderRadius: "0.5rem",
+  borderRadius: "var(--sb-radius-md)",
   boxShadow: "0 0 0 9999px rgba(0,0,0,0.6)",
 } as const;
 
@@ -220,7 +220,7 @@ export function BibleSelector(props: BibleSelectorProps) {
               ? {
                   position: "fixed",
                   boxSizing: "border-box",
-                  zIndex: 10000,
+                  zIndex: "calc(var(--sb-layer-tour) + 1)",
                   ...layout.style,
                 }
               : {
@@ -231,7 +231,7 @@ export function BibleSelector(props: BibleSelectorProps) {
                   width: "100%",
                   maxWidth: "28.625rem",
                   boxSizing: "border-box",
-                  zIndex: 10000,
+                  zIndex: "calc(var(--sb-layer-tour) + 1)",
                 }
           }
           onClick={(event: MouseEvent) => event.stopPropagation()}
@@ -309,7 +309,7 @@ const SearchBar = (props: {
                 </span>
                 <span
                   style={{
-                    transition: "transform 0.3s",
+                    transition: "transform var(--sb-duration-slow)",
                   }}
                   class={`material-symbols-outlined ${selectingTranslation.value ? "upside-down" : ""}`}
                   // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
@@ -702,7 +702,7 @@ const SideBarBooks = (props: {
               </span>
               <span
                 style={{
-                  transition: "transform 0.3s",
+                  transition: "transform var(--sb-duration-slow)",
                   color: isSelected ? "var(--sb-primary-color)" : "",
                 }}
                 class={`material-symbols-outlined ${isSelected ? "upside-down" : ""}`}

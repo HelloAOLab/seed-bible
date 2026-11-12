@@ -13,6 +13,13 @@ import { displayNameOf } from "../../managers/Utils";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
+  answerFriendRequest,
+  BusyButton,
+  cancelFriendRequest,
+  CopyButton,
+  openRemoveFriendConfirm,
+} from "./friendActions";
+import {
   getAddFriendUrl,
   getFriendRequestUrl,
   parseUserId,
@@ -46,108 +53,6 @@ function FriendsHeading(props: { icon?: string; children: string }) {
       ) : null}
       <span className="sb-friends-heading-text">{props.children}</span>
     </h2>
-  );
-}
-
-/**
- * Copies `text`, flipping the button label to "Copied" for a moment, or
- * saying so in a toast when it can't.
- */
-function CopyButton(props: {
-  text: string;
-  label: string;
-  toast: Toast;
-  className?: string;
-  /** For when the visible label alone doesn't say whose link it copies. */
-  ariaLabel?: string;
-}) {
-  const { t } = useI18n();
-  const copied = useSignal(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(props.text);
-    } catch (error) {
-      // Also covers no clipboard at all (an insecure origin, some webviews),
-      // where reading `writeText` throws before there's a promise to reject.
-      console.error("Failed to copy:", error);
-      props.toast(
-        t("copy-failed", { defaultValue: "Couldn't copy to your clipboard." })
-      );
-      return;
-    }
-    copied.value = true;
-    setTimeout(() => (copied.value = false), 2000);
-  };
-  return (
-    <>
-      <button
-        type="button"
-        className={props.className ?? "sb-friends-button"}
-        aria-label={props.ariaLabel}
-        onClick={() => void copy()}
-      >
-        {/* Both labels share one grid cell, so the button is as wide as the
-          longer one and doesn't resize when it flips to "Copied". */}
-        <span className="sb-friends-copy-labels">
-          <span className={copied.value ? "sb-friends-copy-label--hidden" : ""}>
-            {props.label}
-          </span>
-          <span className={copied.value ? "" : "sb-friends-copy-label--hidden"}>
-            {t("copied", { defaultValue: "Copied" })}
-          </span>
-        </span>
-      </button>
-      {/* The label flipping to "Copied" isn't announced on its own. Kept
-        outside the button so it doesn't become part of the button's name. */}
-      <span className="sr-only" role="status">
-        {copied.value ? t("copied", { defaultValue: "Copied" }) : ""}
-      </span>
-    </>
-  );
-}
-
-/**
- * A button that shows a spinner while its request is in flight. The label
- * stays in place (just invisible) under the spinner, so the button keeps its
- * size and screen readers still hear what it is.
- */
-export function BusyButton(props: {
-  busy: boolean;
-  disabled?: boolean;
-  className: string;
-  type?: "button" | "submit";
-  onClick?: () => void;
-  /** For when the visible label alone doesn't say who it acts on. */
-  ariaLabel?: string;
-  children: string;
-}) {
-  return (
-    <button
-      type={props.type ?? "button"}
-      className={`${props.className} sb-friends-busy-button`}
-      disabled={props.busy || props.disabled}
-      aria-busy={props.busy}
-      aria-label={props.ariaLabel}
-      onClick={props.onClick}
-    >
-      <span
-        className={
-          props.busy
-            ? "sb-friends-busy-label sb-friends-busy-label--hidden"
-            : "sb-friends-busy-label"
-        }
-      >
-        {props.children}
-      </span>
-      {props.busy ? (
-        <span
-          className="material-symbols-outlined sb-friends-busy-spinner"
-          aria-hidden="true"
-        >
-          progress_activity
-        </span>
-      ) : null}
-    </button>
   );
 }
 
@@ -392,38 +297,7 @@ function IncomingRequestRow(props: {
   const answer = async (accept: boolean) => {
     answering.value = accept ? "accept" : "decline";
     try {
-      if (!accept) {
-        await friends.declineRequest(request.id);
-        toast(
-          t("friend-request-declined", {
-            name,
-            defaultValue: "Declined {{name}}'s friend request.",
-          })
-        );
-        return;
-      }
-      const result = await friends.acceptRequest(request.id);
-      toast(
-        result.success
-          ? t("now-friends-with", {
-              name,
-              defaultValue: "You're now friends with {{name}}.",
-            })
-          : result.reason === "expired"
-            ? t("friend-request-expired", {
-                defaultValue: "That request has expired.",
-              })
-            : t("friend-request-unavailable", {
-                defaultValue: "That request is no longer available.",
-              })
-      );
-    } catch (error) {
-      console.error("Failed to answer friend request:", error);
-      toast(
-        t("friend-request-answer-failed", {
-          defaultValue: "Couldn't answer the request. Try again.",
-        })
-      );
+      await answerFriendRequest(friends, toast, t, request, name, accept);
     } finally {
       answering.value = null;
     }
@@ -502,83 +376,15 @@ function OutgoingRequestRow(props: {
           })}
           onClick={() => {
             busy.value = true;
-            void friends
-              .cancelRequest(request.id)
-              .then(() =>
-                toast(
-                  t("friend-request-canceled", {
-                    name,
-                    defaultValue: "Canceled your friend request to {{name}}.",
-                  })
-                )
-              )
-              .catch((error) => {
-                console.error("Failed to cancel friend request:", error);
-                toast(
-                  t("friend-request-cancel-failed", {
-                    defaultValue: "Couldn't cancel the request. Try again.",
-                  })
-                );
-              })
-              .finally(() => (busy.value = false));
+            void cancelFriendRequest(friends, toast, t, request, name).finally(
+              () => (busy.value = false)
+            );
           }}
         >
           {t("cancel", { defaultValue: "Cancel" })}
         </BusyButton>
       </span>
     </li>
-  );
-}
-
-function ConfirmRemoveFriend(props: {
-  friend: Friend;
-  friends: FriendsManager;
-  toast: Toast;
-  onClose: () => void;
-}) {
-  const { friend, friends, toast, onClose } = props;
-  const { t } = useI18n();
-
-  const confirm = async () => {
-    onClose();
-    try {
-      await friends.unfriend(friend.userId);
-    } catch (error) {
-      console.error("Failed to remove friend:", error);
-      toast(
-        t("remove-friend-failed", {
-          defaultValue: "Couldn't remove the friend. Try again.",
-        })
-      );
-    }
-  };
-
-  return (
-    <div className="sb-confirm-delete">
-      <p className="sb-confirm-delete-message">
-        {t("remove-friend-confirm-message", {
-          name: displayNameOf(friend, t),
-          defaultValue:
-            "Remove {{name}} as a friend? You'll both stop seeing each other's reading.",
-        })}
-      </p>
-      <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onClose}
-        >
-          {t("cancel", { defaultValue: "Cancel" })}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={() => void confirm()}
-        >
-          {t("remove", { defaultValue: "Remove" })}
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -592,25 +398,6 @@ function FriendRow(props: {
   const { friend, friends, modals, profiles, toast } = props;
   const { t } = useI18n();
 
-  const openConfirm = () => {
-    const modalId = `remove-friend-${friend.userId}`;
-    modals.openModal({
-      id: modalId,
-      title: {
-        key: "remove-friend-confirm-title",
-        defaultValue: "Remove friend?",
-      },
-      content: () => (
-        <ConfirmRemoveFriend
-          friend={friend}
-          friends={friends}
-          toast={toast}
-          onClose={() => modals.closeModal(modalId)}
-        />
-      ),
-    });
-  };
-
   return (
     <li className="sb-friends-row">
       <PersonButton deps={profiles} person={friend} />
@@ -622,7 +409,9 @@ function FriendRow(props: {
             name: displayNameOf(friend, t),
             defaultValue: "Remove {{name}} as a friend",
           })}
-          onClick={openConfirm}
+          onClick={() =>
+            openRemoveFriendConfirm({ friends, modals, toast }, friend)
+          }
         >
           {t("remove", { defaultValue: "Remove" })}
         </button>

@@ -18,14 +18,14 @@
 .sb-cz-intro {
   margin: 0;
   padding: 0 0.25rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
 .sb-cz-hint {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   line-height: 1.45;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
@@ -54,12 +54,12 @@
   box-sizing: border-box;
   padding: 0.625rem 0.75rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-family: inherit;
-  transition: border-color 0.2s ease;
+  transition: border-color var(--sb-duration-base) ease;
 }
 
 .sb-cz-input:focus {
@@ -79,14 +79,14 @@
   gap: 0.625rem;
   padding: 0.75rem 0.875rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   text-align: start;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--sb-duration-base) ease;
 }
 
 .sb-cz-row:hover,
@@ -118,7 +118,7 @@
 .sb-cz-row-label {
   flex: 1;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: var(--sb-font-color);
 }
 
@@ -127,12 +127,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
 .sb-cz-row-hint {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
@@ -169,16 +169,16 @@
   gap: 0.375rem;
   padding: 0.5rem 0.875rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   cursor: pointer;
   transition:
-    background-color 0.2s ease,
-    opacity 0.2s ease;
+    background-color var(--sb-duration-base) ease,
+    opacity var(--sb-duration-base) ease;
 }
 
 .sb-cz-button:hover:not(:disabled) {
@@ -288,9 +288,9 @@
 .sb-cz-theme-card {
   position: relative;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   overflow: hidden;
-  transition: border-color 0.2s ease;
+  transition: border-color var(--sb-duration-base) ease;
 }
 
 .sb-cz-card:hover,
@@ -325,7 +325,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
@@ -333,7 +333,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
@@ -362,19 +362,19 @@
   flex-direction: column;
   gap: 0.375rem;
   padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem 0.375rem 0 0;
+  border-radius: var(--sb-radius-sm) var(--sb-radius-sm) 0 0;
   box-shadow: 0 0 0 1px color-mix(in srgb, black, transparent 92%);
 }
 
 .sb-cz-card-preview-heading {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 700;
 }
 
 .sb-cz-card-preview-line {
   height: 0.1875rem;
   width: 90%;
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
   opacity: 0.35;
 }
 
@@ -400,7 +400,7 @@
 .sb-cz-card-preview-logo {
   width: 1.25rem;
   height: 1.25rem;
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
   object-fit: cover;
 }
 
@@ -411,14 +411,14 @@
   gap: 0.375rem;
   padding: 0.875rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background: transparent;
   color: var(--sb-primary-color);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--sb-duration-base) ease;
 }
 
 .sb-cz-new-button:hover {
@@ -440,15 +440,15 @@
   padding: 1rem 1.25rem;
   box-sizing: border-box;
   border: 1px dashed color-mix(in srgb, var(--sb-font-color), transparent 75%);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
   color: var(--sb-font-color);
   font-family: inherit;
   text-align: start;
   cursor: pointer;
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
+    background-color var(--sb-duration-base) ease,
+    border-color var(--sb-duration-base) ease;
 }
 
 button.sb-cz-logo:hover:not(:disabled) {
@@ -474,7 +474,7 @@ button.sb-cz-logo:disabled {
   align-items: center;
   justify-content: center;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-reader-background);
 }
 
@@ -489,12 +489,12 @@ button.sb-cz-logo:disabled {
 }
 
 .sb-cz-logo-title {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
 .sb-cz-logo-hint {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
@@ -502,7 +502,7 @@ button.sb-cz-logo:disabled {
   width: 3.5rem;
   height: 3.5rem;
   flex-shrink: 0;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   object-fit: cover;
 }
 
@@ -535,7 +535,7 @@ button.sb-cz-logo:disabled {
 }
 
 .sb-cz-theme-thumb-aa {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   line-height: 1;
 }
@@ -548,7 +548,7 @@ button.sb-cz-logo:disabled {
 .sb-cz-theme-thumb-bars > span {
   width: 1.25rem;
   height: 0.3125rem;
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
 }
 
 .sb-cz-add-card {
@@ -561,14 +561,14 @@ button.sb-cz-logo:disabled {
   justify-content: center;
   gap: 0.25rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background: transparent;
   color: var(--sb-primary-color);
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--sb-duration-base) ease;
 }
 
 .sb-cz-add-card:hover {
@@ -601,8 +601,8 @@ button.sb-cz-logo:disabled {
 .sb-cz-preset .sb-cz-theme-thumb {
   height: 3.25rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  border-radius: 0.5rem;
-  transition: border-color 0.2s ease;
+  border-radius: var(--sb-radius-md);
+  transition: border-color var(--sb-duration-base) ease;
 }
 
 .sb-cz-preset:hover .sb-cz-theme-thumb {
@@ -616,7 +616,7 @@ button.sb-cz-logo:disabled {
 }
 
 .sb-cz-preset-name {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   padding: 0 0.125rem;
 }
 
@@ -633,7 +633,7 @@ button.sb-cz-logo:disabled {
   gap: 0.625rem;
   padding: 0.75rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   overflow: hidden;
 }
 
@@ -642,8 +642,8 @@ button.sb-cz-logo:disabled {
   align-items: center;
   gap: 0.5rem;
   padding: 0.375rem 0.625rem;
-  border-radius: 1rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border-radius: var(--sb-radius-xl);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-cz-live-preview-dot {
@@ -655,7 +655,7 @@ button.sb-cz-logo:disabled {
 .sb-cz-live-preview-bar {
   width: 3rem;
   height: 0.25rem;
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
   background: currentColor;
   opacity: 0.3;
 }
@@ -663,25 +663,25 @@ button.sb-cz-logo:disabled {
 .sb-cz-live-preview-reader {
   position: relative;
   padding: 0.875rem 1rem 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   box-shadow: 0 0 0 1px color-mix(in srgb, black, transparent 92%);
 }
 
 .sb-cz-live-preview-book {
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .sb-cz-live-preview-chapter {
   margin: 0.125rem 0 0.375rem;
-  font-size: 1.375rem;
+  font-size: var(--sb-font-size-22);
   font-weight: 700;
 }
 
 .sb-cz-live-preview-verse {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   line-height: 1.55;
 }
 
@@ -706,8 +706,8 @@ button.sb-cz-logo:disabled {
 
 .sb-cz-live-preview-buttons > span {
   padding: 0.25rem 0.625rem;
-  border-radius: 0.375rem;
-  font-size: 0.75rem;
+  border-radius: var(--sb-radius-sm);
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
 }
 
@@ -719,20 +719,21 @@ button.sb-cz-logo:disabled {
   height: 1.75rem;
   border-radius: 50%;
   border: 1px solid color-mix(in srgb, black, transparent 86%);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--sb-shadow-popover);
 }
 
 /* Floats beside the desktop side pane while the inline preview is scrolled
-   out of view. Kept below popovers and modals (999+). */
+   out of view. Above floating panes and the sidebar, which it sits over, but
+   below pop-overs (and the click-catchers just under them) and modals. */
 .sb-cz-floating-preview {
   position: fixed;
-  z-index: 900;
+  z-index: calc(var(--sb-layer-popover) - 10);
   padding: 0.5rem;
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
   background: var(--sb-reader-background);
   box-shadow:
     0 0 0 1px var(--sb-divider-color),
-    0 22px 40px #0000002c;
+    var(--sb-shadow-modal);
   animation: sb-cz-floating-preview-in 160ms ease-out;
 }
 
@@ -751,7 +752,7 @@ button.sb-cz-logo:disabled {
   border-radius: 50%;
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   cursor: pointer;
   box-shadow: 0 0 0 1px
     color-mix(in srgb, var(--sb-font-color), transparent 80%);
@@ -785,7 +786,7 @@ body:has(#sb-color-picker-host) .sb-cz-live-preview-dock {
 
 body:has(#sb-color-picker-host) .sb-cz-live-preview-dock,
 body:has(#sb-color-picker-host) .sb-cz-floating-preview {
-  z-index: 1101;
+  z-index: calc(var(--sb-layer-prompt) + 1);
   pointer-events: none;
 }
 
@@ -807,7 +808,7 @@ body:has(#sb-color-picker-host) .sb-cz-floating-preview {
   min-width: 0;
   padding: 0.5rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
 }
 
 .sb-cz-tile-warning {
@@ -824,7 +825,7 @@ body:has(#sb-color-picker-host) .sb-cz-floating-preview {
   height: 2.75rem;
   padding: 0;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   box-shadow: inset 0 0 0 1px
     color-mix(in srgb, var(--sb-font-color), transparent 85%);
   cursor: pointer;
@@ -879,7 +880,7 @@ button.sb-cz-tile-swatch:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   color: var(--sb-font-color);
 }
@@ -888,7 +889,7 @@ button.sb-cz-tile-swatch:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
@@ -896,14 +897,14 @@ button.sb-cz-tile-swatch:focus-visible {
 .sb-cz-contrast-badge {
   flex-shrink: 0;
   padding: 0.0625rem 0.3125rem;
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
   background: color-mix(
     in srgb,
     var(--sb-error-color, #d64545),
     transparent 88%
   );
   color: var(--sb-error-color, #d64545);
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 700;
   cursor: help;
 }
@@ -912,7 +913,7 @@ button.sb-cz-tile-swatch:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   cursor: default;
 }
@@ -936,7 +937,7 @@ button.sb-cz-tile-swatch:focus-visible {
   gap: 0.5rem;
   padding: 0.5rem 0.5rem 0.5rem 0.875rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
 }
 
 .sb-cz-font-sample {
@@ -945,7 +946,7 @@ button.sb-cz-tile-swatch:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
 }
 
 /* A native select dressed as a pill, with an optional leading status icon
@@ -956,7 +957,7 @@ button.sb-cz-tile-swatch:focus-visible {
   display: inline-flex;
   align-items: center;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   color: var(--sb-font-color);
 }
 
@@ -968,7 +969,7 @@ button.sb-cz-tile-swatch:focus-visible {
   background: transparent;
   color: inherit;
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   cursor: pointer;
 }
@@ -1018,7 +1019,7 @@ button.sb-cz-tile-swatch:focus-visible {
   margin: 0;
   padding: 0;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
 }
 
 .sb-cz-list-row {
@@ -1033,12 +1034,12 @@ button.sb-cz-tile-swatch:focus-visible {
 }
 .sb-unsaved-changes-discard {
   padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.8125rem;
+  border-radius: var(--sb-radius-md);
+  font-size: var(--sb-font-size-13);
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
   border: none;
   background: transparent;
   color: #dc2626;

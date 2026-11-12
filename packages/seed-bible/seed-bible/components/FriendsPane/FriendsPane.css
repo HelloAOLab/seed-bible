@@ -5,7 +5,7 @@
  */
 .sb-friends-screen {
   --sb-friends-padding: 16px;
-  --sb-friends-radius: 12px;
+  --sb-friends-radius: var(--sb-radius-lg);
   --sb-friends-surface: color-mix(
     in srgb,
     var(--sb-font-color),
@@ -53,7 +53,7 @@
      ring in place of a border, plus a soft drop shadow. */
   box-shadow:
     0 0 0 1px var(--sb-divider-color),
-    0 4px 8px #0000002c;
+    var(--sb-shadow-raised);
 }
 
 .sb-friends-heading {
@@ -61,7 +61,7 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
 }
 
@@ -74,7 +74,7 @@
 .sb-friends-empty {
   margin: 0;
   color: var(--sb-friends-muted);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.4;
 }
 
@@ -125,13 +125,13 @@
 }
 
 .sb-friends-person-name {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
 
 .sb-friends-person-subtitle {
   color: var(--sb-friends-muted);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 /* The picture and name in a row, which open that person's profile. */
@@ -143,7 +143,7 @@
   min-width: 0;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: none;
   color: inherit;
   font: inherit;
@@ -168,11 +168,11 @@
   flex-shrink: 0;
   padding: 6px 12px;
   border: 1px solid var(--sb-friends-border);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   cursor: pointer;
 }
 
@@ -262,11 +262,11 @@
   min-width: 0;
   padding: 8px 12px;
   border: 1px solid var(--sb-friends-border);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: inherit;
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-friends-add-outcome {
@@ -274,7 +274,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.4;
 }
 
@@ -291,7 +291,7 @@
   margin-top: 4px;
   padding-top: 12px;
   border-top: 1px solid var(--sb-friends-border);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-friends-share-row {
@@ -324,11 +324,35 @@
   visibility: hidden;
 }
 
+/* A session participant's name, which opens their profile. Styled as plain
+   text so it reads as a name in the list, not a button, and cut off with an
+   ellipsis when it runs long. */
+.sb-participant-profile-button {
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sb-participant-profile-button:hover {
+    text-decoration: underline;
+  }
+}
+
 /* "Friends" / "Requested" in place of Add friend on a session participant. */
 .sb-participant-friend-status {
   flex-shrink: 0;
   color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 /* The person a friend link is about, at the top of its prompt: a card of its
@@ -338,7 +362,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
 }
 
@@ -362,7 +386,7 @@
 .sb-friend-link-description,
 .sb-friend-link-note {
   color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.4;
 }
 
@@ -377,5 +401,5 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }

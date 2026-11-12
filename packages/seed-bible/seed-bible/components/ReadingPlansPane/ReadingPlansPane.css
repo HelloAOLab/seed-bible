@@ -24,11 +24,11 @@
 .sb-reading-plans-create {
   padding: 0.375rem 0.75rem;
   border: 1px solid var(--sb-primary-color);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-primary-color);
   color: var(--sb-background);
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -39,7 +39,7 @@
 
 .sb-reading-plans-empty {
   padding: 24px 8px;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   text-align: center;
   color: var(--rp-muted);
 }
@@ -75,7 +75,7 @@
   width: 100%;
   padding: 18px;
   border: none;
-  border-radius: 16px;
+  border-radius: var(--sb-radius-xl);
   background: var(--rp-peach);
   color: inherit;
   text-align: start;
@@ -91,7 +91,7 @@
 }
 
 .sb-rp-today-eyebrow {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -99,13 +99,13 @@
 }
 
 .sb-rp-today-title {
-  font-size: 1.375rem;
+  font-size: var(--sb-font-size-22);
   font-weight: 700;
   line-height: 1.15;
 }
 
 .sb-rp-today-readings {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: var(--rp-muted);
 }
 
@@ -130,7 +130,7 @@
 
 .sb-rp-section-label {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -165,7 +165,7 @@
 }
 
 .sb-rp-friend-group-name {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -186,7 +186,7 @@
 .sb-rp-card-error {
   margin: 0;
   padding: 0 4px;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: #dc2626;
 }
 
@@ -212,14 +212,14 @@
   width: 100%;
   padding: 14px;
   border: 1px solid var(--rp-border);
-  border-radius: 14px;
+  border-radius: var(--sb-radius-xl);
   background: transparent;
   color: inherit;
   text-align: start;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color var(--sb-duration-fast) ease,
+    box-shadow var(--sb-duration-fast) ease;
 }
 
 .sb-rp-card:hover {
@@ -227,7 +227,7 @@
     --rp-accent-border,
     color-mix(in srgb, var(--rp-accent) 50%, transparent)
   );
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-rp-card-static {
@@ -278,7 +278,7 @@
 }
 
 .sb-rp-card-title {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -286,7 +286,7 @@
 }
 
 .sb-rp-card-sub {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
 }
 
@@ -297,7 +297,7 @@
 
 .sb-rp-card-open-label {
   flex: none;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   color: var(--rp-muted);
 }
@@ -312,7 +312,7 @@
 .sb-rp-card-progress-bar {
   flex: 1;
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--rp-border);
   overflow: hidden;
 }
@@ -320,13 +320,13 @@
 .sb-rp-card-progress-fill {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--rp-accent);
 }
 
 .sb-rp-card-progress-label {
   flex: none;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 700;
 }
 
@@ -342,8 +342,8 @@
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.75rem;
+  border-radius: var(--sb-radius-full);
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   background: var(--rp-accent-soft);
   color: var(--rp-accent);
@@ -354,7 +354,7 @@
 }
 
 .sb-rp-card-next {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
 }
 
@@ -365,7 +365,7 @@
   background: transparent;
   color: var(--rp-accent);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   cursor: pointer;
 }

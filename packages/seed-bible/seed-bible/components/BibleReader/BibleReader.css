@@ -55,7 +55,7 @@
     top 0.35s ease,
     height 0.35s ease,
     inset-inline-start 0.35s ease,
-    opacity 0.25s ease;
+    opacity var(--sb-duration-slow) ease;
 }
 
 /* A bar that carries on past the top or bottom of the screen gets a small
@@ -74,7 +74,7 @@
   border-right: 4px solid transparent;
   transform: translateX(-50%);
   opacity: 1;
-  transition: opacity 0.25s ease;
+  transition: opacity var(--sb-duration-slow) ease;
 }
 
 .sb-presence-arrow-up {
@@ -103,11 +103,11 @@
   opacity: 1;
   transition:
     top 0.35s ease,
-    opacity 0.25s ease;
+    opacity var(--sb-duration-slow) ease;
 }
 
 .sb-presence-avatars-pinned {
-  transition: opacity 0.25s ease;
+  transition: opacity var(--sb-duration-slow) ease;
 }
 
 /* `inset-inline-start: 50%` puts the element's end edge on the centre line in
@@ -136,7 +136,7 @@
 
 .sb-presence-avatar {
   display: flex;
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
 }
 
 /* Later avatars sit in front of earlier ones; the page-coloured ring keeps
@@ -163,7 +163,7 @@
   min-width: var(--sb-presence-avatar-size);
   height: var(--sb-presence-avatar-size);
   padding: 0 0.1875rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: color-mix(
     in srgb,
     var(--sb-font-color) 16%,
@@ -239,7 +239,7 @@
 
 .sb-offscreen-cues-stack::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--sb-font-color) 35%, transparent);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
 }
 
 .sb-offscreen-cues-stack::-webkit-scrollbar-track {
@@ -270,7 +270,7 @@
   background: var(--sb-font-color);
   color: var(--sb-reader-background, #fff);
   box-shadow:
-    0 1px 2px #0000002e,
+    var(--sb-shadow-raised),
     0 0 0 2px var(--sb-reader-background, #fff);
   cursor: pointer;
   pointer-events: auto;
@@ -308,10 +308,10 @@
   /* The toolbar's own outline, which each theme sets so it shows against
      that theme's page (a light line in the dark theme). */
   border: var(--sb-reader-toolbar-border);
-  border-radius: 999px;
-  box-shadow: 0 1px 2px #0000001f;
+  border-radius: var(--sb-radius-full);
+  box-shadow: var(--sb-shadow-raised);
   font-family: var(--sb-font-family);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -319,16 +319,16 @@
   cursor: pointer;
   opacity: 1;
   transition:
-    opacity 0.25s ease,
-    filter 0.2s ease,
-    box-shadow 0.2s ease;
+    opacity var(--sb-duration-slow) ease,
+    filter var(--sb-duration-base) ease,
+    box-shadow var(--sb-duration-base) ease;
 }
 
 /* Kept to effects that don't change the pill's size: growing it would
    overflow the sideways-scrolling row and flash a scrollbar. */
 .sb-offscreen-cue:hover {
   filter: brightness(1.06);
-  box-shadow: 0 1px 3px #00000038;
+  box-shadow: var(--sb-shadow-raised), var(--sb-shadow-raised);
 }
 
 .sb-offscreen-cue:focus-visible {
@@ -368,16 +368,16 @@
   padding-block: 0;
   padding-inline: 0.4375rem 0.25rem;
   border: var(--sb-reader-toolbar-border);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-reader-background, #fff);
   color: var(--sb-font-color);
-  box-shadow: 0 1px 3px #0000002e;
+  box-shadow: var(--sb-shadow-raised);
   cursor: pointer;
   opacity: 1;
   pointer-events: auto;
   transition:
-    opacity 0.25s ease,
-    box-shadow 0.2s ease;
+    opacity var(--sb-duration-slow) ease,
+    box-shadow var(--sb-duration-base) ease;
 }
 
 .sb-offscreen-cue-indicator-up {
@@ -389,7 +389,7 @@
 }
 
 .sb-offscreen-cue-indicator:hover {
-  box-shadow: 0 1px 4px #00000047;
+  box-shadow: var(--sb-shadow-raised), var(--sb-shadow-raised);
 }
 
 .sb-offscreen-cue-indicator:focus-visible {
