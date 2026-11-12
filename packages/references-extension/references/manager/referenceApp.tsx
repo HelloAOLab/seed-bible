@@ -147,7 +147,7 @@ export function openReferencePane(options: {
         placement === "floating" ? "grid_layout_side" : "float_portrait_2";
       return (
         <button
-          class="sb-pane-header-close-button sb-references-header-button material-symbols-outlined"
+          class="sb-references-header-button material-symbols-outlined"
           onClick={() =>
             openReferencePane({
               ...options,
