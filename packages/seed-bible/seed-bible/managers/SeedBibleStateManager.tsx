@@ -4004,8 +4004,8 @@ export function createSeedBibleState(
         placement: "fullscreen",
         title: renderTodayPaneTitle,
         component: renderTodayPane,
-        // Today's own close button (TodayCloseButton) stands in for the
-        // header's.
+        // Today's own close button (in its Header) stands in for the
+        // pane header's.
         showHeader: false,
       });
     } else {

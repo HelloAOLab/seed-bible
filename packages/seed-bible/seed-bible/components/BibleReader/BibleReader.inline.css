@@ -1283,23 +1283,6 @@
   color: var(--sb-chapter-heading-font-color);
 }
 
-.sb-footnote-modal-close {
-  border: none;
-  background: transparent;
-  color: var(--sb-font-color);
-  width: 2rem;
-  height: 2rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sb-footnote-modal-close:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
 .sb-footnote-modal-content {
   margin-top: 1rem;
   font-family: var(--sb-font-family);

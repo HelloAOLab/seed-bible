@@ -270,29 +270,6 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
 }
 
-.sb-floating-chat-header-close {
-  flex-shrink: 0;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  border-radius: var(--sb-radius-md);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
-  cursor: pointer;
-  transition:
-    background-color var(--sb-duration-fast) ease,
-    color var(--sb-duration-fast) ease;
-}
-
-.sb-floating-chat-header-close:hover,
-.sb-floating-chat-header-close:focus-visible {
-  color: var(--sb-font-color);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
-}
-
 @media (max-width: 480px) {
   /* Search is a bottom-anchored sheet on mobile: the input sits just above the
      5-tab bar and results grow upward. It is capped to the *small* viewport

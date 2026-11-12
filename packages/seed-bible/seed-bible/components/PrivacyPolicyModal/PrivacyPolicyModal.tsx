@@ -3,6 +3,7 @@ import { signal } from "@preact/signals";
 import type { i18n as I18nInstance } from "i18next";
 import { useI18n } from "../../i18n/I18nManager";
 import { useOverlayDismiss } from "../useOverlayDismiss";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 /**
  * Tracks which languages have had their Privacy Policy bundle loaded into i18n.
@@ -111,14 +112,7 @@ export function PrivacyPolicyModal({
       >
         <div className="sb-footnote-modal-header">
           <h3 className="sb-footnote-modal-title">{title}</h3>
-          <button
-            type="button"
-            className="sb-footnote-modal-close"
-            aria-label={t("close", { defaultValue: "Close" })}
-            onClick={onClose}
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+          <CloseButton className="sb-footnote-modal-close" onClose={onClose} />
         </div>
 
         <div
