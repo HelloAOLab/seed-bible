@@ -2375,23 +2375,74 @@ export function createPlaylistManager(
   };
 
   /**
-   * Opens an existing playlist for editing: sets `editingPlaylist` to a copy of
-   * the given playlist and switches to the create/edit view. Persisting happens
-   * later via `saveEditingPlaylist`.
+   * The draft kept for `playlist`, when it was made to the playlist as it's
+   * saved now; a draft made to an older version is forgotten instead.
    */
-  const editPlaylist = (playlist: Playlist): void => {
-    // Unsaved edits a refresh (or closing the tab) left behind, as long as
-    // they were made to the playlist as it's saved now.
+  const currentDraftFor = (playlist: Playlist) => {
     const locator = getPlaylistLocator(playlist);
     const kept = readPlaylistDraft(locator);
-    if (kept && kept.baseline.updatedAtMs === playlist.updatedAtMs) {
+    if (kept && kept.baseline.updatedAtMs !== playlist.updatedAtMs) {
+      clearPlaylistDraft(locator);
+      return null;
+    }
+    return kept;
+  };
+
+  /**
+   * Opens a saved playlist in the editor, carrying on from the draft kept for
+   * it, if any: as a reload or Back/Forward does, the user being mid-edit.
+   */
+  const restorePlaylistForEditing = (playlist: Playlist): void => {
+    const kept = currentDraftFor(playlist);
+    if (kept) {
       openDraft(kept.draft, kept.baseline, true);
     } else {
-      if (kept) {
-        clearPlaylistDraft(locator);
-      }
       openDraft(clonePlaylist(playlist), clonePlaylist(playlist), true);
     }
+  };
+
+  /**
+   * A playlist the user went to edit that has a draft kept from before, until
+   * they choose whether to continue from it or discard it.
+   */
+  const editorDraftChoice = signal<Playlist | null>(null);
+
+  /**
+   * Opens an existing playlist for editing: sets `editingPlaylist` to a copy of
+   * the given playlist and switches to the create/edit view. Persisting happens
+   * later via `saveEditingPlaylist`. When unsaved edits were kept from before,
+   * asks first whether to continue from them (see `editorDraftChoice`).
+   */
+  const editPlaylist = (playlist: Playlist): void => {
+    if (currentDraftFor(playlist)) {
+      editorDraftChoice.value = playlist;
+      return;
+    }
+    restorePlaylistForEditing(playlist);
+  };
+
+  /** Opens the playlist being asked about, carrying on from its draft. */
+  const continueEditorDraft = (): void => {
+    const playlist = editorDraftChoice.peek();
+    editorDraftChoice.value = null;
+    if (playlist) {
+      restorePlaylistForEditing(playlist);
+    }
+  };
+
+  /** Forgets the draft of the playlist being asked about, and opens it as saved. */
+  const discardEditorDraft = (): void => {
+    const playlist = editorDraftChoice.peek();
+    editorDraftChoice.value = null;
+    if (playlist) {
+      clearPlaylistDraft(getPlaylistLocator(playlist));
+      restorePlaylistForEditing(playlist);
+    }
+  };
+
+  /** Leaves the playlist being asked about closed, its draft still kept. */
+  const dismissEditorDraftChoice = (): void => {
+    editorDraftChoice.value = null;
   };
 
   /**
@@ -3972,7 +4023,7 @@ export function createPlaylistManager(
       return;
     }
     // A playlist never saved has nothing to load, but may have a draft kept.
-    // (A saved one's is restored by `editPlaylist`, once it's known current.)
+    // (A saved one's is restored once it's known to be current.)
     const kept = readPlaylistDraft(route.locator);
     if (kept && !kept.saved) {
       openDraft(kept.draft, kept.baseline, false);
@@ -3983,7 +4034,7 @@ export function createPlaylistManager(
       .peek()
       .find((playlist) => getPlaylistLocator(playlist) === route.locator);
     if (saved) {
-      editPlaylist(saved);
+      restorePlaylistForEditing(saved);
       showEditorRoute(route);
       return;
     }
@@ -4000,7 +4051,7 @@ export function createPlaylistManager(
         batch(() => {
           pendingEditorRoute.value = null;
           if (loaded) {
-            editPlaylist(loaded);
+            restorePlaylistForEditing(loaded);
           } else {
             const now = Date.now();
             const blank = PlaylistSchema.parse({
@@ -4254,6 +4305,10 @@ export function createPlaylistManager(
     duplicateEditingPlaylistItem,
     cancelEditingPlaylist,
     leaveEditorKeepingDraft,
+    editorDraftChoice,
+    continueEditorDraft,
+    discardEditorDraft,
+    dismissEditorDraftChoice,
     isEditingPlaylistDirty,
     editingPlaylistInvalidSteps,
     editorStepIndex,

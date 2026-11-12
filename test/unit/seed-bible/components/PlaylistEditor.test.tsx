@@ -366,6 +366,12 @@ describe("the playlist editor", () => {
         });
         click(back());
       };
+      const reopen = () =>
+        act(() => state.playlists.editPlaylist(makePlaylist(STEPS)));
+      const chooseDraft = (label: string) =>
+        click(
+          byText(document.body, ".sb-pe-draft-choice-actions button", label)
+        );
       const choose = (label: string) =>
         click(
           byText(document.body, ".sb-unsaved-changes-actions button", label)
@@ -390,7 +396,62 @@ describe("the playlist editor", () => {
         choose("Save Draft");
 
         expect(state.playlists.editingPlaylist.value).toBeNull();
-        act(() => state.playlists.editPlaylist(makePlaylist(STEPS)));
+        reopen();
+        chooseDraft("Continue from Draft");
+        expect(state.playlists.editingPlaylist.value?.title).toBe("Changed");
+      });
+
+      it("asks, on going to edit the playlist again, whether to continue from the draft", () => {
+        leave();
+        choose("Save Draft");
+
+        reopen();
+
+        // Not opened yet: the choice comes first.
+        expect(state.playlists.editingPlaylist.value).toBeNull();
+        expect(document.body.textContent).toContain(
+          "You have unsaved changes to this playlist from before."
+        );
+        expect(
+          Array.from(
+            document.body.querySelectorAll(
+              ".sb-pe-draft-choice-actions button"
+            ),
+            (button) => button.textContent
+          )
+        ).toEqual(["Discard Draft", "Continue from Draft"]);
+      });
+
+      it("opens the playlist as saved, and forgets the draft, with Discard Draft", () => {
+        leave();
+        choose("Save Draft");
+        reopen();
+
+        chooseDraft("Discard Draft");
+
+        expect(state.playlists.editingPlaylist.value?.title).toBeNull();
+        expect(state.playlists.isEditingPlaylistDirty()).toBe(false);
+        // Gone for good: the next visit doesn't ask.
+        act(() => state.playlists.cancelEditingPlaylist());
+        reopen();
+        expect(
+          document.body.querySelector(".sb-pe-draft-choice-actions")
+        ).toBeNull();
+        expect(state.playlists.editingPlaylist.value).not.toBeNull();
+      });
+
+      it("leaves the playlist closed, its draft kept, when the question is closed", () => {
+        leave();
+        choose("Save Draft");
+        reopen();
+
+        act(() => {
+          state.modals.dismissModal("playlist-draft-choice");
+        });
+
+        expect(state.playlists.editingPlaylist.value).toBeNull();
+        reopen();
+        chooseDraft("Continue from Draft");
         expect(state.playlists.editingPlaylist.value?.title).toBe("Changed");
       });
 

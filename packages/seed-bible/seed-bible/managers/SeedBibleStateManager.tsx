@@ -157,6 +157,7 @@ import {
   computed,
   effect,
   signal,
+  untracked,
   type ReadonlySignal,
 } from "@preact/signals";
 import {
@@ -766,6 +767,7 @@ import {
   DiscoverPane,
   DISCOVER_PANE_ID,
 } from "../components/Discover/DiscoverPane";
+import { PlaylistDraftChoice } from "../components/PlaylistEditor/PlaylistDraftChoice";
 import {
   AIBibleVerseRefSchema,
   convertToPlaylistItem,
@@ -3912,6 +3914,32 @@ export function createSeedBibleState(
   // `view` stays the source of truth for both whether Discover is open and
   // which sub-view shows inside it; DiscoverPane routes discover/create/play
   // internally off the same signal.
+
+  // Going to edit a playlist with unsaved edits kept from before asks first
+  // whether to carry on from them (see `playlists.editorDraftChoice`).
+  const PLAYLIST_DRAFT_CHOICE_MODAL_ID = "playlist-draft-choice";
+  effect(() => {
+    if (!playlists.editorDraftChoice.value) {
+      modals.closeModal(PLAYLIST_DRAFT_CHOICE_MODAL_ID);
+      return;
+    }
+    untracked(() =>
+      modals.openModal({
+        id: PLAYLIST_DRAFT_CHOICE_MODAL_ID,
+        title: {
+          key: "playlist-editor-draft-found",
+          defaultValue: "Continue your draft?",
+        },
+        content: () => (
+          <PlaylistDraftChoice
+            onContinue={playlists.continueEditorDraft}
+            onDiscard={playlists.discardEditorDraft}
+          />
+        ),
+        onDismiss: playlists.dismissEditorDraftChoice,
+      })
+    );
+  });
 
   // view -> pane: open (or refresh, by reusing the id) while a view is set,
   // close when it clears. The pane commands read pane state via peek()
