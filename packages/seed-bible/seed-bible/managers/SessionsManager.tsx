@@ -1426,7 +1426,6 @@ async function createBibleReadingSession(
   syncDecorationsFromSession();
 
   const mapSubscription = stateMap.changes.subscribe(() => {
-<<<<<<< HEAD
     // While actively following, the leader's own position is the source of
     // truth. Applying the session chapter here would pull the reader off
     // that person whenever anyone else navigates.
@@ -1434,9 +1433,7 @@ async function createBibleReadingSession(
       return;
     }
 
-=======
     refreshGroupPosition();
->>>>>>> b0c0c96ab898ef6e70b69ff799420cc57d2b3b86
     const nextSessionData = getSessionDataFromMap(stateMap);
 
     if (

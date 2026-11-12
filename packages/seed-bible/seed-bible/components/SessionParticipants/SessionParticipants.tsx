@@ -12,6 +12,7 @@ import {
   getUserDisplayName,
   getUserSessionRole,
   sessionRoleLabel,
+  SessionUserAvatar,
   sortUsersByRole,
 } from "../Avatar/Avatar";
 import {
@@ -20,9 +21,7 @@ import {
   openShareSessionModal,
 } from "../Tabs/Tabs";
 import { MaterialIcon } from "../icons";
-<<<<<<< HEAD
 import { SessionParticipantsRoster } from "../FollowReading/ParticipantFollowButton";
-=======
 import {
   AskToComeBackButton,
   getParticipantLocation,
@@ -33,7 +32,6 @@ import {
   ParticipantName,
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
->>>>>>> b0c0c96ab898ef6e70b69ff799420cc57d2b3b86
 
 /** How many avatars the compact stack shows before collapsing into a "+N" chip. */
 const MAX_STACK_AVATARS = 3;
@@ -152,9 +150,7 @@ export function MobileSessionParticipants({
                 </button>
               </div>
               <div className="sb-mobile-settings-sheet-body">
-<<<<<<< HEAD
                 <SessionParticipantsRoster state={state} session={session} />
-=======
                 <SessionParticipantList
                   state={state}
                   session={session}
@@ -167,7 +163,6 @@ export function MobileSessionParticipants({
                     isSheetOpen.value = true;
                   }}
                 />
->>>>>>> b0c0c96ab898ef6e70b69ff799420cc57d2b3b86
               </div>
               <div className="sb-mobile-settings-sheet-divider" />
               {isHost && (
