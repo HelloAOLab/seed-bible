@@ -1,0 +1,1730 @@
+/*
+ * The playlist editor: its step list (the side pane on desktop, a sheet on a
+ * phone), the toolbar and step cards over the reader, and the bars along the
+ * bottom.
+ *
+ * Accents use the design's own oranges, which read on light and dark
+ * backgrounds alike. Neutrals (text, borders, quiet surfaces) are mixed from
+ * the theme's font and reader colors instead, so they follow whichever theme
+ * is active; in the light theme they land on the design's values.
+ */
+.sb-pe {
+  --pe-accent: #d36433;
+  --pe-accent-strong: #e2673a;
+  --pe-accent-text: #c9572b;
+  --pe-on-accent: #fff;
+  --pe-add: #ed6535;
+  --pe-danger: #c24a2a;
+  --pe-surface: var(--sb-reader-background, #fff);
+  --pe-text: var(--sb-font-color, #1f1b18);
+  --pe-accent-soft: color-mix(
+    in srgb,
+    var(--pe-accent-strong) 22%,
+    var(--pe-surface)
+  );
+  --pe-accent-tint: color-mix(
+    in srgb,
+    var(--pe-accent-strong) 9%,
+    var(--pe-surface)
+  );
+  --pe-accent-line: color-mix(
+    in srgb,
+    var(--pe-accent-strong) 40%,
+    var(--pe-surface)
+  );
+  --pe-muted: color-mix(in srgb, var(--pe-text) 58%, var(--pe-surface));
+  --pe-faint: color-mix(in srgb, var(--pe-text) 42%, var(--pe-surface));
+  --pe-border: color-mix(in srgb, var(--pe-text) 17%, var(--pe-surface));
+  --pe-border-soft: color-mix(in srgb, var(--pe-text) 9%, var(--pe-surface));
+  --pe-border-faint: color-mix(in srgb, var(--pe-text) 6%, var(--pe-surface));
+  --pe-surface-subtle: color-mix(in srgb, var(--pe-text) 2%, var(--pe-surface));
+  --pe-shadow: rgba(31, 27, 24, 0.04);
+  --pe-font-ui: "Lexend", "Plus Jakarta Sans", sans-serif;
+  --pe-font-list: "Plus Jakarta Sans", sans-serif;
+  --pe-font-label: "Figtree", "Plus Jakarta Sans", sans-serif;
+  --pe-font-title: "Newsreader", serif;
+  --pe-font-passage: "Literata", "Newsreader", serif;
+
+  color: var(--pe-text);
+  box-sizing: border-box;
+
+  & *,
+  & *::before,
+  & *::after {
+    box-sizing: border-box;
+  }
+
+  /* `:where` keeps this reset at one class's weight: enough to override the
+     app's global `button` styles, while any editor class declared below
+     still wins. The cover image field is a shared component styled by its own
+     stylesheet, at that same weight, so it's left out: the reset would
+     otherwise strip its "Add cover image" button bare and invisible. */
+  & :where(button:not(.sb-hero-field *)) {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  & button:focus-visible,
+  & input:focus-visible,
+  & textarea:focus-visible {
+    outline: 2px solid var(--pe-accent-strong);
+    outline-offset: 2px;
+  }
+}
+
+/* Icons are the design's own SVGs, used as masks so they take the color of
+   the text around them. */
+.sb-pe-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.sb-pe-icon--arrow-right {
+  -webkit-mask-image: url("./icons/arrow-right.svg");
+  mask-image: url("./icons/arrow-right.svg");
+}
+.sb-pe-icon--audio {
+  -webkit-mask-image: url("./icons/audio.svg");
+  mask-image: url("./icons/audio.svg");
+}
+.sb-pe-icon--book-open {
+  -webkit-mask-image: url("./icons/book-open.svg");
+  mask-image: url("./icons/book-open.svg");
+}
+.sb-pe-icon--chevron-down {
+  -webkit-mask-image: url("./icons/chevron-down.svg");
+  mask-image: url("./icons/chevron-down.svg");
+}
+.sb-pe-icon--close {
+  -webkit-mask-image: url("./icons/close.svg");
+  mask-image: url("./icons/close.svg");
+}
+.sb-pe-icon--copy {
+  -webkit-mask-image: url("./icons/copy.svg");
+  mask-image: url("./icons/copy.svg");
+}
+.sb-pe-icon--drag-handle {
+  -webkit-mask-image: url("./icons/drag-handle.svg");
+  mask-image: url("./icons/drag-handle.svg");
+}
+.sb-pe-icon--eye {
+  -webkit-mask-image: url("./icons/eye.svg");
+  mask-image: url("./icons/eye.svg");
+}
+.sb-pe-icon--info {
+  -webkit-mask-image: url("./icons/info.svg");
+  mask-image: url("./icons/info.svg");
+}
+.sb-pe-icon--items-list {
+  -webkit-mask-image: url("./icons/items-list.svg");
+  mask-image: url("./icons/items-list.svg");
+}
+.sb-pe-icon--link {
+  -webkit-mask-image: url("./icons/link.svg");
+  mask-image: url("./icons/link.svg");
+}
+.sb-pe-icon--note {
+  -webkit-mask-image: url("./icons/note.svg");
+  mask-image: url("./icons/note.svg");
+}
+.sb-pe-icon--pencil {
+  -webkit-mask-image: url("./icons/pencil.svg");
+  mask-image: url("./icons/pencil.svg");
+}
+.sb-pe-icon--play {
+  -webkit-mask-image: url("./icons/play.svg");
+  mask-image: url("./icons/play.svg");
+}
+.sb-pe-icon--scripture {
+  -webkit-mask-image: url("./icons/scripture.svg");
+  mask-image: url("./icons/scripture.svg");
+}
+.sb-pe-icon--settings {
+  -webkit-mask-image: url("./icons/settings.svg");
+  mask-image: url("./icons/settings.svg");
+}
+.sb-pe-icon--trash {
+  -webkit-mask-image: url("./icons/trash.svg");
+  mask-image: url("./icons/trash.svg");
+}
+.sb-pe-icon--video {
+  -webkit-mask-image: url("./icons/video.svg");
+  mask-image: url("./icons/video.svg");
+}
+
+/* ---------- Step list (side pane on desktop, sheet on a phone) ---------- */
+
+.sb-pane-side-shell.sb-pe-pane-shell {
+  margin: 11px 10px 10px 0;
+  border: none;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.1);
+  height: calc(100% - 21px);
+}
+
+.sb-pe-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--pe-surface);
+  font-family: var(--pe-font-list);
+}
+
+.sb-pe-panel-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 15px;
+  border-bottom: 1px solid var(--pe-border-soft);
+}
+
+.sb-pe-panel-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* The back arrow that leaves the editor, at the start of the side panel's
+   and the phone header's title bar. */
+.sb-pe-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-inline-start: -8px;
+  border-radius: 50%;
+  color: var(--pe-text);
+}
+
+.sb-pe-back:hover,
+.sb-pe-back:focus-visible {
+  background: color-mix(in srgb, var(--pe-text) 8%, transparent);
+}
+
+.sb-pe-back .sb-pe-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* The icon is a right arrow; left-to-right, back points left. */
+.sb-pe-back-icon--flipped {
+  transform: scaleX(-1);
+}
+
+.sb-pe-panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sb-pe-panel-title {
+  min-width: 0;
+  margin: 0;
+  font-family: var(--pe-font-title);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 26px;
+}
+
+.sb-pe-panel-title-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  font-weight: inherit;
+
+  & .sb-pe-icon {
+    flex-shrink: 0;
+    width: 11px;
+    height: 11px;
+    color: var(--pe-muted);
+  }
+}
+
+/* A block, so a long title is cut short rather than pushing the pencil out. */
+.sb-pe-panel-title-text {
+  display: block;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-pe-panel-status {
+  margin: 0;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--pe-muted);
+}
+
+.sb-pe-panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.sb-pe-panel-close {
+  display: flex;
+}
+
+.sb-pe-panel-close .sb-pe-icon {
+  color: var(--pe-text);
+}
+
+.sb-pe-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 16px 0;
+}
+
+.sb-pe-step-count {
+  margin: 0;
+  font-weight: 500;
+  font-size: 14px;
+  text-transform: uppercase;
+  color: var(--pe-muted);
+}
+
+.sb-pe-step-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--pe-muted);
+}
+
+/* A playlist with no steps yet: says so, with a way to add the first. */
+.sb-pe-empty-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 40px 16px;
+  text-align: center;
+
+  & > .sb-pe-icon {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 6px;
+    color: var(--pe-muted);
+  }
+}
+
+.sb-pe-empty-list-title {
+  margin: 0;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.sb-pe-empty-list-text {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--pe-muted);
+}
+
+.sb-pe-empty-list-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--pe-add);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--pe-add);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* The steps are the same rows as the playing list's (`PlaylistStepRow`);
+   one that can't be published yet is outlined. */
+.sb-pe-step--invalid {
+  border-color: var(--pe-danger);
+}
+
+.sb-pe-step-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.sb-pe-step-action {
+  display: flex;
+  color: var(--pe-text);
+}
+
+.sb-pe-step-action--danger {
+  color: var(--pe-danger);
+}
+
+.sb-pe-step-action .sb-pe-icon--pencil {
+  width: 11px;
+  height: 11px;
+  color: var(--pe-muted);
+}
+
+.sb-pe-panel-footer {
+  position: relative;
+  padding: 8px 16px 22px;
+}
+
+/* Review & publish, across the foot of the panel. */
+.sb-pe-panel-footer-row {
+  display: flex;
+  gap: 8px;
+
+  & .sb-pe-publish {
+    flex: 1;
+    height: 42px;
+  }
+}
+
+/* "Add a step" menu */
+
+.sb-pe-add-menu {
+  position: absolute;
+  inset-inline: 12px;
+  bottom: 100%;
+  z-index: 5;
+  padding: 24px 20px 20px;
+  border-radius: 10px;
+  background: var(--pe-surface);
+  filter: drop-shadow(0 1px 6.5px rgba(0, 0, 0, 0.1));
+  font-family: var(--pe-font-ui);
+}
+
+.sb-pe-add-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sb-pe-add-menu-title {
+  margin: 0;
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 22px;
+}
+
+.sb-pe-add-menu-close .sb-pe-icon {
+  color: var(--pe-muted);
+}
+
+.sb-pe-add-menu-where {
+  margin: 16px 0 10px;
+  font-size: 12px;
+  color: var(--pe-muted);
+}
+
+.sb-pe-add-menu-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-pe-add-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 11px 0;
+  border-radius: 8px;
+  text-align: start;
+}
+
+.sb-pe-add-option:hover {
+  background: var(--pe-surface-subtle);
+}
+
+.sb-pe-add-option-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  font-family: var(--pe-font-label);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.sb-pe-add-option-icon .sb-pe-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.sb-pe-add-option-icon--scripture {
+  background: color-mix(
+    in srgb,
+    var(--pe-accent-strong) 20%,
+    var(--pe-surface)
+  );
+  color: var(--pe-accent-text);
+}
+.sb-pe-add-option-icon--note {
+  background: color-mix(in srgb, var(--pe-text) 8%, var(--pe-surface));
+  color: var(--pe-text);
+}
+.sb-pe-add-option-icon--video {
+  background: color-mix(in srgb, #4d74c4 13%, var(--pe-surface));
+  color: color-mix(in srgb, #3d5fa8 65%, var(--pe-text));
+}
+.sb-pe-add-option-icon--link {
+  background: color-mix(in srgb, #4d74c4 13%, var(--pe-surface));
+  color: color-mix(in srgb, #3d5fa8 65%, var(--pe-text));
+}
+.sb-pe-add-option-icon--question {
+  background: color-mix(in srgb, #8a9a4c 14%, var(--pe-surface));
+  color: color-mix(in srgb, #5d6a2c 65%, var(--pe-text));
+}
+.sb-pe-add-option-icon--compare {
+  background: color-mix(in srgb, #a2558f 14%, var(--pe-surface));
+  color: color-mix(in srgb, #7e3b6d 65%, var(--pe-text));
+}
+
+/* The compare icon: two side-by-side columns, as in the layout picker. */
+.sb-pe-compare-glyph {
+  display: flex;
+  gap: 2px;
+}
+.sb-pe-compare-glyph::before,
+.sb-pe-compare-glyph::after {
+  content: "";
+  width: 5px;
+  height: 11px;
+  border: 1.5px solid currentColor;
+  border-radius: 1.5px;
+}
+
+.sb-pe-add-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sb-pe-add-option-name {
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 19px;
+}
+
+.sb-pe-add-option-desc {
+  font-size: 12px;
+  line-height: 15px;
+  color: var(--pe-muted);
+}
+
+/* ---------- Workspace over the reader ---------- */
+
+.sb-pane-reader-outer.sb-pe-workspace {
+  position: relative;
+  flex-direction: column;
+}
+
+.sb-pe-workspace .sb-pane-reader {
+  flex: 1;
+  min-height: 0;
+}
+
+/* A card covers the reader, which stays mounted so its place in the chapter
+   survives switching between steps. */
+.sb-pe-workspace--card .sb-pane-reader {
+  display: none;
+}
+
+/* The editor's header replaces the reader's own on a phone, chapter title
+   included. */
+.sb-pe-workspace--mobile .sb-bible-reader-mobile-header,
+.sb-pe-workspace--mobile .sb-bible-reader-mobile-content-title {
+  display: none;
+}
+
+.sb-pe-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  margin-top: 5px;
+  padding: 8px 24px;
+  border-top: 1px solid var(--pe-border-faint);
+  background: var(--pe-surface-subtle);
+  font-family: var(--pe-font-ui);
+  font-size: 12px;
+  line-height: 15px;
+  color: color-mix(in srgb, var(--pe-text) 90%, var(--pe-surface));
+}
+
+.sb-pe-toolbar-settings {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.sb-pe-reading-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.sb-pe-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 98px;
+  padding: 0 9px;
+  height: 30px;
+  border: 1px solid var(--pe-border);
+  border-radius: 999px;
+  background: var(--pe-surface);
+  text-align: center;
+}
+
+.sb-pe-stepper-button {
+  width: 12px;
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.sb-pe-stepper-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sb-pe-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 6px 9px;
+}
+
+.sb-pe-toolbar-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.sb-pe-toolbar-action--danger {
+  color: var(--pe-danger);
+}
+
+/* The step card, centred where the chapter would be. */
+.sb-pe-card-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 24px 140px;
+}
+
+.sb-pe-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 753px;
+  margin: 0 auto;
+  padding: 29px;
+  border: 1px solid var(--pe-border-soft);
+  border-radius: 16px;
+  background: var(--pe-surface);
+  box-shadow: 0 1px 1px var(--pe-shadow);
+  font-family: var(--pe-font-ui);
+}
+
+.sb-pe-eyebrow {
+  margin: 0;
+  font-family: var(--pe-font-ui);
+  font-weight: 600;
+  font-size: 10px;
+  line-height: 13px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--pe-accent-text);
+}
+
+.sb-pe-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.sb-pe-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sb-pe-field-label {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 16px;
+  padding: 0;
+}
+
+.sb-pe-field-hint {
+  font-size: 12px;
+  line-height: 15px;
+  color: var(--pe-muted);
+  text-align: end;
+}
+
+.sb-pe-input,
+.sb-pe-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--pe-border);
+  border-radius: 10px;
+  background: var(--pe-surface);
+  color: var(--pe-text);
+  font-family: var(--pe-font-ui);
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.sb-pe-input::placeholder,
+.sb-pe-textarea::placeholder {
+  color: #757575;
+}
+
+.sb-pe-textarea {
+  display: block;
+  resize: vertical;
+  line-height: 22.4px;
+  min-height: 68px;
+}
+
+.sb-pe-textarea--tall {
+  min-height: 182px;
+}
+
+.sb-pe-input:focus,
+.sb-pe-textarea:focus {
+  outline: none;
+  border-color: var(--pe-accent-strong);
+}
+
+.sb-pe-input--invalid {
+  border-color: var(--pe-danger);
+}
+
+.sb-pe-count {
+  align-self: flex-end;
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--pe-faint);
+}
+
+.sb-pe-error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 15px;
+  color: var(--pe-danger);
+}
+
+/* Video link check */
+.sb-pe-link-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px;
+  border: 1px solid var(--pe-border-soft);
+  border-radius: 10px;
+  background: var(--pe-surface-subtle);
+}
+
+.sb-pe-link-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 96px;
+  height: 54px;
+  border-radius: 6px;
+  background: #1f1b18 center / cover no-repeat;
+  color: #fff;
+}
+
+.sb-pe-link-check-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sb-pe-link-check-title {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.sb-pe-link-check-url {
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--pe-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-pe-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--pe-border);
+  border-radius: 10px;
+  text-align: start;
+}
+
+.sb-pe-toggle-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sb-pe-toggle-row-name {
+  font-size: 13px;
+  line-height: 16px;
+}
+
+.sb-pe-toggle-row-desc {
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--pe-muted);
+}
+
+/* Compare: the page a compare step plays as, made editable
+   (PlaylistCompareEditor). It isn't inside `.sb-pe`, so it draws on the
+   reader's colors; the bars and buttons that are carry that class. */
+.sb-pe-compare-editor {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-pe-compare-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 24px;
+}
+
+.sb-pe-compare-page {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+/* Desktop: the title as the reader's header shows a playing step's, ruled off
+   above the passages. */
+.sb-pe-compare-editor:not(.sb-pe-compare-editor--mobile)
+  .sb-playlist-step-page-title {
+  margin: 2rem 0 0;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--sb-divider-color);
+  text-align: start;
+}
+
+.sb-pe-compare-hint {
+  margin: 0.75rem 0 1.25rem;
+  font-family: var(--pe-font-ui);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--pe-muted);
+}
+
+.sb-pe-compare-editor--mobile .sb-pe-compare-hint {
+  margin-top: -1rem;
+  text-align: center;
+}
+
+.sb-pe-compare-reference {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-inline-start: -6px;
+  padding: 2px 4px 2px 6px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--sb-font-color) 7%, transparent);
+  }
+}
+
+.sb-pe-compare-reference-icon {
+  font-size: 18px;
+  color: #e2673a;
+}
+
+.sb-pe-compare-text {
+  margin: 0;
+}
+
+.sb-pe-compare-verse {
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid #e2673a;
+    outline-offset: 2px;
+  }
+}
+
+/* The verses either side of the passage, there to extend it into. */
+.sb-pe-compare-verse--outside {
+  color: color-mix(in srgb, var(--sb-font-color) 38%, transparent);
+}
+
+/* The first verse tapped, until the last one is. */
+.sb-pe-compare-verse--picked {
+  background: color-mix(
+    in srgb,
+    var(--pe-accent-strong, #e2673a) 22%,
+    transparent
+  );
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--pe-accent-strong, #e2673a) 22%, transparent);
+  color: var(--sb-font-color);
+}
+
+.sb-pe-compare-verse-number {
+  margin-inline-end: 0.25em;
+  font-family: var(--sb-font-family);
+  font-size: 0.6em;
+  color: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
+}
+
+.sb-pe-compare-more {
+  display: block;
+  margin: 2px 0;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  font-family: var(--pe-font-ui);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pe-accent-text);
+}
+
+.sb-pe-compare-status {
+  margin: 0;
+  color: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
+}
+
+/* The pick bar and the note, under the page: as the toolbar stack holds them
+   over a scripture step on desktop. */
+.sb-pe-compare-dock {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: min(480px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 8px 0 16px;
+
+  & .sb-pe-note-sheet {
+    position: static;
+    align-self: stretch;
+    max-height: 60vh;
+    border: 1px solid var(--sb-divider-color);
+    border-radius: 1rem;
+  }
+}
+
+/* One line, as long as it fits (PlaylistCompareEditor measures). Paired with
+   `.sb-pe-pickbar` to outrank its rules, which come later. */
+.sb-pe-pickbar.sb-pe-compare-pickbar {
+  max-width: 100%;
+  overflow: hidden;
+
+  & > span {
+    flex: 1 1 auto;
+  }
+}
+
+/* Too long for one line: the instruction centred over its two buttons,
+   side by side in equal columns. */
+.sb-pe-pickbar.sb-pe-compare-pickbar--stacked {
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 8px;
+  padding: 12px;
+  border-radius: 20px;
+
+  & > span {
+    grid-column: 1 / -1;
+    text-align: center;
+    white-space: normal;
+  }
+
+  /* A long reference takes two lines rather than lose its end. */
+  & > button {
+    border-radius: 18px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  & > .sb-pe-pickbar-cancel {
+    padding: 7px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+  }
+}
+
+.sb-pe-compare-editor--mobile .sb-pe-compare-dock {
+  width: auto;
+  margin: 0 12px var(--sb-reader-bottom-chrome);
+  padding: 8px 0 10px;
+}
+
+/* INSERT row under a note */
+.sb-pe-insert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sb-pe-insert-label {
+  font-family: var(--pe-font-list);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--pe-faint);
+}
+
+.sb-pe-insert-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sb-pe-insert-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 33px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--pe-text) 14%, var(--pe-surface));
+  border-radius: 10px;
+  background: var(--pe-surface);
+  font-family: var(--pe-font-list);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.sb-pe-insert-action .sb-pe-icon {
+  width: 12px;
+  height: 12px;
+  color: #f24f2c;
+}
+
+.sb-pe-insert-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--pe-border-soft);
+  border-radius: 10px;
+  background: var(--pe-surface-subtle);
+}
+
+.sb-pe-insert-picker-row {
+  display: flex;
+  gap: 6px;
+}
+
+.sb-pe-insert-picker-row .sb-pe-input {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.sb-pe-insert-picker-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.sb-pe-insert-picker-list button {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  text-align: start;
+  font-size: 13px;
+}
+
+.sb-pe-insert-picker-list button:hover {
+  background: var(--pe-border-faint);
+}
+
+.sb-pe-insert-picker-go {
+  flex-shrink: 0;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--pe-accent-strong);
+  color: var(--pe-on-accent);
+  font-size: 13px;
+}
+
+/* The note editor itself: TipTap, dressed as a plain text area. */
+.sb-pe-rich {
+  min-height: 68px;
+  font-family: var(--pe-font-ui);
+  font-size: 14px;
+  line-height: 22.4px;
+
+  & .sb-editor-toolbar {
+    display: none;
+  }
+
+  & .sb-editor-content,
+  & .ProseMirror {
+    min-height: inherit;
+    outline: none;
+  }
+
+  & .ProseMirror p {
+    margin: 0;
+  }
+
+  & .ProseMirror p.is-editor-empty:first-child::before,
+  & .ProseMirror-empty-placeholder::before {
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+    color: #757575;
+  }
+
+  & a {
+    color: var(--pe-accent-text);
+  }
+}
+
+.sb-pe-rich-field {
+  padding: 12px 14px;
+  border: 1px solid var(--pe-border);
+  border-radius: 10px;
+  cursor: text;
+}
+
+.sb-pe-rich-field--tall .sb-pe-rich {
+  min-height: 157px;
+}
+
+.sb-pe-rich-field:focus-within {
+  border-color: var(--pe-accent-strong);
+}
+
+.sb-pe-rich-field-inner {
+  position: relative;
+}
+
+/* With the formatting toolbar showing, the text starts under it. */
+.sb-pe-rich-field-inner--formatting {
+  & .sb-pe-rich .sb-editor-toolbar {
+    display: flex;
+  }
+
+  & .sb-pe-rich-placeholder {
+    /* The toolbar's height: its 28px buttons, 6px padding and 6px margin
+       below them, and its 1px rule (see TipTapEditor.css). */
+    top: 41px;
+  }
+}
+
+.sb-pe-rich-placeholder {
+  position: absolute;
+  inset: 0 0 auto;
+  pointer-events: none;
+  font-family: var(--pe-font-ui);
+  font-size: 14px;
+  line-height: 22.4px;
+  color: #757575;
+}
+
+/* ---------- Scripture steps, in the reader ---------- */
+
+/* On desktop the step's passage is also set larger than the chapter around
+   it; a phone keeps one size and only dims the rest. The reader's header
+   takes the editor's size, with the hint on the right. */
+.sb-pe-workspace:not(.sb-pe-workspace--mobile) {
+  & .sb-playlist-editor-step-chapter {
+    & .sb-verse:not(:has(.sb-playlist-editor-step-verse)),
+    & .sb-chapter-heading {
+      font-size: 0.8875em;
+    }
+
+    & .sb-verse:has(.sb-playlist-editor-step-verse) {
+      font-size: 1.125em;
+    }
+  }
+
+  & .sb-bible-reader-header {
+    align-items: center;
+    margin-bottom: 26px;
+    padding-bottom: 16px;
+  }
+
+  & .sb-bible-reader-title {
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 36px;
+  }
+
+  & .sb-bible-reader-title-sep {
+    margin: 0 0.1em;
+  }
+
+  & .sb-bible-reader-translation {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-family: var(--sb-verse-font-family, "Plus Jakarta Sans", sans-serif);
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 1.3;
+  }
+}
+
+.sb-pe-reader-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+  font-family: var(--pe-font-list);
+  font-size: 12px;
+  line-height: 1.2;
+  color: color-mix(in srgb, var(--pe-text) 50%, var(--pe-surface));
+  white-space: nowrap;
+}
+
+.sb-pe-reader-hint .sb-pe-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.sb-pe-publish {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 18px;
+  border-radius: 10px;
+  background: var(--pe-accent-strong);
+  color: var(--pe-on-accent);
+  font-family: var(--pe-font-ui);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.sb-pe-pickbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 8px 8px 8px 16px;
+  border-radius: 999px;
+  background: #1f1b18;
+  box-shadow: 0 8px 12px rgba(31, 27, 24, 0.18);
+  font-family: var(--pe-font-ui);
+  font-size: 13px;
+  line-height: 16px;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.sb-pe-pickbar-ref {
+  color: #f4b89c;
+}
+
+.sb-pe-pickbar-cancel {
+  color: #cfc8c2;
+}
+
+.sb-pe-pickbar-apply {
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #e2673a;
+  color: #fff;
+  font-weight: 500;
+}
+
+.sb-pe-pickbar-apply:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---------- Phone ---------- */
+
+.sb-pe-mobile-header {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  padding-block: 11px;
+  padding-inline: 16px 24px;
+  border-bottom: 1px solid var(--pe-border-soft);
+  background: var(--pe-surface);
+  font-family: var(--pe-font-list);
+}
+
+.sb-pe-mobile-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-pe-mobile-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 14px;
+  min-width: 0;
+}
+
+/* Opens the details sheet; the pencil, as beside the desktop panel's title,
+   says it can be edited. */
+.sb-pe-mobile-title-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  font-weight: inherit;
+}
+
+/* A block, so a long title is cut short rather than running under the title
+   bar's buttons. */
+.sb-pe-mobile-title-text {
+  display: block;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-pe-mobile-title-button .sb-pe-icon {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  opacity: 0.6;
+}
+
+.sb-pe-mobile-status {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pe-faint);
+}
+
+.sb-pe-mobile-header-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 16px;
+}
+
+.sb-pe-square-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid color-mix(in srgb, var(--pe-text) 13%, var(--pe-surface));
+  border-radius: 10px;
+}
+
+.sb-pe-square-button.sb-pe-step-action--danger {
+  color: var(--pe-danger);
+}
+
+/* A title bar's plain icon buttons, Add a step in the accent colour. */
+.sb-pe-mobile-header-actions .sb-pe-square-button,
+.sb-pe-panel-header-actions .sb-pe-square-button {
+  border: none;
+}
+
+.sb-pe-add-toggle {
+  color: var(--pe-add);
+}
+
+.sb-pe-add-toggle[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--pe-add) 10%, transparent);
+}
+
+.sb-pe-step-menu[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--pe-text) 8%, transparent);
+}
+
+.sb-pe-add-toggle-plus {
+  display: block;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* ...and its menu drops down from the title bar rather than rising from the
+   bottom bar, which a step's page doesn't have. */
+.sb-pe-mobile-header .sb-pe-add-menu,
+.sb-pe-panel-header .sb-pe-add-menu {
+  top: calc(100% + 8px);
+  bottom: auto;
+}
+
+/* The phone's list of steps: a page of its own, in the reader's place. */
+.sb-pe-list-page {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 16px 24px;
+}
+
+.sb-pe-workspace--mobile .sb-pe-card-scroll {
+  padding: 20px 24px 24px;
+}
+
+.sb-pe-workspace--mobile .sb-pe-card {
+  max-width: 354px;
+}
+
+/* A step's fields sit straight on the page, with no card around them. */
+.sb-pe-card--plain {
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+
+.sb-pe-workspace--mobile .sb-pe-insert {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Phone: the open step's settings, in the sheet its title bar's menu opens. */
+.sb-pe-settings-sheet .sb-pe-details-sheet-body {
+  align-items: flex-start;
+  gap: 18px;
+  font-size: 13px;
+  line-height: 16px;
+}
+
+/* The menu in a step's title bar (Item settings, and Delete): a vertical
+   ellipsis, as on a tab's row. */
+.sb-pe-step-menu .material-symbols-outlined {
+  font-size: 24px;
+}
+
+/* The menu is portaled out of the editor, past its `--pe-*` colours. */
+.sb-context-menu-item.sb-pe-step-menu-delete {
+  color: #c24a2a;
+}
+
+/* Phone: the open scripture step's note, on the chapter pill like the note
+   playback shows there. Opened, it's an editor, so it may stand taller. */
+.sb-pe-note-sheet--open {
+  max-height: 70vh;
+}
+
+/* Desktop: the scripture step's banners and note, stacked above the reader's
+   toolbar (8px above it: PE_TOOLBAR_STACK_GAP_PX in BibleReaderToolbar).
+   PlaylistEditorToolbarStack narrows it to fit the reader. */
+.sb-pe-toolbar-stack {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: min(480px, calc(100vw - 32px));
+
+  & .sb-pe-note-sheet {
+    position: static;
+    align-self: stretch;
+    max-height: 60vh;
+    border: 1px solid var(--sb-divider-color);
+    border-radius: 1rem;
+  }
+}
+
+.sb-pe-note-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--sb-font-color);
+}
+
+.sb-pe-note-remove {
+  align-self: flex-start;
+  padding: 8px 0;
+  border: none;
+  background: none;
+  color: var(--pe-danger);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-pe-mobile-bottom {
+  position: relative;
+  z-index: 3;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 9px;
+  border-top: 1px solid var(--pe-border-soft);
+  background: var(--pe-surface);
+  filter: drop-shadow(0 -1px 7px rgba(0, 0, 0, 0.1));
+}
+
+/* Clears the app's bottom chrome (the chapter pill and tabs), which stays
+   fixed below the editor. Scrolling the reader down slides the tabs off the
+   screen and the pill down into their place, so the bar follows the pill
+   down, at the toolbar's own pace. */
+/* The phone layout on a screen wider than a phone (up to 768px): there's no
+   tab bar along the bottom to keep clear of. */
+.sb-pe-workspace--tablet {
+  --sb-reader-bottom-chrome: 0px;
+  --sb-reader-bottom-tabs: 0px;
+}
+
+.sb-pe-workspace--mobile .sb-pe-mobile-bottom {
+  margin-bottom: var(--sb-reader-bottom-chrome);
+  transition: margin-bottom 0.3s ease;
+}
+
+body.sb-scroll-hide-bars .sb-pe-workspace--mobile .sb-pe-mobile-bottom {
+  margin-bottom: calc(
+    var(--sb-reader-bottom-chrome) - var(--sb-reader-bottom-tabs, 0px)
+  );
+}
+
+/* Has to fit a 320px-wide phone: the Items and Add buttons take what their
+   labels need, and Review & publish takes the rest, wrapping onto a second
+   line rather than running off the screen. */
+.sb-pe-mobile-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.sb-pe-mobile-bottom .sb-pe-publish {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding-inline: 10px;
+  text-align: center;
+  white-space: normal;
+  line-height: 15px;
+}
+
+/* The editor's sheets (the playlist's details, a step's settings) rise from
+   the bottom of the screen like the reader's verse sheet, covering the
+   chapter pill, its note and the app's tabs (the toolbar's layer is 101). */
+.sb-pe-sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 102;
+  background: rgba(0, 0, 0, 0.32);
+}
+
+.sb-pe-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 103;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 24px);
+  padding: 12px 14px calc(23px + env(safe-area-inset-bottom, 0px));
+  border-radius: 28px 28px 0 0;
+  background: var(--pe-surface);
+  box-shadow: 0 -8px 24px var(--sb-shadow-color, rgba(0, 0, 0, 0.16));
+}
+
+.sb-pe-sheet-handle {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 16px;
+}
+
+.sb-pe-sheet-handle::before {
+  content: "";
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--pe-text) 20%, var(--pe-surface));
+}
+
+/* ---------- Review & publish ---------- */
+
+/* The phone's sheet for the playlist's title, description and cover. Its
+   fields scroll under the header when the cover or keyboard makes them tall. */
+
+.sb-pe-details-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 8px;
+  margin-bottom: 16px;
+}
+
+.sb-pe-details-sheet-title {
+  margin: 0;
+  font-family: var(--pe-font-ui);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* The cover at the size the shared playlist page shows it, so the sheet
+   needn't scroll far to reach it. */
+/* Desktop: the playlist's details in a dialog, opened from its title. */
+.sb-pe-details-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: var(--pe-font-ui);
+
+  & .sb-hero-field {
+    width: min(100%, 15rem);
+  }
+}
+
+.sb-pe-details-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+
+  & .sb-pe-publish {
+    width: auto;
+    padding-inline: 28px;
+  }
+}
+
+.sb-pe-details-sheet-body .sb-hero-field {
+  width: min(100%, 15rem);
+}
+
+.sb-pe-details-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 8px 4px;
+  font-family: var(--pe-font-ui);
+}
+
+.sb-pe-review {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: var(--pe-font-ui);
+}
+
+.sb-pe-review-problems {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--pe-danger);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.sb-pe-review-problems ul {
+  margin: 6px 0 0;
+  padding-inline-start: 18px;
+}
+
+.sb-pe-review-problems button {
+  text-decoration: underline;
+  color: var(--pe-danger);
+}
+
+.sb-pe-review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.sb-pe-review-back {
+  padding: 11px 18px;
+  border: 1px solid var(--pe-border);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.sb-pe-publish:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

@@ -10,6 +10,7 @@ export * from "./BibleReadingManager";
 export * from "./BibleReadingExtensionManager";
 export * from "./BibleSelectorManager";
 export * from "./BibleToolsManager";
+export { scriptureStepVerses } from "./PlaylistManager";
 export * from "./SavesManager";
 export * from "./ChapterText";
 export * from "./DiscoverManager";

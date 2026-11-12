@@ -341,6 +341,8 @@
 }
 
 .sb-bible-reader-mobile-header-translation {
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: var(--sb-font-size-16);
   padding: 0.3125rem 0.625rem;
   border-radius: var(--sb-radius-full);
@@ -423,6 +425,7 @@
   border-radius: 50%;
 }
 
+.sb-bible-reader-mobile-header-back,
 .sb-bible-reader-mobile-header-settings {
   flex-shrink: 0;
   display: inline-flex;
@@ -440,9 +443,14 @@
   margin-inline-start: 0;
 }
 
+.sb-bible-reader-mobile-header-back:active,
 .sb-bible-reader-mobile-header-settings:active {
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
+}
+
+.sb-bible-reader-mobile-header-back .material-symbols-outlined {
+  font-size: 1.375rem;
 }
 
 .sb-bible-reader-mobile-header-open-tab {
@@ -880,11 +888,17 @@
  * (`-note-gutter`). Whichever is open, both edges reserve the same width, so
  * the text stays centred on the page with either gutter, both, or neither.
  */
+:root {
+  --sb-reader-gutter-width: 1.75rem;
+  /* How far the text sits in from each edge while a gutter is open. Global so
+     things drawn beside a chapter (a compare step's passage labels) can line
+     up with its text. */
+  --sb-reader-gutter-inset: calc(var(--sb-reader-gutter-width) + 0.25rem);
+}
+
 .sb-chapter-content.sb-chapter-content-presence,
 .sb-chapter-content.sb-chapter-content-note-gutter {
-  --sb-reader-gutter-width: 1.75rem;
-
-  padding-inline: calc(var(--sb-reader-gutter-width) + 0.25rem);
+  padding-inline: var(--sb-reader-gutter-inset);
 }
 
 /* With a marker in the gutter, the inline one (shown when verse numbers are

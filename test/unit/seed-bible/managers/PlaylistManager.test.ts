@@ -1,6 +1,5 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
 import { FRIEND_READ_TIMEOUT_MS } from "@packages/seed-bible/seed-bible/managers/friendContentFreshness";
-import { I18nProvider } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import {
   CasualOSManager,
   createModalManager,
@@ -15,7 +14,9 @@ import {
   PlaylistSchema,
   PlaylistPlayHistorySchema,
   createPlaylistManager,
+  type StartPlayingOptions,
   createPlayingState,
+  expandCrossChapterItem,
   groupVersesIntoPlaylistItems,
   formatPlaylistPlayDurationMs,
   groupPlaylistPlayHistoryByDay,
@@ -33,19 +34,18 @@ import {
   type PlaylistReadingExtensionInstance,
   type SimplePlaylist,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
-import { openPlaylistItemPreview } from "@packages/seed-bible/seed-bible/components/playlistItemPreview";
 import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
+import type { BibleSelectedVerse } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { computed, effect, signal, type Signal } from "@preact/signals";
-import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
-import { h, render, type ComponentChildren } from "preact";
-import { act } from "preact/test-utils";
-import { pressAndRelease } from "../testUtils/pressAndRelease";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
+import { forgetPlaylistDrafts } from "../testUtils/createTestSeedBibleState";
+import { readPlaylistDraft } from "@packages/seed-bible/seed-bible/managers/PlaylistDrafts";
 import type { Mock } from "vitest";
+import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 
 const START_MS = Date.UTC(2026, 5, 17, 13, 45, 0);
 const MARKER = "publicRead:playlists";
@@ -103,6 +103,15 @@ describe("Playlist schemas", () => {
     expect(() =>
       PlaylistItem.parse({ type: "link", url: "https://example.com" })
     ).not.toThrow();
+  });
+
+  it("keeps a question step's hint and answer when it's saved and loaded", () => {
+    const question = {
+      type: "html",
+      html: "<p>Where is God?</p>",
+      question: { hint: "Look back", answer: "Everywhere" },
+    };
+    expect(PlaylistItem.parse(question)).toEqual(question);
   });
 
   it("rejects an unknown item type and a malformed link", () => {
@@ -264,7 +273,7 @@ describe("playlist play history helpers", () => {
 type LoginArg = Parameters<typeof createPlaylistManager>[1];
 type TabsArg = Parameters<typeof createPlaylistManager>[2];
 type ChatsArg = Parameters<typeof createPlaylistManager>[9];
-type TabArg = Parameters<typeof createPlayingState>[1];
+type TabArg = ReaderTab | null;
 
 /** A minimal `ChatsManager` fake exposing just the context registration surface. */
 function makeChats(): {
@@ -310,7 +319,12 @@ function makeReadingState(
     // fragment's real end verse; defaults to null (unloaded), settable per
     // test via `tab.readingState.chapterData.value = {...}`.
     chapterData: signal<TranslationBookChapter | null>(null),
-    decorateVerses: vi.fn(),
+    // The playlist editor picks a scripture step's verses from these.
+    selectedVerses: signal<BibleSelectedVerse[]>([]),
+    clearSelectedVerses: vi.fn(() => {
+      self.selectedVerses.value = [];
+    }),
+    decorateVerses: vi.fn(() => "decoration-1"),
     removeDecoration: vi.fn(),
     requestUrlUpdate: vi.fn(),
     enabledExtensions: computed(() => Array.from(runtimes.value.values())),
@@ -431,13 +445,22 @@ describe("createPlaylistManager", () => {
    * or the registered extension without changing every existing call site.
    */
   let lastNavigation: ReturnType<typeof createNavigationManager>;
+  /**
+   * Every navigation a test made, torn down after it. Each one's manager
+   * follows the URL (the editor's place is kept there), so one left over from
+   * an earlier test would answer this test's URL with its own.
+   */
+  const liveNavigations: ReturnType<typeof createNavigationManager>[] = [];
   let lastReadingExtensionManager: ReturnType<
     typeof createBibleReadingExtensionManager
   >;
   /** The fake `ChatsManager`'s `addContext`/`removeContext` spies from the most recent `makeManager()` call. */
   /** The `ModalManager` from the most recent `makeManager()` call. */
   let lastModals: ReturnType<typeof createModalManager>;
-  let lastI18n: ReturnType<typeof createI18nManager>;
+  /** The manager the most recent `makeManager()` call made. */
+  let lastManager: ReturnType<typeof createPlaylistManager>;
+  /** The phone/desktop switch from the most recent `makeManager()` call. */
+  let lastIsMobile: ReturnType<typeof signal<boolean>>;
   let lastChatsAddContext: Mock;
   let lastChatsRemoveContext: Mock;
 
@@ -445,7 +468,8 @@ describe("createPlaylistManager", () => {
     id: string | null = "user-1",
     tabsManager?: TabsArg,
     initialHref?: string,
-    initialPlaylistPageSeed?: PlaylistPageSeed
+    initialPlaylistPageSeed?: PlaylistPageSeed,
+    pickChapter?: (onPick: (bookId: string, chapter: number) => void) => void
   ) => {
     userId = signal<string | null>(id);
     const os = CasualOSManager();
@@ -475,11 +499,12 @@ describe("createPlaylistManager", () => {
     const navigation = createNavigationManager(
       initialHref ? { initialHref } : undefined
     );
+    liveNavigations.push(navigation);
     const isMobile = signal(false);
+    lastIsMobile = isMobile;
     const modals = createModalManager();
     lastModals = modals;
     const i18n = createI18nManager(navigation, ["en"]);
-    lastI18n = i18n;
     // Reuse the registry the fake reading states share, so the extension the
     // manager registers is the one those tabs can enable.
     const readingExtensionManager = sharedReadingExtensionManager!;
@@ -489,7 +514,7 @@ describe("createPlaylistManager", () => {
     const discover = createDiscoverManager();
     lastChatsAddContext = addContext;
     lastChatsRemoveContext = removeContext;
-    return createPlaylistManager(
+    lastManager = createPlaylistManager(
       os,
       login,
       tabs,
@@ -500,8 +525,10 @@ describe("createPlaylistManager", () => {
       readingExtensionManager,
       discover,
       chats,
-      initialPlaylistPageSeed
+      initialPlaylistPageSeed,
+      { pickChapter }
     );
+    return lastManager;
   };
 
   beforeEach(() => {
@@ -533,9 +560,15 @@ describe("createPlaylistManager", () => {
   afterEach(() => {
     warnSpy.mockRestore();
     errorSpy.mockRestore();
-    // Clear any query params written by URL sync so they don't leak into the
-    // next test's initial navigation state.
-    window.history.replaceState(null, "", window.location.pathname);
+    // Newest first: each wraps the history methods of the one before it.
+    for (const navigation of liveNavigations.splice(0).reverse()) {
+      navigation.dispose();
+    }
+    // Clear the path and query params written by URL sync (a playlist's page
+    // path, playback params) so they don't leak into the next test's initial
+    // navigation state.
+    window.history.replaceState(null, "", "/");
+    forgetPlaylistDrafts();
   });
 
   it("syncs the user's playlists on creation", async () => {
@@ -554,6 +587,65 @@ describe("createPlaylistManager", () => {
       undefined
     );
     expect(manager.userPlaylists.value).toEqual([playlist]);
+  });
+
+  describe("a playlist record that doesn't match the schema", () => {
+    // Missing its items, so it can't be read as a playlist.
+    const invalid = { id: "playlist_bad", recordName: "user-1", title: "Bad" };
+
+    it("is skipped, and the user's other playlists still load", async () => {
+      const first = makePlaylist({ id: "playlist_a" });
+      const second = makePlaylist({ id: "playlist_b" });
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [
+          { address: "playlist_a", data: first },
+          { address: "playlist_bad", data: invalid },
+          { address: "playlist_b", data: second },
+        ],
+      });
+
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.userPlaylists.value).toEqual([first, second]);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("user-1/playlist_bad"),
+        expect.anything()
+      );
+    });
+
+    it("is skipped, and a friend's other playlists still load", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const friendPlaylist = makePlaylist({
+        id: "playlist_friend",
+        recordName: "friend-user",
+      });
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [
+          { address: "playlist_bad", data: invalid },
+          { address: "playlist_friend", data: friendPlaylist },
+        ],
+      });
+
+      const view = manager.getUserPlaylists("friend-user");
+
+      await vi.waitFor(() => expect(view.value).toEqual([friendPlaylist]));
+    });
+
+    it("leaves an empty list when none of them match", async () => {
+      listDataByMarkerMock.mockResolvedValue({
+        success: true,
+        items: [{ address: "playlist_bad", data: invalid }],
+      });
+
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.userPlaylists.value).toEqual([]);
+    });
   });
 
   describe("clearHeroImage", () => {
@@ -1174,7 +1266,12 @@ describe("createPlaylistManager", () => {
     expect(manager.userPlaylists.value).toHaveLength(1);
     expect(manager.userPlaylists.value[0]!.id).toBe(draftId);
     expect(manager.editingPlaylist.value).toBeNull();
-    expect(manager.view.value).toBe("discover");
+    // On to the new playlist's page, with nothing over it.
+    expect(manager.view.value).toBeNull();
+    expect(window.location.pathname).toBe(
+      `/en/playlist/user-1.${draftId}/favorites`
+    );
+    expect(manager.playlistPage.value?.item.title).toBe("Favorites");
   });
 
   it("saveEditingPlaylist updates an existing playlist in place", async () => {
@@ -1410,6 +1507,348 @@ describe("createPlaylistManager", () => {
     manager.reorderEditingPlaylistItem(0, 1);
 
     expect(manager.editingPlaylist.value).toBeNull();
+  });
+
+  describe("the playlist editor's steps", () => {
+    const steps: Playlist["items"] = [
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 1, verse: 2 } },
+      { type: "html", html: "<p>Between</p>" },
+      { type: "link", url: "https://example.com/talk" },
+    ];
+
+    const pickVerse = (number: number): BibleSelectedVerse => ({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verse: { type: "verse", number, content: [] },
+      translationId: "BSB",
+    });
+
+    const openEditor = async (
+      pickChapter?: (onPick: (bookId: string, chapter: number) => void) => void
+    ) => {
+      const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+      const manager = makeManager(
+        "user-1",
+        makeTabs(tab),
+        undefined,
+        undefined,
+        pickChapter
+      );
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: steps }));
+      await flush();
+      return { manager, tab };
+    };
+
+    it("opens on its list of steps, with no step open", async () => {
+      const { manager } = await openEditor();
+      expect(manager.editorStepIndex.value).toBe(-1);
+
+      manager.selectEditorStep(1);
+      manager.editPlaylist(makePlaylist({ items: [] }));
+      expect(manager.editorStepIndex.value).toBe(-1);
+    });
+
+    it("opens the open scripture step's chapter in the reader", async () => {
+      const { manager } = await openEditor();
+      manager.selectEditorStep(0);
+      await flush();
+
+      expect(selectTranslationAndChapterMock).toHaveBeenLastCalledWith(
+        "BSB",
+        "GEN",
+        1,
+        { scrollToVerse: 2, replace: true }
+      );
+    });
+
+    it("marks the open step's verses with the reader's usual diminish, not a coloured highlight", async () => {
+      const { manager, tab } = await openEditor();
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      decorateVerses.mockClear();
+
+      manager.selectEditorStep(0);
+      await flush();
+
+      expect(decorateVerses).toHaveBeenCalledTimes(1);
+      const [book, chapter, verses, decoration] = decorateVerses.mock.calls[0]!;
+      expect([book, chapter, verses]).toEqual(["GEN", 1, [2]]);
+      expect(decoration.className.split(" ")).toContain(
+        "sb-verse-decoration-diminish"
+      );
+      expect(decoration.containerClassName.split(" ")).toContain(
+        "sb-chapter-decoration-diminish"
+      );
+      expect(decoration.highlight).toBeUndefined();
+    });
+
+    it("keeps the same step open when an earlier one is removed or moved", async () => {
+      const { manager } = await openEditor();
+      manager.selectEditorStep(2);
+
+      manager.removeEditingPlaylistItem(0);
+      expect(manager.editorStepIndex.value).toBe(1);
+      expect(manager.editingPlaylist.value!.items[1]!.type).toBe("link");
+
+      manager.reorderEditingPlaylistItem(1, 0);
+      expect(manager.editorStepIndex.value).toBe(0);
+      expect(manager.editingPlaylist.value!.items[0]!.type).toBe("link");
+    });
+
+    it("goes back to the list when the open step is removed", async () => {
+      const { manager } = await openEditor();
+      manager.selectEditorStep(1);
+
+      manager.removeEditingPlaylistItem(1);
+
+      expect(manager.editorStepIndex.value).toBe(-1);
+      expect(manager.editingPlaylist.value!.items.map((i) => i.type)).toEqual([
+        "bible-verse",
+        "link",
+      ]);
+    });
+
+    it("duplicates a step right after itself and opens the copy", async () => {
+      const { manager } = await openEditor();
+
+      manager.duplicateEditingPlaylistItem(1);
+
+      const items = manager.editingPlaylist.value!.items;
+      expect(items).toHaveLength(4);
+      expect(items[2]).toEqual(items[1]);
+      expect(items[2]).not.toBe(items[1]);
+      expect(manager.editorStepIndex.value).toBe(2);
+    });
+
+    it("adds every kind of step as an item type the saved format already has", async () => {
+      const { manager } = await openEditor();
+
+      for (const kind of [
+        "scripture",
+        "note",
+        "video",
+        "question",
+        "compare",
+      ] as const) {
+        manager.addEditorStep(kind, 0);
+        expect(manager.editorStepIndex.value).toBe(1);
+      }
+
+      const added = manager.editingPlaylist.value!.items.slice(1, 6);
+      // Newest first, since each went in right after step 1.
+      expect(added.map((item) => item.type)).toEqual([
+        "bible-verse",
+        "html",
+        "link",
+        "html",
+        "bible-verse",
+      ]);
+      expect(added[0]).toMatchObject({ compare: { ref: { bookId: "GEN" } } });
+      expect(added[1]).toMatchObject({ question: {} });
+    });
+
+    it("asks for a chapter before adding a scripture step, then adds that whole chapter", async () => {
+      let onPick: ((bookId: string, chapter: number) => void) | undefined;
+      const { manager } = await openEditor((pick) => {
+        onPick = pick;
+      });
+      manager.editorAddMenu.value = { afterIndex: 2 };
+
+      manager.addEditorStep("scripture", 2);
+
+      // Nothing is added until a chapter is picked.
+      expect(onPick).toBeDefined();
+      expect(manager.editingPlaylist.value!.items).toHaveLength(steps.length);
+      expect(manager.editorAddMenu.value).toBeNull();
+
+      onPick!("PSA", 104);
+
+      expect(manager.editingPlaylist.value!.items).toHaveLength(
+        steps.length + 1
+      );
+      expect(manager.editingPlaylist.value!.items[3]).toEqual({
+        type: "bible-verse",
+        ref: { bookId: "PSA", chapter: 104 },
+      });
+      expect(manager.editorStepIndex.value).toBe(3);
+      expect(manager.editorVersePickIndex.value).toBeNull();
+      await flush();
+      expect(selectTranslationAndChapterMock).toHaveBeenLastCalledWith(
+        "BSB",
+        "PSA",
+        104,
+        { replace: true }
+      );
+    });
+
+    it("adds nothing when the chapter is picked after the editor has closed", async () => {
+      let onPick: ((bookId: string, chapter: number) => void) | undefined;
+      const { manager } = await openEditor((pick) => {
+        onPick = pick;
+      });
+
+      manager.addEditorStep("scripture", 0);
+      manager.cancelEditingPlaylist();
+      onPick!("PSA", 104);
+
+      expect(manager.editingPlaylist.value).toBeNull();
+    });
+
+    it("starts a new scripture step on the chapter being read when there's no chapter picker", async () => {
+      const { manager, tab } = await openEditor();
+      tab.readingState.chapterData.value = {
+        book: { id: "PSA" },
+        chapter: { number: 104 },
+      } as unknown as TranslationBookChapter;
+
+      manager.addEditorStep("scripture", 2);
+
+      expect(manager.editingPlaylist.value!.items[3]).toEqual({
+        type: "bible-verse",
+        ref: { bookId: "PSA", chapter: 104 },
+      });
+      expect(manager.editorVersePickIndex.value).toBeNull();
+    });
+
+    describe("moving the reader off a scripture step's chapter", () => {
+      // Like the real reader, navigating moves its position.
+      const openOnStep = async () => {
+        const opened = await openEditor();
+        const { readingState } = opened.tab;
+        selectTranslationAndChapterMock.mockImplementation(
+          async (_translation: string, bookId: string, chapter: number) => {
+            readingState.bookId.value = bookId;
+            readingState.chapterNumber.value = chapter;
+          }
+        );
+        opened.manager.selectEditorStep(0);
+        await flush();
+        return opened;
+      };
+
+      it("offers the chapter moved to, and Apply points the step at that whole chapter", async () => {
+        const { manager, tab } = await openOnStep();
+        expect(manager.editorChapterChange.value).toBeNull();
+
+        tab.readingState.chapterNumber.value = 2;
+
+        expect(manager.editorChapterChange.value).toEqual({
+          bookId: "GEN",
+          chapter: 2,
+        });
+
+        manager.applyEditorChapterChange();
+        await flush();
+
+        expect(manager.editingPlaylist.value!.items[0]).toEqual({
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 2 },
+        });
+        expect(manager.editorChapterChange.value).toBeNull();
+      });
+
+      it("offers nothing while the editor itself is taking the reader to the step", async () => {
+        const { manager, tab } = await openEditor();
+        tab.readingState.bookId.value = "EXO";
+        tab.readingState.chapterNumber.value = 5;
+        let arrive!: () => void;
+        selectTranslationAndChapterMock.mockImplementation(
+          (_translation: string, bookId: string, chapter: number) =>
+            new Promise<void>((resolve) => {
+              arrive = () => {
+                tab.readingState.bookId.value = bookId;
+                tab.readingState.chapterNumber.value = chapter;
+                resolve();
+              };
+            })
+        );
+
+        manager.selectEditorStep(0);
+        await flush();
+        // Still on Exodus 5 while Genesis 1 loads: not a move by the reader.
+        expect(manager.editorChapterChange.value).toBeNull();
+
+        arrive();
+        await flush();
+        expect(manager.editorChapterChange.value).toBeNull();
+      });
+
+      it("offers nothing while verses are being picked", async () => {
+        const { manager, tab } = await openOnStep();
+        tab.readingState.chapterNumber.value = 2;
+
+        manager.editorVersePickIndex.value = 0;
+        expect(manager.editorChapterChange.value).toBeNull();
+      });
+    });
+
+    it("gives the open scripture step the verses picked in the reader on Apply", async () => {
+      const { manager, tab } = await openEditor();
+      manager.selectEditorStep(0);
+
+      tab.readingState.selectedVerses.value = [pickVerse(5), pickVerse(3)];
+      expect(manager.editorVersePickIndex.value).toBe(0);
+      expect(manager.editorVersePickRef.value).toEqual({
+        bookId: "GEN",
+        chapter: 1,
+        verse: 3,
+        endVerse: 5,
+      });
+
+      manager.applyEditorVersePick();
+
+      expect(manager.editingPlaylist.value!.items[0]).toEqual({
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 1, verse: 3, endVerse: 5 },
+      });
+      expect(manager.editorVersePickIndex.value).toBeNull();
+      expect(tab.readingState.selectedVerses.value).toEqual([]);
+    });
+
+    it("ends the verse pick, leaving the step's passage alone, once every verse is deselected", async () => {
+      const { manager, tab } = await openEditor();
+      manager.selectEditorStep(0);
+
+      tab.readingState.selectedVerses.value = [pickVerse(7)];
+      expect(manager.editorVersePickIndex.value).toBe(0);
+
+      tab.readingState.selectedVerses.value = [];
+
+      expect(manager.editorVersePickIndex.value).toBeNull();
+      expect(manager.editorVersePickRef.value).toBeNull();
+      expect(manager.editingPlaylist.value!.items[0]).toEqual(steps[0]);
+    });
+
+    it("refuses to save a step that would make the playlist fail to load", async () => {
+      const { manager } = await openEditor();
+      manager.addEditorStep("video", 2);
+
+      expect(manager.editingPlaylistInvalidSteps()).toEqual([3]);
+      await expect(manager.saveEditingPlaylist()).rejects.toThrow(/Step 4/);
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(manager.editingPlaylist.value).not.toBeNull();
+    });
+
+    it("saves step settings alongside the steps", async () => {
+      const { manager } = await openEditor();
+      manager.updateEditingPlaylistItem(1, {
+        type: "html",
+        html: "<p>Between</p>",
+        minutes: 3,
+        pauseForGroup: true,
+      });
+
+      await manager.saveEditingPlaylist();
+
+      const saved = recordDataMock.mock.calls.at(-1)![2] as Playlist;
+      expect(saved.items[1]).toEqual({
+        type: "html",
+        html: "<p>Between</p>",
+        minutes: 3,
+        pauseForGroup: true,
+      });
+      expect(PlaylistSchema.parse(saved).items[1]).toEqual(saved.items[1]);
+    });
   });
 
   it("cancelEditingPlaylist discards the draft and returns to discover", async () => {
@@ -2619,7 +3058,7 @@ describe("createPlaylistManager", () => {
       await flush();
     });
 
-    it("replayFromHistory starts at step 0 and resets the same playlist row", async () => {
+    it("replaying from history and pressing Start Reading starts at step 0 and resets the same playlist row", async () => {
       const prior = makeHistory({
         id: "hist-done",
         currentStep: 2,
@@ -2643,6 +3082,8 @@ describe("createPlaylistManager", () => {
       await flush();
 
       await manager.replayFromHistory(prior);
+      await flush();
+      manager.startPlaylistPage();
       await flush();
 
       expect(manager.playing.value?.currentIndex.value).toBe(0);
@@ -2871,6 +3312,89 @@ describe("createPlaylistManager", () => {
       }) as unknown as PlaylistReadingExtensionInstance;
     };
 
+    it("finds a joined session's tab once it opens, though playback started in it first", async () => {
+      // A session's tab is built around its reading state, and the session's
+      // playback starts in that reading state before the tab is in `tabs`.
+      const tabsList = signal<NonNullable<TabArg>[]>([]);
+      makeManager("user-1", {
+        tabs: tabsList,
+        selectedTabId: signal(null),
+        leaveStaticPage: vi.fn(),
+      } as unknown as TabsArg);
+      await flush();
+      const tab = makeTab("session-tab", selectTranslationAndChapterMock);
+      const instance = activateExtension(
+        {
+          playlists: [makePlaylist()],
+          queue: [
+            { type: "html", html: "<p>Where?</p>", question: {} },
+            { type: "bible-verse", ref: { bookId: "JHN", chapter: 3 } },
+          ],
+          step: 0,
+        },
+        true,
+        tab.readingState
+      );
+      const playing = instance.playingState;
+      expect(playing.tab).toBeNull();
+
+      tabsList.value = [tab];
+
+      expect(playing.tab).toBe(tab);
+      await playing.next();
+      expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+        "BSB",
+        "JHN",
+        3,
+        undefined
+      );
+    });
+
+    it("opens a compare step's passages once a joined session's tab opens", async () => {
+      // As after a reload in a session: playback lands on a compare step
+      // before the session's tab is among the open tabs.
+      const tabsList = signal<NonNullable<TabArg>[]>([]);
+      const second = makeReadingState(vi.fn());
+      makeManager("user-1", {
+        tabs: tabsList,
+        selectedTabId: signal(null),
+        leaveStaticPage: vi.fn(),
+        createDetachedReadingState: vi.fn(() => second),
+        attachReadingState: vi.fn(() => () => {}),
+      } as unknown as TabsArg);
+      await flush();
+      const tab = makeTab("session-tab", selectTranslationAndChapterMock);
+      const instance = activateExtension(
+        {
+          playlists: [makePlaylist()],
+          queue: [
+            { type: "html", html: "<p>Intro</p>" },
+            {
+              type: "bible-verse",
+              ref: { bookId: "EXO", chapter: 3, verse: 14 },
+              compare: { ref: { bookId: "JHN", chapter: 10, verse: 30 } },
+            },
+          ],
+          step: 1,
+        },
+        true,
+        tab.readingState
+      );
+      const playing = instance.playingState;
+      await flush();
+      expect(playing.compareReadingState.value).toBeNull();
+
+      tabsList.value = [tab];
+      await flush();
+
+      expect(playing.compareReadingState.value).toBe(second);
+      expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+        "BSB",
+        "EXO",
+        3
+      );
+    });
+
     it("navigateNext/navigatePrevious default when nothing is playing", async () => {
       makeManager("user-1");
       await flush();
@@ -2888,7 +3412,7 @@ describe("createPlaylistManager", () => {
     /**
      * A queue no record backs, like a reading plan's day. It has no link to
      * share, so reaching its end hands straight back to chapter navigation
-     * without a finished modal.
+     * without a finished page.
      */
     const makeAdHocPlaylist = (
       overrides: Partial<Playlist> = {}
@@ -2897,8 +3421,7 @@ describe("createPlaylistManager", () => {
       return rest;
     };
 
-    const isFinishedModalOpen = () =>
-      lastModals.modals.value.some((m) => m.id === "playlist-finished");
+    const isFinishedPageUp = () => lastManager.finishedPlaylist.value !== null;
 
     it("navigateNext/navigatePrevious advance the queue and hand back over at the bounds", async () => {
       makeManager("user-1");
@@ -2933,10 +3456,10 @@ describe("createPlaylistManager", () => {
         type: "default",
       });
       expect(instance.playingState.currentIndex.value).toBe(1);
-      expect(isFinishedModalOpen()).toBe(false);
+      expect(isFinishedPageUp()).toBe(false);
     });
 
-    it("navigateNext past a saved playlist's last item shows the finished modal once, then hands back to chapter navigation", async () => {
+    it("navigateNext past a saved playlist's last item shows the finished page once, then hands back to chapter navigation", async () => {
       makeManager("user-1");
       await flush();
       const playlist = makePlaylist({
@@ -2955,27 +3478,27 @@ describe("createPlaylistManager", () => {
       expect(await instance.navigateNext!({} as any)).toEqual({
         type: "prevent",
       });
-      expect(isFinishedModalOpen()).toBe(true);
+      expect(isFinishedPageUp()).toBe(true);
       expect(instance.playingState.currentIndex.value).toBe(1);
 
-      // Pressing on doesn't trap the reader on the modal.
-      lastModals.closeModal("playlist-finished");
+      // Pressing on doesn't trap the reader on the page.
+      lastManager.dismissFinishedPlaylist();
       expect(await instance.navigateNext!({} as any)).toEqual({
         type: "default",
       });
-      expect(isFinishedModalOpen()).toBe(false);
+      expect(isFinishedPageUp()).toBe(false);
 
-      // Stepping off the last item and back re-arms the modal.
+      // Stepping off the last item and back re-arms the page.
       await instance.navigatePrevious!({} as any);
       await instance.navigateNext!({} as any);
-      expect(isFinishedModalOpen()).toBe(false);
+      expect(isFinishedPageUp()).toBe(false);
       expect(await instance.navigateNext!({} as any)).toEqual({
         type: "prevent",
       });
-      expect(isFinishedModalOpen()).toBe(true);
+      expect(isFinishedPageUp()).toBe(true);
     });
 
-    it("does not preview a chapter for the swipe that shows the finished modal", async () => {
+    it("does not preview a chapter for the swipe that shows the finished page", async () => {
       makeManager("user-1");
       await flush();
       const playlist = makePlaylist({ items: [{ type: "html", html: "a" }] });
@@ -2998,7 +3521,7 @@ describe("createPlaylistManager", () => {
       ).toBeUndefined();
     });
 
-    it("turns next off on the Bible's last chapter once the finished modal has been shown", async () => {
+    it("turns next off on the Bible's last chapter once the finished page has been shown", async () => {
       makeManager("user-1");
       await flush();
       const readingState = makeReadingState(vi.fn());
@@ -3016,7 +3539,7 @@ describe("createPlaylistManager", () => {
 
       expect(instance.hasNext!.value).toBe(true);
       await instance.navigateNext!({} as any);
-      expect(isFinishedModalOpen()).toBe(true);
+      expect(isFinishedPageUp()).toBe(true);
       expect(instance.hasNext!.value).toBe(false);
     });
 
@@ -3463,613 +3986,6 @@ describe("createPlaylistManager", () => {
     expect(manager.playing.value).toBeNull();
   });
 
-  describe("playlist item modal", () => {
-    const SHARED_PAGE_HREF =
-      "http://localhost:3000/en/playlist/user-1.playlist-1/my-playlist";
-
-    const openingItems = (): Playlist["items"] => [
-      { type: "link", url: "https://example.com/intro", title: "Intro" },
-      { type: "html", title: "Note", html: "<p>A note</p>" },
-      {
-        type: "bible-verse",
-        ref: { bookId: "JHN", chapter: 3, verse: 16 },
-      },
-    ];
-
-    const renderItemModal = () => {
-      const container = document.createElement("div");
-      document.body.appendChild(container);
-      const draw = () => {
-        act(() => {
-          render(
-            h(I18nProvider, {
-              i18n: lastI18n,
-              children: h(ModalHost, { manager: lastModals }),
-            }),
-            container
-          );
-        });
-      };
-      draw();
-      const click = (selector: string) => {
-        const target = container.querySelector(selector) as HTMLElement | null;
-        expect(target).not.toBeNull();
-        act(() => target!.click());
-        draw();
-      };
-      return {
-        container,
-        close: () => click(".sb-footnote-modal-close"),
-        dismissBackdrop: () => {
-          const target = container.querySelector(
-            ".sb-footnote-modal-overlay"
-          ) as HTMLElement | null;
-          expect(target).not.toBeNull();
-          pressAndRelease(target!, target!);
-          draw();
-        },
-        refresh: draw,
-        unmount: () => {
-          render(null, container);
-          container.remove();
-        },
-      };
-    };
-
-    const startSharedPlaylist = (items: Playlist["items"]) => {
-      const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
-      const manager = makeManager(null, tabs, SHARED_PAGE_HREF, {
-        locator: "user-1.playlist-1",
-        item: makePlaylist({ items }),
-        authorName: null,
-      });
-      manager.startPlaylistPage();
-      return manager;
-    };
-
-    it("keeps advancing through opening text and link items until a verse", async () => {
-      const manager = startSharedPlaylist(openingItems());
-      const modal = renderItemModal();
-      try {
-        expect(manager.playing.value?.currentIndex.value).toBe(0);
-        expect(modal.container.textContent).toContain("Intro");
-
-        modal.dismissBackdrop();
-
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-        expect(modal.container.textContent).toContain("Note");
-        expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
-
-        modal.close();
-        await flush();
-
-        expect(manager.playing.value?.currentIndex.value).toBe(2);
-        expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
-          "BSB",
-          "JHN",
-          3,
-          { scrollToVerse: 16 }
-        );
-        expect(
-          lastModals.modals.value.some((m) => m.id === "playlist-item-content")
-        ).toBe(false);
-        expect(
-          lastModals.modals.value.some((m) => m.id === "playlist-finished")
-        ).toBe(false);
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    it("advances when a playlist started in the app closes its first text or link item", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      manager.startPlaying(makePlaylist({ items: openingItems() }));
-
-      const modal = renderItemModal();
-      try {
-        expect(manager.playing.value?.currentIndex.value).toBe(0);
-        expect(modal.container.textContent).toContain("Intro");
-        modal.close();
-
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-        expect(modal.container.textContent).toContain("Note");
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    const itemsBetweenVerses = (): Playlist["items"] => [
-      { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
-      { type: "html", title: "Note", html: "<p>A note</p>" },
-      { type: "html", title: "After", html: "<p>After</p>" },
-    ];
-
-    const closeMovesForward = async (
-      manager: ReturnType<typeof makeManager>
-    ) => {
-      await manager.playing.value!.next();
-      const modal = renderItemModal();
-      try {
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-        expect(modal.container.textContent).toContain("Note");
-        modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(2);
-        expect(modal.container.textContent).toContain("After");
-      } finally {
-        modal.unmount();
-      }
-    };
-
-    it("advances when a shared playlist's text item was reached by going forward", async () => {
-      await closeMovesForward(startSharedPlaylist(itemsBetweenVerses()));
-    });
-
-    it("advances when an in-app playlist's text item was reached by going forward", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      manager.startPlaying(makePlaylist({ items: itemsBetweenVerses() }));
-      await closeMovesForward(manager);
-    });
-
-    const itemsAroundALink = (): Playlist["items"] => [
-      { type: "html", title: "Before", html: "<p>Before</p>" },
-      { type: "link", url: "https://example.com/mid", title: "Middle" },
-      { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
-    ];
-
-    const closeMovesBackward = async (
-      manager: ReturnType<typeof makeManager>
-    ) => {
-      const modal = renderItemModal();
-      try {
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-        expect(modal.container.textContent).toContain("Middle");
-        modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(0);
-        expect(modal.container.textContent).toContain("Before");
-      } finally {
-        modal.unmount();
-      }
-    };
-
-    it("goes back when a shared playlist's text item was reached by going backward", async () => {
-      const manager = startSharedPlaylist(itemsAroundALink());
-      await manager.playing.value!.jumpTo(2);
-      await manager.playing.value!.previous();
-      await closeMovesBackward(manager);
-    });
-
-    it("goes back when an in-app playlist's text item was reached by going backward", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      manager.startPlaying(makePlaylist({ items: itemsAroundALink() }), 2);
-      await manager.playing.value!.previous();
-      await closeMovesBackward(manager);
-    });
-
-    const closeStaysOnNote = async (
-      manager: ReturnType<typeof makeManager>
-    ) => {
-      const modal = renderItemModal();
-      try {
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-        expect(modal.container.textContent).toContain("Note");
-        modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-        expect(
-          lastModals.modals.value.some((m) => m.id === "playlist-item-content")
-        ).toBe(false);
-      } finally {
-        modal.unmount();
-      }
-    };
-
-    it("stays when a shared playlist's text item was opened by jumping to it", async () => {
-      const manager = startSharedPlaylist(openingItems());
-      await manager.playing.value!.jumpTo(1);
-      await closeStaysOnNote(manager);
-    });
-
-    it("stays when an in-app playlist is started on a text item", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      manager.startPlaying(makePlaylist({ items: openingItems() }), 1);
-      await closeStaysOnNote(manager);
-    });
-
-    it("keeps stepping through modal items in the direction already underway", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      manager.startPlaying(
-        makePlaylist({
-          items: [
-            { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
-            { type: "html", title: "One", html: "<p>One</p>" },
-            { type: "html", title: "Two", html: "<p>Two</p>" },
-            {
-              type: "bible-verse",
-              ref: { bookId: "JHN", chapter: 3, verse: 16 },
-            },
-          ],
-        })
-      );
-      await manager.playing.value!.next();
-
-      const modal = renderItemModal();
-      try {
-        modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(2);
-        expect(modal.container.textContent).toContain("Two");
-
-        modal.close();
-        await flush();
-        expect(manager.playing.value?.currentIndex.value).toBe(3);
-        expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
-          "BSB",
-          "JHN",
-          3,
-          { scrollToVerse: 16 }
-        );
-        expect(
-          lastModals.modals.value.some((m) => m.id === "playlist-item-content")
-        ).toBe(false);
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    it("does not finish the playlist when the last item, reached by going forward, is closed", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      manager.startPlaying(
-        makePlaylist({
-          items: [
-            { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
-            { type: "html", title: "End", html: "<p>End</p>" },
-          ],
-        })
-      );
-      await manager.playing.value!.next();
-
-      const modal = renderItemModal();
-      try {
-        modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-        expect(manager.playing.value).not.toBeNull();
-        expect(
-          lastModals.modals.value.some((m) => m.id === "playlist-finished")
-        ).toBe(false);
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    it("advances when a shared link opens on a text or link first item", async () => {
-      const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
-      const manager = makeManager(
-        null,
-        tabs,
-        "http://localhost:3000/en/playlist/user-1.playlist-1/my-playlist/1",
-        {
-          locator: "user-1.playlist-1",
-          item: makePlaylist({ items: openingItems() }),
-          authorName: null,
-        }
-      );
-      await manager.initialPlaybackPromise;
-
-      const modal = renderItemModal();
-      try {
-        expect(manager.playing.value?.currentIndex.value).toBe(0);
-        expect(modal.container.textContent).toContain("Intro");
-        modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-        expect(modal.container.textContent).toContain("Note");
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    it("does not advance when a shared link opens past the first item", async () => {
-      const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
-      const manager = makeManager(
-        null,
-        tabs,
-        "http://localhost:3000/en/playlist/user-1.playlist-1/my-playlist/2",
-        {
-          locator: "user-1.playlist-1",
-          item: makePlaylist({ items: openingItems() }),
-          authorName: null,
-        }
-      );
-      await manager.initialPlaybackPromise;
-
-      const modal = renderItemModal();
-      try {
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-        expect(modal.container.textContent).toContain("Note");
-        modal.dismissBackdrop();
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    it("advances when playback has left and returned to the first item", async () => {
-      const manager = startSharedPlaylist(openingItems());
-      await manager.playing.value!.next();
-      await manager.playing.value!.previous();
-
-      const modal = renderItemModal();
-      try {
-        expect(manager.playing.value?.currentIndex.value).toBe(0);
-        expect(modal.container.textContent).toContain("Intro");
-        modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-        expect(modal.container.textContent).toContain("Note");
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    it("does not finish a shared playlist when closing the last text or link item", () => {
-      const manager = startSharedPlaylist([
-        { type: "html", title: "Intro", html: "<p>Intro</p>" },
-        { type: "link", url: "https://example.com/end", title: "End" },
-      ]);
-      const modal = renderItemModal();
-      try {
-        modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-        expect(modal.container.textContent).toContain("End");
-
-        modal.close();
-
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-        expect(manager.playing.value).not.toBeNull();
-        expect(
-          lastModals.modals.value.some((m) => m.id === "playlist-finished")
-        ).toBe(false);
-        expect(
-          lastModals.modals.value.some((m) => m.id === "playlist-item-content")
-        ).toBe(false);
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    it("stays when a second playlist starts on the same step the first one reached by going forward", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      const verse = {
-        type: "bible-verse" as const,
-        ref: { bookId: "PSA", chapter: 23 },
-      };
-      manager.startPlaying(
-        makePlaylist({ id: "a", items: [verse, verse, verse] })
-      );
-      await manager.playing.value!.next();
-      await manager.playing.value!.next();
-
-      manager.startPlaying(
-        makePlaylist({
-          id: "b",
-          items: [
-            verse,
-            verse,
-            { type: "html", title: "Note", html: "<p>Note</p>" },
-            verse,
-          ],
-        }),
-        2
-      );
-
-      const modal = renderItemModal();
-      try {
-        expect(manager.playing.value?.currentIndex.value).toBe(2);
-        expect(modal.container.textContent).toContain("Note");
-        modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(2);
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    it("stays when a synced queue replaces the item at the current step", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      const verse = {
-        type: "bible-verse" as const,
-        ref: { bookId: "PSA", chapter: 23 },
-      };
-      manager.startPlaying(
-        makePlaylist({
-          items: [
-            verse,
-            { type: "html", title: "Note", html: "<p>Note</p>" },
-            verse,
-          ],
-        })
-      );
-      await manager.playing.value!.next();
-
-      const playing = manager.playing.value!;
-      await playing.setState({
-        playlists: playing.playlists.peek(),
-        queue: [
-          verse,
-          { type: "html", title: "Replaced", html: "<p>Replaced</p>" },
-          verse,
-        ],
-        step: playing.currentIndex.peek(),
-      });
-
-      const modal = renderItemModal();
-      try {
-        expect(playing.currentIndex.value).toBe(1);
-        expect(modal.container.textContent).toContain("Replaced");
-        modal.close();
-        expect(playing.currentIndex.value).toBe(1);
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    it("still moves forward after an item is added to the queue", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      const verse = {
-        type: "bible-verse" as const,
-        ref: { bookId: "PSA", chapter: 23 },
-      };
-      manager.startPlaying(
-        makePlaylist({
-          items: [
-            verse,
-            { type: "html", title: "Note", html: "<p>Note</p>" },
-            verse,
-          ],
-        })
-      );
-      await manager.playing.value!.next();
-      manager.playing.value!.addToQueue({
-        type: "html",
-        title: "Extra",
-        html: "<p>Extra</p>",
-      });
-
-      const modal = renderItemModal();
-      try {
-        expect(modal.container.textContent).toContain("Note");
-        modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(2);
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    it("reopens the current item after it was closed, and closing it again stays put", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      manager.startPlaying(makePlaylist({ items: openingItems() }), 1);
-
-      const modal = renderItemModal();
-      try {
-        expect(modal.container.textContent).toContain("Note");
-        modal.close();
-        expect(
-          lastModals.modals.value.some((m) => m.id === "playlist-item-content")
-        ).toBe(false);
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-
-        manager.showCurrentItem();
-        modal.refresh();
-
-        expect(modal.container.textContent).toContain("Note");
-        modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(1);
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    it("still moves forward when an item reached by Next is reopened and closed", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      manager.startPlaying(makePlaylist({ items: itemsBetweenVerses() }));
-      await manager.playing.value!.next();
-
-      const modal = renderItemModal();
-      try {
-        manager.showCurrentItem();
-        modal.refresh();
-        expect(modal.container.textContent).toContain("Note");
-        modal.close();
-        expect(manager.playing.value?.currentIndex.value).toBe(2);
-        expect(modal.container.textContent).toContain("After");
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    it("closes the open item without moving on when playback stops", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      manager.startPlaying(
-        makePlaylist({
-          items: [
-            { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
-            { type: "html", title: "Note", html: "<p>Note</p>" },
-            {
-              type: "bible-verse",
-              ref: { bookId: "JHN", chapter: 3, verse: 16 },
-            },
-          ],
-        })
-      );
-      await manager.playing.value!.next();
-      selectTranslationAndChapterMock.mockClear();
-
-      const modal = renderItemModal();
-      try {
-        expect(modal.container.textContent).toContain("Note");
-        manager.stopPlaying();
-        modal.refresh();
-
-        expect(manager.playing.value).toBeNull();
-        expect(modal.container.textContent ?? "").not.toContain("Note");
-        expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
-        expect(
-          lastModals.modals.value.some((m) => m.id === "playlist-finished")
-        ).toBe(false);
-      } finally {
-        modal.unmount();
-      }
-    });
-
-    it("logs a failure to move on after closing an item", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      manager.startPlaying(
-        makePlaylist({
-          items: [
-            { type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } },
-            { type: "html", title: "Note", html: "<p>Note</p>" },
-            {
-              type: "bible-verse",
-              ref: { bookId: "JHN", chapter: 3, verse: 16 },
-            },
-          ],
-        })
-      );
-      const playing = manager.playing.value!;
-      await playing.next();
-      // The reader is already showing the next passage, so applying the
-      // playback snapshot doesn't try to open it a second time. Closing
-      // the pop-up is the load that fails.
-      playing.tab!.readingState.bookId.value = "JHN";
-      playing.tab!.readingState.chapterNumber.value = 3;
-      selectTranslationAndChapterMock.mockRejectedValueOnce(
-        new Error("offline")
-      );
-      errorSpy.mockClear();
-
-      const modal = renderItemModal();
-      try {
-        modal.close();
-        await flush();
-
-        expect(errorSpy).toHaveBeenCalledWith(
-          "Failed to move playlist after closing an item:",
-          expect.any(Error)
-        );
-      } finally {
-        modal.unmount();
-      }
-    });
-  });
-
   it("does not stop playback when a URL change never had a playlist param", async () => {
     const manager = makeManager("user-1");
     await flush();
@@ -4248,13 +4164,7 @@ describe("createPlaylistManager", () => {
     expect(manager.openingPlayback.value).toBe(false);
   });
 
-  it("replayFromHistory waits on the chapter and starts at the beginning", async () => {
-    let resolveChapter: () => void = () => {};
-    selectTranslationAndChapterMock.mockReturnValue(
-      new Promise<void>((resolve) => {
-        resolveChapter = resolve;
-      })
-    );
+  it("replayFromHistory opens the playlist's page, leaving the reader where it is", async () => {
     const playlist = makePlaylist({
       items: [
         {
@@ -4268,23 +4178,96 @@ describe("createPlaylistManager", () => {
     const manager = makeManager("user-1");
     await flush();
 
-    let settled = false;
-    const pending = manager.replayFromHistory(
+    await manager.replayFromHistory(
       makeHistory({ currentStep: 1, totalSteps: 2 })
     );
-    void pending.then(() => {
-      settled = true;
-    });
     await flush();
-    expect(settled).toBe(false);
-    expect(manager.playing.value?.currentIndex.value).toBe(0);
 
-    resolveChapter();
-    await pending;
-    expect(settled).toBe(true);
+    expect(manager.playlistPage.value?.item).toEqual(playlist);
+    expect(manager.playing.value).toBeNull();
+    expect(selectTranslationAndChapterMock).not.toHaveBeenCalled();
+    expect(manager.openingPlayback.value).toBe(false);
   });
 
-  it("playFromHistory replays a finished session and continues an unfinished one", async () => {
+  describe("pressing play on a playlist", () => {
+    it("goes to its shareable page without loading the playlist again", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        title: "Evening Reading",
+        items: [{ type: "html", html: "a" }],
+      });
+      getDataMock.mockClear();
+
+      manager.openPlaylistPage(playlist);
+      await flush();
+
+      expect(lastNavigation.currentUrl.value.toString()).toBe(
+        manager.getPlaylistUrl(playlist)
+      );
+      expect(manager.playlistPage.value?.item).toEqual(playlist);
+      expect(manager.playing.value).toBeNull();
+      expect(getDataMock).not.toHaveBeenCalledWith(
+        playlist.recordName,
+        playlist.id
+      );
+    });
+
+    it("starts from the first step when the page's Start Reading is pressed", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+
+      manager.openPlaylistPage(playlist);
+      await flush();
+      manager.startPlaylistPage();
+      await flush();
+
+      expect(manager.playing.value?.playlists.value).toEqual([playlist]);
+      expect(manager.playing.value?.currentIndex.value).toBe(0);
+    });
+
+    it("stops what's playing, as opening a playlist's link does", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({ id: "first", items: [{ type: "html", html: "a" }] })
+      );
+      await flush();
+
+      manager.openPlaylistPage(
+        makePlaylist({ id: "second", items: [{ type: "html", html: "b" }] })
+      );
+      await flush();
+
+      expect(manager.playing.value).toBeNull();
+      expect(manager.playlistPage.value?.item.id).toBe("second");
+    });
+
+    it("just plays a playlist that has no record, so no page", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      const adHoc = {
+        id: "plan-day",
+        title: "Day 1",
+        description: null,
+        items: [{ type: "html" as const, html: "a" }],
+      };
+
+      manager.openPlaylistPage(adHoc);
+      await flush();
+
+      expect(manager.playing.value?.playlists.value).toEqual([adHoc]);
+      expect(manager.playlistPage.value).toBeNull();
+    });
+  });
+
+  it("playFromHistory opens a finished session's page and continues an unfinished one", async () => {
     const playlist = makePlaylist({
       items: [
         { type: "html", html: "a" },
@@ -4299,7 +4282,9 @@ describe("createPlaylistManager", () => {
     await manager.playFromHistory(
       makeHistory({ currentStep: 2, totalSteps: 3 })
     );
-    expect(manager.playing.value?.currentIndex.value).toBe(0);
+    await flush();
+    expect(manager.playing.value).toBeNull();
+    expect(manager.playlistPage.value?.item).toEqual(playlist);
 
     await manager.playFromHistory(
       makeHistory({ currentStep: 1, totalSteps: 3 })
@@ -4326,156 +4311,108 @@ describe("createPlaylistManager", () => {
     expect(manager.openingPlayback.value).toBe(false);
   });
 
-  describe("playlist item modal", () => {
-    const itemModal = () =>
-      lastModals.modals.value.find((m) => m.id === "playlist-item-content");
+  describe("moving between a playing playlist's steps and its list", () => {
+    const items = (): Playlist["items"] => [
+      { type: "html", title: "Welcome", html: "<p>Welcome</p>" },
+      { type: "bible-verse", ref: { bookId: "JHN", chapter: 3, verse: 16 } },
+      { type: "html", title: "Reflect", html: "<p>Reflect</p>" },
+    ];
+    // Text and link steps show in the reader (see `PlaylistStepPage`), never
+    // in a pop-up.
+    const popUps = () => lastModals.modals.value.map((m) => m.id);
 
-    /** Renders the item modal's footer and returns its nav buttons. */
-    const renderFooter = (container: HTMLElement) => {
-      act(() => {
-        render(
-          h(I18nProvider, {
-            i18n: lastI18n,
-            children: itemModal()!.footer!({
-              t: (key) => key,
-            }) as ComponentChildren,
-          }),
-          container
-        );
-      });
-      return {
-        previous: container.querySelector(
-          ".sb-playlist-item-nav-previous"
-        ) as HTMLButtonElement,
-        next: container.querySelector(
-          ".sb-playlist-item-nav-next"
-        ) as HTMLButtonElement,
-      };
+    const playOnPhone = async (options?: StartPlayingOptions) => {
+      const manager = makeManager("user-1");
+      await flush();
+      lastIsMobile.value = true;
+      manager.startPlaying(makePlaylist({ items: items() }), 0, options);
+      return manager;
     };
 
-    it("shows previous and next buttons that move through the queue", async () => {
+    it("starts on a phone at the list of steps, with nothing popped up over it", async () => {
+      const manager = await playOnPhone();
+
+      expect(manager.view.value).toBe("play_playlist");
+      expect(manager.playing.value?.currentIndex.value).toBe(0);
+      expect(popUps()).toEqual([]);
+    });
+
+    it("puts the list away on a phone to open the tapped step", async () => {
+      const manager = await playOnPhone();
+
+      // The step playback is already on, a text step: it's in the reader.
+      manager.openQueueItem(0);
+      expect(manager.view.value).toBeNull();
+      expect(manager.playing.value?.currentIndex.value).toBe(0);
+      expect(popUps()).toEqual([]);
+
+      // Back to the list, then another step.
+      manager.view.value = "play_playlist";
+      manager.openQueueItem(1);
+      await flush();
+      expect(manager.view.value).toBeNull();
+      expect(manager.playing.value?.currentIndex.value).toBe(1);
+      expect(selectTranslationAndChapterMock).toHaveBeenCalledWith(
+        "BSB",
+        "JHN",
+        3,
+        { scrollToVerse: 16 }
+      );
+    });
+
+    it("goes straight to the step on a phone when asked to, as resuming does", async () => {
+      const manager = await playOnPhone({ openItem: true });
+
+      expect(manager.view.value).toBeNull();
+      expect(manager.playing.value?.currentIndex.value).toBe(0);
+      expect(popUps()).toEqual([]);
+    });
+
+    it("pops nothing up for text and link steps as playback moves through them", async () => {
       const manager = makeManager("user-1");
       await flush();
       manager.startPlaying(
         makePlaylist({
           items: [
-            { type: "html", title: "First", html: "a" },
-            { type: "html", title: "Second", html: "b" },
+            ...items(),
+            { type: "link", url: "https://youtu.be/abc", title: "Watch" },
           ],
         })
       );
       const playing = manager.playing.value!;
-      expect(itemModal()?.title).toBe("First");
 
-      const container = document.createElement("div");
-      document.body.appendChild(container);
-      try {
-        let buttons = renderFooter(container);
-        expect(buttons.previous.disabled).toBe(true);
-        expect(buttons.next.disabled).toBe(false);
+      await playing.next();
+      await playing.next();
+      await playing.next();
 
-        await act(async () => buttons.next.click());
-        await playing.whenSettled();
-        expect(playing.currentIndex.value).toBe(1);
-        expect(itemModal()?.title).toBe("Second");
-
-        buttons = renderFooter(container);
-        expect(buttons.previous.disabled).toBe(false);
-
-        await act(async () => buttons.previous.click());
-        await playing.whenSettled();
-        expect(playing.currentIndex.value).toBe(0);
-        expect(itemModal()?.title).toBe("First");
-      } finally {
-        render(null, container);
-        container.remove();
-      }
+      expect(playing.currentIndex.value).toBe(3);
+      expect(popUps()).toEqual([]);
     });
 
-    it("moves on from the first item when its modal is closed", async () => {
+    it("leaves the playlist from the list's back button, back to the reader on a phone", async () => {
+      const manager = await playOnPhone();
+
+      manager.goBackFromPlayingView();
+
+      expect(manager.playing.value).toBeNull();
+      expect(manager.view.value).toBeNull();
+    });
+
+    it("leaves the playlist from the list's back button on desktop, back to Discover", async () => {
       const manager = makeManager("user-1");
       await flush();
-      manager.startPlaying(
-        makePlaylist({
-          items: [
-            { type: "html", title: "First", html: "a" },
-            { type: "html", title: "Second", html: "b" },
-          ],
-        })
-      );
-      const playing = manager.playing.value!;
+      manager.startPlaying(makePlaylist({ items: items() }));
+      expect(manager.view.value).toBe("play_playlist");
 
-      const dismiss = itemModal()!.onDismiss!;
-      lastModals.closeModal("playlist-item-content");
-      dismiss();
-      await playing.whenSettled();
+      manager.goBackFromPlayingView();
 
-      expect(playing.currentIndex.value).toBe(1);
-      expect(itemModal()?.title).toBe("Second");
+      expect(manager.playing.value).toBeNull();
+      expect(manager.view.value).toBe("discover");
     });
-
-    it("has no nav when an item is previewed outside playback", () => {
-      const modals = createModalManager();
-      openPlaylistItemPreview(
-        modals,
-        { type: "html", title: "Preview", html: "a" },
-        "preview",
-        (key: string) => key
-      );
-
-      const modal = modals.modals.value[0]!;
-      expect(modal.footer).toBeNull();
-      expect(modal.onDismiss).toBeNull();
-    });
-
-    it.each([
-      [
-        "embedded video",
-        { type: "link", url: "https://www.youtube.com/watch?v=abc123" },
-      ],
-      ["video file", { type: "link", url: "https://example.com/clip.mp4" }],
-      ["plain link", { type: "link", url: "https://example.com/article" }],
-      [
-        "embedded page",
-        { type: "link", url: "https://example.com/page", embed: true },
-      ],
-    ] as const)(
-      "shows previous and next buttons on a %s item",
-      async (_, item) => {
-        const manager = makeManager("user-1");
-        await flush();
-        manager.startPlaying(
-          makePlaylist({
-            items: [{ type: "html", title: "Intro", html: "a" }, item],
-          })
-        );
-        const playing = manager.playing.value!;
-        await playing.next();
-        await playing.whenSettled();
-        expect(playing.currentIndex.value).toBe(1);
-
-        const container = document.createElement("div");
-        document.body.appendChild(container);
-        try {
-          const buttons = renderFooter(container);
-          expect(buttons.previous.disabled).toBe(false);
-
-          await act(async () => buttons.previous.click());
-          await playing.whenSettled();
-          expect(playing.currentIndex.value).toBe(0);
-        } finally {
-          render(null, container);
-          container.remove();
-        }
-      }
-    );
   });
 
-  describe("playlist finished modal", () => {
-    const finishedModal = () =>
-      lastModals.modals.value.find((m) => m.id === "playlist-finished");
-
-    it("opens when next is pressed on a saved playlist's last item, and not before", async () => {
+  describe("a finished playlist's page", () => {
+    it("comes up when next is pressed on a saved playlist's last item, and not before", async () => {
       const manager = makeManager("user-1");
       await flush();
       const playlist = makePlaylist({
@@ -4491,41 +4428,17 @@ describe("createPlaylistManager", () => {
 
       await playing.next();
       expect(playing.currentIndex.value).toBe(1);
-      expect(finishedModal()).toBeUndefined();
+      expect(manager.finishedPlaylist.value).toBeNull();
       expect(playing.canFinish.value).toBe(true);
 
       await playing.next();
       expect(playing.currentIndex.value).toBe(1);
-      expect(finishedModal()?.title).toEqual({
-        key: "playlist-finished",
-        defaultValue: "Playlist finished",
-      });
+      expect(manager.finishedPlaylist.value?.id).toBe(playlist.id);
+      // Nothing pops up over it: the app shows it as a page of its own.
+      expect(lastModals.modals.value).toEqual([]);
     });
 
-    it("closes the last item's modal when it opens", async () => {
-      const manager = makeManager("user-1");
-      await flush();
-      manager.startPlaying(
-        makePlaylist({
-          items: [
-            { type: "html", html: "a" },
-            { type: "html", html: "b" },
-          ],
-        })
-      );
-      const playing = manager.playing.value!;
-      await playing.next();
-      const isItemModalOpen = () =>
-        lastModals.modals.value.some((m) => m.id === "playlist-item-content");
-      expect(isItemModalOpen()).toBe(true);
-
-      await playing.next();
-
-      expect(finishedModal()).toBeDefined();
-      expect(isItemModalOpen()).toBe(false);
-    });
-
-    /** Plays a two-item saved playlist through to its finished modal. */
+    /** Plays a two-item saved playlist through to its finished page. */
     const finishPlaylist = async () => {
       const manager = makeManager("user-1");
       await flush();
@@ -4541,56 +4454,35 @@ describe("createPlaylistManager", () => {
       return manager;
     };
 
-    it("stops playback when its Close button is pressed", async () => {
+    it("stops playback from its Done", async () => {
       const manager = await finishPlaylist();
-      const container = document.createElement("div");
-      document.body.appendChild(container);
-      try {
-        act(() => {
-          render(
-            h(I18nProvider, {
-              i18n: lastI18n,
-              children: finishedModal()!.content({
-                t: (key) => key,
-              }) as ComponentChildren,
-            }),
-            container
-          );
-        });
-        const close = Array.from(container.querySelectorAll("button")).find(
-          (b) => b.textContent === "Close"
-        )!;
 
-        act(() => close.click());
+      manager.closeFinishedPlaylist();
 
-        expect(manager.playing.value).toBeNull();
-        expect(finishedModal()).toBeUndefined();
-      } finally {
-        render(null, container);
-        container.remove();
-      }
+      expect(manager.playing.value).toBeNull();
+      expect(manager.finishedPlaylist.value).toBeNull();
     });
 
-    it("keeps playing when the modal is just dismissed (its X or the backdrop)", async () => {
+    it("keeps playing when the page is only put away", async () => {
       const manager = await finishPlaylist();
-      expect(finishedModal()).toBeDefined();
+      expect(manager.finishedPlaylist.value).not.toBeNull();
 
-      lastModals.closeModal("playlist-finished");
+      manager.dismissFinishedPlaylist();
 
-      expect(manager.playing.value).not.toBeNull();
+      expect(manager.finishedPlaylist.value).toBeNull();
       expect(manager.playing.value!.currentIndex.value).toBe(1);
     });
 
-    it("closes when playback ends some other way, so its Close can't stop a later playback", async () => {
+    it("goes away when playback ends some other way, so its Done can't stop a later playback", async () => {
       const manager = await finishPlaylist();
-      expect(finishedModal()).toBeDefined();
+      expect(manager.finishedPlaylist.value).not.toBeNull();
 
       manager.stopPlaying();
 
-      expect(finishedModal()).toBeUndefined();
+      expect(manager.finishedPlaylist.value).toBeNull();
     });
 
-    it("never opens for a queue with no saved playlist behind it, like a reading plan's day", async () => {
+    it("never comes up for a queue with no saved playlist behind it, like a reading plan's day", async () => {
       const manager = makeManager("user-1");
       await flush();
       const { recordName: _recordName, ...adHoc } = makePlaylist({
@@ -4602,10 +4494,10 @@ describe("createPlaylistManager", () => {
       expect(playing.canFinish.value).toBe(false);
 
       await playing.next();
-      expect(finishedModal()).toBeUndefined();
+      expect(manager.finishedPlaylist.value).toBeNull();
     });
 
-    it("does not open for a session peer whose position reaches the end via sync", async () => {
+    it("does not come up for a session peer whose position reaches the end via sync", async () => {
       const manager = makeManager("user-1");
       await flush();
       const playlist = makePlaylist({
@@ -4624,12 +4516,12 @@ describe("createPlaylistManager", () => {
       });
 
       expect(playing.currentIndex.value).toBe(1);
-      expect(finishedModal()).toBeUndefined();
+      expect(manager.finishedPlaylist.value).toBeNull();
 
       // The same position does finish the playlist once this client presses
       // next itself, so it was the sync that didn't.
       await playing.next();
-      expect(finishedModal()).toBeDefined();
+      expect(manager.finishedPlaylist.value).not.toBeNull();
     });
   });
 
@@ -5096,6 +4988,338 @@ describe("createPlaylistManager", () => {
         expect(manager.playlistPageLoadFailed.value).toBe(false);
         expect(manager.getPlaylistPageSeed()).toBeNull();
       });
+    });
+  });
+
+  describe("unsaved drafts", () => {
+    const STEPS = [
+      { type: "html" as const, html: "<p>Think</p>" },
+      { type: "html" as const, html: "<p>Ask</p>", question: {} },
+    ];
+    /** A fresh page load at `pathname`, with the last one's manager gone. */
+    const reloadAt = (pathname: string) => {
+      lastNavigation.dispose();
+      window.history.replaceState(null, "", pathname);
+      return makeManager("user-1", undefined, window.location.href);
+    };
+
+    it("keeps a saved playlist's unsaved edits through a reload", async () => {
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: makePlaylist({ items: STEPS }),
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Not saved yet" });
+      manager.selectEditorStep(1);
+
+      const reloaded = reloadAt(window.location.pathname);
+
+      await vi.waitFor(() =>
+        expect(reloaded.editingPlaylist.value?.title).toBe("Not saved yet")
+      );
+      expect(reloaded.isEditingPlaylistDirty()).toBe(true);
+      expect(reloaded.editorStepIndex.value).toBe(1);
+    });
+
+    it("keeps a playlist that was never saved through a reload", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+      });
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      manager.updateEditingPlaylistMetadata({ title: "Brand new" });
+      manager.insertEditingPlaylistItem(0, STEPS[0]!);
+      const id = manager.editingPlaylist.value!.id;
+
+      const reloaded = reloadAt(window.location.pathname);
+
+      await vi.waitFor(() =>
+        expect(reloaded.editingPlaylist.value?.title).toBe("Brand new")
+      );
+      expect(reloaded.editingPlaylist.value).toMatchObject({
+        id,
+        items: [STEPS[0]],
+      });
+    });
+
+    it("forgets the draft once it's saved, or discarded", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Saving this" });
+      expect(readPlaylistDraft("user-1.playlist-1")?.draft.title).toBe(
+        "Saving this"
+      );
+
+      await manager.saveEditingPlaylist();
+      expect(readPlaylistDraft("user-1.playlist-1")).toBeNull();
+
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Not this" });
+      manager.cancelEditingPlaylist();
+      expect(readPlaylistDraft("user-1.playlist-1")).toBeNull();
+    });
+
+    it("keeps nothing while nothing's changed", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Changed" });
+      manager.updateEditingPlaylistMetadata({ title: "My Playlist" });
+
+      expect(readPlaylistDraft("user-1.playlist-1")).toBeNull();
+    });
+
+    it("drops a draft made to an older version of the playlist", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Stale edit" });
+      expect(readPlaylistDraft("user-1.playlist-1")).not.toBeNull();
+
+      // Saved since, somewhere else.
+      manager.editPlaylist(
+        makePlaylist({ items: STEPS, updatedAtMs: START_MS + 1 })
+      );
+
+      expect(manager.editingPlaylist.value?.title).toBe("My Playlist");
+      expect(manager.isEditingPlaylistDirty()).toBe(false);
+      expect(readPlaylistDraft("user-1.playlist-1")).toBeNull();
+    });
+  });
+
+  describe("the playlist page's Back", () => {
+    it("goes back to where in the app the page was opened from", async () => {
+      window.history.replaceState(null, "", "/en/AAB/exodus/2?content=open");
+      const manager = makeManager("user-1", undefined, window.location.href);
+      await flush();
+      manager.openPlaylistPage(makePlaylist());
+      expect(window.location.pathname).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist"
+      );
+
+      expect(manager.backFromPlaylistPage()).toBe(true);
+
+      await vi.waitFor(() =>
+        expect(window.location.pathname + window.location.search).toBe(
+          "/en/AAB/exodus/2?content=open"
+        )
+      );
+    });
+
+    it("leaves a page opened from its link to close as before", async () => {
+      window.history.replaceState(
+        null,
+        "",
+        "/en/playlist/user-1.playlist-1/my-playlist"
+      );
+      const manager = makeManager("user-1", undefined, window.location.href);
+      await flush();
+
+      expect(manager.backFromPlaylistPage()).toBe(false);
+      expect(window.location.pathname).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist"
+      );
+    });
+  });
+
+  describe("the editor's place in the URL", () => {
+    const STEPS = [
+      { type: "bible-verse" as const, ref: { bookId: "GEN", chapter: 1 } },
+      { type: "html" as const, html: "<p>Think</p>" },
+      { type: "html" as const, html: "<p>Ask</p>", question: {} },
+    ];
+    const path = () => window.location.pathname;
+    const reloadAt = (pathname: string) => {
+      window.history.replaceState(null, "", pathname);
+      return makeManager("user-1", undefined, window.location.href);
+    };
+
+    it("puts each screen at its own path under the playlist's", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      expect(path()).toBe("/en/playlist/user-1.playlist-1/my-playlist/edit");
+
+      manager.selectEditorStep(2);
+      expect(path()).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist/edit/step/3"
+      );
+      manager.editorStepSettingsOpen.value = true;
+      expect(path()).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist/edit/step/3/settings"
+      );
+
+      manager.selectEditorStep(-1);
+      manager.editorDetailsSheetOpen.value = true;
+      expect(path()).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist/edit/details"
+      );
+    });
+
+    it("keeps the slug of the saved title while the title is edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      const push = vi.spyOn(window.history, "pushState");
+
+      manager.updateEditingPlaylistMetadata({ title: "Something else" });
+
+      expect(path()).toBe("/en/playlist/user-1.playlist-1/my-playlist/edit");
+      expect(push).not.toHaveBeenCalled();
+      push.mockRestore();
+    });
+
+    it("gives a new, untitled draft a placeholder slug", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      await manager.createNewPlaylist();
+      const id = manager.editingPlaylist.value!.id;
+
+      expect(path()).toBe(`/en/playlist/user-1.${id}/-/edit`);
+    });
+
+    it("closes to the playlist's page, as it was saved", async () => {
+      window.history.replaceState(null, "", "/en/AAB/exodus/2");
+      const manager = makeManager("user-1", undefined, window.location.href);
+      await flush();
+      manager.view.value = "discover";
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Not kept" });
+      manager.selectEditorStep(1);
+
+      manager.cancelEditingPlaylist();
+
+      expect(path()).toBe("/en/playlist/user-1.playlist-1/my-playlist");
+      expect(manager.view.value).toBeNull();
+      expect(manager.playlistPage.value?.item.title).toBe("My Playlist");
+    });
+
+    it("closes a playlist that was never saved back to where it opened from", async () => {
+      window.history.replaceState(null, "", "/en/AAB/exodus/2");
+      const manager = makeManager("user-1", undefined, window.location.href);
+      await flush();
+      await manager.createNewPlaylist();
+
+      manager.cancelEditingPlaylist();
+
+      expect(path()).toBe("/en/AAB/exodus/2");
+    });
+
+    it("returns to the playlist's page, with nothing over it, when it was opened from there", async () => {
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: makePlaylist({ items: STEPS }),
+      });
+      const manager = reloadAt("/en/playlist/user-1.playlist-1/my-playlist");
+      await vi.waitFor(() => expect(manager.playlistPage.value).not.toBeNull());
+      manager.view.value = "discover";
+
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      expect(manager.playlistPage.value).toBeNull();
+      manager.cancelEditingPlaylist();
+
+      expect(path()).toBe("/en/playlist/user-1.playlist-1/my-playlist");
+      expect(manager.view.value).toBeNull();
+      expect(manager.playlistPage.value).not.toBeNull();
+    });
+
+    it("reopens a saved playlist on the step a reload left it on", async () => {
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: makePlaylist({ items: STEPS }),
+      });
+
+      const manager = reloadAt(
+        "/en/playlist/user-1.playlist-1/my-playlist/edit/step/2"
+      );
+
+      await vi.waitFor(() =>
+        expect(manager.editingPlaylist.value?.items).toHaveLength(3)
+      );
+      expect(getDataMock).toHaveBeenCalledWith("user-1", "playlist-1");
+      expect(manager.view.value).toBe("create_playlist");
+      expect(manager.editorStepIndex.value).toBe(1);
+      expect(manager.playlistPage.value).toBeNull();
+      expect(path()).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist/edit/step/2"
+      );
+    });
+
+    it("reopens a draft that was never saved, empty, on its list", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+      });
+
+      const manager = reloadAt(
+        "/en/playlist/user-1.playlist_new/-/edit/step/2"
+      );
+
+      await vi.waitFor(() =>
+        expect(manager.editingPlaylist.value?.id).toBe("playlist_new")
+      );
+      expect(manager.editingPlaylist.value).toMatchObject({
+        recordName: "user-1",
+        items: [],
+      });
+      // An unsaved draft isn't a missing playlist.
+      expect(manager.playlistPageNotFound.value).toBe(false);
+      // Its steps went with it, so the step it was on is gone too.
+      expect(manager.editorStepIndex.value).toBe(-1);
+      await vi.waitFor(() =>
+        expect(path()).toBe("/en/playlist/user-1.playlist_new/-/edit")
+      );
+    });
+
+    it("goes back through the editor's screens, and forward to the same unsaved draft", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.updateEditingPlaylistMetadata({ title: "Not saved yet" });
+      manager.selectEditorStep(2);
+
+      window.history.back();
+      await vi.waitFor(() => expect(manager.editorStepIndex.value).toBe(-1));
+      expect(manager.view.value).toBe("create_playlist");
+
+      window.history.back();
+      await vi.waitFor(() => expect(manager.editingPlaylist.value).toBeNull());
+      expect(manager.view.value).not.toBe("create_playlist");
+
+      window.history.forward();
+      await vi.waitFor(() =>
+        expect(manager.editingPlaylist.value?.title).toBe("Not saved yet")
+      );
+      expect(manager.isEditingPlaylistDirty()).toBe(true);
+
+      window.history.forward();
+      await vi.waitFor(() => expect(manager.editorStepIndex.value).toBe(2));
+    });
+
+    it("doesn't add a history entry when steps move around the open one", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.editPlaylist(makePlaylist({ items: STEPS }));
+      manager.selectEditorStep(2);
+      const push = vi.spyOn(window.history, "pushState");
+
+      manager.removeEditingPlaylistItem(0);
+      await flush();
+      manager.reorderEditingPlaylistItem(1, 0);
+      await flush();
+
+      expect(path()).toBe(
+        "/en/playlist/user-1.playlist-1/my-playlist/edit/step/1"
+      );
+      expect(push).not.toHaveBeenCalled();
+      push.mockRestore();
     });
   });
 
@@ -6311,5 +6535,122 @@ describe("createPlayingState", () => {
         expect.any(Object)
       );
     });
+  });
+});
+
+describe("playing a compare step", () => {
+  const compareStep = (
+    first: VerseRefLike,
+    second: VerseRefLike,
+    translationId?: string
+  ): PlaylistItemData => ({
+    type: "bible-verse",
+    ref: first,
+    compare: { ref: second },
+    ...(translationId ? { translationId } : {}),
+  });
+  type VerseRefLike = { bookId: string; chapter: number; verse?: number };
+
+  function play(items: PlaylistItemData[]) {
+    const tabNavigate = vi.fn(async () => undefined);
+    const tab = makeTab("tab-1", tabNavigate);
+    const secondNavigate = vi.fn(async () => undefined);
+    const second = {
+      ...makeReadingState(secondNavigate),
+      dispose: vi.fn(),
+    };
+    const createCompareReadingState = vi.fn(() => ({
+      readingState: second,
+      dispose: second.dispose,
+    }));
+    const playing = createPlayingState(
+      [makePlaylist({ items })],
+      tab as any,
+      undefined,
+      createCompareReadingState as any
+    );
+    return {
+      playing,
+      tab,
+      tabNavigate,
+      second,
+      secondNavigate,
+      createCompareReadingState,
+    };
+  }
+
+  it("opens the first passage in the tab and the second beside it, in the step's translation", async () => {
+    const { playing, tabNavigate, second, createCompareReadingState } = play([
+      compareStep(
+        { bookId: "JHN", chapter: 1, verse: 1 },
+        { bookId: "GEN", chapter: 1, verse: 1 },
+        "KJV"
+      ),
+    ]);
+
+    await playing.jumpTo(0);
+
+    // Not scrolled to: the reader shows just the passage, from its top.
+    expect(tabNavigate).toHaveBeenCalledWith("KJV", "JHN", 1);
+    expect(createCompareReadingState).toHaveBeenCalledWith({
+      initialTranslationId: "KJV",
+      initialBookId: "GEN",
+      initialChapterNumber: 1,
+    });
+    expect(playing.compareReadingState.value).toBe(second);
+  });
+
+  it("reuses the second passage's reading state for the next compare step", async () => {
+    const { playing, secondNavigate, createCompareReadingState } = play([
+      compareStep({ bookId: "JHN", chapter: 1 }, { bookId: "GEN", chapter: 1 }),
+      compareStep({ bookId: "MAT", chapter: 5 }, { bookId: "LUK", chapter: 6 }),
+    ]);
+
+    await playing.jumpTo(0);
+    await playing.next();
+
+    expect(createCompareReadingState).toHaveBeenCalledTimes(1);
+    expect(secondNavigate).toHaveBeenCalledWith("BSB", "LUK", 6);
+  });
+
+  it("highlights neither passage, since only the passages are shown", async () => {
+    const { playing, tab, second } = play([
+      compareStep(
+        { bookId: "JHN", chapter: 1, verse: 1 },
+        { bookId: "GEN", chapter: 1, verse: 1 }
+      ),
+    ]);
+
+    await playing.jumpTo(0);
+
+    expect(tab.readingState.decorateVerses).not.toHaveBeenCalled();
+    expect(second.decorateVerses).not.toHaveBeenCalled();
+  });
+
+  it("lets go of the second passage's reading state when playback ends", async () => {
+    const { playing, second } = play([
+      compareStep({ bookId: "JHN", chapter: 1 }, { bookId: "GEN", chapter: 1 }),
+    ]);
+    await playing.jumpTo(0);
+
+    playing.dispose();
+
+    expect(second.dispose).toHaveBeenCalled();
+    expect(playing.compareReadingState.value).toBeNull();
+  });
+
+  it("keeps a compare step whose first passage spans chapters as one step", () => {
+    const item = compareStep(
+      {
+        bookId: "JHN",
+        chapter: 1,
+        verse: 1,
+        endChapter: 2,
+        endVerse: 5,
+      } as any,
+      { bookId: "GEN", chapter: 1 }
+    );
+
+    expect(expandCrossChapterItem(item)).toEqual([item]);
   });
 });

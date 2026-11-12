@@ -22,6 +22,32 @@
   flex-shrink: 0;
 }
 
+/* Mobile, during playlist playback: the playing playlist, right after the
+   back arrow. It may shrink, truncating its text, so the tools on the far
+   side keep their room. */
+.sb-quick-toolbar-mobile-header-leading {
+  flex: 0 1 auto;
+  min-width: 0;
+
+  .sb-quick-toolbar-item,
+  .sb-quick-toolbar-button {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .sb-now-playing-icon {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .sb-now-playing-icon > * {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
 .sb-quick-toolbar-item {
   position: relative;
   display: inline-flex;

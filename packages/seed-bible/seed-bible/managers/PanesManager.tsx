@@ -89,6 +89,8 @@ export interface Pane {
   height: number;
   /** Whether the built-in header bar is shown. See PaneOpenOptions.showHeader. */
   showHeader: boolean;
+  /** Extra class on a side pane's shell. See PaneOpenOptions.shellClassName. */
+  shellClassName?: string;
 }
 
 export interface PaneOpenOptions {
@@ -163,6 +165,11 @@ export interface PaneOpenOptions {
    * provide its own way to close.
    */
   showHeader?: boolean;
+  /**
+   * Extra class for a docked side pane's shell, for a pane whose content
+   * calls for a different frame (the playlist editor's floating card, say).
+   */
+  shellClassName?: string;
   /**
    * When true, opening (or reusing) this pane closes every other pane —
    * including fullscreen ones — so it is the only pane left open, the same
@@ -342,6 +349,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
           onClose: options.onClose,
           confirmClose: options.confirmClose,
           showHeader: options.showHeader ?? true,
+          shellClassName: options.shellClassName,
         };
         syncPaneState(
           closesOthers
