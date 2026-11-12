@@ -141,10 +141,12 @@
   gap: 4px;
 }
 
-/* Form controls */
-select,
-input[type="text"],
-input[type="range"] {
+/* Form controls. Scoped to the extension: this stylesheet loads into the
+   host page, so a bare `input[type="text"]` restyled inputs across the app
+   (e.g. the language picker's search). */
+.ts_app select,
+.ts_app input[type="text"],
+.ts_app input[type="range"] {
   background: var(--sb-menu-background);
   color: var(--sb-font-color);
   border: 1px solid var(--sb-divider-color);
