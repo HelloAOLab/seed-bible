@@ -25,7 +25,7 @@ const FIRST_START_MS = Date.UTC(2026, 0, 5, 12);
 const RESTART_MS = Date.UTC(2026, 2, 9, 12);
 
 const startedLabel = (ms: number) =>
-  `started ${new Date(ms).toLocaleDateString(undefined, {
+  `since ${new Date(ms).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
   })}`;

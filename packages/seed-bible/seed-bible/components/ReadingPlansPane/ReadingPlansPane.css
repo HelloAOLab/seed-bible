@@ -6,6 +6,10 @@
   --rp-border: var(--sb-divider-color, rgba(0, 0, 0, 0.12));
   --rp-muted: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
   --rp-success: #059669;
+  /* Fixed like --rp-success: "behind" has to read as a warning in every
+     theme. Drawn from the accent it was indistinguishable from the Create
+     button and the Today arrow, so a nudge looked like the thing to press. */
+  --rp-warn: #9a5b12;
   --rp-peach: var(--sb-secondary-color, #faddd1);
 
   display: flex;
@@ -119,6 +123,25 @@
   border-radius: 50%;
   background: var(--rp-accent);
   color: var(--rp-accent-contrast);
+}
+
+/* Stand-in cover for a plan without one, sized to match `.sb-hero-thumb` so
+   rows with and without an image start their text at the same place. */
+.sb-rp-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 0.625rem;
+  background: var(--rp-accent-soft);
+  /* Pulled toward the text colour because the accent alone does not carry
+     against its own 12% tint. */
+  color: color-mix(in srgb, var(--rp-accent) 55%, var(--sb-font-color));
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 /* Sections */
@@ -324,6 +347,27 @@
   background: var(--rp-accent);
 }
 
+/* Short plans count their days instead of filling a bar. A 3-day plan with
+   nothing read is a bar stuck at 0%, which reads as broken rather than as
+   three days still waiting. Past ~10 the segments turn to texture and the
+   bar above takes over. */
+.sb-rp-card-progress-segments {
+  display: flex;
+  flex: 1;
+  gap: 3px;
+}
+
+.sb-rp-card-progress-segment {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--rp-border);
+}
+
+.sb-rp-card-progress-segment-done {
+  background: var(--rp-accent);
+}
+
 .sb-rp-card-progress-label {
   flex: none;
   font-size: 0.875rem;
@@ -351,6 +395,14 @@
 
 .sb-rp-chip .material-symbols-outlined {
   font-size: 16px;
+}
+
+/* `sb-rp-chip-warn` and `sb-rp-chip-streak` were both set on the markup but
+   neither had a rule, so both fell through to `.sb-rp-chip` and came out in
+   the accent. A streak in the accent is right; being behind is not. */
+.sb-rp-chip-warn {
+  background: color-mix(in srgb, var(--rp-warn) 16%, transparent);
+  color: var(--rp-warn);
 }
 
 .sb-rp-card-next {

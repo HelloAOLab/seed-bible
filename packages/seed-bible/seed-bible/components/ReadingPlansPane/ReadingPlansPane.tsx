@@ -95,6 +95,15 @@ type ReadingPlansView = "list" | "edit" | "detail";
 const readingPlansView = signal<ReadingPlansView>("list");
 
 /**
+ * Longest plan whose progress is drawn as one segment per day rather than as
+ * a single filled bar. Most plans people make here are a handful of days, and
+ * at that length a bar sitting at 0% reads as a rendering failure instead of
+ * as days still to come. Past this the segments are thinner than the gaps
+ * between them, so the bar carries it better.
+ */
+const SEGMENTED_PROGRESS_MAX_DAYS = 10;
+
+/**
  * Set when another screen opened the pane straight onto a plan, as tapping a
  * plan in "Your content" does. Back from that plan then returns to that
  * screen, not to a plans list the user never saw.
@@ -627,9 +636,10 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                 onClick={() => onOpen(hero.meta)}
                 disabled={openingId === hero.planId}
               >
-                {hero.meta.heroImageUrl ? (
-                  <HeroImageThumb url={hero.meta.heroImageUrl} />
-                ) : null}
+                <PlanThumb
+                  url={hero.meta.heroImageUrl}
+                  title={planTitle(hero.meta)}
+                />
                 <div className="sb-rp-today-text">
                   <span className="sb-rp-today-eyebrow">
                     {t("reading-plan-today-eyebrow", {
@@ -637,16 +647,14 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                       day: hero.summary.nextDayNumber ?? 1,
                     })}
                   </span>
-                  <span className="sb-rp-today-title" dir="auto">
-                    {planTitle(hero.meta)}
-                  </span>
-                  {hero.meta.description ? (
-                    <span className="sb-rp-today-readings" dir="auto">
-                      {hero.meta.description}
-                    </span>
-                  ) : null}
-                  <span className="sb-rp-today-readings">
+                  {/* The passage leads: it is what this button opens. The plan
+                      it belongs to is context, and sat here in 22px bold while
+                      the reading it was offering was a grey line underneath. */}
+                  <span className="sb-rp-today-title">
                     {dayReadingsLabelForBooks(hero.summary.next)}
+                  </span>
+                  <span className="sb-rp-today-readings" dir="auto">
+                    {planTitle(hero.meta)}
                   </span>
                 </div>
                 <span className="sb-rp-today-go" aria-hidden="true">
@@ -684,9 +692,10 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                         onClick={() => resumeDraft(meta)}
                         disabled={!full}
                       >
-                        {meta.heroImageUrl ? (
-                          <HeroImageThumb url={meta.heroImageUrl} />
-                        ) : null}
+                        <PlanThumb
+                          url={meta.heroImageUrl}
+                          title={planTitle(meta)}
+                        />
                         <span className="sb-rp-card-body">
                           <span className="sb-rp-card-title" dir="auto">
                             {planTitle(meta)}
@@ -785,9 +794,10 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                           }}
                           disabled={opening}
                         >
-                          {row.meta.heroImageUrl ? (
-                            <HeroImageThumb url={row.meta.heroImageUrl} />
-                          ) : null}
+                          <PlanThumb
+                            url={row.meta.heroImageUrl}
+                            title={planTitle(row.meta)}
+                          />
                           <span className="sb-rp-card-body">
                             <span className="sb-rp-card-title" dir="auto">
                               {planTitle(row.meta)}
@@ -839,9 +849,10 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                           onClick={() => onOpen(row.meta)}
                           disabled={openingId === row.planId}
                         >
-                          {row.meta.heroImageUrl ? (
-                            <HeroImageThumb url={row.meta.heroImageUrl} />
-                          ) : null}
+                          <PlanThumb
+                            url={row.meta.heroImageUrl}
+                            title={planTitle(row.meta)}
+                          />
                           <span className="sb-rp-card-body">
                             <span className="sb-rp-card-title" dir="auto">
                               {planTitle(row.meta)}
@@ -1053,6 +1064,39 @@ function PlanSection(props: {
   );
 }
 
+/**
+ * Up to two characters standing in for a plan with no cover: the first of its
+ * name and the first of its last word, so "test 6" and "test 33" don't collapse
+ * into the same tile. Taken by code point rather than by word, since a word
+ * list would only hold for English.
+ */
+function planMonogram(title: string): string {
+  const words = title.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) {
+    return "";
+  }
+  const first = Array.from(words[0]!)[0] ?? "";
+  const last =
+    words.length > 1 ? (Array.from(words[words.length - 1]!)[0] ?? "") : "";
+  return (first + last).toUpperCase();
+}
+
+/**
+ * A plan's cover, or a monogram when it has none. Rendering nothing for a plan
+ * without a cover left the list ragged — rows with an image started 56px right
+ * of rows without one — so every row gets a tile of the same size.
+ */
+function PlanThumb(props: { url?: string | null; title: string }) {
+  if (props.url) {
+    return <HeroImageThumb url={props.url} />;
+  }
+  return (
+    <span className="sb-rp-thumb" aria-hidden="true">
+      {planMonogram(props.title)}
+    </span>
+  );
+}
+
 function ActivePlanCard(props: {
   // Only `summary`/`progress` and the plan's image and description are read
   // below, so this accepts both an owned plan's full `PlanRow` and a friend's
@@ -1076,6 +1120,10 @@ function ActivePlanCard(props: {
   const total = summary?.totalDays ?? 0;
   const done = summary?.doneDays ?? 0;
   const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+  // Up to this many days, progress is drawn as one segment per day instead of
+  // a filled bar, so "nothing read yet" looks like days waiting rather than a
+  // bar that failed to render. Beyond it the segments are too thin to read.
+  const segmented = total > 0 && total <= SEGMENTED_PROGRESS_MAX_DAYS;
   const startedMs = row.progress?.startedAtMs ?? null;
   // A self-paced read has an order but no schedule, so it is counted in
   // sessions and never shown as behind.
@@ -1104,9 +1152,7 @@ function ActivePlanCard(props: {
           }}
           disabled={opening}
         >
-          {row.meta.heroImageUrl ? (
-            <HeroImageThumb url={row.meta.heroImageUrl} />
-          ) : null}
+          <PlanThumb url={row.meta.heroImageUrl} title={title} />
           <span className="sb-rp-card-body">
             <span className="sb-rp-card-title" dir="auto">
               {title}
@@ -1117,18 +1163,26 @@ function ActivePlanCard(props: {
               </span>
             ) : null}
             <span className="sb-rp-card-sub">
-              {selfPaced
-                ? t("reading-plan-session-count-sessions", {
-                    defaultValue: "{{count}} sessions",
-                    count: total,
-                  })
-                : t("reading-plan-duration-days", {
-                    defaultValue: "{{count}} days",
-                    count: total,
-                  })}
+              {/* Where the reader is, not just how long the plan is: "3 days"
+                  told them nothing they couldn't read off the progress count.
+                  A plan whose sessions haven't loaded has no day to report, and
+                  "Day 0 of 0" is worse than saying nothing. */}
+              {total > 0
+                ? selfPaced
+                  ? t("reading-plan-session-of-total", {
+                      defaultValue: "Session {{day}} of {{total}}",
+                      day: summary?.nextDayNumber ?? done,
+                      total,
+                    })
+                  : t("reading-plan-day-of-total", {
+                      defaultValue: "Day {{day}} of {{total}}",
+                      day: summary?.nextDayNumber ?? done,
+                      total,
+                    })
+                : ""}
               {startedMs != null
-                ? ` · ${t("reading-plan-started-on", {
-                    defaultValue: "started {{date}}",
+                ? `${total > 0 ? " · " : ""}${t("reading-plan-since", {
+                    defaultValue: "since {{date}}",
                     date: new Date(startedMs).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
@@ -1148,12 +1202,25 @@ function ActivePlanCard(props: {
       </div>
 
       <div className="sb-rp-card-progress">
-        <span className="sb-rp-card-progress-bar">
-          <span
-            className="sb-rp-card-progress-fill"
-            style={{ width: `${percent}%` }}
-          />
-        </span>
+        {segmented ? (
+          <span className="sb-rp-card-progress-segments">
+            {Array.from({ length: total }, (_, i) => (
+              <span
+                key={i}
+                className={`sb-rp-card-progress-segment${
+                  i < done ? " sb-rp-card-progress-segment-done" : ""
+                }`}
+              />
+            ))}
+          </span>
+        ) : (
+          <span className="sb-rp-card-progress-bar">
+            <span
+              className="sb-rp-card-progress-fill"
+              style={{ width: `${percent}%` }}
+            />
+          </span>
+        )}
         <span className="sb-rp-card-progress-label">
           {done}/{total}
         </span>
