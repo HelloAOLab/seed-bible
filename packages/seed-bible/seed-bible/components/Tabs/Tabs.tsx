@@ -2801,14 +2801,20 @@ export function SelfAvatarVisual(props: { state: SeedBibleState }) {
     connectionId: state.os.connectionId,
   });
   const visual = getUserAnimalVisual(visualKey);
-  const imageUrl = profile?.pictureUrl ?? null;
+  // The server can't see the session saved on this device, so it renders the
+  // signed-out icon. Keep rendering that until mount: Preact keeps the
+  // server's classes while hydrating, so a picture that loaded before then
+  // would sit in the signed-out icon's box — square, with no border — until
+  // the next reload.
+  const isMounted = login.isLocalConfigHydrated.value;
+  const imageUrl = isMounted ? (profile?.pictureUrl ?? null) : null;
 
   return (
     <Avatar
       imageUrl={imageUrl}
       visual={visual}
-      title={getSelfDisplayName(state, t)}
-      genericFallback={!isInMultiUserIdentityContext(state)}
+      title={getSelfDisplayNameAfterMount(state, t)}
+      genericFallback={!isInMultiUserIdentityContext(state, isMounted)}
     />
   );
 }
@@ -2818,14 +2824,37 @@ export function SelfAvatarVisual(props: { state: SeedBibleState }) {
  * them — a shared reading session, or a chat that includes another person
  * (including someone who is currently inactive). That's when the
  * animal+color fallback is needed to tell people apart.
+ *
+ * Chats only count once mounted: they load for the signed-in account, which
+ * the server never sees (see `SelfAvatarVisual`).
  */
-function isInMultiUserIdentityContext(state: SeedBibleState): boolean {
+function isInMultiUserIdentityContext(
+  state: SeedBibleState,
+  isMounted: boolean
+): boolean {
   const tabs = state.tabs?.tabs?.value;
   if (tabs?.some((tab) => tab.sharedSession != null)) {
     return true;
   }
+  if (!isMounted) {
+    return false;
+  }
   const chats = state.chats?.chats?.value;
   return chats?.some((chat) => chatHasOtherPeople(chat)) ?? false;
+}
+
+/**
+ * {@link getSelfDisplayName}, but signed-out until mount, for attributes the
+ * server renders: Preact keeps the server's attribute values while hydrating,
+ * so a name known earlier would leave a stale "Anonymous" in place.
+ */
+function getSelfDisplayNameAfterMount(
+  state: SeedBibleState,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  return state.login.isLocalConfigHydrated.value
+    ? getSelfDisplayName(state, t)
+    : t("anonymous", { defaultValue: "Anonymous" });
 }
 
 /** Display name for the current user — used as the avatar tooltip / aria-label. */
@@ -2851,7 +2880,7 @@ export function getSelfDisplayName(
 function SelfAvatarButton(props: { state: SeedBibleState }) {
   const { state } = props;
   const { t } = useI18n();
-  const displayName = getSelfDisplayName(state, t);
+  const displayName = getSelfDisplayNameAfterMount(state, t);
   const label = t("open-profile", { defaultValue: "Open profile" });
 
   return (
