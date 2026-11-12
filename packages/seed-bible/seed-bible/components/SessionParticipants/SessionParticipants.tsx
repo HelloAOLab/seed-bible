@@ -21,7 +21,7 @@ import {
   openShareSessionModal,
 } from "../Tabs/Tabs";
 import { MaterialIcon } from "../icons";
-import { SessionParticipantsRoster } from "../FollowReading/ParticipantFollowButton";
+import { ParticipantFollowButton } from "../FollowReading/ParticipantFollowButton";
 import {
   AskToComeBackButton,
   getParticipantLocation,
@@ -150,7 +150,6 @@ export function MobileSessionParticipants({
                 </button>
               </div>
               <div className="sb-mobile-settings-sheet-body">
-                <SessionParticipantsRoster state={state} session={session} />
                 <SessionParticipantList
                   state={state}
                   session={session}
@@ -317,6 +316,7 @@ export function SessionParticipantList({
             displayName={getUserDisplayName(user)}
           />
         )}
+        <ParticipantFollowButton session={session} user={user} />
       </li>
     );
   };
