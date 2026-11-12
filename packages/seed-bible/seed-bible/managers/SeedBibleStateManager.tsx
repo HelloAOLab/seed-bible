@@ -80,6 +80,7 @@ import {
 import {
   openReadingPlanDetail,
   openReadingPlanEditor,
+  openPlanCreate,
 } from "../components/ReadingPlansPane/ReadingPlansPane";
 import {
   FRIENDS_PANE_ID,
@@ -4368,6 +4369,12 @@ export function createSeedBibleState(
     }
     void openReadingPlanEditor(readingPlans, plan, { fromAnotherScreen: true });
   };
+  const createReadingPlanFromContent = () => {
+    if (!openReadingPlansFromScreen(openYourContent)) {
+      return;
+    }
+    openPlanCreate(readingPlans, { fromAnotherScreen: true });
+  };
   const renderYourContentPane = () => (
     <YourContentPane
       state={state}
@@ -4378,6 +4385,7 @@ export function createSeedBibleState(
       onCreatePlaylist={createPlaylistFromContent}
       onOpenReadingPlan={openReadingPlanFromContent}
       onEditReadingPlan={editReadingPlanFromContent}
+      onCreateReadingPlan={createReadingPlanFromContent}
       onEditCustomization={editCustomizationFromContent}
       onCreateCustomization={() => void createCustomizationFromContent()}
     />

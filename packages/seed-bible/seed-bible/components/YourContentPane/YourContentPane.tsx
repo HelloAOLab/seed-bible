@@ -81,6 +81,8 @@ export interface YourContentScreenProps {
   onOpenReadingPlan: (plan: ReadingPlanMetadata) => void;
   /** Opens a reading plan in the plan editor and leaves this screen. */
   onEditReadingPlan: (plan: ReadingPlanMetadata) => void;
+  /** Opens the plan editor on a new reading plan and leaves this screen. */
+  onCreateReadingPlan: () => void;
   /** Opens a customization in its editor and leaves this screen. */
   onEditCustomization: (customizationId: string) => void;
   /** Creates a new customization, opens it in the editor and leaves this screen. */
@@ -1057,6 +1059,14 @@ export function YourContentPane(props: YourContentScreenProps) {
                 queue_music
               </MaterialIcon>
               {t("create-playlist-menu-item", { defaultValue: "Playlist" })}
+            </ContextMenuItem>
+            <ContextMenuItem onClick={props.onCreateReadingPlan}>
+              <MaterialIcon className="sb-context-menu-item-icon">
+                menu_book
+              </MaterialIcon>
+              {t("create-reading-plan-menu-item", {
+                defaultValue: "Reading Plan",
+              })}
             </ContextMenuItem>
             {userId ? (
               <ContextMenuItem onClick={props.onCreateCustomization}>
