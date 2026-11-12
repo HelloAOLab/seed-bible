@@ -444,7 +444,9 @@ export function PublishButton(props: { state: SeedBibleState }) {
     >
       {saving
         ? t("saving", { defaultValue: "Saving…" })
-        : t("save", { defaultValue: "Save" })}
+        : t("playlist-editor-save-and-publish", {
+            defaultValue: "Save & Publish",
+          })}
     </button>
   );
 }

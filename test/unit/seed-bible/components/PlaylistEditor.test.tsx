@@ -1358,7 +1358,7 @@ describe("the playlist editor", () => {
       act(() => state.playlists.addEditorStep("video", 2));
       act(() => state.playlists.selectEditorStep(0));
 
-      click(byText(container, ".sb-pe-publish", "Save"));
+      click(byText(container, ".sb-pe-publish", "Save & Publish"));
       click(byText(document.body, ".sb-pe-review-problems button", "Step 4"));
 
       expect(state.playlists.editorStepIndex.value).toBe(3);
@@ -1370,11 +1370,15 @@ describe("the playlist editor", () => {
         .spyOn(state.os, "recordData")
         .mockResolvedValue(undefined as never);
       openDesktopEditor(STEPS, 0);
+      expect(
+        container.querySelector(".sb-pe-panel-footer .sb-pe-publish")
+          ?.textContent
+      ).toBe("Save & Publish");
       act(() => {
         state.playlists.updateEditingPlaylistMetadata({ title: "Light" });
       });
 
-      click(byText(container, ".sb-pe-publish", "Save"));
+      click(byText(container, ".sb-pe-publish", "Save & Publish"));
 
       await waitFor(() => state.playlists.editingPlaylist.value === null);
       const saved = recordData.mock.calls[0]![2] as Playlist;
@@ -1388,7 +1392,7 @@ describe("the playlist editor", () => {
       const toast = vi.spyOn(state.app, "toast");
       openDesktopEditor(STEPS, 0);
 
-      click(byText(container, ".sb-pe-publish", "Save"));
+      click(byText(container, ".sb-pe-publish", "Save & Publish"));
 
       await waitFor(() => toast.mock.calls.length > 0);
       expect(toast).toHaveBeenCalledWith(
