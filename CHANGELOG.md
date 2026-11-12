@@ -4,6 +4,10 @@
 
 ### ✨ Added
 
+- Add native iOS and Android apps, built with Capacitor from the same code as the website.
+  - Links shared from the apps point at seedbible.org, and seedbible.org links open in the app when it's installed.
+  - Both apps use the Seed Bible icon, including iOS's dark and tinted icon styles. The Android splash screen plays the seed-growing intro from the Books button; the iOS launch screen shows the finished icon.
+  - CI builds both apps: test builds for pull requests, signed store builds from `main`, and every `develop` build goes to Google Play's Internal testing.
 - In a shared session where only hosts can navigate, reading a different chapter from the group now shows where the group is above the toolbar, with a Rejoin button to go back.
 - In a shared session, see who is reading elsewhere and which passage they're on: in the participants list, and on their faded avatar on the session's tab.
   - On desktop, open the participant list right inside the session's tab. It stays open or closed the way you left it on that device.
@@ -14,6 +18,7 @@
   - Admins of the reviews record, chosen at build time with `EXTENSION_REVIEWS_RECORD_NAME`, mark an extension verified from its page, in a dialog that asks when it was verified and for public and internal notes.
   - Internal notes are kept private to the record's admins.
   - A verified extension's install dialog says it has been verified, instead of warning that it hasn't been reviewed.
+- Let Custom Branding replace the Books, Search, Today, Share, Chat and Discover icons with its own SVGs, drawn in the theme's icon color.
 
 ### 🔧 Changed
 

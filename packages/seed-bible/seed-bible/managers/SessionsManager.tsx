@@ -25,6 +25,7 @@ import type {
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
 import type { AnnotationsManager } from "./AnnotationsManager";
+import { toShareableUrl } from "../app/publicLinks";
 
 export interface ConnectionSessionUserVisual {
   defaultIcon: string;
@@ -893,7 +894,7 @@ export function getSessionUrl(session: BibleReadingSession): URL {
   if (pattern) {
     url.searchParams.set("pattern", pattern);
   }
-  return url;
+  return toShareableUrl(url);
 }
 
 function createSessionId(): string {
