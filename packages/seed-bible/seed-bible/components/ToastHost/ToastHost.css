@@ -3,7 +3,9 @@
   position: fixed;
   right: 1rem;
   top: 1rem;
-  z-index: var(--sb-layer-toast);
+  /* Above menus but under modals: a card stays up for as long as a friend's
+     session runs, and over a modal it would cover the header's close button. */
+  z-index: calc(var(--sb-layer-popover) + 20);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;

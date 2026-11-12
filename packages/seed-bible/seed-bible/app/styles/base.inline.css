@@ -61,7 +61,8 @@
 
   /* App-wide stacking order, lowest first: toolbars and sidebars, menus and
      pop-overs, modal dialogs, prompts that interrupt a modal, the tutorial,
-     then toasts (which ignore the pointer, so they never block anything). */
+     then short-lived toasts. Toast containers ignore the pointer but the cards
+     take clicks, so anything that stays on screen belongs below `modal`. */
   --sb-layer-chrome: 100;
   --sb-layer-popover: 500;
   --sb-layer-modal: 1000;
