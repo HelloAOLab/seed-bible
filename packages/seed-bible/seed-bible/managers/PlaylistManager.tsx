@@ -68,6 +68,7 @@ import {
   createLinkPreviewLoader,
   LinkPreviewSchema,
 } from "./linkPreview";
+import { toShareableUrl } from "../app/publicLinks";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -3181,14 +3182,16 @@ export function createPlaylistManager(
   const getPlaylistUrl = (
     playlist: Pick<Playlist, "id" | "recordName" | "title">
   ): string =>
-    new URL(
-      `${navigation.basePath}${buildSharedPagePath({
-        kind: "playlist",
-        language: i18n.language.peek(),
-        locator: getPlaylistLocator(playlist),
-        title: playlist.title,
-      })}`,
-      navigation.currentUrl.value
+    toShareableUrl(
+      new URL(
+        `${navigation.basePath}${buildSharedPagePath({
+          kind: "playlist",
+          language: i18n.language.peek(),
+          locator: getPlaylistLocator(playlist),
+          title: playlist.title,
+        })}`,
+        navigation.currentUrl.value
+      )
     ).toString();
 
   /** The list of steps' back button: leaves the playlist. */

@@ -45,6 +45,7 @@ import { stubPageVisibility } from "../testUtils/pageVisibility";
 import { forgetPlaylistDrafts } from "../testUtils/createTestSeedBibleState";
 import { readPlaylistDraft } from "@packages/seed-bible/seed-bible/managers/PlaylistDrafts";
 import type { Mock } from "vitest";
+import { injectNativeAppConfig } from "../testUtils/nativeAppConfig";
 import type { ReaderTab } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 
 const START_MS = Date.UTC(2026, 5, 17, 13, 45, 0);
@@ -4542,6 +4543,23 @@ describe("createPlaylistManager", () => {
         "/en/playlist/user-1.playlist-1/psalms-for-hard-days"
       );
       expect(url.search).toBe("");
+    });
+
+    it("points at the public website when shared from the native apps", async () => {
+      const manager = makeManager(
+        "user-1",
+        undefined,
+        "https://localhost/en/AAB/john/3"
+      );
+      await flush();
+      const remove = injectNativeAppConfig();
+      try {
+        expect(manager.getPlaylistUrl(makePlaylist({ title: "Psalms" }))).toBe(
+          "https://seedbible.org/en/playlist/user-1.playlist-1/psalms"
+        );
+      } finally {
+        remove();
+      }
     });
 
     it("leaves the title segment off an untitled playlist", async () => {

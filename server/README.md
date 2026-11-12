@@ -49,19 +49,22 @@ All configuration is via environment variables. Defaults are applied at startup.
 
 ### Server
 
-| Variable                  | Default   | Description                                                                                                                                                      |
-| ------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`                | _(unset)_ | `production` selects the multi-branch host; anything else runs the Vite dev server.                                                                              |
-| `PORT`                    | `3002`    | Port the server listens on.                                                                                                                                      |
-| `ROOT_BRANCH`             | `main`    | Branch served for `GET /` (no `pattern`). Also the default value of `ALLOWED_SSR_BRANCHES`.                                                                      |
-| `ASSET_HOST`              | `""`      | Absolute host prepended to hashed asset URLs in rendered HTML (e.g. `https://cdn.example.com`).                                                                  |
-| `POINTER_TTL_MS`          | `10000`   | How long (ms) a branch → buildId pointer is cached before re-reading from the store.                                                                             |
-| `MODULE_CACHE_MAX`        | `20`      | Max entries in the LRU cache of pre-rendered HTML for non-SSR branches.                                                                                          |
-| `SSR_WORKERS_MAX`         | `4`       | Max builds with a live SSR worker at once (see [SSR workers](#ssr-workers)). Each costs roughly 70 MB.                                                           |
-| `SSR_RENDER_TIMEOUT_MS`   | `15000`   | Limit on loading an SSR bundle and on each render. A render that runs over falls back to the unrendered HTML.                                                    |
-| `SSR_LOAD_FAILURE_TTL_MS` | `30000`   | How long a build that failed to load is remembered. Until then, requests for it fail fast instead of each starting a new worker. `POST /__invalidate` clears it. |
-| `INVALIDATION_SECRET`     | `""`      | Shared secret required in the `x-invalidation-secret` header on `POST /__invalidate`. **When empty the endpoint is unauthenticated.**                            |
-| `SHUTDOWN_GRACE_MS`       | `5000`    | How long to wait for in-flight requests on `SIGTERM`/`SIGINT` before flushing telemetry and exiting.                                                             |
+| Variable                    | Default             | Description                                                                                                                                                                      |
+| --------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                  | _(unset)_           | `production` selects the multi-branch host; anything else runs the Vite dev server.                                                                                              |
+| `PORT`                      | `3002`              | Port the server listens on.                                                                                                                                                      |
+| `ROOT_BRANCH`               | `main`              | Branch served for `GET /` (no `pattern`). Also the default value of `ALLOWED_SSR_BRANCHES`.                                                                                      |
+| `ASSET_HOST`                | `""`                | Absolute host prepended to hashed asset URLs in rendered HTML (e.g. `https://cdn.example.com`).                                                                                  |
+| `POINTER_TTL_MS`            | `10000`             | How long (ms) a branch → buildId pointer is cached before re-reading from the store.                                                                                             |
+| `MODULE_CACHE_MAX`          | `20`                | Max entries in the LRU cache of pre-rendered HTML for non-SSR branches.                                                                                                          |
+| `SSR_WORKERS_MAX`           | `4`                 | Max builds with a live SSR worker at once (see [SSR workers](#ssr-workers)). Each costs roughly 70 MB.                                                                           |
+| `SSR_RENDER_TIMEOUT_MS`     | `15000`             | Limit on loading an SSR bundle and on each render. A render that runs over falls back to the unrendered HTML.                                                                    |
+| `SSR_LOAD_FAILURE_TTL_MS`   | `30000`             | How long a build that failed to load is remembered. Until then, requests for it fail fast instead of each starting a new worker. `POST /__invalidate` clears it.                 |
+| `INVALIDATION_SECRET`       | `""`                | Shared secret required in the `x-invalidation-secret` header on `POST /__invalidate`. **When empty the endpoint is unauthenticated.**                                            |
+| `SHUTDOWN_GRACE_MS`         | `5000`              | How long to wait for in-flight requests on `SIGTERM`/`SIGINT` before flushing telemetry and exiting.                                                                             |
+| `NATIVE_APP_ID`             | `org.seedbible.app` | Bundle id / package name of the iOS and Android apps in `mobile/`, named in the two app-link files below.                                                                        |
+| `APPLE_TEAM_ID`             | `""`                | Apple Developer team id. When set, serves `/.well-known/apple-app-site-association` so iOS opens seedbible.org links in the app.                                                 |
+| `ANDROID_CERT_FINGERPRINTS` | `""`                | Comma-separated SHA-256 fingerprints of the Android app's signing certificates. When set, serves `/.well-known/assetlinks.json` so Android opens seedbible.org links in the app. |
 
 ### SSR workers
 

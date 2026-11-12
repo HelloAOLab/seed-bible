@@ -62,6 +62,7 @@ import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
 import type { SettingsManager } from "./SettingsManager";
 import type { ScriptureChapterLoader } from "../components/PlaylistItemInlinePreview/PlaylistItemInlinePreview";
+import { toShareableUrl } from "../app/publicLinks";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -1611,7 +1612,7 @@ export function getShareUrl(readingState: BibleReadingState) {
       }
     }
   }
-  return url;
+  return toShareableUrl(url);
 }
 
 /**
