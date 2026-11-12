@@ -1,0 +1,72 @@
+/* The shared × button. Its size and colors are custom properties so a surface
+   with its own text color (a colored header, a photo) can set
+   `--sb-close-button-color` instead of overriding the rules. */
+.sb-close-button {
+  --sb-close-button-size: 2rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-close-button-icon-size: 1.25rem;
+  --sb-close-button-color: var(--sb-font-color);
+
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sb-close-button-size);
+  height: var(--sb-close-button-size);
+  padding: 0;
+  border: none;
+  border-radius: var(--sb-radius-full);
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-close-button-color), transparent 25%);
+  cursor: pointer;
+  transition:
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
+}
+
+.sb-close-button .material-symbols-outlined {
+  font-size: var(--sb-close-button-icon-size);
+}
+
+.sb-close-button-sm {
+  --sb-close-button-size: 1.75rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-close-button-icon-size: 1.125rem;
+}
+
+.sb-close-button-lg {
+  --sb-close-button-size: 2.5rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-close-button-icon-size: 1.5rem;
+}
+
+.sb-close-button-tinted {
+  background: color-mix(in srgb, var(--sb-close-button-color), transparent 91%);
+  color: var(--sb-close-button-color);
+}
+
+/* Hover only where there's a pointer, so a tap on a phone doesn't leave the
+   tint stuck on. */
+@media (hover: hover) {
+  .sb-close-button:hover:not(:disabled) {
+    background: color-mix(
+      in srgb,
+      var(--sb-close-button-color),
+      transparent 88%
+    );
+    color: var(--sb-close-button-color);
+  }
+
+  .sb-close-button-tinted:hover:not(:disabled) {
+    background: color-mix(
+      in srgb,
+      var(--sb-close-button-color),
+      transparent 84%
+    );
+  }
+}
+
+.sb-close-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
