@@ -47,6 +47,7 @@ import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { MOBILE_BREAKPOINT } from "../../managers/SeedBibleStateManager";
 import { SearchBar as SearchField } from "../SearchBar/SearchBar";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 /**
  * CSS-only spotlight: the huge translucent box-shadow dims everything around
@@ -377,16 +378,13 @@ const SearchBar = (props: {
           )}
           {isMobile.value && (
             <>
-              <button
-                class="sb-selector-mobile-close"
-                onClick={() => {
+              <CloseButton
+                size="lg"
+                onClose={() => {
                   setOpen(false);
                   selectingTranslation.value = false;
                 }}
-                aria-label={t("close", { defaultValue: "Close" })}
-              >
-                <span class="material-symbols-outlined">close</span>
-              </button>
+              />
               <span class="sb-bible-reader-mobile-header-title">
                 {t("books", { defaultValue: "Books" })}
               </span>
@@ -1963,17 +1961,12 @@ const ApocryphaInfo = (props: { bibleSelectorState: BibleSelectorState }) => {
               })}
             </h2>
 
-            <button
-              type="button"
-              class="sb-apocrypha-info-close"
-              aria-label={t("close", { defaultValue: "Close" })}
-              onClick={(event) => {
+            <CloseButton
+              onClose={(event) => {
                 event.stopPropagation();
                 showApocryphaInfo.value = false;
               }}
-            >
-              <span class="material-symbols-outlined">close</span>
-            </button>
+            />
           </div>
 
           <div class="sb-apocrypha-info-content">

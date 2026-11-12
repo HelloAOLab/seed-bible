@@ -85,28 +85,7 @@
 }
 
 .sb-shared-toast-dismiss {
-  width: 1.75rem;
-  padding: 0;
-  border: none;
-  border-radius: var(--sb-radius-md);
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    background-color var(--sb-duration-fast) ease,
-    color var(--sb-duration-fast) ease;
-}
-
-.sb-shared-toast-dismiss:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  color: var(--sb-font-color);
-}
-
-.sb-shared-toast-dismiss .material-symbols-outlined {
-  font-size: 1.125rem;
+  align-self: center;
 }
 
 .sb-shared-toast .sb-tab-user-icon {

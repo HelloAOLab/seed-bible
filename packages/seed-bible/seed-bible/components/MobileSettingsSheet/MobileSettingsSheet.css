@@ -65,17 +65,6 @@
   font-weight: 600;
 }
 
-.sb-mobile-settings-sheet-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: inherit;
-  padding: 0.25rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .sb-mobile-settings-sheet-section-label {
   font-size: var(--sb-font-size-14);
   font-weight: 500;
