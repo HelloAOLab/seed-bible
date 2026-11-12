@@ -688,7 +688,88 @@ export type SandboxDiscoverResult =
       reference: SandboxReference;
       /** Plain text, up to 5,000 characters. */
       text: string;
-    };
+    }
+  | SandboxDiscoverMetadata
+  | SandboxDiscoverVideo
+  | SandboxDiscoverWebsite;
+
+/** What a `metadata` result describes; each kind gets its own section. */
+export type SandboxDiscoverMetadataKind =
+  | "person"
+  | "place"
+  | "event"
+  | "group"
+  | "object"
+  | "topic";
+
+/** A label and value shown on a `metadata` card, like `"Born"`, `"c. 1000 BC"`. */
+export interface SandboxDiscoverFact {
+  /** Up to 50 characters. */
+  label: string;
+  /** Up to 200 characters. */
+  value: string;
+}
+
+/**
+ * Something the passage mentions — a person, place, event and so on —
+ * shown as a card in that kind's section.
+ */
+export interface SandboxDiscoverMetadata {
+  type: "metadata";
+  /** Passed back to `onSelect` when the user picks it. */
+  id: string;
+  kind: SandboxDiscoverMetadataKind;
+  /** Up to 200 characters. */
+  name: string;
+  /** Up to 2,000 characters. */
+  description?: string;
+  /** The passage it appears in. */
+  reference: SandboxReference;
+  /** The verses it appears in, if not the whole reference. */
+  verses?: number[];
+  /** Other names it goes by; up to 10, each up to 100 characters. */
+  aliases?: string[];
+  /** Up to 20. */
+  facts?: SandboxDiscoverFact[];
+  /** An `https:` image on one of the manifest's `network` hosts. */
+  image?: string;
+}
+
+/** A video about the passage. Selecting it opens `url` in a new browser tab. */
+export interface SandboxDiscoverVideo {
+  type: "video";
+  /** Up to 200 characters. */
+  title: string;
+  /** Up to 2,000 characters. */
+  description?: string;
+  reference: SandboxReference;
+  verses?: number[];
+  /** An `https:` link; any host. */
+  url: string;
+  /** An `https:` image on one of the manifest's `network` hosts. */
+  thumbnail?: string;
+  /** How long the video runs, in seconds. */
+  durationSeconds?: number;
+  /** Who made it, e.g. a channel name. Up to 100 characters. */
+  author?: string;
+}
+
+/** A web page about the passage. Selecting it opens `url` in a new browser tab. */
+export interface SandboxDiscoverWebsite {
+  type: "website";
+  /** Up to 200 characters. */
+  title: string;
+  /** Up to 2,000 characters. */
+  description?: string;
+  reference: SandboxReference;
+  verses?: number[];
+  /** An `https:` link; any host. */
+  url: string;
+  /** An `https:` image on one of the manifest's `network` hosts. */
+  image?: string;
+  /** Who published it. Up to 100 characters. */
+  author?: string;
+}
 
 /** What a Discover provider's `discover` is asked about: the open chapter. */
 export interface SandboxDiscoverRequest {

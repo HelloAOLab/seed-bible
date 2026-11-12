@@ -77,8 +77,13 @@ export type {
   SandboxTranslation,
   SandboxChatMessage,
   SandboxChatRequest,
+  SandboxDiscoverFact,
+  SandboxDiscoverMetadata,
+  SandboxDiscoverMetadataKind,
   SandboxDiscoverRequest,
   SandboxDiscoverResult,
+  SandboxDiscoverVideo,
+  SandboxDiscoverWebsite,
   SandboxCasualOSPattern,
   SandboxFriend,
   SandboxHighlight,
@@ -727,8 +732,9 @@ export interface SandboxContext {
         request: SandboxDiscoverRequest
       ) => SandboxDiscoverResult[] | Promise<SandboxDiscoverResult[]>;
       /**
-       * Called with a `content` result's `id` when the user picks it. Not a
-       * user interaction, so open a pane from it rather than a dialog.
+       * Called with a `content` or `metadata` result's `id` when the user
+       * picks it. Not a user interaction, so open a pane from it rather than
+       * a dialog. (`video` and `website` results open their link instead.)
        */
       onSelect?: (resultId: string) => void;
     }) => Promise<{ unregister: () => Promise<void> }>;

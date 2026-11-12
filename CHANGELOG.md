@@ -13,6 +13,7 @@
   - On desktop, open the participant list right inside the session's tab. It stays open or closed the way you left it on that device.
   - Hosts can ask someone reading elsewhere to come back. They get a request above the toolbar with Not now and Rejoin group, and the host can ask again after 30 seconds.
 - Let Custom Branding replace the Books, Search, Today, Share, Chat and Discover icons with its own SVGs, drawn in the theme's icon color.
+- Let third-party extensions suggest people, places, events and other details, videos and websites for a chapter in the Discover panel, shown in their own sections. Theographic's people, places and events share these sections, so each appears once even with several providers installed.
 
 ### 🔧 Changed
 

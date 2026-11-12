@@ -27,6 +27,12 @@ import type { FriendsManager } from "./FriendsManager";
 import type { SearchManager } from "./SearchManager";
 import type { AppState } from "./SeedBibleStateManager";
 import {
+  httpsUrl,
+  LinkDetails,
+  MetadataDetails,
+} from "./ExtensionDiscoverKinds";
+import { SHARED_CONTENT_TYPES } from "./DiscoverSharedContentTypes";
+import {
   createSandboxAudio,
   SandboxAudioError,
   type SandboxAudioContext,
@@ -85,7 +91,10 @@ export interface SandboxServicesContext {
   bibleData: SandboxBibleData &
     Pick<SandboxAudioContext["bibleData"], "getAudioTimings">;
   search: Pick<SearchManager, "searchVerses">;
-  discover: Pick<DiscoverManager, "registerDiscoverProvider">;
+  discover: Pick<
+    DiscoverManager,
+    "registerDiscoverProvider" | "retainSharedContentTypes"
+  >;
   chats: Pick<ChatsManager, "registerProvider" | "chats">;
   modals: Pick<ModalManager, "openModal" | "closeModal">;
   extensions: {
@@ -182,6 +191,15 @@ const referenceSchema = z.object({
   endChapter: chapterSchema.optional(),
   endVerse: verseSchema.optional(),
 });
+/** What `video` and `website` results have in common. */
+const linkResultShape = {
+  title: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+  reference: referenceSchema,
+  verses: z.array(verseSchema).max(200).optional(),
+  url: z.string().min(1).max(2000),
+  author: z.string().max(100).optional(),
+};
 const discoverResultsSchema = z
   .array(
     z.discriminatedUnion("type", [
@@ -204,6 +222,37 @@ const discoverResultsSchema = z
         type: z.literal("study-note"),
         reference: referenceSchema,
         text: z.string().min(1).max(5000),
+      }),
+      z.object({
+        type: z.literal("metadata"),
+        id: z.string().min(1).max(200),
+        kind: z.enum(["person", "place", "event", "group", "object", "topic"]),
+        name: z.string().min(1).max(200),
+        description: z.string().max(2000).optional(),
+        reference: referenceSchema,
+        verses: z.array(verseSchema).max(200).optional(),
+        aliases: z.array(z.string().min(1).max(100)).max(10).optional(),
+        facts: z
+          .array(
+            z.object({
+              label: z.string().min(1).max(50),
+              value: z.string().min(1).max(200),
+            })
+          )
+          .max(20)
+          .optional(),
+        image: z.string().max(2000).optional(),
+      }),
+      z.object({
+        type: z.literal("video"),
+        ...linkResultShape,
+        thumbnail: z.string().max(2000).optional(),
+        durationSeconds: z.number().min(0).max(1_000_000).optional(),
+      }),
+      z.object({
+        type: z.literal("website"),
+        ...linkResultShape,
+        image: z.string().max(2000).optional(),
       }),
     ])
   )
@@ -704,10 +753,19 @@ export function createSandboxServices(
     }
   };
 
+  const selectResult = (providerId: string, resultId: string) => () =>
+    session.sendToBackground({
+      type: "event",
+      name: "discover.select",
+      providerId,
+      resultId,
+    });
+
+  /** Null when the result can't be shown, like a link that isn't `https:`. */
   const toDiscoverResult = (
     providerId: string,
     result: SandboxDiscoverResult
-  ): DiscoverResult => {
+  ): DiscoverResult | null => {
     switch (result.type) {
       case "content":
         return {
@@ -718,13 +776,7 @@ export function createSandboxServices(
           verses: result.verses,
           author: result.author ?? extensionTitle,
           image: allowedImage(result.image),
-          onClick: () =>
-            session.sendToBackground({
-              type: "event",
-              name: "discover.select",
-              providerId,
-              resultId: result.id,
-            }),
+          onClick: selectResult(providerId, result.id),
         };
       case "cross-reference":
         return {
@@ -738,6 +790,51 @@ export function createSandboxServices(
           reference: toDiscoverReference(result.reference),
           content: <p>{result.text}</p>,
         };
+      case "metadata":
+        return {
+          type: "content",
+          contentType: SHARED_CONTENT_TYPES[result.kind],
+          title: result.name,
+          description: result.description ?? "",
+          reference: toDiscoverReference(result.reference),
+          verses: result.verses,
+          author: extensionTitle,
+          image: allowedImage(result.image),
+          content: (
+            <MetadataDetails aliases={result.aliases} facts={result.facts} />
+          ),
+          onClick: selectResult(providerId, result.id),
+        };
+      case "video":
+      case "website": {
+        const url = httpsUrl(result.url);
+        if (!url) {
+          return null;
+        }
+        const isVideo = result.type === "video";
+        return {
+          type: "content",
+          contentType: isVideo
+            ? SHARED_CONTENT_TYPES.video
+            : SHARED_CONTENT_TYPES.website,
+          title: result.title,
+          description: result.description ?? "",
+          reference: toDiscoverReference(result.reference),
+          verses: result.verses,
+          author: result.author ?? extensionTitle,
+          image: allowedImage(isVideo ? result.thumbnail : result.image),
+          content: (
+            <LinkDetails
+              url={url}
+              author={result.author}
+              durationSeconds={isVideo ? result.durationSeconds : undefined}
+            />
+          ),
+          onClick: () => {
+            window.open(url.href, "_blank", "noopener,noreferrer");
+          },
+        };
+      }
     }
   };
 
@@ -920,42 +1017,46 @@ export function createSandboxServices(
     "discover.register": (params) => {
       const { id, title, description } = params as Params<"discover.register">;
       discoverProviders.get(id)?.();
-      discoverProviders.set(
-        id,
-        context.discover.registerDiscoverProvider({
-          id: scopedId(id),
-          title,
-          description,
-          discover: async (discoverContext) => {
-            // Checked again here: the permission may have been revoked.
-            if (!has("reading:position")) {
-              return [];
-            }
-            try {
-              const results = discoverResultsSchema.parse(
-                await session.requestFromBackground(
-                  "discover",
-                  {
-                    providerId: id,
-                    translationId: discoverContext.translationId,
-                    bookId: discoverContext.book,
-                    chapter: discoverContext.chapter,
-                    language: discoverContext.language,
-                  },
-                  DISCOVER_TIMEOUT_MS
-                )
-              );
-              return results.map((result) => toDiscoverResult(id, result));
-            } catch (err) {
-              console.warn(
-                `Extension '${extensionId}' Discover provider '${id}' failed:`,
-                err
-              );
-              return [];
-            }
-          },
-        })
-      );
+      const releaseContentTypes = context.discover.retainSharedContentTypes();
+      const unregisterProvider = context.discover.registerDiscoverProvider({
+        id: scopedId(id),
+        title,
+        description,
+        discover: async (discoverContext) => {
+          // Checked again here: the permission may have been revoked.
+          if (!has("reading:position")) {
+            return [];
+          }
+          try {
+            const results = discoverResultsSchema.parse(
+              await session.requestFromBackground(
+                "discover",
+                {
+                  providerId: id,
+                  translationId: discoverContext.translationId,
+                  bookId: discoverContext.book,
+                  chapter: discoverContext.chapter,
+                  language: discoverContext.language,
+                },
+                DISCOVER_TIMEOUT_MS
+              )
+            );
+            return results.flatMap(
+              (result) => toDiscoverResult(id, result) ?? []
+            );
+          } catch (err) {
+            console.warn(
+              `Extension '${extensionId}' Discover provider '${id}' failed:`,
+              err
+            );
+            return [];
+          }
+        },
+      });
+      discoverProviders.set(id, () => {
+        unregisterProvider();
+        releaseContentTypes();
+      });
       return null;
     },
 
