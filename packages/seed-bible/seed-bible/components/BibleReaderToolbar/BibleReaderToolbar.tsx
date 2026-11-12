@@ -90,6 +90,7 @@ import {
   LazyColorPicker,
   preloadColorPicker,
 } from "../ColorPicker/LazyColorPicker";
+import { IconButton } from "../IconButton/IconButton";
 
 /** Shared always-true visibility for Chat when `?chatFirst=true`. */
 const CHAT_FIRST_VISIBLE = signal(true);
@@ -3599,9 +3600,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               >
                 <div className="sb-verse-toolbar-handle" />
               </div>
-              <button
-                type="button"
+              <IconButton
+                look="tinted"
                 className="sb-verse-toolbar-close"
+                icon={isHighlightPickerOpen.value ? "arrow_back" : "close"}
+                label={
+                  isHighlightPickerOpen.value
+                    ? t("back", { defaultValue: "Back" })
+                    : t("close", { defaultValue: "Close" })
+                }
                 onClick={() => {
                   // In highlight-picker mode, close just leaves the picker so the
                   // user can return to verse actions without losing the selection.
@@ -3611,21 +3618,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   }
                   selectionState.value?.clearSelectedVerses();
                 }}
-                aria-label={
-                  isHighlightPickerOpen.value
-                    ? t("back", { defaultValue: "Back" })
-                    : t("close", { defaultValue: "Close" })
-                }
-                title={
-                  isHighlightPickerOpen.value
-                    ? t("back", { defaultValue: "Back" })
-                    : t("close", { defaultValue: "Close" })
-                }
-              >
-                <span className="material-symbols-outlined">
-                  {isHighlightPickerOpen.value ? "arrow_back" : "close"}
-                </span>
-              </button>
+              />
             </>
           )}
           {(isHighlightPickerOpen.value || isSmallScreen.value) && (
@@ -3639,19 +3632,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               {/* Desktop keeps a back chevron next to the reference; mobile
                   matches YouVersion with a centered title only. */}
               {isHighlightPickerOpen.value && !isSmallScreen.value && (
-                <button
-                  type="button"
+                <IconButton
+                  size="sm"
                   className="sb-verse-toolbar-back"
+                  icon="chevron_left"
+                  label={t("back", { defaultValue: "Back" })}
                   onClick={() => {
                     isHighlightPickerOpen.value = false;
                   }}
-                  aria-label={t("back", { defaultValue: "Back" })}
-                  title={t("back", { defaultValue: "Back" })}
-                >
-                  <span className="material-symbols-outlined">
-                    chevron_left
-                  </span>
-                </button>
+                />
               )}
               <span
                 className="sb-verse-toolbar-ref-text"

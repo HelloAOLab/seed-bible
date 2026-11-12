@@ -1,6 +1,10 @@
 import "./QuickToolbar.inline.css";
 import "./QuickToolbar.css";
-import { type ToolsManager } from "../../managers/BibleToolsManager";
+import {
+  CURRENT_PLAYLIST_TOOL_ID,
+  type ToolsManager,
+} from "../../managers/BibleToolsManager";
+import { IconButton } from "../IconButton/IconButton";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
@@ -85,35 +89,44 @@ export function QuickToolbar(props: QuickToolbarProps) {
         const menuItems =
           tool.getItems?.().filter((item) => item.visible.value) ?? [];
         const hasMenuItems = menuItems.length > 0;
+        const onSelect = () => {
+          if (hasMenuItems) {
+            setSelectedToolId((prev) => (prev === tool.id ? null : tool.id));
+            return;
+          }
+
+          setSelectedToolId(null);
+          tool.onSelect();
+        };
         return (
           <div
             key={tool.id}
             className={`sb-quick-toolbar-item${tool.className ? ` ${tool.className}` : ""}`}
           >
-            <button
-              type="button"
-              disabled={tool.disabled.value}
-              onClick={() => {
-                if (hasMenuItems) {
-                  setSelectedToolId((prev) =>
-                    prev === tool.id ? null : tool.id
-                  );
-                  return;
-                }
-
-                setSelectedToolId(null);
-                tool.onSelect();
-              }}
-              className="sb-quick-toolbar-button"
-              aria-label={title}
-              aria-pressed={
-                hasMenuItems ? selectedToolId === tool.id : undefined
-              }
-              title={title}
-            >
-              <ToolIcon />
-              <span className="sr-only">{title}</span>
-            </button>
+            {/* "Now playing" is a small card with the playlist's title, not
+                an icon, so it keeps a plain button sized to fit it. */}
+            {tool.id === CURRENT_PLAYLIST_TOOL_ID ? (
+              <button
+                type="button"
+                disabled={tool.disabled.value}
+                onClick={onSelect}
+                className="sb-quick-toolbar-now-playing"
+                aria-label={title}
+                title={title}
+              >
+                <ToolIcon />
+                <span className="sr-only">{title}</span>
+              </button>
+            ) : (
+              <IconButton
+                icon={<ToolIcon />}
+                label={title}
+                pressed={hasMenuItems ? selectedToolId === tool.id : undefined}
+                disabled={tool.disabled.value}
+                onClick={onSelect}
+                className="sb-quick-toolbar-button"
+              />
+            )}
             {hasMenuItems && selectedToolId === tool.id && (
               <div
                 className="sb-tool-context-menu"

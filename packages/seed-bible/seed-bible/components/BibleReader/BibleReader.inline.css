@@ -19,24 +19,71 @@
   color: var(--sb-primary-color);
 }
 
-.sb-bible-reader-bookmark-button,
-.sb-bible-reader-save-button {
-  position: relative;
-  width: 2.25rem;
-  height: 2.25rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: var(--sb-radius-md);
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
-  cursor: pointer;
-  transition:
-    color var(--sb-duration-fast) ease,
-    background-color var(--sb-duration-fast) ease;
+/* The reader header's icons (save, bookmark, the quick tools, and the phone
+   header's back and settings) rest dimmed, so they don't compete with the
+   text, and come to full color on hover or keyboard focus. Two classes, to
+   outrank IconButton's own color. */
+.sb-icon-button:is(
+    .sb-bible-reader-bookmark-button,
+    .sb-bible-reader-save-button,
+    .sb-quick-toolbar-button,
+    .sb-bible-reader-mobile-header-back,
+    .sb-bible-reader-mobile-header-settings
+  ):not(.sb-icon-button-pressed) {
+  color: color-mix(in srgb, var(--sb-icon-button-color), transparent 45%);
+}
+
+.sb-icon-button:is(
+    .sb-bible-reader-bookmark-button,
+    .sb-bible-reader-save-button,
+    .sb-quick-toolbar-button,
+    .sb-bible-reader-mobile-header-back,
+    .sb-bible-reader-mobile-header-settings
+  ):focus-visible {
+  color: var(--sb-icon-button-color);
+}
+
+@media (hover: hover) {
+  .sb-icon-button:is(
+      .sb-bible-reader-bookmark-button,
+      .sb-bible-reader-save-button,
+      .sb-quick-toolbar-button,
+      .sb-bible-reader-mobile-header-back,
+      .sb-bible-reader-mobile-header-settings
+    ):hover:not(:disabled) {
+    color: var(--sb-icon-button-color);
+  }
+}
+
+/* Above the chapter heading they sit beside. */
+.sb-icon-button:is(
+  .sb-bible-reader-bookmark-button,
+  .sb-bible-reader-save-button
+) {
   z-index: 1;
 }
+
+/* Their icons are drawn shapes rather than icon-font glyphs, so each keeps
+   the size it was drawn at instead of IconButton's 20px. */
+.sb-icon-button:is(
+  .sb-bible-reader-bookmark-button,
+  .sb-bible-reader-save-button,
+  .sb-bible-reader-mobile-header-back
+) {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.375rem;
+}
+
+.sb-icon-button.sb-quick-toolbar-button {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.5rem;
+}
+
+.sb-icon-button.sb-bible-reader-mobile-header-settings {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1rem;
+}
+
 .sb-verse-number-flare {
   --sb-selection-flare-background: color-mix(
     in srgb,
@@ -109,29 +156,11 @@
   }
 }
 
-.sb-bible-reader-bookmark-button:hover,
-.sb-bible-reader-save-button:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  color: var(--sb-font-color);
-}
-
-.sb-bible-reader-bookmark-button:disabled,
-.sb-bible-reader-save-button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.sb-bible-reader-bookmark-button svg,
-.sb-bible-reader-save-button svg {
-  width: 1.375rem; /* 22px */
-  height: 1.375rem;
-}
-
 /* A filled star already reads as "saved"; the tint is what keeps it legible
  * against the outlined bookmark sitting next to it. */
-.sb-bible-reader-save-button-saved,
-.sb-bible-reader-save-button-saved:hover {
-  color: var(--sb-primary-color);
+.sb-icon-button.sb-icon-button.sb-bible-reader-save-button-saved {
+  --sb-icon-button-color: var(--sb-primary-color);
+  color: var(--sb-icon-button-color);
 }
 
 /* The rule above is the phone reader's tight 1% margin, which a compact embed
@@ -408,72 +437,17 @@
   margin-inline-start: auto;
 }
 
-.sb-bible-reader-mobile-header .sb-bible-reader-bookmark-button,
-.sb-bible-reader-mobile-header .sb-bible-reader-save-button {
-  position: static;
-  flex-shrink: 0;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-}
-
-/* Match the 2rem circular header buttons (save, bookmark, account, settings)
- * rather than the desktop quick-toolbar's 2.25rem size. */
-.sb-bible-reader-mobile-header .sb-quick-toolbar-button {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-}
-
-.sb-bible-reader-mobile-header-back,
-.sb-bible-reader-mobile-header-settings {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  /* Same dimmed color as the save, bookmark and share buttons beside it. */
-  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
-  cursor: pointer;
-  padding: 0;
-  margin-inline-start: 0;
-}
-
-.sb-bible-reader-mobile-header-back:active,
-.sb-bible-reader-mobile-header-settings:active {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  color: var(--sb-font-color);
-}
-
-.sb-bible-reader-mobile-header-back .material-symbols-outlined {
-  font-size: 1.375rem;
-}
-
-.sb-bible-reader-mobile-header-open-tab {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  border: none;
-  background: var(--sb-reader-floating-nav-play-background);
-  color: var(--sb-reader-floating-nav-play-glyph);
-  cursor: pointer;
-  padding: 0;
-}
-
-.sb-bible-reader-mobile-header-open-tab:active {
-  filter: brightness(0.95);
-}
-
-.sb-bible-reader-mobile-header-open-tab .material-symbols-outlined {
-  font-size: 1.125rem;
+/* Drawn like the floating nav's play button, in the theme's colors for it. */
+.sb-icon-button.sb-bible-reader-mobile-header-open-tab {
+  --sb-icon-button-color: var(--sb-reader-floating-nav-play-glyph);
+  --sb-icon-button-background: var(--sb-reader-floating-nav-play-background);
+  --sb-icon-button-hover-background: color-mix(
+    in srgb,
+    var(--sb-reader-floating-nav-play-background),
+    #000 5%
+  );
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.125rem;
 }
 
 .sb-bible-reader-mobile-header-notes {
@@ -1019,72 +993,6 @@
   margin-top: 0.75rem;
 }
 
-.sb-reader-error-retry,
-.sb-reader-error-switch {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border: none;
-  border-radius: var(--sb-radius-md);
-  padding: 0.625rem 1.5rem;
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    transform 0.1s ease,
-    background-color var(--sb-duration-base) ease;
-}
-
-.sb-reader-error-retry {
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-}
-
-.sb-reader-error-retry:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), black 6%);
-}
-
-.sb-reader-error-retry:active {
-  transform: translateY(1px);
-}
-
-.sb-reader-error-retry:disabled {
-  opacity: 0.75;
-  cursor: default;
-}
-
-.sb-reader-error-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 75%);
-  border-radius: var(--sb-radius-md);
-  padding: 0.5rem 1.25rem;
-  background: transparent;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-reader-error-action .material-symbols-outlined {
-  font-size: 1.125rem;
-  line-height: 1;
-}
-
-.sb-reader-error-action:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-}
-
-.sb-reader-error-action:disabled {
-  opacity: 0.75;
-  cursor: default;
-}
-
 .sb-reader-error-hint {
   margin: 0.5rem 0 0;
   max-width: 26rem;
@@ -1098,20 +1006,6 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-}
-
-.sb-reader-error-switch {
-  background: transparent;
-  color: var(--sb-font-color);
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
-}
-
-.sb-reader-error-switch:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-}
-
-.sb-reader-error-switch:active {
-  transform: translateY(1px);
 }
 
 .sb-reader-error-offline-pick {
@@ -1158,24 +1052,7 @@
 }
 
 .sb-reader-not-found-action {
-  appearance: none;
-  border: 1px solid transparent;
-  border-radius: var(--sb-radius-lg);
-  padding: 0.75rem 1.5rem;
-  font-family: var(--sb-font-family);
-  font-size: 1em;
-  font-weight: 600;
-  cursor: pointer;
   margin-top: 0.5rem;
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-  transition:
-    filter var(--sb-duration-fast) ease,
-    background var(--sb-duration-fast) ease;
-}
-
-.sb-reader-not-found-action:hover {
-  filter: brightness(0.96);
 }
 
 /* The chapter the reader has navigated away from, still on screen while the one

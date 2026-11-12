@@ -5975,7 +5975,7 @@ describe("BibleReader", () => {
     expect(buttons.at(-1)?.className).toBe(
       "sb-bible-reader-mobile-header-translation"
     );
-    expect(buttons.at(-2)?.className).toBe(
+    expect(buttons.at(-2)?.classList).toContain(
       "sb-bible-reader-mobile-header-settings"
     );
   });
