@@ -723,10 +723,11 @@ button.sb-cz-logo:disabled {
 }
 
 /* Floats beside the desktop side pane while the inline preview is scrolled
-   out of view. Kept below popovers and modals (999+). */
+   out of view. Above floating panes and the sidebar, which it sits over, but
+   below pop-overs (and the click-catchers just under them) and modals. */
 .sb-cz-floating-preview {
   position: fixed;
-  z-index: calc(var(--sb-layer-chrome) + 2);
+  z-index: calc(var(--sb-layer-popover) - 10);
   padding: 0.5rem;
   border-radius: var(--sb-radius-xl);
   background: var(--sb-reader-background);
