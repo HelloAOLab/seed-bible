@@ -245,7 +245,7 @@ export interface SandboxVerseRef {
 
 /** App state the host keeps every frame up to date with. */
 export interface SandboxState {
-  /** `--sb-*` CSS declarations for the active theme. */
+  /** `--sb-*` CSS declarations: the shared size scale, then the active theme. */
   themeCss: string;
   language: string;
   direction: "ltr" | "rtl";

@@ -11,15 +11,15 @@ export interface SharedPageModalAction {
 }
 
 /**
- * What a shared playlist or reading plan link opens on: its cover, author,
- * description and length, with the ways to begin it and a Close that goes
- * home. The title is the modal's own header.
+ * What a shared reading plan link opens on: its cover, author, description
+ * and length, with the ways to begin it and a Close that goes home. The title
+ * is the modal's own header. (A playlist link opens on `PlaylistPagePane`.)
  */
 export function SharedPageModalContent(props: {
   heroImageUrl: string | null | undefined;
   authorName: string | null;
   description: string | null;
-  /** How long it is, e.g. "3 items" or "12 sessions · About 8 min per session". */
+  /** How long it is, e.g. "12 sessions · About 8 min per session". */
   lengthLabel: string;
   /** Where the visitor already is in it, e.g. "You're on day 5". */
   status?: string | null;

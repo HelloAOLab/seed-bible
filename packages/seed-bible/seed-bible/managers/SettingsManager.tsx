@@ -994,9 +994,10 @@ export function createSettings(
   };
 
   // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`
-  // (see app/styles/base.css). Chrome sized in `rem` tracks this; reader text keeps its
-  // own font-size knob (`.sb-bible-reader` carries `.sb-font-size-*`), so it
-  // stays independent without the old root-`zoom` + counter-zoom hack.
+  // (see app/styles/base.inline.css). Chrome sized in `rem` tracks this; reader
+  // text keeps its own font-size knob (`.sb-bible-reader` carries
+  // `.sb-reader-font-size-*`), so it stays independent without the old
+  // root-`zoom` + counter-zoom hack.
   const skipUiScaleWrite = skipFirstWriteAfterEarlyConfig();
   effect(() => {
     if (typeof document === "undefined") {
@@ -1024,8 +1025,8 @@ export function createSettings(
   });
 
   // The early-config script sizes the reader through a CSS rule keyed on
-  // `EARLY_CONFIG_ATTR` instead of the `.sb-font-size-*` class (which doesn't
-  // exist yet); once the real settings are in, the class takes over again.
+  // `EARLY_CONFIG_ATTR` instead of the `.sb-reader-font-size-*` class (which
+  // doesn't exist yet); once the real settings are in, the class takes over again.
   const skipFontSizeWrite = skipFirstWriteAfterEarlyConfig();
   effect(() => {
     if (typeof document === "undefined") return;

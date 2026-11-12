@@ -10,15 +10,15 @@
   width: 100%;
   box-sizing: border-box;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.75rem 1rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-family: inherit;
   cursor: pointer;
   text-align: left;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--sb-duration-base) ease;
 }
 
 .sb-language-picker-button:hover {
@@ -38,7 +38,7 @@
 .sb-language-picker-overlay {
   position: fixed;
   inset: 0;
-  z-index: 99;
+  z-index: calc(var(--sb-layer-popover) - 1);
 }
 
 .sb-language-picker-menu {
@@ -46,16 +46,18 @@
   right: 0;
   left: 0;
   top: calc(100% + 0.25rem);
-  z-index: 100;
+  z-index: var(--sb-layer-popover);
   min-width: 13.75rem;
   max-height: 20rem;
   overflow-y: auto;
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.625rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  padding: 0.25rem;
+  border-radius: var(--sb-radius-md);
+  box-shadow: var(--sb-shadow-popover);
+  /* No top padding: the search row supplies it, so the sticky row starts
+     flush with the top edge and options can't scroll through a gap above it. */
+  padding: 0 0.25rem 0.25rem;
 }
 
 .sb-language-picker-search {
@@ -64,7 +66,7 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.375rem 0.5rem;
+  padding: 0.625rem 0.5rem 0.375rem;
   margin-bottom: 0.25rem;
   background: var(--sb-menu-background);
   border-bottom: 1px solid var(--sb-divider-color);
@@ -84,7 +86,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   padding: 0.25rem 0;
 }
 
@@ -94,7 +96,7 @@
 
 .sb-language-picker-empty {
   padding: 0.75rem 0.625rem;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   text-align: center;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
@@ -106,10 +108,10 @@
   width: 100%;
   padding: 0.5rem 0.625rem;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-family: inherit;
   cursor: pointer;
   text-align: left;
@@ -126,7 +128,6 @@
 
 @media (max-width: 480px) {
   .sb-language-picker-overlay {
-    z-index: 9998;
     background: rgba(0, 0, 0, 0.3);
   }
 
@@ -136,7 +137,6 @@
     right: 0.75rem;
     top: auto;
     bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
-    z-index: 9999;
     min-width: 0;
     max-height: min(50dvh, 22.5rem);
   }

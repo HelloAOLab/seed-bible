@@ -44,7 +44,7 @@
 
 .sb-compare-empty-title {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
 }
@@ -52,7 +52,7 @@
 .sb-compare-empty-hint {
   margin: 0;
   max-width: 22rem;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
@@ -69,7 +69,7 @@
   gap: 6px;
   padding: 10px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
 }
 
 /* Abbreviation on the left, full translation name on the right. */
@@ -89,7 +89,7 @@
 .sb-compare-block-header--switch {
   border-top: none;
   border-inline: none;
-  border-radius: 4px 4px 0 0;
+  border-radius: var(--sb-radius-xs) var(--sb-radius-xs) 0 0;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -109,7 +109,7 @@
 
 .sb-compare-block-abbreviation {
   flex: 0 0 auto;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -121,7 +121,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
@@ -133,12 +133,12 @@
 
 .sb-compare-block-text {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   line-height: 1.6;
 }
 
 .sb-compare-verse-number {
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 700;
   vertical-align: super;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
@@ -146,7 +146,7 @@
 
 .sb-compare-block-message {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
@@ -154,10 +154,10 @@
   align-self: flex-start;
   padding: 4px 10px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   cursor: pointer;
 }
 
@@ -180,10 +180,10 @@
   width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--sb-primary-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-primary-color);
   color: var(--sb-background);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   cursor: pointer;
 }
 
@@ -224,7 +224,7 @@
 .sb-compare-title {
   flex: 0 0 auto;
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
 }
 
@@ -234,7 +234,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
@@ -261,7 +261,7 @@
   justify-content: center;
   padding: 4px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
   cursor: pointer;
@@ -307,7 +307,7 @@
 
 .sb-compare-picker-note {
   flex: 0 0 auto;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
@@ -345,7 +345,7 @@
   gap: 4px;
   padding: 4px 8px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
@@ -388,7 +388,7 @@
   justify-content: center;
   padding: 6px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
@@ -412,9 +412,9 @@
   min-width: 12.5rem;
   padding: 0.3125rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-menu-background, var(--sb-background));
-  box-shadow: 0 4px 12px var(--sb-shadow-color);
+  box-shadow: var(--sb-shadow-popover);
 }
 
 /* The shared list has a fixed height suited to the reader's modal; in the pane
@@ -434,10 +434,10 @@
   width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--sb-primary-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-primary-color);
   color: var(--sb-background);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   cursor: pointer;
 }
 

@@ -2,9 +2,12 @@ import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 
 interface DragState {
   pointerId: number;
-  fromIndex: number;
-  rowHeight: number;
-  lastClientY: number;
+  /** Where the dragged row started, and where it is now. */
+  startIndex: number;
+  index: number;
+  /** From one row's top to the next one's: a row's height and the gap. */
+  rowPitch: number;
+  startClientY: number;
 }
 
 interface UseDragReorderOptions {
@@ -39,24 +42,21 @@ export function useDragReorder(options: UseDragReorderOptions) {
       if (!drag || drag.pointerId !== event.pointerId) {
         return;
       }
-      const deltaY = event.clientY - drag.lastClientY;
-      const offset = Math.round(deltaY / drag.rowHeight);
-      if (offset === 0) {
-        return;
-      }
+      // Measured from where the drag began, so the row stays under the
+      // pointer: each move shifts the row a whole row, which counting from
+      // the last move's pointer would add on top of the pointer's own way.
+      const offset = Math.round(
+        (event.clientY - drag.startClientY) / drag.rowPitch
+      );
       const target = Math.max(
         0,
-        Math.min(drag.fromIndex + offset, itemCountRef.current - 1)
+        Math.min(drag.startIndex + offset, itemCountRef.current - 1)
       );
-      if (target === drag.fromIndex) {
+      if (target === drag.index) {
         return;
       }
-      onReorder(drag.fromIndex, target);
-      dragStateRef.current = {
-        ...drag,
-        fromIndex: target,
-        lastClientY: event.clientY,
-      };
+      onReorder(drag.index, target);
+      dragStateRef.current = { ...drag, index: target };
       setDraggingIndex(target);
     };
 
@@ -82,15 +82,29 @@ export function useDragReorder(options: UseDragReorderOptions) {
   const startDrag = useCallback((index: number, event: PointerEvent) => {
     event.stopPropagation();
     const row = (event.currentTarget as HTMLElement | null)?.closest("li");
-    const rowHeight = row?.offsetHeight;
-    if (!rowHeight) {
+    if (!row) {
+      return;
+    }
+    // The distance to a neighbouring row, which counts the gap between rows;
+    // the row's own height where there's no neighbour (or no layout) to
+    // measure.
+    const neighbour = row.nextElementSibling ?? row.previousElementSibling;
+    const measured = neighbour
+      ? Math.abs(
+          neighbour.getBoundingClientRect().top -
+            row.getBoundingClientRect().top
+        )
+      : 0;
+    const rowPitch = measured || row.offsetHeight;
+    if (!rowPitch) {
       return;
     }
     dragStateRef.current = {
       pointerId: event.pointerId,
-      fromIndex: index,
-      rowHeight,
-      lastClientY: event.clientY,
+      startIndex: index,
+      index,
+      rowPitch,
+      startClientY: event.clientY,
     };
     setDraggingIndex(index);
   }, []);

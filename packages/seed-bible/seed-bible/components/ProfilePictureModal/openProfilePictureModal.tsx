@@ -48,7 +48,11 @@ export function openProfilePictureModal(
               defaultValue: "Loading the picture editor…",
             })}
           >
-            <Skeleton width="100%" height="16rem" radius="0.625rem" />
+            <Skeleton
+              width="100%"
+              height="16rem"
+              radius="var(--sb-radius-md)"
+            />
           </SkeletonContainer>
         }
       >

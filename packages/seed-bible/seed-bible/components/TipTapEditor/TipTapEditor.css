@@ -23,7 +23,7 @@
   height: 28px;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
   cursor: pointer;

@@ -1,7 +1,7 @@
 import "./DiscoverContentPanel.css";
 import type { ComponentChildren } from "preact";
 import { Signal, useSignal, useSignalEffect } from "@preact/signals";
-import { useCallback, useLayoutEffect, useRef } from "preact/hooks";
+import { useCallback, useLayoutEffect, useMemo, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import { getDiscoverPanelContent } from "../../managers/BibleReadingManager";
@@ -473,7 +473,21 @@ function DiscoverFilters({
  *   annotation.
  */
 export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
-  const { tab, state, variant } = props;
+  const { state, variant } = props;
+  // In a compare step the user may be working in the passage shown beside the
+  // tab's own; Discover shows that passage's content then.
+  const activeReadingState = props.tab
+    ? state.tabs.activeReadingState(props.tab)
+    : null;
+  const tab = useMemo(
+    () =>
+      props.tab && activeReadingState
+        ? activeReadingState === props.tab.readingState
+          ? props.tab
+          : { ...props.tab, readingState: activeReadingState }
+        : null,
+    [props.tab, activeReadingState]
+  );
 
   const { t } = useI18n();
 
