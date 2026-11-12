@@ -134,4 +134,25 @@ describe("PaneHeader", () => {
 
     expect(onPointerDown).toHaveBeenCalled();
   });
+
+  it("draws a plain close button unless the pane asks for the tinted look", () => {
+    act(() => {
+      render(<PaneHeader title={"My Pane"} onClose={vi.fn()} />, container);
+    });
+    const close = () =>
+      container.querySelector(".sb-pane-header-close-button")!.classList;
+    expect(close()).toContain("sb-close-button-plain");
+
+    act(() => {
+      render(
+        <PaneHeader
+          title={"My Pane"}
+          onClose={vi.fn()}
+          closeButtonLook="tinted"
+        />,
+        container
+      );
+    });
+    expect(close()).toContain("sb-close-button-tinted");
+  });
 });

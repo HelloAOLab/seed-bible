@@ -137,6 +137,8 @@ export function openReferencePane(options: {
         currentPane.value = null;
       }
     },
+    // On desktop the header also holds this pane's own round, tinted button.
+    closeButtonLook: isMobile ? "plain" : "tinted",
     header: () => {
       if (isMobile) {
         return null;

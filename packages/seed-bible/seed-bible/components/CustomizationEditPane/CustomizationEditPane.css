@@ -737,27 +737,23 @@ button.sb-cz-logo:disabled {
   animation: sb-cz-floating-preview-in 160ms ease-out;
 }
 
-/* Sits half over the preview's corner, so its background is solid (the
-   tinted look is see-through) with a hairline ring. Two classes, to outrank
-   the CloseButton's own background. */
+/* Sits half over the preview's corner, so its circle is solid (the tinted
+   look is see-through) with a hairline ring. Two classes, to outrank the
+   CloseButton's own custom properties. */
 .sb-close-button.sb-cz-floating-preview-close {
+  --sb-close-button-background: var(--sb-reader-background);
+  --sb-close-button-hover-background: color-mix(
+    in srgb,
+    var(--sb-close-button-color) 12%,
+    var(--sb-reader-background)
+  );
+
   position: absolute;
   top: -0.625rem;
   inset-inline-end: -0.625rem;
   z-index: 1;
-  background: var(--sb-reader-background);
   box-shadow: 0 0 0 1px
-    color-mix(in srgb, var(--sb-font-color), transparent 80%);
-}
-
-@media (hover: hover) {
-  .sb-close-button.sb-cz-floating-preview-close:hover:not(:disabled) {
-    background: color-mix(
-      in srgb,
-      var(--sb-font-color) 12%,
-      var(--sb-reader-background)
-    );
-  }
+    color-mix(in srgb, var(--sb-close-button-color), transparent 80%);
 }
 
 @keyframes sb-cz-floating-preview-in {

@@ -1,7 +1,7 @@
 import "./PaneHeader.css";
 import type { ComponentChild } from "preact";
 import type { PaneTitle } from "../../managers/PanesManager";
-import { CloseButton } from "../CloseButton/CloseButton";
+import { CloseButton, type CloseButtonLook } from "../CloseButton/CloseButton";
 
 export interface PaneHeaderProps {
   /**
@@ -27,6 +27,8 @@ export interface PaneHeaderProps {
    * button. Rendered as a component so it can use hooks (i18n, signals).
    */
   header?: () => ComponentChild;
+  /** The close button's look; `plain` unless the pane asks for `tinted`. */
+  closeButtonLook?: CloseButtonLook;
   /**
    * Optional pointer-down handler on the header itself (excluding the close
    * button and the custom header slot, which stop propagation). Used by
@@ -46,6 +48,7 @@ export function PaneHeader(props: PaneHeaderProps) {
     icon: Icon,
     leading: Leading,
     header: Header,
+    closeButtonLook,
     onPointerDown,
   } = props;
   return (
@@ -82,6 +85,7 @@ export function PaneHeader(props: PaneHeaderProps) {
       )}
       <CloseButton
         className="sb-pane-header-close-button"
+        look={closeButtonLook}
         onPointerDown={(event: PointerEvent) => {
           event.stopPropagation();
         }}

@@ -20,9 +20,8 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
-/* The header's buttons are round and tinted in this pane. The close button
-   belongs to the shared pane chrome, so it's only restyled in headers carrying
-   this pane's own button, and it gets the shared CloseButton's tinted look. */
+/* The header's buttons are round and tinted in this pane, like the close
+   button (opened with `closeButtonLook: "tinted"`). */
 .sb-references-header-button {
   width: 2rem;
   min-width: 2rem;
@@ -31,12 +30,10 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 91%);
 }
 
+/* Matches the icon size of this pane's own header button. */
 .sb-pane-header:has(.sb-references-header-button) .sb-close-button {
   /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   --sb-close-button-icon-size: 1.125rem;
-
-  background: color-mix(in srgb, var(--sb-close-button-color), transparent 91%);
-  color: var(--sb-close-button-color);
 }
 
 /* Two classes, to outrank the app-wide `body .material-symbols-outlined`
@@ -48,8 +45,7 @@
 }
 
 @media (hover: hover) {
-  .sb-references-header-button:hover,
-  .sb-pane-header:has(.sb-references-header-button) .sb-close-button:hover {
+  .sb-references-header-button:hover {
     background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
   }
 }
