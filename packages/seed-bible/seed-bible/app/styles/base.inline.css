@@ -560,6 +560,8 @@ a:visited {
   color: var(--sb-link-visited-color);
 }
 
+/* stylelint-disable seed-bible/use-design-tokens -- reader text sizes are px on purpose: their own
+   knob, independent of UI Size */
 .sb-reader-font-size-xs {
   font-size: 12px;
 }
@@ -583,6 +585,7 @@ a:visited {
 .sb-reader-font-size-xxl {
   font-size: 22px;
 }
+/* stylelint-enable seed-bible/use-design-tokens */
 
 .sb-main-content {
   flex: 1;

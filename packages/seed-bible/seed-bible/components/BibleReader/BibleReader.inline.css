@@ -845,6 +845,7 @@
    overlap its neighbours by under a pixel rather than push the text. */
 .sb-verse-number-annotated {
   border: 1px solid var(--sb-verse-font-color);
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- reader box, sized in px on purpose (see above) */
   border-radius: 4px;
   padding: 2px;
   margin-inline-start: calc(0.625em - 3px);

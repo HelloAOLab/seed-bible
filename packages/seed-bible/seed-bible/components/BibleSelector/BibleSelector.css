@@ -893,6 +893,7 @@
   left: 11.5625rem;
   top: 6.25rem;
   width: 12.5rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- local stacking inside the Books panel */
   z-index: 1000;
   padding: 0.3125rem;
   border-radius: var(--sb-radius-sm);
@@ -902,6 +903,7 @@
   position: absolute;
   width: fit-content;
   max-width: 21.875rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- local stacking inside the Books panel */
   z-index: 1000;
   padding: 0.3125rem;
   border-radius: var(--sb-radius-sm);
@@ -933,6 +935,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   padding: 1rem 0.8rem 1rem 0.8rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- local stacking inside the Books panel */
   z-index: 1000;
   width: min(85vw, 35rem);
   max-height: 80vh;

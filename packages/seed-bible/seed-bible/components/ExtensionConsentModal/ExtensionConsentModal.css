@@ -373,6 +373,7 @@
 .sb-extension-request-check,
 .sb-extension-request-cross {
   flex: none;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 1.25rem;
 }
 

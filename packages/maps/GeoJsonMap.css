@@ -153,6 +153,7 @@
   border-radius: var(--sb-radius-xs);
   background: color-mix(in srgb, var(--sb-reader-background), transparent 10%);
   color: var(--sb-primary-color);
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 1.125rem;
   cursor: pointer;
 }

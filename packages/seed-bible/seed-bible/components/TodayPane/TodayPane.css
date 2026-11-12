@@ -345,6 +345,7 @@
 
 .sb-today-header > button > span,
 .sb-today-close-button > span {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 1.25rem;
 }
 
@@ -961,6 +962,7 @@
 }
 
 .sb-today-container .sb-today-feed-avatar > span {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 1.125rem;
 }
 

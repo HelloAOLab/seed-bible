@@ -124,6 +124,7 @@
   > .year-selector
   > .year-selector-label
   > span:nth-of-type(2) {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 16px;
 }
 
