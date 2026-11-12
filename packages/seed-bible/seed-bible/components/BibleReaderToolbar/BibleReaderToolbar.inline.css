@@ -555,7 +555,7 @@
   background: var(--sb-reader-toolbar-background);
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-xl);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--sb-shadow-popover);
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
@@ -1135,7 +1135,7 @@
   border-top-right-radius: var(--sb-radius-2xl);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  box-shadow: 0 -8px 24px var(--sb-shadow-color);
+  box-shadow: var(--sb-shadow-sheet);
   /* Stay on screen even before the overflow height is measured. The handle
      lives at the top of this box, so a note taller than the viewport can't
      push it away. */

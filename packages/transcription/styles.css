@@ -22,7 +22,7 @@
     system-ui,
     sans-serif
   );
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--sb-shadow-modal);
 }
 .sbd-header {
   display: flex;

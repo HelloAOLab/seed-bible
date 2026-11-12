@@ -53,7 +53,7 @@
      ring in place of a border, plus a soft drop shadow. */
   box-shadow:
     0 0 0 1px var(--sb-divider-color),
-    0 4px 8px #0000002c;
+    var(--sb-shadow-raised);
 }
 
 .sb-friends-heading {

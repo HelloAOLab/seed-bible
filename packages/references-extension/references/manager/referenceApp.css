@@ -242,7 +242,7 @@
   border: none;
   background: var(--sb-reader-background);
   color: var(--sb-references-accent-text);
-  box-shadow: 0 1px 2px color-mix(in srgb, #000, transparent 88%);
+  box-shadow: var(--sb-shadow-raised);
   cursor: pointer;
   opacity: 0;
   visibility: hidden;
@@ -396,7 +396,7 @@
 
 .sb-references-index-item[aria-current="true"] {
   background: var(--sb-reader-background);
-  box-shadow: 0 1px 3px color-mix(in srgb, #000, transparent 90%);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-references-index-item[aria-current="true"] .sb-references-row-preview {

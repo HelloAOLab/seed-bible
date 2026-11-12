@@ -55,7 +55,7 @@
   border-radius: var(--sb-radius-lg);
   background: var(--sb-menu-background, var(--sb-reader-background, #fff));
   color: var(--sb-menu-font-color, var(--sb-font-color));
-  box-shadow: 0 10px 30px #00000024;
+  box-shadow: var(--sb-shadow-modal);
   box-sizing: border-box;
 }
 

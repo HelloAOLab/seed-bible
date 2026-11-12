@@ -634,7 +634,7 @@
   overflow-y: auto;
   scrollbar-width: thin;
   border-radius: var(--sb-radius-xl);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--sb-shadow-popover);
 }
 
 .sb-today-container

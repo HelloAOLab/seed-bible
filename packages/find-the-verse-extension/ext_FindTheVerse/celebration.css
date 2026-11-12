@@ -72,7 +72,7 @@
   background: var(--sb-background, #fff);
   color: var(--sb-font-color, #333);
   border: 1px solid var(--sb-divider-color, rgb(0 0 0 / 12%));
-  box-shadow: 0 16px 48px var(--sb-shadow-color, rgb(0 0 0 / 20%));
+  box-shadow: var(--sb-shadow-modal);
   text-align: center;
   pointer-events: auto;
   animation: ftv-celebration-pop 0.45s ease-out both;

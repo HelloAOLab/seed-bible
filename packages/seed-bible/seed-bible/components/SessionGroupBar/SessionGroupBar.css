@@ -17,7 +17,7 @@
   color: var(--sb-reader-toolbar-font-color);
   font-family: var(--sb-reader-toolbar-font-family);
   font-size: var(--sb-font-size-13);
-  box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--sb-shadow-sheet);
 }
 
 .sb-session-group-bar-mobile {

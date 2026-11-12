@@ -62,7 +62,7 @@
   background: var(--sb-reader-background);
   box-shadow:
     0 0 0 1px var(--sb-divider-color),
-    0 22px 40px #0000002c;
+    var(--sb-shadow-modal);
 }
 
 /* On mobile, panes always render fullscreen (see app.effectivePanes), so
@@ -191,7 +191,7 @@
   flex-direction: column;
   box-shadow:
     0 0 0 1px var(--sb-divider-color),
-    0 22px 40px #0000002c;
+    var(--sb-shadow-modal);
 }
 
 /* The single fullscreen pane renders inside `.sb-content-row` (see
@@ -403,7 +403,7 @@
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-xl);
   background: var(--sb-reader-background);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--sb-shadow-popover);
   z-index: var(--sb-layer-popover);
   /* The corner by its button, for the opening animation below. */
   transform-origin: top left;

@@ -31,7 +31,7 @@
   background: var(--sb-reader-toolbar-background);
   border: var(--sb-reader-toolbar-border);
   border-radius: var(--sb-radius-full);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-below-reader-toolbar-button {

@@ -270,7 +270,7 @@
   background: var(--sb-font-color);
   color: var(--sb-reader-background, #fff);
   box-shadow:
-    0 1px 2px #0000002e,
+    var(--sb-shadow-raised),
     0 0 0 2px var(--sb-reader-background, #fff);
   cursor: pointer;
   pointer-events: auto;
@@ -309,7 +309,7 @@
      that theme's page (a light line in the dark theme). */
   border: var(--sb-reader-toolbar-border);
   border-radius: var(--sb-radius-full);
-  box-shadow: 0 1px 2px #0000001f;
+  box-shadow: var(--sb-shadow-raised);
   font-family: var(--sb-font-family);
   font-size: var(--sb-font-size-13);
   font-weight: 600;
@@ -328,7 +328,7 @@
    overflow the sideways-scrolling row and flash a scrollbar. */
 .sb-offscreen-cue:hover {
   filter: brightness(1.06);
-  box-shadow: 0 1px 3px #00000038;
+  box-shadow: var(--sb-shadow-raised), var(--sb-shadow-raised);
 }
 
 .sb-offscreen-cue:focus-visible {
@@ -371,7 +371,7 @@
   border-radius: var(--sb-radius-full);
   background: var(--sb-reader-background, #fff);
   color: var(--sb-font-color);
-  box-shadow: 0 1px 3px #0000002e;
+  box-shadow: var(--sb-shadow-raised);
   cursor: pointer;
   opacity: 1;
   pointer-events: auto;
@@ -389,7 +389,7 @@
 }
 
 .sb-offscreen-cue-indicator:hover {
-  box-shadow: 0 1px 4px #00000047;
+  box-shadow: var(--sb-shadow-raised), var(--sb-shadow-raised);
 }
 
 .sb-offscreen-cue-indicator:focus-visible {

@@ -10,7 +10,7 @@
   background: var(--sb-reader-background);
   box-shadow:
     0 0 0 1px var(--sb-divider-color),
-    0 4px 8px #0000002c;
+    var(--sb-shadow-raised);
   border-radius: var(--sb-radius-xl);
   padding: 1rem;
   gap: 12px;

@@ -33,6 +33,11 @@ export const SHARED_TOKENS = {
   "--sb-font-size-22": "1.375rem",
   "--sb-font-size-24": "1.5rem",
   "--sb-font-size-32": "2rem",
+  "--sb-shadow-raised": "0 1px 3px var(--sb-shadow-color)",
+  "--sb-shadow-popover": "0 10px 30px var(--sb-shadow-color)",
+  "--sb-shadow-modal":
+    "0 20px 48px color-mix(in srgb, var(--sb-shadow-color) 85%, black)",
+  "--sb-shadow-sheet": "0 -8px 24px var(--sb-shadow-color)",
 } as const;
 
 export const SHARED_TOKENS_CSS = Object.entries(SHARED_TOKENS)

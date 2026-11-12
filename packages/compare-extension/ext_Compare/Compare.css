@@ -414,7 +414,7 @@
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-md);
   background: var(--sb-menu-background, var(--sb-background));
-  box-shadow: 0 4px 12px var(--sb-shadow-color);
+  box-shadow: var(--sb-shadow-popover);
 }
 
 /* The shared list has a fixed height suited to the reader's modal; in the pane

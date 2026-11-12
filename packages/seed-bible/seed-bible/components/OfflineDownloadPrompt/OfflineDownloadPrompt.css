@@ -18,7 +18,7 @@
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
   border-radius: var(--sb-radius-2xl);
-  box-shadow: 0 20px 48px #00000040;
+  box-shadow: var(--sb-shadow-modal);
   padding: 2rem 1.75rem 1.25rem;
   box-sizing: border-box;
   display: flex;
@@ -118,7 +118,7 @@
     width: 100%;
     border-radius: var(--sb-radius-2xl) var(--sb-radius-2xl) 0 0;
     padding: 0.75rem 1.5rem 1.5rem;
-    box-shadow: 0 -12px 40px #0000002e;
+    box-shadow: var(--sb-shadow-sheet);
   }
 
   .sb-offline-prompt-handle {

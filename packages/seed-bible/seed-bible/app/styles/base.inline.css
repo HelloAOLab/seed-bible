@@ -484,6 +484,17 @@ body {
   /* dynamic-range-limit prevents user-provided images from changing the dynamic range */
   /* eslint-disable-next-line css/no-invalid-properties */
   dynamic-range-limit: var(--sb-dynamic-range-limit);
+
+  /* Elevation shadows: cards and knobs, menus/tooltips/toasts, dialogs and
+     big floating panels, and surfaces that slide up from the bottom. Declared
+     here rather than on `:root` because they're built on the theme's
+     `--sb-shadow-color`, which ThemeManager sets on `body`; a `:root` copy
+     would lock in the light value. Mirrored in `sharedTokens.ts`. */
+  --sb-shadow-raised: 0 1px 3px var(--sb-shadow-color);
+  --sb-shadow-popover: 0 10px 30px var(--sb-shadow-color);
+  --sb-shadow-modal: 0 20px 48px
+    color-mix(in srgb, var(--sb-shadow-color) 85%, black);
+  --sb-shadow-sheet: 0 -8px 24px var(--sb-shadow-color);
 }
 
 /* On mobile, lock the document to the visual viewport so iOS/Android

@@ -33,7 +33,7 @@
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-lg);
   background: var(--sb-reader-background);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--sb-shadow-popover);
   animation: sb-shared-toast-slide-in var(--sb-duration-slow) ease-out;
 }
 
@@ -163,7 +163,7 @@
   font-size: var(--sb-font-size-14);
   line-height: 1.4;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--sb-shadow-popover);
   animation: sb-toast-slide-up var(--sb-duration-slow) ease-out;
 }
 

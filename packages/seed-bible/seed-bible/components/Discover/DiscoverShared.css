@@ -77,7 +77,7 @@
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-lg);
   background: var(--sb-background);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-play-playlist-content .sb-discover-section {

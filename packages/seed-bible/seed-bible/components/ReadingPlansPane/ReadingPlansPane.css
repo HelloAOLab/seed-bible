@@ -227,7 +227,7 @@
     --rp-accent-border,
     color-mix(in srgb, var(--rp-accent) 50%, transparent)
   );
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-rp-card-static {

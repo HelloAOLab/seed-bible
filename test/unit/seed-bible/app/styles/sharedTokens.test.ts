@@ -13,20 +13,27 @@ const baseCss = readFileSync(
   "utf8"
 );
 
-function rootDeclarations(css: string): Record<string, string> {
-  const block = /:root\s*\{([^}]*)\}/.exec(css)![1]!;
+// The shadow tokens live on `body` (they read the theme's shadow color, which
+// is set there); everything else is on `:root`.
+function tokenDeclarations(css: string): Record<string, string> {
+  const blocks = [
+    /:root\s*\{([^}]*)\}/.exec(css)![1]!,
+    /^body\s*\{([^}]*)\}/m.exec(css)![1]!,
+  ];
   const declarations: Record<string, string> = {};
-  for (const m of block.matchAll(/(--sb-[\w-]+)\s*:\s*([^;]+);/g)) {
-    declarations[m[1]!] = m[2]!.trim();
+  for (const block of blocks) {
+    for (const m of block.matchAll(/(--sb-[\w-]+)\s*:\s*([^;]+);/g)) {
+      declarations[m[1]!] = m[2]!.replace(/\s+/g, " ").trim();
+    }
   }
   return declarations;
 }
 
 describe("shared tokens", () => {
   it("match the values base.inline.css gives the app", () => {
-    const declared = rootDeclarations(baseCss);
+    const declared = tokenDeclarations(baseCss);
     const sharedNames = Object.keys(declared).filter((name) =>
-      /^--sb-(radius|layer|duration|font-size)-/.test(name)
+      /^--sb-(radius|layer|duration|font-size|shadow(?!-color$))-/.test(name)
     );
 
     expect(sharedNames.sort()).toEqual(Object.keys(SHARED_TOKENS).sort());

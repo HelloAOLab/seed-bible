@@ -350,7 +350,7 @@
   border: 1px solid var(--sb-error-color, #d64545);
   font-size: var(--sb-font-size-14);
   transform-origin: center top;
-  box-shadow: 0 8px 20px var(--sb-shadow-color, rgb(0 0 0 / 15%));
+  box-shadow: var(--sb-shadow-popover);
 }
 
 .ftv-field-error--zoom {

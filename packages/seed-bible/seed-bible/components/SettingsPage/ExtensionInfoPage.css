@@ -90,7 +90,7 @@
 .sb-extension-info-tab[aria-selected="true"] {
   background: var(--sb-reader-background, #ffffff);
   color: var(--sb-font-color);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-extension-info-tab:focus-visible {

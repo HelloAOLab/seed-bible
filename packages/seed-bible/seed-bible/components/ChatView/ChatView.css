@@ -411,7 +411,7 @@ img.sb-chat-view-message-avatar {
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-lg);
   background: color-mix(in srgb, var(--sb-background, #fff), transparent 1%);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--sb-shadow-popover);
   overflow: hidden;
 }
 

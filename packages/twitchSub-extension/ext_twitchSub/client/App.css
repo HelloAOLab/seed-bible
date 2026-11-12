@@ -121,7 +121,7 @@
   height: 18px;
   background: #fff;
   border-radius: 50%;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--sb-shadow-raised);
   transition: transform var(--sb-duration-base);
 }
 
@@ -218,7 +218,7 @@
   line-height: 1.4;
   text-align: left;
   border-radius: var(--sb-radius-sm);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--sb-shadow-popover);
   z-index: 20;
   visibility: hidden;
   opacity: 0;
