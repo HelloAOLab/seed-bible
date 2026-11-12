@@ -320,6 +320,9 @@
   --sb-bookmark-green-color: #3a9a55;
   --sb-bookmark-blue-color: #3474d4;
   --sb-bookmark-purple-color: #8a56cc;
+  --sb-bookmark-black-color: #161616;
+  --sb-bookmark-gray-color: #8c8c8c;
+  --sb-bookmark-white-color: #ffffff;
 
   --sb-dynamic-range-limit: standard;
 }

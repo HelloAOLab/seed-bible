@@ -762,6 +762,9 @@ export const LIGHT_THEME: BibleTheme = {
     green: "#3a9a55",
     blue: "#3474d4",
     purple: "#8a56cc",
+    black: "#161616",
+    gray: "#8c8c8c",
+    white: "#ffffff",
   },
 };
 
@@ -966,6 +969,9 @@ export const DARK_THEME: BibleTheme = {
     green: "#6ccb85",
     blue: "#7aaef2",
     purple: "#b893ee",
+    black: "#161616",
+    gray: "#8c8c8c",
+    white: "#f5f5f5",
   },
 };
 
@@ -1156,6 +1162,9 @@ export const BOOKMARK_COLOR_IDS = [
   "green",
   "blue",
   "purple",
+  "black",
+  "gray",
+  "white",
 ] as const;
 
 export type BookmarkColorId = (typeof BOOKMARK_COLOR_IDS)[number];

@@ -118,8 +118,14 @@ describe("BookmarksSection", () => {
     // Through the theme variable, so the color follows light and dark mode.
     it("fills its glyph with the bookmark's theme color", () => {
       setup({ bookmarks: signal([bookmark({ colorId: "blue" })]) });
-      const path = firstChip().querySelector("svg path")!;
-      expect(path.getAttribute("fill")).toBe("var(--sb-bookmark-blue-color)");
+      const glyph = firstChip().querySelector("svg.sb-bookmark-glyph")!;
+      expect(glyph.getAttribute("data-bookmark-color")).toBe("blue");
+      expect(
+        glyph.querySelector(".sb-bookmark-glyph-fill")!.getAttribute("fill")
+      ).toMatch(/^url\(#/);
+      expect(
+        glyph.querySelector("linearGradient stop")!.getAttribute("stop-color")
+      ).toContain("--sb-bookmark-blue-color");
     });
   });
 

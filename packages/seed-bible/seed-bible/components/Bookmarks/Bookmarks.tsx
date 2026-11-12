@@ -60,7 +60,84 @@ const STACK_SCALE = 0.92;
 /** Degrees each ribbon behind the front one turns, about its bottom center. */
 const STACK_TILT = 12;
 
-/** A single bookmark ribbon filled in a bookmark color. */
+/** ViewBox size; stroke widths are in these units so 1 screen px = 24 / size. */
+const BOOKMARK_VIEWBOX = 24;
+/**
+ * Fattens the single-ribbon glyph. Half of this sits outside the bare path and
+ * defines the visible edge the inside outline is measured from.
+ */
+const BOOKMARK_EDGE_STROKE = 1.5;
+
+/** Safe fragment for SVG url(#…) ids from Preact's useId(). */
+function svgIdFragment(id: string): string {
+  return id.replace(/[^\w-]/g, "");
+}
+
+/** 135° fill stops: 5% toward white (top-left) and black (bottom-right). */
+function bookmarkFillStops(color: string): { start: string; end: string } {
+  return {
+    start: `color-mix(in srgb, ${color} 95%, white)`,
+    end: `color-mix(in srgb, ${color} 95%, black)`,
+  };
+}
+
+/**
+ * Outline base: the bookmark color shifted 35% toward the theme text color
+ * (darker in light mode, lighter in dark mode).
+ */
+function bookmarkOutlineBase(color: string): string {
+  return `color-mix(in srgb, ${color} 65%, var(--sb-font-color))`;
+}
+
+/** Same 135° treatment as the fill, on top of the outline base color. */
+function bookmarkOutlineStops(color: string): { start: string; end: string } {
+  return bookmarkFillStops(bookmarkOutlineBase(color));
+}
+
+/**
+ * Gradient defs shared by a filled ribbon: fill + outline at 135° in local
+ * viewBox space so a stacked ribbon's transform carries the gradient with it.
+ */
+function BookmarkRibbonGradients(props: {
+  fillId: string;
+  outlineId: string;
+  color: string;
+}) {
+  const fill = bookmarkFillStops(props.color);
+  const outline = bookmarkOutlineStops(props.color);
+  return (
+    <>
+      <linearGradient
+        id={props.fillId}
+        gradientUnits="userSpaceOnUse"
+        x1="0"
+        y1="0"
+        x2={BOOKMARK_VIEWBOX}
+        y2={BOOKMARK_VIEWBOX}
+      >
+        <stop offset="0%" stop-color={fill.start} />
+        <stop offset="100%" stop-color={fill.end} />
+      </linearGradient>
+      <linearGradient
+        id={props.outlineId}
+        gradientUnits="userSpaceOnUse"
+        x1="0"
+        y1="0"
+        x2={BOOKMARK_VIEWBOX}
+        y2={BOOKMARK_VIEWBOX}
+      >
+        <stop offset="0%" stop-color={outline.start} />
+        <stop offset="100%" stop-color={outline.end} />
+      </linearGradient>
+    </>
+  );
+}
+
+/**
+ * A single bookmark ribbon filled in a bookmark color, with the shared 1px
+ * inside outline and 135° gradient. Pass `color="currentColor"` (Tabs toggle
+ * when open) to keep the flat primary-color style from #2039.
+ */
 export function BookmarkGlyph(props: {
   colorId: string;
   size?: number;
@@ -70,6 +147,35 @@ export function BookmarkGlyph(props: {
 }) {
   const size = props.size ?? 16;
   const color = props.color ?? bookmarkColorValue(props.colorId);
+  const flat = color === "currentColor";
+  const uid = svgIdFragment(useId());
+  const fillGradId = `sb-bm-fill-${uid}`;
+  const outlineGradId = `sb-bm-out-${uid}`;
+  const insetFilterId = `sb-bm-inset-${uid}`;
+  const insetMaskId = `sb-bm-inset-mask-${uid}`;
+  // 1 screen px in viewBox units at this display size.
+  const outlineUnits = BOOKMARK_VIEWBOX / size;
+
+  if (flat) {
+    return (
+      <svg
+        className={`sb-bookmark-glyph${props.className ? ` ${props.className}` : ""}`}
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          d={BOOKMARK_PATH}
+          fill={color}
+          stroke={color}
+          stroke-width={BOOKMARK_EDGE_STROKE}
+          stroke-linejoin="round"
+        />
+      </svg>
+    );
+  }
+
   return (
     <svg
       className={`sb-bookmark-glyph${props.className ? ` ${props.className}` : ""}`}
@@ -77,13 +183,69 @@ export function BookmarkGlyph(props: {
       height={size}
       viewBox="0 0 24 24"
       aria-hidden="true"
+      data-bookmark-color={props.colorId}
     >
+      <defs>
+        <BookmarkRibbonGradients
+          fillId={fillGradId}
+          outlineId={outlineGradId}
+          color={color}
+        />
+        {/* Shrink the visible glyph (path + edge stroke) by 1 screen px so the
+            outline ring is measured from that edge, not the bare path. */}
+        <filter
+          id={insetFilterId}
+          filterUnits="userSpaceOnUse"
+          primitiveUnits="userSpaceOnUse"
+          x="-6"
+          y="-6"
+          width="36"
+          height="36"
+        >
+          <feMorphology
+            in="SourceAlpha"
+            operator="erode"
+            radius={outlineUnits}
+            result="eroded"
+          />
+          <feFlood flood-color="white" result="white" />
+          <feComposite in="white" in2="eroded" operator="in" />
+        </filter>
+        <mask
+          id={insetMaskId}
+          maskUnits="userSpaceOnUse"
+          x="-6"
+          y="-6"
+          width="36"
+          height="36"
+        >
+          <g filter={`url(#${insetFilterId})`}>
+            <path
+              d={BOOKMARK_PATH}
+              fill="white"
+              stroke="white"
+              stroke-width={BOOKMARK_EDGE_STROKE}
+              stroke-linejoin="round"
+            />
+          </g>
+        </mask>
+      </defs>
+      {/* Outline-colored full glyph; fill layer covers all but the outer 1px. */}
       <path
         d={BOOKMARK_PATH}
-        fill={color}
-        stroke={color}
-        stroke-width="1.5"
+        fill={`url(#${outlineGradId})`}
+        stroke={`url(#${outlineGradId})`}
+        stroke-width={BOOKMARK_EDGE_STROKE}
         stroke-linejoin="round"
+      />
+      <path
+        className="sb-bookmark-glyph-fill"
+        d={BOOKMARK_PATH}
+        fill={`url(#${fillGradId})`}
+        stroke={`url(#${fillGradId})`}
+        stroke-width={BOOKMARK_EDGE_STROKE}
+        stroke-linejoin="round"
+        mask={`url(#${insetMaskId})`}
       />
     </svg>
   );
@@ -121,8 +283,9 @@ export function BookmarkStackIcon(props: {
 }) {
   const size = props.size ?? 22;
   const shown = props.bookmarks.slice(0, MAX_STACKED_GLYPHS);
-  // Mask ids must be unique on the page, and usable inside `url(#…)`.
-  const maskPrefix = `sb-bookmark-stack-${useId().replace(/[^\w-]/g, "")}`;
+  // Mask / gradient ids must be unique on the page, and usable inside `url(#…)`.
+  const idPrefix = `sb-bookmark-stack-${svgIdFragment(useId())}`;
+  const flatPaint = props.paint === "outline" || props.paint === "current";
   const fillColor = (bookmark: Bookmark) =>
     props.paint === "current"
       ? "currentColor"
@@ -153,11 +316,17 @@ export function BookmarkStackIcon(props: {
   }
 
   const layout = STACK_LAYOUTS[shown.length]!;
+  // Stroke widths on a scaled ribbon are scaled with it; inflate so the
+  // clipped half still reads as 1 screen px after STACK_SCALE.
+  const outlineStroke = (2 * BOOKMARK_VIEWBOX) / (size * STACK_SCALE);
   const ribbons = shown.map((bookmark, index) => {
     const offset = layout[index]!;
     return {
       bookmark,
-      maskId: `${maskPrefix}-${index}`,
+      maskId: `${idPrefix}-gap-${index}`,
+      clipId: `${idPrefix}-clip-${index}`,
+      fillGradId: `${idPrefix}-fill-${index}`,
+      outlineGradId: `${idPrefix}-out-${index}`,
       transform: `translate(${offset.x} ${offset.y}) scale(${STACK_SCALE}) rotate(${index * STACK_TILT} 12 21)`,
     };
   });
@@ -199,6 +368,21 @@ export function BookmarkStackIcon(props: {
             ))}
           </mask>
         ))}
+        {!flatPaint &&
+          ribbons.map((ribbon) => (
+            <g key={ribbon.fillGradId}>
+              <BookmarkRibbonGradients
+                fillId={ribbon.fillGradId}
+                outlineId={ribbon.outlineGradId}
+                color={fillColor(ribbon.bookmark)}
+              />
+              {/* Clip the double-width outline stroke to the ribbon fill so only
+                  the inside half (1 screen px) shows — size stays the same. */}
+              <clipPath id={ribbon.clipId} clipPathUnits="userSpaceOnUse">
+                <path d={BOOKMARK_PATH} transform={ribbon.transform} />
+              </clipPath>
+            </g>
+          ))}
       </defs>
       {/* Painted back to front so the most recently moved ribbon is on top. */}
       {/* The mask sits on an untransformed group: on the path itself it would
@@ -213,14 +397,43 @@ export function BookmarkStackIcon(props: {
               : `url(#${ribbon.maskId})`
           }
         >
-          <path
-            className="sb-bookmark-stack-ribbon"
-            d={BOOKMARK_PATH}
-            transform={ribbon.transform}
-            {...(props.paint === "outline"
-              ? outlinePaint(STACK_SCALE)
-              : { fill: fillColor(ribbon.bookmark) })}
-          />
+          {props.paint === "outline" ? (
+            <path
+              className="sb-bookmark-stack-ribbon"
+              d={BOOKMARK_PATH}
+              transform={ribbon.transform}
+              {...outlinePaint(STACK_SCALE)}
+            />
+          ) : flatPaint ? (
+            <path
+              className="sb-bookmark-stack-ribbon"
+              d={BOOKMARK_PATH}
+              transform={ribbon.transform}
+              fill={fillColor(ribbon.bookmark)}
+            />
+          ) : (
+            <>
+              <path
+                className="sb-bookmark-stack-ribbon"
+                d={BOOKMARK_PATH}
+                transform={ribbon.transform}
+                fill={`url(#${ribbon.fillGradId})`}
+                data-bookmark-color={ribbon.bookmark.colorId}
+              />
+              {/* Clip on an untransformed group so the path's own transform
+                  isn't applied a second time against the clip region. */}
+              <g clip-path={`url(#${ribbon.clipId})`}>
+                <path
+                  d={BOOKMARK_PATH}
+                  transform={ribbon.transform}
+                  fill="none"
+                  stroke={`url(#${ribbon.outlineGradId})`}
+                  stroke-width={outlineStroke}
+                  stroke-linejoin="round"
+                />
+              </g>
+            </>
+          )}
         </g>
       ))}
     </svg>
@@ -255,21 +468,22 @@ export function bookmarkButtonLabel(
   });
 }
 
+const BOOKMARK_COLOR_LABEL_DEFAULTS: Record<BookmarkColorId, string> = {
+  orange: "Orange",
+  red: "Red",
+  yellow: "Yellow",
+  green: "Green",
+  blue: "Blue",
+  purple: "Purple",
+  black: "Black",
+  gray: "Gray",
+  white: "White",
+};
+
 function bookmarkColorLabel(t: Translate, colorId: BookmarkColorId): string {
-  switch (colorId) {
-    case "orange":
-      return t("bookmark-color-orange", { defaultValue: "Orange" });
-    case "red":
-      return t("bookmark-color-red", { defaultValue: "Red" });
-    case "yellow":
-      return t("bookmark-color-yellow", { defaultValue: "Yellow" });
-    case "green":
-      return t("bookmark-color-green", { defaultValue: "Green" });
-    case "blue":
-      return t("bookmark-color-blue", { defaultValue: "Blue" });
-    case "purple":
-      return t("bookmark-color-purple", { defaultValue: "Purple" });
-  }
+  return t(`bookmark-color-${colorId}`, {
+    defaultValue: BOOKMARK_COLOR_LABEL_DEFAULTS[colorId],
+  });
 }
 
 /** Longest name the form accepts — enough for "Sermon prep, week 3". */
