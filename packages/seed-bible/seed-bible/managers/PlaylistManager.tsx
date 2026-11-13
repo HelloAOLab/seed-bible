@@ -3350,22 +3350,6 @@ export function createPlaylistManager(
         ? Math.min(Math.max(Math.floor(initialStep), 0), queue.length - 1)
         : -1;
 
-    const openingItem = queue[0];
-    // A shared opening on text or a link records that first close as forward.
-    // In-app play records a direct landing; closing the first item still
-    // steps forward. A shared opening on any later step is a direct landing.
-    //
-    // Reloads, restored tabs, and URL sync all come through
-    // `startPlayingLocator`, which passes `sharedOpening`. The address bar
-    // can't tell a link someone shared from a reload of your own playlist, so
-    // a step-1 URL always walks the intro. Closing the first text item after
-    // that reload moves on.
-    const walkOpeningText =
-      options?.sharedOpening === true &&
-      step === 0 &&
-      !!openingItem &&
-      openingItem.type !== "bible-verse";
-
     // Ending an existing tracked session before opening the next one keeps
     // duration/endedAt accurate when the user starts another playlist without
     // an explicit stop.
@@ -3388,11 +3372,6 @@ export function createPlaylistManager(
     if (targetTab && paused.length > 0) {
       rememberPaused.get(targetTab.readingState)?.(paused);
     }
-    // Enabling an extension that is already running hands it this data via
-    // `setState`, which only resets the direction when the step or the queue
-    // changes. Always set it here so a second playlist that starts on the
-    // same step doesn't keep the first playlist's direction.
-    playing.peek()?.setStepArrival(walkOpeningText ? "forward" : "direct");
     const generation = beginOpeningPlayback();
     const opened = playing.peek();
     void (opened?.whenSettled() ?? Promise.resolve()).finally(() => {

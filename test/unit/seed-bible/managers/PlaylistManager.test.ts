@@ -1,4 +1,5 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
+import { I18nProvider } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import { FRIEND_READ_TIMEOUT_MS } from "@packages/seed-bible/seed-bible/managers/friendContentFreshness";
 import {
   CasualOSManager,
@@ -42,7 +43,10 @@ import type { BibleSelectedVerse } from "@packages/seed-bible/seed-bible/manager
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { createAudioPlaybackManager } from "@packages/seed-bible/seed-bible/managers/AudioPlaybackManager";
 import type { AudioPlaybackController } from "@packages/seed-bible/seed-bible/managers/AudioPlaybackManager";
+import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
 import { computed, effect, signal, type Signal } from "@preact/signals";
+import { h, render } from "preact";
+import { act } from "preact/test-utils";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
 import { forgetPlaylistDrafts } from "../testUtils/createTestSeedBibleState";
 import { readPlaylistDraft } from "@packages/seed-bible/seed-bible/managers/PlaylistDrafts";
