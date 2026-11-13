@@ -441,7 +441,6 @@
   padding: 10px 12px;
   background: var(--sb-reader-toolbar-background, #fff);
   color: var(--sb-reader-toolbar-font-color, var(--sb-font-color, #333));
-  --sb-button-color: var(--sb-reader-toolbar-font-color, var(--sb-font-color));
   border: var(--sb-reader-toolbar-border, 1px solid rgb(0 0 0 / 14%));
   box-shadow: var(--sb-reader-toolbar-box-shadow, 0 8px 32px rgb(0 0 0 / 12%));
   border-radius: var(--sb-radius-2xl);
@@ -449,6 +448,19 @@
   flex-direction: column;
   gap: 8px;
   transition: transform var(--sb-duration-slow) ease;
+}
+
+/* The bar's buttons sit on the toolbar's surface, so they take its text
+   color. Set on the buttons, since each one sets its own color. */
+.ftv-bar .sb-button:not(.sb-button-danger) {
+  --sb-button-color: var(--sb-reader-toolbar-font-color, var(--sb-font-color));
+}
+
+.ftv-bar .sb-icon-button {
+  --sb-icon-button-color: var(
+    --sb-reader-toolbar-font-color,
+    var(--sb-font-color)
+  );
 }
 
 .ftv-bar-row {

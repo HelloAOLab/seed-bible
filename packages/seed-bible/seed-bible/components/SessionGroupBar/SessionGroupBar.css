@@ -18,7 +18,11 @@
   font-family: var(--sb-reader-toolbar-font-family);
   font-size: var(--sb-font-size-13);
   box-shadow: var(--sb-shadow-sheet);
-  /* Its buttons sit on the toolbar's surface, so they take its text color. */
+}
+
+/* Its buttons sit on the toolbar's surface, so they take its text color. Set
+   on the buttons, since each Button sets its own color; red ones stay red. */
+.sb-session-group-bar .sb-button:not(.sb-button-danger) {
   --sb-button-color: var(--sb-reader-toolbar-font-color);
 }
 
