@@ -25,7 +25,11 @@ export type ButtonProps = Omit<
   icon?: string | ComponentChild;
   /** Which side of the label the icon goes on. */
   iconPosition?: "start" | "end";
-  /** Shows a spinner in place of the icon and stops further clicks, while the action is in progress. */
+  /**
+   * While the action is in progress: a spinner covers the label and further
+   * clicks are ignored. The label stays in place (invisible), so the button
+   * keeps its size and screen readers still hear what it is.
+   */
   loading?: boolean;
   /** `submit` for a form's main button. */
   type?: "button" | "submit" | "reset";
@@ -63,22 +67,22 @@ export function Button({
   class: classAttribute,
   ...rest
 }: ButtonProps) {
-  const iconNode = loading ? (
-    <Spinner className="sb-button-icon" size="var(--sb-button-icon-size)" />
-  ) : typeof icon === "string" ? (
-    <MaterialIcon className="sb-button-icon" aria-hidden="true">
-      {icon}
-    </MaterialIcon>
-  ) : icon ? (
-    <span className="sb-button-icon" aria-hidden="true">
-      {icon}
-    </span>
-  ) : null;
+  const iconNode =
+    typeof icon === "string" ? (
+      <MaterialIcon className="sb-button-icon" aria-hidden="true">
+        {icon}
+      </MaterialIcon>
+    ) : icon ? (
+      <span className="sb-button-icon" aria-hidden="true">
+        {icon}
+      </span>
+    ) : null;
   const classes = [
     "sb-button",
     `sb-button-${variant}`,
     `sb-button-${size}`,
     shape === "pill" && "sb-button-pill",
+    loading && "sb-button-loading",
     tone === "danger" && "sb-button-danger",
     className,
     classAttribute,
@@ -90,6 +94,12 @@ export function Button({
       {iconPosition === "start" && iconNode}
       <span className="sb-button-label">{children}</span>
       {iconPosition === "end" && iconNode}
+      {loading && (
+        <Spinner
+          className="sb-button-spinner"
+          size="var(--sb-button-icon-size)"
+        />
+      )}
     </>
   );
   if (href !== undefined) {

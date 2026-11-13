@@ -55,7 +55,7 @@
   flex-shrink: 0;
 }
 
-.sb-dcp-create-btn {
+.sb-dcp-create-btn:not(.sb-button) {
   flex-shrink: 0;
   padding: 6px 12px;
   border-radius: var(--sb-radius-full);
@@ -68,7 +68,7 @@
   white-space: nowrap;
 }
 
-.sb-dcp-create-btn:hover {
+.sb-dcp-create-btn:not(.sb-button):hover {
   opacity: 0.88;
 }
 
@@ -137,29 +137,11 @@
 .sb-dcp-filters::-webkit-scrollbar {
   display: none;
 }
-.sb-dcp-filters-arrow {
-  width: 1.9rem;
-  height: 1.9rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  color: var(--sb-font-color);
-  cursor: pointer;
+.sb-icon-button.sb-dcp-filters-arrow {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.375rem;
 }
-/* The same hover as the pills it scrolls. */
-.sb-dcp-filters-arrow:hover:not([aria-disabled="true"]) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
-}
-.sb-dcp-filters-arrow .material-symbols-outlined {
-  font-size: 1.4rem;
-}
-.sb-dcp-filters-arrow:active {
-  transform: scale(0.95);
-}
+
 .sb-dcp-chip {
   flex-shrink: 0;
   padding: 6px 14px;
@@ -182,7 +164,7 @@
   border-color: color-mix(in srgb, var(--sb-primary-color), transparent 50%);
   color: var(--sb-font-color);
 }
-.sb-dcp-filters-arrow[aria-disabled="true"] {
+.sb-icon-button.sb-dcp-filters-arrow[aria-disabled="true"] {
   opacity: 0.4;
   cursor: default;
 }
@@ -190,7 +172,7 @@
   .sb-dcp-filters-wrapper--scrollable {
     display: block;
   }
-  .sb-dcp-filters-arrow {
+  .sb-icon-button.sb-dcp-filters-arrow {
     display: none;
   }
 

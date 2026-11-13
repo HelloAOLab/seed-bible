@@ -35,6 +35,8 @@ import {
   readBottomChromeCover,
   readBottomChromeInset,
 } from "../BibleReader/readerViewport";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 type FilterKey =
   | "all"
@@ -401,19 +403,19 @@ function DiscoverFilters({
       }`}
     >
       {hasScrollableFilters.value && (
-        <button
-          type="button"
+        <IconButton
+          size="sm"
+          look="tinted"
           className="sb-dcp-filters-arrow"
           onClick={() => scrollFilters(-1)}
           aria-disabled={!canScrollStart.value}
-          aria-label={t("scroll-filters-start", {
+          icon={
+            <MaterialIcon className="rtl-mirror">chevron_left</MaterialIcon>
+          }
+          label={t("scroll-filters-start", {
             defaultValue: "Scroll filters toward start",
           })}
-        >
-          <MaterialIcon className="rtl-mirror" aria-hidden="true">
-            chevron_left
-          </MaterialIcon>
-        </button>
+        />
       )}
 
       <div className="sb-dcp-filters" role="tablist" ref={filtersRef}>
@@ -436,19 +438,19 @@ function DiscoverFilters({
       </div>
 
       {hasScrollableFilters.value && (
-        <button
-          type="button"
+        <IconButton
+          size="sm"
+          look="tinted"
           className="sb-dcp-filters-arrow"
           onClick={() => scrollFilters(1)}
           aria-disabled={!canScrollEnd.value}
-          aria-label={t("scroll-filters-end", {
+          icon={
+            <MaterialIcon className="rtl-mirror">chevron_right</MaterialIcon>
+          }
+          label={t("scroll-filters-end", {
             defaultValue: "Scroll filters toward end",
           })}
-        >
-          <MaterialIcon className="rtl-mirror" aria-hidden="true">
-            chevron_right
-          </MaterialIcon>
-        </button>
+        />
       )}
     </div>
   );
@@ -546,16 +548,18 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
             props.variant === "full" ? (
               <DiscoverCreateMenu state={state} />
             ) : (
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="sm"
+                shape="pill"
+                icon="add"
                 className="sb-dcp-create-btn"
                 onClick={() => void state.annotations.createNewAnnotation()}
               >
-                +{" "}
                 {t("create-playlist", {
                   defaultValue: "Create",
                 })}
-              </button>
+              </Button>
             )
           }
           onClose={props.variant === "full" ? props.onClose : undefined}

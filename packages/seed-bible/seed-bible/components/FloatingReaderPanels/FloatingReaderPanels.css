@@ -229,28 +229,6 @@
   border-bottom: 1px solid var(--sb-divider-color);
 }
 
-.sb-floating-chat-header-back {
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  border-radius: var(--sb-radius-md);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
-  cursor: pointer;
-  transition:
-    background-color var(--sb-duration-fast) ease,
-    color var(--sb-duration-fast) ease;
-}
-
-.sb-floating-chat-header-back:hover,
-.sb-floating-chat-header-back:focus-visible {
-  color: var(--sb-font-color);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
-}
-
 .sb-floating-chat-header-title {
   margin: 0;
   min-width: 0;

@@ -113,7 +113,7 @@ describe("Button", () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it("shows a spinner in place of the icon and ignores clicks while loading", () => {
+  it("covers its label with a spinner and ignores clicks while loading", () => {
     const onClick = vi.fn();
     act(() => {
       render(
@@ -127,7 +127,12 @@ describe("Button", () => {
     expect(button().getAttribute("aria-busy")).toBe("true");
     expect(button().disabled).toBe(true);
     expect(button().querySelector(".sb-spinner")).not.toBeNull();
-    expect(button().textContent).not.toContain("save");
+    // The label stays (hidden by the stylesheet), so screen readers still
+    // hear what the button is and it keeps its size.
+    expect(button().querySelector(".sb-button-label")?.textContent).toBe(
+      "Save"
+    );
+    expect(button().classList).toContain("sb-button-loading");
     act(() => button().click());
     expect(onClick).not.toHaveBeenCalled();
 
@@ -141,6 +146,7 @@ describe("Button", () => {
     });
     expect(button().hasAttribute("aria-busy")).toBe(false);
     expect(button().querySelector(".sb-spinner")).toBeNull();
+    expect(button().classList).not.toContain("sb-button-loading");
     act(() => button().click());
     expect(onClick).toHaveBeenCalledTimes(1);
   });

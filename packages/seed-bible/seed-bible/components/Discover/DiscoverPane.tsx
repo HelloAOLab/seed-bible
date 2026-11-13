@@ -19,6 +19,7 @@ import {
   ContextMenuItem,
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
+import { IconButton } from "../IconButton/IconButton";
 
 export const DISCOVER_PANE_ID = "discover-pane";
 
@@ -172,14 +173,11 @@ export function EditPlaylistWithAiButton(props: {
     return null;
   }
   return (
-    <button
-      type="button"
+    <IconButton
       className="sb-discover-title-ai"
-      aria-label={aiButtonAriaLabel}
-      title={aiButtonLabel}
+      icon="auto_awesome"
+      label={aiButtonAriaLabel}
       onClick={() => startAiChat(singleProvider.id)}
-    >
-      <MaterialIcon>auto_awesome</MaterialIcon>
-    </button>
+    />
   );
 }

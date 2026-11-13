@@ -22,6 +22,8 @@ import {
 } from "../ContextMenu/ContextMenu";
 import { openReaderLocation } from "../Tabs/openReaderLocation";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 type Translate = ReturnType<typeof useI18n>["t"];
 
@@ -575,22 +577,17 @@ function BookmarkPickerContent(props: {
               </span>
             </div>
             {draft.value && (
-              <button
-                type="button"
+              <IconButton
                 className="sb-bookmark-picker-remove"
                 disabled={isSaving.value}
-                aria-label={t("discard-new-bookmark", {
-                  defaultValue: "Discard new bookmark",
-                })}
-                title={t("discard-new-bookmark", {
+                icon="close"
+                label={t("discard-new-bookmark", {
                   defaultValue: "Discard new bookmark",
                 })}
                 onClick={() => {
                   draft.value = null;
                 }}
-              >
-                <MaterialIcon aria-hidden="true">close</MaterialIcon>
-              </button>
+              />
             )}
             <div className="sb-bookmark-picker-form">
               <BookmarkForm
@@ -602,16 +599,17 @@ function BookmarkPickerContent(props: {
                 onSubmit={createHere}
               />
               <div className="sb-bookmark-picker-actions">
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
                   className="sb-bookmark-picker-save"
                   disabled={!canCreate}
+                  loading={isSaving.value}
                   onClick={createHere}
                 >
                   {isSaving.value
                     ? t("saving", { defaultValue: "Saving…" })
                     : t("save", { defaultValue: "Save" })}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -771,24 +769,24 @@ function BookmarkEditor(props: {
         onSubmit={() => void submit()}
       />
       <div className="sb-bookmark-edit-actions">
-        <button
-          type="button"
+        <Button
           className="sb-bookmark-edit-cancel"
           disabled={isSaving.value}
           onClick={onDone}
         >
           {t("cancel", { defaultValue: "Cancel" })}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="primary"
           className="sb-bookmark-picker-save"
-          disabled={isSaving.value || value.value.name.trim() === ""}
+          disabled={value.value.name.trim() === ""}
+          loading={isSaving.value}
           onClick={() => void submit()}
         >
           {isSaving.value
             ? t("saving", { defaultValue: "Saving…" })
             : t("save", { defaultValue: "Save" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1072,56 +1072,6 @@
   border-top: 1px solid var(--sb-divider-color);
 }
 
-/* The old Cancel / red End pair, for the panes not yet on the shared Button.
-   `:not(.sb-button)` keeps it off the ones that are (the shared confirm
-   dialog keeps these classes for its tests). Delete once none remain. */
-.sb-session-settings-cancel:not(.sb-button),
-.sb-session-settings-end:not(.sb-button) {
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: var(--sb-radius-md);
-  font-size: var(--sb-font-size-13);
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color var(--sb-duration-fast) ease;
-}
-
-.sb-session-settings-cancel:not(.sb-button) {
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-}
-
-.sb-session-settings-cancel:not(.sb-button):hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  color: var(--sb-font-color);
-}
-
-.sb-session-settings-end:not(.sb-button) {
-  background: #ef4444;
-  color: #ffffff;
-}
-
-.sb-session-settings-end:not(.sb-button):hover:not(:disabled) {
-  background: #dc2626;
-}
-
-.sb-session-settings-cancel:not(.sb-button):disabled,
-.sb-session-settings-end:not(.sb-button):disabled {
-  cursor: default;
-}
-
-/* A red Delete button, led by a trash can. */
-.sb-delete-button:not(.sb-button) {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.sb-delete-button:not(.sb-button) .material-symbols-outlined {
-  font-size: 1.125rem;
-}
-
 /* Session URL row (top of the session settings panel) */
 .sb-session-settings-url {
   display: flex;

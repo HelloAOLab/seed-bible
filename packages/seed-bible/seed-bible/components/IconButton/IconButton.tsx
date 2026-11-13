@@ -26,6 +26,8 @@ export type IconButtonProps = Omit<
   look?: IconButtonLook;
   /** For an on/off button (bookmark, mute): tells screen readers whether it's on, and draws it in the primary color while it is. */
   pressed?: boolean;
+  /** `submit` for a form's send button. */
+  type?: "button" | "submit";
   /** Extra classes, for placement. `class` and `className` both work. */
   className?: string;
   class?: string;
@@ -38,6 +40,7 @@ export function IconButton({
   size = "md",
   look = "plain",
   pressed,
+  type = "button",
   className,
   class: classAttribute,
   ...rest
@@ -45,7 +48,7 @@ export function IconButton({
   return (
     <button
       {...rest}
-      type="button"
+      type={type}
       className={[
         "sb-icon-button",
         `sb-icon-button-${size}`,

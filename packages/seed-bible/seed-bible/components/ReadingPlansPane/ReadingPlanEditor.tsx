@@ -35,6 +35,8 @@ import { cadenceOptionLabel } from "./cadenceLabels";
 import { readingLabel } from "./readingLabel";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { readingItemIcon, readingPreviewText } from "./readingPreview";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 interface ReadingPlanEditorProps {
   readingPlans: ReadingPlansManager;
@@ -367,11 +369,9 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
               unsaved changes (cover image included) and leaves the published
               plan as it was. */}
           {draft.isNew ? (
-            <button
-              type="button"
-              className={`sb-rp-button sb-rp-button-secondary${
-                confirmingDiscard ? " sb-rp-button-danger" : ""
-              }`}
+            <Button
+              size="lg"
+              tone={confirmingDiscard ? "danger" : "neutral"}
               onClick={() => void handleDiscard()}
               disabled={saving}
             >
@@ -380,29 +380,25 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
                     defaultValue: "Delete for good?",
                   })
                 : t("reading-plan-discard-draft", { defaultValue: "Discard" })}
-            </button>
+            </Button>
           ) : (
-            <button
-              type="button"
-              className="sb-rp-button sb-rp-button-secondary"
-              onClick={onCancel}
-              disabled={saving}
-            >
+            <Button size="lg" onClick={onCancel} disabled={saving}>
               {t("cancel", { defaultValue: "Cancel" })}
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            className="sb-rp-button sb-rp-button-primary"
+          <Button
+            variant="primary"
+            size="lg"
             onClick={handleSave}
-            disabled={!canSave || saving}
+            disabled={!canSave}
+            loading={saving}
           >
             {draft.isNew
               ? t("reading-plan-create-submit", { defaultValue: "Create plan" })
               : t("reading-plan-save-changes", {
                   defaultValue: "Save changes",
                 })}
-          </button>
+          </Button>
         </div>
       </footer>
     </div>
@@ -581,16 +577,15 @@ function SessionsSection(props: SessionsSectionProps) {
                     })}
                   </span>
                 </button>
-                <button
-                  type="button"
-                  className="sb-rp-icon-button sb-rp-session-remove"
+                <IconButton
+                  size="sm"
+                  className="sb-rp-session-remove"
                   onClick={() => onRemoveSession(index)}
-                  aria-label={t("reading-plan-remove-session", {
+                  icon="delete"
+                  label={t("reading-plan-remove-session", {
                     defaultValue: "Remove session",
                   })}
-                >
-                  <MaterialIcon>delete</MaterialIcon>
-                </button>
+                />
               </div>
 
               {session.readings.length > 0 ? (
@@ -645,35 +640,33 @@ function SessionsSection(props: SessionsSectionProps) {
                             {expanded ? "expand_less" : "expand_more"}
                           </MaterialIcon>
                         </button>
-                        <button
-                          type="button"
-                          className="sb-rp-icon-button sb-rp-reading-edit"
-                          aria-pressed={editingReadingId === reading.id}
+                        <IconButton
+                          size="sm"
+                          className="sb-rp-reading-edit"
+                          pressed={editingReadingId === reading.id}
                           onClick={() => {
                             onSelectSession(index);
                             setEditingReadingId(reading.id);
                           }}
-                          aria-label={t("reading-plan-edit-reading", {
+                          icon="edit"
+                          label={t("reading-plan-edit-reading", {
                             defaultValue: "Edit reading",
                           })}
-                        >
-                          <MaterialIcon>edit</MaterialIcon>
-                        </button>
-                        <button
-                          type="button"
-                          className="sb-rp-icon-button sb-rp-reading-remove"
+                        />
+                        <IconButton
+                          size="sm"
+                          className="sb-rp-reading-remove"
                           onClick={() => {
                             onRemoveReading(index, reading.id);
                             if (editingReadingId === reading.id) {
                               setEditingReadingId(null);
                             }
                           }}
-                          aria-label={t("reading-plan-scripture-remove", {
+                          icon="close"
+                          label={t("reading-plan-scripture-remove", {
                             defaultValue: "Remove reading",
                           })}
-                        >
-                          <MaterialIcon>close</MaterialIcon>
-                        </button>
+                        />
                         {expanded ? (
                           <PlaylistItemInlinePreview
                             id={previewId}

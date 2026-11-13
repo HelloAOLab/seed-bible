@@ -10,6 +10,7 @@ import {
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
+import { IconButton } from "../IconButton/IconButton";
 
 /**
  * One playlist in a `sb-discover-list`: title, description, a play button,
@@ -94,19 +95,18 @@ export function PlaylistRow(props: {
           </ExpandableText>
         ) : null}
       </div>
-      <button
-        type="button"
+      <IconButton
+        size="sm"
         className="sb-discover-item-play"
-        aria-label={t("play-playlist", {
+        icon="play_arrow"
+        label={t("play-playlist", {
           defaultValue: "Play playlist",
         })}
         onClick={(e) => {
           e.stopPropagation();
           play(playlist);
         }}
-      >
-        <MaterialIcon>play_arrow</MaterialIcon>
-      </button>
+      />
       <ContextMenuWithButton
         buttonClassName="sb-discover-item-menu"
         aria-label={t("playlist-options", {

@@ -55,6 +55,7 @@ import { useHorizontalScroll } from "../useHorizontalScroll";
 import { UserImagesGrid } from "./UserImages";
 import { CustomizationCard } from "../CustomizationEditPane/CustomizationCard";
 import "./YourContentPane.css";
+import { Button } from "../Button/Button";
 
 export const YOUR_CONTENT_PANE_ID = "your-content-pane";
 
@@ -1108,13 +1109,13 @@ export function YourContentPane(props: YourContentScreenProps) {
                 defaultValue: "Your content couldn't be loaded.",
               })}
             </p>
-            <button
-              type="button"
+            <Button
+              shape="pill"
               className="sb-content-retry"
               onClick={() => void yourContent.load({ force: true })}
             >
               {t("try-again", { defaultValue: "Try again" })}
-            </button>
+            </Button>
           </div>
         ) : null}
 
@@ -1125,13 +1126,13 @@ export function YourContentPane(props: YourContentScreenProps) {
                 defaultValue: "Couldn't load your bookmarks. Please try again.",
               })}
             </p>
-            <button
-              type="button"
+            <Button
+              shape="pill"
               className="sb-content-retry"
               onClick={loadBookmarks}
             >
               {t("try-again", { defaultValue: "Try again" })}
-            </button>
+            </Button>
           </div>
         ) : null}
 

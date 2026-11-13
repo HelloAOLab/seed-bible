@@ -333,39 +333,9 @@ button.sb-profile-plans-link {
 
 /* ------------------------------------------------------------------ logout */
 
-/* `--sb-profile-danger` is the app's destructive-action red (#db1c1c). */
 .sb-profile-logout {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
   width: 100%;
   margin-top: 20px;
-  padding: 0.75rem 1rem;
-  border: 2px solid var(--sb-profile-danger);
-  border-radius: var(--sb-radius-sm);
-  background: transparent;
-  color: var(--sb-profile-danger);
-  font-family: inherit;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.sb-profile-logout:hover {
-  background: color-mix(in srgb, var(--sb-profile-danger), transparent 92%);
-}
-
-/* Signed out: the identity card invites sign-in instead. */
-.sb-profile-signin {
-  padding: 13px 24px;
-  border: none;
-  border-radius: var(--sb-radius-full);
-  background: var(--sb-profile-accent);
-  color: var(--sb-primary-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-16);
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .sb-profile-signin-hint {
@@ -375,34 +345,11 @@ button.sb-profile-plans-link {
   text-align: center;
 }
 
-/*
- * Logical inset: top-right under LTR, top-left under RTL, without a separate
- * rule for each direction.
- */
-.sb-profile-card-edit {
+/* Two classes, to outrank IconButton's own position. */
+.sb-icon-button.sb-profile-card-edit {
   position: absolute;
   top: 10px;
   inset-inline-end: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--sb-profile-muted);
-  cursor: pointer;
-}
-
-.sb-profile-card-edit:hover {
-  background: var(--sb-profile-border);
-  color: var(--sb-font-color);
-}
-
-.sb-profile-card-edit .material-symbols-outlined {
-  font-size: 20px;
 }
 
 .sb-profile-avatar-button {
@@ -495,18 +442,4 @@ button.sb-profile-plans-link {
 .sb-profile-save {
   width: 100%;
   margin-top: 8px;
-  padding: 14px;
-  border: none;
-  border-radius: var(--sb-radius-lg);
-  background: var(--sb-profile-accent);
-  color: var(--sb-primary-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-16);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-profile-save:disabled {
-  cursor: default;
-  opacity: 0.6;
 }

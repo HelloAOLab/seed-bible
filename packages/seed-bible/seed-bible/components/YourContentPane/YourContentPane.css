@@ -504,14 +504,6 @@
 
 .sb-content-retry {
   margin-top: 12px;
-  padding: 9px 18px;
-  border: 1px solid var(--sb-content-rule);
-  border-radius: var(--sb-radius-full);
-  background: none;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  cursor: pointer;
 }
 
 /* -------------------------------------------------------------- your images */
@@ -605,16 +597,8 @@
   }
 }
 
-/* Download sits apart at the start of the row, Close and Delete at the end. */
 .sb-images-preview-download {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
   margin-inline-end: auto;
-}
-
-.sb-images-preview-download .material-symbols-outlined {
-  font-size: 1.125rem;
 }
 
 .sb-images-preview-img {

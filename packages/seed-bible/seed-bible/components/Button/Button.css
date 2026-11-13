@@ -127,6 +127,32 @@ a.sb-button-primary:is(:link, :visited) {
   cursor: default;
 }
 
+/* A working button isn't an unavailable one, so it isn't faded like a
+   disabled one. */
 .sb-button[aria-busy="true"] {
+  opacity: 1;
   cursor: progress;
+}
+
+/* While loading, the spinner sits over the label rather than beside it, so
+   the button never changes size. The label and icon are hidden with opacity,
+   keeping their space and their place in the accessibility tree. */
+.sb-button-loading {
+  position: relative;
+  /* A rotating icon's corners sweep outside its box; clipping stops that
+     from giving a scrolling parent a scrollbar mid-spin. */
+  overflow: hidden;
+}
+
+.sb-button-loading > :not(.sb-button-spinner) {
+  opacity: 0;
+}
+
+/* Centred with negative margins, not a transform, which the spin uses. */
+.sb-button .sb-button-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: calc(var(--sb-button-icon-size) / -2) 0 0
+    calc(var(--sb-button-icon-size) / -2);
 }

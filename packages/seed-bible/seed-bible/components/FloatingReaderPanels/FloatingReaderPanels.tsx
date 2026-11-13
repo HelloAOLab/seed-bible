@@ -31,6 +31,7 @@ import { Avatar } from "../Avatar/Avatar";
 import { ChatParticipantsIcon, MaterialIcon } from "../icons";
 import { SearchBar } from "../SearchBar/SearchBar";
 import { CloseButton } from "../CloseButton/CloseButton";
+import { IconButton } from "../IconButton/IconButton";
 
 interface SearchResult {
   id: string;
@@ -783,19 +784,16 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
     >
       <header className="sb-floating-chat-header">
         {selectedChat ? (
-          <button
-            type="button"
+          <IconButton
+            size="sm"
+            look="tinted"
             className="sb-floating-chat-header-back"
+            icon="arrow_back"
+            label={t("back", { defaultValue: "Back" })}
             onClick={() => {
               state.chats.selectChat(null);
             }}
-            aria-label={t("back", { defaultValue: "Back" })}
-            title={t("back", { defaultValue: "Back" })}
-          >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              arrow_back
-            </span>
-          </button>
+          />
         ) : null}
 
         {selectedChat ? (

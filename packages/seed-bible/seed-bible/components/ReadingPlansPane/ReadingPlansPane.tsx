@@ -36,6 +36,8 @@ import { ReadingPlanDetail } from "./ReadingPlanDetail";
 import { ReadingPlanOptionsMenu } from "./ReadingPlanOptionsMenu";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 interface ReadingPlansPaneProps {
   readingPlans: ReadingPlansManager;
@@ -331,9 +333,10 @@ export function ReadingPlansPaneLeading(props: {
     return null;
   }
   return (
-    <button
-      type="button"
-      className="sb-pane-header-button sb-rp-pane-back"
+    <IconButton
+      className="sb-rp-pane-back"
+      icon="arrow_back"
+      label={t("back", { defaultValue: "Back" })}
       onClick={() => {
         if (onList) {
           onBack?.();
@@ -341,11 +344,7 @@ export function ReadingPlansPaneLeading(props: {
           leavePlan(onBack, () => backToPlansList(readingPlans));
         }
       }}
-      aria-label={t("back", { defaultValue: "Back" })}
-      title={t("back", { defaultValue: "Back" })}
-    >
-      <MaterialIcon>arrow_back</MaterialIcon>
-    </button>
+    />
   );
 }
 
@@ -358,8 +357,11 @@ export function ReadingPlansPaneActions(props: {
     return null;
   }
   return (
-    <button
-      type="button"
+    <Button
+      variant="primary"
+      size="sm"
+      shape="pill"
+      icon="add"
       className="sb-reading-plans-create"
       onClick={() => openPlanCreate(props.readingPlans)}
       aria-label={t("create-reading-plan", {
@@ -367,8 +369,8 @@ export function ReadingPlansPaneActions(props: {
       })}
       title={t("create-reading-plan", { defaultValue: "Create reading plan" })}
     >
-      + {t("create-menu", { defaultValue: "Create" })}
-    </button>
+      {t("create-menu", { defaultValue: "Create" })}
+    </Button>
   );
 }
 
@@ -704,11 +706,11 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                           </span>
                         </span>
                       </button>
-                      <button
-                        type="button"
-                        className={`sb-rp-restart${
-                          confirming ? " sb-rp-restart-danger" : ""
-                        }`}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        tone={confirming ? "danger" : "neutral"}
+                        className="sb-rp-restart"
                         onClick={() => {
                           if (!confirming) {
                             setConfirmDeleteId(planId);
@@ -725,7 +727,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                           : t("reading-plan-discard-draft", {
                               defaultValue: "Discard",
                             })}
-                      </button>
+                      </Button>
                     </div>
                   );
                 })}
@@ -866,15 +868,16 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                             </span>
                           </span>
                         </button>
-                        <button
-                          type="button"
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="sb-rp-restart"
                           onClick={() => onRestart(row.meta)}
                         >
                           {t("reading-plan-restart", {
                             defaultValue: "Restart",
                           })}
-                        </button>
+                        </Button>
                         {optionsMenu(row)}
                       </div>
                       <PlanLoadError planId={row.planId} />

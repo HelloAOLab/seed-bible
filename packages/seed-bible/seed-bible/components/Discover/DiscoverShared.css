@@ -11,7 +11,7 @@
 }
 
 /* Generic pane back button (reading plans, play view, create form, item input). */
-.sb-reading-plans-back {
+.sb-reading-plans-back:not(.sb-button) {
   border: none;
   border-radius: var(--sb-radius-md);
   padding: 0.625rem 1.25rem;
@@ -26,7 +26,7 @@
     background-color var(--sb-duration-base) ease;
 }
 
-.sb-reading-plans-back:hover {
+.sb-reading-plans-back:not(.sb-button):hover {
   background: var(--sb-secondary-color);
 }
 
