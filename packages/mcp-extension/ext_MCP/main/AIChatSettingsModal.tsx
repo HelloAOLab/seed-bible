@@ -2,7 +2,7 @@ import "./AIChatSettingsModal.css";
 import { useState } from "preact/hooks";
 import { useI18n } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { MaterialIcon } from "@packages/seed-bible/seed-bible/components/icons";
+import { Button, IconButton } from "seed-bible/components";
 import type {
   MCPManager,
   McpServerConfig,
@@ -120,52 +120,35 @@ function AIChatSettingsServerRow(props: {
           )}
         </div>
         <div className="sb-extension-row-actions">
-          <button
-            type="button"
+          <IconButton
             className="sb-extension-row-action-button"
+            size="sm"
+            look="tinted"
+            icon={status === "disabled" ? "toggle_off" : "toggle_on"}
+            label={
+              status === "disabled"
+                ? t("mcp-server-enable", {
+                    defaultValue: "Enable",
+                    ns: "mcp-extension",
+                  })
+                : t("mcp-server-disable", {
+                    defaultValue: "Disable",
+                    ns: "mcp-extension",
+                  })
+            }
             onClick={() => onToggleEnabled(status === "disabled")}
-            aria-label={
-              status === "disabled"
-                ? t("mcp-server-enable", {
-                    defaultValue: "Enable",
-                    ns: "mcp-extension",
-                  })
-                : t("mcp-server-disable", {
-                    defaultValue: "Disable",
-                    ns: "mcp-extension",
-                  })
-            }
-            title={
-              status === "disabled"
-                ? t("mcp-server-enable", {
-                    defaultValue: "Enable",
-                    ns: "mcp-extension",
-                  })
-                : t("mcp-server-disable", {
-                    defaultValue: "Disable",
-                    ns: "mcp-extension",
-                  })
-            }
-          >
-            <MaterialIcon>
-              {status === "disabled" ? "toggle_off" : "toggle_on"}
-            </MaterialIcon>
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
             className="sb-extension-row-action-button"
+            size="sm"
+            look="tinted"
+            icon="delete"
+            label={t("mcp-server-remove", {
+              defaultValue: "Remove",
+              ns: "mcp-extension",
+            })}
             onClick={onRemove}
-            aria-label={t("mcp-server-remove", {
-              defaultValue: "Remove",
-              ns: "mcp-extension",
-            })}
-            title={t("mcp-server-remove", {
-              defaultValue: "Remove",
-              ns: "mcp-extension",
-            })}
-          >
-            <MaterialIcon>delete</MaterialIcon>
-          </button>
+          />
         </div>
       </div>
     </li>
@@ -270,17 +253,18 @@ function AddMcpServerForm(props: { mcp: MCPManager }) {
           setAuthHeader((event.currentTarget as HTMLInputElement).value);
         }}
       />
-      <button
-        type="button"
+      <Button
         className="sb-settings-save-button"
+        variant="primary"
+        loading={isAdding}
+        disabled={!name.trim() || !url.trim()}
         onClick={() => void handleAdd()}
-        disabled={!name.trim() || !url.trim() || isAdding}
       >
         {t("mcp-server-add", {
           defaultValue: "Add server",
           ns: "mcp-extension",
         })}
-      </button>
+      </Button>
       {error ? <div className="sb-playlist-add-error">{error}</div> : null}
     </div>
   );

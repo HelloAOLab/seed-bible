@@ -229,28 +229,6 @@
   border-bottom: 1px solid var(--sb-divider-color);
 }
 
-.sb-floating-chat-header-back {
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  border-radius: var(--sb-radius-md);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
-  cursor: pointer;
-  transition:
-    background-color var(--sb-duration-fast) ease,
-    color var(--sb-duration-fast) ease;
-}
-
-.sb-floating-chat-header-back:hover,
-.sb-floating-chat-header-back:focus-visible {
-  color: var(--sb-font-color);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
-}
-
 .sb-floating-chat-header-title {
   margin: 0;
   min-width: 0;
@@ -303,20 +281,6 @@
        row and results below re-enable pointer events. */
     pointer-events: none;
   }
-}
-
-.sb-floating-chat-header-members-button-icon {
-  display: inline-flex;
-  gap: 0.25rem;
-  align-items: center;
-  font-size: 0.875rem;
-}
-
-.sb-floating-chat-header-ai-context-button-icon {
-  display: inline-flex;
-  gap: 0.25rem;
-  align-items: center;
-  font-size: 0.875rem;
 }
 
 .sb-floating-chat-members-menu {
@@ -398,21 +362,11 @@
   bottom: 0.875rem;
 }
 
-.sb-floating-chat-list-create-button {
-  width: 2.125rem;
-  height: 2.125rem;
-  border-radius: var(--sb-radius-full);
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  background: var(--sb-primary-color);
-  color: var(--sb-tertiary-color);
-  box-shadow: 0 10px 24px
-    color-mix(in srgb, var(--sb-primary-color), transparent 78%);
-}
-
-.sb-floating-chat-list-create-button:hover,
-.sb-floating-chat-list-create-button:focus-visible {
-  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 10%);
-  background: color-mix(
+/* New chat: a filled circle in the primary color. */
+.sb-icon-button.sb-floating-chat-list-create-button {
+  --sb-icon-button-color: var(--sb-primary-font-color);
+  --sb-icon-button-background: var(--sb-primary-color);
+  --sb-icon-button-hover-background: color-mix(
     in srgb,
     var(--sb-primary-color),
     var(--sb-font-color) 15%

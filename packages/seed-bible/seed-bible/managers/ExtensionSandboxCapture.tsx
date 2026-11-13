@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../i18n";
+import { Button } from "../components/Button/Button";
 
 export type SandboxCaptureKind = "audio" | "photo";
 
@@ -205,16 +206,20 @@ export function SandboxCaptureDialog({
         </p>
       )}
       <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="lg"
+          shape="pill"
           className="sb-extension-consent-cancel"
           onClick={() => onDone({ cancelled: true })}
         >
           {t("extension-capture-cancel")}
-        </button>
+        </Button>
         {kind === "audio" && phase === "ready" && (
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="lg"
+            shape="pill"
             className="sb-extension-consent-allow"
             onClick={() => {
               source.current!.start();
@@ -222,25 +227,29 @@ export function SandboxCaptureDialog({
             }}
           >
             {t("extension-capture-record")}
-          </button>
+          </Button>
         )}
         {kind === "audio" && phase === "recording" && (
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="lg"
+            shape="pill"
             className="sb-extension-consent-allow"
             onClick={() => void finish()}
           >
             {t("extension-capture-stop")}
-          </button>
+          </Button>
         )}
         {kind === "photo" && phase === "ready" && (
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="lg"
+            shape="pill"
             className="sb-extension-consent-allow"
             onClick={() => void finish()}
           >
             {t("extension-capture-take")}
-          </button>
+          </Button>
         )}
       </div>
     </div>

@@ -105,21 +105,25 @@ describe("openConfirmDeleteModal", () => {
     expect(modals.modals.value.some((m) => m.id === MODAL_ID)).toBe(false);
   });
 
-  it("shows a spinner in place of the trash can while the delete is running", async () => {
+  it("covers the button with a spinner while the delete is running", async () => {
     const { deleteButton } = openAndRender();
-    const icon = () => deleteButton.querySelector(".material-symbols-outlined");
-    expect(icon()!.textContent).toBe("delete");
-    expect(deleteButton.querySelector(".sb-spinner")).toBeNull();
+    const spinner = () => deleteButton.querySelector(".sb-spinner");
+    expect(spinner()).toBeNull();
 
     act(() => {
       click(deleteButton);
     });
 
-    expect(deleteButton.querySelector(".sb-spinner")).not.toBeNull();
-    expect(icon()!.textContent).toBe("progress_activity");
+    expect(spinner()).not.toBeNull();
     expect(deleteButton.getAttribute("aria-busy")).toBe("true");
-    // The label stays, so the button keeps its width and says what's running.
-    expect(deleteButton.textContent).toMatch(/progress_activity\s*delete$/i);
+    // The trash can and label stay under the spinner, so the button keeps
+    // its size and still says what's running.
+    expect(deleteButton.querySelector(".sb-button-icon")?.textContent).toBe(
+      "delete"
+    );
+    expect(deleteButton.querySelector(".sb-button-label")?.textContent).toMatch(
+      /delete/i
+    );
 
     await finishTheDelete();
 

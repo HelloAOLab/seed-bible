@@ -233,6 +233,16 @@ export const CUSTOMIZATION_CONTRAST_PAIRS: CustomizationContrastPair[] = [
     label: "Secondary text on secondary",
   },
   {
+    foreground: "dangerFontColor",
+    background: "dangerColor",
+    label: "Danger text on danger",
+  },
+  {
+    foreground: "dangerColor",
+    background: "readerBackground",
+    label: "Danger on reader background",
+  },
+  {
     foreground: "fontColor",
     background: "background",
     label: "Text on app background",
@@ -647,6 +657,8 @@ export const CUSTOMIZATION_COLOR_GROUPS: CustomizationColorGroup[] = [
       { key: "tertiaryColor", label: "Tertiary" },
       { key: "linkColor", label: "Link" },
       { key: "linkVisitedColor", label: "Visited link" },
+      { key: "dangerColor", label: "Danger" },
+      { key: "dangerFontColor", label: "Danger text" },
     ],
   },
   {

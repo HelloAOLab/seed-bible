@@ -50,23 +50,6 @@
   font-size: 0.8125rem;
 }
 
-.sb-ccl-chip-remove {
-  display: grid;
-  place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.sb-ccl-chip-remove .material-symbols-outlined {
-  font-size: 1rem;
-}
-
 .sb-ccl-inline-form {
   display: flex;
   gap: 0.5rem;
@@ -187,10 +170,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-}
-
-.sb-ccl-file {
-  position: relative;
 }
 
 .sb-ccl-progress {
@@ -369,7 +348,7 @@
   overflow-wrap: anywhere;
 }
 
-.sb-ccl-site > .sb-cz-button {
+.sb-ccl-site > .sb-button {
   margin-inline-start: auto;
 }
 

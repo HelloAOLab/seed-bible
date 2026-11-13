@@ -1,7 +1,7 @@
 import "./CustomizationContentView.css";
 import { useSignal } from "@preact/signals";
 import type { ComponentChildren } from "preact";
-import { useEffect } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   ContentLibraryError,
@@ -24,6 +24,8 @@ import {
   type ParsedImport,
 } from "../../managers/customContent/importEntries";
 import { useI18n } from "../../i18n/I18nManager";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 import { translateTitle } from "../../app/utils";
 import { CONFIDENT_PASSAGE } from "../../managers/customContent/classify";
 import {
@@ -273,16 +275,15 @@ export function CustomizationContentView(props: { state: SeedBibleState }) {
               {createError.value}
             </p>
           )}
-          <button
-            type="button"
-            className="sb-cz-button sb-cz-button-primary"
+          <Button
+            variant="primary"
             disabled={isCreating.value}
             onClick={() => void create()}
           >
             {t("custom-content-create", {
               defaultValue: "Create content library",
             })}
-          </button>
+          </Button>
         </section>
       </div>
     );
@@ -299,9 +300,7 @@ export function CustomizationContentView(props: { state: SeedBibleState }) {
                 "This Custom Branding's content library couldn't be found. It may have been deleted.",
             })}
           </p>
-          <button
-            type="button"
-            className="sb-cz-button"
+          <Button
             onClick={() =>
               void customizations.setEditingContentRecordName(null)
             }
@@ -309,7 +308,7 @@ export function CustomizationContentView(props: { state: SeedBibleState }) {
             {t("custom-content-unlink", {
               defaultValue: "Start a new library",
             })}
-          </button>
+          </Button>
         </section>
       </div>
     );
@@ -323,13 +322,9 @@ export function CustomizationContentView(props: { state: SeedBibleState }) {
               defaultValue: "The content library couldn't be loaded.",
             })}
           </p>
-          <button
-            type="button"
-            className="sb-cz-button"
-            onClick={() => void customContent.openLibrary(recordName)}
-          >
+          <Button onClick={() => void customContent.openLibrary(recordName)}>
             {t("custom-content-retry", { defaultValue: "Try again" })}
-          </button>
+          </Button>
         </section>
       </div>
     );
@@ -434,20 +429,18 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
               {manifest.categories.map((category) => (
                 <li key={category.id} className="sb-ccl-chip">
                   <span dir="auto">{category.name}</span>
-                  <button
-                    type="button"
-                    className="sb-ccl-chip-remove"
+                  <IconButton
+                    icon="close"
+                    size="sm"
                     disabled={busy}
-                    aria-label={t("custom-content-remove-category", {
+                    label={t("custom-content-remove-category", {
                       name: category.name,
                       defaultValue: "Remove {{name}}",
                     })}
                     onClick={() =>
                       void run(() => customContent.removeCategory(category.id))
                     }
-                  >
-                    <span className="material-symbols-outlined">close</span>
-                  </button>
+                  />
                 </li>
               ))}
             </ul>
@@ -486,13 +479,9 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                 ).value;
               }}
             />
-            <button
-              type="submit"
-              className="sb-cz-button"
-              disabled={busy || !newCategory.value.trim()}
-            >
+            <Button type="submit" disabled={busy || !newCategory.value.trim()}>
               {t("custom-content-add-category", { defaultValue: "Add" })}
-            </button>
+            </Button>
           </form>
         </div>
 
@@ -527,9 +516,9 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
             <h3 className="sb-settings-subheading">
               {t("custom-content-items", { defaultValue: "Content" })}
             </h3>
-            <button
-              type="button"
-              className="sb-cz-button sb-cz-button-primary"
+            <Button
+              variant="primary"
+              icon="add"
               onClick={() => {
                 draft.value = {
                   ...EMPTY_DRAFT,
@@ -537,9 +526,8 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                 };
               }}
             >
-              <span className="material-symbols-outlined">add</span>
               {t("custom-content-add-item", { defaultValue: "Add content" })}
-            </button>
+            </Button>
           </div>
           {customContent.canImport && (
             <ImportPanel state={state} books={books} run={run} />
@@ -634,9 +622,9 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                     </div>
                     <div className="sb-ccl-item-actions">
                       {confirmingDelete.value === item.id ? (
-                        <button
-                          type="button"
-                          className="sb-cz-button sb-cz-button-danger"
+                        <Button
+                          variant="primary"
+                          tone="danger"
                           disabled={busy}
                           onClick={() => {
                             confirmingDelete.value = null;
@@ -646,14 +634,13 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                           {t("custom-content-confirm-delete-item", {
                             defaultValue: "Confirm delete",
                           })}
-                        </button>
+                        </Button>
                       ) : (
                         <>
                           {item.status !== "published" &&
                             customContent.classifier.value && (
-                              <button
-                                type="button"
-                                className="sb-cz-button sb-cz-button-quiet"
+                              <Button
+                                variant="ghost"
                                 disabled={
                                   busy ||
                                   customContent.aiRun.value?.running === true
@@ -667,11 +654,9 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                                 {t("custom-content-suggest-with-ai", {
                                   defaultValue: "Suggest with AI",
                                 })}
-                              </button>
+                              </Button>
                             )}
-                          <button
-                            type="button"
-                            className="sb-cz-button"
+                          <Button
                             disabled={busy}
                             onClick={() => {
                               draft.value = draftFromItem(item, books);
@@ -680,10 +665,8 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                             {t("custom-content-edit-item", {
                               defaultValue: "Edit",
                             })}
-                          </button>
-                          <button
-                            type="button"
-                            className="sb-cz-button"
+                          </Button>
+                          <Button
                             disabled={
                               busy ||
                               (item.status !== "published" &&
@@ -705,22 +688,18 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                               : t("custom-content-publish", {
                                   defaultValue: "Publish",
                                 })}
-                          </button>
-                          <button
-                            type="button"
-                            className="sb-cz-icon-button"
+                          </Button>
+                          <IconButton
+                            icon="delete"
+                            size="sm"
                             disabled={busy}
-                            aria-label={t("custom-content-delete-item", {
+                            label={t("custom-content-delete-item", {
                               defaultValue: "Delete",
                             })}
                             onClick={() => {
                               confirmingDelete.value = item.id;
                             }}
-                          >
-                            <span className="material-symbols-outlined">
-                              delete
-                            </span>
-                          </button>
+                          />
                         </>
                       )}
                     </div>
@@ -730,15 +709,13 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
           )}
           {items.filter((item) => matchesFilter(item, filter.value)).length >
             visibleCount.value && (
-            <button
-              type="button"
-              className="sb-cz-button"
+            <Button
               onClick={() => {
                 visibleCount.value += PAGE_SIZE;
               }}
             >
               {t("custom-content-show-more", { defaultValue: "Show more" })}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -752,38 +729,36 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
 
       <footer className="sb-cz-footer">
         {confirmingDeleteLibrary.value ? (
-          <button
-            type="button"
-            className="sb-cz-button sb-cz-button-danger"
+          <Button
+            variant="primary"
+            tone="danger"
+            icon="delete"
             disabled={busy}
             onClick={() => {
               confirmingDeleteLibrary.value = false;
               void run(() => customContent.deleteLibrary());
             }}
           >
-            <span className="material-symbols-outlined">delete</span>
             {t("custom-content-confirm-delete-library", {
               defaultValue: "Delete library and all its content",
             })}
-          </button>
+          </Button>
         ) : (
-          <button
-            type="button"
-            className="sb-cz-button sb-cz-button-danger sb-cz-button-quiet"
+          <Button
+            variant="ghost"
+            tone="danger"
+            icon="delete"
             onClick={() => {
               confirmingDeleteLibrary.value = true;
             }}
           >
-            <span className="material-symbols-outlined">delete</span>
             {t("custom-content-delete-library", {
               defaultValue: "Delete library",
             })}
-          </button>
+          </Button>
         )}
         <span className="sb-cz-footer-spacer" />
-        <button
-          type="button"
-          className="sb-cz-button"
+        <Button
           disabled={busy}
           title={t("custom-content-rebuild-hint", {
             defaultValue:
@@ -801,7 +776,7 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
           }
         >
           {t("custom-content-rebuild", { defaultValue: "Rebuild index" })}
-        </button>
+        </Button>
       </footer>
     </div>
   );
@@ -1007,37 +982,30 @@ function ItemForm(props: {
       </form>
 
       <footer className="sb-cz-footer">
-        <button type="button" className="sb-cz-button" onClick={props.onCancel}>
+        <Button onClick={props.onCancel}>
           {t("cancel", { defaultValue: "Cancel" })}
-        </button>
+        </Button>
         <span className="sb-cz-footer-spacer" />
         {form.value.published ? (
-          <button
-            type="button"
-            className="sb-cz-button sb-cz-button-primary"
+          <Button
+            variant="primary"
             disabled={!canPublish}
             onClick={() => submit(true)}
           >
             {t("save", { defaultValue: "Save" })}
-          </button>
+          </Button>
         ) : (
           <>
-            <button
-              type="button"
-              className="sb-cz-button"
-              disabled={!canSave}
-              onClick={() => submit(false)}
-            >
+            <Button disabled={!canSave} onClick={() => submit(false)}>
               {t("custom-content-save-draft", { defaultValue: "Save draft" })}
-            </button>
-            <button
-              type="button"
-              className="sb-cz-button sb-cz-button-primary"
+            </Button>
+            <Button
+              variant="primary"
               disabled={!canPublish}
               onClick={() => submit(true)}
             >
               {t("custom-content-publish", { defaultValue: "Publish" })}
-            </button>
+            </Button>
           </>
         )}
       </footer>
@@ -1078,6 +1046,7 @@ function ImportPanel(props: {
   const links = useSignal("");
   const message = useSignal<string | null>(null);
   const isStarting = useSignal(false);
+  const csvInput = useRef<HTMLInputElement>(null);
   const tab = useSignal<"links" | "site">("links");
   const progress = customContent.importProgress.value;
   const lookup = customContent.siteImport.value;
@@ -1204,42 +1173,47 @@ function ImportPanel(props: {
             }}
           />
           <div className="sb-ccl-import-actions">
-            <button
-              type="button"
-              className="sb-cz-button sb-cz-button-primary"
+            <Button
+              variant="primary"
               disabled={isStarting.value || !links.value.trim()}
               onClick={() => void start(parsePastedLinks(links.value))}
             >
               {t("custom-content-import-start", {
                 defaultValue: "Import links",
               })}
-            </button>
-            <label className="sb-cz-button sb-ccl-file">
+            </Button>
+            <Button
+              disabled={isStarting.value}
+              onClick={() => csvInput.current?.click()}
+            >
               {t("custom-content-import-csv", { defaultValue: "Upload CSV" })}
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                className="sr-only"
-                disabled={isStarting.value}
-                onChange={async (event) => {
-                  const input = event.currentTarget as HTMLInputElement;
-                  const file = input.files?.[0];
-                  input.value = "";
-                  if (!file) {
-                    return;
-                  }
-                  const parsed = parseImportCsv(await file.text());
-                  if (!parsed) {
-                    message.value = t("custom-content-import-csv-no-url", {
-                      defaultValue:
-                        'The CSV needs a header row with a "url" column.',
-                    });
-                    return;
-                  }
-                  await start(parsed);
-                }}
-              />
-            </label>
+            </Button>
+            <input
+              ref={csvInput}
+              type="file"
+              accept=".csv,text/csv"
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden="true"
+              disabled={isStarting.value}
+              onChange={async (event) => {
+                const input = event.currentTarget as HTMLInputElement;
+                const file = input.files?.[0];
+                input.value = "";
+                if (!file) {
+                  return;
+                }
+                const parsed = parseImportCsv(await file.text());
+                if (!parsed) {
+                  message.value = t("custom-content-import-csv-no-url", {
+                    defaultValue:
+                      'The CSV needs a header row with a "url" column.',
+                  });
+                  return;
+                }
+                await start(parsed);
+              }}
+            />
           </div>
           <p className="sb-cz-hint">
             {t("custom-content-import-csv-hint", {
@@ -1290,22 +1264,19 @@ function ImportProgressBanner(props: {
           })}
         </p>
         <div className="sb-ccl-import-actions">
-          <button
-            type="button"
-            className="sb-cz-button sb-cz-button-primary"
+          <Button
+            variant="primary"
             onClick={() => void run(() => state.customContent.resumeImport())}
           >
             {t("custom-content-import-resume", { defaultValue: "Continue" })}
-          </button>
-          <button
-            type="button"
-            className="sb-cz-button"
+          </Button>
+          <Button
             onClick={() => void run(() => state.customContent.cancelImport())}
           >
             {t("custom-content-import-cancel", {
               defaultValue: "Cancel import",
             })}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -1319,13 +1290,12 @@ function ImportProgressBanner(props: {
             defaultValue: "Looking up your website in Common Crawl…",
           })}
         </p>
-        <button
-          type="button"
-          className="sb-cz-button sb-cz-button-quiet"
+        <Button
+          variant="ghost"
           onClick={() => void run(() => state.customContent.cancelImport())}
         >
           {t("custom-content-import-cancel", { defaultValue: "Cancel import" })}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -1351,13 +1321,12 @@ function ImportProgressBanner(props: {
         >
           <div style={{ width: `${percent}%` }} />
         </div>
-        <button
-          type="button"
-          className="sb-cz-button sb-cz-button-quiet"
+        <Button
+          variant="ghost"
           onClick={() => void run(() => state.customContent.cancelImport())}
         >
           {t("custom-content-import-cancel", { defaultValue: "Cancel import" })}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -1553,22 +1522,19 @@ function SuggestedCategories(props: {
               defaultValue: "Suggested category: {{name}} ({{count}} items)",
             })}
           </span>
-          <button
-            type="button"
-            className="sb-cz-button"
+          <Button
             onClick={() => void run(() => customContent.addCategory(name))}
           >
             {t("custom-content-add-category", { defaultValue: "Add" })}
-          </button>
-          <button
-            type="button"
-            className="sb-cz-button sb-cz-button-quiet"
+          </Button>
+          <Button
+            variant="ghost"
             onClick={() => {
               dismissed.value = [...dismissed.value, name.toLowerCase()];
             }}
           >
             {t("custom-content-dismiss", { defaultValue: "Dismiss" })}
-          </button>
+          </Button>
         </li>
       ))}
     </ul>
@@ -1614,13 +1580,12 @@ function AiSuggestionsRun(props: {
             })}
           </p>
         ) : (
-          <button
-            type="button"
-            className="sb-cz-button sb-cz-button-quiet"
+          <Button
+            variant="ghost"
             onClick={() => customContent.stopSuggesting()}
           >
             {t("custom-content-ai-stop", { defaultValue: "Stop" })}
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -1640,17 +1605,13 @@ function AiSuggestionsRun(props: {
         </p>
       )}
       {candidates > 0 && (
-        <button
-          type="button"
-          className="sb-cz-button"
-          onClick={() => void run(() => customContent.suggestWithAi())}
-        >
+        <Button onClick={() => void run(() => customContent.suggestWithAi())}>
           {t("custom-content-ai-suggest-all", {
             count: candidates,
             agent: agentName,
             defaultValue: "Suggest with {{agent}} for {{count}} items",
           })}
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -1906,14 +1867,13 @@ function SiteImportForm(props: {
         })}
       </label>
       <div className="sb-ccl-import-actions">
-        <button
-          type="button"
-          className="sb-cz-button sb-cz-button-primary"
+        <Button
+          variant="primary"
           disabled={isStarting.value || !site.value.trim() || !permission.value}
           onClick={() => void find()}
         >
           {t("custom-content-site-find", { defaultValue: "Find pages" })}
-        </button>
+        </Button>
       </div>
       {sources.length > 0 && (
         <div className="sb-ccl-sites">
@@ -1934,9 +1894,7 @@ function SiteImportForm(props: {
                     defaultValue: "Last imported {{date}}",
                   })}
                 </span>
-                <button
-                  type="button"
-                  className="sb-cz-button"
+                <Button
                   disabled={isStarting.value}
                   onClick={() =>
                     void run(() =>
@@ -1947,7 +1905,7 @@ function SiteImportForm(props: {
                   {t("custom-content-site-check", {
                     defaultValue: "Check for new pages",
                   })}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
@@ -1976,13 +1934,9 @@ function SiteLookup(props: {
   }
 
   const cancel = (
-    <button
-      type="button"
-      className="sb-cz-button"
-      onClick={() => void run(() => customContent.cancelImport())}
-    >
+    <Button onClick={() => void run(() => customContent.cancelImport())}>
       {t("custom-content-site-cancel", { defaultValue: "Cancel" })}
-    </button>
+    </Button>
   );
 
   if (lookup.progress.status === "listing" || !lookup.candidates) {
@@ -2024,13 +1978,9 @@ function SiteLookup(props: {
                 })}
         </p>
         <div className="sb-ccl-import-actions">
-          <button
-            type="button"
-            className="sb-cz-button"
-            onClick={() => void run(() => customContent.cancelImport())}
-          >
+          <Button onClick={() => void run(() => customContent.cancelImport())}>
             {t("custom-content-site-done", { defaultValue: "Done" })}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -2149,9 +2099,8 @@ function SiteLookup(props: {
                     <span dir="ltr">{folder}</span>
                     <span className="sb-ccl-folder-count">{ids.length}</span>
                   </label>
-                  <button
-                    type="button"
-                    className="sb-cz-button sb-cz-button-quiet"
+                  <Button
+                    variant="ghost"
                     aria-expanded={isOpen}
                     onClick={() => {
                       const next = new Set(openFolders.value);
@@ -2170,7 +2119,7 @@ function SiteLookup(props: {
                       : t("custom-content-site-show-pages", {
                           defaultValue: "Show pages",
                         })}
-                  </button>
+                  </Button>
                 </div>
                 {isOpen && (
                   <ul className="sb-ccl-pages">
@@ -2219,9 +2168,8 @@ function SiteLookup(props: {
         </span>
         <span className="sb-cz-footer-spacer" />
         {cancel}
-        <button
-          type="button"
-          className="sb-cz-button sb-cz-button-primary"
+        <Button
+          variant="primary"
           disabled={chosen.length === 0 || isPicking.value}
           onClick={async () => {
             isPicking.value = true;
@@ -2238,7 +2186,7 @@ function SiteLookup(props: {
             count: chosen.length,
             defaultValue: "Import {{count}} pages",
           })}
-        </button>
+        </Button>
       </div>
     </div>
   );

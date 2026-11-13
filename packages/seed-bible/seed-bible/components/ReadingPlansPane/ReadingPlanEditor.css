@@ -286,14 +286,6 @@
   color: var(--rp-muted);
 }
 
-.sb-rp-session-remove {
-  color: var(--rp-muted);
-}
-
-.sb-rp-session-remove:hover {
-  color: #dc2626;
-}
-
 .sb-rp-add-session {
   display: inline-flex;
   align-items: center;
@@ -352,6 +344,7 @@
 
 .sb-rp-add-button:hover {
   opacity: 0.9;
+  background: color-mix(in srgb, var(--sb-font-color) 8%, transparent);
 }
 
 .sb-rp-empty-day {
@@ -452,36 +445,6 @@
   white-space: nowrap;
 }
 
-.sb-rp-reading-remove {
-  color: var(--rp-muted);
-}
-
-.sb-rp-reading-remove:hover {
-  color: #dc2626;
-}
-
-/* Icon buttons */
-.sb-rp-icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  border: none;
-  border-radius: var(--sb-radius-md);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.sb-rp-icon-button:hover {
-  background: color-mix(in srgb, var(--sb-font-color) 8%, transparent);
-}
-
-.sb-rp-add-button:hover,
-.sb-rp-reading-remove:hover {
-  background: color-mix(in srgb, var(--sb-font-color) 8%, transparent);
-}
-
 /* Footer.
 
    The reader toolbar is a floating bar fixed to the bottom of the viewport and
@@ -535,48 +498,10 @@
   gap: 10px;
 }
 
-.sb-rp-button {
-  padding: 11px 18px;
-  border-radius: var(--sb-radius-md);
-  font-family: inherit;
-  font-size: var(--sb-font-size-15);
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity var(--sb-duration-fast) ease;
-}
-
-.sb-rp-button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.sb-rp-button-secondary {
-  border: 1px solid var(--rp-border);
-  background: transparent;
-  color: var(--sb-font-color);
-}
-
-.sb-rp-button-primary {
-  border: 1px solid var(--rp-accent);
-  background: var(--rp-accent);
-  color: var(--rp-accent-contrast);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.02);
-}
-
 /* The primary button only grows to fill the editor's side-by-side footer row.
    Elsewhere (celebration, start CTA) it must size to its content instead. */
-.sb-rp-editor-actions .sb-rp-button-primary {
+.sb-rp-editor-actions .sb-button-primary {
   flex: 1;
-}
-
-/* Second press of "Discard" — the one that actually erases the plan. */
-.sb-rp-button-danger {
-  border-color: #dc2626;
-  color: #dc2626;
-}
-
-.sb-rp-button-primary:not(:disabled):hover {
-  opacity: 0.92;
 }
 
 /* Soft accent button — Figma's peach "Mark as complete" */
@@ -596,12 +521,4 @@
 
 .sb-rp-button-soft:not(:disabled):hover {
   background: color-mix(in srgb, var(--sb-primary-color) 18%, transparent);
-}
-
-.sb-rp-reading-edit {
-  color: var(--rp-muted);
-}
-
-.sb-rp-reading-edit[aria-pressed="true"] {
-  color: var(--sb-primary-color);
 }
