@@ -89,6 +89,7 @@ export function createFakeCasualOS(
   /** Procedure name → error code to answer the next N calls with. */
   const failures = new Map<string, { code: string; times: number }>();
   const calls: { procedure: string; input: Record<string, unknown> }[] = [];
+  const allowedOrigins = new Set([APP_ORIGIN]);
   const PAGE_SIZE = 2;
 
   const signIn = (userId: string, sessionId?: string) => {
@@ -215,6 +216,10 @@ export function createFakeCasualOS(
       throw new Error(`Unexpected request to ${target}`);
     }
     const headers = new Headers(init?.headers);
+    // Like the real server: calls must come from one of its allowed origins.
+    if (!allowedOrigins.has(headers.get("Origin") ?? "")) {
+      return Response.json(fail("invalid_origin"), { status: 403 });
+    }
     const auth = headers.get("Authorization");
     const body = JSON.parse(String(init?.body)) as {
       procedure: string;
@@ -234,6 +239,7 @@ export function createFakeCasualOS(
     records,
     sessions,
     previews,
+    allowedOrigins,
     failures,
     calls,
     signIn,
@@ -317,6 +323,7 @@ export function createTestWorker(
       get: () => (gate ??= new CommonCrawlGate(null, env, deps)),
     },
     CASUALOS_ENDPOINT: "https://casualos.test",
+    CASUALOS_ORIGIN: APP_ORIGIN,
     ALLOWED_ORIGINS: APP_ORIGIN,
     SESSION_KEY_SECRET: SECRET,
     DEAD_LETTER_QUEUE: "dlq",

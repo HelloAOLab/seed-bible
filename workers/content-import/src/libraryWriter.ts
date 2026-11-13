@@ -64,7 +64,7 @@ export class LibraryWriter {
     request: z.infer<typeof writerRequestSchema>
   ): Promise<Response> {
     const client = createCasualOSClient(
-      this.env.CASUALOS_ENDPOINT,
+      this.env,
       request.sessionKey,
       this.deps.fetch
     );

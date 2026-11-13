@@ -161,6 +161,29 @@ describe("content import worker", () => {
       expect(worker.sent).toEqual([]);
     });
 
+    it("calls CasualOS as the app's origin, and says plainly when CasualOS won't accept it", async () => {
+      const { worker, key, casualos } = setup();
+      expect(
+        (
+          await call(worker, "GET", `/imports?contentRecordName=${LIBRARY}`, {
+            key,
+          })
+        ).status
+      ).toBe(200);
+
+      casualos.allowedOrigins.clear();
+      const refused = await call(
+        worker,
+        "GET",
+        `/imports?contentRecordName=${LIBRARY}`,
+        { key: casualos.signIn(OWNER, "session-2") }
+      );
+      expect(refused.status).toBe(500);
+      expect(await refused.json()).toMatchObject({
+        error: "worker_misconfigured",
+      });
+    });
+
     it("reports a temporary CasualOS failure as such, not as a permission problem", async () => {
       const { worker, key, casualos } = setup();
       casualos.failures.set("recordData", { code: "server_error", times: 1 });

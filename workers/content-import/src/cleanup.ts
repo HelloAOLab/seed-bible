@@ -58,8 +58,7 @@ export async function runCleanup(env: Env, deps: WorkerDeps): Promise<void> {
       );
       const expired = (await getJob(env.DB, job.id))!;
       await writeImportStatus(
-        createCasualOSClient(env.CASUALOS_ENDPOINT, sessionKey, deps.fetch)
-          .store,
+        createCasualOSClient(env, sessionKey, deps.fetch).store,
         await jobProgress(env.DB, expired),
         now
       );

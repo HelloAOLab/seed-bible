@@ -78,6 +78,11 @@ export interface Env {
   COMMON_CRAWL_GATE: DurableObjectNamespace;
   /** The CasualOS records server, e.g. `https://auth.seedbible.org`. */
   CASUALOS_ENDPOINT: string;
+  /**
+   * The origin CasualOS calls are made as: the app this worker serves, e.g.
+   * `https://seedbible.org`. It must be one of CasualOS's allowed origins.
+   */
+  CASUALOS_ORIGIN: string;
   /** Comma-separated origins allowed to call the API, e.g. `https://seedbible.org`. */
   ALLOWED_ORIGINS: string;
   /** Base64 of 32 random bytes. Encrypts the session keys imports hold. A secret, set with `wrangler secret put`. */

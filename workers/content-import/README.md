@@ -61,6 +61,12 @@ Once the secrets exist, CD deploys the alpha worker on pushes to `develop` and t
 
 Each environment's `ALLOWED_ORIGINS` in `wrangler.toml` lists the origins its app is served from. Add any other host the app is served from, or its calls will be refused.
 
+`CASUALOS_ORIGIN` is the origin the worker gives when it calls CasualOS. CasualOS refuses calls that don't come from one of its allowed origins. A browser sends its page's origin automatically, but the worker has to name one. It's `https://alpha.seedbible.org` for alpha and `https://seedbible.org` for production. If CasualOS ever stops accepting it, every call fails, and the API answers `worker_misconfigured`.
+
+## Logs
+
+Workers Logs (`[observability]` in `wrangler.toml`) is on for both workers. Their console output and every request are under each worker's **Observability** tab in the Cloudflare dashboard. When CasualOS refuses a call, the log line includes CasualOS's own error code.
+
 ## Tests
 
 `test/unit/content-import-worker/` runs the worker's handlers against real SQLite (Node's `node:sqlite`, through the same D1 interface), an in-memory CasualOS, and an in-memory Common Crawl (index answers and gzipped WARC records built in the test).

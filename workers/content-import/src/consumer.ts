@@ -230,11 +230,7 @@ export async function processImportMessage(
     job.session_key_enc,
     env.SESSION_KEY_SECRET
   );
-  const client = createCasualOSClient(
-    env.CASUALOS_ENDPOINT,
-    sessionKey,
-    deps.fetch
-  );
+  const client = createCasualOSClient(env, sessionKey, deps.fetch);
 
   try {
     await importOne(client, deps.fetch, job, row, now);
@@ -296,7 +292,7 @@ export async function processDeadLetter(
   );
   await finishJob(
     env,
-    createCasualOSClient(env.CASUALOS_ENDPOINT, sessionKey, deps.fetch),
+    createCasualOSClient(env, sessionKey, deps.fetch),
     job,
     now
   );

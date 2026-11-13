@@ -3,6 +3,7 @@ import {
   type ContentRecordStore,
   type StoreResult,
 } from "../../../packages/seed-bible/seed-bible/managers/customContent/publish";
+import type { Env } from "./platform";
 
 /**
  * Error codes meaning the session key is dead for good. Mirrors
@@ -51,13 +52,17 @@ export interface LinkPreview {
  * CasualOS's records API, called the way the SDK's `RecordsClient` does:
  * one `POST {endpoint}/api/v3/callProcedure` per call, as the owner of
  * `sessionKey`. The worker never has access of its own.
+ *
+ * CasualOS refuses calls that don't come from one of its allowed origins
+ * (`invalid_origin`). Browsers send their page's origin themselves; the
+ * worker sends the origin of the app it works for, `CASUALOS_ORIGIN`.
  */
 export function createCasualOSClient(
-  endpoint: string,
+  env: Pick<Env, "CASUALOS_ENDPOINT" | "CASUALOS_ORIGIN">,
   sessionKey: string,
   fetchImpl: typeof fetch = (...args) => fetch(...args)
 ) {
-  const root = endpoint.replace(/\/+$/, "");
+  const root = env.CASUALOS_ENDPOINT.replace(/\/+$/, "");
 
   const call = async (
     procedure: string,
@@ -71,6 +76,7 @@ export function createCasualOSClient(
           "Content-Type": "application/json;charset=UTF-8",
           Accept: "application/json",
           Authorization: `Bearer ${sessionKey}`,
+          Origin: env.CASUALOS_ORIGIN,
         },
         body: JSON.stringify({ procedure, input }),
       });

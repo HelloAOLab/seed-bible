@@ -15,6 +15,11 @@ compatibility_date = "2026-09-01"
 [triggers]
 crons = ["*/15 * * * *"]
 
+# Workers Logs: keeps the workers' console output and request logs, viewable
+# under the worker's Observability tab in the Cloudflare dashboard.
+[observability]
+enabled = true
+
 # SQLite-backed Durable Objects: the only kind Cloudflare's free plan
 # allows. Neither object stores anything, so the storage kind doesn't matter.
 [[migrations]]
@@ -32,6 +37,8 @@ name = "seed-bible-content-import-alpha"
 
 [env.alpha.vars]
 CASUALOS_ENDPOINT = "https://auth.seedbible.org"
+# CasualOS only accepts calls from its allowed origins; this is the app's.
+CASUALOS_ORIGIN = "https://alpha.seedbible.org"
 ALLOWED_ORIGINS = "https://alpha.seedbible.org"
 DEAD_LETTER_QUEUE = "seed-bible-content-import-alpha-dlq"
 # SESSION_KEY_SECRET is a secret: `wrangler secret put SESSION_KEY_SECRET --env alpha`.
@@ -75,6 +82,8 @@ name = "seed-bible-content-import"
 
 [env.production.vars]
 CASUALOS_ENDPOINT = "https://auth.seedbible.org"
+# CasualOS only accepts calls from its allowed origins; this is the app's.
+CASUALOS_ORIGIN = "https://seedbible.org"
 ALLOWED_ORIGINS = "https://seedbible.org,https://prod.seedbible.org"
 DEAD_LETTER_QUEUE = "seed-bible-content-import-dlq"
 # SESSION_KEY_SECRET is a secret: `wrangler secret put SESSION_KEY_SECRET --env production`.

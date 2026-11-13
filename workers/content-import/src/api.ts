@@ -81,11 +81,7 @@ async function authenticate(
   if (!sessionKey || !userId) {
     throw new HttpError(401, "not_logged_in", "Sign in to import content.");
   }
-  const client = createCasualOSClient(
-    env.CASUALOS_ENDPOINT,
-    sessionKey,
-    deps.fetch
-  );
+  const client = createCasualOSClient(env, sessionKey, deps.fetch);
 
   const fingerprint = await sessionKeyFingerprint(sessionKey);
   const cached = authCache.get(fingerprint);
@@ -102,10 +98,21 @@ async function authenticate(
     ) {
       throw new HttpError(401, "session_invalid", "Sign in again to continue.");
     }
+    console.error("CasualOS refused getUserInfo:", info.errorCode);
+    if (info.errorCode === "invalid_origin") {
+      // A setup problem, not the caller's: CasualOS doesn't accept the
+      // origin this worker calls it as.
+      throw new HttpError(
+        500,
+        "worker_misconfigured",
+        `CasualOS refused calls from ${env.CASUALOS_ORIGIN}. Check the worker's CASUALOS_ORIGIN.`
+      );
+    }
     throw new HttpError(
       502,
       "casualos_unavailable",
-      "CasualOS couldn't confirm who you are."
+      "CasualOS couldn't confirm who you are.",
+      { casualosError: info.errorCode }
     );
   }
   authCache.set(fingerprint, { userId, until: deps.now() + AUTH_CACHE_MS });
