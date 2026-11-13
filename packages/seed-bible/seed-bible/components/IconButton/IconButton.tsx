@@ -1,5 +1,5 @@
 import "./IconButton.css";
-import type { ComponentChild, JSX } from "preact";
+import type { ComponentChild, JSX, Ref } from "preact";
 import { MaterialIcon } from "../icons";
 
 export type IconButtonSize = "sm" | "md" | "lg";
@@ -31,6 +31,8 @@ export type IconButtonProps = Omit<
   /** Extra classes, for placement. `class` and `className` both work. */
   className?: string;
   class?: string;
+  /** The `<button>` element, for code that has to focus or measure it (a menu returning focus to the button that opened it). */
+  buttonRef?: Ref<HTMLButtonElement>;
 };
 
 /** A button that shows only an icon, such as a pane header's or toolbar's actions. */
@@ -43,11 +45,13 @@ export function IconButton({
   type = "button",
   className,
   class: classAttribute,
+  buttonRef,
   ...rest
 }: IconButtonProps) {
   return (
     <button
       {...rest}
+      ref={buttonRef}
       type={type}
       className={[
         "sb-icon-button",

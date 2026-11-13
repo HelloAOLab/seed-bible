@@ -993,8 +993,8 @@ export function TabsHeader(props: TabsHeaderProps) {
               closeContextMenus();
             }}
             buttonClassName="sb-sidebar-top-icon-button"
-            aria-label={t("more", { defaultValue: "More" })}
-            title={t("more", { defaultValue: "More" })}
+            size="md"
+            label={t("more", { defaultValue: "More" })}
           >
             <ContextMenuItem
               onClick={() => {
@@ -1355,9 +1355,7 @@ function TabRow(props: TabRowProps) {
         anchorClassName="sb-tab-menu-anchor"
         buttonClassName="sb-tab-menu-button"
         menuClassName="sb-tab-menu"
-        iconClassName="sb-tab-more-icon"
-        aria-label={t("open-tab-menu", { defaultValue: "Open tab menu" })}
-        title={t("tab-options", { defaultValue: "Tab options" })}
+        label={t("open-tab-menu", { defaultValue: "Open tab menu" })}
       >
         {tab.sharedSession && (
           <>
@@ -2049,11 +2047,7 @@ function SavesSection(props: SavesSectionProps) {
                 anchorClassName="sb-save-category-menu-anchor"
                 buttonClassName="sb-save-category-menu-button"
                 menuClassName="sb-tab-menu"
-                iconClassName="sb-tab-more-icon"
-                aria-label={t("category-options", {
-                  defaultValue: "Folder options",
-                })}
-                title={t("category-options", {
+                label={t("category-options", {
                   defaultValue: "Folder options",
                 })}
               >
@@ -2149,11 +2143,7 @@ function SavesSection(props: SavesSectionProps) {
                           anchorClassName="sb-tab-menu-anchor"
                           buttonClassName="sb-tab-menu-button"
                           menuClassName="sb-tab-menu"
-                          iconClassName="sb-tab-more-icon"
-                          aria-label={t("save-options", {
-                            defaultValue: "Save options",
-                          })}
-                          title={t("save-options", {
+                          label={t("save-options", {
                             defaultValue: "Save options",
                           })}
                         >

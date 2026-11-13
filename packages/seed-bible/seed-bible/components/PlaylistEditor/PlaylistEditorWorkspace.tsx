@@ -110,9 +110,9 @@ function StepActions(props: {
       <div className="sb-pe-mobile-header-actions">
         <AddStepToggle playlists={playlists} />
         <ContextMenuWithButton
-          buttonClassName="sb-pe-square-button sb-pe-step-menu"
-          aria-label={more}
-          title={more}
+          buttonClassName="sb-pe-step-menu"
+          size="lg"
+          label={more}
         >
           <ContextMenuItem
             onClick={() => (playlists.editorStepSettingsOpen.value = true)}

@@ -242,7 +242,7 @@ function PlaylistHistoryList(props: {
                   />
                   <ContextMenuWithButton
                     buttonClassName="sb-discover-item-menu"
-                    aria-label={t("playlist-history-options", {
+                    label={t("playlist-history-options", {
                       defaultValue: "Playlist history options",
                     })}
                     onClick={(e) => e.stopPropagation()}

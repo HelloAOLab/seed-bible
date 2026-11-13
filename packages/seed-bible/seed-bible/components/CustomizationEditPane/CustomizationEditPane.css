@@ -67,11 +67,8 @@
   border-color: var(--sb-primary-color);
 }
 
-/* The "Default translation" row is a `ContextMenuWithButton` trigger, so it
-   also gets `.sb-context-menu-button`'s icon-button sizing; the compound
-   selector outranks that regardless of CSS load order. */
-.sb-cz-row,
-.sb-context-menu-button.sb-cz-row {
+/* The "Default translation" row, which opens the translation menu. */
+.sb-cz-row {
   width: 100%;
   height: auto;
   display: flex;
@@ -89,8 +86,7 @@
   transition: background-color var(--sb-duration-base) ease;
 }
 
-.sb-cz-row:hover,
-.sb-context-menu-button.sb-cz-row:hover {
+.sb-cz-row:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
 }
 
@@ -134,30 +130,6 @@
 .sb-cz-row-hint {
   font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
-}
-
-.sb-context-menu-button.sb-cz-icon-button {
-  width: 2rem;
-  height: 2rem;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  cursor: pointer;
-}
-
-.sb-context-menu-button.sb-cz-icon-button:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  color: var(--sb-font-color);
-}
-
-.sb-cz-icon-button .material-symbols-outlined {
-  font-size: 1.25rem;
 }
 
 /* Footer actions (Delete · Share · Save), pinned to the bottom of the pane

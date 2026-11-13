@@ -1276,22 +1276,6 @@
   gap: 16px;
 }
 
-.sb-pe-square-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid color-mix(in srgb, var(--pe-text) 13%, var(--pe-surface));
-  border-radius: 10px;
-}
-
-/* A title bar's plain icon buttons, Add a step in the accent colour. */
-.sb-pe-mobile-header-actions .sb-pe-square-button,
-.sb-pe-panel-header-actions .sb-pe-square-button {
-  border: none;
-}
-
 .sb-icon-button.sb-pe-add-toggle {
   --sb-icon-button-color: var(--pe-add);
   /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
@@ -1306,8 +1290,12 @@
   );
 }
 
-.sb-pe-step-menu[aria-expanded="true"] {
-  background: color-mix(in srgb, var(--pe-text) 8%, transparent);
+.sb-icon-button.sb-pe-step-menu[aria-expanded="true"] {
+  --sb-icon-button-background: color-mix(
+    in srgb,
+    var(--pe-text) 8%,
+    transparent
+  );
 }
 
 .sb-pe-add-toggle-plus {
@@ -1368,8 +1356,9 @@
 
 /* The menu in a step's title bar (Item settings, and Delete): a vertical
    ellipsis, as on a tab's row. */
-.sb-pe-step-menu .material-symbols-outlined {
-  font-size: 24px;
+.sb-icon-button.sb-pe-step-menu {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.5rem;
 }
 
 /* The menu is portaled out of the editor, past its `--pe-*` colours. */

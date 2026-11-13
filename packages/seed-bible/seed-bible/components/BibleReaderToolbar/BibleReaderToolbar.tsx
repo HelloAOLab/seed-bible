@@ -866,7 +866,7 @@ function VerseToolbarAnnotationGroup(props: {
               {ownAnnotations.has(annotation) ? (
                 <ContextMenuWithButton
                   buttonClassName="sb-annotation-item-menu"
-                  aria-label={t("annotation-options", {
+                  label={t("annotation-options", {
                     defaultValue: "Annotation options",
                   })}
                 >

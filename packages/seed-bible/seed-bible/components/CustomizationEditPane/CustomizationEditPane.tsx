@@ -776,20 +776,21 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
         </div>
 
         <ContextMenuWithButton
-          type="button"
           buttonClassName="sb-cz-row"
           menuClassName="sb-customization-translation-picker-menu"
-          icon={
-            <>
+          trigger={({ buttonRef, ...menu }) => (
+            <button {...menu} ref={buttonRef} type="button">
               <span className="sb-cz-row-label">
                 {t("customization-default-translation", {
                   defaultValue: "Default translation",
                 })}
               </span>
               <span className="sb-cz-row-value">{defaultTranslationLabel}</span>
-              <span className="material-symbols-outlined">expand_more</span>
-            </>
-          }
+              <span className="material-symbols-outlined" aria-hidden="true">
+                expand_more
+              </span>
+            </button>
+          )}
         >
           <DefaultTranslationPickerMenuContent state={state} />
         </ContextMenuWithButton>
@@ -835,7 +836,8 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                     <ContextMenuWithButton
                       anchorClassName="sb-cz-card-menu"
                       buttonClassName="sb-cz-icon-button"
-                      aria-label={t("variant-options", {
+                      size="md"
+                      label={t("variant-options", {
                         defaultValue: "Theme options",
                       })}
                     >

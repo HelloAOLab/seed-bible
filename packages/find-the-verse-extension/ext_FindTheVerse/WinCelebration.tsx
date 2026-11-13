@@ -84,11 +84,10 @@ export default function WinCelebration({
   onBack: () => void;
   onDismiss: () => void;
 }) {
-  // Button doesn't pass a ref through, so "Back to games" is found from its row.
-  const actionsRef = useRef<HTMLDivElement>(null);
+  const backRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    actionsRef.current?.querySelector("button")?.focus({ preventScroll: true });
+    backRef.current?.focus({ preventScroll: true });
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onDismiss();
     };
@@ -136,8 +135,8 @@ export default function WinCelebration({
             })}
           </p>
         )}
-        <div className="ftv-celebration-actions" ref={actionsRef}>
-          <Button variant="primary" onClick={onBack}>
+        <div className="ftv-celebration-actions">
+          <Button buttonRef={backRef} variant="primary" onClick={onBack}>
             {translate("back-to-menu", { defaultValue: "Back to games" })}
           </Button>
           <Button onClick={onDismiss}>

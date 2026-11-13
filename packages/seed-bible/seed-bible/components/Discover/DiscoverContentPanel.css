@@ -55,39 +55,6 @@
   flex-shrink: 0;
 }
 
-.sb-dcp-create-btn:not(.sb-button) {
-  flex-shrink: 0;
-  padding: 6px 12px;
-  border-radius: var(--sb-radius-full);
-  border: none;
-  background: var(--sb-primary-color);
-  color: var(--sb-background);
-  font-size: var(--sb-font-size-12);
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.sb-dcp-create-btn:not(.sb-button):hover {
-  opacity: 0.88;
-}
-
-/* The full panel's create menu trigger (`DiscoverCreateMenu`) is also a
-   `.sb-context-menu-button`, whose fixed icon-button size, zero padding and
-   transparent background would otherwise win. */
-.sb-dcp-create-btn.sb-context-menu-button {
-  width: auto;
-  height: auto;
-  padding: 6px 12px;
-  border-radius: var(--sb-radius-full);
-  background: var(--sb-primary-color);
-  color: var(--sb-background);
-}
-
-.sb-dcp-create-btn.sb-context-menu-button:hover {
-  background: var(--sb-primary-color);
-}
-
 /* ── Filter chips ── */
 .sb-dcp-filters-wrapper {
   width: 100%;

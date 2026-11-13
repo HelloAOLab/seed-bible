@@ -286,7 +286,7 @@ function AnnotationCard(props: {
         <ContextMenuWithButton
           icon="more_horiz"
           buttonClassName="sb-content-kebab"
-          aria-label={t("more-options", { defaultValue: "More options" })}
+          label={t("more-options", { defaultValue: "More options" })}
         >
           <ContextMenuItem onClick={props.onEdit}>
             <MaterialIcon
@@ -427,7 +427,7 @@ function HighlightRow(props: {
       <ContextMenuWithButton
         icon="more_horiz"
         buttonClassName="sb-content-kebab"
-        aria-label={t("more-options", { defaultValue: "More options" })}
+        label={t("more-options", { defaultValue: "More options" })}
       >
         <ContextMenuItem onClick={confirmDelete}>
           <MaterialIcon
@@ -546,8 +546,7 @@ function SavePill(props: {
       </button>
       <ContextMenuWithButton
         buttonClassName="sb-content-save-menu"
-        aria-label={t("save-options", { defaultValue: "Save options" })}
-        title={t("save-options", { defaultValue: "Save options" })}
+        label={t("save-options", { defaultValue: "Save options" })}
       >
         <ContextMenuItem
           onClick={() => openSaveModalForLocation(state, location)}
@@ -616,11 +615,10 @@ function BookmarkRow(props: {
       </button>
       <ContextMenuWithButton
         buttonClassName="sb-content-save-menu"
-        aria-label={t("bookmark-options-named", {
+        label={t("bookmark-options-named", {
           defaultValue: "Options for {{name}}",
           name: bookmark.name,
         })}
-        title={t("bookmark-options", { defaultValue: "Bookmark options" })}
       >
         <ContextMenuItem onClick={() => openEditBookmarkModal(state, bookmark)}>
           <MaterialIcon
@@ -1050,8 +1048,17 @@ export function YourContentPane(props: YourContentScreenProps) {
           {/* Outside the chip strip so it stays put while the chips scroll. */}
           <ContextMenuWithButton
             buttonClassName="sb-content-create"
-            aria-label={t("create-menu", { defaultValue: "Create" })}
-            icon={<>+ {t("create-playlist", { defaultValue: "Create" })}</>}
+            trigger={(menu) => (
+              <Button
+                {...menu}
+                variant="primary"
+                size="sm"
+                shape="pill"
+                icon="add"
+              >
+                {t("create-playlist", { defaultValue: "Create" })}
+              </Button>
+            )}
           >
             <ContextMenuItem onClick={props.onCreatePlaylist}>
               <MaterialIcon className="sb-context-menu-item-icon">

@@ -51,7 +51,8 @@ export function PlaylistPagePane(props: {
           {props.onEdit || props.onDelete ? (
             <ContextMenuWithButton
               buttonClassName="sb-playlist-page-menu"
-              aria-label={t("playlist-options", {
+              size="lg"
+              label={t("playlist-options", {
                 defaultValue: "Playlist options",
               })}
             >

@@ -283,20 +283,6 @@
   }
 }
 
-.sb-floating-chat-header-members-button-icon {
-  display: inline-flex;
-  gap: 0.25rem;
-  align-items: center;
-  font-size: 0.875rem;
-}
-
-.sb-floating-chat-header-ai-context-button-icon {
-  display: inline-flex;
-  gap: 0.25rem;
-  align-items: center;
-  font-size: 0.875rem;
-}
-
 .sb-floating-chat-members-menu {
   min-width: 13.75rem;
 }
@@ -376,21 +362,11 @@
   bottom: 0.875rem;
 }
 
-.sb-floating-chat-list-create-button {
-  width: 2.125rem;
-  height: 2.125rem;
-  border-radius: var(--sb-radius-full);
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  background: var(--sb-primary-color);
-  color: var(--sb-tertiary-color);
-  box-shadow: 0 10px 24px
-    color-mix(in srgb, var(--sb-primary-color), transparent 78%);
-}
-
-.sb-floating-chat-list-create-button:hover,
-.sb-floating-chat-list-create-button:focus-visible {
-  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 10%);
-  background: color-mix(
+/* New chat: a filled circle in the primary color. */
+.sb-icon-button.sb-floating-chat-list-create-button {
+  --sb-icon-button-color: var(--sb-primary-font-color);
+  --sb-icon-button-background: var(--sb-primary-color);
+  --sb-icon-button-hover-background: color-mix(
     in srgb,
     var(--sb-primary-color),
     var(--sb-font-color) 15%

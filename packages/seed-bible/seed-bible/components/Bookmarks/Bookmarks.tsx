@@ -522,14 +522,10 @@ function BookmarkPickerContent(props: {
               anchorClassName="sb-tab-menu-anchor sb-bookmark-picker-menu-anchor"
               buttonClassName="sb-tab-menu-button"
               menuClassName="sb-tab-menu sb-bookmark-picker-menu"
-              iconClassName="sb-tab-more-icon"
               disabled={isSaving.value}
-              aria-label={t("bookmark-options-named", {
+              label={t("bookmark-options-named", {
                 defaultValue: "Options for {{name}}",
                 name: bookmark.name,
-              })}
-              title={t("bookmark-options", {
-                defaultValue: "Bookmark options",
               })}
             >
               <ContextMenuItem
@@ -869,13 +865,9 @@ export function BookmarksPanel(props: {
             anchorClassName="sb-tab-menu-anchor"
             buttonClassName="sb-tab-menu-button"
             menuClassName="sb-tab-menu"
-            iconClassName="sb-tab-more-icon"
-            aria-label={t("bookmark-options-named", {
+            label={t("bookmark-options-named", {
               defaultValue: "Options for {{name}}",
               name: bookmark.name,
-            })}
-            title={t("bookmark-options", {
-              defaultValue: "Bookmark options",
             })}
           >
             <ContextMenuItem

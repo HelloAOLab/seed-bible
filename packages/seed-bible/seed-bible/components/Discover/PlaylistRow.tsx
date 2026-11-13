@@ -109,7 +109,7 @@ export function PlaylistRow(props: {
       />
       <ContextMenuWithButton
         buttonClassName="sb-discover-item-menu"
-        aria-label={t("playlist-options", {
+        label={t("playlist-options", {
           defaultValue: "Playlist options",
         })}
         onClick={(e) => e.stopPropagation()}

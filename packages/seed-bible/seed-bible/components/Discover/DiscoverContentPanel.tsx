@@ -175,8 +175,11 @@ function DiscoverCreateMenu(props: { state: SeedBibleState }) {
   return (
     <ContextMenuWithButton
       buttonClassName="sb-dcp-create-btn"
-      aria-label={t("create-menu", { defaultValue: "Create" })}
-      icon={<>+ {t("create-playlist", { defaultValue: "Create" })}</>}
+      trigger={(menu) => (
+        <Button {...menu} variant="primary" size="sm" shape="pill" icon="add">
+          {t("create-playlist", { defaultValue: "Create" })}
+        </Button>
+      )}
     >
       <ContextMenuItem onClick={() => void annotations.createNewAnnotation()}>
         <MaterialIcon className="sb-context-menu-item-icon">

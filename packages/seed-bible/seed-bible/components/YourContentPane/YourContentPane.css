@@ -59,28 +59,9 @@
   padding: 0 var(--sb-content-padding) 8px;
 }
 
-/* Same filled look as the Discover pane's Create button. */
-.sb-content-create.sb-context-menu-button {
+.sb-button.sb-content-create {
   flex-shrink: 0;
-  width: auto;
-  height: auto;
-  padding: 7px 16px;
-  border: none;
-  border-radius: var(--sb-radius-full);
-  background: var(--sb-primary-color);
-  color: var(--sb-background);
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
 }
-
-.sb-content-create.sb-context-menu-button:hover {
-  opacity: 0.9;
-  background: var(--sb-primary-color);
-}
-
 /* Sets Create apart from the filters beside it. */
 .sb-content-toolbar-divider {
   flex-shrink: 0;
@@ -220,24 +201,6 @@
 .sb-content-date {
   color: var(--sb-content-muted);
   font-size: var(--sb-font-size-13);
-}
-
-.sb-content-kebab {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: none;
-  color: var(--sb-content-muted);
-  cursor: pointer;
-}
-
-.sb-content-kebab:hover {
-  background: var(--sb-content-surface-strong);
 }
 
 /* The verse the note is about: an accent rule, the text, then the reference. */
@@ -408,22 +371,6 @@
 
 .sb-content-bookmark-chapter {
   overflow-wrap: anywhere;
-}
-
-.sb-content-save-menu {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 9px 8px 9px 0;
-  border: none;
-  border-radius: 0 var(--sb-radius-md) var(--sb-radius-md) 0;
-  background: transparent;
-  color: var(--sb-content-muted);
-  cursor: pointer;
-}
-
-.sb-content-save-menu:hover {
-  color: inherit;
 }
 
 /* Wraps onto a second line rather than ending in an ellipsis when even its

@@ -125,7 +125,9 @@ function SavedGameCard({
           >
             {t("play", { defaultValue: "Play" })}
           </Button>
-          <ContextMenuWithButton>
+          <ContextMenuWithButton
+            label={t("game-options", { defaultValue: "Game options" })}
+          >
             <ContextMenuItem onClick={onEdit}>
               <span class="material-symbols-outlined sb-context-menu-item-icon">
                 edit

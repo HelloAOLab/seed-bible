@@ -18,7 +18,6 @@ import {
   ContextMenuWithButton,
   ContextMenuItem,
 } from "../ContextMenu/ContextMenu";
-import { MaterialIcon } from "../icons";
 import { IconButton } from "../IconButton/IconButton";
 
 export const DISCOVER_PANE_ID = "discover-pane";
@@ -144,7 +143,6 @@ export function EditPlaylistWithAiButton(props: {
     chats.selectChat(chat.id);
     openChatPanel();
   };
-  const aiButtonLabel = t("ai", { defaultValue: "AI" });
   const aiButtonAriaLabel = t("ai-edit-playlist", {
     defaultValue: "Edit playlist with AI",
   });
@@ -154,9 +152,9 @@ export function EditPlaylistWithAiButton(props: {
     return (
       <ContextMenuWithButton
         buttonClassName="sb-discover-title-ai"
-        aria-label={aiButtonAriaLabel}
-        title={aiButtonLabel}
-        icon={<MaterialIcon>auto_awesome</MaterialIcon>}
+        label={aiButtonAriaLabel}
+        icon="auto_awesome"
+        size="md"
       >
         {providers.map((provider) => (
           <ContextMenuItem

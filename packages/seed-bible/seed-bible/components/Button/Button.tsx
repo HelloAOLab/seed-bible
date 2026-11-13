@@ -1,5 +1,5 @@
 import "./Button.css";
-import type { ComponentChild, ComponentChildren, JSX } from "preact";
+import type { ComponentChild, ComponentChildren, JSX, Ref } from "preact";
 import { MaterialIcon } from "../icons";
 import { Spinner } from "../Spinner/Spinner";
 
@@ -46,6 +46,8 @@ export type ButtonProps = Omit<
   /** Extra classes, for placement. `class` and `className` both work. */
   className?: string;
   class?: string;
+  /** The `<button>` element, for code that has to focus or measure it (a menu returning focus to the button that opened it). Not set for a link. */
+  buttonRef?: Ref<HTMLButtonElement>;
 };
 
 /** A button with a text label: Save, Cancel, Retry, Sign in. With `href`, a link drawn the same way. */
@@ -65,6 +67,7 @@ export function Button({
   disabled,
   className,
   class: classAttribute,
+  buttonRef,
   ...rest
 }: ButtonProps) {
   const iconNode =
@@ -118,6 +121,7 @@ export function Button({
   return (
     <button
       {...rest}
+      ref={buttonRef}
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}

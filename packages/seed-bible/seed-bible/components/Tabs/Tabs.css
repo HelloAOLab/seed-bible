@@ -155,29 +155,6 @@
   gap: 0.5rem;
 }
 
-/* The "more" menu button, the one top-row button that isn't an IconButton
-   yet. Scoped to the top row to outrank `.sb-context-menu-button`'s size. */
-.sb-sidebar-top-actions .sb-sidebar-top-icon-button:not(.sb-icon-button) {
-  border: none;
-  border-radius: var(--sb-radius-md);
-  background: transparent;
-  color: var(--sb-font-color);
-  cursor: pointer;
-  width: 2rem;
-  height: 2rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  /* These sit inside block anchor divs; baseline alignment there can make
-     the row taller than the button, which would throw off the collapsed
-     hamburger's pinned offset. */
-  vertical-align: top;
-  transition:
-    background-color var(--sb-duration-fast) ease,
-    color var(--sb-duration-fast) ease;
-}
-
 /* Block anchor divs hold the top-row buttons; baseline alignment there
    can make the row taller than the button, which would throw off the
    collapsed hamburger's pinned offset. */
@@ -329,24 +306,6 @@
 .sb-save-category-menu-anchor {
   position: relative;
   flex-shrink: 0;
-}
-
-.sb-save-category-menu-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  border-radius: var(--sb-radius-sm);
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  cursor: pointer;
-}
-
-.sb-save-category-menu-button:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
-  color: var(--sb-font-color);
 }
 
 .sb-save-category-items {
@@ -1259,21 +1218,6 @@
 
 .sb-tab-menu-item:hover {
   background: var(--sb-secondary-color);
-}
-
-.sb-tab-more-icon {
-  font-size: 1.125rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-}
-
-/* Only where hover is real: a touch screen keeps `:hover` on a tapped
-   button, so the tint would stick. */
-@media (hover: hover) {
-  .sb-sidebar-top-actions
-    .sb-sidebar-top-icon-button:not(.sb-icon-button):hover {
-    background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-    color: var(--sb-font-color);
-  }
 }
 
 .sb-sidebar-icon-button path {

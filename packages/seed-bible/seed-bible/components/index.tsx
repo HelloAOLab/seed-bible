@@ -5,6 +5,8 @@ export * from "./IconButton/IconButton";
 export {
   ContextMenuWithButton,
   ContextMenuItem,
+  type ContextMenuTriggerProps,
+  type ContextMenuWithButtonProps,
 } from "./ContextMenu/ContextMenu";
 export * from "./PortalComponent/PortalComponent";
 export * from "./Skeleton/Skeleton";
