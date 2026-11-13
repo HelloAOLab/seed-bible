@@ -4,7 +4,7 @@
 .sb-bottom-sheet-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--sb-backdrop);
   /* A sheet with a backdrop blocks the page, so it belongs to the modal
    * layer. The sheet comes later in the DOM, so it is on top. */
   z-index: var(--sb-layer-modal);

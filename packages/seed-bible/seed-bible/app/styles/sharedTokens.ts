@@ -19,6 +19,7 @@ export const SHARED_TOKENS = {
   "--sb-layer-prompt": "1100",
   "--sb-layer-tour": "1200",
   "--sb-layer-toast": "1300",
+  "--sb-backdrop": "rgba(0, 0, 0, 0.3)",
   "--sb-duration-fast": "0.15s",
   "--sb-duration-base": "0.2s",
   "--sb-duration-slow": "0.3s",
