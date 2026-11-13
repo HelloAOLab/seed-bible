@@ -6,6 +6,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationsManager";
 import { useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
+import { Button } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import {
   downloadReferences,
@@ -268,21 +269,13 @@ function AskToDownloadModal(props: {
       </div>
 
       <div className="sb-references-download-actions">
-        <button
-          type="button"
-          className="sb-references-download-btn sb-references-download-btn-secondary"
-          onClick={onClose}
-        >
+        <Button size="lg" shape="pill" onClick={onClose}>
           {t("download-not-now", { defaultValue: "Not now" })}
-        </button>
+        </Button>
 
-        <button
-          type="button"
-          className="sb-references-download-btn sb-references-download-btn-primary"
-          onClick={accept}
-        >
+        <Button variant="primary" size="lg" shape="pill" onClick={accept}>
           {t("download-confirm", { defaultValue: "Download" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { Button } from "seed-bible/components";
 import { formatReference } from "./books";
 import { SoundToggle } from "./SoundToggle";
 import type { TargetVerse } from "./types";
@@ -83,10 +84,11 @@ export default function WinCelebration({
   onBack: () => void;
   onDismiss: () => void;
 }) {
-  const backRef = useRef<HTMLButtonElement>(null);
+  // Button doesn't pass a ref through, so "Back to games" is found from its row.
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    backRef.current?.focus({ preventScroll: true });
+    actionsRef.current?.querySelector("button")?.focus({ preventScroll: true });
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onDismiss();
     };
@@ -134,20 +136,20 @@ export default function WinCelebration({
             })}
           </p>
         )}
-        <div className="ftv-celebration-actions">
-          <button
-            ref={backRef}
-            type="button"
-            className="ftv-btn ftv-btn--primary"
-            onClick={onBack}
-          >
+        <div className="ftv-celebration-actions" ref={actionsRef}>
+          <Button variant="primary" onClick={onBack}>
             {translate("back-to-menu", { defaultValue: "Back to games" })}
-          </button>
-          <button type="button" className="ftv-btn" onClick={onDismiss}>
+          </Button>
+          <Button onClick={onDismiss}>
             {translate("keep-reading", { defaultValue: "Keep reading" })}
-          </button>
+          </Button>
         </div>
-        <SoundToggle t={translate} className="ftv-celebration-sound" />
+        <SoundToggle
+          t={translate}
+          className="ftv-celebration-sound"
+          variant="ghost"
+          size="sm"
+        />
       </div>
     </div>
   );

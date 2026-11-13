@@ -20,34 +20,14 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
-/* The header's buttons are round and tinted in this pane, like the close
-   button (opened with `closeButtonLook: "tinted"`). */
-.sb-references-header-button {
-  width: 2rem;
-  min-width: 2rem;
-  height: 2rem;
-  border-radius: var(--sb-radius-full);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 91%);
+.sb-icon-button.sb-references-header-button {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.125rem;
 }
-
 /* Matches the icon size of this pane's own header button. */
 .sb-pane-header:has(.sb-references-header-button) .sb-close-button {
   /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   --sb-icon-button-icon-size: 1.125rem;
-}
-
-/* Two classes, to outrank the app-wide `body .material-symbols-outlined`
-   size. A line-height of 1 makes the glyph's box its own size, so centering
-   the box centers the icon. */
-.sb-references-header-button.material-symbols-outlined {
-  font-size: 1.125rem;
-  line-height: 1;
-}
-
-@media (hover: hover) {
-  .sb-references-header-button:hover {
-    background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
-  }
 }
 
 .sb-references-root {

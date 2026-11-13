@@ -1,4 +1,5 @@
 import type { SeedBibleState } from "seed-bible";
+import { Button } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { formatReference } from "./books";
 import { resultMessage, revealThreshold } from "./gameLogic";
@@ -71,14 +72,10 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
             </p>
           )}
         </div>
-        <button
-          type="button"
-          className="ftv-btn ftv-btn--primary ftv-btn--block"
-          onClick={onReset}
-        >
+        <Button className="ftv-btn--block" variant="primary" onClick={onReset}>
           {t("back-to-menu", { defaultValue: "Back to games" })}
-        </button>
-        <SoundToggle t={t} className="ftv-btn ftv-sound-toggle" />
+        </Button>
+        <SoundToggle t={t} />
       </div>
     );
   }
@@ -162,17 +159,11 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
       {revealReady && !revealed && (
         <div className="ftv-reveal-row">
           {!partialRevealText && target.verseText.trim() ? (
-            <button
-              type="button"
-              className="ftv-btn"
-              onClick={() => revealHint(game)}
-            >
+            <Button onClick={() => revealHint(game)}>
               {t("reveal-hint", { defaultValue: "Reveal hint" })}
-            </button>
+            </Button>
           ) : null}
-          <button
-            type="button"
-            className="ftv-btn"
+          <Button
             onClick={() =>
               void revealVerse(
                 state,
@@ -184,7 +175,7 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
             }
           >
             {t("reveal-verse", { defaultValue: "Reveal verse" })}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -198,14 +189,10 @@ export function GamePlayer({ game, state, onReset }: GamePlayerProps) {
         </p>
       )}
 
-      <button
-        type="button"
-        className="ftv-btn ftv-btn--start"
-        onClick={onReset}
-      >
+      <Button className="ftv-btn--start" onClick={onReset}>
         {t("end-game", { defaultValue: "End game" })}
-      </button>
-      <SoundToggle t={t} className="ftv-btn ftv-btn--start ftv-sound-toggle" />
+      </Button>
+      <SoundToggle t={t} className="ftv-btn--start" />
     </div>
   );
 }

@@ -93,28 +93,6 @@
   margin-left: auto;
 }
 
-.sb-extension-row-action-button {
-  width: 1.875rem;
-  height: 1.875rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  border-radius: var(--sb-radius-md);
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 70%);
-  color: var(--sb-font-color);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-.sb-extension-row-action-button:hover {
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 56%);
-}
-
-.sb-extension-row-action-button .material-symbols-outlined {
-  font-size: 1.125rem;
-}
-
 .sb-extension-state-icon {
   font-size: 1.125rem;
   flex: 0 0 auto;
@@ -724,29 +702,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.625rem;
-}
-
-.sb-settings-save-button:not(.sb-button) {
-  border: none;
-  border-radius: var(--sb-radius-md);
-  padding: 0.625rem 1.25rem;
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition:
-    transform 0.1s ease,
-    background-color var(--sb-duration-base) ease;
-}
-
-.sb-settings-save-button:not(.sb-button):hover {
-  background: color-mix(in srgb, var(--sb-primary-color), black 6%);
-}
-
-.sb-settings-save-button:not(.sb-button):active {
-  transform: translateY(1px);
 }
 
 /* Breadcrumb row at the top of a settings subpage — ported from develop */

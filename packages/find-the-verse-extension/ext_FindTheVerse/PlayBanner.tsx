@@ -1,6 +1,7 @@
 import type { ComponentChildren } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import type { SeedBibleState } from "seed-bible";
+import { Button, type ButtonProps } from "seed-bible/components";
 import { resultMessage, revealThreshold } from "./gameLogic";
 import { chanceView, GameName, HintControl } from "./PlayStatus";
 import { revealHint, revealVerse } from "./roundActions";
@@ -193,9 +194,9 @@ function RoundBar({
         <p className="ftv-bar-title">
           {translate("you-found-it", { defaultValue: "You found it!" })}
         </p>
-        <button type="button" className="ftv-bar-button" onClick={onEnd}>
+        <BarButton onClick={onEnd}>
           {translate("back-to-menu", { defaultValue: "Back to games" })}
-        </button>
+        </BarButton>
       </div>
     );
   }
@@ -221,13 +222,9 @@ function RoundBar({
           }}
           t={translate}
         />
-        <button
-          type="button"
-          className="ftv-bar-button ftv-bar-button--end"
-          onClick={onEnd}
-        >
+        <BarButton className="ftv-bar-button--end" onClick={onEnd}>
           {translate("end-game", { defaultValue: "End game" })}
-        </button>
+        </BarButton>
       </div>
       {!onRoundTab && roundTabId ? (
         <div className="ftv-bar-row">
@@ -236,13 +233,9 @@ function RoundBar({
               defaultValue: "Your game is in another tab.",
             })}
           </p>
-          <button
-            type="button"
-            className="ftv-bar-button"
-            onClick={() => state.app.selectTab(roundTabId)}
-          >
+          <BarButton onClick={() => state.app.selectTab(roundTabId)}>
             {translate("return-to-game", { defaultValue: "Return to game" })}
-          </button>
+          </BarButton>
         </div>
       ) : revealed ? (
         <p className="ftv-bar-text">
@@ -261,17 +254,11 @@ function RoundBar({
       {revealReady && !revealed && (
         <div className="ftv-bar-row">
           {!partialRevealText && target?.verseText.trim() ? (
-            <button
-              type="button"
-              className="ftv-bar-button"
-              onClick={() => revealHint(game)}
-            >
+            <BarButton onClick={() => revealHint(game)}>
               {translate("reveal-hint", { defaultValue: "Reveal hint" })}
-            </button>
+            </BarButton>
           ) : null}
-          <button
-            type="button"
-            className="ftv-bar-button"
+          <BarButton
             onClick={() =>
               void revealVerse(
                 state,
@@ -283,7 +270,7 @@ function RoundBar({
             }
           >
             {translate("reveal-verse", { defaultValue: "Reveal verse" })}
-          </button>
+          </BarButton>
         </div>
       )}
       {notice && <p className="ftv-bar-text ftv-notice">{notice}</p>}
@@ -369,13 +356,9 @@ export function FindTheVerseReaderBanner({
               "Tap any verse in the reader, then choose Set as target in the toolbar.",
           })}
         </p>
-        <button
-          type="button"
-          className="ftv-bar-button"
-          onClick={onCancelSelect}
-        >
+        <BarButton onClick={onCancelSelect}>
           {translate("cancel", { defaultValue: "Cancel" })}
-        </button>
+        </BarButton>
       </PlacedBar>
     );
   } else if (!paneOpen && phase === "playing") {
@@ -402,4 +385,9 @@ export function FindTheVerseReaderBanner({
       />
     </>
   );
+}
+
+/** The reader bar's buttons: all the same small pill. */
+function BarButton(props: Omit<ButtonProps, "size" | "shape">) {
+  return <Button {...props} size="sm" shape="pill" />;
 }

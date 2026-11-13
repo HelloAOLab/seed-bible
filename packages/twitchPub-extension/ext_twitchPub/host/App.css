@@ -15,25 +15,10 @@
   border-radius: var(--sb-radius-md);
 }
 
-.twitchBtn {
-  margin-top: 5px;
-  padding: 10px 20px;
-  font-size: var(--sb-font-size-16);
-  background-color: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-  border: none;
-  border-radius: var(--sb-radius-sm);
-  cursor: pointer;
-  width: max-content;
-  margin-left: auto;
-  margin-right: auto;
+.sb-button.twitchBtn {
+  align-self: center;
+  margin: 5px auto 0;
 }
-
-.twitchBtn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
 .twitchPub-header {
   display: flex;
   height: fit-content;
@@ -371,16 +356,6 @@
   display: flex;
   align-items: center;
   gap: 3px;
-}
-
-.twitchPub-logout-btn {
-  padding: 6px 14px;
-  font-size: var(--sb-font-size-14);
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-  border: none;
-  border-radius: var(--sb-radius-sm);
-  cursor: pointer;
 }
 
 /* When the QR interface auto-hides (pointer left the QR), dissolve the floating

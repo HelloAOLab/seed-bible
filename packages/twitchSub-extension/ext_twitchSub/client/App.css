@@ -168,24 +168,6 @@
   margin: 0;
 }
 
-.session-btn {
-  padding: 3px 6px;
-  border: none;
-  border-radius: var(--sb-radius-xs);
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-}
-
-.leave-session-btn {
-  background-color: #eb5a4a;
-}
-.rejoin-session-btn {
-  background-color: lightgreen;
-}
-
 .twitch-tooltip {
   position: relative;
   display: inline-flex;
