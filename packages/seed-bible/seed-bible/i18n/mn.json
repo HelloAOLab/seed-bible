@@ -22,22 +22,18 @@
   "clear-search": "Хайлтыг цэвэрлэх",
   "searching": "Хайж байна...",
   "no-search-results": "Таарах шүлэг байхгүй.",
-
   "uploading": "Байршуулж байна...",
   "profile-name": "Профайлын нэр",
   "profile-name-placeholder": "жишээ нь Крэйгийн гэр бүл",
-
   "description": "Тайлбар",
   "optional": "(Заавал биш)",
   "description-placeholder": "Профайлын тайлбараа оруулна уу...",
   "location": "Байршил",
   "location-placeholder": "жишээ нь: Остин, Техас",
-
   "copied": "Хуулбарласан",
   "copy": "Хуулбарлах",
   "save-changes": "Өөрчлөлтүүдийг хадгалах",
   "sign-out": "Гарах",
-
   "log-in": "Нэвтрэх",
   "session-settings": "Хуралдааны тохиргоо",
   "shared-session-click-to-join": "хуваалцаж байна — нэгдэхийн тулд дарна уу",
@@ -53,12 +49,10 @@
   "display-and-theme-description": "Сэдэв сонгоод, Судар болон хэрэглэгчийн интерфэйс хэрхэн харагдахыг тохируул.",
   "scripture-settings": "Судрын тохиргоо",
   "scripture-settings-font-size-example": "А",
-
   "all-settings": "Бүх тохиргоо",
   "no-extensions-available": "Өргөтгөл байхгүй.",
   "install": "Суулгах",
   "uninstall": "Устгах",
-
   "custom": "Захиалгат",
   "text-section-bookTitle": "Номын гарчгийн текст",
   "text-section-heading": "Гарчиг текст",
@@ -79,7 +73,6 @@
   "show-selected-items": "Сонгосон зүйлсийг харуулах",
   "show-highlight-colors": "Тодруулсан өнгийг харуулах",
   "show-icon-text": "Дүрсний текстийг харуулах",
-
   "extensions": "Өргөтгөлүүд",
   "display": "Дэлгэц",
   "keep-screen-awake": "Дэлгэцийг асаалттай байлгах",
@@ -101,7 +94,6 @@
   "increase-scripture-font-size": "Судрын фонтын хэмжээг нэмэгдүүлэх",
   "change-line-spacing": "Мөр хоорондын зайг өөрчлөх",
   "line-spacing_lineHeight": "Мөр хоорондын зай: {{lineHeight}}",
-
   "italic": "Налуу",
   "underline": "Доогуур нь зураастай",
   "alignment_x": "Зэрэгцүүлэлт: {{alignment}}",
@@ -110,7 +102,6 @@
   "text_color": "Текстийн өнгө",
   "follow_theme": "Загварыг дагах",
   "reset-to-default": "Анхдагч тохиргоонд нь дахин тохируулах",
-
   "id_highlight-text-color": "{{id}} тодруулсан текстийн өнгө",
   "id_highlight-background-color": "{{id}} тодруулсан дэвсгэр өнгө",
   "all-settings-description": "Текстийн хэсэг бүрийг нарийн тохируулж, сэдэв бүрийн өнгийг өөрчил.",
@@ -126,7 +117,6 @@
   "old-testament_short": "ОТ",
   "new-testament_short": "NT",
   "apocrypha": "Апокриф",
-
   "custom-translations": "Захиалгат орчуулга",
   "no-translation-results-found": "Илэрц олдсонгүй. Та хайлтаа хэсэгчлэн бүрэн орчуулгыг оруулахын тулд өргөжүүлэхийг хүсэж байна уу?",
   "show-all-translations": "Бүх орчуулгыг харуулах",
@@ -138,7 +128,6 @@
   "complete-translations": "Бүрэн орчуулга",
   "all-translations": "Бүх орчуулга",
   "popular-translations": "Алдартай орчуулга",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 Дуулал",
   "2-psalms": "2 Дуулал",
@@ -160,7 +149,6 @@
   "go-to-all-settings": "Бүх тохиргоо руу очих",
   "more": "Илүү их",
   "remove-bookmark": "Хавчуургыг устгах",
-
   "chat": "Чат",
   "today": "Өнөөдөр",
   "you": "Чи",
@@ -170,7 +158,6 @@
   "category-options": "Фолдерын сонголтууд",
   "rename": "Нэрийг нь өөрчлөх",
   "delete": "Устгах",
-
   "bookmark-options": "Хавчуургын сонголтууд",
   "new-folder-placeholder": "Фолдерын нэр",
   "tasks": "Даалгаварууд",
@@ -182,11 +169,9 @@
   "folder-name-taken": "Ийм нэртэй фолдер аль хэдийн байна.",
   "add-to-new": "Шинэ зүйлд нэмэх",
   "save": "Хадгалах",
-
   "seed-bible": "Үрийн Библи",
   "take-photo": "Зураг авах",
   "choose-from-gallery": "Галерейгаас сонгох",
-
   "crop-your-photo": "Зургаа тайрах",
   "zoom": "Томруулах",
   "set-picture": "Зургийн багц",
@@ -212,10 +197,8 @@
   "read-the-bible": "Библийг уншина уу",
   "seed-bible-description": "Үрийн Библиэс {{bookName}} {{chapterNumber}} г уншина уу",
   "social-title": "{{bookName}} {{chapterNumber}} г унших",
-
   "chapter-navigation": "Бүлгийн навигаци",
   "tutorial.skip": "Алгасах",
-
   "tutorial.back": "Буцах",
   "tutorial.done": "Дууссан",
   "tutorial.next": "Дараагийнх",
@@ -239,7 +222,6 @@
   "copied-translation-share-link": "Орчуулгын хуваалцах холбоосыг хуулсан",
   "less": "Бага",
   "swipe-up-more": "Дэлгэрэнгүй үзэхийн тулд дээш шударна уу",
-  "plans": "Төлөвлөгөө",
   "reading-plans": "Унших төлөвлөгөө",
   "create-reading-plan": "Унших төлөвлөгөө гаргах",
   "reading-plans-empty": "Танд одоогоор унших төлөвлөгөө алга байна. Эхлэхийн тулд нэгийг үүсгэнэ үү.",
@@ -328,11 +310,9 @@
   "study-notes": "Судалгааны тэмдэглэл",
   "content": "Агуулга",
   "untitled-playlist": "Гарчиггүй тоглуулах жагсаалт",
-
   "discover-annotations-empty": "Танд тэмдэглэл алга",
   "discover-cross-references-empty": "Энэ бүлэгт хөндлөн лавлагаа байхгүй.",
   "discover-study-notes-empty": "Энэ бүлэгт зориулсан судалгааны тэмдэглэл байхгүй байна.",
-
   "discover-select-tab": "Холбоотой материалыг олохын тулд таб сонгоно уу.",
   "create-playlist": "Үүсгэх",
   "playlist-title_placeholder": "Тоглуулах жагсаалтын гарчиг",
@@ -381,12 +361,10 @@
   "delete-playlist-failed": "Тоглуулах жагсаалтыг устгаж чадсангүй.",
   "collapsed-tab-shared-label": "{{title}} — хуваалцсан хэсэг, {{count}} танилцуулга",
   "playlist-add-mode-label": "Зүйлийн төрөл",
-
   "session-host-reconnected": "Хуралдаанд дахин холбогдсон",
   "session-host-left": "Хөтлөгч явсан — таныг хуралдаанаас хассан",
   "drag-to-reorder-playlist-item": "Дахин эрэмбэлэхийн тулд чирнэ үү",
   "saving": "Хадгалж байна…",
-
   "unsaved-item-confirm-message": "Та тоглуулах жагсаалтад хараахан нэмэгдээгүй зүйл нэмж эхэлсэн байна. Та юу хийхийг хүсэж байна вэ?",
   "discard-and-save": "Цуцлаад хадгалах",
   "add-and-save": "Нэмээд хадгалах",
@@ -514,7 +492,6 @@
   "reading-plan-preview-reading": "Урьдчилан харах {{reading}}",
   "reading-plan-mark-reading-complete": "Уншсан гэж тэмдэглэх",
   "reading-plan-link-video": "Видео",
-
   "reading-plan-mark-passage-complete": "{{passage}} уншсан гэж тэмдэглэх",
   "reading-plan-read-nudge-title": "Сайхан уншлага байна!",
   "reading-plan-read-nudge-toast": "{{passage}} дууссан гэж тэмдэглэх үү?",
@@ -522,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Библийг онлайнаар уншиж, хайж, судлаарай. Онцлох үйл явдлууд, тэмдэглэл, хавчуурга, унших төлөвлөгөөтэй олон хэл дээрх үнэгүй орчуулга.",
   "all": "Бүгд",
-
   "today-bookmarks": "ХАВЧУРУУД",
   "today-search-verses": "Ном, бүлэг, шүлгүүдийг хайх....",
   "anonymous-greeting": "Тавтай морил!",
   "community": "НИЙГЭМЛЭГ",
   "go-somewhere-new": "ШИНЭ ХААНА Ч ЯВАХ",
-
   "open-bible": "Нээлттэй Библи",
   "personal-greeting": "Тавтай морил, {{name}} !",
   "resume-reading": "ХАЯСАН ЗАЙГААСАА ҮРГЭЛЖЛҮҮЛЭХ",
   "resume-reading-loading": "Уншлагын түүхийг тань ачаалж байна...",
   "selected-year": "Жил: {{year}}",
-
   "theme-light": "Гэрэл",
   "theme-dark": "Харанхуй",
   "installed-extensions": "Суулгасан",
@@ -544,7 +518,6 @@
   "extension-state-installed": "Суулгасан",
   "extension-state-downloaded": "Татаж авсан",
   "extension-state-pending": "Суулгаж байна…",
-
   "tutorial.stepProgress": "{{current}} {{total}} алхам",
   "tutorial.offlineDownloadTitle": "Үүнийг төхөөрөмж дээрээ хадгалахын тулд товшино уу",
   "tutorial.offlineDownloadBody": "Энэ дүрс бүхий аливаа орчуулгыг офлайн уншихад зориулж хадгалж болно.",
@@ -578,7 +551,6 @@
   "tutorial.paneLayoutBody": "Энэ байрлалын цэснээс хэдэн хэсгийг зэрэгцүүлэн уншихаа сонгоно уу.",
   "tutorial.addTabTitle": "Илүү олон хэсгийг нээх",
   "tutorial.addTabBody": "Хэд хэдэн ном эсвэл орчуулгыг зэрэгцүүлэн уншихын тулд шинэ таб нэмнэ үү.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % дууссан - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % дууссан",
   "playlist-history-continue": "Үргэлжлүүлэх",
@@ -637,7 +609,6 @@
   "chapter-notes-count_other": "Энэ бүлгийн {{count}} тэмдэглэл",
   "create-folder": "Хавтас үүсгэх",
   "edit-bookmark": "Хавчуургыг засах",
-
   "greeting-afternoon": "Өдрийн мэнд!",
   "greeting-afternoon-named": "Өдрийн мэнд, {{name}} !",
   "greeting-evening": "Оройн мэнд!",
@@ -653,32 +624,24 @@
   "ask-ai": "Хиймэл оюун ухаанаас асуу",
   "unread-mention": "Уншаагүй дурдалт",
   "unread-messages": "Уншаагүй мессежүүд: {{count}}",
-
   "scripture-width": "Судрын өргөн",
   "decrease-scripture-width": "Судрын өргөнийг багасгах",
   "increase-scripture-width": "Судрын өргөнийг нэмэгдүүлэх",
   "annotations": "Тэмдэглэгээ",
   "discover-content-panel": "Контентыг нээх",
   "discover-book-title": "{{book}} г нээж илрүүлээрэй",
-
   "about-title": "Үрийн Библийн тухай",
   "about-meta-description": "Seed Bible бол гэр бүл, найз нөхөд, олон нийттэйгээ хамт Судрыг уншихад зориулагдсан үнэгүй Библийн апп юм - үүрд үнэгүй, зар сурталчилгаа эсвэл төлбөрийн хана байхгүй.",
-
   "about-action-open-passage": "Хэсэг нээх",
   "about-action-donate": "Хандив өргөх",
   "about-action-discord": "Discord-д нэгдээрэй",
   "recent-uploads": "Саяхны байршуулалтууд",
-
   "customization-not-found": "Энэ тохируулга олдсонгүй.",
   "customization-name": "Нэр",
   "customization-primaryColor": "Үндсэн",
-
   "customization-secondaryColor": "Хоёрдогч",
-
   "customization-tertiaryColor": "Гуравдагч шат",
-
   "customization-fonts": "Фонтууд",
-
   "custom-font-option": "Захиалгат…",
   "custom-font-name-placeholder": "Google Фонтын нэр",
   "delete-customization": "Устгах",
@@ -691,10 +654,8 @@
   "extension-availability-available": "Боломжтой",
   "extension-availability-auto-installed": "Автоматаар суулгасан",
   "extension-availability-hidden": "Нуугдсан",
-
   "variants": "Сэдэвүүд",
   "add-variant": "Загвар нэмэх",
-
   "base-theme-description": "Энэ загварыг урьдчилан тохируулсан өөрчлөлтүүд нь таны өөрчлөөгүй аливаа зүйлд хамаарна. Таны өөрийн засварууд хадгалагдана.",
   "reset-to-base-theme": "Үндсэн загвар руу дахин тохируулах",
   "low-contrast-warning": "{{label}} : ялгаа нь зөвхөн {{ratio}} :1 байна — текстийг уншигдахуйц байлгахын тулд дор хаяж {{minRatio}} :1 байхыг зорь.",
@@ -740,14 +701,12 @@
   "save-folder-empty": "Энд одоогоор хадгалалт алга.",
   "save-options": "Хадгалах сонголтууд",
   "saves": "Хадгалсан",
-
   "hide-saves": "Хадгалсан зүйлсийг нуух",
   "show-saves": "Хадгалсан зүйлсийг харуулах",
   "save-verses": "Хадгалах",
   "new-save-folder": "Шинэ хавтас",
   "edit-save": "Хадгалахыг засах",
   "remove-save-from-all-folders": "Бүх хавтаснаас устгах",
-
   "color-hue": "Өнгө",
   "color-saturation": "Ханалт ба гэрэлтэлт",
   "hex-color": "Зургаан өнцөгт өнгө",
@@ -862,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Форматлах засварлагчийг ачаалж чадсангүй. Энэ тэмдэглэлд алга болох формат байгаа тул та дахин холбогдох хүртэл засварлах боломжгүй.",
   "annotation-text": "Тэмдэглэгээний текст",
   "notes-for-verse": "{{verse}} шүлгийн тэмдэглэл",
-
   "configure-extension-defaults": "Анхдагч дарж бичих тохиргоог тохируулах",
-
   "extension-settings-defaults-title": "{{name}} анхдагч дарж бичих тохиргоо",
   "no-extension-settings": "Энэ өргөтгөлд тохируулах боломжтой тохиргоо байхгүй байна.",
   "extension-settings-save-failed": "Таны тохиргоог хадгалж чадсангүй.",
@@ -873,7 +830,6 @@
   "setting-no-default": "Анхдагч утгагүй",
   "override-setting": "{{name}} -г дарж бичих",
   "override-setting-label": "Дарах",
-
   "discover-choose-filter-hint": "Энэ бүлгээс илүү ихийг харахын тулд дээрх шүүлтүүрийг сонгоно уу.",
   "take-a-tour": "Аялал жуулчлал хийх",
   "share-reading-plan": "Төлөвлөгөөг хуваалцах",
@@ -1057,7 +1013,6 @@
   "my-bookmark-numbered": "Миний хавчуурга {{number}}",
   "bookmark-move-hint": "Энэ бүлэг рүү зөөхийн тулд хавчуурга дээр товшино уу.",
   "move-bookmark-here": "{{name}} г энд зөөх",
-
   "play": "Тоглох",
   "pause": "Түр зогсоох",
   "audio-playback-position": "Тоглуулах байрлал",
@@ -1066,7 +1021,6 @@
   "audio-scrub-verse": "Шүлгүүд {{verse}}",
   "tab-playing-audio": "Аудио тоглуулж байна",
   "collapsed-tab-playing-label": "{{label}} — аудио тоглуулж байна",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} сэдэв",
   "customization-theme-count_one": "{{count}} сэдэв",
@@ -1105,7 +1059,6 @@
   "about-community-body": "Итгэл бол хамтдаа амьдрах зориулалттай. Үрийн Библи нь танай гэр бүл, хамгийн дотны найз нөхөд, гэрийн сүмтэйгээ хамт Судрыг уншихад зориулагдсан.",
   "discovered-content": "Илэрсэн контент",
   "show-discovered-content": "Олдсон контентыг харуулах",
-
   "extension-availability-default": "Анхдагч ( {{availability}} )",
   "customization-extensions-default": "Бусад өргөтгөлүүдийн хувьд анхдагч",
   "customization-extensions-default-hint": "Дараа нь нэмсэн шинэ өргөтгөлүүдийг оруулаад доор тохируулаагүй бүх өргөтгөлд хамаарна",
@@ -1138,7 +1091,6 @@
   "playlist-scripture-note-return": "Тоглуулах жагсаалтад буцах",
   "playlist-scripture-note-aria": "{{passage}} дээрх тэмдэглэл",
   "playlist-scripture-note-progress": "{{current}} -с {{total}}",
-
   "unsaved-item-edit-confirm-message": "Та нэг зүйлийг өөрчилсөн боловч тэдгээр өөрчлөлтийг хараахан хадгалаагүй байна. Та юу хийхийг хүсэж байна вэ?",
   "keep-changes-and-save": "Өөрчлөлтийг хадгалж, хадгалах",
   "reading-plan-edit-reading": "Уншихыг засах",
@@ -1153,7 +1105,6 @@
   "branding": "Брэндинг",
   "create-custom-branding-menu-item": "Захиалгат брэндинг",
   "your-content-empty-branding": "Таны үүсгэсэн захиалгат брэндинг энд харагдах болно.",
-
   "extension-consent-from": "{{host}}",
   "extension-consent-source-version": "{{version}} хувилбар · {{host}}",
   "extension-consent-uploader-unnamed": "Библийн үрийн хэрэглэгч",
@@ -1201,7 +1152,6 @@
   "extension-permission-reading-selection": "Аль шүлгүүдийг сонгож байгаагаа хараарай",
   "extension-permission-reading-navigate": "Нээлттэй хэсгүүд",
   "extension-permission-network": "{{host}} руу холбогдох",
-
   "extension-consent-not-now": "Одоо биш",
   "extension-consent-nothing-yet": "Одоогоор энэ нь таны ямар ч мэдээлэлд хандах эрхгүй болно.",
   "extension-permission-reading-history": "Уншсан түүхээ харах",
@@ -1239,7 +1189,6 @@
   "extension-capture-cancel": "Цуцлах",
   "extension-consent-high-risk": "Мэдрэмтгий",
   "extension-modal-ok": "Зүгээр дээ",
-
   "extension-permissions-restart-note": "Өөрчлөлтүүд шууд хүчин төгөлдөр болно. {{name}} тэдгээрийг авахын тулд дахин ачаална.",
   "extension-permissions-saved": "Хадгалсан. {{name}} шинэ зөвшөөрлүүдээр дахин эхлүүлсэн.",
   "extension-permissions-failed": "Энэ хадгалаагүй. Дахин оролдоно уу.",
@@ -1277,8 +1226,67 @@
   "session-settings-verse-effects-desc-hosts": "Хөтлөгч шүлгийг сонгох үед эффектүүдийг харуулах.",
   "session-settings-verse-effects-desc-everyone": "Хэн нэгэн шүлгийг сонгоход эффектүүдийг харуул.",
   "session-settings-verse-effects-desc-none": "Шүлгийн сонголтын эффектүүд хүн бүрт идэвхгүй болсон.",
-
   "account": "Бүртгэл",
   "scroll-filters-start": "Шүүлтүүрийг эхлэл рүү гүйлгэх",
-  "scroll-filters-end": "Шүүлтүүрийг төгсгөл рүү гүйлгэх"
+  "scroll-filters-end": "Шүүлтүүрийг төгсгөл рүү гүйлгэх",
+  "download": "Татаж авах",
+  "image-details-uploaded": "Байршуулсан",
+  "image-details-dimensions": "Хэмжээ",
+  "image-details-dimensions-value": "{{width}} × {{height}} пиксел",
+  "image-details-type": "Төрөл",
+  "image-details-cover-of": "Хавтас",
+  "image-details-not-a-cover": "Хавтас болгон ашигладаггүй",
+  "delete-customization-confirm-title": "Захиалгат брэндингийг устгах уу?",
+  "delete-customization-confirm-message": "\" {{name}} \" брэндийн захиалгат нэрийг устгах уу? Үүнийг буцаах боломжгүй.",
+  "delete-customization-failed": "Захиалгат брэндингийг устгаж чадсангүй.",
+  "delete-variant-confirm-title": "Загварыг устгах уу?",
+  "delete-variant-confirm-message": "\" {{name}} \" загварыг устгах уу? Үүнийг буцаах боломжгүй.",
+  "delete-variant-confirm-message-unnamed": "Энэ загварыг устгах уу? Үүнийг буцаах боломжгүй.",
+  "delete-variant-failed": "Загварыг устгаж чадсангүй.",
+  "delete-highlight-confirm-title": "Онцлох зүйлсийг устгах уу?",
+  "delete-highlight-confirm-message": "{{reference}} дээрх тодруулгыг устгах уу? Үүнийг буцаах боломжгүй.",
+  "delete-highlight-failed": "Тодруулгыг устгаж чадсангүй.",
+  "delete-annotation-on-confirm-message": "{{reference}} дээрх тэмдэглэлийг устгах уу? Үүнийг буцаах боломжгүй.",
+  "remove-from-folder": "Хавтаснаас устгах",
+  "save-folders": "{{folders}} дотор",
+  "delete-save-confirm-title": "Хадгалсан файлыг устгах уу?",
+  "delete-save-confirm-message": "{{reference}} -н хадгалалтыг устгах уу? Үүнийг буцаах боломжгүй.",
+  "delete-save-confirm-message-folders": "{{reference}} -н хадгалалтыг {{folders}} -с устгах уу? Үүнийг буцаах боломжгүй.",
+  "delete-save-failed": "Хадгалалтыг устгаж чадсангүй.",
+  "delete-save-folder-confirm-title": "Фолдерыг устгах уу?",
+  "delete-save-folder-confirm-message": "\" {{name}} \" хавтсыг устгах уу?",
+  "delete-save-folder-confirm-deletes": "Зөвхөн энэ фолдерт байгаа {{count}} хадгалалтууд мөн устах болно.",
+  "delete-save-folder-confirm-deletes_one": "Зөвхөн энэ фолдерт байгаа хадгалалт бас устах болно.",
+  "delete-save-folder-confirm-deletes_other": "Зөвхөн энэ фолдерт байгаа {{count}} хадгалалтууд мөн устах болно.",
+  "delete-save-folder-confirm-keeps": "Бусад фолдерт байгаа {{count}} хадгалалтууд тэндээ үлдэнэ.",
+  "delete-save-folder-confirm-keeps_one": "Өөр хавтсанд байгаа хадгалалт тэндээ үлдэх болно.",
+  "delete-save-folder-confirm-keeps_other": "Бусад фолдерт байгаа {{count}} хадгалалтууд тэндээ үлдэнэ.",
+  "cant-be-undone": "Үүнийг буцаах боломжгүй.",
+  "delete-save-folder-failed": "Фолдерыг устгаж чадсангүй.",
+  "download-image-failed": "Зургийг татаж авч чадсангүй.",
+  "session-settings-verse-effects-hosts-only": "Зөвхөн хостууд",
+  "session-settings-verse-effects-everyone": "Хүн бүр",
+  "session-settings-verse-effects-none": "Байхгүй",
+  "loading-books": "Номуудыг ачаалж байна…",
+  "books-load-failed": "Номуудыг ачаалж чадсангүй. Холболтоо шалгаад дахин оролдоно уу.",
+  "loading-translation": "{{name}} ачааллаж байна …",
+  "translation-load-failed": "{{name}} г ачаалж чадсангүй.",
+  "loading-translations": "Орчуулгыг ачаалж байна…",
+  "translations-load-failed": "Орчуулгын бүрэн жагсаалтыг ачаалж чадсангүй, зарим нь дутуу байж магадгүй.",
+  "verse-of-the-day": "ӨДРИЙН ШҮЛЭГ",
+  "verse-of-the-day-loading": "Өдрийн шүлгийг ачаалж байна...",
+  "delete-bookmark-confirm-title": "Хавчуургыг устгах уу?",
+  "delete-bookmark-confirm-message": "\" {{name}} \"-г устгах уу?",
+  "scripture-font": "Судрын фонт",
+  "ai-limits-title": "Хиймэл оюун ухаантай чатлахаасаа өмнө",
+  "ai-limits-intro": "Хиймэл оюун ухаан нь тустай эхлэлийн цэг байж болох ч түүний хязгаарыг санаж яваарай:",
+  "ai-limits-mistakes": "Энэ нь алдаа гаргадаг бөгөөд буруу зүйл хийсэн үедээ өөртөө итгэлтэй сонсогдож чаддаг.",
+  "ai-limits-agreeable": "Энэ нь таны сонсохыг хүссэн зүйлийг хэлэх хандлагатай бөгөөд түгээмэл хариултууд руу чиглэдэг.",
+  "ai-limits-scripture": "Энэ бол найдвартай эх сурвалж биш. Судартай харьцуулж юу гэж хэлснийг шалгаарай.",
+  "ai-limits-study": "Библийг өөрөө судал, хиймэл оюун ухаанаар өөрийнхөө өмнөөс бодож болохгүй.",
+  "ai-limits-confirm": "Хиймэл оюун ухаан алдаа гаргаж болох бөгөөд Библийг өөрөө судлахыг орлох зүйл биш гэдгийг би ойлгож байна.",
+  "friends-playlists-filter": "Найзуудын тоглуулах жагсаалтууд",
+  "friend-link-social-title": "{{name}} г найздаа нэмэх",
+  "friend-link-meta-description": "{{name}} {{brand}} дээр тантай найз болохыг хүсэж байна",
+  "friend-link-title": "{{name}} - {{brand}} дээр найзаар нэмэх"
 }

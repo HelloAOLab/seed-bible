@@ -9,7 +9,7 @@
 .sb-skeleton {
   position: relative;
   overflow: hidden;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
 }
 
@@ -36,7 +36,7 @@
 /* Shape defaults — callers can still override height/radius inline. */
 .sb-skeleton--line {
   height: 0.8125rem;
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
 }
 
 .sb-skeleton--circle {
@@ -45,7 +45,7 @@
 }
 
 .sb-skeleton--button {
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
 }
 
 /* `.sb-skeleton--block` keeps the base 0.5rem radius (no override needed). */

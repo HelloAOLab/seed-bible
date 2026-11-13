@@ -1,4 +1,5 @@
 import type { NavigationManager } from "../../managers/NavigationManager";
+import { toShareableUrl } from "../../app/publicLinks";
 
 /** `?addFriend=<userId>`: asks whoever opens it to send that person a request. */
 export const ADD_FRIEND_PARAM = "addFriend";
@@ -21,19 +22,24 @@ export function parseUserId(input: string): string | null {
 
 /*
  * Both links are built from the deployment root so they work on preview
- * deploys, and carry nothing from the sender's current page.
+ * deploys, and carry nothing from the sender's current page. They're sent to
+ * someone else, so in the native apps they point at the public website.
  */
 
 export function getAddFriendUrl(
   navigation: Pick<NavigationManager, "linkToBareRoot">,
   userId: string
 ): string {
-  return navigation.linkToBareRoot({ [ADD_FRIEND_PARAM]: userId });
+  return toShareableUrl(
+    navigation.linkToBareRoot({ [ADD_FRIEND_PARAM]: userId })
+  ).toString();
 }
 
 export function getFriendRequestUrl(
   navigation: Pick<NavigationManager, "linkToBareRoot">,
   requestId: string
 ): string {
-  return navigation.linkToBareRoot({ [FRIEND_REQUEST_PARAM]: requestId });
+  return toShareableUrl(
+    navigation.linkToBareRoot({ [FRIEND_REQUEST_PARAM]: requestId })
+  ).toString();
 }

@@ -1,4 +1,9 @@
 export * from "./icons";
+export * from "./CloseButton/CloseButton";
+export {
+  ContextMenuWithButton,
+  ContextMenuItem,
+} from "./ContextMenu/ContextMenu";
 export * from "./PortalComponent/PortalComponent";
 export * from "./Skeleton/Skeleton";
 export * from "./ExpandableText/ExpandableText";

@@ -1,3 +1,4 @@
+import { createAttachedReadingStates } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
@@ -171,6 +172,8 @@ function createFixture(): ReaderFixture {
     discoveredContent: signal([]),
     discoveredCrossReferences,
     discoveredStudyNotes: signal([]),
+    isDiscovering: signal(false),
+    showDiscoveryLoader: signal(false),
     discoverContentPanelInline: signal(true),
     disableExtension: vi.fn(async () => undefined),
     enableExtension: vi.fn(async () => undefined),
@@ -189,6 +192,7 @@ function createFixture(): ReaderFixture {
     selectionAnnotations: signal([]),
     pendingAnnotationScrollVerse: signal<number | null>(null),
     visibleVerseRange: signal<VisibleVerseRange | null>(null),
+    visibleAreas: signal<ReadonlyMap<string, VisibleVerseRange>>(new Map()),
   } as BibleReadingState;
 
   const selectorState = {
@@ -264,7 +268,7 @@ function createMobileState(): SeedBibleState {
     tools: createBibleToolsManager(testBranding),
     saves: createSavesStub(),
     bookmarks: createBookmarksStub(),
-    tabs: {} as any,
+    tabs: createAttachedReadingStates() as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,
@@ -326,7 +330,7 @@ function createDesktopState(): SeedBibleState {
     tools: createBibleToolsManager(testBranding),
     saves: createSavesStub(),
     bookmarks: createBookmarksStub(),
-    tabs: {} as any,
+    tabs: createAttachedReadingStates() as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,
@@ -1080,6 +1084,79 @@ describe("TabSlotReader integration", () => {
 
       expect(readingState.loadNextChapter).not.toHaveBeenCalled();
       expect(track?.style.transform).toBe(CENTRE_PANEL_TRANSFORM);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // A track left on its own GPU layer let Android Chrome keep stale tiles of
+  // the outgoing chapter painted over the end of the new one after a swipe.
+  it("puts the track on its own layer only while a finger drags it sideways", async () => {
+    vi.useFakeTimers();
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement;
+      const track = container.querySelector(
+        ".sb-reader-swipe-track"
+      ) as HTMLDivElement;
+
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 200, clientY: 300 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 200, clientY: 100 }]);
+        dispatchTouch(viewport, "touchend", []);
+      });
+      expect(track.style.willChange).toBe("");
+
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+      });
+      expect(track.style.willChange).toBe("transform");
+
+      act(() => {
+        dispatchTouch(viewport, "touchend", []);
+      });
+      expect(track.style.willChange).toBe("");
+
+      // Through the slide, the navigation and the recentre that follows.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(250 + 1000);
+      });
+      expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
+      expect(track.style.transform).toBe(CENTRE_PANEL_TRANSFORM);
+      expect(track.style.willChange).toBe("");
+
+      // The browser takes the gesture over mid-drag.
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 150, clientY: 50 }]);
+        dispatchTouch(viewport, "touchcancel", []);
+      });
+      expect(track.style.willChange).toBe("");
+
+      // A second finger lands mid-drag: another touchstart, no touchcancel.
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 150, clientY: 50 }]);
+        dispatchTouch(viewport, "touchstart", [{ clientX: 150, clientY: 60 }]);
+        dispatchTouch(viewport, "touchend", []);
+      });
+      expect(track.style.willChange).toBe("");
     } finally {
       vi.useRealTimers();
     }

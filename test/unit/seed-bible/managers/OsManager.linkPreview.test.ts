@@ -40,6 +40,38 @@ describe("CasualOSManager.getLinkPreview()", () => {
     });
   });
 
+  it("keeps a YouTube video's uploader, from its oEmbed fields", async () => {
+    getLinkPreview.mockResolvedValue({
+      success: true,
+      cachedUntilMs: 0,
+      title: "The Best Catan Strategy",
+      imageUrl: "https://i.ytimg.com/vi/x/hqdefault.jpg",
+      siteName: "YouTube",
+      type: "video",
+      meta: { author_name: " Board Game Lab ", provider_name: "YouTube" },
+    });
+
+    await expect(
+      os.getLinkPreview("https://youtu.be/x")
+    ).resolves.toMatchObject({
+      title: "The Best Catan Strategy",
+      author: "Board Game Lab",
+    });
+  });
+
+  it("takes a page's author from its author meta tag", async () => {
+    getLinkPreview.mockResolvedValue({
+      success: true,
+      cachedUntilMs: 0,
+      title: "An essay",
+      meta: { author: "Ruth" },
+    });
+
+    await expect(
+      os.getLinkPreview("https://example.com/essay")
+    ).resolves.toMatchObject({ author: "Ruth" });
+  });
+
   it("returns null for a page with nothing to show", async () => {
     getLinkPreview.mockResolvedValue({
       success: true,

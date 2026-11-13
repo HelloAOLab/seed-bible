@@ -75,7 +75,32 @@
       // reflects the server's default-light guess, not this device's saved
       // preference. See ThemeManager.tsx / CLAUDE.md for why this stays
       // `body`-scoped.
+      //
+      // Same precedence as SettingsManager's readSettings: a signed-in
+      // account's theme (from the profile copy LoginManager caches under
+      // "sb-profile-cache-<userId>"), then the anonymous device store.
       (function () {
+        function readAccountThemeId() {
+          try {
+            // A CasualOS session key is "vSK1.<base64 userId>.<...>".
+            var sessionKey = localStorage.getItem("sessionKey");
+            if (!sessionKey || sessionKey.indexOf("vSK1.") !== 0) return null;
+            var userId = atob(sessionKey.split(".")[1] || "");
+            if (!userId) return null;
+            var cached = localStorage.getItem("sb-profile-cache-" + userId);
+            var profile = cached && JSON.parse(cached);
+            // LoginManager ignores a cached copy that fails its profile
+            // schema. Checking the fields it always requires keeps this
+            // script from painting a theme the app then won't use.
+            if (!profile || typeof profile.name !== "string") return null;
+            var config = profile.config;
+            if (!config || typeof config !== "object") return null;
+            var id = config.themeId;
+            return typeof id === "string" && id ? id : null;
+          } catch (e) {
+            return null;
+          }
+        }
         try {
           var raw = localStorage.getItem("sb-profile-config-local");
           var params = new URLSearchParams(window.location.search);
@@ -86,6 +111,7 @@
               : null;
           var themeId =
             (linkTheme && linkTheme.trim()) ||
+            readAccountThemeId() ||
             (raw && JSON.parse(raw).themeId) ||
             "system";
           if (themeId === "system") {
@@ -110,6 +136,204 @@
         }
       })();
     </script>
+    <script>
+      // Applies the device's saved reader settings (UI size, reader font
+      // size, scripture width, verse line height, scripture font) before
+      // first paint. The
+      // app seeds its settings with the defaults so hydration matches the
+      // server's HTML, then applies the saved ones after mount, which used
+      // to resize and reflow the chapter on every visit. These are CSS
+      // variables and one attribute on <html>, which hydration never
+      // touches; SettingsManager takes over once the real settings load
+      // (see EARLY_CONFIG_ATTR). Links with `app.*` overrides are skipped,
+      // since those win over saved settings.
+      //
+      // The values come from the copy SettingsManager keeps of just these
+      // five settings (it is written signed in or out), falling back to the
+      // anonymous local config, which is emptied as soon as someone signs in.
+      (function () {
+        try {
+          if (/[?&]app\./.test(window.location.search)) return;
+          var read = function (key, maxLength) {
+            var raw = localStorage.getItem(key);
+            if (!raw || raw.length > maxLength) return null;
+            var parsed = JSON.parse(raw);
+            return parsed && typeof parsed === "object" ? parsed : null;
+          };
+          var saved = null;
+          try {
+            saved = read("sb-reader-settings-early", 2000);
+          } catch (e) {}
+          var legacy = null;
+          if (!saved) {
+            // Signed-in readers on a device that has not written the copy
+            // yet (it predates it, or this is the first visit since): the
+            // profile LoginManager cached on the last visit holds the same
+            // settings under `config`. A brand-new device has neither, so a
+            // signed-in reader there still waits for the profile.
+            try {
+              for (var i = 0; i < localStorage.length && !legacy; i++) {
+                var key = localStorage.key(i);
+                if (key && key.indexOf("sb-profile-cache-") === 0) {
+                  var cached = read(key, 500000);
+                  if (
+                    cached &&
+                    cached.config &&
+                    typeof cached.config === "object"
+                  ) {
+                    legacy = cached.config;
+                  }
+                }
+              }
+            } catch (e) {}
+          }
+          if (!saved && !legacy) {
+            // Same limits as LoginManager's readLocalConfig (50,000
+            // characters, 100 keys); past them the app treats the store as
+            // corrupt, so painting from it would only be undone.
+            legacy = read("sb-profile-config-local", 50000);
+            if (legacy && Object.keys(legacy).length > 100) legacy = null;
+          }
+          var config = saved || legacy;
+          if (!config) return;
+          // Line height has its own key now; older configs only kept it
+          // inside the removed per-section `textConfig`.
+          var lineHeight = config.verseLineHeight;
+          if (legacy && lineHeight == null) {
+            try {
+              var text = config.textConfig;
+              if (typeof text === "string") text = JSON.parse(text);
+              lineHeight = text && text.verse && text.verse.lineHeight;
+            } catch (e) {}
+          }
+          var root = document.documentElement;
+          var applied = false;
+          var apply = function (name, value) {
+            root.style.setProperty(name, value);
+            applied = true;
+          };
+          var uiScales = { S: 0.85, M: 1, L: 1.15, XL: 1.3 };
+          var fontSizes = { XS: 12, S: 14, M: 16, L: 18, XL: 20, XXL: 22 };
+          if (uiScales.hasOwnProperty(config.uiSize)) {
+            apply("--sb-ui-scale", String(uiScales[config.uiSize]));
+          }
+          if (fontSizes.hasOwnProperty(config.fontSize)) {
+            apply("--sb-early-font-size", fontSizes[config.fontSize] + "px");
+          }
+          var width = Number(config.scriptureWidth);
+          if (isFinite(width) && width >= 24 && width <= 192) {
+            apply("--sb-scripture-width", width + "ch");
+          }
+          lineHeight = Number(lineHeight);
+          if (isFinite(lineHeight) && lineHeight > 0 && lineHeight < 10) {
+            apply("--text-verse-line-height", String(lineHeight));
+          }
+          // The saved value is one of CUSTOMIZATION_FONT_PRESETS; it is looked
+          // up here rather than written into CSS as-is. The stacks carry the
+          // same fallback faces SettingsManager adds (a test keeps the two in
+          // step).
+          var scriptureFonts = {
+            "Newsreader, serif":
+              'Newsreader, "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif',
+            "system-ui, sans-serif": "system-ui, sans-serif",
+            "Roboto, sans-serif": "Roboto, sans-serif",
+            "Open Sans, sans-serif": "Open Sans, sans-serif",
+            "Playfair Display, serif": "Playfair Display, serif",
+            "Cormorant Garamond, serif": "Cormorant Garamond, serif",
+            "Plus Jakarta Sans, sans-serif":
+              'Plus Jakarta Sans, "Plus Jakarta Sans Fallback", "Plus Jakarta Sans Fallback Roboto", sans-serif',
+          };
+          if (scriptureFonts.hasOwnProperty(config.fontOverride)) {
+            apply(
+              "--sb-scripture-font-override",
+              scriptureFonts[config.fontOverride]
+            );
+          }
+          // Any applied value means SettingsManager must not write its
+          // defaults over it on the way to the real settings.
+          if (applied) root.setAttribute("data-sb-early-config", "");
+        } catch (e) {
+          // Corrupt/inaccessible storage — the defaults stand.
+        }
+      })();
+    </script>
+    <!-- The reading font's latin file (27 KB; Google serves it from a
+         versioned, immutable URL), fetched alongside the stylesheet that names
+         it instead of after it, so on a decent connection it is in before the
+         first layout and the chapter never re-wraps. If Google ever moves the
+         file this 404s harmlessly and the calibrated fallback face carries
+         the first paint, as it does on a slow connection. Newsreader's
+         132 KB file is deliberately not preloaded; it only sets titles. -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+      href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2"
+    />
+    <!-- Fonts load without blocking first paint. The two stylesheets below
+         are rewritten at build time into non-blocking preloads (see
+         script/lib/inlineCriticalCss.ts); the icon stylesheet is written out
+         by hand because it also lifts the `sb-icons-pending` class that keeps
+         icon names hidden until the font is there. The hrefs must match
+         STATIC_FONT_STYLESHEETS in app/fontStylesheets.ts (a test checks). -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Roboto&family=Open+Sans&family=Playfair+Display&family=Cormorant+Garamond&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&family=Figtree:wght@400;500;600;700&family=Literata&display=swap"
+    />
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var clear = function () {
+          root.classList.remove("sb-icons-pending");
+        };
+        root.classList.add("sb-icons-pending");
+        // Called once the icon stylesheet is in; the icons stay hidden until
+        // the font file itself has arrived, since until then the (invisible)
+        // glyph names would still take up their full width.
+        window.__sbIconsStylesheetReady = function () {
+          if (!document.fonts || !document.fonts.load) return clear();
+          var tries = 0;
+          (function check() {
+            // Resolves with no faces until the stylesheet's @font-face is
+            // registered, so an empty answer means "not yet", not "done".
+            document.fonts
+              .load("24px 'Material Symbols Outlined'", "a")
+              .then(function (faces) {
+                if (faces.length || ++tries > 20) clear();
+                else window.setTimeout(check, 100);
+              }, clear);
+          })();
+        };
+        // Never leave icons invisible if the font can't be fetched.
+        window.setTimeout(clear, 4000);
+      })();
+    </script>
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+      onload="
+        this.onload = null;
+        this.rel = 'stylesheet';
+        window.__sbIconsStylesheetReady();
+      "
+      onerror="document.documentElement.classList.remove('sb-icons-pending')"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+      />
+    </noscript>
     <!-- META -->
     <script type="application/json" id="app-config">
       <!-- CONFIG_JSON -->
@@ -125,6 +349,9 @@
     </script>
     <script type="application/json" id="app-reading-plan-page-seed">
       <!-- READING_PLAN_PAGE_JSON -->
+    </script>
+    <script type="application/json" id="app-friend-link-seed">
+      <!-- FRIEND_LINK_JSON -->
     </script>
   </head>
   <body>

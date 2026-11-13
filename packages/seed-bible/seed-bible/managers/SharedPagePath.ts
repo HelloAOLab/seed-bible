@@ -18,10 +18,62 @@ export interface ParsedSharedPagePath {
    * null for the page itself (its intro modal).
    */
   step: number | null;
+  /** The playlist editor's screen, on a playlist's edit path; else null. */
+  edit: SharedPageEditScreen | null;
 }
 
 /**
- * Stands in for the title slug in a step path whose record has no title, or
+ * A screen of the playlist editor, as its path names it:
+ * `…/edit` (the list of steps), `…/edit/details`, `…/edit/step/{step}`, and
+ * `…/edit/step/{step}/settings` (`step` 1-based).
+ */
+export type SharedPageEditScreen =
+  | { screen: "steps" }
+  | { screen: "details" }
+  | { screen: "step"; step: number; settings: boolean };
+
+const POSITIVE_INTEGER = /^[1-9]\d*$/;
+
+/** The editor screen `segments` (what follows the slug) name, or null. */
+function parseEditSegments(segments: string[]): SharedPageEditScreen | null {
+  const [edit, screen, step, settings, ...rest] = segments;
+  if (edit !== "edit" || rest.length > 0) {
+    return null;
+  }
+  if (screen === undefined) {
+    return { screen: "steps" };
+  }
+  if (screen === "details" && step === undefined) {
+    return { screen: "details" };
+  }
+  if (
+    screen === "step" &&
+    step !== undefined &&
+    POSITIVE_INTEGER.test(step) &&
+    (settings === undefined || settings === "settings")
+  ) {
+    return {
+      screen: "step",
+      step: Number(step),
+      settings: settings !== undefined,
+    };
+  }
+  return null;
+}
+
+function editSegments(edit: SharedPageEditScreen): string {
+  switch (edit.screen) {
+    case "steps":
+      return "/edit";
+    case "details":
+      return "/edit/details";
+    case "step":
+      return `/edit/step/${edit.step}${edit.settings ? "/settings" : ""}`;
+  }
+}
+
+/**
+ * Stands in for the title slug in a step or edit path whose record has no title, or
  * whose title isn't known (an old `?playlist=` link being redirected). A step
  * path needs some slug: `/{lang}/{segment}/{locator}/{x}` is always read as a
  * slug, so a title like "2024" can't be mistaken for step 2024.
@@ -34,22 +86,23 @@ export const SHARED_PAGE_SLUG_PLACEHOLDER = "-";
  * The slug only exists for search engines and link previews, so it is never
  * used to find the record and a stale one (the content was renamed) still
  * opens it. A trailing step (1-based) means the content is playing at that
- * step.
+ * step. A playlist's path can instead end in one of the editor's screens
+ * (see `SharedPageEditScreen`).
  */
 export function parseSharedPagePath(
   pathname: string,
   basePath: string
 ): ParsedSharedPagePath | null {
   const segments = splitPathSegments(pathname, basePath);
-  if (segments.length < 3 || segments.length > 5) {
+  if (segments.length < 3) {
     return null;
   }
-  const [language, pageSeg, locator, slug, stepSeg] = segments as [
+  const [language, pageSeg, locator, slug, ...rest] = segments as [
     string,
     string,
     string,
     string | undefined,
-    string | undefined,
+    ...string[],
   ];
   const kind = (
     Object.keys(SHARED_PAGE_PATH_SEGMENTS) as SharedPageKind[]
@@ -57,14 +110,15 @@ export function parseSharedPagePath(
   if (!kind || !locator) {
     return null;
   }
-  let step: number | null = null;
-  if (stepSeg !== undefined) {
-    if (!/^[1-9]\d*$/.test(stepSeg)) {
-      return null;
-    }
-    step = Number(stepSeg);
+  const base = { kind, language, locator, slug: slug ?? null };
+  if (rest.length === 0) {
+    return { ...base, step: null, edit: null };
   }
-  return { kind, language, locator, slug: slug ?? null, step };
+  if (rest.length === 1 && POSITIVE_INTEGER.test(rest[0]!)) {
+    return { ...base, step: Number(rest[0]), edit: null };
+  }
+  const edit = kind === "playlist" ? parseEditSegments(rest) : null;
+  return edit ? { ...base, step: null, edit } : null;
 }
 
 /**
@@ -117,7 +171,8 @@ export function slugifyTitle(title: string | null | undefined): string {
 
 /**
  * Builds `/{lang}/{segment}/{locator}[/{slug}]`, or with `step` (1-based) the
- * playing path `/{lang}/{segment}/{locator}/{slug}/{step}`.
+ * playing path `/{lang}/{segment}/{locator}/{slug}/{step}`, or with `edit`
+ * the editor screen's path `/{lang}/{segment}/{locator}/{slug}/edit…`.
  */
 export function buildSharedPagePath(params: {
   kind: SharedPageKind;
@@ -125,12 +180,17 @@ export function buildSharedPagePath(params: {
   locator: string;
   title: string | null | undefined;
   step?: number | null;
+  edit?: SharedPageEditScreen | null;
 }): string {
-  const { kind, language, locator, title, step } = params;
+  const { kind, language, locator, title, step, edit } = params;
   const slug = slugifyTitle(title);
   const path = `/${encodeURIComponent(language)}/${SHARED_PAGE_PATH_SEGMENTS[kind]}/${encodeURIComponent(locator)}`;
+  const slugSegment = `/${encodeURIComponent(slug || SHARED_PAGE_SLUG_PLACEHOLDER)}`;
+  if (edit) {
+    return `${path}${slugSegment}${editSegments(edit)}`;
+  }
   if (step != null) {
-    return `${path}/${encodeURIComponent(slug || SHARED_PAGE_SLUG_PLACEHOLDER)}/${step}`;
+    return `${path}${slugSegment}/${step}`;
   }
   return slug ? `${path}/${encodeURIComponent(slug)}` : path;
 }

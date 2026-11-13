@@ -3,11 +3,11 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   UI_SIZE_OPTIONS,
   VERSE_LINE_HEIGHT_OPTIONS,
-  DEFAULT_VERSE_LINE_HEIGHT,
   type UISize,
 } from "../../managers/SettingsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { ScriptureLineHeightIcon, SettingsIcon } from "../icons";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 const FONT_SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
@@ -26,8 +26,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
   const fontSizeIndex = FONT_SIZE_OPTIONS.indexOf(
     fontSize as (typeof FONT_SIZE_OPTIONS)[number]
   );
-  const currentLineHeight =
-    current.textConfig.verse.lineHeight ?? DEFAULT_VERSE_LINE_HEIGHT;
+  const currentLineHeight = current.verseLineHeight;
   const lineHeightIndex = (() => {
     const idx = VERSE_LINE_HEIGHT_OPTIONS.indexOf(currentLineHeight);
     return idx === -1 ? 0 : idx;
@@ -75,14 +74,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
             </span>
             <span>{t("theme-and-text", { defaultValue: "Theme & text" })}</span>
           </div>
-          <button
-            type="button"
-            className="sb-mobile-settings-sheet-close"
-            onClick={onClose}
-            aria-label={t("close", { defaultValue: "Close" })}
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+          <CloseButton onClose={onClose} />
         </div>
         <div className="sb-mobile-settings-sheet-body">
           <div className="sb-mobile-settings-sheet-section-label">
@@ -97,7 +89,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
               aria-label={t("decrease-scripture-font-size", {
                 defaultValue: "Decrease scripture font size",
               })}
-              style={{ fontSize: "0.875rem" }}
+              style={{ fontSize: "var(--sb-font-size-14)" }}
               // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
             >
               A
@@ -110,7 +102,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
               aria-label={t("increase-scripture-font-size", {
                 defaultValue: "Increase scripture font size",
               })}
-              style={{ fontSize: "1.25rem", fontWeight: 500 }}
+              style={{ fontSize: "var(--sb-font-size-20)", fontWeight: 500 }}
               // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
             >
               A

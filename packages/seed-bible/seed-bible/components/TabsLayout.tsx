@@ -17,6 +17,11 @@ import { useI18n } from "../i18n/I18nManager";
 import { translateTitle } from "../app/utils";
 import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import { revealReadAlongVerse } from "./BibleReader/readerViewport";
+import {
+  isPlaylistEditorTab,
+  PlaylistEditorWorkspace,
+  playlistEditorScriptureStep,
+} from "./PlaylistEditor/PlaylistEditorWorkspace";
 
 interface TabSlotReaderProps {
   slot: TabSlot;
@@ -65,6 +70,23 @@ function clearSwipeTrackInlineStyles(track: HTMLDivElement | null) {
   }
   track.style.removeProperty("transition");
   track.style.removeProperty("transform");
+  setSwipeTrackDragging(track, false);
+}
+
+/**
+ * Keep the track on its own GPU layer only while a finger drags it. Left on
+ * permanently (as `will-change` in the stylesheet once was), Android Chrome
+ * kept stale tiles of the chapter swapped in under it after a swipe — the
+ * last lines of the new chapter painted over with the old chapter's text, so
+ * the reader looked cut off. The settle and snap-back slides are CSS
+ * transitions, which the browser promotes on its own for their duration.
+ */
+function setSwipeTrackDragging(track: HTMLDivElement, dragging: boolean) {
+  if (dragging) {
+    track.style.willChange = "transform";
+  } else {
+    track.style.removeProperty("will-change");
+  }
 }
 
 export function TabSlotReader(props: TabSlotReaderProps) {
@@ -119,18 +141,23 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   // When a mobile pane or the chat panel opens (both fill the screen above the
   // bottom toolbar there), the verse sheet yields and the default bottom
   // toolbar comes back. Clear scroll-hide so that bar isn't left translated
-  // off-screen — e.g. after Locations opens a map, or Ask AI opens the chat,
-  // from a verse selection while the user had scrolled down.
+  // off-screen — e.g. after Compare opens its pane, or Ask AI opens the chat,
+  // from a verse selection while the user had scrolled down. The same goes for
+  // the playlist editor covering the reader with its list of steps or a
+  // step's card, where nothing scrolls the reader to bring the bars back.
   useEffect(() => {
     if (!isCompactReader) return;
     return effect(() => {
       const hasPane = (state.panes?.panes?.value?.length ?? 0) > 0;
       const isChatOpen = state.sidebar?.isChatPanelOpen?.value ?? false;
-      if (hasPane || isChatOpen) {
+      const editorCoversReader =
+        isPlaylistEditorTab(state, tab) &&
+        !playlistEditorScriptureStep(state, tab);
+      if (hasPane || isChatOpen || editorCoversReader) {
         setIsScrolled(false);
       }
     });
-  }, [isCompactReader, state]);
+  }, [isCompactReader, state, tab]);
 
   // The element the reader actually scrolls in: the slot itself on desktop, the
   // centre swipe panel on mobile. Held as state rather than a ref so the
@@ -474,6 +501,9 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
       const track = swipeTrackRef.current;
       if (track) {
+        // A second finger fires another touchstart without a touchcancel, so
+        // the gesture it interrupts may never reach the end-of-drag release.
+        setSwipeTrackDragging(track, false);
         track.style.transition = "none";
         // Recentre unconditionally: a committed swipe may have left the track
         // resting on a neighbouring panel, and `onTouchMove` measures from
@@ -518,6 +548,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           Math.abs(dx) > SWIPE_LOCK_THRESHOLD_PX
         ) {
           swipeDirectionLocked.current = "h";
+          const track = swipeTrackRef.current;
+          if (track) {
+            setSwipeTrackDragging(track, true);
+          }
         } else if (Math.abs(dy) > SWIPE_LOCK_THRESHOLD_PX) {
           swipeDirectionLocked.current = "v";
           return;
@@ -636,6 +670,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
+      setSwipeTrackDragging(track, false);
       const sign = rtl ? 1 : -1;
 
       if (shouldLoadNext && hasNext) {
@@ -647,7 +682,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           readingState.loadPreviousChapter()
         );
       } else {
-        track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        track.style.transition =
+          "transform var(--sb-duration-slow) cubic-bezier(0.4, 0, 0.2, 1)";
         track.style.transform = centreTransform();
       }
     };
@@ -664,7 +700,9 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
       const track = swipeTrackRef.current;
       if (track) {
-        track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
+        setSwipeTrackDragging(track, false);
+        track.style.transition =
+          "transform var(--sb-duration-slow) cubic-bezier(0.4, 0, 0.2, 1)";
         track.style.transform = centreTransform();
       }
     };
@@ -814,42 +852,53 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     clearSwipeTrackInlineStyles(swipeTrackRef.current);
   }
 
-  return (
-    <div className="sb-pane-reader-outer">
-      <div
-        className={`sb-pane-reader${isCompactReader ? " sb-pane-reader-mobile" : ""}`}
-        ref={slotScrollerRefCallback}
-      >
-        <BibleReader
-          currentSlot={slot}
+  const editingPlaylistHere = isPlaylistEditorTab(state, tab);
+  const reader = (
+    <div
+      className={`sb-pane-reader${isCompactReader ? " sb-pane-reader-mobile" : ""}`}
+      ref={slotScrollerRefCallback}
+    >
+      <BibleReader
+        currentSlot={slot}
+        readingState={readingState}
+        selectorState={state.selector}
+        state={state}
+        mobileChrome={mobileChrome}
+        sharedSession={tab.sharedSession}
+      />
+      {!isCompactReader && !editingPlaylistHere && (
+        <BelowReaderToolbar
+          toolsManager={state.tools}
           readingState={readingState}
-          selectorState={state.selector}
-          state={state}
-          mobileChrome={mobileChrome}
           sharedSession={tab.sharedSession}
+          selectorState={state.selector}
+          tabsManager={state.tabs}
+          panesManager={state.panes}
+          tabsLayoutManager={state.tabsLayout}
+          openSidebar={state.sidebar.openSidebar}
+          openSearch={state.sidebar.openSearch}
+          currentSlot={slot}
+          toast={state.app.toast}
+          openChat={state.sidebar.openChatPanel}
+          chats={state.chats}
+          features={state.features}
+          app={state.app}
         />
-        {!isCompactReader && (
-          <BelowReaderToolbar
-            toolsManager={state.tools}
-            readingState={readingState}
-            sharedSession={tab.sharedSession}
-            selectorState={state.selector}
-            tabsManager={state.tabs}
-            panesManager={state.panes}
-            tabsLayoutManager={state.tabsLayout}
-            openSidebar={state.sidebar.openSidebar}
-            openSearch={state.sidebar.openSearch}
-            currentSlot={slot}
-            toast={state.app.toast}
-            openChat={state.sidebar.openChatPanel}
-            chats={state.chats}
-            features={state.features}
-            app={state.app}
-          />
-        )}
-      </div>
+      )}
     </div>
   );
+
+  if (editingPlaylistHere) {
+    return (
+      <PlaylistEditorWorkspace
+        state={state}
+        compact={state.app.isCompactPlaylistEditor.value}
+      >
+        {reader}
+      </PlaylistEditorWorkspace>
+    );
+  }
+  return <div className="sb-pane-reader-outer">{reader}</div>;
 }
 
 function EmptySlotToolbar({

@@ -12,9 +12,10 @@
  *   • rem  — ALL chrome: dimensions, spacing, radius, positioning offsets, and
  *            chrome font-size. Tracks the UI Size knob. This is the default.
  *   • px   — things that must NOT scale with UI Size:
- *              - reader glyph size: `.sb-font-size-*` on `.sb-bible-reader`
- *                (its own independent knob; the cascade anchor lives there so it
- *                doesn't leak into chrome `em`/`inherit`);
+ *              - reader glyph size: `.sb-reader-font-size-*` on
+ *                `.sb-bible-reader` (its own independent knob; the cascade
+ *                anchor lives there so it doesn't leak into chrome
+ *                `em`/`inherit`);
  *              - 1px / sub-2px hairline borders & dividers;
  *              - `@media` breakpoint conditions;
  *              - `box-shadow` / `outline` / `transform` offsets;
@@ -36,7 +37,7 @@
  * minPixelValue 2 so 1px hairlines stay px, mediaQuery false so breakpoint
  * conditions stay px) over the chrome; `border` / `box-shadow` / `transform` /
  * `line-height` were excluded from its propList (kept px), and the reader
- * selectors (`.sb-font-size-*`, `.sb-chapter-heading`, `.sb-line-break`,
+ * selectors (`.sb-reader-font-size-*`, `.sb-chapter-heading`, `.sb-line-break`,
  * `.sb-verse-number`) plus `html` were blacklisted. New chrome CSS added after
  * the migration should follow the same rules: author it in `rem`.
  * =============================================================================
@@ -46,8 +47,60 @@
   --sb-ui-scale: 1;
   --sb-scripture-margin: 27%;
 
-  /* Text config variables — overridden at runtime by SettingsManager. */
-  --text-bookTitle-font: "Newsreader", serif;
+  /* Shared corner scale and stacking layers. Mirrored in `sharedTokens.ts`,
+     which hands the same values to sandboxed extension frames (they don't load
+     this file). Radius `full` stays px: it only has to exceed half of any
+     pill's height. */
+  --sb-radius-xs: 0.25rem;
+  --sb-radius-sm: 0.375rem;
+  --sb-radius-md: 0.5rem;
+  --sb-radius-lg: 0.75rem;
+  --sb-radius-xl: 1rem;
+  --sb-radius-2xl: 1.25rem;
+  --sb-radius-full: 999px;
+
+  /* App-wide stacking order, lowest first: toolbars and sidebars, menus and
+     pop-overs, modal dialogs, prompts that interrupt a modal, the tutorial,
+     then short-lived toasts. Toast containers ignore the pointer but the cards
+     take clicks, so anything that stays on screen belongs below `modal`. */
+  --sb-layer-chrome: 100;
+  --sb-layer-popover: 500;
+  --sb-layer-modal: 1000;
+  --sb-layer-prompt: 1100;
+  --sb-layer-tour: 1200;
+  --sb-layer-toast: 1300;
+
+  /* UI animation speeds: quick feedback (hover, press), most open/close and
+     fade changes, and larger moves (sheets, modals, slides). Long or looping
+     animations keep their own timings. */
+  --sb-duration-fast: 0.15s;
+  --sb-duration-base: 0.2s;
+  --sb-duration-slow: 0.3s;
+
+  /* Chrome text sizes, named by their pixel size at the default UI Size (they
+     are rem, so they all scale with it). Reader text has its own sizes
+     (`.sb-reader-font-size-*`), and icons keep their own. */
+  --sb-font-size-10: 0.625rem;
+  --sb-font-size-11: 0.6875rem;
+  --sb-font-size-12: 0.75rem;
+  --sb-font-size-13: 0.8125rem;
+  --sb-font-size-14: 0.875rem;
+  --sb-font-size-15: 0.9375rem;
+  --sb-font-size-16: 1rem;
+  --sb-font-size-18: 1.125rem;
+  --sb-font-size-20: 1.25rem;
+  --sb-font-size-22: 1.375rem;
+  --sb-font-size-24: 1.5rem;
+  --sb-font-size-32: 2rem;
+
+  /* Matches DEFAULT_SCRIPTURE_WIDTH in SettingsManager; the runtime value only
+     replaces it when the reader has chosen a different width. */
+  --sb-scripture-width: 68ch;
+
+  /* Scripture text defaults. Only --text-verse-line-height is overridden at
+     runtime (by SettingsManager). */
+  --text-bookTitle-font:
+    "Newsreader", "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif;
   --text-bookTitle-weight: 700;
   --text-bookTitle-color: #333;
   --text-bookTitle-font-style: normal;
@@ -58,7 +111,9 @@
   --text-bookTitle-margin-left: 0;
   --text-bookTitle-margin-right: 0;
 
-  --text-heading-font: "Plus Jakarta Sans", sans-serif;
+  --text-heading-font:
+    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback",
+    "Plus Jakarta Sans Fallback Roboto", sans-serif;
   --text-heading-weight: 700;
   --text-heading-color: #333;
   --text-heading-font-style: normal;
@@ -69,7 +124,9 @@
   --text-heading-margin-left: 0;
   --text-heading-margin-right: 0;
 
-  --text-verse-font: "Plus Jakarta Sans", sans-serif;
+  --text-verse-font:
+    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback",
+    "Plus Jakarta Sans Fallback Roboto", sans-serif;
   --text-verse-weight: 500;
   --text-verse-color: #333;
   --text-verse-font-style: normal;
@@ -106,14 +163,19 @@
   --sb-reader-font-family: inherit;
   --sb-reader-font-color: #333;
 
-  --sb-book-title-font-family: "Newsreader", serif;
+  --sb-book-title-font-family:
+    "Newsreader", "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif;
   --sb-book-title-font-color: #333;
 
-  --sb-chapter-heading-font-family: "Plus Jakarta Sans", sans-serif;
+  --sb-chapter-heading-font-family:
+    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback",
+    "Plus Jakarta Sans Fallback Roboto", sans-serif;
   --sb-chapter-heading-font-color: #333;
   --sb-chapter-heading-font-style: normal;
 
-  --sb-verse-font-family: "Plus Jakarta Sans", sans-serif;
+  --sb-verse-font-family:
+    "Plus Jakarta Sans", "Plus Jakarta Sans Fallback",
+    "Plus Jakarta Sans Fallback Roboto", sans-serif;
   --sb-verse-font-color: #333;
   --sb-verse-cursor: pointer;
 
@@ -125,29 +187,30 @@
   --sb-selected-verse-text-decoration: underline dotted;
   --sb-selected-verse-text-decoration-color: currentColor;
 
-  --sb-hebrew-subtitle-font-family: "Newsreader", serif;
+  --sb-hebrew-subtitle-font-family:
+    "Newsreader", "Newsreader Fallback", "Newsreader Fallback Noto Serif", serif;
   --sb-hebrew-subtitle-font-color: #333;
   --sb-hebrew-subtitle-font-style: italic;
 
   --sb-reader-toolbar-bottom: 1.125rem;
   --sb-reader-toolbar-gap: 0.25rem;
   --sb-reader-toolbar-padding: 1px 0.3125rem;
-  --sb-reader-toolbar-border-radius: 1.25rem;
+  --sb-reader-toolbar-border-radius: var(--sb-radius-2xl);
   --sb-reader-toolbar-background: #ffffff;
   --sb-reader-toolbar-border: 1px solid #00000024;
   --sb-reader-toolbar-box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
-  --sb-reader-toolbar-z-index: 99;
+  --sb-reader-toolbar-z-index: calc(var(--sb-layer-chrome) - 1);
   --sb-reader-toolbar-height: auto;
   --sb-reader-toolbar-font-family: system-ui, sans-serif;
   --sb-reader-toolbar-font-color: #333;
 
   --sb-reader-toolbar-button-height: 3.25rem;
   --sb-reader-toolbar-button-padding: 0.375rem 0.625rem;
-  --sb-reader-toolbar-button-border-radius: 0.75rem;
+  --sb-reader-toolbar-button-border-radius: var(--sb-radius-lg);
   --sb-reader-toolbar-button-icon-size: 1.5rem;
   --sb-reader-toolbar-button-label-font-family: system-ui, sans-serif;
-  --sb-reader-toolbar-button-label-font-size: 0.6875rem;
+  --sb-reader-toolbar-button-label-font-size: var(--sb-font-size-11);
   --sb-reader-toolbar-button-label-line-height: 1;
   --sb-reader-toolbar-button-label-height: 0.8125rem;
 
@@ -158,17 +221,17 @@
   --sb-reader-toolbar-floating-button-width: 3rem;
   --sb-reader-toolbar-floating-button-height: 3rem;
   --sb-reader-toolbar-floating-button-border: 1px solid #00000024;
-  --sb-reader-toolbar-floating-button-border-radius: 62.4375rem;
+  --sb-reader-toolbar-floating-button-border-radius: var(--sb-radius-full);
   --sb-reader-toolbar-floating-button-background: #fff;
   --sb-reader-toolbar-floating-button-font-color: #333;
   --sb-reader-toolbar-floating-button-box-shadow: 0 10px 24px #0000001a;
 
   --sb-verse-toolbar-gap: 0.125rem;
   --sb-verse-toolbar-padding: 0.25rem 0.5rem;
-  --sb-verse-toolbar-border-radius: 0.625rem;
+  --sb-verse-toolbar-border-radius: var(--sb-radius-md);
   --sb-verse-toolbar-border: 1px solid var(--sb-divider-color);
   --sb-verse-toolbar-box-shadow: 0 26px 10px var(--sb-shadow-color);
-  --sb-verse-toolbar-z-index: 100;
+  --sb-verse-toolbar-z-index: var(--sb-layer-chrome);
   --sb-verse-toolbar-min-height: 0;
 
   --sb-reader-toolbar-mobile-layout-height: auto;
@@ -177,8 +240,8 @@
   --sb-reader-toolbar-mobile-layout-item-size: 2.75rem;
   --sb-reader-toolbar-mobile-layout-center-button-width: 5.4375rem;
   --sb-reader-toolbar-mobile-layout-center-button-height: 2.625rem;
-  --sb-reader-toolbar-mobile-layout-button-border-radius: 2.5rem;
-  --sb-reader-toolbar-mobile-tabs-label-font-size: 0.75rem;
+  --sb-reader-toolbar-mobile-layout-button-border-radius: var(--sb-radius-full);
+  --sb-reader-toolbar-mobile-tabs-label-font-size: var(--sb-font-size-12);
 
   --sb-reader-toolbar-floating-button-side-offset: 1rem;
 
@@ -194,6 +257,10 @@
   /* The same without the 3rem gap: just what the bottom chrome covers, for
    * things that sit right against it (the off-screen highlight notices). */
   --sb-reader-bottom-chrome: 7.375rem;
+
+  /* The phone tab bar's part of that, which slides off the screen when the
+   * reader is scrolled down. Measured at runtime like the two above. */
+  --sb-reader-bottom-tabs: 4.375rem;
 
   /* Full-width floating chapter-nav bar. Composed from theme-injected vars so
    * the bar, arrow circles, and peach play button adapt across themes. */
@@ -240,6 +307,7 @@
   --sb-menu-font-color: #333;
 
   --sb-toolbar-icon-invert: 0;
+  --sb-map-tile-filter: none;
 
   --sb-tab-border: 1px solid transparent;
   --sb-tab-background: inherit;
@@ -314,12 +382,90 @@ html {
   /* UI scale: the "UI Size" setting (S/M/L/XL) drives `--sb-ui-scale`
    * (set in SettingsManager). 1rem = the scaled UI base, so every chrome size
    * expressed in `rem` tracks this knob. Reader glyph size stays in px on
-   * `.sb-bible-reader` (`.sb-font-size-*`) and is therefore unaffected. */
+   * `.sb-bible-reader` (`.sb-reader-font-size-*`) and is therefore
+   * unaffected. */
   font-size: calc(16px * var(--sb-ui-scale, 1));
 }
 
+/* Metric-matched stand-ins used while the Google web fonts download. The
+   numbers are measured, and why they are what they are is written up beside
+   FALLBACK_FACES in app/fontFallbacks.ts (a test keeps these in step with it).
+   size-adjust scales the local font to the web font's width; the overrides
+   restore the web font's own line box. A device that lacks the first face's
+   local fonts (Android) skips it and uses the next one in the stack. */
+@font-face {
+  font-family: "Plus Jakarta Sans Fallback";
+  src:
+    local("Arial"), local("Arimo"), local("Liberation Sans"), local("Helvetica");
+  size-adjust: 105.2%;
+  ascent-override: 98.7%;
+  descent-override: 21.1%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans Fallback Roboto";
+  src: local("Roboto"), local("Roboto-Regular");
+  size-adjust: 106.1%;
+  ascent-override: 97.8%;
+  descent-override: 20.9%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Newsreader Fallback";
+  src:
+    local("Times New Roman"), local("Liberation Serif"), local("Tinos"),
+    local("Times");
+  size-adjust: 105%;
+  ascent-override: 70%;
+  descent-override: 25.2%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Newsreader Fallback Noto Serif";
+  src: local("Noto Serif");
+  size-adjust: 90%;
+  ascent-override: 81.7%;
+  descent-override: 29.4%;
+  line-gap-override: 0%;
+}
+
+/* The icon font's stylesheet loads without blocking first paint, so its base
+   rule is repeated here (identical to Google's) for icons to be sized and
+   shaped from the start. Until the font arrives (`sb-icons-pending`, set and
+   cleared by index.html) the glyph name is hidden and clipped to the icon's
+   square, rather than flashing as a long word that reflows the toolbar. */
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+}
+
+html.sb-icons-pending .material-symbols-outlined {
+  width: 1em;
+  overflow: hidden;
+  color: transparent;
+}
+
+/* Saved reader font size, applied by index.html's early-config script before
+   the `.sb-reader-font-size-*` class (which follows the hydrated settings)
+   exists. SettingsManager removes the attribute once the real settings are
+   in. */
+html[data-sb-early-config] .sb-bible-reader {
+  font-size: var(--sb-early-font-size, 16px);
+}
+
 /* Material Symbols icons ship with a fixed `font-size: 24px` from the Google
-   Fonts stylesheet (loaded in main.tsx), which ignores the UI Size knob.
+   Fonts stylesheet (preloaded in index.html), which ignores the UI Size knob.
    Re-express that base in rem so every icon scales with the chrome by default
    (1.5rem = 24px at size M — a no-op at M). Scoped
    `.sb-* .material-symbols-outlined` rules (specificity 0,2,0) still win and
@@ -343,6 +489,17 @@ body {
   /* dynamic-range-limit prevents user-provided images from changing the dynamic range */
   /* eslint-disable-next-line css/no-invalid-properties */
   dynamic-range-limit: var(--sb-dynamic-range-limit);
+
+  /* Elevation shadows: cards and knobs, menus/tooltips/toasts, dialogs and
+     big floating panels, and surfaces that slide up from the bottom. Declared
+     here rather than on `:root` because they're built on the theme's
+     `--sb-shadow-color`, which ThemeManager sets on `body`; a `:root` copy
+     would lock in the light value. Mirrored in `sharedTokens.ts`. */
+  --sb-shadow-raised: 0 1px 3px var(--sb-shadow-color);
+  --sb-shadow-popover: 0 10px 30px var(--sb-shadow-color);
+  --sb-shadow-modal: 0 20px 48px
+    color-mix(in srgb, var(--sb-shadow-color) 85%, black);
+  --sb-shadow-sheet: 0 -8px 24px var(--sb-shadow-color);
 }
 
 /* On mobile, lock the document to the visual viewport so iOS/Android
@@ -408,36 +565,39 @@ a:visited {
   color: var(--sb-link-visited-color);
 }
 
-.sb-font-size-xs {
+/* stylelint-disable seed-bible/use-design-tokens -- reader text sizes are px on purpose: their own
+   knob, independent of UI Size */
+.sb-reader-font-size-xs {
   font-size: 12px;
 }
 
-.sb-font-size-s {
+.sb-reader-font-size-s {
   font-size: 14px;
 }
 
-.sb-font-size-m {
+.sb-reader-font-size-m {
   font-size: 16px;
 }
 
-.sb-font-size-l {
+.sb-reader-font-size-l {
   font-size: 18px;
 }
 
-.sb-font-size-xl {
+.sb-reader-font-size-xl {
   font-size: 20px;
 }
 
-.sb-font-size-xxl {
+.sb-reader-font-size-xxl {
   font-size: 22px;
 }
+/* stylelint-enable seed-bible/use-design-tokens */
 
 .sb-main-content {
   flex: 1;
   overflow: hidden;
   background: var(--sb-sidebar-background);
   scrollbar-width: none;
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   display: flex;
   justify-content: center;
   align-items: center;

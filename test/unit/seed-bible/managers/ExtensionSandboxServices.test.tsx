@@ -366,18 +366,15 @@ describe("sandboxed extension services", () => {
     it("reads public Bible text without any permission", async () => {
       const { sb } = await install({ id: "ext.bible" });
 
-      expect(
-        await sb.bible.chapter({
-          translationId: "BSB",
-          bookId: "JHN",
-          chapter: 1,
-        })
-      ).toEqual({
-        verses: [
-          { number: 1, text: "In the beginning" },
-          { number: 2, text: "was the Word." },
-        ],
+      const chapter = await sb.bible.chapter({
+        translationId: "BSB",
+        bookId: "JHN",
+        chapter: 1,
       });
+      expect(chapter.verses).toEqual([
+        { number: 1, text: "In the beginning" },
+        { number: 2, text: "was the Word." },
+      ]);
     });
   });
 
@@ -819,6 +816,17 @@ describe("sandboxed extension services", () => {
       );
       expect(csp).toContain("font-src data: https://fonts.gstatic.com;");
       expect(csp).toContain("connect-src 'none'");
+    });
+  });
+
+  describe("theme", () => {
+    it("gives frames the shared corner scale along with the theme", async () => {
+      await install({ id: "ext.theme" });
+
+      const themeCss = h.frames[0]!.init.state.themeCss;
+      expect(themeCss).toContain("--sb-radius-md: 0.5rem;");
+      expect(themeCss).toContain("--sb-radius-full: 999px;");
+      expect(themeCss).toContain("--sb-font-color: #111;");
     });
   });
 
