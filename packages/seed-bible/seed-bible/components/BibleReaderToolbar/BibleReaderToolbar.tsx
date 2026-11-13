@@ -47,6 +47,7 @@ import {
   openSaveModalForLocation,
 } from "../Tabs/Tabs";
 import { BookmarkStackIcon } from "../Bookmarks/Bookmarks";
+import { CustomizableIcon } from "../CustomizableIcon/CustomizableIcon";
 import { SessionGroupBar } from "../SessionGroupBar/SessionGroupBar";
 import { playlistItemLabel } from "../playlistItemLabel";
 import {
@@ -2739,7 +2740,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           openTodayScreen();
         }}
       >
-        <TodayIcon />
+        <CustomizableIcon id="today">
+          <TodayIcon />
+        </CustomizableIcon>
         <span className="sb-reader-toolbar-button-label">
           {t("today", { defaultValue: "Today" })}
         </span>
@@ -3343,7 +3346,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               {isSmallScreen.value ? (
                 <>
                   <MobileBottomTab
-                    iconNode={<TodayIcon />}
+                    iconNode={
+                      <CustomizableIcon id="today">
+                        <TodayIcon />
+                      </CustomizableIcon>
+                    }
                     label={t("today", { defaultValue: "Today" })}
                     active={activeMobileTab.value === "today"}
                     onClick={() => {
@@ -3360,11 +3367,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
                   <MobileBottomTab
                     iconNode={
-                      <SeedBibleIcon
-                        size={24}
-                        animated
+                      <CustomizableIcon
+                        id="books"
                         className="sb-reader-toolbar-seed-icon"
-                      />
+                      >
+                        <SeedBibleIcon
+                          size={24}
+                          animated
+                          className="sb-reader-toolbar-seed-icon"
+                        />
+                      </CustomizableIcon>
                     }
                     label={t("bible", { defaultValue: "Bible" })}
                     active={activeMobileTab.value === "bible"}
@@ -3387,7 +3399,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   />
 
                   <MobileBottomTab
-                    iconName="search"
+                    iconNode={
+                      <CustomizableIcon id="search">
+                        <MaterialIcon>search</MaterialIcon>
+                      </CustomizableIcon>
+                    }
                     label={t("search", { defaultValue: "Search" })}
                     active={activeMobileTab.value === "search"}
                     onClick={() => {

@@ -21,6 +21,7 @@ import {
 } from "../../components/ContextMenu/ContextMenu";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { MaterialIcon, SettingsIcon, StarIcon } from "../../components/icons";
+import { CustomizableIcon } from "../CustomizableIcon/CustomizableIcon";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
 import {
@@ -1001,12 +1002,18 @@ export function TabsHeader(props: TabsHeaderProps) {
                 openShareSheetForCurrentTab(state);
               }}
             >
-              <MaterialIcon
+              <CustomizableIcon
+                id="share"
+                size={18}
                 className="sb-context-menu-item-icon"
-                aria-hidden="true"
               >
-                share
-              </MaterialIcon>
+                <MaterialIcon
+                  className="sb-context-menu-item-icon"
+                  aria-hidden="true"
+                >
+                  share
+                </MaterialIcon>
+              </CustomizableIcon>
               <span>
                 {t("share", {
                   defaultValue: "Share",
@@ -2536,7 +2543,11 @@ export function Tabs(props: TabsProps) {
             <IconButton
               size="lg"
               className="sb-mobile-screen-header-button sb-sidebar-tabs-header-share-button"
-              icon="share"
+              icon={
+                <CustomizableIcon id="share">
+                  <MaterialIcon aria-hidden="true">share</MaterialIcon>
+                </CustomizableIcon>
+              }
               label={t("share", { defaultValue: "Share" })}
               onClick={() => {
                 openShareSheetForCurrentTab(state);

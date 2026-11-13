@@ -1,4 +1,5 @@
 import { AskIcon, MaterialIcon, SeedBibleIcon } from "../components/icons";
+import { CustomizableIcon } from "../components/CustomizableIcon/CustomizableIcon";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
@@ -62,6 +63,7 @@ import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
 import type { SettingsManager } from "./SettingsManager";
 import type { ScriptureChapterLoader } from "../components/PlaylistItemInlinePreview/PlaylistItemInlinePreview";
+import { toShareableUrl } from "../app/publicLinks";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -737,7 +739,11 @@ function ChevronLeftIcon() {
 }
 
 function OpenSelectorIcon() {
-  return <SeedBibleIcon size={28} animated className="sb-open-selector-icon" />;
+  return (
+    <CustomizableIcon id="books" size={28} className="sb-open-selector-icon">
+      <SeedBibleIcon size={28} animated className="sb-open-selector-icon" />
+    </CustomizableIcon>
+  );
 }
 
 function ChevronRightIcon() {
@@ -756,8 +762,12 @@ function CopyVerseIcon() {
   return <MaterialIcon>content_copy</MaterialIcon>;
 }
 
-function ShareVerseIcon() {
-  return <MaterialIcon>share</MaterialIcon>;
+function ShareIcon() {
+  return (
+    <CustomizableIcon id="share">
+      <MaterialIcon>share</MaterialIcon>
+    </CustomizableIcon>
+  );
 }
 
 function ClearSelectionIcon() {
@@ -942,17 +952,16 @@ function getDefaultQuickToolbarTools(
         key: "discover-content-panel",
         defaultValue: "Discover content",
       },
-      icon: (c) => (
-        <MaterialIcon
-          className={
-            c.readingState.discoverContentPanelInline.value
-              ? "sb-quick-tool-icon-active"
-              : undefined
-          }
-        >
-          explore
-        </MaterialIcon>
-      ),
+      icon: (c) => {
+        const className = c.readingState.discoverContentPanelInline.value
+          ? "sb-quick-tool-icon-active"
+          : undefined;
+        return (
+          <CustomizableIcon id="discover" className={className}>
+            <MaterialIcon className={className}>explore</MaterialIcon>
+          </CustomizableIcon>
+        );
+      },
       isVisible: (c) => {
         if (
           c.app?.isMobile?.value ||
@@ -972,7 +981,7 @@ function getDefaultQuickToolbarTools(
       id: "share",
       priority: 100,
       title: { key: "share", defaultValue: "Share" },
-      icon: () => <MaterialIcon>share</MaterialIcon>,
+      icon: ShareIcon,
       // Header-level so Share stays visible instead of sitting in the bottom
       // toolbar (desktop) or More menu (mobile). Hidden on the
       // mobile-navigation-bar surface, which is reserved for the audio play
@@ -1222,7 +1231,11 @@ function getDefaultToolbarTools(
       id: "open-search",
       priority: 110,
       title: { key: "search", defaultValue: "Search" },
-      icon: () => <MaterialIcon>search</MaterialIcon>,
+      icon: () => (
+        <CustomizableIcon id="search">
+          <MaterialIcon>search</MaterialIcon>
+        </CustomizableIcon>
+      ),
       onSelect: (context) => {
         if (context.toggleSearch) {
           context.toggleSearch();
@@ -1235,7 +1248,11 @@ function getDefaultToolbarTools(
       id: "open-chat",
       priority: 120,
       title: { key: "chat", defaultValue: "Chat" },
-      icon: () => <MaterialIcon>chat_bubble_outline</MaterialIcon>,
+      icon: () => (
+        <CustomizableIcon id="chat">
+          <MaterialIcon>chat_bubble_outline</MaterialIcon>
+        </CustomizableIcon>
+      ),
       isVisible: (context) => {
         // Hide when there are no providers and no chats
         return (
@@ -1251,7 +1268,11 @@ function getDefaultToolbarTools(
       id: "open-discover",
       priority: 120,
       title: { key: "discover", defaultValue: "Discover" },
-      icon: () => <MaterialIcon>explore</MaterialIcon>,
+      icon: () => (
+        <CustomizableIcon id="discover">
+          <MaterialIcon>explore</MaterialIcon>
+        </CustomizableIcon>
+      ),
       isVisible: (context) => !!context.openDiscover,
       onSelect: (context) => {
         if (!context.openDiscover) {
@@ -1478,7 +1499,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       priority: 300,
       showInEmbedded: true,
       title: { key: "share-verse", defaultValue: "Share" },
-      icon: ShareVerseIcon,
+      icon: ShareIcon,
       isVisible: (context) =>
         context.readingState.selectedVerses.value.length > 0,
       onSelect: (context) => {
@@ -1623,7 +1644,7 @@ export function getShareUrl(readingState: BibleReadingState) {
       }
     }
   }
-  return url;
+  return toShareableUrl(url);
 }
 
 /**

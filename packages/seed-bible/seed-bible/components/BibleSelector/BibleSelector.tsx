@@ -46,6 +46,7 @@ import { Spinner } from "../Spinner/Spinner";
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { MOBILE_BREAKPOINT } from "../../managers/SeedBibleStateManager";
+import { toShareableUrl } from "../../app/publicLinks";
 import { SearchBar as SearchField } from "../SearchBar/SearchBar";
 import { CloseButton } from "../CloseButton/CloseButton";
 import { Button } from "../Button/Button";
@@ -1798,7 +1799,7 @@ const TranslationRowActions = (props: {
         bibleLanguageToUiLocale(translation.language) ??
         undefined,
     });
-    navigator.clipboard.writeText(url.href);
+    navigator.clipboard.writeText(toShareableUrl(url).href);
 
     app.toast(
       t("copied-translation-share-link", {
