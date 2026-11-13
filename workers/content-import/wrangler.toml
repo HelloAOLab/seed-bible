@@ -15,13 +15,15 @@ compatibility_date = "2026-09-01"
 [triggers]
 crons = ["*/15 * * * *"]
 
+# SQLite-backed Durable Objects: the only kind Cloudflare's free plan
+# allows. Neither object stores anything, so the storage kind doesn't matter.
 [[migrations]]
 tag = "v1"
-new_classes = ["LibraryWriter"]
+new_sqlite_classes = ["LibraryWriter"]
 
 [[migrations]]
 tag = "v2"
-new_classes = ["CommonCrawlGate"]
+new_sqlite_classes = ["CommonCrawlGate"]
 
 # ─── alpha (develop) ────────────────────────────────────────────────────────
 
