@@ -359,6 +359,21 @@ describe("website imports", () => {
     );
   });
 
+  it("says what Common Crawl answered when its crawl list can't be had", async () => {
+    const { worker, key, commonCrawl } = setup();
+    commonCrawl.indexFailures.push(403);
+    const response = await call(worker, "POST", "/site-imports", {
+      key,
+      body: { contentRecordName: LIBRARY, site: "gracecommunity.org" },
+    });
+    expect(response.status).toBe(502);
+    expect(await response.json()).toMatchObject({
+      error: "common_crawl_unavailable",
+      commonCrawlStatus: 403,
+      commonCrawlAnswer: "Slow down",
+    });
+  });
+
   it("refuses an address that isn't a public website", async () => {
     const { worker, key } = setup();
     for (const site of [

@@ -57,7 +57,8 @@ export class CommonCrawlGate {
       });
     } catch (error) {
       this.nextAt = this.deps.now() + INDEX_REQUEST_GAP_MS;
-      return new Response(String(error), { status: 502 });
+      console.error(`Couldn't reach Common Crawl's index (${target}):`, error);
+      return new Response(`Network error: ${String(error)}`, { status: 502 });
     }
     let gap = INDEX_REQUEST_GAP_MS;
     if (response.status === 503 || response.status === 429) {

@@ -70,15 +70,28 @@ async function latestCrawls(env: Env, deps: WorkerDeps): Promise<Crawl[]> {
     return collections.crawls;
   }
   const response = await fetchThroughGate(gate(env), COLLECTIONS_URL);
-  const crawls =
-    response.status === 200
-      ? parseCollections(await response.json().catch(() => null))
-      : [];
+  const body = await response.text();
+  let crawls: Crawl[] = [];
+  if (response.status === 200) {
+    try {
+      crawls = parseCollections(JSON.parse(body));
+    } catch {
+      // Reported below with what came back.
+    }
+  }
   if (crawls.length === 0) {
+    // What Common Crawl actually answered, so a block or an outage can be
+    // told apart from a change in its format.
+    const answer = body.slice(0, 300);
+    console.error(
+      `Common Crawl's crawl list failed: HTTP ${response.status}:`,
+      answer
+    );
     throw new HttpError(
       502,
       "common_crawl_unavailable",
-      "Common Crawl couldn't be reached. Please try again later."
+      "Common Crawl couldn't be reached. Please try again later.",
+      { commonCrawlStatus: response.status, commonCrawlAnswer: answer }
     );
   }
   collections = { crawls, until: deps.now() + COLLECTIONS_CACHE_MS };
@@ -293,6 +306,12 @@ export async function processLookupMessage(
       ? pageCountUrl(crawl, details.pattern)
       : resultPageUrl(crawl, details.pattern, message.page);
   const response = await fetchThroughGate(gate(env), url);
+  if (response.status !== 200 && response.status !== 404) {
+    console.warn(
+      `Common Crawl lookup failed: HTTP ${response.status} for ${url}:`,
+      (await response.clone().text()).slice(0, 300)
+    );
+  }
   if (RETRY_STATUSES.has(response.status)) {
     return { kind: "retry", delaySeconds: retryDelay };
   }
