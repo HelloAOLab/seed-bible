@@ -4,7 +4,7 @@ import "./CustomizationEditPane.css";
 // imported explicitly rather than relying on `BibleSelector.tsx` happening to
 // already be in the bundle.
 import "../BibleSelector/BibleSelector.css";
-import { batch, signal, useSignal } from "@preact/signals";
+import { signal, useSignal } from "@preact/signals";
 import { lazy, Suspense } from "preact/compat";
 import { useMemo, useRef } from "preact/hooks";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -389,15 +389,13 @@ export function CustomizationEditPaneHelp(props: { state: SeedBibleState }) {
             : record.defaultVariantId;
         // Only once the tour has started: it refuses while another tour runs,
         // and that tour may be pointing at the screen the user is on.
-        batch(() => {
-          const started = state.tutorial.replayContextual(
-            "customization-created",
-            buildCustomizationTutorialSteps(state, variantId)
-          );
-          if (started) {
-            customizationEditView.value = "edit";
-          }
-        });
+        const started = state.tutorial.replayContextual(
+          "customization-created",
+          buildCustomizationTutorialSteps(state, variantId)
+        );
+        if (started) {
+          customizationEditView.value = "edit";
+        }
       }}
     />
   );

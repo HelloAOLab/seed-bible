@@ -75,17 +75,19 @@ All of these are on `state.tutorial` (`TutorialManager`).
 - the user turned tutorials off,
 - the user has already seen this tour.
 
-`replayContextual` stops only for the first two. `startTutorial` stops only in an embed, or for a desktop-only tour on a phone; it doesn't wait for a running tour but replaces it. Both return `false` when nothing started. If your button changes the screen for the tour, do that only when it returns `true`, or a tour that's already running ends up pointing at something that isn't shown:
+`replayContextual` stops only for the first two. `startTutorial` stops only in an embed, or for a desktop-only tour on a phone; it doesn't wait for a running tour but replaces it. Both return `false` when nothing started. If your **Take a tour** button also changes the screen for the tour, do that only when it returns `true`, or a tour that's already running ends up pointing at something that isn't shown. This is the one case where the screen changes after the tour starts; that's fine, because the overlay keeps looking for a step's target until it appears. The Custom Branding editor's button does this:
 
 ```ts
 onClick={() => {
-  if (state.tutorial.replayContextual("mobile-settings")) {
-    openSettingsSheet();
+  const started = state.tutorial.replayContextual(
+    "customization-created",
+    buildCustomizationTutorialSteps(state, variantId)
+  );
+  if (started) {
+    customizationEditView.value = "edit"; // the main editor, where step 1 points
   }
 }}
 ```
-
-(`CustomizationEditPaneHelp` batches the two, because its first step needs the screen it switches to.)
 
 ---
 
@@ -158,7 +160,7 @@ One limitation: the overlay looks step text up in Seed Bible's own `en.json`, an
 | `next()` / `prev()` / `finish()`          | method  | Move through the tour, or end it (the popover's buttons call these).                             |
 | `skip()`                                  | method  | End the tour and ask whether to turn tutorials off.                                              |
 | `keepTutorials()`                         | method  | Answer that question with "keep them".                                                           |
-| `optOut()`                                | method  | Turn tutorials off (the question's confirm button, and Settings).                                |
+| `optOut()`                                | method  | Turn tutorials off (what the "turn off tutorials?" question's confirm button calls).             |
 | `acceptPrompt()` / `dismissPrompt()`      | method  | Answer the first-run offer card.                                                                 |
 | `running`                                 | signal  | Whether a tour is showing.                                                                       |
 | `activeTutorialId`                        | signal  | `"introduction"`, a contextual feature id, or `null`.                                            |
