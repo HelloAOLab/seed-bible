@@ -33,6 +33,8 @@
   "close-settings": "Close Settings",
   "session-settings": "Session settings",
   "shared-session-click-to-join": "is sharing — click to join",
+  "joining-session": "Joining session…",
+  "joining-session-description": "Please wait while we connect you to the shared session.",
   "dismiss": "Dismiss",
   "tabs": "Tabs",
   "new-tab": "New tab",
