@@ -14,6 +14,7 @@ import {
   AnnotationPreview,
   getAnnotationUpdatedTimeFormatter,
 } from "../Discover/AnnotationsSection";
+import { Button } from "../Button/Button";
 
 /** The id every conflict shares, so only one prompt is ever open. */
 const MODAL_ID = "annotation-conflict";
@@ -241,14 +242,14 @@ function ConflictForm(props: {
       </div>
 
       <div className="sb-annotation-conflict-actions">
-        <button
-          type="button"
-          className="sb-annotation-conflict-confirm"
-          disabled={applying || !resolution}
+        <Button
+          variant="primary"
+          loading={applying}
+          disabled={!resolution}
           onClick={() => void confirm()}
         >
           {t("annotation-conflict-confirm", { defaultValue: "Confirm" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

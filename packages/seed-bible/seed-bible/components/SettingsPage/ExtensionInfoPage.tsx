@@ -23,6 +23,7 @@ import {
   ExtensionPermissionsPanel,
   type PermissionsApi,
 } from "../ExtensionConsentModal/ExtensionPermissionsPanel";
+import { Button } from "../Button/Button";
 import {
   ExtensionReviewBadges,
   ExtensionReviewControls,
@@ -206,28 +207,32 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
   );
 
   const installButton = !installed && (
-    <button
-      type="button"
+    <Button
+      variant="primary"
+      size="lg"
+      shape="pill"
       className="sb-extension-info-install"
-      disabled={installState === "pending"}
+      loading={installState === "pending"}
       onClick={props.onInstall}
     >
       {installState === "pending"
         ? t("extension-state-pending", { defaultValue: "Installing…" })
         : t("install", { defaultValue: "Install" })}
-    </button>
+    </Button>
   );
 
   const uninstallButton = installed && (
-    <button
-      type="button"
+    <Button
+      tone="danger"
+      size="lg"
+      shape="pill"
       className="sb-extension-info-uninstall"
       onClick={props.onUninstall}
     >
       {wide
         ? t("uninstall", { defaultValue: "Uninstall" })
         : t("extension-info-uninstall", { name })}
-    </button>
+    </Button>
   );
 
   const whatItCanDo = !installed && manifest?.ok && (

@@ -3,7 +3,7 @@ import {
   type Translation,
   extractContentText,
 } from "seed-bible/managers";
-import { Skeleton, SkeletonContainer } from "seed-bible/components";
+import { Button, Skeleton, SkeletonContainer } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import {
   chapterCacheKey,
@@ -140,13 +140,13 @@ function TranslationBlock(props: {
               defaultValue: "Could not load this translation.",
             })}
           </p>
-          <button
-            type="button"
+          <Button
             className="sb-compare-retry"
+            size="sm"
             onClick={() => state.retryTranslation(entry.id)}
           >
             {t("retry", { defaultValue: "Retry" })}
-          </button>
+          </Button>
         </div>
       </div>
     );

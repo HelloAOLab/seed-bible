@@ -2,6 +2,7 @@ import { useImperativeHandle, useState } from "preact/hooks";
 import { forwardRef } from "preact/compat";
 import { useI18n } from "../i18n/I18nManager";
 import type { PlaylistItemData } from "../managers/PlaylistManager";
+import { Button } from "./Button/Button";
 
 interface LinkItemInputProps {
   onAdd: (item: PlaylistItemData) => void;
@@ -132,15 +133,15 @@ export const LinkItemInput = forwardRef<
             })}
           </span>
         </label>
-        <button
-          type="button"
+        <Button
+          variant="primary"
           className="sb-settings-save-button"
           onClick={handleAdd}
           disabled={!value.trim()}
         >
           {submitLabel ??
             t("playlist-add-button", { defaultValue: "Add item" })}
-        </button>
+        </Button>
       </div>
       {error ? <div className="sb-playlist-add-error">{error}</div> : null}
     </>

@@ -21,6 +21,7 @@ import {
   SANDBOX_PERMISSION_INFO,
   type SandboxPermission,
 } from "../../extensions/protocol";
+import { Button } from "../Button/Button";
 
 type Translate = ModalContentProps["t"];
 
@@ -740,20 +741,24 @@ function ExtensionConsentActions({
   const { t } = useI18n();
   return (
     <div className="sb-extension-consent-actions">
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="lg"
+        shape="pill"
         className="sb-extension-consent-cancel"
         onClick={() => onAnswer(false)}
       >
         {cancelText(t, reason)}
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Button
+        variant="primary"
+        size="lg"
+        shape="pill"
         className="sb-extension-consent-allow"
         onClick={() => onAnswer(true)}
       >
         {allowText(t, reason)}
-      </button>
+      </Button>
     </div>
   );
 }

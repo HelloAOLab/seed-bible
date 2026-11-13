@@ -67,11 +67,8 @@
   border-color: var(--sb-primary-color);
 }
 
-/* The "Default translation" row is a `ContextMenuWithButton` trigger, so it
-   also gets `.sb-context-menu-button`'s icon-button sizing; the compound
-   selector outranks that regardless of CSS load order. */
-.sb-cz-row,
-.sb-context-menu-button.sb-cz-row {
+/* The "Default translation" row, which opens the translation menu. */
+.sb-cz-row {
   width: 100%;
   height: auto;
   display: flex;
@@ -89,8 +86,7 @@
   transition: background-color var(--sb-duration-base) ease;
 }
 
-.sb-cz-row:hover,
-.sb-context-menu-button.sb-cz-row:hover {
+.sb-cz-row:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
 }
 
@@ -134,123 +130,6 @@
 .sb-cz-row-hint {
   font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
-}
-
-.sb-cz-icon-button,
-.sb-context-menu-button.sb-cz-icon-button {
-  width: 2rem;
-  height: 2rem;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  cursor: pointer;
-}
-
-.sb-cz-icon-button:hover,
-.sb-context-menu-button.sb-cz-icon-button:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  color: var(--sb-font-color);
-}
-
-.sb-cz-icon-button .material-symbols-outlined {
-  font-size: 1.25rem;
-}
-
-.sb-cz-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  border-radius: var(--sb-radius-md);
-  background: transparent;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color var(--sb-duration-base) ease,
-    opacity var(--sb-duration-base) ease;
-}
-
-.sb-cz-button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-}
-
-.sb-cz-button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.sb-cz-button .material-symbols-outlined {
-  font-size: 1.125rem;
-}
-
-.sb-cz-button-primary {
-  border-color: var(--sb-primary-color);
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-}
-
-.sb-cz-button-primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-primary-color), black 6%);
-}
-
-.sb-cz-button-primary:disabled {
-  border-color: color-mix(in srgb, var(--sb-font-color), transparent 88%);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  opacity: 1;
-}
-
-.sb-cz-button-danger {
-  border-color: var(--sb-error-color, #d64545);
-  color: var(--sb-error-color, #d64545);
-}
-
-.sb-cz-button-quiet {
-  border-color: transparent;
-  padding-inline: 0.5rem;
-}
-
-.sb-cz-button-danger:hover:not(:disabled) {
-  background: color-mix(
-    in srgb,
-    var(--sb-error-color, #d64545),
-    transparent 90%
-  );
-}
-
-.sb-cz-reset {
-  width: 1.5rem;
-  height: 1.5rem;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  cursor: pointer;
-}
-
-.sb-cz-reset:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
-  color: var(--sb-font-color);
-}
-
-.sb-cz-reset .material-symbols-outlined {
-  font-size: 1rem;
 }
 
 /* Footer actions (Delete · Share · Save), pinned to the bottom of the pane
@@ -778,10 +657,10 @@ button.sb-cz-logo:disabled {
    look is see-through) with a hairline ring. Two classes, to outrank the
    CloseButton's own custom properties. */
 .sb-close-button.sb-cz-floating-preview-close {
-  --sb-close-button-background: var(--sb-reader-background);
-  --sb-close-button-hover-background: color-mix(
+  --sb-icon-button-background: var(--sb-reader-background);
+  --sb-icon-button-hover-background: color-mix(
     in srgb,
-    var(--sb-close-button-color) 12%,
+    var(--sb-icon-button-color) 12%,
     var(--sb-reader-background)
   );
 
@@ -790,7 +669,7 @@ button.sb-cz-logo:disabled {
   inset-inline-end: -0.625rem;
   z-index: 1;
   box-shadow: 0 0 0 1px
-    color-mix(in srgb, var(--sb-close-button-color), transparent 80%);
+    color-mix(in srgb, var(--sb-icon-button-color), transparent 80%);
 }
 
 @keyframes sb-cz-floating-preview-in {
@@ -1062,19 +941,4 @@ button.sb-cz-tile-swatch:focus-visible {
 
 .sb-cz-list-row + .sb-cz-list-row {
   border-top: 1px solid var(--sb-divider-color);
-}
-.sb-unsaved-changes-discard {
-  padding: 0.5rem 1rem;
-  border-radius: var(--sb-radius-md);
-  font-size: var(--sb-font-size-13);
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color var(--sb-duration-fast) ease;
-  border: none;
-  background: transparent;
-  color: #dc2626;
-}
-.sb-unsaved-changes-discard:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
 }

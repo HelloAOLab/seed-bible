@@ -20,6 +20,8 @@ import {
   useExtensionReview,
 } from "../ExtensionReview/ExtensionReview";
 import { UnusedSensitiveSettingsList } from "../ExtensionSettingsForm/SensitiveSettingsForm";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 export const EXTENSIONS_PANE_ID = "extensions-pane";
 
@@ -39,15 +41,12 @@ export function ExtensionsPaneBackButton(props: { state: SeedBibleState }) {
     return null;
   }
   return (
-    <button
-      type="button"
-      className="sb-pane-header-button sb-extensions-page-back"
+    <IconButton
+      className="sb-extensions-page-back"
+      icon={<MaterialIcon className="rtl-mirror">arrow_back</MaterialIcon>}
+      label={t("extensions-page-back")}
       onClick={() => props.state.openExtensions()}
-      aria-label={t("extensions-page-back")}
-      title={t("extensions-page-back")}
-    >
-      <MaterialIcon className="rtl-mirror">arrow_back</MaterialIcon>
-    </button>
+    />
   );
 }
 
@@ -255,8 +254,10 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
           }}
           placeholder={t("extensions-search")}
         />
-        <button
-          type="button"
+        <Button
+          size="lg"
+          shape="pill"
+          icon="link"
           className="sb-extensions-page-add-link"
           onClick={() =>
             catalog.openAddFromLink((extensionId) =>
@@ -264,11 +265,8 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
             )
           }
         >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            link
-          </span>
           {t("extensions-page-add-link")}
-        </button>
+        </Button>
       </div>
 
       <div className="sb-extensions-page-columns">

@@ -14,6 +14,7 @@ import {
   type TextItemInputHandle,
 } from "../TextItemInput/TextItemInput";
 import { LinkItemInput, type LinkItemInputHandle } from "../LinkItemInput";
+import { Button } from "../Button/Button";
 
 interface PlaylistItemInputProps {
   books: TranslationBook[];
@@ -169,13 +170,12 @@ export const PlaylistItemInput = forwardRef<
       )}
 
       {isEditing ? (
-        <button
-          type="button"
-          className="sb-reading-plans-back sb-playlist-cancel-edit"
+        <Button
+          className="sb-playlist-cancel-edit"
           onClick={() => onCancelEdit?.()}
         >
           {t("cancel", { defaultValue: "Cancel" })}
-        </button>
+        </Button>
       ) : null}
     </DiscoverSection>
   );

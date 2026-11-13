@@ -2,50 +2,12 @@
    panel, the reader bar, and the creator follow light, dark, and custom
    themes. The fallbacks are only for a theme that leaves a variable out. */
 
-.ftv-btn {
-  padding: 8px 14px;
-  border-radius: var(--sb-radius-sm);
-  border: none;
-  cursor: pointer;
-  font-size: var(--sb-font-size-14);
-  font-weight: 500;
-  background: var(--sb-tertiary-color, #f0f0f0);
-  color: var(--sb-font-color, #333);
-}
-
-.ftv-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.ftv-btn--primary {
-  background: var(--sb-primary-color, #e07b4c);
-  color: var(--sb-primary-font-color, #fff);
-}
-
-.ftv-btn--large {
-  padding: 10px 20px;
-  font-weight: 600;
-  font-size: var(--sb-font-size-15);
-}
-
 .ftv-btn--block {
   width: 100%;
 }
 
 .ftv-btn--start {
   align-self: flex-start;
-}
-
-.ftv-sound-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.ftv-sound-toggle .material-symbols-outlined {
-  font-size: 1.1rem;
 }
 
 .ftv-notice {
@@ -135,23 +97,9 @@
   opacity: 0.55;
 }
 
-.ftv-saved-action {
-  padding: 6px 12px;
-  border-radius: var(--sb-radius-sm);
-  border: none;
-  cursor: pointer;
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
+.sb-button.ftv-saved-action {
   flex-shrink: 0;
-  background: transparent;
-  color: var(--sb-font-color, #333);
 }
-
-.ftv-saved-action--primary {
-  background: var(--sb-primary-color, #e07b4c);
-  color: var(--sb-primary-font-color, #fff);
-}
-
 .ftv-show-reference {
   padding: 0;
   border: none;
@@ -243,11 +191,10 @@
   font-size: var(--sb-font-size-14);
 }
 
-.ftv-selecting-banner .ftv-btn {
-  display: block;
+.ftv-selecting-banner > .sb-button {
+  display: flex;
   margin-top: 8px;
 }
-
 .ftv-chances-help {
   margin: 0 0 8px;
   opacity: 0.6;
@@ -282,17 +229,10 @@
   line-height: 1.4;
 }
 
-.ftv-step-remove {
+.sb-icon-button.ftv-step-remove {
+  --sb-icon-button-color: var(--sb-danger-color);
   margin-top: 4px;
-  padding: 4px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--sb-error-color, #d64545);
-  font-size: var(--sb-font-size-16);
-  line-height: 1;
 }
-
 .ftv-add-step {
   margin-top: 8px;
 }
@@ -488,22 +428,6 @@
   white-space: pre-wrap;
 }
 
-.ftv-hint-button {
-  width: 1.6rem;
-  height: 1.6rem;
-  border-radius: var(--sb-radius-full);
-  border: 1px solid var(--sb-divider-color, rgb(0 0 0 / 12%));
-  background: var(--sb-tertiary-color, #f0f0f0);
-  color: var(--sb-font-color, #333);
-  cursor: pointer;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.ftv-bar .ftv-hint-button {
-  background: var(--sb-secondary-color, #f3f3f3);
-}
-
 /* Reader bar. Its position is set inline: it follows the phone toolbar. */
 
 .ftv-bar {
@@ -524,6 +448,19 @@
   flex-direction: column;
   gap: 8px;
   transition: transform var(--sb-duration-slow) ease;
+}
+
+/* The bar's buttons sit on the toolbar's surface, so they take its text
+   color. Set on the buttons, since each one sets its own color. */
+.ftv-bar .sb-button:not(.sb-button-danger) {
+  --sb-button-color: var(--sb-reader-toolbar-font-color, var(--sb-font-color));
+}
+
+.ftv-bar .sb-icon-button {
+  --sb-icon-button-color: var(
+    --sb-reader-toolbar-font-color,
+    var(--sb-font-color)
+  );
 }
 
 .ftv-bar-row {
@@ -551,20 +488,6 @@
 
 .ftv-bar-text--italic {
   font-style: italic;
-}
-
-.ftv-bar-button {
-  flex-shrink: 0;
-  padding: 8px 14px;
-  border-radius: var(--sb-radius-lg);
-  border: 1px solid
-    color-mix(in srgb, var(--sb-font-color, #333) 16%, transparent);
-  background: var(--sb-secondary-color, #f3f3f3);
-  color: var(--sb-font-color, #333);
-  cursor: pointer;
-  font-weight: 600;
-  font-size: var(--sb-font-size-14);
-  line-height: 1.2;
 }
 
 .ftv-bar-button--end {
