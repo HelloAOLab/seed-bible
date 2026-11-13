@@ -413,6 +413,7 @@
   background: var(--sb-reader-floating-nav-group-background);
   user-select: none;
   overflow: hidden;
+  container-type: inline-size;
 }
 
 .sb-reader-floating-nav-arrow {
@@ -421,7 +422,7 @@
   /* Full-height, wide hit region; the visual circle lives in ::before so the
        whole button is tappable with no dead margin around the chevron. */
   align-self: stretch;
-  min-width: min(4.5rem, 18vw);
+  min-width: 3.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -494,15 +495,16 @@
     var(--sb-book-title-font-family)
   );
   color: var(--sb-font-color);
-  font-size: min(1.2rem, 22px);
+  font-size: clamp(0.95rem, 9cqi, min(1.2rem, 22px));
   font-weight: 700;
   display: flex;
-  flex-wrap: wrap;
-  align-content: center;
+  align-items: center;
   justify-content: center;
-  column-gap: 0.35em;
   overflow: hidden;
   cursor: pointer;
+  flex-wrap: wrap;
+  align-content: center;
+  column-gap: 0.35em;
   transition:
     background-color 0.12s ease,
     transform 0.12s ease;
