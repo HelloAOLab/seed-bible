@@ -20,6 +20,8 @@
       "cross-reference-count_one": "{{count}} cross-reference",
       "cross-reference-count_other": "{{count}} cross-references",
       "previous-reference": "Previous reference",
+      "dock-pane": "Dock to the side",
+      "float-pane": "Float over the reader",
       "next-reference": "Next reference",
       "reference-position": "{{current}} of {{total}}",
       "section-law": "Law",

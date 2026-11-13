@@ -1,6 +1,10 @@
 import type { SeedBibleState } from "seed-bible";
 import { useSignal } from "@preact/signals";
-import { ContextMenuItem, ContextMenuWithButton } from "seed-bible/components";
+import {
+  Button,
+  ContextMenuItem,
+  ContextMenuWithButton,
+} from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { formatReference } from "./books";
 import type { SavedGame } from "./types";
@@ -93,31 +97,37 @@ function SavedGameCard({
 
       {confirming ? (
         <>
-          <button
-            type="button"
-            className="ftv-saved-action ftv-saved-action--primary"
+          <Button
+            className="ftv-saved-action"
+            variant="primary"
+            tone="danger"
+            size="sm"
             onClick={onConfirmDelete}
           >
             {t("delete", { defaultValue: "Delete" })}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             className="ftv-saved-action"
+            variant="ghost"
+            size="sm"
             onClick={onCancelDelete}
           >
             {t("cancel", { defaultValue: "Cancel" })}
-          </button>
+          </Button>
         </>
       ) : (
         <>
-          <button
-            type="button"
-            className="ftv-saved-action ftv-saved-action--primary"
+          <Button
+            className="ftv-saved-action"
+            variant="primary"
+            size="sm"
             onClick={onPlay}
           >
             {t("play", { defaultValue: "Play" })}
-          </button>
-          <ContextMenuWithButton>
+          </Button>
+          <ContextMenuWithButton
+            label={t("game-options", { defaultValue: "Game options" })}
+          >
             <ContextMenuItem onClick={onEdit}>
               <span class="material-symbols-outlined sb-context-menu-item-icon">
                 edit

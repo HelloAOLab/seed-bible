@@ -55,30 +55,3 @@
   justify-content: flex-end;
   gap: 0.5rem;
 }
-
-.sb-references-download-btn {
-  appearance: none;
-  border: 1px solid transparent;
-  border-radius: var(--sb-radius-full);
-  padding: 0.65rem 1.5rem;
-  font-family: inherit;
-  font-size: 0.9em;
-  font-weight: 600;
-  cursor: pointer;
-  transition: filter var(--sb-duration-fast) ease;
-}
-
-.sb-references-download-btn:hover {
-  filter: brightness(0.96);
-}
-
-.sb-references-download-btn-primary {
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-}
-
-.sb-references-download-btn-secondary {
-  background: transparent;
-  color: var(--sb-font-color);
-  opacity: 0.7;
-}

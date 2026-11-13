@@ -148,39 +148,10 @@
   gap: 0.75rem;
 }
 
-.sb-about-action {
-  padding: 0.5rem 0.9rem;
-  border-radius: var(--sb-radius-xs);
-  font-weight: 600;
-  font-size: var(--sb-font-size-14);
-  text-decoration: none;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  line-height: 1.3rem;
-  letter-spacing: -0.01rem;
-  border: 1px solid transparent;
-}
-
-.sb-about-action .material-symbols-outlined {
-  font-size: 1.3rem;
-}
-
-.sb-about-action-primary,
-.sb-about-action-primary:visited {
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-}
-
-/* Matches the Today welcome screen's neutral outlined buttons
-   (`.sb-today-welcome-screen-tour-button`), so only "Open a passage" is orange. */
-.sb-about-action-secondary,
-.sb-about-action-secondary:visited {
-  border-color: var(--sb-reader-font-color);
-  background: transparent;
-  color: var(--sb-reader-font-color);
+/* The page sits on the reader background, so its outlined buttons use the
+   reader's text color. Two classes, to outrank the Button's own color. */
+.sb-button.sb-about-action-secondary {
+  --sb-button-color: var(--sb-reader-font-color);
 }
 
 @container (max-width: 500px) {
@@ -192,21 +163,5 @@
 @media (max-width: 480px) {
   .sb-about-actions {
     padding-bottom: 4rem;
-  }
-}
-
-@media (hover: hover) {
-  .sb-about-action-primary:hover {
-    border-color: var(--sb-primary-color);
-    background: transparent;
-    color: var(--sb-primary-color);
-  }
-
-  .sb-about-action-secondary:hover {
-    background: color-mix(
-      in srgb,
-      var(--sb-reader-font-color),
-      transparent 90%
-    );
   }
 }

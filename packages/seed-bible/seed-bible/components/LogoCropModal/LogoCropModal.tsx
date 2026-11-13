@@ -3,6 +3,7 @@ import { useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import AvatarEditor, { useAvatarEditor } from "react-avatar-editor";
 import { useI18n } from "../../i18n/I18nManager";
+import { Button } from "../Button/Button";
 
 const EDITOR_SIZE = 256;
 
@@ -134,32 +135,29 @@ export function LogoCropModalContent(props: {
           </label>
 
           <div className="sb-photo-modal-actions">
-            <button
-              type="button"
-              className="sb-photo-modal-button"
+            <Button
+              variant="secondary"
               onClick={backToChoose}
               disabled={isUploading.value}
             >
               {t("back", { defaultValue: "Back" })}
-            </button>
-            <button
-              type="button"
-              className="sb-photo-modal-button"
+            </Button>
+            <Button
+              variant="secondary"
               onClick={onClose}
               disabled={isUploading.value}
             >
               {t("cancel", { defaultValue: "Cancel" })}
-            </button>
-            <button
-              type="button"
-              className="sb-photo-modal-button sb-photo-modal-button-primary"
+            </Button>
+            <Button
+              variant="primary"
               onClick={handleConfirm}
-              disabled={isUploading.value}
+              loading={isUploading.value}
             >
               {isUploading.value
                 ? t("uploading", { defaultValue: "Uploading..." })
                 : t("set-logo", { defaultValue: "Set logo" })}
-            </button>
+            </Button>
           </div>
         </div>
       )}

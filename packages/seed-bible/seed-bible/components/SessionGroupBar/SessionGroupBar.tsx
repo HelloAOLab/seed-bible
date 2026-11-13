@@ -3,6 +3,7 @@ import type { BibleReadingSession } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { Avatar, getUserDisplayName, sortUsersByRole } from "../Avatar/Avatar";
 import { MaterialIcon } from "../icons";
+import { Button } from "../Button/Button";
 
 /** How many of the people leading the group are shown beside the label. */
 const MAX_LEADER_AVATARS = 2;
@@ -41,14 +42,7 @@ export function SessionGroupBar({
     session.options.value
   ).slice(0, MAX_LEADER_AVATARS);
 
-  const rejoinIcon = (
-    <MaterialIcon
-      className="sb-session-group-bar-rejoin-icon rtl-mirror"
-      aria-hidden="true"
-    >
-      undo
-    </MaterialIcon>
-  );
+  const rejoinIcon = <MaterialIcon className="rtl-mirror">undo</MaterialIcon>;
 
   const request = session.incomingComeBackRequest.value;
   if (request) {
@@ -93,16 +87,21 @@ export function SessionGroupBar({
           </span>
         </span>
         <span className="sb-session-group-bar-request-actions">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="lg"
+            shape="pill"
             className="sb-session-group-bar-not-now"
             onClick={() => session.dismissComeBackRequest()}
           >
             {t("not-now", { defaultValue: "Not now" })}
-          </button>
-          <button
-            type="button"
-            className="sb-session-group-bar-rejoin sb-session-group-bar-rejoin-primary"
+          </Button>
+          <Button
+            variant="primary"
+            size="lg"
+            shape="pill"
+            icon={rejoinIcon}
+            className="sb-session-group-bar-rejoin"
             aria-label={t("session-rejoin-group-label", {
               defaultValue: "Rejoin the group at {{passage}}",
               passage,
@@ -111,9 +110,8 @@ export function SessionGroupBar({
               void session.rejoinGroup();
             }}
           >
-            {rejoinIcon}
             {t("session-rejoin-the-group", { defaultValue: "Rejoin group" })}
-          </button>
+          </Button>
         </span>
       </div>
     );
@@ -146,8 +144,10 @@ export function SessionGroupBar({
           passage,
         })}
       </span>
-      <button
-        type="button"
+      <Button
+        variant="secondary"
+        shape="pill"
+        icon={rejoinIcon}
         className="sb-session-group-bar-rejoin"
         aria-label={t("session-rejoin-group-label", {
           defaultValue: "Rejoin the group at {{passage}}",
@@ -157,9 +157,8 @@ export function SessionGroupBar({
           void session.rejoinGroup();
         }}
       >
-        {rejoinIcon}
         {t("session-rejoin-group", { defaultValue: "Rejoin" })}
-      </button>
+      </Button>
     </div>
   );
 }

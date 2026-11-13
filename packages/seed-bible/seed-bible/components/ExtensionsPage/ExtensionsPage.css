@@ -35,23 +35,7 @@
 }
 
 .sb-extensions-page-add-link {
-  min-height: 2.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0 1.125rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
-  border-radius: var(--sb-radius-full);
-  background: transparent;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-extensions-page-add-link:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  flex-shrink: 0;
 }
 
 .sb-extensions-page-columns {

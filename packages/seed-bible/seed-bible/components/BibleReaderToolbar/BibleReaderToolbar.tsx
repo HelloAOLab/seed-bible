@@ -48,6 +48,7 @@ import {
   openSaveModalForLocation,
 } from "../Tabs/Tabs";
 import { BookmarkStackIcon } from "../Bookmarks/Bookmarks";
+import { CustomizableIcon } from "../CustomizableIcon/CustomizableIcon";
 import { SessionGroupBar } from "../SessionGroupBar/SessionGroupBar";
 import { playlistItemLabel } from "../playlistItemLabel";
 import {
@@ -91,6 +92,7 @@ import {
   LazyColorPicker,
   preloadColorPicker,
 } from "../ColorPicker/LazyColorPicker";
+import { IconButton } from "../IconButton/IconButton";
 
 /** Shared always-true visibility for Chat when `?chatFirst=true`. */
 const CHAT_FIRST_VISIBLE = signal(true);
@@ -866,7 +868,7 @@ function VerseToolbarAnnotationGroup(props: {
               {ownAnnotations.has(annotation) ? (
                 <ContextMenuWithButton
                   buttonClassName="sb-annotation-item-menu"
-                  aria-label={t("annotation-options", {
+                  label={t("annotation-options", {
                     defaultValue: "Annotation options",
                   })}
                 >
@@ -2558,7 +2560,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           openTodayScreen();
         }}
       >
-        <TodayIcon />
+        <CustomizableIcon id="today">
+          <TodayIcon />
+        </CustomizableIcon>
         <span className="sb-reader-toolbar-button-label">
           {t("today", { defaultValue: "Today" })}
         </span>
@@ -3162,7 +3166,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               {isSmallScreen.value ? (
                 <>
                   <MobileBottomTab
-                    iconNode={<TodayIcon />}
+                    iconNode={
+                      <CustomizableIcon id="today">
+                        <TodayIcon />
+                      </CustomizableIcon>
+                    }
                     label={t("today", { defaultValue: "Today" })}
                     active={activeMobileTab.value === "today"}
                     onClick={() => {
@@ -3179,11 +3187,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
                   <MobileBottomTab
                     iconNode={
-                      <SeedBibleIcon
-                        size={24}
-                        animated
+                      <CustomizableIcon
+                        id="books"
                         className="sb-reader-toolbar-seed-icon"
-                      />
+                      >
+                        <SeedBibleIcon
+                          size={24}
+                          animated
+                          className="sb-reader-toolbar-seed-icon"
+                        />
+                      </CustomizableIcon>
                     }
                     label={t("bible", { defaultValue: "Bible" })}
                     active={activeMobileTab.value === "bible"}
@@ -3206,7 +3219,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   />
 
                   <MobileBottomTab
-                    iconName="search"
+                    iconNode={
+                      <CustomizableIcon id="search">
+                        <MaterialIcon>search</MaterialIcon>
+                      </CustomizableIcon>
+                    }
                     label={t("search", { defaultValue: "Search" })}
                     active={activeMobileTab.value === "search"}
                     onClick={() => {
@@ -3428,19 +3445,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               {/* Desktop keeps a back chevron next to the reference; mobile
                   matches YouVersion with a centered title only. */}
               {isHighlightPickerOpen.value && !isSmallScreen.value && (
-                <button
-                  type="button"
+                <IconButton
+                  size="sm"
                   className="sb-verse-toolbar-back"
+                  icon="chevron_left"
+                  label={t("back", { defaultValue: "Back" })}
                   onClick={() => {
                     isHighlightPickerOpen.value = false;
                   }}
-                  aria-label={t("back", { defaultValue: "Back" })}
-                  title={t("back", { defaultValue: "Back" })}
-                >
-                  <span className="material-symbols-outlined">
-                    chevron_left
-                  </span>
-                </button>
+                />
               )}
               <span
                 className="sb-verse-toolbar-ref-text"

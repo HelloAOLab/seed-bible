@@ -46,9 +46,7 @@ describe("ParticipantFriendButton", () => {
   /** What a button shows, leaving out the spinner while it works. */
   const visibleLabel = (el: Element) => {
     const copy = el.cloneNode(true) as Element;
-    copy
-      .querySelectorAll(".sb-friends-busy-spinner")
-      .forEach((spinner) => spinner.remove());
+    copy.querySelectorAll(".sb-spinner").forEach((spinner) => spinner.remove());
     return copy.textContent;
   };
   const button = (label: string) =>

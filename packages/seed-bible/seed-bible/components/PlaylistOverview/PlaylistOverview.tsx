@@ -13,6 +13,8 @@ import {
   playlistTotalMinutes,
   type PlaylistStepKind,
 } from "../PlaylistEditor/playlistSteps";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 /**
  * A playlist's cover, author, description and steps, with a back button and
@@ -55,15 +57,13 @@ export function PlaylistOverview(props: {
   return (
     <div className={`sb-playlist-page ${props.className ?? ""}`}>
       <div className="sb-playlist-page-header">
-        <button
-          type="button"
+        <IconButton
+          size="lg"
           className="sb-playlist-page-back"
-          aria-label={props.backLabel}
-          title={props.backLabel}
+          icon={isRtl ? "arrow_forward" : "arrow_back"}
+          label={props.backLabel}
           onClick={props.onBack}
-        >
-          <MaterialIcon>{isRtl ? "arrow_forward" : "arrow_back"}</MaterialIcon>
-        </button>
+        />
         <h1 className="sb-playlist-page-title">
           <span dir="auto">{title}</span>
         </h1>
@@ -100,14 +100,15 @@ export function PlaylistOverview(props: {
       </div>
       {action ? (
         <div className="sb-playlist-page-footer">
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="lg"
             className="sb-playlist-page-start"
             disabled={action.disabled}
             onClick={action.onClick}
           >
             {action.label}
-          </button>
+          </Button>
         </div>
       ) : null}
     </div>

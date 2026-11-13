@@ -1,0 +1,10 @@
+.sb-custom-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  width: var(--sb-custom-icon-size, 24px);
+  height: var(--sb-custom-icon-size, 24px);
+  background-color: currentColor;
+  -webkit-mask: var(--sb-custom-icon-url) center / contain no-repeat;
+  mask: var(--sb-custom-icon-url) center / contain no-repeat;
+  vertical-align: middle;
+}

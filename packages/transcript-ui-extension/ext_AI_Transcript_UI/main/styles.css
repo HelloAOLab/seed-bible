@@ -33,14 +33,6 @@
   gap: 8px;
   flex-shrink: 0;
 }
-.ts_app__mode {
-  padding: 6px 8px;
-}
-.ts_app__mode .material-symbols-outlined {
-  display: block;
-  font-size: 20px;
-}
-
 /* Live (microphone) panel */
 .ts_live__bar {
   display: flex;
@@ -221,38 +213,6 @@
   font-size: var(--sb-font-size-14);
 }
 
-/* Buttons */
-.ts_btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--sb-menu-background);
-  color: var(--sb-font-color);
-  border: 1px solid var(--sb-divider-color);
-  border-radius: var(--sb-radius-md);
-  padding: 8px 14px;
-  font-size: var(--sb-font-size-14);
-  cursor: pointer;
-  transition:
-    background var(--sb-duration-fast),
-    border-color var(--sb-duration-fast);
-}
-.ts_btn:hover:not(:disabled) {
-  border-color: var(--sb-primary-color);
-}
-.ts_btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.ts_btn--primary {
-  background: var(--sb-primary-color);
-  border-color: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-}
-.ts_btn--primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-primary-color), #000 12%);
-  border-color: color-mix(in srgb, var(--sb-primary-color), #000 12%);
-}
 .ts_btn--sm {
   padding: 4px 10px;
   font-size: var(--sb-font-size-13);

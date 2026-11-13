@@ -242,6 +242,84 @@ describe("createTutorialManager — startContextual with inline steps", () => {
   });
 });
 
+describe("createTutorialManager — replayContextual", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    window.localStorage.setItem("sb-tutorial-seen", "true");
+  });
+
+  function makeStep(id: string): TutorialStep {
+    return {
+      id,
+      target: `.${id}`,
+      titleKey: `${id}.title`,
+      titleDefault: id,
+      bodyKey: `${id}.body`,
+      bodyDefault: id,
+    };
+  }
+
+  function createManager(minimalEmbed = false) {
+    const tutorial = createTutorialManager(
+      createLogin(),
+      createReaderVisible(true),
+      createSelector(),
+      signal(false),
+      createPanes(),
+      createSidebar(),
+      signal(false),
+      signal(minimalEmbed)
+    );
+    tutorial.hydrateStoredFlags();
+    return tutorial;
+  }
+
+  it("replays a tour that was already finished, from its first step", () => {
+    const tutorial = createManager();
+    const steps = [makeStep("step-1"), makeStep("step-2")];
+    tutorial.startContextual("a-feature", steps);
+    tutorial.next();
+    tutorial.finish();
+    expect(tutorial.featuresSeen.value["a-feature"]).toBe(true);
+
+    expect(tutorial.replayContextual("a-feature", steps)).toBe(true);
+
+    expect(tutorial.running.value).toBe(true);
+    expect(tutorial.currentStep.value?.id).toBe("step-1");
+  });
+
+  it("runs even after the user turned tutorials off, since they asked for it", () => {
+    window.localStorage.setItem("sb-tutorial-opted-out", "true");
+    const tutorial = createManager();
+    tutorial.startContextual("a-feature", [makeStep("step-1")]);
+    expect(tutorial.running.value).toBe(false);
+
+    expect(tutorial.replayContextual("a-feature", [makeStep("step-1")])).toBe(
+      true
+    );
+    expect(tutorial.running.value).toBe(true);
+  });
+
+  it("doesn't interrupt a tour that's already running", () => {
+    const tutorial = createManager();
+    tutorial.startContextual("first", [makeStep("first-step")]);
+
+    expect(tutorial.replayContextual("second", [makeStep("second-step")])).toBe(
+      false
+    );
+    expect(tutorial.currentStep.value?.id).toBe("first-step");
+  });
+
+  it("starts nothing in a minimal embed or without steps", () => {
+    expect(
+      createManager(true).replayContextual("a-feature", [makeStep("step-1")])
+    ).toBe(false);
+    expect(createManager().replayContextual("not-a-registered-tour")).toBe(
+      false
+    );
+  });
+});
+
 describe("createTutorialManager — skip flow", () => {
   beforeEach(() => {
     // The onboarding tour's own "seen" flag persists in localStorage; start

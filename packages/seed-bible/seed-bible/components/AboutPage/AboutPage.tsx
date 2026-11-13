@@ -7,12 +7,12 @@ import {
   DiscordIcon,
   DonateIcon,
   EditIcon,
-  MaterialIcon,
   Playlist,
   SeedBibleIcon,
   SupportIcon,
 } from "../icons";
 import type { ComponentChildren } from "preact";
+import { Button } from "../Button/Button";
 
 const CHANGELOG_URL =
   "https://github.com/HelloAOLab/seed-bible/blob/main/CHANGELOG.md";
@@ -158,47 +158,46 @@ export function AboutPage({
         />
         <div className="sb-about-actions">
           <div className="sb-about-actions-row">
-            <a
-              className="sb-about-action sb-about-action-secondary"
+            <Button
+              className="sb-about-action-secondary"
               href={DONATE_URL}
               target="_blank"
-              rel="noopener noreferrer"
+              icon={<DonateIcon />}
             >
-              <DonateIcon width={16} height={16} />
               {t("about-action-donate", { defaultValue: "Donate" })}
-            </a>
-            <a
-              className="sb-about-action sb-about-action-secondary"
+            </Button>
+            <Button
+              className="sb-about-action-secondary"
               href={DISCORD_URL}
               target="_blank"
-              rel="noopener noreferrer"
+              icon={<DiscordIcon />}
             >
-              <DiscordIcon width={16} height={16} />
               {t("about-action-discord", { defaultValue: "Join Discord" })}
-            </a>
-            <a
-              className="sb-about-action sb-about-action-secondary"
+            </Button>
+            <Button
+              className="sb-about-action-secondary"
               href={CHANGELOG_URL}
               target="_blank"
-              rel="noopener noreferrer"
+              icon="campaign"
             >
-              <MaterialIcon>campaign</MaterialIcon>
               {t("about-action-release-notes", {
                 defaultValue: "Release Notes",
               })}
-            </a>
-            <button
-              type="button"
-              className="sb-about-action sb-about-action-secondary"
+            </Button>
+            <Button
+              className="sb-about-action-secondary"
+              icon="emoji_objects"
               onClick={() => tutorial.start()}
             >
-              <MaterialIcon>emoji_objects</MaterialIcon>
               {t("take-a-tour", { defaultValue: "Take a tour" })}
-            </button>
+            </Button>
           </div>
-          <button
-            type="button"
-            className="sb-about-action sb-about-action-primary"
+          <Button
+            variant="primary"
+            size="lg"
+            icon="arrow_right_alt"
+            iconPosition="end"
+            className="sb-about-action-primary"
             onClick={() => {
               // `selector.slot` only ever gets bound as a side effect of an
               // earlier open elsewhere (see BibleSelectorManager.tsx) — nothing
@@ -213,8 +212,7 @@ export function AboutPage({
             }}
           >
             {t("about-action-open-passage", { defaultValue: "Open a passage" })}
-            <MaterialIcon>arrow_right_alt</MaterialIcon>
-          </button>
+          </Button>
         </div>
       </article>
     </main>

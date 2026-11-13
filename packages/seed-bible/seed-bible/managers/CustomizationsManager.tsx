@@ -35,6 +35,7 @@ import {
   type ThemeManager,
   type ThemeOverrides,
 } from "./ThemeManager";
+import { toShareableUrl } from "../app/publicLinks";
 
 export const CUSTOMIZATION_MARKER = "publicRead:seedBibleCustomization";
 
@@ -232,6 +233,16 @@ export const CUSTOMIZATION_CONTRAST_PAIRS: CustomizationContrastPair[] = [
     label: "Secondary text on secondary",
   },
   {
+    foreground: "dangerFontColor",
+    background: "dangerColor",
+    label: "Danger text on danger",
+  },
+  {
+    foreground: "dangerColor",
+    background: "readerBackground",
+    label: "Danger on reader background",
+  },
+  {
     foreground: "fontColor",
     background: "background",
     label: "Text on app background",
@@ -359,6 +370,55 @@ export const DEFAULT_EXTENSION_AVAILABILITY_VALUES = [
 export type DefaultExtensionAvailability =
   (typeof DEFAULT_EXTENSION_AVAILABILITY_VALUES)[number];
 
+/**
+ * App icons a customization can replace with its own SVG. Each is the icon
+ * of one navigation entry, wherever that entry appears (toolbar, mobile tab
+ * bar, More menu, sidebar header).
+ */
+export const CUSTOMIZATION_ICON_IDS = [
+  "books",
+  "search",
+  "today",
+  "share",
+  "chat",
+  "discover",
+] as const;
+export type CustomizationIconId = (typeof CUSTOMIZATION_ICON_IDS)[number];
+/** Uploaded SVG URL per icon id. An id with no entry keeps the app's own icon. */
+export type CustomizationIcons = Partial<Record<CustomizationIconId, string>>;
+
+export const MAX_CUSTOM_ICON_BYTES = 256 * 1024;
+
+const SVG_MIME_TYPE = "image/svg+xml";
+
+/**
+ * Whether `file` is an SVG. Some Windows setups and Android file pickers
+ * report no type for `.svg` files, so an untyped file is judged by its name.
+ */
+function isSvgFile(file: File): boolean {
+  if (file.type) {
+    return file.type === SVG_MIME_TYPE;
+  }
+  return file.name.toLowerCase().endsWith(".svg");
+}
+
+/** Why a file can't be used as a custom icon, or null when it can. */
+export function getCustomIconFileProblem(
+  file: File
+): "not-svg" | "too-large" | null {
+  if (!isSvgFile(file)) {
+    return "not-svg";
+  }
+  if (file.size > MAX_CUSTOM_ICON_BYTES) {
+    return "too-large";
+  }
+  return null;
+}
+
+function isCustomizationIconId(id: string): id is CustomizationIconId {
+  return (CUSTOMIZATION_ICON_IDS as readonly string[]).includes(id);
+}
+
 const customizationSchema = z
   .object({
     id: z.string().min(1),
@@ -366,6 +426,15 @@ const customizationSchema = z
     variants: z.array(customizationVariantSchema).min(1),
     defaultVariantId: z.string().min(1),
     logoUrl: z.url().max(1024).optional().nullable(),
+    /**
+     * Uploaded SVG URLs replacing app icons, keyed by `CustomizationIconId`.
+     * Keys are left as plain strings so a record carrying an icon id this
+     * build doesn't know yet still loads; unknown ids are just ignored.
+     * Limited to http(s) since the URL ends up in a CSS `url()`.
+     */
+    icons: z
+      .record(z.string(), z.url({ protocol: /^https?$/ }).max(1024))
+      .optional(),
     /**
      * The translation viewers of this customization should start reading in,
      * overriding Seed Bible's own per-language default (see
@@ -455,6 +524,8 @@ export interface SeedBibleCustomization {
   /** The variant id shown to a viewer who hasn't picked one for this customization yet. Always references an entry in `variants`. */
   defaultVariantId: string;
   logoUrl?: string | null;
+  /** Uploaded SVG URLs replacing app icons. An id with no entry keeps the app's own icon. */
+  icons?: CustomizationIcons;
   /**
    * The translation viewers should start reading in while this
    * customization is active, overriding Seed Bible's per-language default.
@@ -577,6 +648,8 @@ export const CUSTOMIZATION_COLOR_GROUPS: CustomizationColorGroup[] = [
       { key: "tertiaryColor", label: "Tertiary" },
       { key: "linkColor", label: "Link" },
       { key: "linkVisitedColor", label: "Visited link" },
+      { key: "dangerColor", label: "Danger" },
+      { key: "dangerFontColor", label: "Danger text" },
     ],
   },
   {
@@ -871,6 +944,16 @@ export interface CustomizationsManager {
   remove: (id: string) => Promise<void>;
   /** Uploads the file, stages the resulting URL onto the open draft, and immediately persists it (unlike every other draft field, which auto-saves only after a short debounce). */
   uploadLogo: (file: File) => Promise<void>;
+  /**
+   * Uploads an SVG as one of the draft's custom icons and immediately
+   * persists the draft, like `uploadLogo`. Throws, without uploading, when
+   * `getCustomIconFileProblem` rejects the file.
+   */
+  uploadIcon: (iconId: CustomizationIconId, file: File) => Promise<void>;
+  /** Removes one of the draft's custom icons, restoring the app's own, and immediately persists the draft. No-op with no open draft. */
+  removeEditingIcon: (iconId: CustomizationIconId) => Promise<void>;
+  /** The active customization's custom icons, limited to ids this build knows. Empty when nothing is active. */
+  activeIcons: ReadonlySignal<CustomizationIcons>;
   /** A shareable link that auto-loads this customization via `loadByLocator`. */
   getShareLink: (customization: SeedBibleCustomization) => string;
   // Synchronous, draft-only mutators. Each no-ops if `editingCustomization` is
@@ -1551,6 +1634,7 @@ export function createCustomizationsManager(
       variants: [variant],
       defaultVariantId: variant.id,
       logoUrl: null,
+      icons: {},
       createdAt: now,
       updatedAt: now,
       extensionSettings: {},
@@ -2077,33 +2161,50 @@ export function createCustomizationsManager(
     }
   };
 
-  const uploadLogo = async (file: File): Promise<void> => {
+  /**
+   * Uploads a file for the open draft and returns the draft as it stands
+   * once the upload finishes, along with the file's URL. Null when nothing
+   * is being edited, or when the editor was closed or switched to another
+   * customization while the upload ran, so the file never lands on a
+   * customization it wasn't meant for.
+   */
+  const uploadCustomizationFile = async (
+    file: File,
+    mimeType: string,
+    label: string
+  ): Promise<{ draft: SeedBibleCustomization; url: string } | null> => {
     const userId = login.userId.value;
     if (!userId) {
-      throw new Error("Cannot upload a logo while signed out.");
+      throw new Error(`Cannot upload this ${label} while signed out.`);
     }
-    if (!editingCustomization.value) {
-      return;
+    const startedFor = editingCustomization.value?.id;
+    if (!startedFor) {
+      return null;
     }
 
     const result = await os.recordFile(userId, file, {
-      mimeType: file.type,
+      mimeType,
       marker: CUSTOMIZATION_MARKER,
     });
     if (result.success === false) {
-      throw new Error("Failed to upload logo.");
+      throw new Error(`Failed to upload ${label}.`);
     }
 
-    // Re-read after the await: editing may have been cancelled while the
-    // upload was in flight. Only stage the URL onto the draft — the record
-    // itself isn't persisted until saveEditingCustomization() is called.
-    const current = editingCustomization.value;
-    if (!current) {
+    const draft = editingCustomization.value;
+    if (!draft || draft.id !== startedFor) {
+      return null;
+    }
+    return { draft, url: result.url };
+  };
+
+  const uploadLogo = async (file: File): Promise<void> => {
+    const uploaded = await uploadCustomizationFile(file, file.type, "logo");
+    if (!uploaded) {
       return;
     }
     editingCustomization.value = {
-      ...current,
-      logoUrl: result.url,
+      ...uploaded.draft,
+      logoUrl: uploaded.url,
       updatedAt: Date.now(),
     };
     await saveEditingCustomization();
@@ -2121,6 +2222,64 @@ export function createCustomizationsManager(
     };
     await saveEditingCustomization();
   };
+
+  const uploadIcon = async (
+    iconId: CustomizationIconId,
+    file: File
+  ): Promise<void> => {
+    const problem = getCustomIconFileProblem(file);
+    if (problem) {
+      throw new Error(`Cannot use this file as an icon: ${problem}.`);
+    }
+    // Sent as SVG even when the browser gave no type, so the files host
+    // serves it as one; masks ignore files without an image type.
+    const uploaded = await uploadCustomizationFile(file, SVG_MIME_TYPE, "icon");
+    if (!uploaded) {
+      return;
+    }
+    editingCustomization.value = {
+      ...uploaded.draft,
+      icons: { ...uploaded.draft.icons, [iconId]: uploaded.url },
+      updatedAt: Date.now(),
+    };
+    await saveEditingCustomization();
+  };
+
+  const removeEditingIcon = async (
+    iconId: CustomizationIconId
+  ): Promise<void> => {
+    const current = editingCustomization.value;
+    if (!current) {
+      return;
+    }
+    const icons = { ...current.icons };
+    delete icons[iconId];
+    editingCustomization.value = {
+      ...current,
+      icons,
+      updatedAt: Date.now(),
+    };
+    await saveEditingCustomization();
+  };
+
+  // Every draft edit (a name keystroke, a color drag) makes a new
+  // `activeCustomization`, so the previous result is handed back whenever
+  // the icons themselves are unchanged. Otherwise every icon in the app
+  // would re-render on each edit.
+  let previousActiveIcons: CustomizationIcons = {};
+  const activeIcons = computed<CustomizationIcons>(() => {
+    const icons = activeCustomization.value?.icons ?? {};
+    const next: CustomizationIcons = Object.fromEntries(
+      Object.entries(icons).filter(([id]) => isCustomizationIconId(id))
+    );
+    const unchanged = CUSTOMIZATION_ICON_IDS.every(
+      (id) => previousActiveIcons[id] === next[id]
+    );
+    if (!unchanged) {
+      previousActiveIcons = next;
+    }
+    return previousActiveIcons;
+  });
 
   const setEditingExtensionAvailability = (
     extensionId: string,
@@ -2345,9 +2504,11 @@ export function createCustomizationsManager(
 
   const getShareLink = (customization: SeedBibleCustomization): string => {
     const recordName = login.userId.value ?? "";
-    return navigation.linkToBareRoot({
-      customization: buildCustomizationLocator(recordName, customization.id),
-    });
+    return toShareableUrl(
+      navigation.linkToBareRoot({
+        customization: buildCustomizationLocator(recordName, customization.id),
+      })
+    ).toString();
   };
 
   const selectActiveVariant = async (variantId: string): Promise<void> => {
@@ -2388,6 +2549,9 @@ export function createCustomizationsManager(
     saveEditingCustomization,
     remove,
     uploadLogo,
+    uploadIcon,
+    removeEditingIcon,
+    activeIcons,
     getShareLink,
     updateEditingName,
     updateEditingDefaultTranslationId,

@@ -101,18 +101,6 @@
 .sb-question-answer-actions {
   display: flex;
   margin-inline-start: auto;
-
-  & button {
-    min-height: 2rem;
-    padding: 0 0.5rem;
-    border: none;
-    background: transparent;
-    color: var(--sb-primary-color);
-    font: inherit;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
 }
 
 .sb-question-answer-text {

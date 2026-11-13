@@ -6,6 +6,7 @@ import type { VerseRef } from "../../managers/BibleDataManager";
 import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import { PlaylistHtmlContent } from "../PlaylistHtmlContent/PlaylistHtmlContent";
 import { PlaylistLinkContent } from "../PlaylistLinkContent/PlaylistLinkContent";
+import { Button } from "../Button/Button";
 
 type PageItem = Exclude<PlaylistItemData, { type: "bible-verse" }>;
 
@@ -119,14 +120,14 @@ function QuestionReveal(props: { kind: "hint" | "answer"; html: string }) {
       className={`sb-playlist-question-reveal is-${kind}`}
       data-presence-unit
     >
-      <button
-        type="button"
+      <Button
+        shape="pill"
         className="sb-playlist-question-reveal-button"
         aria-expanded={shown}
         onClick={() => setShown(!shown)}
       >
         {label}
-      </button>
+      </Button>
       {shown ? (
         <div className="sb-playlist-question-reveal-content">
           <PlaylistHtmlContent html={html} />

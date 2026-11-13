@@ -1,6 +1,7 @@
 import "./TutorialSkipPrompt.css";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TutorialManager } from "../../managers/TutorialManager";
+import { Button } from "../Button/Button";
 
 /**
  * Follow-up dialog shown after the user skips a tutorial, asking whether they
@@ -48,22 +49,14 @@ export function TutorialSkipPrompt({
           })}
         </p>
         <div className="sb-tutorial-skip-prompt-actions">
-          <button
-            type="button"
-            className="sb-tutorial-skip-prompt-btn sb-tutorial-skip-prompt-btn-secondary"
-            onClick={tutorial.keepTutorials}
-          >
+          <Button variant="ghost" onClick={tutorial.keepTutorials}>
             {t("tutorial.skipPromptKeep", { defaultValue: "Just this one" })}
-          </button>
-          <button
-            type="button"
-            className="sb-tutorial-skip-prompt-btn sb-tutorial-skip-prompt-btn-primary"
-            onClick={tutorial.optOut}
-          >
+          </Button>
+          <Button variant="primary" onClick={tutorial.optOut}>
             {t("tutorial.skipPromptDisable", {
               defaultValue: "Turn off tutorials",
             })}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

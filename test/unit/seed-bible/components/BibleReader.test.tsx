@@ -5936,13 +5936,11 @@ describe("BibleReader", () => {
       const { back } = renderPlaying(true);
 
       const info = back?.nextElementSibling;
-      expect(
-        info?.querySelector(".sb-quick-toolbar-current-playlist")
-      ).not.toBeNull();
+      expect(info?.querySelector(".sb-quick-toolbar-card")).not.toBeNull();
       expect(info?.textContent).toContain("The Love of Jesus");
       expect(
         container.querySelector(
-          ".sb-bible-reader-mobile-header-actions .sb-quick-toolbar-current-playlist"
+          ".sb-bible-reader-mobile-header-actions .sb-quick-toolbar-card"
         )
       ).toBeNull();
     });
@@ -5975,7 +5973,7 @@ describe("BibleReader", () => {
     expect(buttons.at(-1)?.className).toBe(
       "sb-bible-reader-mobile-header-translation"
     );
-    expect(buttons.at(-2)?.className).toBe(
+    expect(buttons.at(-2)?.classList).toContain(
       "sb-bible-reader-mobile-header-settings"
     );
   });

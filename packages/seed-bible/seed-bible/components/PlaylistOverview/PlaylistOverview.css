@@ -18,51 +18,11 @@
   padding: 0.75rem 0.75rem 0.5rem;
 }
 
-.sb-playlist-page-back {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
 .sb-playlist-page-header-actions {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 0.25rem;
-
-  /* The menu's own button matches the back button. */
-  & .sb-playlist-page-menu {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: transparent;
-    color: inherit;
-    cursor: pointer;
-  }
-
-  & .sb-playlist-page-menu:hover,
-  & .sb-playlist-page-menu:focus-visible {
-    background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  }
-}
-
-.sb-playlist-page-back:hover,
-.sb-playlist-page-back:focus-visible {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
 }
 
 /* The title sits beside the back button in the page's direction, and a long
@@ -132,21 +92,7 @@
 }
 
 .sb-playlist-page-start {
-  display: block;
   width: 100%;
-  padding: 0.75rem 1rem;
-  border: none;
-  border-radius: 0.75rem;
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-playlist-page-start:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
 /* Wider than a phone, the pane runs under the app's floating navigation bar
