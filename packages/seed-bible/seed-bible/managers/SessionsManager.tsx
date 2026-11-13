@@ -141,6 +141,60 @@ export type SessionStartPosition = Pick<
 >;
 export type VerseSelectionEffectVisibility = "hosts-only" | "everyone" | "none";
 
+/**
+ * Whose viewing-area bars a shared session draws beside the chapter.
+ *
+ * "auto" is the default: everyone while fewer than
+ * `VIEWING_AREA_HOSTS_ONLY_MIN_USERS` people are connected, and only hosts
+ * from that many on. A host can set "everyone" or "hosts-only" instead.
+ */
+export type ViewingAreaVisibility = "auto" | "everyone" | "hosts-only";
+
+/**
+ * A person's own choice of whose bars they see. "default" follows the
+ * session. "hosts-only" hides other people's bars on this screen, including
+ * when the session is set to everyone. "everyone" cannot widen a session
+ * the host has set to hosts only.
+ */
+export type ViewingAreaPreference = "default" | "everyone" | "hosts-only";
+
+/**
+ * Connected people at which "auto" switches from everyone's bars to hosts
+ * only. Past this the gutter starts to crowd.
+ */
+export const VIEWING_AREA_HOSTS_ONLY_MIN_USERS = 4;
+
+/**
+ * Whose bars to draw. Hosts only from either the session or this person
+ * hides other bars. A personal "everyone" applies on automatic and when the
+ * session is showing everyone, and does not widen a hosts-only session.
+ * "auto" with no personal choice follows `connectedUserCount`. Hosts-only
+ * falls back to everyone when no host is connected, so the margin is not
+ * left blank.
+ */
+export function resolveViewingAreaVisibility(
+  sessionVisibility: ViewingAreaVisibility | null | undefined,
+  connectedUserCount: number,
+  preference: ViewingAreaPreference | null | undefined = "default",
+  hostConnected = true
+): "everyone" | "hosts-only" {
+  let mode: "everyone" | "hosts-only";
+  if (sessionVisibility === "hosts-only" || preference === "hosts-only") {
+    mode = "hosts-only";
+  } else if (sessionVisibility === "everyone" || preference === "everyone") {
+    mode = "everyone";
+  } else {
+    mode =
+      connectedUserCount >= VIEWING_AREA_HOSTS_ONLY_MIN_USERS
+        ? "hosts-only"
+        : "everyone";
+  }
+  if (mode === "hosts-only" && !hostConnected) {
+    return "everyone";
+  }
+  return mode;
+}
+
 export interface SessionOptions {
   allowedNavigators: string[] | null;
   allowedDecorators: string[] | null;
@@ -178,6 +232,12 @@ export interface SessionOptions {
    */
   coHostUserIds: string[];
   verseSelectionEffectVisibility: VerseSelectionEffectVisibility;
+  /**
+   * Whose viewing-area bars are drawn beside the chapter. See
+   * `ViewingAreaVisibility`. Each person can still choose hosts only for
+   * their own screen. They cannot widen a hosts-only session.
+   */
+  viewingAreaVisibility: ViewingAreaVisibility;
 }
 
 /**
@@ -194,6 +254,21 @@ export function isSessionHost(
   return (
     options.hostUserId === sessionId ||
     (options.coHostUserIds ?? []).includes(sessionId)
+  );
+}
+
+/**
+ * True when this connected user is the host or a co-host. Checks both ids
+ * because a signed-in host is stored by user id and an anonymous one by
+ * connection id.
+ */
+export function isConnectedUserHost(
+  options: SessionOptions,
+  user: { userId?: string | null; connectionId?: string | null }
+): boolean {
+  return (
+    isSessionHost(options, user.userId ?? null) ||
+    isSessionHost(options, user.connectionId ?? null)
   );
 }
 
@@ -434,7 +509,14 @@ const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   shareTranslation: false,
   coHostUserIds: [],
   verseSelectionEffectVisibility: "hosts-only",
+  viewingAreaVisibility: "auto",
 };
+
+function parseViewingAreaVisibility(value: unknown): ViewingAreaVisibility {
+  return value === "auto" || value === "everyone" || value === "hosts-only"
+    ? value
+    : DEFAULT_SESSION_OPTIONS.viewingAreaVisibility;
+}
 
 function getSessionDataSnapshot(
   readingState: Pick<
@@ -497,6 +579,9 @@ function getSessionOptionsFromMap(
       rawVerseSelectionEffectVisibility === "none"
         ? rawVerseSelectionEffectVisibility
         : DEFAULT_SESSION_OPTIONS.verseSelectionEffectVisibility,
+    viewingAreaVisibility: parseViewingAreaVisibility(
+      optionsMap.get("viewingAreaVisibility")
+    ),
     endedAt:
       typeof rawEndedAt === "number" && Number.isFinite(rawEndedAt)
         ? rawEndedAt
@@ -535,6 +620,7 @@ function sessionOptionsMatch(
     left.highlightDurationSeconds === right.highlightDurationSeconds &&
     left.verseSelectionEffectVisibility ===
       right.verseSelectionEffectVisibility &&
+    left.viewingAreaVisibility === right.viewingAreaVisibility &&
     left.endedAt === right.endedAt &&
     left.shareTranslation === right.shareTranslation &&
     stringArraysMatch(left.coHostUserIds, right.coHostUserIds)
@@ -739,6 +825,20 @@ export function getConnectedUserVisualKey(user: {
   connectionId?: string | null;
 }): string {
   return user.userId ?? user.connectionId ?? "anonymous";
+}
+
+/**
+ * Distinct people in a session. One person with the session open in two
+ * tabs counts once. A signed-out guest has no user id, so each of their
+ * connections still counts as its own person.
+ */
+export function countSessionPeople(
+  users: readonly {
+    userId?: string | null;
+    connectionId?: string | null;
+  }[]
+): number {
+  return new Set(users.map((user) => getConnectedUserVisualKey(user))).size;
 }
 
 export interface BibleReadingSession {
@@ -1011,6 +1111,12 @@ async function createBibleReadingSession(
       }
       if (optionsMap.get("coHostUserIds") === undefined) {
         optionsMap.set("coHostUserIds", defaultOptions.coHostUserIds);
+      }
+      if (optionsMap.get("viewingAreaVisibility") === undefined) {
+        optionsMap.set(
+          "viewingAreaVisibility",
+          defaultOptions.viewingAreaVisibility
+        );
       }
     });
   }
@@ -2040,6 +2146,10 @@ async function createBibleReadingSession(
         typeof newOptions.verseSelectionEffectVisibility === "undefined"
           ? currentOptions.verseSelectionEffectVisibility
           : newOptions.verseSelectionEffectVisibility,
+      viewingAreaVisibility:
+        typeof newOptions.viewingAreaVisibility === "undefined"
+          ? currentOptions.viewingAreaVisibility
+          : newOptions.viewingAreaVisibility,
       endedAt:
         typeof newOptions.endedAt === "undefined"
           ? currentOptions.endedAt
@@ -2097,6 +2207,15 @@ async function createBibleReadingSession(
         optionsMap.set(
           "verseSelectionEffectVisibility",
           nextOptions.verseSelectionEffectVisibility
+        );
+      }
+      if (
+        currentOptions.viewingAreaVisibility !==
+        nextOptions.viewingAreaVisibility
+      ) {
+        optionsMap.set(
+          "viewingAreaVisibility",
+          nextOptions.viewingAreaVisibility
         );
       }
 

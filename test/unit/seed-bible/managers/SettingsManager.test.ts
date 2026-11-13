@@ -432,6 +432,26 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(settings.settings.value.verseSelectionEffects).toBe("default");
   });
 
+  it("setViewingAreaIndicators persists to login.localConfig when anonymous", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setViewingAreaIndicators("hosts-only");
+
+    expect(settings.settings.value.viewingAreaIndicators).toBe("hosts-only");
+    expect(login.localConfig.value.viewingAreaIndicators).toBe("hosts-only");
+  });
+
+  it("resetToDefaults resets viewing area indicators to default", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setViewingAreaIndicators("everyone");
+    settings.resetToDefaults();
+
+    expect(settings.settings.value.viewingAreaIndicators).toBe("default");
+  });
+
   it("preserves verse selection effects after a simulated page refresh", () => {
     const os = CasualOSManager();
     const nav = navWith();

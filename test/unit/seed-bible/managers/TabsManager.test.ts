@@ -241,6 +241,7 @@ function createMockSharedSession(
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     }),
     updateOptions: vi.fn(),
     removeSharedDecoration: vi.fn(),
