@@ -203,7 +203,9 @@
   min-width: 0;
 }
 
-/* Two classes, to outrank IconButton's own margin. */
+/* The back arrow that leaves the editor, at the start of the side panel's
+   and the phone header's title bar: pulled into the bar's padding, so the
+   arrow rather than its hover circle lines up with the edge. */
 .sb-icon-button.sb-pe-back {
   margin-inline-start: -8px;
 }

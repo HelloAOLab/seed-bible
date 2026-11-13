@@ -105,7 +105,7 @@ export function QuickToolbar(props: QuickToolbarProps) {
                 type="button"
                 disabled={tool.disabled.value}
                 onClick={onSelect}
-                className="sb-quick-toolbar-now-playing"
+                className="sb-quick-toolbar-card"
                 aria-label={title}
                 title={title}
               >

@@ -30,7 +30,7 @@
   min-width: 0;
 
   .sb-quick-toolbar-item,
-  .sb-quick-toolbar-now-playing {
+  .sb-quick-toolbar-card {
     min-width: 0;
     max-width: 100%;
   }
@@ -53,9 +53,9 @@
   display: inline-flex;
 }
 
-/* The "now playing" card, the one quick tool that isn't an icon (the others
-   are IconButtons). Sized to fit its text. */
-.sb-quick-toolbar-now-playing {
+/* A tool drawn as a card (`display: "card"`, like "Now playing") rather than an
+   IconButton: a plain button sized to fit its icon. */
+.sb-quick-toolbar-card {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -70,12 +70,12 @@
     background-color var(--sb-duration-fast) ease;
 }
 
-.sb-quick-toolbar-now-playing:hover:not(:disabled) {
+.sb-quick-toolbar-card:hover:not(:disabled) {
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
 }
 
-.sb-quick-toolbar-now-playing:disabled {
+.sb-quick-toolbar-card:disabled {
   opacity: 0.4;
   cursor: default;
 }

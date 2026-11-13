@@ -924,7 +924,6 @@ function getDefaultQuickToolbarTools(
         key: "current-playlist",
         defaultValue: "Current Playlist",
       },
-      className: "sb-quick-toolbar-current-playlist",
       display: "card",
       icon: (c) => (
         <NowPlayingIcon playlists={c.playlists} readingState={c.readingState} />
