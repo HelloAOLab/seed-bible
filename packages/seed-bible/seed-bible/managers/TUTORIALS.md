@@ -173,6 +173,22 @@ onClick={() => {
 }}
 ```
 
+### `replayContextual(id, steps?)`
+
+For a "Take a tour" button: starts the contextual tour now, even if the user
+has seen it or turned tutorials off, since they asked for it. Finishing it
+still records it seen. Returns `false` when nothing started (another tour is
+running, a compact embed, or no steps), so only change the screen the tour
+needs once it returns `true`.
+
+```ts
+onClick={() => {
+  if (state.tutorial.replayContextual("mobile-settings")) {
+    openSettingsSheet();
+  }
+}}
+```
+
 ### `startTour(id)`
 
 Starts immediately and **ignores** the "already seen" flag and opt-out — for an
@@ -285,6 +301,7 @@ function HighlightButton({ state }: { state: SeedBibleState }) {
 | ----------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
 | `registerTour(id, steps, opts?)`          | method  | Register a custom tour. `opts.once` (default `true`).                                                |
 | `startContextual(id)`                     | method  | Auto-show once; respects opt-out & seen flag. Use in handlers.                                       |
+| `replayContextual(id, steps?)`            | method  | Start a contextual tour on request (ignores seen flag & opt-out). Returns whether it started.        |
 | `startTour(id)`                           | method  | Force-start now (ignores seen flag & opt-out). For replay.                                           |
 | `start()`                                 | method  | Restart the first-run onboarding tour.                                                               |
 | `next()` / `prev()` / `finish()`          | method  | Manual navigation / end (the popover buttons call these).                                            |
