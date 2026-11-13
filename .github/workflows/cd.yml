@@ -88,10 +88,19 @@ jobs:
           PATTERN_RECORD_KEY: ${{ secrets.RECORD_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          # The content import worker (workers/content-import). Unset leaves
-          # bulk import off and publishing in the browser.
-          VITE_CONTENT_IMPORT_URL: ${{ vars.CONTENT_IMPORT_URL }}
-        run: pnpm build
+          CONTENT_IMPORT_URL: ${{ vars.CONTENT_IMPORT_URL }}
+          CONTENT_IMPORT_ALPHA_URL: ${{ vars.CONTENT_IMPORT_ALPHA_URL }}
+        # The content import worker (workers/content-import): main's build
+        # uses the production worker, every other branch's preview the alpha
+        # one, so testing never touches production data. Unset leaves bulk
+        # import off and publishing in the browser.
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            export VITE_CONTENT_IMPORT_URL="$CONTENT_IMPORT_URL"
+          else
+            export VITE_CONTENT_IMPORT_URL="$CONTENT_IMPORT_ALPHA_URL"
+          fi
+          pnpm build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -235,17 +244,23 @@ jobs:
           fi
 
   # ─── Content import worker ─────────────────────────────────────────────────
-  # One worker serves every branch's deployment, so it deploys from main only,
-  # after the app's own quality gates pass. Skipped until the Cloudflare
-  # secrets exist (setup: workers/content-import/README.md).
+  # Two deployments, each with its own database and queues: `alpha` from
+  # develop (used by alpha.seedbible.org, where develop and every branch
+  # preview are served) and `production` from main. Runs after the app's own
+  # quality gates pass. Skipped until the Cloudflare secrets exist (setup:
+  # workers/content-import/README.md).
   deploy-content-import-worker:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
     needs: deploy
     runs-on: ubuntu-latest
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      D1_DATABASE_ID: ${{ vars.CONTENT_IMPORT_D1_DATABASE_ID }}
+      WORKER_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'alpha' }}
+      PRODUCTION_D1_DATABASE_ID: ${{ vars.CONTENT_IMPORT_D1_DATABASE_ID }}
+      ALPHA_D1_DATABASE_ID: ${{ vars.CONTENT_IMPORT_ALPHA_D1_DATABASE_ID }}
       WRANGLER: pnpm dlx wrangler@4.127.1
     steps:
       - uses: actions/checkout@v4
@@ -267,18 +282,25 @@ jobs:
         if: env.CLOUDFLARE_API_TOKEN != ''
         working-directory: workers/content-import
         run: |
-          test -n "$D1_DATABASE_ID" || { echo "Set the CONTENT_IMPORT_D1_DATABASE_ID variable."; exit 1; }
-          sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$D1_DATABASE_ID/" wrangler.toml
+          if [ "$WORKER_ENV" = "production" ]; then
+            ID="$PRODUCTION_D1_DATABASE_ID"; VAR=CONTENT_IMPORT_D1_DATABASE_ID
+            PLACEHOLDER=REPLACE_WITH_PRODUCTION_D1_DATABASE_ID
+          else
+            ID="$ALPHA_D1_DATABASE_ID"; VAR=CONTENT_IMPORT_ALPHA_D1_DATABASE_ID
+            PLACEHOLDER=REPLACE_WITH_ALPHA_D1_DATABASE_ID
+          fi
+          test -n "$ID" || { echo "Set the $VAR variable."; exit 1; }
+          sed -i "s/$PLACEHOLDER/$ID/" wrangler.toml
 
       - name: Apply D1 migrations
         if: env.CLOUDFLARE_API_TOKEN != ''
         working-directory: workers/content-import
-        run: $WRANGLER d1 migrations apply seed-bible-content-import --remote
+        run: $WRANGLER d1 migrations apply DB --env "$WORKER_ENV" --remote
 
       - name: Deploy worker
         if: env.CLOUDFLARE_API_TOKEN != ''
         working-directory: workers/content-import
-        run: $WRANGLER deploy
+        run: $WRANGLER deploy --env "$WORKER_ENV"
 
   # Covers the case where a branch was already deployed (via `push`) before
   # its PR was opened: the deploy job's comment step only finds PRs that
