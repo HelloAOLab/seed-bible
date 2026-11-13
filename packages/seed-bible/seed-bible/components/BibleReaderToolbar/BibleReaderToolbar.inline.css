@@ -677,11 +677,7 @@
     height: auto;
     width: 100%;
     border-radius: 0;
-    /* `viewport-fit=cover` lets the page paint under Android's gesture /
-     * navigation strip; extend this bar's background into that inset so
-     * the chrome matches the theme instead of showing a bare gap. Icons
-     * stay above the unsafe area via the padded bottom edge. */
-    padding: 0.5rem 0.5rem calc(0.625rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.5rem 0.5rem 0.625rem;
     justify-content: space-around;
     align-items: stretch;
     gap: 0;

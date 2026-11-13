@@ -566,11 +566,18 @@ function channelToLinear(channel: number): number {
 }
 
 /**
+ * Relative luminance where black and white text contrast equally against
+ * the background (WCAG). Used for Android PWA `color-scheme` so mid-gray
+ * custom branding backgrounds stay on the light strip/controls rather than
+ * flipping dark at the naive 0.5 midpoint. Keep in sync with the inline
+ * copy in `index.html`.
+ */
+export const LIGHT_DARK_CROSSOVER = 0.179;
+
+/**
  * Whether the app background is dark enough that Android's installed-PWA
  * system navigation strip should use the dark color-scheme (near-black)
- * instead of the light one (near-white). Mid-gray backgrounds use the
- * WCAG relative-luminance midpoint so custom theme colors stay consistent
- * with Light/Dark presets.
+ * instead of the light one (near-white).
  */
 export function browserColorSchemeForBackground(
   color: string
@@ -581,7 +588,7 @@ export function browserColorSchemeForBackground(
     0.2126 * channelToLinear(rgb[0]) +
     0.7152 * channelToLinear(rgb[1]) +
     0.0722 * channelToLinear(rgb[2]);
-  return luminance < 0.5 ? "dark" : "light";
+  return luminance < LIGHT_DARK_CROSSOVER ? "dark" : "light";
 }
 
 /**
@@ -618,8 +625,7 @@ export function applyBrowserColorScheme(scheme: BrowserColorScheme): void {
  * sync — browsers walk the tags in tree order and stop at the first match.
  *
  * Also drives `<meta name="color-scheme">` and paints `html`'s background
- * so the bottom system nav strip and any edge-to-edge safe-area gap follow
- * the same chrome color (see `applyBrowserColorScheme`).
+ * so the canvas matches the theme chrome (see `applyBrowserColorScheme`).
  */
 export function applyBrowserThemeColor(color: string): void {
   if (typeof document === "undefined") return;
@@ -639,9 +645,7 @@ export function applyBrowserThemeColor(color: string): void {
     }
   }
   // `html` does not inherit body-scoped `--sb-*` vars (ThemeManager paints
-  // those on `body`), so set the canvas color directly. Edge-to-edge
-  // Android / `viewport-fit=cover` then shows the theme behind the gesture
-  // bar instead of the UA's default white.
+  // those on `body`), so set the canvas color directly.
   document.documentElement.style.backgroundColor = color;
   const scheme = browserColorSchemeForBackground(color);
   if (scheme) applyBrowserColorScheme(scheme);

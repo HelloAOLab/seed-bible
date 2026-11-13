@@ -246,17 +246,28 @@ describe("index.html pre-hydration theme script", () => {
 });
 
 describe("index.html Android PWA chrome meta", () => {
-  it("opts into viewport-fit=cover and ships a color-scheme meta beside theme-color", () => {
+  it("ships a color-scheme meta beside theme-color without viewport-fit=cover", () => {
     const html = readFileSync(
       resolve(__dirname, "../../../index.html"),
       "utf8"
     );
-    expect(html).toMatch(/viewport-fit=cover/);
+    // The bottom strip is driven by color-scheme, not by drawing under the
+    // system bars — keep the page inside the safe area on every platform.
+    expect(html).not.toMatch(/viewport-fit=cover/);
     expect(html).toMatch(
       /<meta name="color-scheme" id="sb-color-scheme" content="light"/
     );
     expect(html).toMatch(
       /<meta name="theme-color" id="sb-theme-color" content="#f8fafc"/
     );
+  });
+
+  it("uses the same light/dark luminance crossover as ThemeManager", () => {
+    const html = readFileSync(
+      resolve(__dirname, "../../../index.html"),
+      "utf8"
+    );
+    expect(html).toMatch(/0\.179/);
+    expect(html).not.toMatch(/toLin\(b\)\s*<\s*0\.5\s*\?\s*"dark"/);
   });
 });

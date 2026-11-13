@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
     />
     <meta name="referrer" content="origin" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -172,8 +172,11 @@
                   ? s / 12.92
                   : Math.pow((s + 0.055) / 1.055, 2.4);
               };
+              // Same crossover as ThemeManager.LIGHT_DARK_CROSSOVER: where
+              // black and white text contrast equally (not 0.5).
               var scheme =
-                0.2126 * toLin(r) + 0.7152 * toLin(g) + 0.0722 * toLin(b) < 0.5
+                0.2126 * toLin(r) + 0.7152 * toLin(g) + 0.0722 * toLin(b) <
+                0.179
                   ? "dark"
                   : "light";
               var schemeMeta =

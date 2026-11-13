@@ -221,9 +221,17 @@ describe("browserColorSchemeForBackground", () => {
     ).toBe("dark");
   });
 
-  it("treats mid-dark custom backgrounds as dark and pale ones as light", () => {
+  it("treats near-black custom backgrounds as dark and pale ones as light", () => {
     expect(browserColorSchemeForBackground("#222222")).toBe("dark");
     expect(browserColorSchemeForBackground("#eeeeee")).toBe("light");
+  });
+
+  it("keeps mid-gray branding backgrounds on the light scheme", () => {
+    // #b0b0b0 is clearly light (~0.43 luminance) but sits below the naive
+    // 0.5 midpoint — it must stay light so form controls and the Android
+    // nav strip don't flip dark on a light page.
+    expect(browserColorSchemeForBackground("#b0b0b0")).toBe("light");
+    expect(browserColorSchemeForBackground("#808080")).toBe("light");
   });
 
   it("returns null when the color cannot be parsed as hex", () => {

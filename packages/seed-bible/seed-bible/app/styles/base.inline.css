@@ -387,9 +387,7 @@ html {
   font-size: calc(16px * var(--sb-ui-scale, 1));
 
   /* Fallback canvas while ThemeManager / the pre-hydration script set the
-   * live `background-color` + `color-scheme` on this element. Without a
-   * root fill, `viewport-fit=cover` can flash the UA default (white) in the
-   * Android system-nav inset before the theme paints. */
+   * live `background-color` + `color-scheme` on this element. */
   background-color: var(--sb-background);
 }
 
