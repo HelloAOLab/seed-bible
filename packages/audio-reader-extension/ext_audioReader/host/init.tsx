@@ -59,6 +59,16 @@ let saveListeningSpan: SaveListeningSpan | null = null;
  */
 let audioPlayback: AudioPlaybackManager | null = null;
 
+/**
+ * True while this tab's own playlist is borrowing the reader. The playlist
+ * changes the chapter; the paused narration has to stay so it can continue
+ * when that playlist gives the tab back. This is the tab's playlist, not
+ * whichever tab happens to be on screen.
+ */
+let playlistHoldsReadingState: (
+  readingState: BibleReadingState
+) => boolean = () => false;
+
 /** The browser's speech synthesiser, for as long as the extension is installed. */
 let textToSpeech: TextToSpeechManager | null = null;
 
@@ -593,7 +603,21 @@ function beginSession(session: ListeningSession): void {
     `${readingState.translationId.value}|${readingState.bookId.value}|${readingState.chapterNumber.value}|${passageKey(stepPassage?.(readingState) ?? null)}`;
   const opened = untracked(chapterKey);
   const stopWatching = effect(() => {
-    if (chapterKey() !== opened) untracked(() => endSession(session));
+    // Call it inside the effect so the session follows this tab's playlist,
+    // including the moment that playlist lets the tab go.
+    const held = playlistHoldsReadingState(readingState);
+    const key = chapterKey();
+    if (key === opened) {
+      return;
+    }
+    // A playlist that borrowed this tab keeps a paused whole-chapter
+    // narration across its chapter moves so Listen can continue afterward.
+    // Listening to a playlist step (passage set) still ends when that step's
+    // verses change — `held` alone would block that.
+    if (held && session.passage === null) {
+      return;
+    }
+    untracked(() => endSession(session));
   });
 
   session.teardown = () => {
@@ -1422,12 +1446,15 @@ export default function initAudioReaderExtension() {
       };
 
       audioPlayback = context.audioPlayback;
+      playlistHoldsReadingState = (readingState) =>
+        context.playlists.holdsReadingState(readingState);
       const speech = context.textToSpeech;
       textToSpeech = speech;
       // The audio element and the synthesiser outlive the install, but nothing
       // would be left to show or control them, so an uninstall ends every
       // tab's listening outright.
       yield () => {
+        playlistHoldsReadingState = () => false;
         endAllSessions();
         audioPlayback = null;
         textToSpeech = null;

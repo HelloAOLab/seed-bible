@@ -175,7 +175,6 @@
   font-weight: 600;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
-
 @media (max-width: 480px) {
   .sb-toast-host {
     bottom: auto;

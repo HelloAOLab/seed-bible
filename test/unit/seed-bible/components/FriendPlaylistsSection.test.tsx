@@ -14,6 +14,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers";
 import { createBibleReadingExtensionManager } from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
+import { createAudioPlaybackManager } from "@packages/seed-bible/seed-bible/managers/AudioPlaybackManager";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import type { ChatsManager } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TabsManager } from "@packages/seed-bible/seed-bible/managers/TabsManager";
@@ -66,7 +67,8 @@ function createRealPlaylists(
     createI18nManager(navigation, ["en"]),
     createBibleReadingExtensionManager(),
     discover,
-    { addContext: vi.fn(), removeContext: vi.fn() } as unknown as ChatsManager
+    { addContext: vi.fn(), removeContext: vi.fn() } as unknown as ChatsManager,
+    createAudioPlaybackManager()
   );
 }
 
