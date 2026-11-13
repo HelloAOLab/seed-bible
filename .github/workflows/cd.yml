@@ -250,9 +250,14 @@ jobs:
   # quality gates pass. Skipped until the Cloudflare secrets exist (setup:
   # workers/content-import/README.md).
   deploy-content-import-worker:
+    # TEMPORARY: claude/upbeat-turing-eflv7a also deploys the alpha worker, so
+    # the content library can be tried on alpha before it reaches develop.
+    # Remove that branch from this condition before merging.
     if: >-
       github.event_name == 'push' &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+      (github.ref == 'refs/heads/main' ||
+       github.ref == 'refs/heads/develop' ||
+       github.ref == 'refs/heads/claude/upbeat-turing-eflv7a')
     needs: deploy
     runs-on: ubuntu-latest
     env:
