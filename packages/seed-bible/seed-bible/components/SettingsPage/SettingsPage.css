@@ -181,27 +181,6 @@
 
 .sb-extensions-add-link-button {
   align-self: flex-start;
-  min-height: 2.75rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0 1rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
-  border-radius: var(--sb-radius-full);
-  background: transparent;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-extensions-add-link-button:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-}
-
-.sb-extensions-add-link-button .material-symbols-outlined {
-  font-size: 1.125rem;
 }
 
 .sb-extension-add-link-row {
@@ -212,10 +191,6 @@
 .sb-extension-add-link-row .sb-settings-text-input {
   flex: 1;
   min-width: 0;
-}
-
-.sb-extension-add-link-row .sb-settings-action-button {
-  width: auto;
 }
 
 .sb-extension-add-link-status {
@@ -314,10 +289,6 @@
   font-size: var(--sb-font-size-14);
 }
 
-.sb-extension-sensitive-unused-row .sb-settings-action-button {
-  width: auto;
-}
-
 .sb-extension-sensitive-actions {
   display: flex;
   gap: 0.5rem;
@@ -331,15 +302,6 @@
   align-items: center;
   gap: 0.25rem;
   min-height: 1.5rem;
-}
-
-.sb-settings-field-title-row .sb-theme-color-reset {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.sb-settings-field-title-row .sb-theme-color-reset .material-symbols-outlined {
-  font-size: 1rem;
 }
 
 /* Sits under a setting's title, so it stays close to the title's size rather
@@ -787,30 +749,6 @@
   transform: translateY(1px);
 }
 
-.sb-settings-action-button {
-  border: none;
-  border-radius: var(--sb-radius-md);
-  padding: 0.75rem 1rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  color: var(--sb-font-color);
-  font-size: var(--sb-font-size-14);
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-  transition: background-color var(--sb-duration-base) ease;
-}
-
-.sb-settings-action-button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
-}
-
-.sb-settings-action-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 /* Breadcrumb row at the top of a settings subpage — ported from develop */
 .sb-settings-breadcrumbs {
   display: flex;
@@ -820,30 +758,6 @@
   margin-bottom: 0.625rem;
   font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
-}
-
-.sb-settings-breadcrumbs-back {
-  border: none;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
-  cursor: pointer;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: background-color var(--sb-duration-base) ease;
-}
-
-.sb-settings-breadcrumbs-back:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  color: var(--sb-font-color);
-}
-
-.sb-settings-breadcrumbs-back .material-symbols-outlined {
-  font-size: 1.125rem;
 }
 
 .sb-settings-breadcrumbs-item {
@@ -1120,32 +1034,6 @@
   .sb-settings-version:hover {
     color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
   }
-}
-
-.sb-theme-color-reset {
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    background-color var(--sb-duration-base) ease,
-    color var(--sb-duration-base) ease;
-}
-
-.sb-theme-color-reset:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  color: var(--sb-font-color);
-}
-
-.sb-theme-color-reset .material-symbols-outlined {
-  font-size: 1.125rem;
 }
 
 .sb-settings-login-prompt {

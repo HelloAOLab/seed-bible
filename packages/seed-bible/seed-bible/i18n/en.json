@@ -138,7 +138,6 @@
   "variants": "Themes",
   "add-variant": "Add theme",
   "base-theme-description": "Anything you haven't changed follows this preset. Your own edits are kept.",
-  "reset-to-base-theme": "Reset to base theme",
   "low-contrast-warning": "{{label}}: contrast is only {{ratio}}:1 — aim for at least {{minRatio}}:1 so text stays readable.",
   "highlight-text-on-background": "{{label}} text on its background",
   "variant-name": "Name",

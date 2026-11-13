@@ -75,6 +75,7 @@ import {
   DockableThemeLivePreview,
   ThemeThumbnail,
 } from "./CustomizationPreviews";
+import { Button } from "../Button/Button";
 
 // The picture editor pulls in `react-avatar-editor`, so it's only fetched on
 // the "Upload logo" click rather than at boot, same as SettingsPage does.
@@ -403,17 +404,13 @@ export function CustomizationEditPaneLeading() {
     return null;
   }
   return (
-    <button
-      type="button"
-      className="sb-pane-header-button"
+    <IconButton
+      icon="arrow_back"
+      label={t("back", { defaultValue: "Back" })}
       onClick={() => {
         customizationEditView.value = "edit";
       }}
-      aria-label={t("back", { defaultValue: "Back" })}
-      title={t("back", { defaultValue: "Back" })}
-    >
-      <span className="material-symbols-outlined">arrow_back</span>
-    </button>
+    />
   );
 }
 
@@ -445,27 +442,15 @@ function UnsavedChangesConfirmModalContent(props: {
         })}
       </p>
       <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onKeepEditing}
-        >
+        <Button onClick={onKeepEditing}>
           {t("keep-editing", { defaultValue: "Keep editing" })}
-        </button>
-        <button
-          type="button"
-          className="sb-unsaved-changes-discard"
-          onClick={onDiscard}
-        >
+        </Button>
+        <Button variant="ghost" tone="danger" onClick={onDiscard}>
           {t("discard-changes", { defaultValue: "Discard changes" })}
-        </button>
-        <button
-          type="button"
-          className="sb-friends-button sb-friends-button--primary"
-          onClick={onSaveAndLeave}
-        >
+        </Button>
+        <Button variant="primary" onClick={onSaveAndLeave}>
           {t("save-and-leave", { defaultValue: "Save and leave" })}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -748,22 +733,18 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                 alt={t("logo", { defaultValue: "Logo" })}
               />
               <div className="sb-cz-logo-actions">
-                <button
-                  type="button"
-                  className="sb-cz-button"
+                <Button
                   onClick={handleUploadLogo}
                   disabled={isUploadingLogo.value}
                 >
                   {t("replace-logo", { defaultValue: "Replace" })}
-                </button>
-                <button
-                  type="button"
-                  className="sb-cz-button"
+                </Button>
+                <Button
                   onClick={() => void customizations.removeEditingLogo()}
                   disabled={isUploadingLogo.value}
                 >
                   {t("remove-logo", { defaultValue: "Remove logo" })}
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
@@ -931,18 +912,17 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
       </section>
 
       <footer className="sb-cz-footer">
-        <button
-          type="button"
-          className="sb-cz-button sb-cz-button-danger sb-cz-button-quiet"
+        <Button
+          variant="ghost"
+          tone="danger"
+          icon="delete"
           onClick={() => confirmDeleteCustomization(state, record)}
         >
-          <span className="material-symbols-outlined">delete</span>
           {t("delete-customization", { defaultValue: "Delete" })}
-        </button>
+        </Button>
         <span className="sb-cz-footer-spacer" />
-        <button
-          type="button"
-          className="sb-cz-button"
+        <Button
+          icon="share"
           onClick={() => {
             navigator.clipboard.writeText(customizations.getShareLink(record));
             state.app.toast(
@@ -952,9 +932,8 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
             );
           }}
         >
-          <span className="material-symbols-outlined">share</span>
           {t("share", { defaultValue: "Share" })}
-        </button>
+        </Button>
         <SaveButton
           hasUnsavedChanges={customizations.hasUnsavedChanges.value}
           onSave={() => void handleSave()}
@@ -971,14 +950,13 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
 function SaveButton(props: { hasUnsavedChanges: boolean; onSave: () => void }) {
   const { t } = useI18n();
   return (
-    <button
-      type="button"
-      className="sb-cz-button sb-cz-button-primary"
+    <Button
+      variant="primary"
       disabled={!props.hasUnsavedChanges}
       onClick={props.onSave}
     >
       {t("save", { defaultValue: "Save" })}
-    </button>
+    </Button>
   );
 }
 
@@ -1203,19 +1181,13 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
                   </span>
                   {Object.keys(entry.extension?.meta.settings ?? {}).length >
                     0 && (
-                    <button
-                      type="button"
-                      className="sb-cz-icon-button"
+                    <IconButton
+                      icon="tune"
+                      label={t("configure-extension-defaults", {
+                        defaultValue: "Configure defaults",
+                      })}
                       onClick={() => handleConfigureDefaults(entry)}
-                      aria-label={t("configure-extension-defaults", {
-                        defaultValue: "Configure defaults",
-                      })}
-                      title={t("configure-extension-defaults", {
-                        defaultValue: "Configure defaults",
-                      })}
-                    >
-                      <span className="material-symbols-outlined">tune</span>
-                    </button>
+                    />
                   )}
                   <ExtensionAvailabilitySelect
                     id={selectId}
@@ -1831,28 +1803,26 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
 
       <footer className="sb-cz-footer">
         {canDelete && (
-          <button
-            type="button"
-            className="sb-cz-button sb-cz-button-danger sb-cz-button-quiet"
+          <Button
+            variant="ghost"
+            tone="danger"
+            icon="delete"
             onClick={() =>
               confirmDeleteVariant(state, variant, () => {
                 customizationEditView.value = "edit";
               })
             }
           >
-            <span className="material-symbols-outlined">delete</span>
             {t("delete-variant", { defaultValue: "Delete" })}
-          </button>
+          </Button>
         )}
         <span className="sb-cz-footer-spacer" />
         {!isDefault && (
-          <button
-            type="button"
-            className="sb-cz-button"
+          <Button
             onClick={() => customizations.setEditingDefaultVariant(variant.id)}
           >
             {t("set-as-default-variant", { defaultValue: "Set as default" })}
-          </button>
+          </Button>
         )}
         <SaveButton
           hasUnsavedChanges={customizations.hasUnsavedChanges.value}
@@ -1866,22 +1836,16 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
 /** Small "back to the base theme's value" button for a field the user has overridden. */
 function ResetButton(props: { label: string; onReset: () => void }) {
   const { t } = useI18n();
-  const title = t("reset-to-base-theme", {
-    defaultValue: "Reset to base theme",
-  });
   return (
-    <button
-      type="button"
-      className="sb-cz-reset"
-      title={title}
-      aria-label={t("reset-field", {
+    <IconButton
+      size="sm"
+      icon="restart_alt"
+      label={t("reset-field", {
         label: props.label,
         defaultValue: "Reset {{label}}",
       })}
       onClick={props.onReset}
-    >
-      <span className="material-symbols-outlined">restart_alt</span>
-    </button>
+    />
   );
 }
 

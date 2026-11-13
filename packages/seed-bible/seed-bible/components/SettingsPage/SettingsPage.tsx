@@ -43,6 +43,8 @@ import { useExtensionCatalog } from "./useExtensionCatalog";
 
 export { AddExtensionFromLink } from "./useExtensionCatalog";
 import { ExtensionTile } from "../ExtensionConsentModal/ExtensionConsentModal";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 function FlagImg({ cc }: { cc: string }) {
   return (
@@ -66,14 +68,13 @@ function SettingsBreadcrumbs(props: { onBack: () => void; trail: string[] }) {
   const { t } = useI18n();
   return (
     <div className="sb-settings-breadcrumbs">
-      <button
+      <IconButton
+        size="sm"
         className="sb-settings-breadcrumbs-back"
+        icon="arrow_back"
+        label={t("back", { defaultValue: "Back" })}
         onClick={props.onBack}
-        aria-label={t("back", { defaultValue: "Back" })}
-        title={t("back", { defaultValue: "Back" })}
-      >
-        <span className="material-symbols-outlined">arrow_back</span>
-      </button>
+      />
       {props.trail.map((item, index) => (
         <span key={index} className="sb-settings-breadcrumbs-item">
           {index > 0 && (
@@ -1111,16 +1112,15 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           t={t}
         />
 
-        <button
-          type="button"
+        <Button
+          size="lg"
+          shape="pill"
+          icon="link"
           className="sb-extensions-add-link-button"
           onClick={openAddFromLink}
         >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            link
-          </span>
           {t("extension-add-link-label")}
-        </button>
+        </Button>
       </section>
     </div>
   );
@@ -1361,17 +1361,12 @@ function SettingsMainView(props: { state: SeedBibleState }) {
           </li>
           <li>
             <div className="sb-settings-field-row">
-              <button
-                className="sb-settings-action-button"
-                onClick={() => {
-                  window.open(
-                    "https://docs.google.com/forms/d/e/1FAIpQLSejiuVM8xguEHKZ2Kv5DX-jE98zYwxFiPwpYrFSmvVgMejZzQ/viewform",
-                    "_blank"
-                  );
-                }}
+              <Button
+                href="https://docs.google.com/forms/d/e/1FAIpQLSejiuVM8xguEHKZ2Kv5DX-jE98zYwxFiPwpYrFSmvVgMejZzQ/viewform"
+                target="_blank"
               >
                 {t("report-a-bug", { defaultValue: "Report a bug" })}
-              </button>
+              </Button>
             </div>
           </li>
         </ul>
