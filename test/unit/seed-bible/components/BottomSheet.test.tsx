@@ -203,6 +203,8 @@ describe("BottomSheet", () => {
         closeIcon: "arrow_back",
       });
       expect(closeButton()!.getAttribute("aria-label")).toBe("Back");
+      // Drawn like the ✕ it replaces.
+      expect(closeButton()!.classList).toContain("sb-icon-button-tinted");
       // A back arrow has to point the other way in right-to-left languages.
       expect(closeButton()!.querySelector(".rtl-mirror")?.textContent).toBe(
         "arrow_back"

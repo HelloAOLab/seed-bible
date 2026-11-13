@@ -6,6 +6,8 @@ import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
 import { useOverlayDismiss } from "../useOverlayDismiss";
 import { CloseButton } from "../CloseButton/CloseButton";
+import { IconButton } from "../IconButton/IconButton";
+import { MaterialIcon } from "../icons";
 
 /** A press that moves less than this is a tap, not a drag. */
 const TAP_SLOP_PX = 6;
@@ -364,23 +366,20 @@ export function BottomSheet(props: BottomSheetProps) {
       onClose={onCloseButton ?? onClose}
     />
   ) : (
-    // Not a close: the shared button's look, with its own icon and label.
-    <button
-      type="button"
-      className={`sb-close-button sb-close-button-md sb-close-button-tinted ${closePlacement}`}
+    // Not a close: the same tinted button, with its own icon and label.
+    <IconButton
+      className={closePlacement}
+      look="tinted"
+      icon={
+        closeIcon === "arrow_back" ? (
+          <MaterialIcon className="rtl-mirror">arrow_back</MaterialIcon>
+        ) : (
+          closeIcon
+        )
+      }
+      label={closeLabel}
       onClick={onCloseButton ?? onClose}
-      aria-label={closeLabel}
-      title={closeLabel}
-    >
-      <span
-        className={`material-symbols-outlined${
-          closeIcon === "arrow_back" ? " rtl-mirror" : ""
-        }`}
-        aria-hidden="true"
-      >
-        {closeIcon}
-      </span>
-    </button>
+    />
   );
 
   const offset = dismissOffset.value;
