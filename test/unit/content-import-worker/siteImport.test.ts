@@ -2,7 +2,6 @@
 import { handleRequest } from "../../../workers/content-import/src/api";
 import { runCleanup } from "../../../workers/content-import/src/cleanup";
 import { clearCrawlCache } from "../../../workers/content-import/src/siteImports";
-import { SITE_LISTING_LIFETIME_MS } from "../../../workers/content-import/src/siteJobs";
 import {
   CONTENT_ITEM_MARKER,
   CONTENT_LIBRARY_MARKER,
@@ -433,7 +432,7 @@ describe("website imports", () => {
     ]);
   });
 
-  it("forgets the list when cancelled, or when the owner never picks", async () => {
+  it("forgets the list when cancelled, but otherwise waits for the owner however long they take", async () => {
     const { worker, key, commonCrawl } = setup();
     commonCrawl.addPage(LATEST, "https://gracecommunity.org/sermons/a", "");
     const first = await lookUp(worker, key);
@@ -452,15 +451,19 @@ describe("website imports", () => {
         .get() as { n: number };
     expect(rows().n).toBe(0);
 
-    // A second lookup can start once the first is over; left alone, it expires.
+    // A second lookup can start once the first is over. Left for two months,
+    // it's still waiting, and picking then starts the import.
     const second = await lookUp(worker, key);
     expect(second.candidates).toHaveLength(1);
-    worker.clock.now += SITE_LISTING_LIFETIME_MS + 1;
+    worker.clock.now += 60 * 24 * 60 * 60 * 1000;
     await runCleanup(worker.env, worker.deps);
-    expect(
-      (await siteImport(worker, key, second.progress.id)).progress.status
-    ).toBe("expired");
-    expect(rows().n).toBe(0);
+    const later = await siteImport(worker, key, second.progress.id);
+    expect(later.progress.status).toBe("awaiting_pick");
+    expect(later.candidates).toHaveLength(1);
+    const picked = await pick(worker, key, second.progress.id, [
+      later.candidates![0]!.itemId,
+    ]);
+    expect(((await picked.json()) as ImportProgress).status).toBe("running");
   });
 
   it("counts as the library's one running import", async () => {

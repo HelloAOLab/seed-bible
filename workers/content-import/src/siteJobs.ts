@@ -1,12 +1,9 @@
 import { MAX_SITE_PAGES } from "../../../packages/seed-bible/seed-bible/managers/customContent/importApi";
 import type { CandidatePage, IndexBlock } from "./commonCrawl/cdx";
-import type { JobRow, SiteJobDetails } from "./jobs";
+import { JOB_LIFETIME_MS, type JobRow, type SiteJobDetails } from "./jobs";
 import type { D1Database, D1PreparedStatement } from "./platform";
 
 /** D1 queries for website imports (design doc §5.7). */
-
-/** How long a website import may spend listing and waiting for the owner to pick. */
-export const SITE_LISTING_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 const STATEMENTS_PER_BATCH = 50;
 const IDS_PER_STATEMENT = 50;
@@ -45,7 +42,9 @@ export async function createSiteJob(
       JSON.stringify(job.details),
       job.created_at,
       job.created_at,
-      job.created_at + SITE_LISTING_LIFETIME_MS
+      // Not used while listing or waiting: those never expire. Picking sets
+      // the import's real lifetime.
+      job.created_at + JOB_LIFETIME_MS
     )
     .run();
   if (job.details.crawls.length > 0) {

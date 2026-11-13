@@ -346,6 +346,11 @@ export async function requeueExpiredLeases(
   return results;
 }
 
+/**
+ * Imports to end because they've run too long. Only ones that have started
+ * importing: a website lookup still listing or waiting for the owner to pick
+ * holds no session key, and stays ready for whenever the owner comes back.
+ */
 export async function jobsPastExpiry(
   db: D1Database,
   now: number
@@ -353,8 +358,7 @@ export async function jobsPastExpiry(
   const { results } = await db
     .prepare(
       `SELECT * FROM import_jobs
-       WHERE status IN ('listing', 'awaiting_pick', 'running', 'paused_signin')
-         AND expires_at <= ?`
+       WHERE status IN ('running', 'paused_signin') AND expires_at <= ?`
     )
     .bind(now)
     .all<JobRow>();

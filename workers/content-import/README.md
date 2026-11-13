@@ -8,7 +8,7 @@ Workers. Design: [`docs/custom-content-database.md`](../../docs/custom-content-d
 - **D1** (`migrations/`, `src/jobs.ts`): imports and their links, with the owner's session key encrypted (AES-GCM) and erased when the import stops.
 - **`LibraryWriter` Durable Object** (`src/libraryWriter.ts`): the one writer of a library's chapter records.
 - **Common Crawl** (`src/siteImports.ts`, `src/commonCrawl/`): website imports read Common Crawl's index files and saved pages from `data.commoncrawl.org` with range requests: a binary search of each crawl's `cluster.idx` finds the blocks that hold the site. The worker never fetches the owner's site, and never uses `index.commoncrawl.org`, which wasn't reachable from Cloudflare.
-- **Cron** (`src/cleanup.ts`): every 15 minutes, re-queues links whose consumer died, ends imports older than 7 days (and website lookups nobody picked from after a day), and deletes old rows.
+- **Cron** (`src/cleanup.ts`): every 15 minutes, re-queues links whose consumer died, ends imports older than 7 days, and deletes old rows. A website lookup waiting for the owner to pick pages never expires: it holds no session key, and the owner can pick or cancel whenever they come back.
 
 It has no npm dependencies of its own: it bundles `zod` and the shared code in `packages/seed-bible/seed-bible/managers/customContent/` from the repo. The Cloudflare APIs it uses are described in `src/platform.ts` rather than with `@cloudflare/workers-types`, whose globals clash with the DOM types the rest of the repo is type-checked against.
 

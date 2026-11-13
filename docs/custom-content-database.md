@@ -451,7 +451,7 @@ Common Crawl provides copies of pages, but the content still belongs to each sit
 - **Range requests are limited by the queue's concurrency** (proposal: 4 at a time for `data.commoncrawl.org`). Each response is limited to its `length` and the extracted text is capped.
 - **Not built yet: caching index results.** The plan was a day's cache per crawl and site in Workers KV, so two owners importing the same site, or an owner retrying, don't query Common Crawl twice. Only the list of crawls is cached (for an hour, in memory). Add the cache if the index sees repeated lookups; it needs a KV namespace in `wrangler.toml` and CD.
 - **Each crawl is read for at most 20 index blocks** (about 60,000 entries), so one huge site can't run on. Together with the 2,000-page cap, this bounds a lookup's work.
-- Page listings are kept only until the owner has picked, or for 24 hours.
+- A page listing is kept until the owner picks from it or cancels, however long that takes. It holds no session key (the key is only stored when the owner picks), so there's nothing that needs to expire. While it waits, it counts as the library's one active import.
 
 **As built.** A lookup that meets a passing failure (a 5xx or 429 from the archive, a network error) is retried with the queue's growing delays; after 5 tries it's recorded as failed and the listing finishes without it, and the editor says some pages may be missing. Listing state is two D1 tables (migrations `0002_site_imports.sql`, `0003_index_blocks.sql`): `site_lookups`, one row per lookup (the block a lookup reads is stored on its row), and `import_items` rows in state `candidate`, one per offered page. A page's item id is a hash of its normalized address, so finding it again in another crawl or on a retry updates the same row, which keeps the newest capture. The job moves `listing` → `awaiting_pick` when its last lookup finishes, and `awaiting_pick` → `running` when the owner picks, which is also when the owner's session key is stored: listing needs no key. Picked pages then run through the same queue, slots and retries as pasted links, but are read from the archive instead of through `getLinkPreview`, so the site itself is never contacted.
 
@@ -579,8 +579,7 @@ A narrower credential would be better than a full session key. CasualOS **record
 A scheduled worker (a Cron Trigger, proposal: every 15 minutes):
 
 - Puts `running` items whose lease has expired back to `queued` and re-sends their messages.
-- Expires jobs past `expires_at`: sets them to `expired`, erases the key, and writes the summary to `importStatus`.
-- Deletes `candidate` rows the owner never picked, 24 hours after listing.
+- Expires `running` and `paused_signin` jobs past `expires_at`: sets them to `expired`, erases the key, and writes the summary to `importStatus`. Website lookups still `listing` or `awaiting_pick` never expire; they wait for the owner.
 - Deletes finished jobs and their item rows 30 days after they end. The lasting record is the `importStatus` entry and the items themselves, both in the content record.
 
 #### Deployment
