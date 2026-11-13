@@ -561,6 +561,14 @@ export function CasualOSManager(
     },
 
     /**
+     * Creates a record owned by `ownerId`, which must be the signed-in user.
+     * Fails with `record_already_exists` when the name is taken, and with
+     * `subscription_limit_reached` when the owner's plan allows no more.
+     */
+    createRecord: (recordName: string, ownerId: string) =>
+      client.createRecord({ recordName, ownerId }),
+
+    /**
      * Removes an uploaded file, given the URL `recordFile` returned for it.
      * The SDK's own result type for this procedure leaves out the success
      * case, so the shape callers can rely on is spelled out here.

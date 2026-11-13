@@ -1,0 +1,119 @@
+# Content import worker. Setup steps: README.md.
+#
+# Two separate deployments, each with its own database, queues and
+# SESSION_KEY_SECRET, so testing on alpha never touches production data:
+#   alpha       deployed from `develop`; serves alpha.seedbible.org, where
+#               develop and every other branch's preview are served
+#   production  deployed from `main`; serves seedbible.org
+# Always deploy with `--env alpha` or `--env production`.
+name = "seed-bible-content-import"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+# Pinned in .github/workflows/cd.yml; deploy with that version.
+
+# Inherited by both environments.
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Workers Logs: keeps the workers' console output and request logs, viewable
+# under the worker's Observability tab in the Cloudflare dashboard.
+[observability]
+enabled = true
+
+# SQLite-backed Durable Objects: the only kind Cloudflare's free plan
+# allows. Neither object stores anything, so the storage kind doesn't matter.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["LibraryWriter"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["CommonCrawlGate"]
+
+# The gate spaced out requests to index.commoncrawl.org, which the worker
+# no longer uses: it reads Common Crawl's index files instead.
+[[migrations]]
+tag = "v3"
+deleted_classes = ["CommonCrawlGate"]
+
+# ─── alpha (develop) ────────────────────────────────────────────────────────
+
+[env.alpha]
+name = "seed-bible-content-import-alpha"
+
+[env.alpha.vars]
+CASUALOS_ENDPOINT = "https://auth.seedbible.org"
+# CasualOS only accepts calls from its allowed origins; this is the app's.
+CASUALOS_ORIGIN = "https://alpha.seedbible.org"
+ALLOWED_ORIGINS = "https://alpha.seedbible.org"
+DEAD_LETTER_QUEUE = "seed-bible-content-import-alpha-dlq"
+# SESSION_KEY_SECRET is a secret: `wrangler secret put SESSION_KEY_SECRET --env alpha`.
+
+[[env.alpha.d1_databases]]
+binding = "DB"
+database_name = "seed-bible-content-import-alpha"
+# Replaced by CD from the CONTENT_IMPORT_ALPHA_D1_DATABASE_ID variable.
+database_id = "REPLACE_WITH_ALPHA_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[[env.alpha.queues.producers]]
+binding = "IMPORT_QUEUE"
+queue = "seed-bible-content-import-alpha"
+
+[[env.alpha.queues.consumers]]
+queue = "seed-bible-content-import-alpha"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 5
+max_concurrency = 4
+dead_letter_queue = "seed-bible-content-import-alpha-dlq"
+
+[[env.alpha.queues.consumers]]
+queue = "seed-bible-content-import-alpha-dlq"
+max_batch_size = 10
+max_batch_timeout = 30
+
+[[env.alpha.durable_objects.bindings]]
+name = "LIBRARY_WRITER"
+class_name = "LibraryWriter"
+
+# ─── production (main) ──────────────────────────────────────────────────────
+
+[env.production]
+name = "seed-bible-content-import"
+
+[env.production.vars]
+CASUALOS_ENDPOINT = "https://auth.seedbible.org"
+# CasualOS only accepts calls from its allowed origins; this is the app's.
+CASUALOS_ORIGIN = "https://seedbible.org"
+ALLOWED_ORIGINS = "https://seedbible.org,https://prod.seedbible.org"
+DEAD_LETTER_QUEUE = "seed-bible-content-import-dlq"
+# SESSION_KEY_SECRET is a secret: `wrangler secret put SESSION_KEY_SECRET --env production`.
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "seed-bible-content-import"
+# Replaced by CD from the CONTENT_IMPORT_D1_DATABASE_ID variable.
+database_id = "REPLACE_WITH_PRODUCTION_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[[env.production.queues.producers]]
+binding = "IMPORT_QUEUE"
+queue = "seed-bible-content-import"
+
+[[env.production.queues.consumers]]
+queue = "seed-bible-content-import"
+max_batch_size = 10
+max_batch_timeout = 5
+max_retries = 5
+max_concurrency = 4
+dead_letter_queue = "seed-bible-content-import-dlq"
+
+[[env.production.queues.consumers]]
+queue = "seed-bible-content-import-dlq"
+max_batch_size = 10
+max_batch_timeout = 30
+
+[[env.production.durable_objects.bindings]]
+name = "LIBRARY_WRITER"
+class_name = "LibraryWriter"
