@@ -226,9 +226,11 @@ export default defineConfig(({ isSsrBuild, mode }) => ({
               start_url: "/",
               display: "standalone",
               // Splash/default only. Keep in sync with LIGHT_THEME
-              // `background` in ThemeManager. The installed app's live
-              // status bar is driven by <meta name="theme-color">, which
-              // ThemeManager updates to the active theme.
+              // `background` in ThemeManager. Live chrome after launch:
+              // status bar ← <meta name="theme-color">; Android PWA bottom
+              // nav strip ← <meta name="color-scheme">. Both are updated by
+              // ThemeManager (and the pre-hydration script) for the active
+              // theme — see applyBrowserThemeColor.
               background_color: "#f8fafc",
               theme_color: "#f8fafc",
               icons: [
@@ -487,7 +489,10 @@ export default defineConfig(({ isSsrBuild, mode }) => ({
     globals: true,
     // Blocks real WebSocket connections, so a test that reaches the network
     // fails in its own file instead of as an unattributed async error.
-    setupFiles: ["./test/setup/blockRealSockets.ts"],
+    setupFiles: [
+      "./test/setup/memoryLocalStorage.ts",
+      "./test/setup/blockRealSockets.ts",
+    ],
     // Inline react-i18next so the use-sync-external-store alias above applies
     // to its imports (aliases don't reach externalized modules, which are
     // loaded directly by Node).

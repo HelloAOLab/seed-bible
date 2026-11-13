@@ -27,11 +27,16 @@ function readInlineThemeScript(): string {
 function installServerRenderedHead(): void {
   document.head.innerHTML = [
     `<meta name="theme-color" id="sb-theme-color" content="${LIGHT_THEME.variables.background}" />`,
+    `<meta name="color-scheme" id="sb-color-scheme" content="light" />`,
     `<style id="sb-theme-styles">${THEME_PRESET_STYLE_TEXT.light}</style>`,
     `<script type="application/json" id="sb-theme-presets">${JSON.stringify(
       THEME_PRESET_STYLE_TEXT
     )}</script>`,
   ].join("");
+}
+
+function paintedColorScheme(): string | null | undefined {
+  return document.getElementById("sb-color-scheme")?.getAttribute("content");
 }
 
 /**
@@ -65,10 +70,12 @@ function paintedBackground(): string | null | undefined {
 
 describe("index.html pre-hydration theme script", () => {
   afterEach(() => {
-    vi.unstubAllGlobals();
     localStorage.clear();
     document.head.innerHTML = "";
+    document.documentElement.style.colorScheme = "";
+    document.documentElement.style.backgroundColor = "";
     window.history.replaceState({}, "", "/");
+    vi.unstubAllGlobals();
   });
 
   it("paints Dark for a first-time visitor on a dark device, since System is the default", () => {
@@ -81,6 +88,8 @@ describe("index.html pre-hydration theme script", () => {
       `--sb-background: ${DARK_THEME.variables.background};`
     );
     expect(paintedBackground()).toBe(DARK_THEME.variables.background);
+    expect(paintedColorScheme()).toBe("dark");
+    expect(document.documentElement.style.colorScheme).toBe("dark");
   });
 
   it("paints Dark for a saved config with no theme on a dark device", () => {
@@ -94,6 +103,7 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(DARK_THEME.variables.background);
+    expect(paintedColorScheme()).toBe("dark");
   });
 
   it("keeps Light for a first-time visitor on a light device", () => {
@@ -103,6 +113,8 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
+    expect(paintedColorScheme()).toBe("light");
+    expect(document.documentElement.style.colorScheme).toBe("light");
   });
 
   it("paints the embed link's theme instead of the saved one", () => {
@@ -117,6 +129,7 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(DARK_THEME.variables.background);
+    expect(paintedColorScheme()).toBe("dark");
   });
 
   it("keeps a saved Light on a dark device", () => {
@@ -130,6 +143,7 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
+    expect(paintedColorScheme()).toBe("light");
   });
 
   it("paints a signed-in account's cached Dark on a light device", () => {
@@ -204,5 +218,45 @@ describe("index.html pre-hydration theme script", () => {
 
     expect(runInlineThemeScript).not.toThrow();
     expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
+  });
+
+  it("still paints System dark when localStorage is unavailable", () => {
+    installServerRenderedHead();
+    stubColorScheme(true);
+    const original = window.localStorage;
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      get() {
+        return undefined;
+      },
+    });
+
+    try {
+      expect(runInlineThemeScript).not.toThrow();
+      expect(paintedBackground()).toBe(DARK_THEME.variables.background);
+      expect(paintedColorScheme()).toBe("dark");
+    } finally {
+      Object.defineProperty(window, "localStorage", {
+        configurable: true,
+        writable: true,
+        value: original,
+      });
+    }
+  });
+});
+
+describe("index.html Android PWA chrome meta", () => {
+  it("opts into viewport-fit=cover and ships a color-scheme meta beside theme-color", () => {
+    const html = readFileSync(
+      resolve(__dirname, "../../../index.html"),
+      "utf8"
+    );
+    expect(html).toMatch(/viewport-fit=cover/);
+    expect(html).toMatch(
+      /<meta name="color-scheme" id="sb-color-scheme" content="light"/
+    );
+    expect(html).toMatch(
+      /<meta name="theme-color" id="sb-theme-color" content="#f8fafc"/
+    );
   });
 });
