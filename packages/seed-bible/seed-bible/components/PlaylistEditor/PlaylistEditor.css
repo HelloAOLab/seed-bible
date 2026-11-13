@@ -1283,10 +1283,6 @@
   border-radius: 10px;
 }
 
-.sb-pe-square-button.sb-pe-step-action--danger {
-  color: var(--pe-danger);
-}
-
 /* A title bar's plain icon buttons, Add a step in the accent colour. */
 .sb-pe-mobile-header-actions .sb-pe-square-button,
 .sb-pe-panel-header-actions .sb-pe-square-button {
