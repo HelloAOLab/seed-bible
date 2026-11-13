@@ -7,7 +7,7 @@ import {
 } from "../../managers/SettingsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { ScriptureLineHeightIcon, SettingsIcon } from "../icons";
-import { CloseButton } from "../CloseButton/CloseButton";
+import { BottomSheet } from "../BottomSheet/BottomSheet";
 
 const FONT_SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
@@ -50,140 +50,121 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
     if (next !== undefined) settings.setVerseLineHeight(next);
   };
 
+  const title = t("theme-and-text", { defaultValue: "Theme & text" });
+
   return (
-    <>
-      <div
-        className="sb-mobile-settings-sheet-overlay"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <div
-        className="sb-mobile-settings-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label={t("theme-and-text", { defaultValue: "Theme & text" })}
-      >
-        <div className="sb-mobile-settings-sheet-header">
-          <div className="sb-mobile-settings-sheet-title">
-            <span
-              className="material-symbols-outlined"
-              aria-hidden="true"
-              style={{ fontSize: "1.375rem" }}
-            >
-              auto_stories
-            </span>
-            <span>{t("theme-and-text", { defaultValue: "Theme & text" })}</span>
-          </div>
-          <CloseButton onClose={onClose} />
-        </div>
-        <div className="sb-mobile-settings-sheet-body">
-          <div className="sb-mobile-settings-sheet-section-label">
-            {t("scripture-settings", { defaultValue: "Scripture settings" })}
-          </div>
-          <div className="sb-mobile-settings-sheet-scripture-row">
-            <button
-              type="button"
-              className="sb-mobile-settings-sheet-scripture-button"
-              onClick={handleDecreaseFontSize}
-              disabled={fontSizeIndex <= 0}
-              aria-label={t("decrease-scripture-font-size", {
-                defaultValue: "Decrease scripture font size",
-              })}
-              style={{ fontSize: "var(--sb-font-size-14)" }}
-              // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
-            >
-              A
-            </button>
-            <button
-              type="button"
-              className="sb-mobile-settings-sheet-scripture-button"
-              onClick={handleIncreaseFontSize}
-              disabled={fontSizeIndex >= FONT_SIZE_OPTIONS.length - 1}
-              aria-label={t("increase-scripture-font-size", {
-                defaultValue: "Increase scripture font size",
-              })}
-              style={{ fontSize: "var(--sb-font-size-20)", fontWeight: 500 }}
-              // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
-            >
-              A
-            </button>
-            <button
-              type="button"
-              className="sb-mobile-settings-sheet-scripture-button"
-              onClick={handleCycleLineHeight}
-              aria-label={t("change-line-spacing", {
-                defaultValue: "Change line spacing",
-              })}
-            >
-              <ScriptureLineHeightIcon index={lineHeightIndex} />
-            </button>
-          </div>
-          <div className="sb-mobile-settings-sheet-section-label">
-            {t("ui-size", { defaultValue: "UI size" })}
-          </div>
-          <div className="sb-mobile-settings-sheet-size-row">
-            {UI_SIZE_OPTIONS.map((size, i) => (
-              <button
-                key={size}
-                type="button"
-                className={`sb-mobile-settings-sheet-size-button${
-                  current.uiSize === size
-                    ? " sb-mobile-settings-sheet-size-button-selected"
-                    : ""
-                }`}
-                onClick={() => settings.setUISize(size as UISize)}
-                style={{ fontSize: `${(12 + i * 2) / 16}rem` }}
-                aria-label={size}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-
-          <div className="sb-settings-toggle-row sb-mobile-settings-sheet-toggle-row">
-            <label
-              className="sb-settings-toggle-label"
-              htmlFor="sb-mobile-wake-lock-toggle"
-            >
-              {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
-            </label>
-            <input
-              id="sb-mobile-wake-lock-toggle"
-              type="checkbox"
-              checked={current.keepScreenAwake}
-              onChange={(event: Event) => {
-                settings.setKeepScreenAwake(
-                  (event.currentTarget as HTMLInputElement).checked
-                );
-              }}
-            />
-          </div>
-
-          {!state.app.isMinimalEmbed?.value && (
-            <>
-              <div className="sb-mobile-settings-sheet-divider" />
-
-              <button
-                type="button"
-                className="sb-mobile-settings-sheet-all-settings"
-                onClick={onOpenAllSettings}
-              >
-                <span className="material-symbols-outlined sb-mobile-settings-icon">
-                  <SettingsIcon />
-                </span>
-                <span>
-                  {t("go-to-all-settings", {
-                    defaultValue: "Go to all settings",
-                  })}
-                </span>
-                <span className="material-symbols-outlined sb-mobile-settings-sheet-all-settings-chevron rtl-mirror">
-                  chevron_right
-                </span>
-              </button>
-            </>
-          )}
-        </div>
+    <BottomSheet
+      className="sb-mobile-settings-sheet"
+      label={title}
+      title={title}
+      titleIcon="auto_stories"
+      onClose={onClose}
+    >
+      <div className="sb-mobile-settings-sheet-section-label">
+        {t("scripture-settings", { defaultValue: "Scripture settings" })}
       </div>
-    </>
+      <div className="sb-mobile-settings-sheet-scripture-row">
+        <button
+          type="button"
+          className="sb-mobile-settings-sheet-scripture-button"
+          onClick={handleDecreaseFontSize}
+          disabled={fontSizeIndex <= 0}
+          aria-label={t("decrease-scripture-font-size", {
+            defaultValue: "Decrease scripture font size",
+          })}
+          style={{ fontSize: "var(--sb-font-size-14)" }}
+          // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
+        >
+          A
+        </button>
+        <button
+          type="button"
+          className="sb-mobile-settings-sheet-scripture-button"
+          onClick={handleIncreaseFontSize}
+          disabled={fontSizeIndex >= FONT_SIZE_OPTIONS.length - 1}
+          aria-label={t("increase-scripture-font-size", {
+            defaultValue: "Increase scripture font size",
+          })}
+          style={{ fontSize: "var(--sb-font-size-20)", fontWeight: 500 }}
+          // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
+        >
+          A
+        </button>
+        <button
+          type="button"
+          className="sb-mobile-settings-sheet-scripture-button"
+          onClick={handleCycleLineHeight}
+          aria-label={t("change-line-spacing", {
+            defaultValue: "Change line spacing",
+          })}
+        >
+          <ScriptureLineHeightIcon index={lineHeightIndex} />
+        </button>
+      </div>
+      <div className="sb-mobile-settings-sheet-section-label">
+        {t("ui-size", { defaultValue: "UI size" })}
+      </div>
+      <div className="sb-mobile-settings-sheet-size-row">
+        {UI_SIZE_OPTIONS.map((size, i) => (
+          <button
+            key={size}
+            type="button"
+            className={`sb-mobile-settings-sheet-size-button${
+              current.uiSize === size
+                ? " sb-mobile-settings-sheet-size-button-selected"
+                : ""
+            }`}
+            onClick={() => settings.setUISize(size as UISize)}
+            style={{ fontSize: `${(12 + i * 2) / 16}rem` }}
+            aria-label={size}
+          >
+            {size}
+          </button>
+        ))}
+      </div>
+
+      <div className="sb-settings-toggle-row sb-mobile-settings-sheet-toggle-row">
+        <label
+          className="sb-settings-toggle-label"
+          htmlFor="sb-mobile-wake-lock-toggle"
+        >
+          {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
+        </label>
+        <input
+          id="sb-mobile-wake-lock-toggle"
+          type="checkbox"
+          checked={current.keepScreenAwake}
+          onChange={(event: Event) => {
+            settings.setKeepScreenAwake(
+              (event.currentTarget as HTMLInputElement).checked
+            );
+          }}
+        />
+      </div>
+
+      {!state.app.isMinimalEmbed?.value && (
+        <>
+          <div className="sb-mobile-settings-sheet-divider" />
+
+          <button
+            type="button"
+            className="sb-mobile-settings-sheet-all-settings"
+            onClick={onOpenAllSettings}
+          >
+            <span className="material-symbols-outlined sb-mobile-settings-icon">
+              <SettingsIcon />
+            </span>
+            <span>
+              {t("go-to-all-settings", {
+                defaultValue: "Go to all settings",
+              })}
+            </span>
+            <span className="material-symbols-outlined sb-mobile-settings-sheet-all-settings-chevron rtl-mirror">
+              chevron_right
+            </span>
+          </button>
+        </>
+      )}
+    </BottomSheet>
   );
 }

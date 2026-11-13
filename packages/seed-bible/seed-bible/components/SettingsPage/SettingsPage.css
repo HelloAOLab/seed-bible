@@ -477,7 +477,7 @@
    scrolls internally, with the overlay dimming the whole screen. */
 @media (max-width: 480px) {
   .sb-language-picker-overlay {
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--sb-backdrop);
   }
 
   .sb-language-picker-menu {

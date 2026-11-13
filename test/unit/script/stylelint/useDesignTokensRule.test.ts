@@ -33,6 +33,8 @@ describe(ruleName, () => {
       ".a { box-shadow: 0 10px  30px var(--sb-shadow-color); }",
       "--sb-shadow-popover",
     ],
+    [".a { background: rgba(0,0,0,0.3); }", "--sb-backdrop"],
+    [".a { background-color: rgba(0, 0, 0, 0.3); }", "--sb-backdrop"],
   ])("reports %s", async (code, token) => {
     const warnings = await lint(code);
     expect(warnings).toHaveLength(1);
