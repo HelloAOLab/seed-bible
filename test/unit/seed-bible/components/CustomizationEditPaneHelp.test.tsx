@@ -1,6 +1,9 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { CustomizationEditPaneHelp } from "@packages/seed-bible/seed-bible/components/CustomizationEditPane/CustomizationEditPane";
+import {
+  CustomizationEditPaneHelp,
+  CustomizationEditPaneLeading,
+} from "@packages/seed-bible/seed-bible/components/CustomizationEditPane/CustomizationEditPane";
 import type {
   CustomizationThemeVariant,
   SeedBibleCustomization,
@@ -69,6 +72,7 @@ describe("CustomizationEditPaneHelp", () => {
     act(() => {
       render(
         <TestHost state={state}>
+          <CustomizationEditPaneLeading />
           <CustomizationEditPaneHelp state={state} />
         </TestHost>,
         container
@@ -134,9 +138,27 @@ describe("CustomizationEditPaneHelp", () => {
     expect(state.customizations.editingVariantId.value).toBe("light-theme");
   });
 
+  it("leaves a running tour where it is when pressed again", () => {
+    editBranding();
+    renderHelp();
+    clickHelp();
+    goToStep(FIRST_THEME_STEP);
+    const step = state.tutorial.currentStep.value?.id;
+    // The tour has opened the theme editor, which has a back button.
+    const back = () => container.querySelector('button[aria-label="Back"]');
+    expect(back()).not.toBeNull();
+
+    clickHelp();
+
+    expect(state.tutorial.currentStep.value?.id).toBe(step);
+    expect(back()).not.toBeNull();
+  });
+
   it("isn't shown while no Custom Branding is open", () => {
     renderHelp();
 
-    expect(container.querySelector("button")).toBeNull();
+    expect(
+      container.querySelector('button[aria-label="Take a tour"]')
+    ).toBeNull();
   });
 });
