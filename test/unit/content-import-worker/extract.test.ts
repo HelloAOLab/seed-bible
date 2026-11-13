@@ -2,10 +2,12 @@
 import { extractPage } from "../../../workers/content-import/src/commonCrawl/extract";
 import {
   parseCaptures,
-  parseCollections,
+  parseCrawlList,
   pickCrawls,
   selectCandidates,
+  surtPrefix,
 } from "../../../workers/content-import/src/commonCrawl/cdx";
+import { parseSiteAddress } from "@packages/seed-bible/seed-bible/managers/customContent/siteImport";
 
 const PAGE = "https://g.org/sermons/door";
 
@@ -57,27 +59,34 @@ describe("extractPage", () => {
 });
 
 describe("the index's answers", () => {
-  it("lists crawls newest first and picks the ones to look in", () => {
-    const crawls = parseCollections([
-      { id: "CC-MAIN-2026-22", name: "May" },
-      {
-        id: "CC-MAIN-2026-38",
-        name: "Sept",
-        "cdx-api": "https://evil.example/x",
-      },
-      { id: "not-a-crawl" },
+  it("lists crawls newest first, with their names, and picks the ones to look in", () => {
+    // The shape of data.commoncrawl.org/crawl-data/index.html's rows.
+    const crawls = parseCrawlList(`
+      <tr>
+        <td><a href="./CC-MAIN-2026-39/index.html">CC-MAIN-2026-39</a></td>
+        <td><a href="https://commoncrawl.org/blog/x">September 2026</a></td>
+      </tr>
+      <tr>
+        <td><a href="./CC-MAIN-2026-43/index.html">CC-MAIN-2026-43</a></td>
+        <td><a href="https://commoncrawl.org/blog/y">October 2026</a></td>
+      </tr>`);
+    expect(crawls).toEqual([
+      { id: "CC-MAIN-2026-43", name: "October 2026" },
+      { id: "CC-MAIN-2026-39", name: "September 2026" },
     ]);
-    expect(crawls.map((c) => c.id)).toEqual([
-      "CC-MAIN-2026-38",
-      "CC-MAIN-2026-22",
+    expect(pickCrawls(crawls, 3, "CC-MAIN-2026-39").map((c) => c.id)).toEqual([
+      "CC-MAIN-2026-43",
     ]);
-    // An index elsewhere than Common Crawl's own host is never used.
-    expect(crawls[0]!.cdxApi).toBe(
-      "https://index.commoncrawl.org/CC-MAIN-2026-38-index"
+  });
+
+  it("finds a site's pages under the key Common Crawl files them by", () => {
+    // Real keys, from Common Crawl's index for gracechurch.org.
+    expect(surtPrefix(parseSiteAddress("www.GraceChurch.org/Sermons")!)).toBe(
+      "org,gracechurch)/sermons/"
     );
-    expect(pickCrawls(crawls, 3, "CC-MAIN-2026-22").map((c) => c.id)).toEqual([
-      "CC-MAIN-2026-38",
-    ]);
+    expect(surtPrefix(parseSiteAddress("gracechurch.org")!)).toBe(
+      "org,gracechurch)/"
+    );
   });
 
   it("keeps the newest capture of a page and one page per content", () => {

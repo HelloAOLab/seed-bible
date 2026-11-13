@@ -37,12 +37,12 @@ export interface JobRow {
 /** What a website import remembers about its lookup. */
 export interface SiteJobDetails {
   site: string;
-  /** The search pattern sent to the index, e.g. `gracecommunity.org/sermons/*`. */
-  pattern: string;
+  /** The SURT key every page under the site starts with, e.g. `org,gracecommunity)/sermons/`. */
+  prefix: string;
   include: string[];
   exclude: string[];
   sourceId: string;
-  crawls: { id: string; name: string; cdxApi: string }[];
+  crawls: { id: string; name: string }[];
 }
 
 export interface ItemRow {

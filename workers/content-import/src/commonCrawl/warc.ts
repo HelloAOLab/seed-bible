@@ -57,7 +57,7 @@ async function readCapped(
   return bytes;
 }
 
-function gunzip(bytes: Uint8Array): Promise<Uint8Array> {
+export function gunzip(bytes: Uint8Array): Promise<Uint8Array> {
   const stream = new Blob([bytes as BlobPart])
     .stream()
     .pipeThrough(new DecompressionStream("gzip"));

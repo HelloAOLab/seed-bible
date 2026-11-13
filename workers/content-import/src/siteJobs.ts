@@ -1,5 +1,5 @@
 import { MAX_SITE_PAGES } from "../../../packages/seed-bible/seed-bible/managers/customContent/importApi";
-import type { CandidatePage } from "./commonCrawl/cdx";
+import type { CandidatePage, IndexBlock } from "./commonCrawl/cdx";
 import type { JobRow, SiteJobDetails } from "./jobs";
 import type { D1Database, D1PreparedStatement } from "./platform";
 
@@ -89,24 +89,24 @@ export async function lookupState(
 }
 
 /**
- * Records a crawl's result page count: one queued lookup per result page,
- * stored in the same batch that marks the count done, so the listing can
- * never look finished in between.
+ * Records which blocks of a crawl's index hold the site: one queued lookup
+ * per block, stored in the same batch that marks the search done, so the
+ * listing can never look finished in between.
  */
-export async function recordPageCount(
+export async function recordIndexBlocks(
   db: D1Database,
   jobId: string,
   crawlId: string,
-  pages: number
+  blocks: readonly IndexBlock[]
 ): Promise<void> {
   await db.batch([
-    ...Array.from({ length: pages }, (_, page) =>
+    ...blocks.map((block, page) =>
       db
         .prepare(
-          `INSERT OR IGNORE INTO site_lookups (job_id, crawl_id, page, state)
-           VALUES (?, ?, ?, 'queued')`
+          `INSERT OR IGNORE INTO site_lookups (job_id, crawl_id, page, state, block)
+           VALUES (?, ?, ?, 'queued', ?)`
         )
-        .bind(jobId, crawlId, page)
+        .bind(jobId, crawlId, page, JSON.stringify(block))
     ),
     db
       .prepare(
@@ -114,6 +114,29 @@ export async function recordPageCount(
       )
       .bind(jobId, crawlId),
   ]);
+}
+
+/** The index block a lookup reads, as {@link recordIndexBlocks} stored it. */
+export async function lookupBlock(
+  db: D1Database,
+  jobId: string,
+  crawlId: string,
+  page: number
+): Promise<IndexBlock | null> {
+  const row = await db
+    .prepare(
+      "SELECT block FROM site_lookups WHERE job_id = ? AND crawl_id = ? AND page = ?"
+    )
+    .bind(jobId, crawlId, page)
+    .first<{ block: string | null }>();
+  if (!row?.block) {
+    return null;
+  }
+  try {
+    return JSON.parse(row.block) as IndexBlock;
+  } catch {
+    return null;
+  }
 }
 
 export async function settleLookup(

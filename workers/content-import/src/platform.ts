@@ -74,8 +74,6 @@ export interface Env {
   DB: D1Database;
   IMPORT_QUEUE: QueueSender<ImportMessage>;
   LIBRARY_WRITER: DurableObjectNamespace;
-  /** The single CommonCrawlGate every index request goes through. */
-  COMMON_CRAWL_GATE: DurableObjectNamespace;
   /** The CasualOS records server, e.g. `https://auth.seedbible.org`. */
   CASUALOS_ENDPOINT: string;
   /**

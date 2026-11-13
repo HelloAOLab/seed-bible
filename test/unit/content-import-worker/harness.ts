@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { gzipSync } from "node:zlib";
-import { CommonCrawlGate } from "../../../workers/content-import/src/commonCrawlGate";
 import { LibraryWriter } from "../../../workers/content-import/src/libraryWriter";
 import { handleQueueBatch } from "../../../workers/content-import/src/consumer";
 import type { WorkerDeps } from "../../../workers/content-import/src/deps";
@@ -23,7 +22,11 @@ const MIGRATIONS = path.resolve(
 /** D1, backed by a real in-memory SQLite database with the worker's migrations applied. */
 export function createTestD1(): D1Database & { sqlite: DatabaseSync } {
   const sqlite = new DatabaseSync(":memory:");
-  for (const file of ["0001_import_jobs.sql", "0002_site_imports.sql"]) {
+  for (const file of [
+    "0001_import_jobs.sql",
+    "0002_site_imports.sql",
+    "0003_index_blocks.sql",
+  ]) {
     sqlite.exec(readFileSync(path.join(MIGRATIONS, file), "utf-8"));
   }
   type Bindable = string | number | null;
@@ -282,12 +285,7 @@ export function createTestWorker(
         : casualos.fetch(input, init);
     },
     now: () => clock.now,
-    // Time passes instead of the test waiting for it.
-    sleep: async (ms) => {
-      clock.now += ms;
-    },
   };
-  let gate: CommonCrawlGate | null = null;
   const db = createTestD1();
   const pending: { body: ImportMessage; attempts: number }[] = [];
   const deadLetters: { body: ImportMessage; attempts: number }[] = [];
@@ -317,10 +315,6 @@ export function createTestWorker(
         }
         return writers.get(name)!;
       },
-    },
-    COMMON_CRAWL_GATE: {
-      idFromName: (name) => name,
-      get: () => (gate ??= new CommonCrawlGate(null, env, deps)),
     },
     CASUALOS_ENDPOINT: "https://casualos.test",
     CASUALOS_ORIGIN: APP_ORIGIN,
@@ -370,7 +364,7 @@ export function createTestWorker(
 
 export type TestWorker = ReturnType<typeof createTestWorker>;
 
-/** One saved page in the fake archive. */
+/** One saved page in the fake archive's index. */
 interface FakeCapture {
   url: string;
   timestamp: string;
@@ -407,24 +401,39 @@ export function warcRecord(
   return gzipSync(warc);
 }
 
+/** A page's SURT key, as Common Crawl writes its index: `org,example)/path?q`. */
+function surtKey(url: string): string {
+  const parsed = new URL(url);
+  const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+  return `${host.split(".").reverse().join(",")})${parsed.pathname}${parsed.search}`.toLowerCase();
+}
+
 /**
- * Common Crawl, in memory: the list of crawls, each crawl's URL index
- * (answering the pywb CDX queries the worker makes, paged), and WARC files
- * answering range requests.
+ * Common Crawl's archive host, in memory: the crawl list page; each
+ * crawl's index as Common Crawl publishes it (gzipped CDX blocks sorted by
+ * SURT key, and a `cluster.idx` naming each block), built from the pages
+ * added; and WARC files. Every file answers range requests.
  */
 export function createFakeCommonCrawl() {
   const crawls: { id: string; name: string }[] = [
-    { id: "CC-MAIN-2026-38", name: "September 2026 Index" },
-    { id: "CC-MAIN-2026-30", name: "July 2026 Index" },
-    { id: "CC-MAIN-2026-22", name: "May 2026 Index" },
-    { id: "CC-MAIN-2026-13", name: "March 2026 Index" },
+    { id: "CC-MAIN-2026-38", name: "September 2026" },
+    { id: "CC-MAIN-2026-30", name: "July 2026" },
+    { id: "CC-MAIN-2026-22", name: "May 2026" },
+    { id: "CC-MAIN-2026-13", name: "March 2026" },
   ];
   const captures = new Map<string, FakeCapture[]>();
   const files = new Map<string, Buffer>();
-  /** Captures per result page. */
-  const pageSize = { value: 50 };
-  /** HTTP statuses to answer the next index requests with, in order. */
+  /** Index entries per block; Common Crawl's are about 3,000. */
+  const blockSize = { value: 50 };
+  /**
+   * Entries from other sites in every crawl's index, sorted before and
+   * after the test's own, so the index is big enough to need searching.
+   */
+  const otherSites = { value: 20 };
+  /** HTTP statuses to answer the next index-file requests with, in order; 0 answers normally. */
   const indexFailures: number[] = [];
+  /** Crawls whose index files are built; adding a page rebuilds its crawl's. */
+  const built = new Set<string>();
 
   /** Saves a page in a crawl, as an index entry plus a record in that crawl's WARC file. */
   const addPage = (
@@ -455,93 +464,112 @@ export function createFakeCommonCrawl() {
       length: record.length,
     });
     captures.set(crawlId, list);
+    built.delete(crawlId);
   };
 
-  /** Captures matching a pywb prefix pattern like `example.org/sermons/*`. */
-  const matching = (crawlId: string, pattern: string) => {
-    const prefix = pattern.replace(/\*$/, "");
-    return (captures.get(crawlId) ?? []).filter((capture) =>
-      capture.url
-        .replace(/^https?:\/\//, "")
-        .replace(/^www\./, "")
-        .startsWith(prefix)
-    );
+  /** Builds a crawl's CDX file and `cluster.idx` from its pages, as Common Crawl's tools do. */
+  const buildIndex = (crawlId: string) => {
+    const other = (prefix: string, i: number): FakeCapture => ({
+      url: `https://${prefix}${String(i).padStart(5, "0")}.example/`,
+      timestamp: "20260101000000",
+      filename: "crawl-data/other.warc.gz",
+      offset: 0,
+      length: 1,
+    });
+    const entries = [
+      ...Array.from({ length: otherSites.value }, (_, i) => other("aaa", i)),
+      ...(captures.get(crawlId) ?? []),
+      ...Array.from({ length: otherSites.value }, (_, i) => other("zzz", i)),
+    ]
+      .map((capture) => ({
+        key: surtKey(capture.url),
+        line: `${surtKey(capture.url)} ${capture.timestamp} ${JSON.stringify({
+          url: capture.url,
+          mime: capture.mime ?? "text/html",
+          status: capture.status ?? "200",
+          digest: capture.digest ?? "",
+          length: String(capture.length),
+          offset: String(capture.offset),
+          filename: capture.filename,
+        })}`,
+      }))
+      .sort((a, b) => (a.line < b.line ? -1 : a.line > b.line ? 1 : 0));
+    const blocks: Buffer[] = [];
+    const cluster: string[] = [];
+    let offset = 0;
+    for (let i = 0; i < entries.length; i += blockSize.value) {
+      const block = entries.slice(i, i + blockSize.value);
+      const zipped = gzipSync(
+        Buffer.from(block.map((entry) => entry.line).join("\n") + "\n")
+      );
+      const [key, timestamp] = block[0]!.line.split(" ");
+      cluster.push(
+        `${key} ${timestamp}\tcdx-00000.gz\t${offset}\t${zipped.length}\t${cluster.length + 1}`
+      );
+      blocks.push(zipped);
+      offset += zipped.length;
+    }
+    const base = `cc-index/collections/${crawlId}/indexes`;
+    files.set(`${base}/cdx-00000.gz`, Buffer.concat(blocks));
+    files.set(`${base}/cluster.idx`, Buffer.from(cluster.join("\n") + "\n"));
   };
 
   const fetchImpl = async (url: URL, init?: RequestInit): Promise<Response> => {
-    if (url.hostname === "index.commoncrawl.org") {
+    if (url.hostname !== "data.commoncrawl.org") {
+      throw new Error(`Unexpected request to ${url}`);
+    }
+    const path = url.pathname.slice(1);
+    const isIndex =
+      path === "crawl-data/index.html" || path.startsWith("cc-index/");
+    if (isIndex) {
       const failure = indexFailures.shift();
       if (failure) {
         return new Response("Slow down", { status: failure });
       }
-      if (url.pathname === "/collinfo.json") {
-        return Response.json(
-          crawls.map((crawl) => ({
-            ...crawl,
-            "cdx-api": `https://index.commoncrawl.org/${crawl.id}-index`,
-          }))
-        );
-      }
-      const crawlId = /^\/(CC-MAIN-[\w-]+)-index$/.exec(url.pathname)?.[1];
-      const found = crawlId
-        ? matching(crawlId, url.searchParams.get("url") ?? "")
-        : [];
-      if (found.length === 0) {
-        return new Response(
-          "No Captures found for: " + url.searchParams.get("url"),
-          {
-            status: 404,
-          }
-        );
-      }
-      const pages = Math.ceil(found.length / pageSize.value);
-      if (url.searchParams.get("showNumPages") === "true") {
-        return Response.json({ pages, pageSize: 5, blocks: pages });
-      }
-      const page = Number(url.searchParams.get("page") ?? 0);
-      if (page >= pages) {
-        return new Response("Page out of range", { status: 400 });
-      }
-      const lines = found
-        .slice(page * pageSize.value, (page + 1) * pageSize.value)
-        .map((capture) =>
-          JSON.stringify({
-            urlkey: capture.url,
-            timestamp: capture.timestamp,
-            url: capture.url,
-            mime: capture.mime ?? "text/html",
-            status: capture.status ?? "200",
-            digest: capture.digest,
-            length: String(capture.length),
-            offset: String(capture.offset),
-            filename: capture.filename,
-          })
-        );
-      return new Response(lines.join("\n") + "\n");
     }
-    if (url.hostname === "data.commoncrawl.org") {
-      const file = files.get(url.pathname.slice(1));
-      const range = /^bytes=(\d+)-(\d+)$/.exec(
-        new Headers(init?.headers).get("Range") ?? ""
-      );
-      if (!file || !range) {
-        return new Response("Not found", { status: 404 });
-      }
+    if (path === "crawl-data/index.html") {
       return new Response(
-        new Uint8Array(file.subarray(+range[1]!, +range[2]! + 1)),
-        {
-          status: 206,
-        }
+        `<table><tbody>${crawls
+          .map(
+            (crawl) =>
+              `<tr>\n<td><a href="./${crawl.id}/index.html">${crawl.id}</a></td>\n<td><a href="https://commoncrawl.org/blog/x">${crawl.name}</a></td>\n</tr>`
+          )
+          .join("\n")}</tbody></table>`
       );
     }
-    throw new Error(`Unexpected request to ${url}`);
+    const indexOf = /^cc-index\/collections\/(CC-MAIN-[\w-]+)\/indexes\//.exec(
+      path
+    );
+    if (
+      indexOf &&
+      !built.has(indexOf[1]!) &&
+      crawls.some((crawl) => crawl.id === indexOf[1])
+    ) {
+      buildIndex(indexOf[1]!);
+      built.add(indexOf[1]!);
+    }
+    const file = files.get(path);
+    const range = /^bytes=(\d+)-(\d+)$/.exec(
+      new Headers(init?.headers).get("Range") ?? ""
+    );
+    if (!file || !range) {
+      // S3 answers 403 for a file that isn't there.
+      return new Response("AccessDenied", { status: 403 });
+    }
+    const start = Number(range[1]);
+    const end = Math.min(Number(range[2]), file.length - 1);
+    return new Response(new Uint8Array(file.subarray(start, end + 1)), {
+      status: 206,
+      headers: { "Content-Range": `bytes ${start}-${end}/${file.length}` },
+    });
   };
 
   return {
     crawls,
     captures,
     files,
-    pageSize,
+    blockSize,
+    otherSites,
     indexFailures,
     addPage,
     fetch: fetchImpl,

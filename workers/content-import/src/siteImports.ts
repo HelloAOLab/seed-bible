@@ -7,22 +7,21 @@ import {
 import {
   formatSiteAddress,
   parseSiteAddress,
-  siteSearchPattern,
 } from "../../../packages/seed-bible/seed-bible/managers/customContent/siteImport";
 import { enqueue } from "./queue";
 import {
-  COLLECTIONS_URL,
-  MAX_LOOKUP_PAGES_PER_CRAWL,
-  pageCountUrl,
+  CRAWL_LIST_URL,
+  findIndexBlocks,
   parseCaptures,
-  parseCollections,
-  parsePageCount,
+  parseCrawlList,
   pickCrawls,
-  resultPageUrl,
+  readIndexBlock,
   selectCandidates,
+  surtPrefix,
   type Crawl,
 } from "./commonCrawl/cdx";
-import { fetchThroughGate } from "./commonCrawlGate";
+import { ArchiveError } from "./commonCrawl/warc";
+import { isTransientError } from "./casualos";
 import type { WorkerDeps } from "./deps";
 import { HttpError, checkLibraryAccess, readBody, type Caller } from "./http";
 import {
@@ -43,9 +42,10 @@ import {
   finishListingIfComplete,
   listCandidates,
   lookupCounts,
+  lookupBlock,
   lookupState,
   pickCandidates,
-  recordPageCount,
+  recordIndexBlocks,
   settleLookup,
   siteDetails,
   startPickedJob,
@@ -61,37 +61,34 @@ import {
 const COLLECTIONS_CACHE_MS = 60 * 60 * 1000;
 let collections: { crawls: Crawl[]; until: number } | null = null;
 
-function gate(env: Env) {
-  return env.COMMON_CRAWL_GATE.get(env.COMMON_CRAWL_GATE.idFromName("global"));
-}
-
-async function latestCrawls(env: Env, deps: WorkerDeps): Promise<Crawl[]> {
+async function latestCrawls(deps: WorkerDeps): Promise<Crawl[]> {
   if (collections && collections.until > deps.now()) {
     return collections.crawls;
   }
-  const response = await fetchThroughGate(gate(env), COLLECTIONS_URL);
-  const body = await response.text();
-  let crawls: Crawl[] = [];
-  if (response.status === 200) {
-    try {
-      crawls = parseCollections(JSON.parse(body));
-    } catch {
-      // Reported below with what came back.
-    }
+  let status = 0;
+  let body = "";
+  try {
+    const response = await deps.fetch(CRAWL_LIST_URL, {
+      headers: {
+        "User-Agent": "SeedBibleContentImport/1.0 (+https://seedbible.org)",
+      },
+    });
+    status = response.status;
+    body = await response.text();
+  } catch (error) {
+    body = `Network error: ${String(error)}`;
   }
+  const crawls = status === 200 ? parseCrawlList(body) : [];
   if (crawls.length === 0) {
     // What Common Crawl actually answered, so a block or an outage can be
     // told apart from a change in its format.
     const answer = body.slice(0, 300);
-    console.error(
-      `Common Crawl's crawl list failed: HTTP ${response.status}:`,
-      answer
-    );
+    console.error(`Common Crawl's crawl list failed: HTTP ${status}:`, answer);
     throw new HttpError(
       502,
       "common_crawl_unavailable",
       "Common Crawl couldn't be reached. Please try again later.",
-      { commonCrawlStatus: response.status, commonCrawlAnswer: answer }
+      { commonCrawlStatus: status, commonCrawlAnswer: answer }
     );
   }
   collections = { crawls, until: deps.now() + COLLECTIONS_CACHE_MS };
@@ -162,7 +159,7 @@ export async function startSiteImport(
   await checkLibraryAccess(caller, contentRecordName, now);
 
   const crawls = pickCrawls(
-    await latestCrawls(env, deps),
+    await latestCrawls(deps),
     SITE_CRAWLS,
     parsed.data.sinceCrawlId
   );
@@ -175,7 +172,7 @@ export async function startSiteImport(
       created_at: now,
       details: {
         site: formatSiteAddress(address),
-        pattern: siteSearchPattern(address),
+        prefix: surtPrefix(address),
         include: parsed.data.include ?? [],
         exclude: parsed.data.exclude ?? [],
         sourceId: parsed.data.sourceId ?? `site_${crypto.randomUUID()}`,
@@ -267,12 +264,11 @@ export async function pickSitePages(
   };
 }
 
-const RETRY_STATUSES = new Set([429, 500, 502, 503, 504]);
-
 /**
- * One index lookup of a website import. Counting a crawl's result pages
- * queues a lookup per page; each page adds the pages it lists to the
- * offer. The last lookup to finish hands the list to the owner.
+ * One index lookup of a website import. The first, per crawl (`page` -1),
+ * finds which blocks of the crawl's index can hold the site's pages and
+ * queues a lookup per block; each block's lookup adds the pages it lists to
+ * the offer. The last lookup to finish hands the list to the owner.
  */
 export async function processLookupMessage(
   env: Env,
@@ -301,67 +297,63 @@ export async function processLookupMessage(
     return { kind: "ack" };
   }
 
-  const url =
-    message.page < 0
-      ? pageCountUrl(crawl, details.pattern)
-      : resultPageUrl(crawl, details.pattern, message.page);
-  const response = await fetchThroughGate(gate(env), url);
-  if (response.status !== 200 && response.status !== 404) {
+  try {
+    if (message.page < 0) {
+      // Finding the site's blocks: each becomes one lookup of its own.
+      const blocks =
+        (await findIndexBlocks(deps.fetch, crawl.id, details.prefix)) ?? [];
+      await recordIndexBlocks(env.DB, job.id, crawl.id, blocks);
+      if (blocks.length > 0) {
+        await env.IMPORT_QUEUE.sendBatch(
+          blocks.map((_, page) => ({
+            body: {
+              kind: "lookup" as const,
+              jobId: job.id,
+              crawlId: crawl.id,
+              page,
+            },
+          }))
+        );
+      }
+    } else {
+      const block = await lookupBlock(env.DB, job.id, crawl.id, message.page);
+      const rows = block
+        ? await readIndexBlock(deps.fetch, crawl.id, block, details.prefix)
+        : "";
+      const candidates = selectCandidates(parseCaptures(rows), {
+        crawlId: crawl.id,
+        sourceId: details.sourceId,
+        include: details.include,
+        exclude: details.exclude,
+      });
+      await addCandidates(
+        env.DB,
+        job.id,
+        await Promise.all(
+          candidates.map(async (candidate) => ({
+            ...candidate,
+            itemId: await candidateItemId(candidate.key),
+          }))
+        )
+      );
+      await settleLookup(env.DB, job.id, crawl.id, message.page, {
+        state: "done",
+      });
+    }
+  } catch (error) {
+    const code = error instanceof ArchiveError ? error.code : "server_error";
     console.warn(
-      `Common Crawl lookup failed: HTTP ${response.status} for ${url}:`,
-      (await response.clone().text()).slice(0, 300)
+      `Common Crawl lookup failed (${crawl.id}, ${message.page < 0 ? "index search" : `block ${message.page}`}):`,
+      error
     );
-  }
-  if (RETRY_STATUSES.has(response.status)) {
-    return { kind: "retry", delaySeconds: retryDelay };
-  }
-  // The index answers 404 for a site it has nothing from. Anything else
-  // that isn't a 200 is a real failure, never read as "no pages".
-  const empty = response.status === 404;
-  if (!empty && response.status !== 200) {
+    if (isTransientError(code)) {
+      return { kind: "retry", delaySeconds: retryDelay };
+    }
+    // A real failure, never read as "no pages": the editor says some may
+    // be missing.
     await settleLookup(env.DB, job.id, crawl.id, message.page, {
       state: "failed",
-      error: `http_${response.status}`,
-    });
-    await finishListingIfComplete(env.DB, job.id, deps.now());
-    return { kind: "ack" };
-  }
-  const body = empty ? "" : await response.text();
-
-  if (message.page < 0) {
-    const pages = Math.min(parsePageCount(body), MAX_LOOKUP_PAGES_PER_CRAWL);
-    await recordPageCount(env.DB, job.id, crawl.id, pages);
-    if (pages > 0) {
-      await env.IMPORT_QUEUE.sendBatch(
-        Array.from({ length: pages }, (_, page) => ({
-          body: {
-            kind: "lookup" as const,
-            jobId: job.id,
-            crawlId: crawl.id,
-            page,
-          },
-        }))
-      );
-    }
-  } else {
-    const candidates = selectCandidates(parseCaptures(body), {
-      crawlId: crawl.id,
-      sourceId: details.sourceId,
-      include: details.include,
-      exclude: details.exclude,
-    });
-    await addCandidates(
-      env.DB,
-      job.id,
-      await Promise.all(
-        candidates.map(async (candidate) => ({
-          ...candidate,
-          itemId: await candidateItemId(candidate.key),
-        }))
-      )
-    );
-    await settleLookup(env.DB, job.id, crawl.id, message.page, {
-      state: "done",
+      error: code,
     });
   }
   await finishListingIfComplete(env.DB, job.id, deps.now());

@@ -5,7 +5,6 @@ import {
   parseCaptureTimestamp,
   parseSiteAddress,
   siteFolder,
-  siteSearchPattern,
 } from "@packages/seed-bible/seed-bible/managers/customContent/siteImport";
 import {
   findPageReferences,
@@ -24,7 +23,6 @@ describe("parseSiteAddress", () => {
         host: "gracecommunity.org",
         pathPrefix: "/sermons/",
       });
-      expect(siteSearchPattern(site)).toBe("gracecommunity.org/sermons/*");
       expect(formatSiteAddress(site)).toBe("gracecommunity.org/sermons/");
     }
     expect(formatSiteAddress(parseSiteAddress("gracecommunity.org")!)).toBe(

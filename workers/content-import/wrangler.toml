@@ -30,6 +30,12 @@ new_sqlite_classes = ["LibraryWriter"]
 tag = "v2"
 new_sqlite_classes = ["CommonCrawlGate"]
 
+# The gate spaced out requests to index.commoncrawl.org, which the worker
+# no longer uses: it reads Common Crawl's index files instead.
+[[migrations]]
+tag = "v3"
+deleted_classes = ["CommonCrawlGate"]
+
 # ─── alpha (develop) ────────────────────────────────────────────────────────
 
 [env.alpha]
@@ -71,10 +77,6 @@ max_batch_timeout = 30
 name = "LIBRARY_WRITER"
 class_name = "LibraryWriter"
 
-[[env.alpha.durable_objects.bindings]]
-name = "COMMON_CRAWL_GATE"
-class_name = "CommonCrawlGate"
-
 # ─── production (main) ──────────────────────────────────────────────────────
 
 [env.production]
@@ -115,7 +117,3 @@ max_batch_timeout = 30
 [[env.production.durable_objects.bindings]]
 name = "LIBRARY_WRITER"
 class_name = "LibraryWriter"
-
-[[env.production.durable_objects.bindings]]
-name = "COMMON_CRAWL_GATE"
-class_name = "CommonCrawlGate"

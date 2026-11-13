@@ -53,11 +53,6 @@ export function parseSiteAddress(input: string): SiteAddress | null {
   };
 }
 
-/** The index query's URL pattern: everything under the site's path. */
-export function siteSearchPattern(site: SiteAddress): string {
-  return `${site.host}${site.pathPrefix}*`;
-}
-
 /** The site written back the way owners type it, e.g. `gracecommunity.org/sermons/`. */
 export function formatSiteAddress(site: SiteAddress): string {
   return `${site.host}${site.pathPrefix === "/" ? "" : site.pathPrefix}`;

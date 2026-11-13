@@ -1,7 +1,6 @@
 // @vitest-environment node
 import { handleRequest } from "../../../workers/content-import/src/api";
 import { runCleanup } from "../../../workers/content-import/src/cleanup";
-import { INDEX_REQUEST_GAP_MS } from "../../../workers/content-import/src/commonCrawlGate";
 import { clearCrawlCache } from "../../../workers/content-import/src/siteImports";
 import { SITE_LISTING_LIFETIME_MS } from "../../../workers/content-import/src/siteJobs";
 import {
@@ -144,7 +143,7 @@ afterEach(() => {
 describe("website imports", () => {
   it("lists a site's pages from the latest crawls, newest copy of each, leaving out noise", async () => {
     const { worker, key, commonCrawl } = setup();
-    commonCrawl.pageSize.value = 2;
+    commonCrawl.blockSize.value = 2;
     const site = "https://gracecommunity.org/sermons";
     commonCrawl.addPage(OLDER, `${site}/good-shepherd`, sermonPage("Old"), {
       timestamp: "20260701000000",
@@ -279,10 +278,39 @@ describe("website imports", () => {
     expect(libraryItems(casualos)[0]?.title).toBe("Café church");
   });
 
+  it("finds a site in a big index, across several of its blocks, and nothing beside it", async () => {
+    const { worker, key, commonCrawl } = setup();
+    // About 700 KB of index around the site, many times the search window.
+    commonCrawl.otherSites.value = 12000;
+    commonCrawl.blockSize.value = 2;
+    const urls = Array.from(
+      { length: 7 },
+      (_, i) => `https://gracecommunity.org/sermons/${i}`
+    );
+    for (const url of urls) {
+      commonCrawl.addPage(LATEST, url, "");
+    }
+    // Not under the address the owner gave.
+    commonCrawl.addPage(
+      LATEST,
+      "https://media.gracecommunity.org/sermons/x",
+      ""
+    );
+    commonCrawl.addPage(LATEST, "https://gracecommunity.org/blog/y", "");
+
+    const listed = await lookUp(worker, key);
+    expect(listed.candidates!.map((c) => c.url).sort()).toEqual(urls);
+    // The search reads small pieces of the index, not all of it.
+    const read = worker.requests.filter((r) =>
+      r.url.includes("cluster.idx")
+    ).length;
+    expect(read).toBeLessThan(40);
+  });
+
   it("waits and tries again when the index is overloaded, rather than finding nothing", async () => {
     const { worker, key, commonCrawl } = setup();
     commonCrawl.addPage(LATEST, "https://gracecommunity.org/sermons/a", "");
-    // The crawl list, then the first count lookup, are refused once each.
+    // The crawl list answers; the first read of the index is refused once.
     commonCrawl.indexFailures.push(0, 503);
 
     const listed = await lookUp(worker, key);
@@ -290,22 +318,12 @@ describe("website imports", () => {
       "https://gracecommunity.org/sermons/a",
     ]);
     expect(listed.lookups.failed).toBe(0);
-
-    // One request at a time to the index, never closer than the gap.
-    const times = worker.requests
-      .filter((r) => r.host === "index.commoncrawl.org")
-      .map((r) => r.at);
-    for (let i = 1; i < times.length; i++) {
-      expect(times[i]! - times[i - 1]!).toBeGreaterThanOrEqual(
-        INDEX_REQUEST_GAP_MS
-      );
-    }
   });
 
   it("counts an index error as a failed lookup, never as finding nothing", async () => {
     const { worker, key, commonCrawl } = setup();
     commonCrawl.addPage(LATEST, "https://gracecommunity.org/sermons/a", "");
-    // The crawl list answers; the first count lookup is refused as malformed.
+    // The crawl list answers; the first read of the index is refused outright.
     commonCrawl.indexFailures.push(0, 400);
     const listed = await lookUp(worker, key);
     expect(listed.lookups.failed).toBe(1);
@@ -322,7 +340,7 @@ describe("website imports", () => {
 
   it("offers at most the page limit, and says it stopped there", async () => {
     const { worker, key, commonCrawl } = setup();
-    commonCrawl.pageSize.value = 1000;
+    commonCrawl.blockSize.value = 1000;
     for (let i = 0; i < MAX_SITE_PAGES + 50; i++) {
       commonCrawl.addPage(
         LATEST,
@@ -348,11 +366,7 @@ describe("website imports", () => {
     ]);
     await worker.drain();
     expect(new Set(worker.requests.map((r) => r.host))).toEqual(
-      new Set([
-        "index.commoncrawl.org",
-        "data.commoncrawl.org",
-        "casualos.test",
-      ])
+      new Set(["data.commoncrawl.org", "casualos.test"])
     );
     expect(worker.requests.some((r) => r.url.includes("getLinkPreview"))).toBe(
       false
