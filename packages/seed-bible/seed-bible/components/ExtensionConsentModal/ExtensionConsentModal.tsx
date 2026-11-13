@@ -11,6 +11,11 @@ import type {
   SandboxUploader,
 } from "../../managers/ExtensionPermissions";
 import type { FriendsManager } from "../../managers/FriendsManager";
+import type { ExtensionReviewsManager } from "../../managers/ExtensionReviewsManager";
+import {
+  ExtensionReviewNotice,
+  useExtensionReview,
+} from "../ExtensionReview/ExtensionReview";
 import {
   expandSandboxPermissions,
   SANDBOX_PERMISSION_INFO,
@@ -655,11 +660,14 @@ function ExtensionRequestContent({
 function ExtensionConsentContent({
   request,
   people,
+  reviews,
 }: {
   request: SandboxConsentRequest;
   people?: ConsentPeople;
+  reviews?: ExtensionReviewsManager;
 }) {
   const { t } = useI18n();
+  const review = useExtensionReview(reviews, request.extensionId);
   // An update lists only what's new: the rest was already agreed to.
   const isUpdate = request.reason === "update";
   const permissions = isUpdate ? request.newPermissions : request.permissions;
@@ -690,15 +698,7 @@ function ExtensionConsentContent({
           )}
         </div>
       </div>
-      <p className="sb-extension-consent-notice">
-        <span
-          className="material-symbols-outlined sb-extension-consent-notice-icon"
-          aria-hidden="true"
-        >
-          info
-        </span>
-        {t("extension-consent-unreviewed")}
-      </p>
+      <ExtensionReviewNotice review={review} />
       {nothingRequested ? (
         <p className="sb-extension-consent-text">
           {request.optionalPermissions.length > 0
@@ -796,7 +796,8 @@ function modalTitle(request: SandboxConsentRequest) {
 export function openExtensionConsentModal(
   modals: ModalManager,
   request: SandboxConsentRequest,
-  people?: ConsentPeople
+  people?: ConsentPeople,
+  reviews?: ExtensionReviewsManager
 ): Promise<boolean> {
   const id = `extension-consent-${request.extensionId}`;
   return new Promise((resolve) => {
@@ -816,7 +817,11 @@ export function openExtensionConsentModal(
         request.reason === "request" ? (
           <ExtensionRequestContent request={request} />
         ) : (
-          <ExtensionConsentContent request={request} people={people} />
+          <ExtensionConsentContent
+            request={request}
+            people={people}
+            reviews={reviews}
+          />
         ),
       footer: () => (
         <ExtensionConsentActions reason={request.reason} onAnswer={answer} />

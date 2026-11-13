@@ -12,6 +12,12 @@
 - In a shared session, see who is reading elsewhere and which passage they're on: in the participants list, and on their faded avatar on the session's tab.
   - On desktop, open the participant list right inside the session's tab. It stays open or closed the way you left it on that device.
   - Hosts can ask someone reading elsewhere to come back. They get a request above the toolbar with Not now and Rejoin group, and the host can ask again after 30 seconds.
+- Extensions can be marked Verified, shown on their cards and pages. ([#2075](https://github.com/HelloAOLab/seed-bible/pull/2075))
+  - Hovering over the Verified mark shows when the extension was verified and the reviewer's public notes.
+  - Extensions built into Seed Bible are always verified, since they're reviewed with the app's own code.
+  - Admins of the reviews record, chosen at build time with `EXTENSION_REVIEWS_RECORD_NAME`, mark an extension verified from its page, in a dialog that asks when it was verified and for public and internal notes.
+  - Internal notes are kept private to the record's admins.
+  - A verified extension's install dialog says it has been verified, instead of warning that it hasn't been reviewed.
 - Let Custom Branding replace the Books, Search, Today, Share, Chat and Discover icons with its own SVGs, drawn in the theme's icon color.
 
 ### 🔧 Changed

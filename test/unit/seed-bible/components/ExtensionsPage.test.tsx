@@ -7,6 +7,11 @@ import {
   type ExtensionListEntry,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import {
+  createExtensionReviewsManager,
+  type ExtensionReviewsManager,
+} from "@packages/seed-bible/seed-bible/managers/ExtensionReviewsManager";
+import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 
 // Return the defaultValue (or key), as the other component tests do, with
 // the extension's own title and description from its namespace.
@@ -19,10 +24,18 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
     useI18n: () => ({
       t: (
         key: string,
-        options?: { defaultValue?: string; ns?: string; host?: string }
+        options?: {
+          defaultValue?: string;
+          ns?: string;
+          host?: string;
+          date?: string;
+        }
       ) => {
         if (options?.ns) {
           return key === "title" ? options.ns : "";
+        }
+        if (options?.date) {
+          return `${key} ${options.date}`;
         }
         if (key === "extension-consent-from") {
           return `From ${options?.host}`;
@@ -128,8 +141,14 @@ describe("ExtensionsPage", () => {
     container.remove();
   });
 
-  function renderPage(entries: ExtensionListEntry[]) {
+  function renderPage(
+    entries: ExtensionListEntry[],
+    extensionReviews?: ExtensionReviewsManager
+  ) {
     const state = createMockState(entries);
+    if (extensionReviews) {
+      state.extensionReviews = extensionReviews;
+    }
     act(() => {
       render(<ExtensionsPage state={state} />, container);
     });
@@ -143,7 +162,7 @@ describe("ExtensionsPage", () => {
         title: section.querySelector("h2")?.textContent,
         cards: [...section.querySelectorAll(".sb-extensions-card")].map(
           (card) =>
-            `${card.querySelector(".sb-extensions-card-name")?.textContent} · ${card.querySelector(".sb-extensions-card-source")?.textContent}`
+            `${card.querySelector(".sb-extensions-card-name")?.firstChild?.textContent} · ${card.querySelector(".sb-extensions-card-source")?.textContent}`
         ),
       })
     );
@@ -358,5 +377,361 @@ describe("ExtensionsPage", () => {
 
     expect(state.modals.closeModal).toHaveBeenCalledWith(registration.id);
     expect(state.openExtensions).toHaveBeenCalledWith("verse-art");
+  });
+
+  describe("verification", () => {
+    const flush = () => act(async () => {});
+    const VERIFIED_AT = new Date(2026, 9, 30, 14, 5).getTime();
+    let modalContainer: HTMLDivElement;
+
+    beforeEach(() => {
+      modalContainer = document.createElement("div");
+      document.body.appendChild(modalContainer);
+    });
+
+    afterEach(() => {
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
+
+    /** The reviews record as the records server answers for it. */
+    function createReviews(
+      stored: Record<string, unknown>,
+      options: { admin?: boolean; refuseWrites?: boolean } = {}
+    ) {
+      const os = {
+        getData: vi.fn(async (_recordName: string, address: string) =>
+          address in stored
+            ? { success: true, data: stored[address] }
+            : { success: false, errorCode: "data_not_found" }
+        ),
+        recordData: vi.fn(
+          async (_recordKey: string, address: string, data: unknown) => {
+            if (options.refuseWrites) {
+              return { success: false, errorCode: "not_authorized" };
+            }
+            stored[address] = data;
+            return { success: true };
+          }
+        ),
+        isRecordAdmin: vi.fn().mockResolvedValue(options.admin ?? false),
+      };
+      const reviews = createExtensionReviewsManager(
+        os as unknown as Parameters<typeof createExtensionReviewsManager>[0],
+        { userId: signal<string | null>("user-1") },
+        "seed-bible-reviews"
+      );
+      return { os, reviews };
+    }
+
+    /** Opens verse-art's page with a real modal manager behind it. */
+    async function openVerseArt(reviews: ExtensionReviewsManager) {
+      const state = renderPage([linked("verse-art", false)], reviews);
+      const modals = createModalManager();
+      state.modals = modals as unknown as typeof state.modals;
+      act(() => state.openExtensions("verse-art"));
+      await flush();
+      return modals;
+    }
+
+    /** Shows whichever modal is open, as the app's modal host would. */
+    async function renderModal(modals: ReturnType<typeof createModalManager>) {
+      const modal = modals.modals.value.at(-1);
+      act(() => {
+        render(
+          modal ? <>{modal.content({ t: (key) => key })}</> : null,
+          modalContainer
+        );
+      });
+      await flush();
+    }
+
+    const badges = (root: ParentNode) =>
+      [...root.querySelectorAll(".sb-extension-review-badge")].map(
+        (badge) => badge.textContent
+      );
+    const notice = () =>
+      container.querySelector(".sb-extension-consent-notice")?.textContent;
+    const buttonNamed = (root: ParentNode, label: string) =>
+      [...root.querySelectorAll<HTMLButtonElement>("button")].find((item) =>
+        item.textContent?.includes(label)
+      );
+    const field = <T extends HTMLElement>(name: string) =>
+      modalContainer.querySelector<T>(`[name="${name}"]`)!;
+    const type = (
+      element: HTMLInputElement | HTMLTextAreaElement,
+      value: string
+    ) =>
+      act(() => {
+        element.value = value;
+        element.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    /** Submits the modal's form and lets both of its writes settle. */
+    const submit = async () => {
+      act(() => {
+        modalContainer
+          .querySelector("form")!
+          .dispatchEvent(
+            new Event("submit", { bubbles: true, cancelable: true })
+          );
+      });
+      for (let i = 0; i < 5; i++) {
+        await flush();
+      }
+    };
+
+    const cardBadges = () =>
+      Object.fromEntries(
+        [...container.querySelectorAll(".sb-extensions-card")].map((card) => [
+          card.querySelector(".sb-extensions-card-name")?.firstChild
+            ?.textContent,
+          badges(card),
+        ])
+      );
+    const hover = (badge: Element) =>
+      act(() => {
+        badge.dispatchEvent(new Event("pointerenter"));
+      });
+    const tooltip = () =>
+      document.body.querySelector(".sb-extension-review-tooltip");
+
+    it("marks the cards of verified extensions", async () => {
+      const { reviews } = createReviews({
+        "verse-art": { verified: true, verifiedAtMs: VERIFIED_AT },
+      });
+      renderPage([linked("verse-art", false), linked("other", false)], reviews);
+      await flush();
+
+      expect(cardBadges()).toEqual({
+        "verse-art": ["verifiedextension-review-verified"],
+        other: [],
+      });
+    });
+
+    it("marks every built-in extension verified, even with no reviews record", async () => {
+      renderPage([builtIn("audio", true), builtIn("maps", false)]);
+      await flush();
+
+      expect(cardBadges()).toEqual({
+        audio: ["verifiedextension-review-verified"],
+        maps: ["verifiedextension-review-verified"],
+      });
+      hover(container.querySelector(".sb-extension-review-badge")!);
+      expect(tooltip()?.textContent).toBe("extension-review-verified-built-in");
+    });
+
+    it("keeps a built-in extension verified whatever the record says", async () => {
+      const { os, reviews } = createReviews({ maps: { verified: false } });
+      renderPage([builtIn("maps", false)], reviews);
+      await flush();
+
+      expect(cardBadges()).toEqual({
+        maps: ["verifiedextension-review-verified"],
+      });
+      expect(os.getData).not.toHaveBeenCalled();
+    });
+
+    it("gives admins nothing to change on a built-in extension's page", async () => {
+      const { reviews } = createReviews({}, { admin: true });
+      const state = renderPage([builtIn("maps", false)], reviews);
+      act(() => state.openExtensions("maps"));
+      await flush();
+
+      expect(badges(container)).toEqual(["verifiedextension-review-verified"]);
+      expect(
+        container.querySelector(".sb-extension-review-controls")
+      ).toBeNull();
+    });
+
+    it("shows when it was verified and the public notes on hovering over the mark", async () => {
+      const { reviews } = createReviews({
+        "verse-art": {
+          verified: true,
+          verifiedAtMs: VERIFIED_AT,
+          publicNotes: "Published by the Verse Art team.",
+        },
+      });
+      renderPage([linked("verse-art", false)], reviews);
+      await flush();
+      const badge = container.querySelector(".sb-extension-review-badge")!;
+
+      act(() => {
+        badge.dispatchEvent(new Event("pointerenter"));
+      });
+      const tooltip = () =>
+        document.body.querySelector(".sb-extension-review-tooltip");
+      expect(tooltip()?.textContent).toBe(
+        "extension-review-verified-on Oct 30, 2026" +
+          "Published by the Verse Art team."
+      );
+
+      act(() => {
+        badge.dispatchEvent(new Event("pointerleave"));
+      });
+      expect(tooltip()).toBeNull();
+    });
+
+    it("says a verified extension has been verified, instead of warning", async () => {
+      const { reviews } = createReviews({
+        "verse-art": { verified: true, verifiedAtMs: VERIFIED_AT },
+      });
+      await openVerseArt(reviews);
+
+      expect(notice()).toBe("verifiedextension-consent-verified");
+    });
+
+    it("warns about an extension nobody has verified", async () => {
+      const { reviews } = createReviews({});
+      await openVerseArt(reviews);
+
+      expect(notice()).toBe("infoextension-consent-unreviewed");
+    });
+
+    it("hides the verification controls from anyone but an admin", async () => {
+      const { reviews } = createReviews({});
+      await openVerseArt(reviews);
+
+      expect(
+        container.querySelector(".sb-extension-review-controls")
+      ).toBeNull();
+    });
+
+    it("lets an admin mark an extension verified, with when and their notes", async () => {
+      const stored: Record<string, unknown> = {};
+      const { os, reviews } = createReviews(stored, { admin: true });
+      const modals = await openVerseArt(reviews);
+      expect(
+        container.querySelector(".sb-extension-review-controls input")
+      ).toBeNull();
+
+      act(() =>
+        buttonNamed(container, "extension-review-mark-verified")!.click()
+      );
+      await renderModal(modals);
+
+      type(field<HTMLInputElement>("verifiedAt"), "2026-10-30T14:05");
+      type(
+        field<HTMLTextAreaElement>("publicNotes"),
+        "Published by the Verse Art team."
+      );
+      type(
+        field<HTMLTextAreaElement>("internalNotes"),
+        "Checked the publisher's domain."
+      );
+      await submit();
+
+      expect(stored["verse-art"]).toMatchObject({
+        verified: true,
+        verifiedAtMs: VERIFIED_AT,
+        publicNotes: "Published by the Verse Art team.",
+      });
+      expect(stored["internal/verse-art"]).toMatchObject({
+        internalNotes: "Checked the publisher's domain.",
+      });
+      expect(os.recordData).toHaveBeenCalledWith(
+        "seed-bible-reviews",
+        "internal/verse-art",
+        expect.anything(),
+        { marker: "private" }
+      );
+      expect(modals.modals.value).toEqual([]);
+      expect(badges(container)).toEqual(["verifiedextension-review-verified"]);
+      expect(notice()).toBe("verifiedextension-consent-verified");
+      expect(
+        container.querySelector(".sb-extension-review-controls-note")
+          ?.textContent
+      ).toBe("extension-review-admin-verified-on Oct 30, 2026");
+    });
+
+    it("fills in an existing verification when an admin edits it", async () => {
+      const { reviews } = createReviews(
+        {
+          "verse-art": {
+            verified: true,
+            verifiedAtMs: VERIFIED_AT,
+            publicNotes: "Published by the Verse Art team.",
+          },
+          "internal/verse-art": {
+            internalNotes: "Checked the publisher's domain.",
+          },
+        },
+        { admin: true }
+      );
+      const modals = await openVerseArt(reviews);
+
+      act(() => buttonNamed(container, "extension-review-edit")!.click());
+      await renderModal(modals);
+
+      expect(field<HTMLInputElement>("verifiedAt").value).toBe(
+        "2026-10-30T14:05"
+      );
+      expect(field<HTMLTextAreaElement>("publicNotes").value).toBe(
+        "Published by the Verse Art team."
+      );
+      expect(field<HTMLTextAreaElement>("internalNotes").value).toBe(
+        "Checked the publisher's domain."
+      );
+    });
+
+    it("won't save over internal notes it couldn't read", async () => {
+      const { os, reviews } = createReviews({}, { admin: true });
+      os.getData.mockImplementation(
+        async (_recordName: string, address: string) =>
+          address.startsWith("internal/")
+            ? { success: false, errorCode: "server_error" }
+            : { success: false, errorCode: "data_not_found" }
+      );
+      const modals = await openVerseArt(reviews);
+
+      act(() =>
+        buttonNamed(container, "extension-review-mark-verified")!.click()
+      );
+      await renderModal(modals);
+
+      expect(modalContainer.querySelector('[role="alert"]')?.textContent).toBe(
+        "extension-review-modal-internal-notes-failed"
+      );
+      expect(
+        buttonNamed(modalContainer, "extension-review-mark-verified")!.disabled
+      ).toBe(true);
+    });
+
+    it("keeps the modal open and says so when the record refuses", async () => {
+      const { reviews } = createReviews(
+        {},
+        { admin: true, refuseWrites: true }
+      );
+      const modals = await openVerseArt(reviews);
+
+      act(() =>
+        buttonNamed(container, "extension-review-mark-verified")!.click()
+      );
+      await renderModal(modals);
+      await submit();
+      await renderModal(modals);
+
+      expect(modals.modals.value).toHaveLength(1);
+      expect(modalContainer.querySelector('[role="alert"]')?.textContent).toBe(
+        "extension-review-admin-save-failed"
+      );
+      expect(badges(container)).toEqual([]);
+    });
+
+    it("lets an admin take the mark away", async () => {
+      const stored: Record<string, unknown> = {
+        "verse-art": { verified: true, verifiedAtMs: VERIFIED_AT },
+      };
+      const { reviews } = createReviews(stored, { admin: true });
+      await openVerseArt(reviews);
+
+      await act(async () => {
+        buttonNamed(container, "extension-review-unverify")!.click();
+      });
+      await flush();
+
+      expect(stored["verse-art"]).toMatchObject({ verified: false });
+      expect(badges(container)).toEqual([]);
+      expect(notice()).toBe("infoextension-consent-unreviewed");
+    });
   });
 });
