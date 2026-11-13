@@ -32,7 +32,11 @@
   border: none;
   border-radius: var(--sb-radius-full);
   background: none;
-  color: var(--sb-icon-button-color);
+  /* Rests a shade softer than the text, so chrome doesn't compete with what
+     it sits beside, and comes to full color on hover, keyboard focus or when
+     pressed. Still about 5.7:1 against the background, and clearly unlike a
+     disabled button. */
+  color: color-mix(in srgb, var(--sb-icon-button-color), transparent 25%);
   cursor: pointer;
   transition: color var(--sb-duration-fast) ease;
 
@@ -109,16 +113,31 @@
   );
 }
 
+/* A tinted button already stands apart on its circle, and a pressed one is
+   in the primary color, so both show their icon at full color. */
+.sb-icon-button-tinted,
+.sb-icon-button-pressed {
+  color: var(--sb-icon-button-color);
+}
+
 /* Hover only where there's a pointer, so a tap on a phone doesn't leave the
    tint stuck on. */
 @media (hover: hover) {
+  .sb-icon-button:hover:not(:disabled) {
+    color: var(--sb-icon-button-color);
+  }
+
   .sb-icon-button:hover:not(:disabled)::before {
     background: var(--sb-icon-button-hover-background);
   }
 }
 
-/* Keyboard focus gets the hover tint on any device, alongside the browser's
+/* Keyboard focus gets the hover look on any device, alongside the browser's
    focus ring. */
+.sb-icon-button:focus-visible {
+  color: var(--sb-icon-button-color);
+}
+
 .sb-icon-button:focus-visible::before {
   background: var(--sb-icon-button-hover-background);
 }

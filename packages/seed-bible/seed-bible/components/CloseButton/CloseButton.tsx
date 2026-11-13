@@ -6,7 +6,6 @@ import {
   type IconButtonSize,
 } from "../IconButton/IconButton";
 import { useOptionalI18n } from "../../i18n";
-import "./CloseButton.css";
 
 export type CloseButtonSize = IconButtonSize;
 export type CloseButtonLook = IconButtonLook;

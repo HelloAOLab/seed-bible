@@ -94,7 +94,8 @@ a.sb-button-primary:is(:link, :visited) {
 }
 
 /* Two classes, to outrank the app-wide icon font size. */
-.sb-button .sb-button-icon.material-symbols-outlined {
+.sb-button .sb-button-icon.material-symbols-outlined,
+.sb-button .sb-button-icon > .material-symbols-outlined {
   font-size: var(--sb-button-icon-size);
 }
 

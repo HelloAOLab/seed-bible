@@ -763,14 +763,6 @@
 
 .sb-selector-retry {
   margin-top: 0.75rem;
-  padding: 0.5625rem 1.125rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
-  border-radius: var(--sb-radius-full);
-  background: none;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  cursor: pointer;
 }
 
 .sidebar-itm {
@@ -1115,37 +1107,6 @@
   gap: 0.5rem;
 }
 
-.sb-offline-delete-cancel,
-.sb-offline-delete-confirm {
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: var(--sb-radius-md);
-  font-size: var(--sb-font-size-13);
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color var(--sb-duration-fast) ease;
-}
-
-.sb-offline-delete-cancel {
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-}
-
-.sb-offline-delete-cancel:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  color: var(--sb-font-color);
-}
-
-.sb-offline-delete-confirm {
-  background: #ef4444;
-  color: #ffffff;
-}
-
-.sb-offline-delete-confirm:hover {
-  background: #dc2626;
-}
-
 .filters-icon {
   height: 1.875rem;
   width: 1.875rem;
@@ -1398,4 +1359,10 @@
     width: 100%;
     color: var(--sb-font-color);
   }
+}
+
+/* The phone Books header's Tabs button: its icon is drawn at 20px. */
+.sb-icon-button.sb-selector-mobile-tabs {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.25rem;
 }

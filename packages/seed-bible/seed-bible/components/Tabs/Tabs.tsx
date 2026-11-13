@@ -75,6 +75,8 @@ import {
   bookmarkButtonLabel,
 } from "../Bookmarks/Bookmarks";
 import { CloseButton } from "../CloseButton/CloseButton";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -263,21 +265,16 @@ function SessionSettingsModalContent(props: {
             >
               {sessionUrl.href}
             </span>
-            <button
-              type="button"
+            <IconButton
               className="sb-session-settings-copy-url"
-              onClick={copySessionUrl}
-              aria-label={t("copy", { defaultValue: "Copy" })}
-              title={
+              icon={urlCopied.value ? "check" : "content_copy"}
+              label={
                 urlCopied.value
                   ? t("copied", { defaultValue: "Copied" })
                   : t("copy", { defaultValue: "Copy" })
               }
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                {urlCopied.value ? "check" : "content_copy"}
-              </span>
-            </button>
+              onClick={copySessionUrl}
+            />
           </div>
         </div>
 
@@ -576,9 +573,10 @@ function SessionSettingsModalContent(props: {
                       />
                     )}
                     {isHost && !isHostUser && (
-                      <button
-                        type="button"
-                        className={`sb-session-participant-action${isCoHost ? " sb-session-participant-action-active" : ""}`}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="sb-session-participant-action"
                         onClick={() => setCoHost(coHostKey, !isCoHost)}
                       >
                         {isCoHost
@@ -586,7 +584,7 @@ function SessionSettingsModalContent(props: {
                               defaultValue: "Remove co-host",
                             })
                           : t("make-co-host", { defaultValue: "Make co-host" })}
-                      </button>
+                      </Button>
                     )}
                   </li>
                 );
@@ -597,8 +595,9 @@ function SessionSettingsModalContent(props: {
       </div>
 
       <div className="sb-session-settings-actions">
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          tone="danger"
           className="sb-session-settings-end"
           onClick={() => {
             onEndSession();
@@ -606,14 +605,14 @@ function SessionSettingsModalContent(props: {
           }}
         >
           {t("end-session", { defaultValue: "End Session" })}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="secondary"
           className="sb-session-settings-cancel"
           onClick={onClose}
         >
           {t("close", { defaultValue: "Close" })}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -724,23 +723,24 @@ function SessionCloseConfirmModalContent(props: {
           )}
           <div className="sb-session-close-confirm-actions">
             {candidates.length > 0 && (
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 className="sb-session-settings-cancel"
                 onClick={() => {
                   showCoHostPicker.value = true;
                 }}
               >
                 {t("appoint-co-host", { defaultValue: "Appoint a co-host" })}
-              </button>
+              </Button>
             )}
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              tone="danger"
               className="sb-session-settings-end"
               onClick={endForEveryone}
             >
               {t("end-session-for-everyone", { defaultValue: "End session" })}
-            </button>
+            </Button>
           </div>
         </>
       )}
@@ -905,19 +905,17 @@ export function TabsHeader(props: TabsHeaderProps) {
   return (
     <div className="sb-sidebar-top-row">
       <div className="sb-sidebar-top-start">
-        <button
+        <IconButton
           onClick={sidebar.toggleSidebarCollapsed}
           className="sb-sidebar-collapse-button"
-          aria-label={
-            effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
+          label={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          icon={
+            // Mirrored in RTL, where the sidebar is on the right.
+            <span className="material-symbols-outlined rtl-mirror">
+              {effectivelyCollapsed ? "left_panel_open" : "left_panel_close"}
+            </span>
           }
-          title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {/* Mirrored in RTL, where the sidebar is on the right. */}
-          <span className="material-symbols-outlined rtl-mirror">
-            {effectivelyCollapsed ? "left_panel_open" : "left_panel_close"}
-          </span>
-        </button>
+        />
 
         {activeLogoUrl ? (
           <span
@@ -947,16 +945,14 @@ export function TabsHeader(props: TabsHeaderProps) {
       <div className="sb-sidebar-top-actions">
         {panelsEnabled && !effectivelyCollapsed && (
           <div className="sb-pane-layout-anchor" ref={layoutAnchorRef}>
-            <button
+            <IconButton
               onClick={toggleLayoutMenu}
               className="sb-sidebar-top-icon-button"
-              aria-label={t("select-pane-layout", {
+              icon="dashboard"
+              label={t("select-pane-layout", {
                 defaultValue: "Select pane layout",
               })}
-              title={t("pane-layout", { defaultValue: "Pane layout" })}
-            >
-              <span className="material-symbols-outlined">dashboard</span>
-            </button>
+            />
 
             {isLayoutMenuOpen && (
               <div className="sb-pane-layout-menu">
@@ -1336,22 +1332,20 @@ function TabRow(props: TabRowProps) {
       </button>
 
       {isSelected && !tab.sharedSession && (
-        <button
-          type="button"
+        <IconButton
+          size="sm"
           className={`sb-tab-save-button${
             isChapterSaved ? " sb-tab-save-button-saved" : ""
           }`}
-          aria-label={saveChapterLabel(t, isChapterSaved)}
-          title={saveChapterLabel(t, isChapterSaved)}
+          icon={<SaveStarIcon isSaved={isChapterSaved} size={18} />}
+          label={saveChapterLabel(t, isChapterSaved)}
           onClick={(event: MouseEvent) => {
             event.stopPropagation();
             closeContextMenus();
             closeLayoutMenu();
             handleSaveAction();
           }}
-        >
-          <SaveStarIcon isSaved={isChapterSaved} size={18} />
-        </button>
+        />
       )}
 
       <ContextMenuWithButton
@@ -1751,8 +1745,9 @@ function SaveCategoryPickerContent(props: {
 
       <div className="sb-save-picker-actions">
         {isEdit && saveId && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            tone="danger"
             className="sb-save-picker-remove"
             disabled={isSaving.value}
             onClick={() => {
@@ -1762,11 +1757,11 @@ function SaveCategoryPickerContent(props: {
             {t("remove-save-from-all-folders", {
               defaultValue: "Remove from all folders",
             })}
-          </button>
+          </Button>
         )}
         {isAddingNew.value && (
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             className="sb-save-picker-stage-folder"
             disabled={!canStageNew}
             onClick={() => {
@@ -1774,12 +1769,13 @@ function SaveCategoryPickerContent(props: {
             }}
           >
             {t("create-folder", { defaultValue: "Create folder" })}
-          </button>
+          </Button>
         )}
-        <button
-          type="button"
+        <Button
+          variant="primary"
           className="sb-save-picker-save"
           disabled={!canSave}
+          loading={isSaving.value}
           onClick={() => {
             void handleSave();
           }}
@@ -1787,7 +1783,7 @@ function SaveCategoryPickerContent(props: {
           {isSaving.value
             ? t("saving", { defaultValue: "Saving…" })
             : t("save", { defaultValue: "Save" })}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -2270,17 +2266,13 @@ function MobileScreen(props: {
   return (
     <div className="sb-mobile-screen">
       <div className="sb-mobile-screen-header">
-        <button
-          type="button"
+        <IconButton
+          size="lg"
           className="sb-mobile-screen-header-button"
+          icon={isClose ? "close" : "arrow_back"}
+          label={closeLabel}
           onClick={onClose}
-          aria-label={closeLabel}
-          title={closeLabel}
-        >
-          <span className="material-symbols-outlined">
-            {isClose ? "close" : "arrow_back"}
-          </span>
-        </button>
+        />
         <h2 className="sb-mobile-screen-title">{title}</h2>
         {actions}
       </div>
@@ -2302,9 +2294,6 @@ export function Tabs(props: TabsProps) {
   const isBookmarksPanelOpen = bookmarks.isPanelOpen.value;
   const { t } = useI18n();
 
-  const bookmarksToggleLabel = isBookmarksPanelOpen
-    ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
-    : t("show-bookmarks", { defaultValue: "Show bookmarks" });
   // The toggle draws the same stack as the reader's button, but for all of
   // the user's bookmarks: most recently moved in front, at most three shown.
   // Like the saves star beside it, it is an outline while off and filled in
@@ -2397,16 +2386,14 @@ export function Tabs(props: TabsProps) {
             </button>
           );
         })}
-        <button
+        <IconButton
           onClick={() => {
             app.addTab();
           }}
           className="sb-tab-add-button sb-collapsed-tab-add-button"
-          aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
-          title={t("new-tab", { defaultValue: "New tab" })}
-        >
-          <span className="material-symbols-outlined">add</span>
-        </button>
+          icon="add"
+          label={t("create-new-tab", { defaultValue: "Create new tab" })}
+        />
       </div>
     );
   }
@@ -2468,17 +2455,13 @@ export function Tabs(props: TabsProps) {
           }
         }}
         actions={
-          <button
-            type="button"
+          <IconButton
+            size="lg"
             className="sb-mobile-screen-header-button"
+            icon="create_new_folder"
+            label={t("new-save-folder", { defaultValue: "New folder" })}
             onClick={createNewCategory}
-            aria-label={t("new-save-folder", {
-              defaultValue: "New folder",
-            })}
-            title={t("new-save-folder", { defaultValue: "New folder" })}
-          >
-            <span className="material-symbols-outlined">create_new_folder</span>
-          </button>
+          />
         }
       >
         <SavesSection state={state} closeLayoutMenu={closeLayoutMenu} />
@@ -2529,71 +2512,55 @@ export function Tabs(props: TabsProps) {
         }}
         actions={
           <>
-            <button
-              type="button"
+            <IconButton
+              size="lg"
               className="sb-mobile-screen-header-button sb-sidebar-tabs-header-bookmarks-button"
-              aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
-              aria-pressed={isBookmarksPanelOpen}
-              title={bookmarksToggleLabel}
+              icon={
+                <BookmarkStackIcon
+                  bookmarks={allBookmarks}
+                  size={24}
+                  paint={isBookmarksPanelOpen ? "current" : "outline"}
+                />
+              }
+              label={t("bookmarks", { defaultValue: "Bookmarks" })}
+              pressed={isBookmarksPanelOpen}
               onClick={() => {
                 // Opened from the Tabs header, so it gets a Back arrow.
                 bookmarks.openedFromToolbar.value = false;
                 bookmarks.togglePanel();
               }}
-            >
-              <BookmarkStackIcon
-                bookmarks={allBookmarks}
-                size={24}
-                paint={isBookmarksPanelOpen ? "current" : "outline"}
-              />
-            </button>
-            <button
-              type="button"
+            />
+            <IconButton
+              size="lg"
               className="sb-mobile-screen-header-button sb-sidebar-tabs-header-saves-button"
-              aria-label={t("saves", { defaultValue: "Saves" })}
-              aria-pressed={isSavesFilterActive}
-              title={
-                isSavesFilterActive
-                  ? t("hide-saves", { defaultValue: "Hide saves" })
-                  : t("show-saves", { defaultValue: "Show saves" })
-              }
+              icon={<SaveStarIcon isSaved={isSavesFilterActive} size={24} />}
+              label={t("saves", { defaultValue: "Saves" })}
+              pressed={isSavesFilterActive}
               onClick={() => {
                 // Opened from the Tabs header: backing out of the saves
                 // view should return here, so it gets a Back arrow (not an X).
                 saves.openedFromToolbar.value = false;
                 saves.toggleFilter();
               }}
-            >
-              <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
-            </button>
-            <button
-              type="button"
+            />
+            <IconButton
+              size="lg"
               className="sb-mobile-screen-header-button sb-sidebar-tabs-header-share-button"
-              aria-label={t("share", {
-                defaultValue: "Share",
-              })}
-              title={t("share", {
-                defaultValue: "Share",
-              })}
+              icon="share"
+              label={t("share", { defaultValue: "Share" })}
               onClick={() => {
                 openShareSheetForCurrentTab(state);
               }}
-            >
-              <MaterialIcon aria-hidden="true">share</MaterialIcon>
-            </button>
-            <button
-              type="button"
+            />
+            <IconButton
+              size="lg"
               className="sb-mobile-screen-header-button sb-tab-add-button"
+              icon="add"
+              label={t("create-new-tab", { defaultValue: "Create new tab" })}
               onClick={() => {
                 app.addTab();
               }}
-              aria-label={t("create-new-tab", {
-                defaultValue: "Create new tab",
-              })}
-              title={t("new-tab", { defaultValue: "New tab" })}
-            >
-              <span className="material-symbols-outlined">add</span>
-            </button>
+            />
           </>
         }
       >
@@ -2609,63 +2576,43 @@ export function Tabs(props: TabsProps) {
           {t("tabs", { defaultValue: "Tabs" })}
         </h3>
         <div className="sb-sidebar-tabs-header-actions">
-          <button
-            type="button"
-            className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
-              isBookmarksPanelOpen
-                ? " sb-sidebar-tabs-header-bookmarks-button-active"
-                : ""
-            }`}
-            aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
-            aria-pressed={isBookmarksPanelOpen}
-            title={bookmarksToggleLabel}
+          <IconButton
+            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button"
+            icon={
+              <BookmarkStackIcon
+                bookmarks={allBookmarks}
+                size={24}
+                paint={isBookmarksPanelOpen ? "current" : "outline"}
+              />
+            }
+            label={t("bookmarks", { defaultValue: "Bookmarks" })}
+            pressed={isBookmarksPanelOpen}
             onClick={() => {
               bookmarks.openedFromToolbar.value = false;
               bookmarks.togglePanel();
             }}
-          >
-            <BookmarkStackIcon
-              bookmarks={allBookmarks}
-              size={24}
-              paint={isBookmarksPanelOpen ? "current" : "outline"}
-            />
-          </button>
-          <button
-            type="button"
-            className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-saves-button${
-              isSavesFilterActive
-                ? " sb-sidebar-tabs-header-saves-button-active"
-                : ""
-            }`}
-            aria-label={t("saves", { defaultValue: "Saves" })}
-            aria-pressed={isSavesFilterActive}
-            title={
-              isSavesFilterActive
-                ? t("hide-saves", { defaultValue: "Hide saves" })
-                : t("show-saves", { defaultValue: "Show saves" })
-            }
+          />
+          <IconButton
+            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-saves-button"
+            icon={<SaveStarIcon isSaved={isSavesFilterActive} size={24} />}
+            label={t("saves", { defaultValue: "Saves" })}
+            pressed={isSavesFilterActive}
             onClick={() => {
               saves.toggleFilter();
             }}
-          >
-            <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
-          </button>
+          />
           <CloseButton
             className="sb-sidebar-tabs-header-close-button"
             onClose={state.sidebar.closeSidebar}
           />
-          <button
+          <IconButton
             onClick={() => {
               app.addTab();
             }}
             className="sb-sidebar-tabs-header-icon-button sb-tab-add-button"
-            aria-label={t("create-new-tab", {
-              defaultValue: "Create new tab",
-            })}
-            title={t("new-tab", { defaultValue: "New tab" })}
-          >
-            <span className="material-symbols-outlined">add</span>
-          </button>
+            icon="add"
+            label={t("create-new-tab", { defaultValue: "Create new tab" })}
+          />
         </div>
       </div>
 
@@ -2996,19 +2943,14 @@ export function Sidebar(props: SidebarProps) {
             effectivelyCollapsed ? " sb-sidebar-bottom-actions-collapsed" : ""
           }`}
         >
-          <button
+          <IconButton
             onClick={sidebar.toggleSettings}
             data-tutorial="settings"
-            className={`sb-sidebar-icon-button${
-              isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
-            }`}
-            aria-label={t("open-settings", {
-              defaultValue: "Open settings",
-            })}
-            title={t("settings", { defaultValue: "Settings" })}
-          >
-            <SettingsIcon />
-          </button>
+            className="sb-sidebar-icon-button"
+            icon={<SettingsIcon />}
+            label={t("settings", { defaultValue: "Settings" })}
+            pressed={isSettingsOpen}
+          />
           <SelfAvatarButton state={state} />
         </div>
       </aside>
