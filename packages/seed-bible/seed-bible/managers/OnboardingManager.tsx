@@ -5,6 +5,7 @@ import {
   saveProfileConfigValue,
 } from "../managers/ProfileConfigSync";
 import { safeLocalStorage } from "../app/ssrEnv";
+import { readInjectedConfig } from "../app/appConfig";
 
 /**
  * The platform the app is currently running on. Used to decide how the app can
@@ -81,6 +82,15 @@ export function isStandalone(): boolean {
   return iosStandalone || displayModeStandalone;
 }
 
+/**
+ * True inside the iOS/Android apps (`mobile/`). Only the native build sets
+ * `publicOrigin`, and someone using the app store app already has it
+ * installed, so they should never be asked to install the web app.
+ */
+export function isNativeApp(): boolean {
+  return Boolean(readInjectedConfig().publicOrigin);
+}
+
 function readFlag(key: string): boolean {
   return safeLocalStorage.getItem(key) === "true";
 }
@@ -101,7 +111,7 @@ export interface OnboardingManager {
   standalone: boolean;
   /**
    * Whether the app is treated as installed for this session. True when the
-   * session is already standalone, or after markInstalled() completes in this
+   * session is already standalone, inside the native apps, or after markInstalled() completes in this
    * page load. Not persisted — so a browser visit after uninstalling the PWA
    * shows install affordances again.
    */
@@ -152,7 +162,7 @@ export function createOnboardingManager(
   // Only true when this session is the installed app, or the user just
   // finished installing in this tab. Do not seed from localStorage/profile:
   // those outlive PWA uninstall and incorrectly hide Settings forever.
-  const installedLocally = signal<boolean>(standalone);
+  const installedLocally = signal<boolean>(standalone || isNativeApp());
 
   const installed = computed<boolean>(() => installedLocally.value);
 
