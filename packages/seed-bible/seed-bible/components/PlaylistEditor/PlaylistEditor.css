@@ -962,6 +962,7 @@
     padding-block: 0.4375rem;
     border-radius: 18px;
     text-align: center;
+    white-space: normal;
   }
 }
 
