@@ -257,6 +257,49 @@ describe("website imports", () => {
     ).toMatchObject({ status: "done", done: 1 });
   });
 
+  it("reads a saved page that arrives already unzipped", async () => {
+    const { worker, key, casualos, commonCrawl } = setup();
+    commonCrawl.addPage(
+      LATEST,
+      "https://gracecommunity.org/sermons/door",
+      "<title>I Am the Door</title>"
+    );
+    const listed = await lookUp(worker, key);
+    commonCrawl.archiveAnswers.value = "unzipped";
+    await pick(worker, key, listed.progress.id, [
+      listed.candidates![0]!.itemId,
+    ]);
+    await worker.drain();
+    expect(libraryItems(casualos).map((item) => item.title)).toEqual([
+      "I Am the Door",
+    ]);
+  });
+
+  it("fails a page with the reason, rather than reading the wrong record, when the archive ignores the byte range", async () => {
+    const { worker, key, casualos, commonCrawl } = setup();
+    // Another record first in the file, which the whole file would start with.
+    commonCrawl.addPage(
+      LATEST,
+      "https://gracecommunity.org/sermons/a",
+      "<title>A</title>"
+    );
+    commonCrawl.addPage(
+      LATEST,
+      "https://gracecommunity.org/sermons/b",
+      "<title>B</title>"
+    );
+    const listed = await lookUp(worker, key);
+    const b = listed.candidates!.find((c) => c.url.endsWith("/b"))!;
+    commonCrawl.archiveAnswers.value = "ignoring_range";
+    await pick(worker, key, listed.progress.id, [b.itemId]);
+    await worker.drain();
+    expect(libraryItems(casualos)).toEqual([]);
+    const row = worker.db.sqlite
+      .prepare("SELECT state, error FROM import_items WHERE item_id = ?")
+      .get(b.itemId) as { state: string; error: string };
+    expect(row).toEqual({ state: "failed", error: "range_not_honored" });
+  });
+
   it("reads a page in its own character set", async () => {
     const { worker, key, casualos, commonCrawl } = setup();
     const url = "https://gracecommunity.org/sermons/cafe";

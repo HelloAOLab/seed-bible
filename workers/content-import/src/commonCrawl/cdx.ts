@@ -7,7 +7,12 @@ import {
   keepSitePage,
   type SiteAddress,
 } from "../../../../packages/seed-bible/seed-bible/managers/customContent/siteImport";
-import { ArchiveError, DATA_HOST, gunzip } from "./warc";
+import {
+  ArchiveError,
+  DATA_HOST,
+  readArchiveRange,
+  unzipArchivePiece,
+} from "./warc";
 
 /**
  * Common Crawl's URL index, read straight from the files Common Crawl
@@ -32,7 +37,6 @@ export const MAX_BLOCKS_PER_CRAWL = 20;
 const SEARCH_WINDOW_BYTES = 64 * 1024;
 /** Enough of `cluster.idx` to hold one whole line after a cut. */
 const PROBE_BYTES = 4096;
-const USER_AGENT = "SeedBibleContentImport/1.0 (+https://seedbible.org)";
 
 export interface Crawl {
   id: string;
@@ -90,39 +94,6 @@ function indexFileUrl(crawlId: string, file: string): string {
   return `https://${DATA_HOST}/cc-index/collections/${crawlId}/indexes/${file}`;
 }
 
-/** Reads part of an index file. Null when the crawl has no index yet. */
-async function readRange(
-  fetchImpl: typeof fetch,
-  url: string,
-  start: number,
-  end: number
-): Promise<{ bytes: Uint8Array; size: number } | null> {
-  let response: Response;
-  try {
-    response = await fetchImpl(url, {
-      headers: { Range: `bytes=${start}-${end - 1}`, "User-Agent": USER_AGENT },
-    });
-  } catch (error) {
-    throw new ArchiveError("network_error", String(error));
-  }
-  if (response.status === 404 || response.status === 403) {
-    // S3 answers 403 for a file that doesn't exist.
-    return null;
-  }
-  if (response.status !== 206 && response.status !== 200) {
-    throw new ArchiveError(
-      `http_${response.status}`,
-      `Common Crawl answered ${response.status} for ${url}.`
-    );
-  }
-  const total = /\/(\d+)$/.exec(response.headers.get("Content-Range") ?? "");
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  return {
-    bytes,
-    size: total ? Number(total[1]) : start + bytes.length,
-  };
-}
-
 /** A `cluster.idx` line: `<surt> <timestamp>\t<file>\t<offset>\t<length>\t<n>`. */
 function parseClusterLine(line: string): (IndexBlock & { key: string }) | null {
   const [head, file, offset, length] = line.split("\t");
@@ -152,7 +123,7 @@ export async function findIndexBlocks(
   prefix: string
 ): Promise<IndexBlock[] | null> {
   const url = indexFileUrl(crawlId, "cluster.idx");
-  const first = await readRange(fetchImpl, url, 0, PROBE_BYTES);
+  const first = await readArchiveRange(fetchImpl, url, 0, PROBE_BYTES);
   if (!first) {
     return null;
   }
@@ -163,7 +134,12 @@ export async function findIndexBlocks(
   let high = size;
   while (high - low > SEARCH_WINDOW_BYTES) {
     const middle = Math.floor((low + high) / 2);
-    const probe = await readRange(fetchImpl, url, middle, middle + PROBE_BYTES);
+    const probe = await readArchiveRange(
+      fetchImpl,
+      url,
+      middle,
+      middle + PROBE_BYTES
+    );
     const line = probe && wholeLines(probe.bytes, true)[0];
     const key = line ? parseClusterLine(line)?.key : undefined;
     if (key !== undefined && key < prefix) {
@@ -177,7 +153,7 @@ export async function findIndexBlocks(
   let before: IndexBlock | null = null;
   let at = low;
   while (at < size) {
-    const chunk = await readRange(
+    const chunk = await readArchiveRange(
       fetchImpl,
       url,
       at,
@@ -235,7 +211,7 @@ export async function readIndexBlock(
   block: IndexBlock,
   prefix: string
 ): Promise<string> {
-  const chunk = await readRange(
+  const chunk = await readArchiveRange(
     fetchImpl,
     indexFileUrl(crawlId, block.file),
     block.offset,
@@ -244,7 +220,14 @@ export async function readIndexBlock(
   if (!chunk) {
     throw new ArchiveError("index_missing", `${block.file} is missing.`);
   }
-  const text = new TextDecoder().decode(await gunzip(chunk.bytes));
+  // CDX lines are plain text; a block that arrives already unzipped is
+  // used as it is.
+  const text = new TextDecoder().decode(
+    await unzipArchivePiece(
+      chunk.bytes,
+      (bytes) => bytes[0] !== undefined && bytes[0] < 0x80
+    )
+  );
   const rows: string[] = [];
   for (const line of text.split("\n")) {
     if (!line.startsWith(prefix)) {

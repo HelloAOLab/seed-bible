@@ -20,7 +20,7 @@ import {
   surtPrefix,
   type Crawl,
 } from "./commonCrawl/cdx";
-import { ArchiveError } from "./commonCrawl/warc";
+import { ArchiveError, COMMON_CRAWL_USER_AGENT } from "./commonCrawl/warc";
 import { isTransientError } from "./casualos";
 import type { WorkerDeps } from "./deps";
 import { HttpError, checkLibraryAccess, readBody, type Caller } from "./http";
@@ -69,9 +69,7 @@ async function latestCrawls(deps: WorkerDeps): Promise<Crawl[]> {
   let body = "";
   try {
     const response = await deps.fetch(CRAWL_LIST_URL, {
-      headers: {
-        "User-Agent": "SeedBibleContentImport/1.0 (+https://seedbible.org)",
-      },
+      headers: { "User-Agent": COMMON_CRAWL_USER_AGENT },
     });
     status = response.status;
     body = await response.text();

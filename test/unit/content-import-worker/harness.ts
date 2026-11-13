@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { gzipSync } from "node:zlib";
+import { gunzipSync, gzipSync } from "node:zlib";
 import { LibraryWriter } from "../../../workers/content-import/src/libraryWriter";
 import { handleQueueBatch } from "../../../workers/content-import/src/consumer";
 import type { WorkerDeps } from "../../../workers/content-import/src/deps";
@@ -432,6 +432,14 @@ export function createFakeCommonCrawl() {
   const otherSites = { value: 20 };
   /** HTTP statuses to answer the next index-file requests with, in order; 0 answers normally. */
   const indexFailures: number[] = [];
+  /**
+   * How the archive answers reads of saved pages: properly, ignoring the
+   * byte range (sending the file from its start), or with the slice
+   * already unzipped.
+   */
+  const archiveAnswers = {
+    value: "properly" as "properly" | "ignoring_range" | "unzipped",
+  };
   /** Crawls whose index files are built; adding a page rebuilds its crawl's. */
   const built = new Set<string>();
 
@@ -519,6 +527,11 @@ export function createFakeCommonCrawl() {
       throw new Error(`Unexpected request to ${url}`);
     }
     const path = url.pathname.slice(1);
+    // Like the real front end: a bare "Name/1.0 (+url)" agent is refused.
+    const agent = new Headers(init?.headers).get("User-Agent") ?? "";
+    if (/\(\+https?:/.test(agent) && !agent.includes("compatible")) {
+      return new Response("<html>403 ERROR</html>", { status: 403 });
+    }
     const isIndex =
       path === "crawl-data/index.html" || path.startsWith("cc-index/");
     if (isIndex) {
@@ -558,6 +571,21 @@ export function createFakeCommonCrawl() {
     }
     const start = Number(range[1]);
     const end = Math.min(Number(range[2]), file.length - 1);
+    if (
+      path.endsWith(".warc.gz") &&
+      archiveAnswers.value === "ignoring_range"
+    ) {
+      return new Response(new Uint8Array(file), { status: 200 });
+    }
+    if (path.endsWith(".warc.gz") && archiveAnswers.value === "unzipped") {
+      return new Response(
+        new Uint8Array(gunzipSync(file.subarray(start, end + 1))),
+        {
+          status: 206,
+          headers: { "Content-Range": `bytes ${start}-${end}/${file.length}` },
+        }
+      );
+    }
     return new Response(new Uint8Array(file.subarray(start, end + 1)), {
       status: 206,
       headers: { "Content-Range": `bytes ${start}-${end}/${file.length}` },
@@ -571,6 +599,7 @@ export function createFakeCommonCrawl() {
     blockSize,
     otherSites,
     indexFailures,
+    archiveAnswers,
     addPage,
     fetch: fetchImpl,
   };
