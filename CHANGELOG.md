@@ -16,13 +16,7 @@
 
 ### 🔧 Changed
 
-- On phones, the verse actions, Theme & text and Participants sheets now look and behave the same. ([#2133](https://github.com/HelloAOLab/seed-bible/pull/2133))
-  - Drag any of them down by its handle to close it, or press Escape. Dragging the verse actions sheet up still shows more actions.
-  - Theme & text and Participants also close when you tap outside them, and keep keyboard focus inside while open.
-
 ### 🐛 Fixed
-
-- In right-to-left languages such as Arabic, the Participants sheet now reads right to left, and the verse actions sheet's close button sits on the correct side. ([#2133](https://github.com/HelloAOLab/seed-bible/pull/2133))
 
 ### 🗑️ Removed
 
