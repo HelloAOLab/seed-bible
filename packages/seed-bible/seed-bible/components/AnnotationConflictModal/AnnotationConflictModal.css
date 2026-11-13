@@ -112,25 +112,3 @@
   justify-content: flex-end;
   gap: 0.5rem;
 }
-
-.sb-annotation-conflict-confirm {
-  border: none;
-  border-radius: var(--sb-radius-md);
-  padding: 0.5rem 1rem;
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-  font-size: var(--sb-font-size-13);
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: filter var(--sb-duration-fast) ease;
-}
-
-.sb-annotation-conflict-confirm:hover:not(:disabled) {
-  filter: brightness(1.05);
-}
-
-.sb-annotation-conflict-confirm:disabled {
-  opacity: 0.6;
-  cursor: default;
-}

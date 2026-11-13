@@ -842,7 +842,9 @@ describe("Find the Verse", () => {
     await installAndPlay(games, 0);
     await showPane();
     await act(async () => {
-      clickButton(container, "?");
+      container
+        .querySelector<HTMLButtonElement>('button[aria-label="Show hint"]')!
+        .click();
     });
     expect(container.textContent).toContain("alpha hint");
 

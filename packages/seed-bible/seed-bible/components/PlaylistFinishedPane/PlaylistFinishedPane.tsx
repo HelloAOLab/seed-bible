@@ -4,6 +4,8 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { SimplePlaylist } from "../../managers/PlaylistManager";
 import { HeroImageBanner } from "../HeroImageField/HeroImageField";
 import { MaterialIcon } from "../icons";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 /**
  * What a playlist ends on, filling the screen as its intro page does: says
@@ -26,15 +28,13 @@ export function PlaylistFinishedPane(props: {
   return (
     <div className="sb-playlist-page sb-playlist-finished-page">
       <div className="sb-playlist-page-header">
-        <button
-          type="button"
+        <IconButton
+          size="lg"
           className="sb-playlist-page-back"
-          aria-label={done}
-          title={done}
+          icon={isRtl ? "arrow_forward" : "arrow_back"}
+          label={done}
           onClick={props.onDone}
-        >
-          <MaterialIcon>{isRtl ? "arrow_forward" : "arrow_back"}</MaterialIcon>
-        </button>
+        />
         <h1 className="sb-playlist-page-title">
           <span dir="auto">{title}</span>
         </h1>
@@ -67,21 +67,22 @@ export function PlaylistFinishedPane(props: {
         </div>
       </div>
       <div className="sb-playlist-page-footer sb-playlist-finished-footer">
-        <button
-          type="button"
+        <Button
+          size="lg"
+          icon="share"
           className="sb-playlist-finished-share"
           onClick={props.onShare}
         >
-          <MaterialIcon>share</MaterialIcon>
           {t("share-playlist", { defaultValue: "Share playlist" })}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="primary"
+          size="lg"
           className="sb-playlist-page-start"
           onClick={props.onDone}
         >
           {done}
-        </button>
+        </Button>
       </div>
     </div>
   );

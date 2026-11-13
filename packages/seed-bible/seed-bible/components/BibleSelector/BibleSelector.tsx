@@ -49,6 +49,8 @@ import { MOBILE_BREAKPOINT } from "../../managers/SeedBibleStateManager";
 import { toShareableUrl } from "../../app/publicLinks";
 import { SearchBar as SearchField } from "../SearchBar/SearchBar";
 import { CloseButton } from "../CloseButton/CloseButton";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 /**
  * CSS-only spotlight: the huge translucent box-shadow dims everything around
@@ -389,12 +391,13 @@ const SearchBar = (props: {
               <span class="sb-bible-reader-mobile-header-title">
                 {t("books", { defaultValue: "Books" })}
               </span>
-              <button
+              <IconButton
+                size="lg"
                 class="sb-selector-mobile-tabs"
+                icon={<SbTabsIcon />}
+                label={t("tabs", { defaultValue: "Tabs" })}
                 onClick={() => openTabs()}
-              >
-                <SbTabsIcon />
-              </button>
+              />
             </>
           )}
         </div>
@@ -451,13 +454,14 @@ const BooksStatusMessage = (props: {
             "The books couldn't be loaded. Check your connection and try again.",
         })}
       </p>
-      <button
-        type="button"
+      <Button
+        variant="secondary"
+        shape="pill"
         className="sb-selector-retry"
         onClick={() => void retryBooks()}
       >
         {t("try-again", { defaultValue: "Try again" })}
-      </button>
+      </Button>
     </div>
   );
 };
@@ -505,13 +509,14 @@ const TranslationListStatus = (props: {
             name,
           })}
         </p>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          shape="pill"
           className="sb-selector-retry"
           onClick={() => void selectTranslation(load.translationId)}
         >
           {t("try-again", { defaultValue: "Try again" })}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -542,13 +547,14 @@ const TranslationListStatus = (props: {
               "Couldn't load the full list of translations, so some may be missing.",
           })}
         </p>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          shape="pill"
           className="sb-selector-retry"
           onClick={() => retryCatalog()}
         >
           {t("try-again", { defaultValue: "Try again" })}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -1471,20 +1477,21 @@ const ConfirmOfflineDelete = (props: {
         })}
       </p>
       <div className="sb-offline-delete-actions">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           className="sb-offline-delete-cancel"
           onClick={close}
         >
           {t("cancel")}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="primary"
+          tone="danger"
           className="sb-offline-delete-confirm"
           onClick={() => void confirm()}
         >
           {t("remove", { defaultValue: "Remove" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

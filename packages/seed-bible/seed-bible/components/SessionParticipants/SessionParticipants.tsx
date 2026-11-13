@@ -32,6 +32,8 @@ import {
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
 import { CloseButton } from "../CloseButton/CloseButton";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 /** How many avatars the compact stack shows before collapsing into a "+N" chip. */
 const MAX_STACK_AVATARS = 3;
@@ -288,21 +290,18 @@ export function SessionParticipantList({
           <AskToComeBackButton session={session} user={user} />
         )}
         {user.isSelf && session.isAwayFromGroup.value && (
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
+            shape="pill"
+            icon={<MaterialIcon className="rtl-mirror">undo</MaterialIcon>}
             className="sb-ask-come-back"
             onClick={() => {
               void session.rejoinGroup();
             }}
           >
-            <MaterialIcon
-              className="sb-ask-come-back-icon rtl-mirror"
-              aria-hidden="true"
-            >
-              undo
-            </MaterialIcon>
             {t("session-rejoin-group", { defaultValue: "Rejoin" })}
-          </button>
+          </Button>
         )}
         {friendButtonRows.has(user.connectionId) && (
           <ParticipantFriendButton
@@ -433,39 +432,36 @@ export function TabSessionParticipants({
             count: users.length,
           })}
         </span>
-        <button
-          type="button"
+        <IconButton
           className="sb-tab-participants-collapse"
           aria-expanded="true"
-          aria-label={t("hide-participants", {
-            defaultValue: "Hide participants",
-          })}
-          title={t("hide-participants", { defaultValue: "Hide participants" })}
+          icon="expand_less"
+          label={t("hide-participants", { defaultValue: "Hide participants" })}
           onClick={() => setTabParticipantsListExpanded(false)}
-        >
-          <MaterialIcon aria-hidden="true">expand_less</MaterialIcon>
-        </button>
+        />
       </div>
       <SessionParticipantList state={state} session={session} />
       <div className="sb-tab-participants-footer">
         {isLocalSessionHost(state, session) && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
+            icon="settings"
             className="sb-tab-participants-link"
             onClick={() => openSessionSettingsModal(state, session)}
           >
-            <MaterialIcon aria-hidden="true">settings</MaterialIcon>
             {t("session-settings", { defaultValue: "Session settings" })}
-          </button>
+          </Button>
         )}
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
+          icon="share"
           className="sb-tab-participants-link"
           onClick={() => openShareSessionModal(state, session)}
         >
-          <MaterialIcon aria-hidden="true">share</MaterialIcon>
           {t("share-session", { defaultValue: "Share session" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

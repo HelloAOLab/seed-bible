@@ -9,6 +9,7 @@ import {
   type UserGalleryManager,
 } from "../../managers/UserGalleryManager";
 import { MaterialIcon } from "../icons";
+import { Button } from "../Button/Button";
 
 export type PhotoChooserPhoto = { id: string; url: string };
 
@@ -107,15 +108,14 @@ export function PhotoChooserContent(props: {
             </div>
           )}
           <div className="sb-photo-modal-actions">
-            <button
-              type="button"
-              className="sb-photo-modal-button"
+            <Button
+              variant="secondary"
               onClick={() => {
                 step.value = "source";
               }}
             >
               {t("back", { defaultValue: "Back" })}
-            </button>
+            </Button>
           </div>
         </>
       ) : (

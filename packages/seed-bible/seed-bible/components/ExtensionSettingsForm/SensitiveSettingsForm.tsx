@@ -14,6 +14,7 @@ import type {
   UnusedSensitiveProxy,
 } from "../../managers/ExtensionSensitiveSettings";
 import type { I18nHook } from "../../i18n/I18nManager";
+import { Button } from "../Button/Button";
 
 /**
  * Whose values the form edits: the viewer's own, or those of the
@@ -246,9 +247,8 @@ function SensitiveProxyGroup(props: {
         </p>
       )}
       <div className="sb-extension-sensitive-actions">
-        <button
-          type="button"
-          className="sb-settings-action-button"
+        <Button
+          variant="primary"
           disabled={!anyTyped || !hostValid}
           onClick={() =>
             void run(() => onSave(drafts.value, { host, visibility }))
@@ -257,15 +257,11 @@ function SensitiveProxyGroup(props: {
           {anySet
             ? t("sensitive-settings-replace", { defaultValue: "Replace" })
             : t("sensitive-settings-save", { defaultValue: "Save" })}
-        </button>
+        </Button>
         {hasStored && (
-          <button
-            type="button"
-            className="sb-settings-action-button"
-            onClick={() => void run(onClear)}
-          >
+          <Button tone="danger" onClick={() => void run(onClear)}>
             {t("sensitive-settings-clear", { defaultValue: "Clear" })}
-          </button>
+          </Button>
         )}
       </div>
       {failed.value && (
@@ -398,10 +394,10 @@ export function UnusedSensitiveSettingsList(props: {
                 host,
               })}
             </span>
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              disabled={clearing.value === id}
+            <Button
+              tone="danger"
+              size="sm"
+              loading={clearing.value === id}
               onClick={async () => {
                 clearing.value = id;
                 failed.value = null;
@@ -411,7 +407,7 @@ export function UnusedSensitiveSettingsList(props: {
               }}
             >
               {t("sensitive-settings-clear", { defaultValue: "Clear" })}
-            </button>
+            </Button>
             {failed.value === id && (
               <p className="sb-settings-save-error" role="alert">
                 {t("extension-settings-save-failed", {
