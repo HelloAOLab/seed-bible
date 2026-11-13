@@ -19,21 +19,14 @@
   color: var(--sb-primary-color);
 }
 
-/* Above the chapter heading they sit beside. */
+/* Above the chapter heading they sit beside. Their icons are drawn shapes
+   rather than icon-font glyphs, so each keeps the size it was drawn at
+   instead of IconButton's 20px. */
 .sb-icon-button:is(
   .sb-bible-reader-bookmark-button,
   .sb-bible-reader-save-button
 ) {
   z-index: 1;
-}
-
-/* Their icons are drawn shapes rather than icon-font glyphs, so each keeps
-   the size it was drawn at instead of IconButton's 20px. */
-.sb-icon-button:is(
-  .sb-bible-reader-bookmark-button,
-  .sb-bible-reader-save-button,
-  .sb-bible-reader-mobile-header-back
-) {
   /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   --sb-icon-button-icon-size: 1.375rem;
 }
