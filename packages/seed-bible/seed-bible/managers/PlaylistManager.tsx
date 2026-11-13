@@ -2373,7 +2373,9 @@ export function createPlaylistManager(
    * extension instance is disposed, which is every way the playlist ends.
    * A tab that has already closed drops its narration instead of starting it.
    * Another playlist still running inherits it, so this one does not talk
-   * over that one.
+   * over that one. After any chapter restore, rewrites the address bar for
+   * the owner tab when it is still selected (restore itself uses
+   * updateUrl: false so it does not).
    */
   const resumeNarrationHeldBy = (
     owner: BibleReadingState,
@@ -2425,6 +2427,15 @@ export function createPlaylistManager(
           item.bookId !== null && open.has(item.readingState)
       );
       const finish = () => {
+        // Restore used updateUrl: false so the address bar still shows the
+        // playlist chapter. Rewrite it from the restored tab whenever that
+        // tab is still selected (replace — no Back entry). Do this while
+        // restoring is still marked so a URL-sync stopPlaying bails instead
+        // of re-entering endPlaylist, and before the heir return so handing
+        // narration off cannot leave the wrong chapter in the address bar.
+        if (toReturn.length > 0 && activeTab.peek()?.readingState === owner) {
+          tabs.leaveStaticPage();
+        }
         for (const item of toReturn) {
           clearRestoring(item.readingState);
         }
@@ -2435,16 +2446,6 @@ export function createPlaylistManager(
           if (controllerFor(item.readingState) === item.controller) {
             item.controller.play();
           }
-        }
-        if (
-          toReturn.length > 0 &&
-          activeTab.peek()?.readingState === owner &&
-          parsePlaylistPagePath(
-            navigation.currentUrl.peek().pathname,
-            navigation.basePath
-          )?.step != null
-        ) {
-          tabs.leaveStaticPage();
         }
       };
 
@@ -2741,8 +2742,13 @@ export function createPlaylistManager(
     // from this one can only set the flag false, which this already did.
     openingPlayback.value = false;
     // A playing path only means anything while playing. Left in the address
-    // bar, it would be read straight back as a request to play again.
+    // bar, it would be read straight back as a request to play again. Skip
+    // when dispose already queued a chapter restore: writing now would stamp
+    // the playlist chapter, and finish() rewrites the restored one after.
+    const restoringOwner =
+      tab != null && restoringNarration.peek().has(tab.readingState);
     if (
+      !restoringOwner &&
       parsePlaylistPagePath(
         navigation.currentUrl.peek().pathname,
         navigation.basePath
@@ -2759,8 +2765,10 @@ export function createPlaylistManager(
   /**
    * Stops the active tab's playlist. Narration that playlist paused continues
    * from the extension instance's dispose, so a stop that arrived because
-   * some other tab's address replaced the URL does not resume it. A restore
-   * already in flight writes the URL itself; stopping again would fight it.
+   * some other tab's address replaced the URL does not resume it. While a
+   * chapter restore is in flight, a second stop would run endPlaylist again
+   * (and rewrite the address from the playlist chapter) before finish() can
+   * write the restored one — so bail until that restore completes.
    */
   const stopPlaying = (): void => {
     const readingState = activeTab.peek()?.readingState;

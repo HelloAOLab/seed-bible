@@ -2373,6 +2373,118 @@ describe("createPlaylistManager", () => {
       expect(audio.isPlaying.value).toBe(true);
     });
 
+    it("writes the restored Audio Reader chapter to the address bar after Stop", async () => {
+      const tab = makeTab("tab-1", selectTranslationAndChapterMock);
+      tab.readingState.bookId.value = "JHN";
+      tab.readingState.chapterNumber.value = 3;
+      selectTranslationAndChapterMock.mockImplementation(
+        async (
+          _translationId: string,
+          bookId: string,
+          chapterNumber: number
+        ) => {
+          tab.readingState.bookId.value = bookId;
+          tab.readingState.chapterNumber.value = chapterNumber;
+        }
+      );
+      const tabs = makeTabs(tab);
+      const manager = makeManager(
+        "user-1",
+        tabs,
+        "http://localhost:3000/en/BSB/john/3"
+      );
+      // leaveStaticPage in production reads the selected tab and replaces the
+      // address; the harness stub must do the same so we can assert the URL.
+      (tabs.leaveStaticPage as Mock).mockImplementation(() => {
+        const bookId = tab.readingState.bookId.peek();
+        const chapter = tab.readingState.chapterNumber.peek();
+        const translationId = tab.readingState.translationId.peek();
+        if (!bookId) {
+          return;
+        }
+        lastNavigation.replace(
+          `/en/${translationId}/${bookId === "JHN" ? "john" : "genesis"}/${chapter}`
+        );
+      });
+      await flush();
+      listen(tab.readingState, 12);
+
+      expect(manager.startPlaying(htmlPlaylist())).toBeNull();
+      const dialog = renderPauseDialog();
+      try {
+        dialog.click("Play playlist");
+      } finally {
+        dialog.cleanup();
+      }
+      await flush();
+
+      // Playlist moved the reader (and address) to another book.
+      tab.readingState.bookId.value = "GEN";
+      tab.readingState.chapterNumber.value = 1;
+      lastNavigation.replace("/en/BSB/genesis/1");
+      expect(lastNavigation.currentUrl.value.pathname).toBe(
+        "/en/BSB/genesis/1"
+      );
+
+      manager.stopPlaying();
+      await flush();
+
+      expect(tab.readingState.bookId.value).toBe("JHN");
+      expect(tab.readingState.chapterNumber.value).toBe(3);
+      expect(lastNavigation.currentUrl.value.pathname).toBe("/en/BSB/john/3");
+      expect(tabs.leaveStaticPage).toHaveBeenCalled();
+    });
+
+    it("does not rewrite the address bar when a background playlist ends and restores", async () => {
+      const first = makeTab("tab-1", selectTranslationAndChapterMock);
+      const second = makeTab("tab-2", selectTranslationAndChapterMock);
+      first.readingState.bookId.value = "JHN";
+      first.readingState.chapterNumber.value = 3;
+      selectTranslationAndChapterMock.mockImplementation(
+        async (
+          _translationId: string,
+          bookId: string,
+          chapterNumber: number
+        ) => {
+          first.readingState.bookId.value = bookId;
+          first.readingState.chapterNumber.value = chapterNumber;
+        }
+      );
+      const tabs = makeTabs(first);
+      tabs.tabs.value = [first, second];
+      const manager = makeManager(
+        "user-1",
+        tabs,
+        "http://localhost:3000/en/BSB/john/3"
+      );
+      await flush();
+      listen(first.readingState, 12);
+
+      expect(manager.startPlaying(htmlPlaylist())).toBeNull();
+      const dialog = renderPauseDialog();
+      try {
+        dialog.click("Play playlist");
+      } finally {
+        dialog.cleanup();
+      }
+      await flush();
+
+      first.readingState.bookId.value = "GEN";
+      first.readingState.chapterNumber.value = 1;
+      // Looking at another tab when the background playlist ends.
+      tabs.selectedTabId.value = second.id;
+      lastNavigation.replace("/en/BSB/exodus/2");
+      (tabs.leaveStaticPage as Mock).mockClear();
+
+      first.readingState.disableExtension("playlist");
+      await flush();
+
+      expect(first.readingState.bookId.value).toBe("JHN");
+      expect(first.readingState.chapterNumber.value).toBe(3);
+      expect(tabs.leaveStaticPage).not.toHaveBeenCalled();
+      expect(lastNavigation.currentUrl.value.pathname).toBe("/en/BSB/exodus/2");
+    });
+
     it("continueFromHistory waits for the answer and does not start on cancel", async () => {
       const tab = makeTab("tab-1", selectTranslationAndChapterMock);
       const playlist = htmlPlaylist();
