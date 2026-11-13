@@ -606,7 +606,18 @@ function beginSession(session: ListeningSession): void {
     // Call it inside the effect so the session follows this tab's playlist,
     // including the moment that playlist lets the tab go.
     const held = playlistHoldsReadingState(readingState);
-    if (chapterKey() !== opened && !held) untracked(() => endSession(session));
+    const key = chapterKey();
+    if (key === opened) {
+      return;
+    }
+    // A playlist that borrowed this tab keeps a paused whole-chapter
+    // narration across its chapter moves so Listen can continue afterward.
+    // Listening to a playlist step (passage set) still ends when that step's
+    // verses change — `held` alone would block that.
+    if (held && session.passage === null) {
+      return;
+    }
+    untracked(() => endSession(session));
   });
 
   session.teardown = () => {
