@@ -28,22 +28,18 @@
   "searching": "Ojehekávo...",
   "no-search-results": "Ndaipóri versíkulo ojoguáva.",
   "open-chapter": "Oipe'a capítulo",
-
   "uploading": "Ojeguerahaukávo...",
   "profile-name": "Perfil réra",
   "profile-name-placeholder": "techapyrãme Craig rogaygua",
-
   "description": "Techaukaha",
   "optional": "(Poravokuaa)",
   "description-placeholder": "Emoinge nde perfil ñemombe'u...",
   "location": "Ñeimeha",
   "location-placeholder": "techapyrãme Austin,TX",
-
   "copied": "Ojekopia",
   "copy": "Kopia rehegua",
   "save-changes": "Eñongatu umi ñemoambue",
   "sign-out": "Esẽ esẽ",
-
   "log-in": "Eike",
   "tanakh": "Tanakh rehegua",
   "traditional": "Jepokuaa'yma",
@@ -57,7 +53,6 @@
   "scripture-settings": "Escriturakuéra ñemboheko",
   "scripture-elements": "Umi elemento Escritura-pegua",
   "scripture-settings-font-size-example": "PETEĨ",
-
   "show-headings": "Ehechauka umi rubro",
   "show-verse-numbers": "Ehechauka umi versíkulo número",
   "show-footnotes": "Ehechauka umi nóta",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Ndaipóri extensión ojeguerekóva.",
   "install": "Mboguejy mohendahápe",
   "uninstall": "Desinstalar",
-
   "custom": "Jepokuaa",
   "text-section-bookTitle": "Aranduka réra Texto",
   "text-section-heading": "Ñe’ẽryru iñakãrapu’ãva",
@@ -92,7 +86,6 @@
   "show-selected-items": "Ohechauka umi mba’e ojeporavóva",
   "show-highlight-colors": "Ohechauka umi sa’y resaltado",
   "show-icon-text": "Ohechauka icono jehaipyre",
-
   "extensions": "Umi extensión rehegua",
   "display": "Techaukahára",
   "theme-and-text": "Tema & texto rehegua",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Embotuichave escriturakuéra letra tuichakue",
   "change-line-spacing": "Omoambue espaciado línea rehegua",
   "line-spacing_lineHeight": "Línea ñemohenda: {{lineHeight}}",
-
   "italic": "Cursivo-pe",
   "underline": "Emoĩ subrayado",
   "alignment_x": "Ñemohenda: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Texto sa’y",
   "follow_theme": "Segui pe téma",
   "reset-to-default": "Oñemoĩjey ñepyrũrãme",
-
   "id_highlight-text-color": "{{id}} emomba’eguasu jehaipyre sa’y",
   "id_highlight-background-color": "{{id}} emomba’eguasu tapykuehoha sa’y",
   "all-settings-description": "Emohenda porã opaite sección de texto ha emohenda peteĩteĩva tema color.",
@@ -141,7 +132,6 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apocrifa rehegua",
-
   "custom-translations": "Traducciones personalizadas",
   "no-translation-results-found": "Ndojejuhúi resultado. ¿Rembotuichavesépa nde jeheka reike hag̃ua avei umi traduksión parcialmente kompletoite?",
   "show-all-translations": "Ehechauka opaite traduksión",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Salmokuéra",
   "5-psalms": "5 Salmokuéra",
   "remove-bookmark": "Oipe’a marcador",
-
   "chat": "Mongeta",
   "today": "Ko árape",
   "you": "Nde",
@@ -169,7 +158,6 @@
   "category-options": "Umi opción carpeta rehegua",
   "rename": "Embohéra jey",
   "delete": "Mboje'oha",
-
   "bookmark-options": "Umi opción marcador rehegua",
   "new-folder-placeholder": "Carpeta réra",
   "tasks": "Tembiaporã",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Oĩma peteĩ kundaha orekóva upe téra.",
   "add-to-new": "Oñemoĩ pyahúpe",
   "save": "Pysyrõ",
-
   "apocrypha-info-text": "Ni peteĩva umi kuatiañe’ẽ oĩva ko sección-pe araka’eve noñekonsidérái Escritura ramo umi comunidad judía térã cristiana ypykue. La Biblia ningo peteĩ koleksión espesífiko de lívro. Umi hudío ha cristiano ymaite guive oñemoĩ peteĩ ñe’ẽme Antiguo Testamento rehe, oúva peteĩ conjunto fijo de escrituras sagrada-gui umi pueblo judío ohenóiva Tanakh ha umi cristiano ohenóiva Antiguo Testamento. Umi mbaʼe oĩva pe Tanakh ha pe Antiguo Testaméntope ojoguaiterei, péro jepiveguaicha oñemohenda diferénte. Umi kristiáno ohechakuaa adicionalmente pe Nuevo Testamento, omombeʼúva Jesús rembiasakue, umi mbaʼe omboʼéva ha umi mbaʼe ohaivaʼekue isegidorkuéra. Umi kuatiañeʼẽ oĩva koʼápe ojekuaa ha ojelee heta hendápe ojehai jave la Biblia, péro arakaʼeve noñetratáiva Escritura-icha. Umi haihára yma guare sapy’ánte ocita ramo jepe hetaiterei téxto oikehápe ñe’ẽpapára, filósofo ha ambue kuatiahaipyre, ocita peteĩ mba’e ndaha’éi peteĩchagua otratávo Escritura ramo. Ko’ã kuatiañe’ẽ oñemoĩ ko’ápe ojehecha haguã tembiasakue ha literario-pe añoite.",
   "seed-bible": "Semilla Biblia",
   "take-photo": "Ejapo peteĩ ta’anga",
   "choose-from-gallery": "Eiporavo galería-gui",
-
   "crop-your-photo": "Eikytĩ nde ta’ãngamýi",
   "zoom": "Zoom rehegua",
   "set-picture": "Oñemohenda ta’anga",
@@ -211,10 +197,8 @@
   "read-the-bible": "Elee la Biblia",
   "seed-bible-description": "Emoñe’ẽ {{bookName}} {{chapterNumber}} pe Biblia Semillas-pe",
   "social-title": "Emoñe’ẽ {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Capítulo jeguata",
   "tutorial.skip": "Jepopo",
-
   "tutorial.back": "Kupe",
   "tutorial.done": "Apopyre",
   "tutorial.next": "Ag̃ui",
@@ -238,7 +222,6 @@
   "copied-translation-share-link": "Ojekopia traducción compartir enlace",
   "less": "Mbovy",
   "swipe-up-more": "Emoinge yvate gotyo rehecha hag̃ua hetave mba’e",
-  "plans": "Umi plan rehegua",
   "reading-plans": "Umi plan de lectura rehegua",
   "create-reading-plan": "Ojapo plan de lectura rehegua",
   "reading-plans-empty": "Ndereguerekói gueteri mba'eveichagua plan de lectura. Ejapo peteĩ reñepyrũ hag̃ua.",
@@ -327,11 +310,9 @@
   "study-notes": "Umi nóta ojestudia hag̃ua",
   "content": "Pypegua",
   "untitled-playlist": "Lista de reproducción ndorekóiva título",
-
   "discover-annotations-empty": "Ndereguerekói anotación",
   "discover-cross-references-empty": "Ndaipóri referencia cruzada ko capítulo-pe guarã.",
   "discover-study-notes-empty": "Ndaipóri nóta de estúdio ko kapítulope g̃uarã.",
-
   "discover-select-tab": "Eiporavo peteĩ ficha reikuaa hag̃ua umi mbaʼe ojoajúva hese.",
   "create-playlist": "Mboypy",
   "playlist-title_placeholder": "Título lista de reproducción rehegua",
@@ -380,12 +361,10 @@
   "delete-playlist-failed": "Ndaikatúi oñembogue pe lista de reproducción.",
   "collapsed-tab-shared-label": "{{title}} — sesión oñemboja’óva, {{count}} oĩva",
   "playlist-add-mode-label": "Mba’eichagua mba’e",
-
   "session-host-reconnected": "Oñembojoaju jey sesión rehe",
   "session-host-left": "Pe karameg̃ua oho — ojeipe’a ndéve pe sesión-gui",
   "drag-to-reorder-playlist-item": "Mongu'e ombohysýi haguã",
   "saving": "Oñeñongatu…",
-
   "unsaved-item-confirm-message": "Reñepyrũ emoĩ peteĩ mba'e ndojejapóiva gueteri playlist-pe. Mba'épa reipota?",
   "discard-and-save": "Emombo ha eñongatu",
   "add-and-save": "Emoĩ ha eñongatu",
@@ -513,7 +492,6 @@
   "reading-plan-preview-reading": "Tembiecharã {{reading}}",
   "reading-plan-mark-reading-complete": "Marca pe lectura completa",
   "reading-plan-link-video": "Techarã",
-
   "reading-plan-mark-passage-complete": "Emarka {{passage}} ojeleeháicha",
   "reading-plan-read-nudge-title": "¡Iporãiterei pe moñe’ẽrã!",
   "reading-plan-read-nudge-toast": "¿Marca {{passage}} oñembotýma?",
@@ -521,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Elee, eheka ha estudia la Biblia Internétpe. Traducciones gratuitas heta idioma-pe, orekóva destacado, nota, marcador ha planes de lectura.",
   "all": "Opavave",
-
   "today-bookmarks": "MBA’ÉICHAPA ÑE’ẼTEKUAA",
   "today-search-verses": "Eheka aranduka, capítulo, versículo....",
   "anonymous-greeting": "Tapeg̃uahẽporãite!",
   "community": "AVAREKOHA",
   "go-somewhere-new": "EHO ALGO PYAHU",
-
   "open-bible": "Jaipeʼa la Biblia",
   "personal-greeting": "Eju porãite, {{name}} !",
   "resume-reading": "ESEGUI MOÕPA REHECHA",
   "resume-reading-loading": "Okargávo nde rembiasakue moñe'ẽrã...",
   "selected-year": "Ary: {{year}}",
-
   "theme-light": "Tesakã",
   "theme-dark": "Pytũ",
   "installed-extensions": "Oñemoĩva’ekue",
@@ -543,7 +518,6 @@
   "extension-state-installed": "Oñemoĩva’ekue",
   "extension-state-downloaded": "Ojegueru",
   "extension-state-pending": "Oñemoĩvo...",
-
   "tutorial.stepProgress": "Paso {{current}} {{total}} rehegua.",
   "tutorial.offlineDownloadTitle": "Epoko eñongatu hag̃ua nde dispositivo-pe",
   "tutorial.offlineDownloadBody": "Oimeraẽ ñembohasa ko techaukaha reheve ikatu oñeñongatu ojelee hag̃ua línea’ỹre.",
@@ -577,7 +551,6 @@
   "tutorial.paneLayoutBody": "Eiporavo mboy pasajepa remoñe’ẽta ojoykére ko menú diseño-gui.",
   "tutorial.addTabTitle": "Eipe’a hetave pasaje",
   "tutorial.addTabBody": "Emoĩ peteĩ ficha pyahu relee hag̃ua heta lívro térã traduksión ojoykére.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % oñembotývo - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % oñembotýma",
   "playlist-history-continue": "Mbojoapy",
@@ -636,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} notas ko capítulo-pe g̃uarã",
   "create-folder": "Ojapo carpeta",
   "edit-bookmark": "Emohenda marcador",
-
   "greeting-afternoon": "Tandeka'aru porãite!",
   "greeting-afternoon-named": "Asaje porã, {{name}} !",
   "greeting-evening": "Mba'éichapa ndepyhare!",
@@ -652,32 +624,24 @@
   "ask-ai": "Eporandu AI-pe",
   "unread-mention": "Mención noñemoñe'êiva",
   "unread-messages": "Marandu noñemoñe'ẽiva: {{count}}",
-
   "scripture-width": "Escritura Ancho",
   "decrease-scripture-width": "Omboguejy escritura ipekue",
   "increase-scripture-width": "Embotuichave escritura ipekue",
   "annotations": "Anotaciones rehegua",
   "discover-content-panel": "Edescubri contenido",
   "discover-book-title": "Eikuaa {{book}}",
-
   "about-title": "Semilla Biblia rehegua",
   "about-meta-description": "Seed Bible ha’e peteĩ aplicación bíblica gratuita oñemopu’ãva pemoñe’ẽ haĝua Escritura oñondive pene familia, amigo ha comunidad ndive — gratis tapiaite ĝuarã, ndaipóri anuncio ni paywall.",
-
   "about-action-open-passage": "Eipe’a peteĩ pasaje",
   "about-action-donate": "Me'ẽrei",
   "about-action-discord": "Eike Discordia-pe",
   "recent-uploads": "Umi mba’e ojegueraha ramoitéva",
-
   "customization-not-found": "Ko personalización ndaikatúi ojejuhu.",
   "customization-name": "Téra",
   "customization-primaryColor": "Tenondeguáva",
-
   "customization-secondaryColor": "Secundaria rehegua",
-
   "customization-tertiaryColor": "Terciario rehegua",
-
   "customization-fonts": "Fuente-kuéra",
-
   "custom-font-option": "Jepokuaa…",
   "custom-font-name-placeholder": "Google Fuente réra",
   "delete-customization": "Mboje'oha",
@@ -690,10 +654,8 @@
   "extension-availability-available": "Oĩ",
   "extension-availability-auto-installed": "Oñeinstaláva ijehegui",
   "extension-availability-hidden": "Kañy",
-
   "variants": "Temas rehegua",
   "add-variant": "Oñemoĩve tema",
-
   "base-theme-description": "Umi ñemoambue omoĩva’ekue ko tema ho’a jey oimeraẽ mba’e nerembohekopyrýivape g̃uarã. Oñeñongatu umi edición nde mba’éva.",
   "reset-to-base-theme": "Oñemohenda jey tema base-pe",
   "low-contrast-warning": "{{label}} : joavy haꞌehína {{ratio}} :1 añoite — eñehaꞌã por lo menos {{minRatio}} :1 rehe ikatu hag̃uáicha jehaipyre opyta ojeleekuaa.",
@@ -739,14 +701,12 @@
   "save-folder-empty": "Ndaipóri gueteri salva ko'ápe.",
   "save-options": "Oñongatu umi opción",
   "saves": "Oñongatu",
-
   "hide-saves": "Oñomi umi osalva",
   "show-saves": "Ohechauka osalva",
   "save-verses": "Pysyrõ",
   "new-save-folder": "Carpeta pyahu",
   "edit-save": "Emohenda ñeñongatu",
   "remove-save-from-all-folders": "Opaite kundahagui ojeipe’a",
-
   "color-hue": "Hue",
   "color-saturation": "Saturación ha tesape",
   "hex-color": "Color hexagonal rehegua",
@@ -861,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Pe editor formato rehegua ndaikatúikuri okargá. Ko nota oguereko formato okañýtava, upévare ndaikatúi oñemboheko oñembojoaju jey peve.",
   "annotation-text": "Texto anotación rehegua",
   "notes-for-verse": "Notas para verso {{verse}} rehegua.",
-
   "configure-extension-defaults": "Emohenda umi ñemboyke ñepyrũrã",
-
   "extension-settings-defaults-title": "{{name}} oñemboyke ñepyrũrã",
   "no-extension-settings": "Ko extensión ndorekói ñemboheko oñembohekokuaáva.",
   "extension-settings-save-failed": "Ndaikatúi oñongatu ne ñemboheko.",
@@ -872,7 +830,6 @@
   "setting-no-default": "Ndaipóri por defecto",
   "override-setting": "Ojeheja rei {{name}}",
   "override-setting-label": "Ojeheja rei",
-
   "discover-choose-filter-hint": "Eiporavo peteĩ filtro yvate gotyo rehecha hag̃ua hetave mbaʼe ko kapítulogui.",
   "take-a-tour": "Ejapo peteĩ gira",
   "share-reading-plan": "Plan de compartir rehegua",
@@ -1056,7 +1013,6 @@
   "my-bookmark-numbered": "Che kundaha {{number}}",
   "bookmark-move-hint": "Epoko peteĩ marcador rehe regueraha hag̃ua ko kapítulope.",
   "move-bookmark-here": "Emongu’e {{name}} ko’ápe",
-
   "play": "Ñembosarái",
   "pause": "Pa'ũ",
   "audio-playback-position": "Ñembopu ñemohenda",
@@ -1065,7 +1021,6 @@
   "audio-scrub-verse": "Versículo {{verse}}",
   "tab-playing-audio": "Oñembopu jave audio",
   "collapsed-tab-playing-label": "{{label}} — oñembopu jave audio",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} temas rehegua",
   "customization-theme-count_one": "{{count}} tema rehegua",
@@ -1104,7 +1059,6 @@
   "about-community-body": "Jerovia oje’e ojeiko haĝua oñondive. Seed Bible oñemopu’ã pemoñe’ẽ haĝua Escritura pene familia ndive, pene amigokuéra hi’aguĩvéva ha pende róga tupao ndive.",
   "discovered-content": "Contenido Ojejuhúva",
   "show-discovered-content": "Ohechauka contenido ojejuhúva",
-
   "extension-availability-default": "Por defecto ( {{availability}} ) Ñe’ẽpoty ha ñe’ẽpoty ñemohenda.",
   "customization-extensions-default": "Por defecto ambue extensión-pe g̃uarã",
   "customization-extensions-default-hint": "Ojeporu opaite extensión neremoĩriva’ekue iguýpe, umíva apytépe umi pyahu oñembojoapýva upe rire",
@@ -1137,7 +1091,6 @@
   "playlist-scripture-note-return": "Ojevy lista de reproducción-pe",
   "playlist-scripture-note-aria": "Ñe’ẽñemi {{passage}} rehegua.",
   "playlist-scripture-note-progress": "{{current}} {{total}} rehegua.",
-
   "unsaved-item-edit-confirm-message": "Remoambue peteĩ mba’e ha katu nereñongatúi gueteri umi ñemoambue. Mbaʼépa rejapose?",
   "keep-changes-and-save": "Eñongatu umi ñemoambue ha eñongatu",
   "reading-plan-edit-reading": "Emohenda moñe’ẽrã",
@@ -1152,7 +1105,6 @@
   "branding": "Marca rehegua",
   "create-custom-branding-menu-item": "Marca Personalizada rehegua",
   "your-content-empty-branding": "Marca Personalizada remoheñóiva ojehechaukáta ko’ápe.",
-
   "extension-consent-from": "{{host}} guive.",
   "extension-consent-source-version": "Versión {{version}} · {{host}} guive.",
   "extension-consent-uploader-unnamed": "peteĩ Usuario Biblia Semilla rehegua",
@@ -1200,7 +1152,6 @@
   "extension-permission-reading-selection": "Ehecha mbaʼe versíkulopa reiporavóta",
   "extension-permission-reading-navigate": "Umi pasaje ojepe’áva",
   "extension-permission-network": "Embojoaju {{host}} ndive.",
-
   "extension-consent-not-now": "Ko'ag̃a nahániri",
   "extension-consent-nothing-yet": "Ko’áĝa g̃uarã, ndoguerekomo’ãi jeike mba’eveichagua ne marandu rehe.",
   "extension-permission-reading-history": "Ehecha nde rembiasakue moñe’ẽrã rehegua",
@@ -1238,7 +1189,6 @@
   "extension-capture-cancel": "Heja",
   "extension-consent-high-risk": "Andukuaa",
   "extension-modal-ok": "OĨMA",
-
   "extension-permissions-restart-note": "Umi kámbio oike en vigor pyaʼe voi. {{name}} oñepyrũ jey oipyhy hag̃ua umíva.",
   "extension-permissions-saved": "Oñongatu. {{name}} oñepyrũ jey umi permiso pyahúpe.",
   "extension-permissions-failed": "Upéva ndosalvái. Eñeha’ã jey.",
@@ -1276,8 +1226,67 @@
   "session-settings-verse-effects-desc-hosts": "Ehechauka umi efecto peteĩ anfitrión oiporavóramo peteĩ versíkulo.",
   "session-settings-verse-effects-desc-everyone": "Ehechauka umi efecto oimeraẽva oiporavóramo peteĩ versíkulo.",
   "session-settings-verse-effects-desc-none": "Umi efecto versículo jeporavo rehegua oñembogue opavavepe g̃uarã.",
-
   "account": "Mba'erepy",
   "scroll-filters-start": "Embohasa umi filtro oñepyrũ gotyo",
-  "scroll-filters-end": "Embohasa umi filtro ipaha gotyo"
+  "scroll-filters-end": "Embohasa umi filtro ipaha gotyo",
+  "download": "Mboguejy",
+  "image-details-uploaded": "Ojeguerahauka",
+  "image-details-dimensions": "Dimensiones rehegua",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "Hesegua",
+  "image-details-cover-of": "Cubierta de",
+  "image-details-not-a-cover": "Ndojeporúi cubierta ramo",
+  "delete-customization-confirm-title": "¿Embogue pe Marca Personalizada?",
+  "delete-customization-confirm-message": "Ombogue Marca Personalizada \" {{name}} \"? Péva ndaikatúi ojedesatina.",
+  "delete-customization-failed": "Ndaikatúi ombogue pe Marca Personalizada.",
+  "delete-variant-confirm-title": "¿Ombogue tema?",
+  "delete-variant-confirm-message": "¿Ombogue tema \" {{name}} \"? Péva ndaikatúi ojedesatina.",
+  "delete-variant-confirm-message-unnamed": "¿Embogue ko téma? Péva ndaikatúi ojedesatina.",
+  "delete-variant-failed": "Ndaikatúi ombogue pe tema.",
+  "delete-highlight-confirm-title": "¿Embogue resaltado?",
+  "delete-highlight-confirm-message": "Embogue pe mba’e ojehecharamovéva {{reference}} ? Péva ndaikatúi ojedesatina.",
+  "delete-highlight-failed": "Ndaikatúi ombogue pe resaltado.",
+  "delete-annotation-on-confirm-message": "Embogue pe anotación {{reference}} rehegua ? Péva ndaikatúi ojedesatina.",
+  "remove-from-folder": "Ojepe’a carpeta-gui",
+  "save-folders": "{{folders}}",
+  "delete-save-confirm-title": "¿Ombogue ñongatu?",
+  "delete-save-confirm-message": "Embogue ñeñongatu {{reference}} -pe g̃uarã ? Péva ndaikatúi ojedesatina.",
+  "delete-save-confirm-message-folders": "Embogue ñeñongatu {{reference}} -pe g̃uarã {{folders}} gui ? Péva ndaikatúi ojedesatina.",
+  "delete-save-failed": "Ndaikatúi ombogue pe ñeñongatu.",
+  "delete-save-folder-confirm-title": "¿Ombogue carpeta?",
+  "delete-save-folder-confirm-message": "Ombogue kundaha \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Umi {{count}} ñeñongatu oĩva ko kundahárape añoite oñembogueva’erã avei.",
+  "delete-save-folder-confirm-deletes_one": "Pe ñeñongatu oĩva ko kundahárape añoite oñemboguepáta avei.",
+  "delete-save-folder-confirm-deletes_other": "Umi {{count}} ñeñongatu oĩva ko kundahárape añoite oñembogueva’erã avei.",
+  "delete-save-folder-confirm-keeps": "Umi {{count}} ñeñongatu oĩva avei ambue kundahárape opyta upépe.",
+  "delete-save-folder-confirm-keeps_one": "Pe save oĩva avei ambue carpeta-pe opyta upépe.",
+  "delete-save-folder-confirm-keeps_other": "Umi {{count}} ñeñongatu oĩva avei ambue kundahárape opyta upépe.",
+  "cant-be-undone": "Péva ndaikatúi ojedesatina.",
+  "delete-save-folder-failed": "Ndaikatúi oñembogue pe kundaha.",
+  "download-image-failed": "Ndaikatúi omboguejy ta'ãnga.",
+  "session-settings-verse-effects-hosts-only": "Anfitriones-kuéra añoite",
+  "session-settings-verse-effects-everyone": "Opaite arapygua",
+  "session-settings-verse-effects-none": "Avave",
+  "loading-books": "Ojekargávo aranduka...",
+  "books-load-failed": "Umi aranduka ndaikatúi ojekarga. Ehecháke ne joaju ha eñeha’ã jey.",
+  "loading-translation": "Ojekarga hína {{name}} ...",
+  "translation-load-failed": "{{name}} ndaikatúi ojekarga.",
+  "loading-translations": "Ojekarga umi ñe'ẽasa...",
+  "translations-load-failed": "Ndaikatúi ojekarga pe lista completa umi traduksión rehegua, upévare ikatu oĩ ofaltáva.",
+  "verse-of-the-day": "VERSIÓN DEL DÍA rehegua",
+  "verse-of-the-day-loading": "Ojekargávo pe versículo ára rehegua...",
+  "delete-bookmark-confirm-title": "¿Embogue pe marcador?",
+  "delete-bookmark-confirm-message": "¿Ombogue \" {{name}} \"?",
+  "scripture-font": "Escritura Fuente",
+  "ai-limits-title": "Reñemongeta mboyve AI ndive",
+  "ai-limits-intro": "AI ikatu ha’e peteĩ punto ñepyrũrã oipytyvõva, ha katu eñongatu ne akãme umi límite orekóva:",
+  "ai-limits-mistakes": "Ojavy, ha ikatu ipu ojeroviaha ivaíramo.",
+  "ai-limits-agreeable": "Omombe’u jepi ndéve pe rehenduséva, ha oñeinclina umi respuesta popular gotyo.",
+  "ai-limits-scripture": "Ndaha’éi peteĩ fuente ojeroviakuaáva. Ejesareko mba’épa he’i Escritura-kuéra rehe.",
+  "ai-limits-study": "Estudia la Biblia ndete voi, ha ani reheja AI ojapo nderehehápe ne pensamiénto.",
+  "ai-limits-confirm": "Añetehápe AI ikatuha ojavy ha ndahaʼeiha peteĩ sustituto astudia hag̃ua la Biblia che voi.",
+  "friends-playlists-filter": "Angirûnguéra lista de reproducción",
+  "friend-link-social-title": "Emoĩ {{name}} angirũramo",
+  "friend-link-meta-description": "{{name}} ha’ese ne angirũ {{brand}} pe.",
+  "friend-link-title": "Emoĩ {{name}} angirũramo {{brand}} pe."
 }

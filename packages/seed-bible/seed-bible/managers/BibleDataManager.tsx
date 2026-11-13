@@ -9,6 +9,14 @@ import {
   FreeUseBibleAPI,
   type ApiRequestOptions,
   type AudioTimings,
+  type Commentary,
+  type CommentaryBookChapter,
+  type CommentaryBooks,
+  type CommentaryProfile,
+  type CommentaryProfileContent,
+  type Dataset,
+  type DatasetBookChapter,
+  type DatasetBooks,
   type PromiseCache,
   type Translation,
   type TranslationBook,
@@ -104,6 +112,18 @@ export interface BibleDataManager {
   getTranslationBooks: (translationId: string) => Promise<TranslationBooks>;
 
   /**
+   * Every translation the app can offer right now, for callers that just want
+   * a list to pick from (such as extensions).
+   *
+   * This is the full catalog, fetched like `getTranslations()` unless it is
+   * already known this session (`catalogLoaded`). When that fetch fails, or
+   * the device is offline, it answers from what is already known instead:
+   * every downloaded translation, plus whatever else the app has seen.
+   * Rejects only when nothing at all is known.
+   */
+  getTranslationCatalog: () => Promise<Translation[]>;
+
+  /**
    * Returns the already-downloaded book catalog for a translation, or null when
    * it has not been fetched yet. Never hits the network, so callers can answer
    * questions like "which chapter comes next" synchronously.
@@ -154,6 +174,43 @@ export interface BibleDataManager {
     link: string,
     options?: ApiRequestOptions
   ) => Promise<AudioTimings>;
+
+  /**
+   * Commentaries and datasets (such as cross-references) from the default
+   * endpoint. Unlike translations they can't be downloaded, so these always
+   * need a connection, except for responses already fetched this session.
+   */
+  getCommentaries: (options?: ApiRequestOptions) => Promise<Commentary[]>;
+  getCommentaryBooks: (
+    commentaryId: string,
+    options?: ApiRequestOptions
+  ) => Promise<CommentaryBooks>;
+  getCommentaryBookChapter: (
+    commentaryId: string,
+    book: string,
+    chapter: number,
+    options?: ApiRequestOptions
+  ) => Promise<CommentaryBookChapter>;
+  getCommentaryProfiles: (
+    commentaryId: string,
+    options?: ApiRequestOptions
+  ) => Promise<CommentaryProfile[]>;
+  getCommentaryProfile: (
+    commentaryId: string,
+    profileId: string,
+    options?: ApiRequestOptions
+  ) => Promise<CommentaryProfileContent>;
+  getDatasets: (options?: ApiRequestOptions) => Promise<Dataset[]>;
+  getDatasetBooks: (
+    datasetId: string,
+    options?: ApiRequestOptions
+  ) => Promise<DatasetBooks>;
+  getDatasetBookChapter: (
+    datasetId: string,
+    book: string,
+    chapter: number,
+    options?: ApiRequestOptions
+  ) => Promise<DatasetBookChapter>;
 
   /**
    * Gets the API endpoint associated with a given translation. If the translation is not associated with a specific endpoint, it returns the default endpoint.
@@ -1145,6 +1202,30 @@ export function createBibleDataManager(
     mergeTranslations,
   });
 
+  const getTranslationCatalog = async (): Promise<Translation[]> => {
+    // Downloads join `availableTranslations` only once the offline store has
+    // been read, and they are the whole fallback for a first visit made
+    // offline, so wait for that before trusting the list.
+    await offline.ready;
+    // Once the full catalog is known, answer from it: fetching again would
+    // re-merge it, which rewrites the saved copy and re-renders every
+    // translation picker, on every call.
+    if (catalogLoaded.peek()) {
+      return availableTranslations.peek();
+    }
+    const known = availableTranslations.peek();
+    if (offline.isOnline.peek() || known.length === 0) {
+      try {
+        await getTranslations();
+      } catch (error) {
+        if (availableTranslations.peek().length === 0) {
+          throw error;
+        }
+      }
+    }
+    return availableTranslations.peek();
+  };
+
   // Lookups under way, by translation. A screen of rows can ask for the same
   // list all at once (one per save or highlight); they share one lookup
   // instead of each reading storage and setting up its own request.
@@ -1315,6 +1396,62 @@ export function createBibleDataManager(
     return await api.getAudioTimings(link, endpoint, options);
   };
 
+  const getCommentaries = async (options?: ApiRequestOptions) =>
+    (await api.getAvailableCommentaries(defaultEndpoint, options)).commentaries;
+
+  const getCommentaryBooks = (
+    commentaryId: string,
+    options?: ApiRequestOptions
+  ) => api.getCommentaryBooks(commentaryId, defaultEndpoint, options);
+
+  const getCommentaryBookChapter = (
+    commentaryId: string,
+    book: string,
+    chapter: number,
+    options?: ApiRequestOptions
+  ) =>
+    api.getCommentaryBookChapter(
+      commentaryId,
+      book,
+      chapter,
+      defaultEndpoint,
+      options
+    );
+
+  const getCommentaryProfiles = async (
+    commentaryId: string,
+    options?: ApiRequestOptions
+  ) =>
+    (await api.getCommentaryProfiles(commentaryId, defaultEndpoint, options))
+      .profiles;
+
+  const getCommentaryProfile = (
+    commentaryId: string,
+    profileId: string,
+    options?: ApiRequestOptions
+  ) =>
+    api.getCommentaryProfile(commentaryId, profileId, defaultEndpoint, options);
+
+  const getDatasets = async (options?: ApiRequestOptions) =>
+    (await api.getAvailableDatasets(defaultEndpoint, options)).datasets;
+
+  const getDatasetBooks = (datasetId: string, options?: ApiRequestOptions) =>
+    api.getDatasetBooks(datasetId, defaultEndpoint, options);
+
+  const getDatasetBookChapter = (
+    datasetId: string,
+    book: string,
+    chapter: number,
+    options?: ApiRequestOptions
+  ) =>
+    api.getDatasetBookChapter(
+      datasetId,
+      book,
+      chapter,
+      defaultEndpoint,
+      options
+    );
+
   const buildTranslationId = (translationId: string) => {
     const endpoint = getTranslationEndpointInfo(translationId);
     if (endpoint.isDefault) {
@@ -1402,12 +1539,21 @@ export function createBibleDataManager(
     offline,
     getTranslations,
     getTranslationBooks,
+    getTranslationCatalog,
     getCachedTranslationBooks,
     getTranslationBookChapter,
     getCachedTranslationBookChapter,
     getNextChapter,
     getPreviousChapter,
     getAudioTimings,
+    getCommentaries,
+    getCommentaryBooks,
+    getCommentaryBookChapter,
+    getCommentaryProfiles,
+    getCommentaryProfile,
+    getDatasets,
+    getDatasetBooks,
+    getDatasetBookChapter,
     getTranslationEndpointInfo,
     buildTranslationId,
     hydrateCachedCatalog,

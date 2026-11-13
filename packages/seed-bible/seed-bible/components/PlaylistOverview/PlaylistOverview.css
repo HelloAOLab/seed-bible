@@ -1,0 +1,211 @@
+/* The playlist overview (PlaylistOverview): header and button stay put; only
+   the body between them scrolls. */
+.sb-playlist-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 40rem;
+  margin-inline: auto;
+  color: var(--sb-font-color);
+}
+
+.sb-playlist-page-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0.75rem 0.5rem;
+}
+
+.sb-playlist-page-header-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* The title sits beside the back button in the page's direction, and a long
+   one is cut at the end of its own script's line (the inner span's). */
+.sb-playlist-page-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.sb-playlist-page-title > span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sb-playlist-page-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.25rem 1rem 1rem;
+}
+
+/* A modest cover, still 4:3 so the image is cropped the way its author saw
+   it, that keeps its size however long the list is; the body scrolls. */
+.sb-playlist-page-body > .sb-hero-banner {
+  flex-shrink: 0;
+  width: min(100%, 15rem);
+  margin-inline: auto;
+}
+
+.sb-playlist-page-about {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sb-playlist-page-author {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sb-playlist-page-description {
+  margin: 0;
+  font-size: 0.9375rem;
+  white-space: pre-line;
+}
+
+.sb-playlist-page-count {
+  margin: 0;
+  font-size: 0.8125rem;
+  opacity: 0.7;
+}
+
+.sb-playlist-page-footer {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--sb-divider-color);
+}
+
+.sb-playlist-page-start {
+  width: 100%;
+}
+
+/* Wider than a phone, the pane runs under the app's floating navigation bar
+   (a phone's pane stops above its bottom bar instead), so the Start button is
+   lifted clear of it. A compact embed has no such bar. */
+@media (min-width: 481px) {
+  .sb-playlist-page-footer {
+    padding-bottom: 5.5rem;
+  }
+
+  .sb-embed-minimal .sb-playlist-page-footer {
+    padding-bottom: 0.75rem;
+  }
+
+  /* With no button below (the playing list on a wider screen), the steps
+     themselves need to scroll clear of that bar. */
+  .sb-playlist-page-body:last-child {
+    padding-bottom: 5.5rem;
+  }
+
+  .sb-embed-minimal .sb-playlist-page-body:last-child {
+    padding-bottom: 1rem;
+  }
+}
+
+/* A step's time estimate, at the end of its row. */
+.sb-playlist-page-item-minutes {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  white-space: nowrap;
+}
+
+/* A row that opens its step: the whole row is the button. */
+.sb-playlist-step-row-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  /* Stretch to fill the row's full height (not just the label's own line),
+   * absorbing the row's own padding so the whole row is clickable. */
+  align-self: stretch;
+  padding-block: 8px;
+  padding-inline: 10px;
+  margin-block: -8px;
+  margin-inline: -10px;
+}
+
+/* The step that's playing, or open in the editor. */
+.sb-playlist-step-row--current {
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
+
+  & .sb-discover-item-title,
+  & .sb-discover-item-icon {
+    color: var(--sb-primary-color);
+  }
+
+  & .sb-discover-item-title {
+    font-weight: 600;
+  }
+}
+
+/* The app's icon, for scripture: wider than tall, so drawn a little larger
+   than the other icons to read at the same weight, in a box as wide as a
+   Material icon's so every row's title starts at the same place. */
+.sb-playlist-step-icon-scripture {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.375rem;
+}
+
+/* Desktop shows a step's drag handle only while its row is hovered, focused
+   from the keyboard or being dragged, as the sidebar tab rows' ⋮ does (see
+   Tabs.css); touch and phone widths, with no hover to reveal it, always show
+   it. Hidden, it gives back its width and the row's gap after it (the
+   negative margin), sliding open rather than jumping when it's revealed. */
+@media (hover: hover) and (min-width: 481px) {
+  .sb-playlist-page-item > .sb-discover-item-drag-handle {
+    box-sizing: border-box;
+    width: 2rem;
+    overflow: hidden;
+    transition:
+      opacity 0.15s ease,
+      width 0.15s ease,
+      padding 0.15s ease,
+      margin 0.15s ease,
+      visibility 0s;
+  }
+
+  .sb-playlist-page-item:not(
+      :hover,
+      :has(:focus-visible),
+      .sb-discover-item--dragging
+    )
+    > .sb-discover-item-drag-handle {
+    visibility: hidden;
+    width: 0;
+    padding-inline: 0;
+    margin-inline-end: -8px;
+    opacity: 0;
+    transition:
+      opacity 0.15s ease,
+      width 0.15s ease,
+      padding 0.15s ease,
+      margin 0.15s ease,
+      visibility 0s 0.15s;
+  }
+}

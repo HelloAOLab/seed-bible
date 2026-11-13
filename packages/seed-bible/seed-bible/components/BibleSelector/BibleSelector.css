@@ -39,14 +39,14 @@
   padding: 1.125rem 1.25rem 1.25rem;
   background: var(--sb-reader-toolbar-background);
   color: var(--sb-reader-toolbar-font-color);
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
   border: 1px solid var(--sb-divider-color);
 
   width: 100%;
   height: 100dvh;
   bottom: 0;
 
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--sb-shadow-modal);
   opacity: 0;
   transform: translateY(50%);
   transition: all 0.5s;
@@ -120,7 +120,7 @@
 
 .sb-selector-close-button {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.25rem 0.5rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
@@ -136,7 +136,7 @@
 }
 
 .sb-selector-pane-picker-label {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--sb-reader-toolbar-font-color);
   opacity: 0.85;
 }
@@ -149,11 +149,11 @@
 
 .sb-selector-pane-chip {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   padding: 0.25rem 0.625rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -173,7 +173,7 @@
 .sb-selector-translation-select {
   min-width: 6rem;
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.375rem 0.5rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
@@ -182,7 +182,7 @@
 .sb-selector-search-input {
   flex: 1;
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.375rem 0.625rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
@@ -190,7 +190,7 @@
 
 .sb-selector-all-books {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.375rem 0.625rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
@@ -249,7 +249,7 @@
   justify-content: space-between;
   align-items: center;
 
-  transition: all 0.3s;
+  transition: all var(--sb-duration-slow);
 }
 
 .sb-selector-book-button:hover {
@@ -273,7 +273,7 @@
 }
 
 .sb-selector-book-button > .material-symbols-outlined {
-  transition: all 0.3s;
+  transition: all var(--sb-duration-slow);
 }
 
 .sb-selector-book-button.expanded > .material-symbols-outlined {
@@ -299,7 +299,7 @@
 
 .sb-selector-chapter-button {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   background: var(--sb-secondary-color);
   width: 100%;
   cursor: pointer;
@@ -363,7 +363,7 @@
 .testament-title {
   font-family: system-ui, sans-serif;
   font-weight: 700;
-  font-size: 1.125rem;
+  font-size: var(--sb-font-size-18);
   line-height: 1.1;
   padding-left: 0.75rem;
   padding-bottom: 0.5rem;
@@ -437,11 +437,11 @@
   -moz-appearance: none;
 
   padding: 0.5rem 2rem 0.5rem 0.875rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   height: 2.5rem;
 
   border: none;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%)
     url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
     no-repeat right 10px center;
@@ -485,11 +485,11 @@
 
 .share-btn {
   border: none;
-  font-size: 1.125rem;
+  font-size: var(--sb-font-size-18);
   height: 1.5rem;
   width: 1.5rem;
   background: transparent;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.1875rem;
   color: var(--sb-font-color);
   cursor: pointer;
@@ -506,11 +506,11 @@
   gap: 0.5rem;
   margin: 0 0.3125rem 0.5rem;
   padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
   color: var(--sb-font-color);
   font-family: system-ui, sans-serif;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-translation-downloaded-filter-label {
@@ -538,7 +538,7 @@
   height: fit-content;
   width: 100%;
   padding: 0px 0.625rem;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   margin-top: 0.3125rem;
   font-weight: normal;
   color: var(--sb-font-color);
@@ -564,11 +564,11 @@
 .custom-tr-in {
   width: 100%;
   height: 2.5rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   padding-right: 5rem;
   border: none;
   padding-left: 0.3125rem;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   background-color: var(--sb-background);
   color: var(--sb-font-color);
   outline: none;
@@ -579,9 +579,9 @@
   right: 0.3125rem;
   width: 4.375rem;
   height: 1.875rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   background-color: var(--sb-primary-color);
-  color: var(--sb-font-color);
+  color: var(--sb-primary-font-color);
   border: none;
 }
 
@@ -598,9 +598,9 @@
   height: 2.5rem;
   min-width: 8.125rem;
   width: auto;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   color: var(--sb-font-color);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   cursor: pointer;
   display: flex;
@@ -609,7 +609,7 @@
 }
 
 .sidebar-selected-title {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: system-ui, sans-serif;
@@ -622,8 +622,8 @@
   background-color: var(--sb-secondary-color);
   color: var(--sb-font-color);
   padding: 0.625rem;
-  border-radius: 0.3125rem;
-  font-size: 0.875rem;
+  border-radius: var(--sb-radius-sm);
+  font-size: var(--sb-font-size-14);
   grid-column: 1 / -1;
   border: none;
   font-family: system-ui, sans-serif;
@@ -641,11 +641,11 @@
      toolbar color, which a half-strength or see-through tint blends into (or,
      on phones where the section is see-through, gets tinted by). */
   background-color: var(--sb-secondary-color);
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   color: var(--sb-font-color);
-  transition: all 0.3s;
+  transition: all var(--sb-duration-slow);
   position: relative;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .chapter-btn:hover {
@@ -687,7 +687,7 @@
     var(--sb-reader-toolbar-background)
   );
   padding: 0.5rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
 }
 
 .sidebar {
@@ -697,10 +697,10 @@
   padding: 0.625rem;
   transition: all 0.5s;
   scrollbar-width: none;
-  border-top-left-radius: 0.625rem;
-  border-bottom-left-radius: 0.625rem;
-  border-top-right-radius: 0.625rem;
-  border-bottom-right-radius: 0.625rem;
+  border-top-left-radius: var(--sb-radius-md);
+  border-bottom-left-radius: var(--sb-radius-md);
+  border-top-right-radius: var(--sb-radius-md);
+  border-bottom-right-radius: var(--sb-radius-md);
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
@@ -714,16 +714,16 @@
   justify-content: space-between;
   align-items: center;
   padding: 0px 0px 0.9375rem 0px;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   gap: 0.625rem;
 }
 
 .sidebar-select {
   width: 100%;
   height: fit-content;
-  font-size: 1.25rem;
+  font-size: var(--sb-font-size-20);
   font-weight: bold;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   outline: 0px;
   animation: fadeInAnimation2 ease 1s;
   animation-iteration-count: 1;
@@ -736,7 +736,7 @@
   scroll-behavior: smooth;
   overflow-y: auto;
   scrollbar-width: none;
-  transition: all 0.3s;
+  transition: all var(--sb-duration-slow);
   height: calc(80dvh - 3.125rem);
 }
 
@@ -746,7 +746,7 @@
   padding: 1.5rem 1rem;
   box-sizing: border-box;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   text-align: center;
 }
 
@@ -763,26 +763,18 @@
 
 .sb-selector-retry {
   margin-top: 0.75rem;
-  padding: 0.5625rem 1.125rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
-  border-radius: 999px;
-  background: none;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
 }
 
 .sidebar-itm {
   height: 2.75rem;
   width: 12.5rem;
   max-width: 100%;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   cursor: pointer;
   transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
-  font-size: 0.9375rem;
+    background-color var(--sb-duration-base) ease,
+    color var(--sb-duration-base) ease;
+  font-size: var(--sb-font-size-15);
   font-weight: 500;
   padding: 0.625rem 0.75rem;
   font-family: system-ui, sans-serif;
@@ -794,7 +786,7 @@
 .sidebar-itm .material-symbols-outlined {
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
   font-size: 1.375rem;
-  transition: transform 0.2s ease;
+  transition: transform var(--sb-duration-base) ease;
 }
 
 .sidebar-ghost-itm {
@@ -820,7 +812,7 @@
 
 .sidebar-selected-itm {
   color: var(--sb-primary-color);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   border-bottom-color: transparent;
   background-color: color-mix(
     in srgb,
@@ -868,7 +860,7 @@
 
 .upside-down {
   transform: rotate(180deg);
-  transition: transform 0.3s;
+  transition: transform var(--sb-duration-slow);
 }
 
 .modal-overlay {
@@ -880,7 +872,7 @@
 .modal {
   width: 23.4375rem;
   background: var(--sb-reader-toolbar-background);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   box-shadow: 0 10px 20px var(--sb-detached-pane-toolbar-background);
   padding: 0.625rem 0.625rem 2.8125rem 0.625rem;
   z-index: 2;
@@ -893,18 +885,20 @@
   left: 11.5625rem;
   top: 6.25rem;
   width: 12.5rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- local stacking inside the Books panel */
   z-index: 1000;
   padding: 0.3125rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
 }
 
 .translationInfoModal {
   position: absolute;
   width: fit-content;
   max-width: 21.875rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- local stacking inside the Books panel */
   z-index: 1000;
   padding: 0.3125rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
@@ -933,13 +927,14 @@
   left: 50%;
   transform: translate(-50%, -50%);
   padding: 1rem 0.8rem 1rem 0.8rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- local stacking inside the Books panel */
   z-index: 1000;
   width: min(85vw, 35rem);
   max-height: 80vh;
   box-sizing: border-box;
   background: var(--sb-reader-toolbar-background);
   color: var(--sb-reader-toolbar-font-color);
-  border-radius: 0.525rem;
+  border-radius: var(--sb-radius-md);
   overflow-y: auto;
 }
 
@@ -970,18 +965,6 @@
   line-height: 1.2;
 }
 
-.sb-apocrypha-info-close {
-  padding: 0;
-  margin: 0;
-  border: 0;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--sb-font-color);
-}
-
 /* ─── Offline translation downloads ──────────────────────────────────────── */
 
 .sb-offline-btn {
@@ -989,7 +972,7 @@
   height: 1.5rem;
   width: 1.5rem;
   background: transparent;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.1875rem;
   color: var(--sb-font-color);
   cursor: pointer;
@@ -1100,20 +1083,20 @@
   height: fit-content;
   z-index: 1001;
   padding: 0.9375rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   color: var(--sb-font-color);
   font-family: "Satoshi", system-ui, sans-serif;
 }
 
 .sb-offline-delete-title {
   margin: 0 0 0.5rem 0;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
 }
 
 .sb-offline-delete-message {
   margin: 0 0 1rem 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.5;
 }
 
@@ -1124,42 +1107,11 @@
   gap: 0.5rem;
 }
 
-.sb-offline-delete-cancel,
-.sb-offline-delete-confirm {
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.sb-offline-delete-cancel {
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-}
-
-.sb-offline-delete-cancel:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  color: var(--sb-font-color);
-}
-
-.sb-offline-delete-confirm {
-  background: #ef4444;
-  color: #ffffff;
-}
-
-.sb-offline-delete-confirm:hover {
-  background: #dc2626;
-}
-
 .filters-icon {
   height: 1.875rem;
   width: 1.875rem;
   background: var(--sb-background);
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.125rem;
   cursor: pointer;
 }
@@ -1170,7 +1122,7 @@
 .footer {
   padding: 0.625rem;
   text-align: center;
-  color: #ff5722;
+  color: var(--sb-primary-color);
   font-weight: 500;
   cursor: pointer;
   border-top: 1px solid var(--sb-divider-color);
@@ -1180,8 +1132,8 @@
   bottom: 0;
   height: fit-content;
   background-color: var(--sb-reader-toolbar-background);
-  border-bottom-right-radius: 0.625rem;
-  border-bottom-left-radius: 0.625rem;
+  border-bottom-right-radius: var(--sb-radius-md);
+  border-bottom-left-radius: var(--sb-radius-md);
 }
 
 @media only screen and (max-width: 1200px) {
@@ -1220,7 +1172,7 @@
   }
 
   .sidebar-selected-title {
-    font-size: 1rem;
+    font-size: var(--sb-font-size-16);
     font-weight: bold;
   }
 
@@ -1286,7 +1238,7 @@
 
   .sidebar-itm {
     width: 100%;
-    font-size: 1rem;
+    font-size: var(--sb-font-size-16);
   }
 
   .chapter-btn {
@@ -1318,7 +1270,7 @@
   }
 
   .sidebar-select {
-    font-size: 1.125rem;
+    font-size: var(--sb-font-size-18);
     padding-left: 0px;
   }
 
@@ -1361,13 +1313,13 @@
         var(--sb-detached-pane-toolbar-background) 15%,
         transparent
       );
-    border-radius: 0.3125rem;
+    border-radius: var(--sb-radius-sm);
   }
 
   .translationInfoModal {
     width: 15.625rem;
     height: fit-content;
-    border-radius: 0.3125rem;
+    border-radius: var(--sb-radius-sm);
     box-shadow: 0 5px 10px
       color-mix(
         in srgb,
@@ -1386,7 +1338,7 @@
     left: 50%;
     width: calc(100% - 2.5rem);
     height: fit-content;
-    border-radius: 0.5rem;
+    border-radius: var(--sb-radius-md);
     box-shadow: 0 5px 10px
       color-mix(
         in srgb,
@@ -1407,4 +1359,10 @@
     width: 100%;
     color: var(--sb-font-color);
   }
+}
+
+/* The phone Books header's Tabs button: its icon is drawn at 20px. */
+.sb-icon-button.sb-selector-mobile-tabs {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.25rem;
 }

@@ -1,0 +1,65 @@
+/*
+ * Styles shared across the discover/playlist feature — used by more than one
+ * component (reading plans pane, playlist item inputs, play view, etc.), so
+ * they live here rather than in any single component's CSS file. Loaded via
+ * DiscoverPane, which the app imports eagerly.
+ */
+
+.sb-discover-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Add-item row shared by the scripture, text, and link item inputs. */
+.sb-playlist-add-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sb-playlist-add-text-row,
+.sb-playlist-add-link-row {
+  flex-direction: column;
+
+  > .sb-settings-save-button {
+    align-self: flex-end;
+  }
+}
+
+.sb-playlist-add-title-input {
+  margin-bottom: 8px;
+}
+
+/*
+ * Playlist text inputs reuse the account settings' filled-box look
+ * (`sb-settings-text-input`); this glue lets them flex next to the add button
+ * inside `.sb-playlist-add-row`.
+ */
+.sb-playlist-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-playlist-add-error {
+  margin-top: 6px;
+  font-size: var(--sb-font-size-13);
+  color: var(--sb-error-color, #d64545);
+}
+
+.sb-play-playlist-content {
+  flex: 0 0 auto;
+  max-height: 40%;
+  overflow-y: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--sb-divider-color);
+
+  padding: 12px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: var(--sb-radius-lg);
+  background: var(--sb-background);
+  box-shadow: var(--sb-shadow-raised);
+}
+
+.sb-play-playlist-content .sb-discover-section {
+  margin-bottom: 0;
+}

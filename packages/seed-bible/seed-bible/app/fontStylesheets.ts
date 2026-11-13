@@ -1,12 +1,22 @@
+/** The Material Symbols icon font. */
+export const ICON_FONT_STYLESHEET =
+  "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0";
+
 /**
  * The Google Fonts stylesheets the app loads: the preset font families and
  * the Material Symbols icon font. Shared by the app's own `<head>`
- * (`ExternalResourceDependencies` in `main.tsx`) and the frames sandboxed
+ * (`<link>` tags in `index.html`, which a test keeps in step with this list)
+ * and the frames sandboxed
  * extensions run in, so both render with the same fonts.
  */
 export const STATIC_FONT_STYLESHEETS = [
-  "https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Roboto&family=Open+Sans&family=Playfair+Display&family=Cormorant+Garamond&display=swap",
-  "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0",
+  // The two families the first paint is set in.
+  "https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap",
+  // Only reached when someone picks one of these in the font settings.
+  "https://fonts.googleapis.com/css2?family=Roboto&family=Open+Sans&family=Playfair+Display&family=Cormorant+Garamond&display=swap",
+  // The playlist editor's; their files are only fetched once it's open.
+  "https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&family=Figtree:wght@400;500;600;700&family=Literata&display=swap",
+  ICON_FONT_STYLESHEET,
 ] as const;
 
 /**

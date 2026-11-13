@@ -22,22 +22,18 @@
   "clear-search": "खोज खाली गर्नुहोस्",
   "searching": "खोज्दै...",
   "no-search-results": "कुनै मिल्दो पदहरू छैनन्।",
-
   "uploading": "अपलोड हुँदै...",
   "profile-name": "प्रोफाइल नाम",
   "profile-name-placeholder": "जस्तै क्रेग परिवार",
-
   "description": "विवरण",
   "optional": "(वैकल्पिक)",
   "description-placeholder": "आफ्नो प्रोफाइल विवरण प्रविष्ट गर्नुहोस्...",
   "location": "स्थानहरू",
   "location-placeholder": "जस्तै अस्टिन, TX",
-
   "copied": "प्रतिलिपि गरियो",
   "copy": "प्रतिलिपि गर्नुहोस्",
   "save-changes": "परिवर्तनहरू बचत गर्नुहोस्",
   "sign-out": "साइन आउट गर्नुहोस्",
-
   "log-in": "लग इन गर्नुहोस्",
   "session-settings": "सत्र सेटिङहरू",
   "shared-session-click-to-join": "साझेदारी गर्दैछ — सामेल हुन क्लिक गर्नुहोस्",
@@ -53,12 +49,10 @@
   "display-and-theme-description": "एउटा विषयवस्तु छान्नुहोस् र धर्मशास्त्र तथा यूआई कसरी देखाइन्छ भनेर मिलाउनुहोस्।",
   "scripture-settings": "धर्मशास्त्र सेटिङहरू",
   "scripture-settings-font-size-example": "अ",
-
   "all-settings": "सबै सेटिङहरू",
   "no-extensions-available": "कुनै पनि एक्सटेन्सन उपलब्ध छैन।",
   "install": "इन्स्टल गर्नुहोस्",
   "uninstall": "स्थापना रद्द गर्नुहोस्",
-
   "custom": "अनुकूलन",
   "text-section-bookTitle": "पुस्तक शीर्षक पाठ",
   "text-section-heading": "शीर्षक पाठ",
@@ -79,7 +73,6 @@
   "show-selected-items": "चयन गरिएका वस्तुहरू देखाउनुहोस्",
   "show-highlight-colors": "हाइलाइट रङहरू देखाउनुहोस्",
   "show-icon-text": "आइकनको पाठ देखाउनुहोस्",
-
   "extensions": "एक्सटेन्सनहरू",
   "display": "प्रदर्शन",
   "keep-screen-awake": "स्क्रिन सक्रिय राख्नुहोस्",
@@ -101,7 +94,6 @@
   "increase-scripture-font-size": "धर्मशास्त्रको फन्ट साइज बढाउनुहोस्",
   "change-line-spacing": "रेखा स्पेसिङ परिवर्तन गर्नुहोस्",
   "line-spacing_lineHeight": "रेखा स्पेसिङ: {{lineHeight}}",
-
   "italic": "इटालिक",
   "underline": "रेखांकन गर्नुहोस्",
   "alignment_x": "पङ्क्तिबद्धता: {{alignment}}",
@@ -110,7 +102,6 @@
   "text_color": "पाठको रङ",
   "follow_theme": "विषयवस्तु फलो गर्नुहोस्",
   "reset-to-default": "पूर्वनिर्धारितमा रिसेट गर्नुहोस्",
-
   "id_highlight-text-color": "{{id}} हाइलाइट टेक्स्ट रङ",
   "id_highlight-background-color": "{{id}} हाइलाइट पृष्ठभूमि रङ",
   "all-settings-description": "प्रत्येक पाठ खण्डलाई फाइन-ट्यून गर्नुहोस् र प्रत्येक विषयवस्तुको रङलाई अनुकूलित गर्नुहोस्।",
@@ -126,7 +117,6 @@
   "old-testament_short": "ओटी",
   "new-testament_short": "NT नामक यन्त्र",
   "apocrypha": "एपोक्रिफा",
-
   "custom-translations": "अनुकूलन अनुवादहरू",
   "no-translation-results-found": "कुनै परिणाम भेटिएन। के तपाईं आंशिक रूपमा पूर्ण अनुवादहरू पनि समावेश गर्न आफ्नो खोज विस्तार गर्न चाहनुहुन्छ?",
   "show-all-translations": "सबै अनुवादहरू देखाउनुहोस्",
@@ -138,7 +128,6 @@
   "complete-translations": "पूरा अनुवादहरू",
   "all-translations": "सबै अनुवादहरू",
   "popular-translations": "लोकप्रिय अनुवादहरू",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "१ भजनसंग्रह",
   "2-psalms": "२ भजनसंग्रह",
@@ -160,7 +149,6 @@
   "go-to-all-settings": "सबै सेटिङहरूमा जानुहोस्",
   "more": "थप",
   "remove-bookmark": "बुकमार्क हटाउनुहोस्",
-
   "chat": "कुराकानी",
   "today": "आज",
   "you": "तपाईं",
@@ -170,7 +158,6 @@
   "category-options": "फोल्डर विकल्पहरू",
   "rename": "पुन: नामाकरण गर्नुहोस्",
   "delete": "मेटाउनुहोस्",
-
   "bookmark-options": "बुकमार्क विकल्पहरू",
   "new-folder-placeholder": "फोल्डरको नाम",
   "tasks": "कार्यहरू",
@@ -182,11 +169,9 @@
   "folder-name-taken": "त्यो नामको फोल्डर पहिले नै अवस्थित छ।",
   "add-to-new": "नयाँमा थप्नुहोस्",
   "save": "बचत गर्नुहोस्",
-
   "seed-bible": "बीउ बाइबल",
   "take-photo": "फोटो खिच्नुहोस्",
   "choose-from-gallery": "ग्यालरीबाट छान्नुहोस्",
-
   "crop-your-photo": "आफ्नो फोटो क्रप गर्नुहोस्",
   "zoom": "जुम गर्नुहोस्",
   "set-picture": "तस्वीर सेट गर्नुहोस्",
@@ -212,10 +197,8 @@
   "read-the-bible": "बाइबल पढ्नुहोस्",
   "seed-bible-description": "बीउ बाइबलमा {{bookName}} {{chapterNumber}} पढ्नुहोस्",
   "social-title": "{{bookName}} {{chapterNumber}} पढ्नुहोस्",
-
   "chapter-navigation": "अध्याय नेभिगेसन",
   "tutorial.skip": "छोड्नुहोस्",
-
   "tutorial.back": "पछाडि",
   "tutorial.done": "भयो",
   "tutorial.next": "अर्को",
@@ -239,7 +222,6 @@
   "copied-translation-share-link": "अनुवाद साझेदारी लिङ्क प्रतिलिपि गरियो",
   "less": "कम",
   "swipe-up-more": "थप हेर्न माथि स्वाइप गर्नुहोस्",
-  "plans": "योजनाहरू",
   "reading-plans": "पठन योजनाहरू",
   "create-reading-plan": "पढ्ने योजना बनाउनुहोस्",
   "reading-plans-empty": "तपाईंसँग अहिलेसम्म पढ्ने कुनै योजना छैन। सुरु गर्न एउटा योजना बनाउनुहोस्।",
@@ -328,11 +310,9 @@
   "study-notes": "अध्ययन नोटहरू",
   "content": "सामग्रीहरू",
   "untitled-playlist": "शीर्षकविहीन प्लेलिस्ट",
-
   "discover-annotations-empty": "तपाईंसँग कुनै एनोटेसन छैन।",
   "discover-cross-references-empty": "यस अध्यायको लागि कुनै क्रस सन्दर्भहरू छैनन्।",
   "discover-study-notes-empty": "यस अध्यायको लागि कुनै अध्ययन नोटहरू छैनन्।",
-
   "discover-select-tab": "सम्बन्धित सामग्री पत्ता लगाउन ट्याब चयन गर्नुहोस्।",
   "create-playlist": "सिर्जना गर्नुहोस्",
   "playlist-title_placeholder": "प्लेलिस्ट शीर्षक",
@@ -381,12 +361,10 @@
   "delete-playlist-failed": "प्लेलिस्ट मेटाउन सकिएन।",
   "collapsed-tab-shared-label": "{{title}} — साझा सत्र, {{count}} उपस्थित",
   "playlist-add-mode-label": "वस्तु प्रकार",
-
   "session-host-reconnected": "सत्रमा पुन: जडान गरियो",
   "session-host-left": "होस्टले छोड्नुभयो — तपाईंलाई सत्रबाट हटाइयो",
   "drag-to-reorder-playlist-item": "पुन: क्रमबद्ध गर्न तान्नुहोस्",
   "saving": "सेभ गर्दै…",
-
   "unsaved-item-confirm-message": "तपाईंले प्लेलिस्टमा अझै थपिएको नभएको वस्तु थप्न सुरु गर्नुभएको छ। तपाईं के गर्न चाहनुहुन्छ?",
   "discard-and-save": "त्याग्नुहोस् र सेभ गर्नुहोस्",
   "add-and-save": "थप्नुहोस् र सेभ गर्नुहोस्",
@@ -514,7 +492,6 @@
   "reading-plan-preview-reading": "पूर्वावलोकन {{reading}}",
   "reading-plan-mark-reading-complete": "पढाइ पूरा भएको चिन्ह लगाउनुहोस्",
   "reading-plan-link-video": "भिडियो",
-
   "reading-plan-mark-passage-complete": "{{passage}} लाई पढिएको रूपमा चिन्ह लगाउनुहोस्",
   "reading-plan-read-nudge-title": "राम्रो पढाइ!",
   "reading-plan-read-nudge-toast": "{{passage}} लाई पूरा भएको चिन्ह लगाउने हो?",
@@ -522,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "अनलाइन बाइबल पढ्नुहोस्, खोज्नुहोस् र अध्ययन गर्नुहोस्। धेरै भाषाहरूमा नि:शुल्क अनुवादहरू, हाइलाइटहरू, नोटहरू, बुकमार्कहरू, र पठन योजनाहरू सहित।",
   "all": "सबै",
-
   "today-bookmarks": "बुकमार्कहरू",
   "today-search-verses": "किताबहरू, अध्यायहरू, पदहरू खोज्नुहोस्....",
   "anonymous-greeting": "स्वागत छ!",
   "community": "समुदाय",
   "go-somewhere-new": "कतै नयाँ जानुहोस्",
-
   "open-bible": "बाइबल खोल्नुहोस्",
   "personal-greeting": "स्वागत छ, {{name}} !",
   "resume-reading": "जहाँ छोड्नुभएको थियो त्यहीँ जारी राख्नुहोस्",
   "resume-reading-loading": "तपाईंको पठन इतिहास लोड गर्दै...",
   "selected-year": "वर्ष: {{year}}",
-
   "theme-light": "उज्यालो",
   "theme-dark": "अँध्यारो",
   "installed-extensions": "स्थापना गरियो",
@@ -544,7 +518,6 @@
   "extension-state-installed": "स्थापना गरियो",
   "extension-state-downloaded": "डाउनलोड गरियो",
   "extension-state-pending": "स्थापना गर्दै...",
-
   "tutorial.stepProgress": "{ {{total}} मध्ये {{current}} }} चरण",
   "tutorial.offlineDownloadTitle": "यसलाई आफ्नो यन्त्रमा राख्न ट्याप गर्नुहोस्",
   "tutorial.offlineDownloadBody": "यो आइकन भएको कुनै पनि अनुवाद अफलाइन पढ्नको लागि सुरक्षित गर्न सकिन्छ।",
@@ -578,7 +551,6 @@
   "tutorial.paneLayoutBody": "यो लेआउट मेनुबाट कतिवटा खण्डहरू सँगै पढ्ने भनेर छनौट गर्नुहोस्।",
   "tutorial.addTabTitle": "थप खण्डहरू खोल्नुहोस्",
   "tutorial.addTabBody": "धेरै पुस्तकहरू वा अनुवादहरू सँगै पढ्नको लागि नयाँ ट्याब थप्नुहोस्।",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % पूरा - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % पूरा भयो",
   "playlist-history-continue": "जारी राख्नुहोस्",
@@ -637,7 +609,6 @@
   "chapter-notes-count_other": "यस अध्यायको लागि {{count}} नोटहरू",
   "create-folder": "फोल्डर सिर्जना गर्नुहोस्",
   "edit-bookmark": "बुकमार्क सम्पादन गर्नुहोस्",
-
   "greeting-afternoon": "शुभ दिउँसो!",
   "greeting-afternoon-named": "शुभ दिउँसो, {{name}} !",
   "greeting-evening": "शुभ साँझ!",
@@ -653,32 +624,24 @@
   "ask-ai": "एआईलाई सोध्नुहोस्",
   "unread-mention": "नपढिएको उल्लेख",
   "unread-messages": "नपढिएका सन्देशहरू: {{count}}",
-
   "scripture-width": "धर्मग्रन्थको चौडाइ",
   "decrease-scripture-width": "शास्त्रको चौडाइ घटाउनुहोस्",
   "increase-scripture-width": "धर्मशास्त्रको चौडाइ बढाउनुहोस्",
   "annotations": "एनोटेसनहरू",
   "discover-content-panel": "सामग्री पत्ता लगाउनुहोस्",
   "discover-book-title": "{{book}} पत्ता लगाउनुहोस्",
-
   "about-title": "बीउ बाइबलको बारेमा",
   "about-meta-description": "सिड बाइबल एउटा नि:शुल्क बाइबल एप हो जुन तपाईंको परिवार, साथीभाइ र समुदायसँग मिलेर धर्मशास्त्र पढ्नको लागि बनाइएको हो — सधैंभरि नि:शुल्क, कुनै विज्ञापन वा पेवाल बिना।",
-
   "about-action-open-passage": "एउटा खण्ड खोल्नुहोस्",
   "about-action-donate": "दान गर्नुहोस्",
   "about-action-discord": "डिस्कोर्डमा सामेल हुनुहोस्",
   "recent-uploads": "हालसालैका अपलोडहरू",
-
   "customization-not-found": "यो अनुकूलन फेला पार्न सकिएन।",
   "customization-name": "नाम",
   "customization-primaryColor": "प्राथमिक",
-
   "customization-secondaryColor": "माध्यमिक",
-
   "customization-tertiaryColor": "तृतीयक",
-
   "customization-fonts": "फन्टहरू",
-
   "custom-font-option": "आफू अनुकूल…",
   "custom-font-name-placeholder": "गुगल फन्ट नाम",
   "delete-customization": "मेटाउनुहोस्",
@@ -691,10 +654,8 @@
   "extension-availability-available": "उपलब्ध छ",
   "extension-availability-auto-installed": "स्वतः स्थापित",
   "extension-availability-hidden": "लुकेको",
-
   "variants": "विषयवस्तुहरू",
   "add-variant": "विषयवस्तु थप्नुहोस्",
-
   "base-theme-description": "यो विषयवस्तुलाई पूर्वनिर्धारित गर्ने परिवर्तनहरू तपाईंले अनुकूलित नगर्नुभएको कुनै पनि कुरामा फिर्ता आउँछन्। तपाईंका आफ्नै सम्पादनहरू राखिन्छन्।",
   "reset-to-base-theme": "आधार विषयवस्तुमा रिसेट गर्नुहोस्",
   "low-contrast-warning": "{{label}} : कन्ट्रास्ट केवल {{ratio}} :1 हो — कम्तिमा {{minRatio}} :1 को लागि लक्ष्य राख्नुहोस् ताकि पाठ पढ्न योग्य रहोस्।",
@@ -740,14 +701,12 @@
   "save-folder-empty": "यहाँ अहिलेसम्म कुनै पनि बचत गरिएको छैन।",
   "save-options": "बचत विकल्पहरू",
   "saves": "बचत गर्छ",
-
   "hide-saves": "सुरक्षित गरिएका वस्तुहरू लुकाउनुहोस्",
   "show-saves": "सुरक्षित गरिएका सामग्रीहरू देखाउनुहोस्",
   "save-verses": "बचत गर्नुहोस्",
   "new-save-folder": "नयाँ फोल्डर",
   "edit-save": "सेभ सम्पादन गर्नुहोस्",
   "remove-save-from-all-folders": "सबै फोल्डरहरूबाट हटाउनुहोस्",
-
   "color-hue": "ह्यु",
   "color-saturation": "संतृप्ति र चमक",
   "hex-color": "हेक्स रङ",
@@ -862,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "ढाँचा सम्पादक लोड गर्न सकिएन। यो नोटमा ढाँचा हराउने भएकोले, तपाईंले पुन: जडान नगरेसम्म यसलाई सम्पादन गर्न सकिँदैन।",
   "annotation-text": "एनोटेसन पाठ",
   "notes-for-verse": "पद {{verse}} को लागि नोटहरू",
-
   "configure-extension-defaults": "पूर्वनिर्धारित ओभरराइडहरू कन्फिगर गर्नुहोस्",
-
   "extension-settings-defaults-title": "{{name}} पूर्वनिर्धारित ओभरराइडहरू",
   "no-extension-settings": "यो एक्सटेन्सनमा कुनै कन्फिगर योग्य सेटिङहरू छैनन्।",
   "extension-settings-save-failed": "तपाईंका सेटिङहरू सुरक्षित गर्न सकिएन।",
@@ -873,7 +830,6 @@
   "setting-no-default": "कुनै पूर्वनिर्धारित छैन",
   "override-setting": "{{name}} लाई ओभरराइड गर्नुहोस्",
   "override-setting-label": "ओभरराइड गर्नुहोस्",
-
   "discover-choose-filter-hint": "यस अध्यायबाट थप हेर्न माथिको फिल्टर छान्नुहोस्।",
   "take-a-tour": "भ्रमण गर्नुहोस्",
   "share-reading-plan": "योजना साझा गर्नुहोस्",
@@ -1057,7 +1013,6 @@
   "my-bookmark-numbered": "मेरो बुकमार्क {{number}}",
   "bookmark-move-hint": "यस अध्यायमा सार्न बुकमार्कमा ट्याप गर्नुहोस्।",
   "move-bookmark-here": "{{name}} यहाँ सार्नुहोस्",
-
   "play": "खेल्नुहोस्",
   "pause": "पज गर्नुहोस्",
   "audio-playback-position": "प्लेब्याक स्थिति",
@@ -1066,7 +1021,6 @@
   "audio-scrub-verse": "पद {{verse}}",
   "tab-playing-audio": "अडियो प्ले गर्दै",
   "collapsed-tab-playing-label": "{{label}} — अडियो बजाउँदै",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} विषयवस्तुहरू",
   "customization-theme-count_one": "{{count}} विषयवस्तु",
@@ -1105,7 +1059,6 @@
   "about-community-body": "विश्वास सँगै बस्नको लागि हो। बीज बाइबल तपाईंको परिवार, तपाईंको नजिकका साथीहरू र तपाईंको घरको चर्चसँग धर्मशास्त्र पढ्नको लागि बनाइएको हो।",
   "discovered-content": "खोजिएको सामग्री",
   "show-discovered-content": "खोजिएको सामग्री देखाउनुहोस्",
-
   "extension-availability-default": "पूर्वनिर्धारित ( {{availability}} )",
   "customization-extensions-default": "अन्य एक्सटेन्सनहरूको लागि पूर्वनिर्धारित",
   "customization-extensions-default-hint": "तपाईंले तल सेट नगर्नुभएका सबै एक्स्टेन्सनहरूमा लागू हुन्छ, पछि थपिएका नयाँ एक्स्टेन्सनहरू सहित।",
@@ -1138,7 +1091,6 @@
   "playlist-scripture-note-return": "प्लेलिस्टमा फर्कनुहोस्",
   "playlist-scripture-note-aria": "{{passage}} मा नोट",
   "playlist-scripture-note-progress": "{{ {{total}} {{current}} }}",
-
   "unsaved-item-edit-confirm-message": "तपाईंले एउटा वस्तु परिवर्तन गर्नुभएको छ तर ती परिवर्तनहरू अहिलेसम्म सुरक्षित गर्नुभएको छैन। तपाईं के गर्न चाहनुहुन्छ?",
   "keep-changes-and-save": "परिवर्तनहरू राख्नुहोस् र बचत गर्नुहोस्",
   "reading-plan-edit-reading": "पढाइ सम्पादन गर्नुहोस्",
@@ -1153,7 +1105,6 @@
   "branding": "ब्रान्डिङ",
   "create-custom-branding-menu-item": "अनुकूलन ब्रान्डिङ",
   "your-content-empty-branding": "तपाईंले सिर्जना गर्नुभएको अनुकूलन ब्रान्डिङ यहाँ देखिनेछ।",
-
   "extension-consent-from": "{{host}} बाट",
   "extension-consent-source-version": "संस्करण {{version}} · {{host}} बाट",
   "extension-consent-uploader-unnamed": "बीउ बाइबल प्रयोगकर्ता",
@@ -1201,7 +1152,6 @@
   "extension-permission-reading-selection": "तपाईंले कुन पदहरू छान्नुहुन्छ हेर्नुहोस्",
   "extension-permission-reading-navigate": "खण्डहरू खोल्नुहोस्",
   "extension-permission-network": "{{host}} मा जडान गर्नुहोस्",
-
   "extension-consent-not-now": "अहिले होइन",
   "extension-consent-nothing-yet": "अहिलेको लागि, यसले तपाईंको कुनै पनि जानकारीमा पहुँच राख्न सक्ने छैन।",
   "extension-permission-reading-history": "आफ्नो पठन इतिहास हेर्नुहोस्",
@@ -1239,7 +1189,6 @@
   "extension-capture-cancel": "रद्द गर्नुहोस्",
   "extension-consent-high-risk": "संवेदनशील",
   "extension-modal-ok": "ठिक छ",
-
   "extension-permissions-restart-note": "परिवर्तनहरू तुरुन्तै लागू हुन्छन्। तिनीहरूलाई लिन {{name}} पुन: सुरु हुन्छ।",
   "extension-permissions-saved": "सुरक्षित गरियो। {{name}} नयाँ अनुमतिहरू सहित पुन: सुरु गरियो।",
   "extension-permissions-failed": "त्यो बचत भएन। फेरि प्रयास गर्नुहोस्।",
@@ -1277,8 +1226,67 @@
   "session-settings-verse-effects-desc-hosts": "होस्टले पद चयन गर्दा प्रभावहरू देखाउनुहोस्।",
   "session-settings-verse-effects-desc-everyone": "कसैले पद चयन गर्दा प्रभावहरू देखाउनुहोस्।",
   "session-settings-verse-effects-desc-none": "पद चयन प्रभावहरू सबैका लागि बन्द गरिएका छन्।",
-
   "account": "खाता",
   "scroll-filters-start": "फिल्टरहरूलाई सुरुतिर स्क्रोल गर्नुहोस्",
-  "scroll-filters-end": "फिल्टरहरूलाई अन्त्यतिर स्क्रोल गर्नुहोस्"
+  "scroll-filters-end": "फिल्टरहरूलाई अन्त्यतिर स्क्रोल गर्नुहोस्",
+  "download": "डाउनलोड गर्नुहोस्",
+  "image-details-uploaded": "अपलोड गरियो",
+  "image-details-dimensions": "आयामहरू",
+  "image-details-dimensions-value": "{{width}} × {{height}} पिक्सेल",
+  "image-details-type": "प्रकारहरू",
+  "image-details-cover-of": "को आवरण",
+  "image-details-not-a-cover": "आवरणको रूपमा प्रयोग गरिँदैन",
+  "delete-customization-confirm-title": "आफू अनुकूल ब्रान्डिङ मेटाउने हो?",
+  "delete-customization-confirm-message": "\" {{name}} \" कस्टम ब्रान्डिङ मेटाउने हो? यो पूर्ववत गर्न सकिँदैन।",
+  "delete-customization-failed": "अनुकूलन ब्रान्डिङ मेटाउन सकिएन।",
+  "delete-variant-confirm-title": "विषयवस्तु मेटाउने हो?",
+  "delete-variant-confirm-message": "\" {{name}} \" विषयवस्तु मेटाउने हो? यो पूर्ववत गर्न सकिँदैन।",
+  "delete-variant-confirm-message-unnamed": "यो विषयवस्तु मेटाउने हो? यसलाई पूर्ववत गर्न सकिँदैन।",
+  "delete-variant-failed": "विषयवस्तु मेटाउन सकिएन।",
+  "delete-highlight-confirm-title": "हाइलाइट मेटाउने हो?",
+  "delete-highlight-confirm-message": "{{reference}} मा रहेको हाइलाइट मेटाउने हो? यसलाई पूर्ववत गर्न सकिँदैन।",
+  "delete-highlight-failed": "हाइलाइट मेटाउन सकिएन।",
+  "delete-annotation-on-confirm-message": "{{reference}} मा रहेको एनोटेसन मेटाउने हो? यसलाई पूर्ववत गर्न सकिँदैन।",
+  "remove-from-folder": "फोल्डरबाट हटाउनुहोस्",
+  "save-folders": "{{folders}} मा",
+  "delete-save-confirm-title": "सेभ मेटाउने हो?",
+  "delete-save-confirm-message": "{{reference}} को लागि सेभ मेटाउने हो? यो पूर्ववत गर्न सकिँदैन।",
+  "delete-save-confirm-message-folders": "{{folders}} बाट {{reference}} को लागि सेभ मेटाउने हो? यो पूर्ववत गर्न सकिँदैन।",
+  "delete-save-failed": "सुरक्षित गरिएको फाइल मेटाउन सकिएन।",
+  "delete-save-folder-confirm-title": "फोल्डर मेटाउने हो?",
+  "delete-save-folder-confirm-message": "\" {{name}} \" फोल्डर मेटाउने हो?",
+  "delete-save-folder-confirm-deletes": "यस फोल्डरमा मात्र रहेका {{count}} बचतहरू पनि मेटिनेछन्।",
+  "delete-save-folder-confirm-deletes_one": "यस फोल्डरमा मात्र भएको बचत पनि मेटिनेछ।",
+  "delete-save-folder-confirm-deletes_other": "यस फोल्डरमा मात्र रहेका {{count}} बचतहरू पनि मेटिनेछन्।",
+  "delete-save-folder-confirm-keeps": "अन्य फोल्डरहरूमा भएका {{count}} बचतहरू त्यहाँ रहनेछन्।",
+  "delete-save-folder-confirm-keeps_one": "अर्को फोल्डरमा भएको बचत पनि त्यहीं रहनेछ।",
+  "delete-save-folder-confirm-keeps_other": "अन्य फोल्डरहरूमा भएका {{count}} बचतहरू त्यहाँ रहनेछन्।",
+  "cant-be-undone": "यो पूर्ववत गर्न सकिँदैन।",
+  "delete-save-folder-failed": "फोल्डर मेटाउन सकिएन।",
+  "download-image-failed": "छवि डाउनलोड गर्न सकिएन।",
+  "session-settings-verse-effects-hosts-only": "होस्टहरू मात्र",
+  "session-settings-verse-effects-everyone": "सबैजना",
+  "session-settings-verse-effects-none": "कुनै पनि होइन",
+  "loading-books": "पुस्तकहरू लोड गर्दै...",
+  "books-load-failed": "पुस्तकहरू लोड गर्न सकिएन। आफ्नो जडान जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।",
+  "loading-translation": "{{name}} लोड हुँदै ...",
+  "translation-load-failed": "{{name}} लोड गर्न सकिएन।",
+  "loading-translations": "अनुवादहरू लोड गर्दै...",
+  "translations-load-failed": "अनुवादहरूको पूर्ण सूची लोड गर्न सकिएन, त्यसैले केही छुटेका हुन सक्छन्।",
+  "verse-of-the-day": "दिनको पद",
+  "verse-of-the-day-loading": "आजको पद लोड गर्दै...",
+  "delete-bookmark-confirm-title": "बुकमार्क मेटाउने हो?",
+  "delete-bookmark-confirm-message": "\" {{name}} \" मेटाउने हो?",
+  "scripture-font": "धर्मशास्त्रको फन्ट",
+  "ai-limits-title": "एआईसँग कुराकानी गर्नु अघि",
+  "ai-limits-intro": "एआई एक उपयोगी सुरुवात बिन्दु हुन सक्छ, तर यसको सीमाहरूलाई ध्यानमा राख्नुहोस्:",
+  "ai-limits-mistakes": "यसले गल्ती गर्छ, र गलत हुँदा आत्मविश्वासी लाग्न सक्छ।",
+  "ai-limits-agreeable": "यसले तपाईंलाई के सुन्न चाहन्छ भनेर बताउने गर्छ, र लोकप्रिय उत्तरहरू तिर झुक्छ।",
+  "ai-limits-scripture": "यो भरपर्दो स्रोत होइन। धर्मशास्त्र विरुद्ध के भन्छ भनेर जाँच गर्नुहोस्।",
+  "ai-limits-study": "आफैं बाइबल अध्ययन गर्नुहोस्, र एआईलाई तपाईंको सोचाइ बनाउन नदिनुहोस्।",
+  "ai-limits-confirm": "मलाई थाहा छ कि एआईले गल्ती गर्न सक्छ र यो आफैंले बाइबल अध्ययन गर्नुको विकल्प होइन।",
+  "friends-playlists-filter": "साथीहरूको प्लेलिस्टहरू",
+  "friend-link-social-title": "साथीको रूपमा {{name}} थप्नुहोस्",
+  "friend-link-meta-description": "{{name}} {{brand}} मा तपाईंको साथी बन्न चाहन्छ।",
+  "friend-link-title": "{ {{brand}} मा साथीको रूपमा {{name}} थप्नुहोस्।"
 }

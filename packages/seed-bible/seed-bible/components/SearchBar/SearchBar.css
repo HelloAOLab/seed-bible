@@ -4,7 +4,7 @@
   gap: 0.625rem;
   min-height: 2.75rem;
   padding: 0 0.875rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--sb-font-color), transparent 91%);
   color: var(--sb-font-color);
   box-sizing: border-box;
@@ -20,7 +20,7 @@
 
 /* Inside a floating panel, on the reader's colour. */
 .sb-search-bar-panel {
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-reader-background);
 }
 
@@ -39,7 +39,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .sb-search-bar-input::placeholder {

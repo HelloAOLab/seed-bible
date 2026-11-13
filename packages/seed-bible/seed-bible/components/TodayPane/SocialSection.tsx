@@ -48,6 +48,7 @@ import type {
 } from "../../managers/TodayManager";
 import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
 import { htmlToPlainText } from "../CreateAnnotationForm/PlainTextAnnotationEditor";
+import { IconButton } from "../IconButton/IconButton";
 
 const FEED_KINDS = ["all", "notes", "reading"] as const;
 
@@ -353,18 +354,13 @@ function FeedCard(props: {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          aria-pressed={props.historyOpen}
-          aria-label={historyLabel}
-          title={historyLabel}
+        <IconButton
+          icon="history"
+          label={historyLabel}
+          pressed={props.historyOpen}
           onClick={props.onToggleHistory}
-          className={`sb-today-feed-history-button${
-            props.historyOpen ? " sb-today-feed-history-button-selected" : ""
-          } sb-today-clickable`}
-        >
-          <MaterialIcon>history</MaterialIcon>
-        </button>
+          className="sb-today-feed-history-button"
+        />
       </div>
       {props.historyOpen && (
         <Fragment>

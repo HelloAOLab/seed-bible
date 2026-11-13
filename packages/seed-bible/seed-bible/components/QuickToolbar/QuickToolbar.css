@@ -5,7 +5,7 @@
   align-items: center;
   gap: 0.25rem;
   opacity: 1;
-  transition: opacity 0.25s ease;
+  transition: opacity var(--sb-duration-slow) ease;
 }
 
 /* Desktop: sits in the header's action cluster, just after the save and
@@ -22,56 +22,62 @@
   flex-shrink: 0;
 }
 
+/* Mobile, during playlist playback: the playing playlist, right after the
+   back arrow. It may shrink, truncating its text, so the tools on the far
+   side keep their room. */
+.sb-quick-toolbar-mobile-header-leading {
+  flex: 0 1 auto;
+  min-width: 0;
+
+  .sb-quick-toolbar-item,
+  .sb-quick-toolbar-card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .sb-now-playing-icon {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .sb-now-playing-icon > * {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
 .sb-quick-toolbar-item {
   position: relative;
   display: inline-flex;
 }
 
-.sb-quick-toolbar-button {
+/* A tool drawn as a card (`display: "card"`, like "Now playing") rather than an
+   IconButton: a plain button sized to fit its icon. */
+.sb-quick-toolbar-card {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
   padding: 0;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
   cursor: pointer;
   transition:
-    color 0.15s ease,
-    background-color 0.15s ease;
+    color var(--sb-duration-fast) ease,
+    background-color var(--sb-duration-fast) ease;
 }
 
-/* The same as the save and bookmark buttons beside it. */
-.sb-quick-toolbar-button:hover:not(:disabled) {
+.sb-quick-toolbar-card:hover:not(:disabled) {
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
 }
 
-.sb-quick-toolbar-button:disabled {
+.sb-quick-toolbar-card:disabled {
   opacity: 0.4;
   cursor: default;
-}
-
-/* Chrome icon-buttons render their icons as <svg> (inline or icon components)
-   with fixed px width/height attributes, which ignore the UI Size knob.
-   (Material Symbols glyphs are handled by the base rule near the top of this
-   file; SVGs are sized by width/height, not font-size, so they need explicit
-   rem sizing here.) CSS width/height overrides the SVG's px attributes; the rem
-   values equal each icon's current px ÷ 16, so these are no-ops at size M. */
-.sb-quick-toolbar-button svg {
-  display: block;
-  width: 1.5rem; /* 24px */
-  height: 1.5rem;
-}
-
-.sb-quick-toolbar-current-playlist {
-  > .sb-quick-toolbar-button {
-    width: fit-content;
-    height: fit-content;
-  }
 }
 
 .sb-now-playing-icon {

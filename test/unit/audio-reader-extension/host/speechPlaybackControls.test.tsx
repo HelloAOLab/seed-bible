@@ -290,4 +290,60 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
     first.play();
     expect(queuedTexts()).toEqual(["Verse 3", "Verse 4", "Verse 5"]);
   });
+
+  describe("during a playlist", () => {
+    const step = (verse: number, endVerse?: number) => ({
+      type: "bible-verse" as const,
+      ref: {
+        bookId: "GEN",
+        chapter: 1,
+        verse,
+        ...(endVerse ? { endVerse } : {}),
+      },
+    });
+
+    async function play(items: ReturnType<typeof step>[]) {
+      const playing = state.playlists.startPlaying(
+        { id: "p", title: "P", description: null, items },
+        0,
+        { history: false, openItem: true }
+      );
+      await playing!.whenSettled();
+      return playing!;
+    }
+
+    it("reads only the verses of the step that's open", async () => {
+      await play([step(2, 4)]);
+
+      pressListen();
+      expect(queuedTexts()).toEqual(["Verse 2", "Verse 3", "Verse 4"]);
+      voiceReaches("Verse 2");
+      const playback = state.audioPlayback.controllerFor(
+        getReadingState(state)
+      )!;
+      expect(playback.duration.value).toBe(3);
+      expect(playback.currentTime.value).toBe(0);
+    });
+
+    it("reads a single-verse step's one verse", async () => {
+      await play([step(3)]);
+
+      pressListen();
+      expect(queuedTexts()).toEqual(["Verse 3"]);
+    });
+
+    it("stops when the playlist moves on to another step's verses", async () => {
+      const playing = await play([step(2, 3), step(5)]);
+      pressListen();
+      voiceReaches("Verse 2");
+
+      await playing.next();
+
+      expect(
+        state.audioPlayback.controllerFor(getReadingState(state))
+      ).toBeNull();
+      pressListen();
+      expect(queuedTexts()).toEqual(["Verse 5"]);
+    });
+  });
 });

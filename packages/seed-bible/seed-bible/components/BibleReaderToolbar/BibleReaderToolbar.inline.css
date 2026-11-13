@@ -17,13 +17,13 @@
   font-family: var(--sb-reader-toolbar-font-family);
   color: var(--sb-reader-toolbar-font-color);
 
-  transition: transform 0.3s ease;
+  transition: transform var(--sb-duration-slow) ease;
   user-select: none;
 }
 
 .sb-reader-toolbar-wrap {
   position: static;
-  transition: transform 0.3s ease;
+  transition: transform var(--sb-duration-slow) ease;
   /* Both mobile rows (chapter nav + tabs) derive their text, icons and tints
      from --sb-font-color, so re-pointing it here makes them follow the reader
      toolbar's text color instead of the page's. The pill border is re-declared
@@ -41,7 +41,7 @@
   flex: 0 0 2.75rem;
   height: 100%;
   position: relative;
-  transition: transform 0.25s ease;
+  transition: transform var(--sb-duration-slow) ease;
 }
 
 .sb-reader-toolbar-labeled .sb-reader-toolbar-item {
@@ -65,8 +65,8 @@
   color: inherit;
 
   transition:
-    background-color 0.2s ease,
-    transform 0.25s ease;
+    background-color var(--sb-duration-base) ease,
+    transform var(--sb-duration-slow) ease;
 }
 
 /* The chapter controls render as real `<a>` elements, which pulls in the
@@ -122,11 +122,11 @@
   min-width: 1rem;
   height: 1rem;
   padding: 0 0.25rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
   font-weight: 700;
   line-height: 1;
   background: var(--sb-primary-color);
@@ -184,7 +184,7 @@
  * invert them in dark themes (toolbarIconInvert=1) to keep dark glyphs
  * visible on dark surfaces. SVG icons are unaffected — they already use
  * `currentColor` and follow the toolbar font color. */
-.sb-reader-toolbar-button img,
+.sb-reader-toolbar-button img:not(.sb-tab-user-icon-image),
 .sb-more-menu-icon img,
 .sb-tool-context-menu-item img,
 .sb-verse-toolbar-draggable button img,
@@ -231,7 +231,7 @@
 /* Opens like the ⋯ menus (`sb-context-menu-open`, in ContextMenu.css). */
 @media (prefers-reduced-motion: no-preference) {
   .sb-tool-context-menu {
-    animation: sb-context-menu-open 0.15s ease-out;
+    animation: sb-context-menu-open var(--sb-duration-fast) ease-out;
   }
 }
 
@@ -247,7 +247,7 @@
   left: auto;
   inset-inline-start: auto;
   inset-inline-end: auto;
-  z-index: 110;
+  z-index: calc(var(--sb-layer-chrome) + 10);
   visibility: hidden;
 }
 
@@ -282,7 +282,7 @@
   background: transparent;
   text-align: start;
   padding: 0.5rem 0.625rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -326,7 +326,7 @@
   background: var(--sb-reader-toolbar-background);
   color: var(--sb-font-color);
   height: 3.125rem;
-  transition: transform 0.3s ease;
+  transition: transform var(--sb-duration-slow) ease;
 }
 
 /* Room above the chapter pill for the narration scrubber. Grows upwards, since
@@ -372,7 +372,7 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
 }
 
 .sb-reader-floating-nav-play:disabled {
@@ -409,7 +409,7 @@
   min-width: 0;
   min-height: 2.875rem;
   border: 1px solid var(--sb-reader-floating-nav-group-border);
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-reader-floating-nav-group-background);
   user-select: none;
   overflow: hidden;
@@ -452,7 +452,7 @@
   width: 2.125rem;
   height: 2.125rem;
   transform: translate(-50%, -50%);
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   transition: background-color 0.12s ease;
   z-index: 0;
 }
@@ -489,8 +489,11 @@
   padding: 0;
   border: none;
   background: transparent;
+  font-family: var(
+    --sb-scripture-font-override,
+    var(--sb-book-title-font-family)
+  );
   color: var(--sb-font-color);
-  font-family: var(--text-bookTitle-font);
   font-size: min(1.2rem, 22px);
   font-weight: 700;
   display: flex;
@@ -551,11 +554,12 @@
   padding: 0.625rem;
   background: var(--sb-reader-toolbar-background);
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.875rem;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  border-radius: var(--sb-radius-xl);
+  box-shadow: var(--sb-shadow-popover);
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- local stacking inside the toolbar */
   z-index: 100;
   /* The corner by the More button, for the opening animation below. */
   transform-origin: bottom right;
@@ -568,7 +572,7 @@
 /* Opens like the ⋯ menus (`sb-context-menu-open`, in ContextMenu.css). */
 @media (prefers-reduced-motion: no-preference) {
   .sb-more-menu {
-    animation: sb-context-menu-open 0.15s ease-out;
+    animation: sb-context-menu-open var(--sb-duration-fast) ease-out;
   }
 }
 
@@ -581,11 +585,11 @@
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 0.9375rem;
-  border-radius: 0.625rem;
+  font-size: var(--sb-font-size-15);
+  border-radius: var(--sb-radius-md);
   cursor: pointer;
   text-align: start;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 .sb-more-menu-item:hover {
@@ -605,7 +609,7 @@
 
 .sb-more-menu-group-title {
   padding: 0.25rem 0.75rem 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
@@ -620,11 +624,11 @@
   min-width: 1rem;
   height: 1rem;
   padding: 0 0.25rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
   font-weight: 700;
   line-height: 1;
   background: var(--sb-primary-color);
@@ -656,7 +660,7 @@
     /* Sit above the mobile sidebar/settings overlay (z-index: 100) so the
      * bottom bar of options stays visible while the account panel is open.
      * The overlay already reserves `padding-bottom: 68px` for it. */
-    z-index: 101;
+    z-index: calc(var(--sb-layer-chrome) + 1);
   }
 
   .sb-action-btns {
@@ -709,8 +713,8 @@
     height: auto;
     background: transparent;
     color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-    border-radius: 0.5rem;
-    transition: color 0.15s ease;
+    border-radius: var(--sb-radius-md);
+    transition: color var(--sb-duration-fast) ease;
   }
 
   /* Exclude the active tab from hover: on touch devices `:hover` sticks after
@@ -802,7 +806,7 @@
   right: 0;
   bottom: 0;
   transform: none;
-  z-index: 101;
+  z-index: calc(var(--sb-layer-chrome) + 1);
   width: 100%;
 }
 
@@ -848,7 +852,7 @@
 
 /* Selected-verse reference label shown above the verse toolbar tools */
 .sb-verse-toolbar-ref {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
   letter-spacing: 0.01em;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
@@ -928,7 +932,7 @@
   height: 1.5rem;
   border-radius: 50%;
   border: 1px solid var(--sb-divider-color);
-  transition: transform 0.15s ease;
+  transition: transform var(--sb-duration-fast) ease;
 }
 
 .sb-verse-toolbar-color-button:hover .sb-verse-toolbar-color {
@@ -937,30 +941,6 @@
 
 .sb-verse-toolbar-color-button:active .sb-verse-toolbar-color {
   transform: scale(0.95);
-}
-
-.sb-verse-toolbar-back {
-  width: 1.5rem;
-  height: 1.5rem;
-  padding: 0;
-  flex: none;
-  border: none;
-  background: transparent;
-  color: var(--sb-font-color);
-  cursor: pointer;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.15s ease;
-}
-
-.sb-verse-toolbar-back:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-}
-
-.sb-verse-toolbar-back .material-symbols-outlined {
-  font-size: 1.25rem;
 }
 
 /* Add / Clear: equal-width labelled pills in the action row under the grid. */
@@ -973,17 +953,17 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
   cursor: pointer;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   white-space: nowrap;
   transition:
-    background-color 0.15s ease,
-    filter 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    filter var(--sb-duration-fast) ease;
 }
 
 .sb-verse-toolbar-plus {
@@ -1018,7 +998,6 @@
   cursor: default;
 }
 
-.sb-verse-toolbar-back .material-symbols-outlined,
 .sb-verse-toolbar-plus .material-symbols-outlined,
 .sb-verse-toolbar-clear .material-symbols-outlined,
 .sb-verse-toolbar-highlight-trigger .material-symbols-outlined {
@@ -1078,10 +1057,10 @@
   color: var(--sb-font-color);
   font-family: inherit;
   font-weight: 400;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   line-height: 1;
-  border-radius: 0.375rem;
-  transition: background-color 0.15s ease;
+  border-radius: var(--sb-radius-sm);
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 .sb-verse-toolbar-action:hover:not(:disabled) {
@@ -1112,7 +1091,7 @@
 }
 
 .sb-verse-toolbar-action-label {
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   line-height: 1;
 }
 
@@ -1128,11 +1107,11 @@
   border-left: none;
   border-right: none;
   border-bottom: none;
-  border-top-left-radius: 1.25rem;
-  border-top-right-radius: 1.25rem;
+  border-top-left-radius: var(--sb-radius-2xl);
+  border-top-right-radius: var(--sb-radius-2xl);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  box-shadow: 0 -8px 24px var(--sb-shadow-color);
+  box-shadow: var(--sb-shadow-sheet);
   /* Stay on screen even before the overflow height is measured. The handle
      lives at the top of this box, so a note taller than the viewport can't
      push it away. */
@@ -1148,7 +1127,7 @@
      an ancestor `none` would block that scroller. */
   touch-action: none;
 
-  transition: transform 0.2s ease;
+  transition: transform var(--sb-duration-base) ease;
 }
 
 /* Drag target around the grab handle. The pill is only 4px tall, so the
@@ -1173,7 +1152,7 @@
 .sb-verse-toolbar-handle-area:focus-visible {
   outline: 2px solid var(--sb-primary-color);
   outline-offset: 2px;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
 }
 
 /* The overflow row of actions, revealed by dragging the handle up. Its height is
@@ -1300,10 +1279,15 @@
   gap: 0.5rem;
 }
 
+.sb-verse-toolbar-discovered {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
 /* No click-to-navigate here (unlike DiscoverPane's row, which jumps to the
    verse on click) — the row itself isn't a button, so the pointer cursor
    DiscoverPane's clickable row uses isn't appropriate. The edit/delete menu
-   button inside still gets its own cursor via `.sb-context-menu-button`. */
+   button inside is an IconButton, with its own cursor. */
 .sb-verse-toolbar-annotations .sb-annotation-item {
   cursor: default;
 }
@@ -1327,39 +1311,19 @@
 .sb-verse-toolbar-handle {
   width: 2.25rem;
   height: 0.25rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-font-color), transparent 70%);
   margin: 0 auto;
   flex: none;
 }
 
-/* Small dismiss button pinned to the top-right corner of the mobile sheet. */
-.sb-verse-toolbar-close {
+/* Pinned to the top-right corner of the mobile sheet. Two classes, to
+   outrank IconButton's own `position`. */
+.sb-icon-button.sb-verse-toolbar-close {
   position: absolute;
   top: 0.625rem;
   right: 0.75rem;
-  width: 1.875rem;
-  height: 1.875rem;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-  color: var(--sb-font-color);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.15s ease;
   z-index: 1;
-}
-
-.sb-verse-toolbar-close:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
-}
-
-.sb-verse-toolbar-close .material-symbols-outlined {
-  font-size: 1.25rem;
-  line-height: 1;
 }
 
 /* "Swipe up to see more" at the foot of the sheet — the affordance that replaced
@@ -1371,7 +1335,7 @@
   justify-content: center;
   gap: 0.375rem;
   margin-top: 0.5rem;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
   /* Tapping/dragging the hint also expands the sheet, as a shortcut alongside
@@ -1453,7 +1417,7 @@
   min-width: 0;
   justify-content: flex-start;
   padding: 0.375rem 0.5rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
   overflow-x: auto;
   overflow-y: hidden;
@@ -1569,9 +1533,9 @@
   gap: 0.375rem;
   padding: 0.75rem 0.375rem;
   height: 4rem;
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 .sb-verse-toolbar-cards .sb-verse-toolbar-action:hover:not(:disabled) {
@@ -1579,7 +1543,7 @@
 }
 
 .sb-verse-toolbar-cards .sb-verse-toolbar-action-label {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 /* The card grid hosts its own dismiss control (the corner X), and the ref label
@@ -1602,7 +1566,7 @@
   flex: none;
   padding: 0.125rem 0.375rem;
   margin-right: 0.25rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }
 
@@ -1653,4 +1617,11 @@
 
 .sb-reader-toolbar-audio-stop > svg rect {
   fill: var(--sb-reader-toolbar-background);
+}
+
+/* The session group bar sits on top of the desktop toolbar as its upper
+ * section, so the toolbar's top corners give way to the bar's. */
+.sb-reader-toolbar-has-group-bar {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }

@@ -1,3 +1,4 @@
+import { Button } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { type TwitchSubInterface } from "./interface";
 import type { SeedBibleState } from "seed-bible";
@@ -159,13 +160,13 @@ const TwitchSettings = (props: {
           </div>
           <div className="twitchSub-settings-item">
             <div></div>
-            <button
-              className={`session-btn ${wsPaused.value ? "rejoin-session-btn" : "leave-session-btn"}`}
+            <Button
+              size="sm"
+              shape="pill"
+              tone={wsPaused.value ? "neutral" : "danger"}
+              icon={wsPaused.value ? "link" : "link_off"}
               onClick={() => (wsPaused.value = !wsPaused.value)}
             >
-              <span className="material-symbols-outlined">
-                {wsPaused.value ? "link" : "link_off"}
-              </span>
               {wsPaused.value
                 ? t("rejoinSession", {
                     ns: "ext_twitchSub",
@@ -175,7 +176,7 @@ const TwitchSettings = (props: {
                     ns: "ext_twitchSub",
                     defaultValue: "Leave session",
                   })}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -1,17 +1,14 @@
-import "./PlayPlaylistView.css";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager } from "../../managers/TabsManager";
 import type { PlaylistManager } from "../../managers/PlaylistManager";
 import type { ModalManager } from "../../managers/ModalManager";
-import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
-import { playlistItemLabel } from "../playlistItemLabel";
-import { playlistItemIcon } from "../playlistItemIcon";
-import { PlaylistItemNoteTag } from "../PlaylistItemNoteTag/PlaylistItemNoteTag";
 import { useDragReorder } from "../useDragReorder";
-import { MaterialIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import { HeroImageBanner } from "../HeroImageField/HeroImageField";
-import { ExpandableText } from "../ExpandableText/ExpandableText";
+import { Spinner } from "../Spinner/Spinner";
+import {
+  PlaylistOverview,
+  PlaylistStepRow,
+} from "../PlaylistOverview/PlaylistOverview";
 
 interface PlayPlaylistViewProps {
   playlists: PlaylistManager;
@@ -21,10 +18,10 @@ interface PlayPlaylistViewProps {
 }
 
 /**
- * Playback screen shown inside the discover pane while a playlist is playing.
- * Displays the playlist title, the queue of items, and a bottom-anchored bar
- * with the current item and previous/next controls. Video, link, and text
- * (html) items open in the app's generic modal rather than rendering inline.
+ * The list of steps of the playlist that's playing, shown in the Discover
+ * pane: the same overview as the playlist's own page, with each step opening
+ * it, a drag handle to reorder it, and the current step highlighted. On a
+ * phone, where this fills the screen, Continue Reading goes back to the step.
  */
 export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   const { playlists, tabs } = props;
@@ -47,9 +44,6 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
 
   const currentIndex = playing.currentIndex.value;
   const playlist = playing.playlists.value[0];
-  const heroImageUrl = playlist?.heroImageUrl ?? null;
-  const authorName = playlists.playingAuthorName.value;
-  const description = playlist?.description?.trim() || null;
 
   // Resolve verse book IDs to full book names using the selected tab's loaded
   // translation, when available. Falls back to the raw book ID otherwise.
@@ -62,87 +56,49 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   };
 
   return (
-    <div className="sb-discover-pane sb-play-playlist">
-      <div className="sb-play-playlist-body">
-        {heroImageUrl ? (
-          <HeroImageBanner
-            url={heroImageUrl}
-            alt={
-              playing.playlists.value[0]?.title ??
-              t("untitled-playlist", { defaultValue: "Untitled playlist" })
+    <PlaylistOverview
+      className="sb-play-playlist"
+      title={
+        playlist?.title ??
+        t("untitled-playlist", { defaultValue: "Untitled playlist" })
+      }
+      backLabel={t("close-playlist", { defaultValue: "Close playlist" })}
+      onBack={() => playlists.goBackFromPlayingView()}
+      titleAccessory={
+        playlists.openingPlayback.value ? <Spinner size="1rem" /> : null
+      }
+      heroImageUrl={playlist?.heroImageUrl ?? null}
+      authorName={playlists.playingAuthorName.value}
+      description={playlist?.description?.trim() || null}
+      items={queue}
+      // Only a phone needs this: the list fills its screen, hiding the
+      // reader. Wider screens show the step beside the list already.
+      action={
+        playlists.isMobile.value && queue.length > 0
+          ? {
+              label: t("continue-reading", {
+                defaultValue: "Continue Reading",
+              }),
+              onClick: () => playlists.openQueueItem(Math.max(currentIndex, 0)),
             }
-          />
-        ) : null}
-        {authorName || description ? (
-          <div className="sb-play-playlist-about" dir="auto">
-            {authorName ? (
-              <p className="sb-play-playlist-author">
-                {t("shared-page-by-author", {
-                  author: authorName,
-                  defaultValue: "By {{author}}",
-                })}
-              </p>
-            ) : null}
-            {description ? (
-              <ExpandableText
-                className="sb-play-playlist-description"
-                readMoreLabel={t("read-more", { defaultValue: "Read more" })}
-                readLessLabel={t("read-less", { defaultValue: "Read less" })}
-              >
-                {description}
-              </ExpandableText>
-            ) : null}
-          </div>
-        ) : null}
-        <DiscoverSection title={t("queue", { defaultValue: "Queue" })}>
-          <ul className="sb-discover-list">
-            {queue.map((item, index) => (
-              <li
-                key={index}
-                className={
-                  "sb-discover-item sb-discover-item--row sb-play-playlist-item" +
-                  (index === currentIndex
-                    ? " sb-play-playlist-item--current"
-                    : "") +
-                  getRowClassName(index)
-                }
-                dir="auto"
-              >
-                <button
-                  type="button"
-                  className="sb-discover-item-drag-handle"
-                  aria-label={t("drag-to-reorder-playlist-item", {
-                    defaultValue: "Drag to reorder",
-                  })}
-                  {...getHandleProps(index)}
-                >
-                  <MaterialIcon>drag_indicator</MaterialIcon>
-                </button>
-                <button
-                  type="button"
-                  className="sb-play-playlist-item-button"
-                  aria-current={index === currentIndex}
-                  onClick={() => {
-                    if (index === currentIndex) {
-                      playlists.showCurrentItem();
-                      return;
-                    }
-                    playing.jumpTo(index);
-                  }}
-                >
-                  <MaterialIcon className="sb-discover-item-icon">
-                    {playlistItemIcon(item)}
-                  </MaterialIcon>
-                  <span className="sb-discover-item-title">
-                    {playlistItemLabel(item, t, resolveBookName)}
-                    <PlaylistItemNoteTag item={item} />
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </DiscoverSection>
-      </div>
-    </div>
+          : null
+      }
+    >
+      {queue.map((item, index) => (
+        <PlaylistStepRow
+          key={index}
+          item={item}
+          resolveBookName={resolveBookName}
+          current={index === currentIndex}
+          ariaCurrent={index === currentIndex}
+          className={`sb-play-playlist-item${getRowClassName(index)}`}
+          dragHandleProps={getHandleProps(index)}
+          dragLabel={t("drag-to-reorder-playlist-item", {
+            defaultValue: "Drag to reorder",
+          })}
+          onOpen={() => playlists.openQueueItem(index)}
+        />
+      ))}
+    </PlaylistOverview>
   );
 }

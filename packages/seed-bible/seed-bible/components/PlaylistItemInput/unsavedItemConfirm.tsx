@@ -1,5 +1,6 @@
 import { useI18n } from "../../i18n/I18nManager";
 import type { ModalManager } from "../../managers/ModalManager";
+import { Button } from "../Button/Button";
 
 const UNSAVED_ITEM_CONFIRM_MODAL_ID = "playlist-unsaved-item-confirm";
 
@@ -31,31 +32,19 @@ function UnsavedItemConfirmModalContent(props: {
             })}
       </p>
       <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onGoBack}
-        >
+        <Button onClick={onGoBack}>
           {t("back", { defaultValue: "Back" })}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onDiscardAndSave}
-        >
+        </Button>
+        <Button variant="ghost" tone="danger" onClick={onDiscardAndSave}>
           {t("discard-and-save", { defaultValue: "Discard and save" })}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={onAddAndSave}
-        >
+        </Button>
+        <Button variant="primary" onClick={onAddAndSave}>
           {editing
             ? t("keep-changes-and-save", {
                 defaultValue: "Keep changes and save",
               })
             : t("add-and-save", { defaultValue: "Add and save" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

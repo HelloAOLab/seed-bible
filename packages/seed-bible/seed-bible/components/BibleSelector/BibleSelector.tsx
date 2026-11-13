@@ -46,7 +46,11 @@ import { Spinner } from "../Spinner/Spinner";
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { MOBILE_BREAKPOINT } from "../../managers/SeedBibleStateManager";
+import { toShareableUrl } from "../../app/publicLinks";
 import { SearchBar as SearchField } from "../SearchBar/SearchBar";
+import { CloseButton } from "../CloseButton/CloseButton";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 /**
  * CSS-only spotlight: the huge translucent box-shadow dims everything around
@@ -61,7 +65,7 @@ import { SearchBar as SearchField } from "../SearchBar/SearchBar";
 const SPOTLIGHT_STYLE = {
   position: "relative",
   zIndex: 2,
-  borderRadius: "0.5rem",
+  borderRadius: "var(--sb-radius-md)",
   boxShadow: "0 0 0 9999px rgba(0,0,0,0.6)",
 } as const;
 
@@ -219,7 +223,7 @@ export function BibleSelector(props: BibleSelectorProps) {
               ? {
                   position: "fixed",
                   boxSizing: "border-box",
-                  zIndex: 10000,
+                  zIndex: "calc(var(--sb-layer-tour) + 1)",
                   ...layout.style,
                 }
               : {
@@ -230,7 +234,7 @@ export function BibleSelector(props: BibleSelectorProps) {
                   width: "100%",
                   maxWidth: "28.625rem",
                   boxSizing: "border-box",
-                  zIndex: 10000,
+                  zIndex: "calc(var(--sb-layer-tour) + 1)",
                 }
           }
           onClick={(event: MouseEvent) => event.stopPropagation()}
@@ -308,7 +312,7 @@ const SearchBar = (props: {
                 </span>
                 <span
                   style={{
-                    transition: "transform 0.3s",
+                    transition: "transform var(--sb-duration-slow)",
                   }}
                   class={`material-symbols-outlined ${selectingTranslation.value ? "upside-down" : ""}`}
                   // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
@@ -377,25 +381,23 @@ const SearchBar = (props: {
           )}
           {isMobile.value && (
             <>
-              <button
-                class="sb-selector-mobile-close"
-                onClick={() => {
+              <CloseButton
+                size="lg"
+                onClose={() => {
                   setOpen(false);
                   selectingTranslation.value = false;
                 }}
-                aria-label={t("close", { defaultValue: "Close" })}
-              >
-                <span class="material-symbols-outlined">close</span>
-              </button>
+              />
               <span class="sb-bible-reader-mobile-header-title">
                 {t("books", { defaultValue: "Books" })}
               </span>
-              <button
-                class="sb-selector-mobile-close"
+              <IconButton
+                size="lg"
+                class="sb-selector-mobile-tabs"
+                icon={<SbTabsIcon />}
+                label={t("tabs", { defaultValue: "Tabs" })}
                 onClick={() => openTabs()}
-              >
-                <SbTabsIcon />
-              </button>
+              />
             </>
           )}
         </div>
@@ -452,13 +454,14 @@ const BooksStatusMessage = (props: {
             "The books couldn't be loaded. Check your connection and try again.",
         })}
       </p>
-      <button
-        type="button"
+      <Button
+        variant="secondary"
+        shape="pill"
         className="sb-selector-retry"
         onClick={() => void retryBooks()}
       >
         {t("try-again", { defaultValue: "Try again" })}
-      </button>
+      </Button>
     </div>
   );
 };
@@ -506,13 +509,14 @@ const TranslationListStatus = (props: {
             name,
           })}
         </p>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          shape="pill"
           className="sb-selector-retry"
           onClick={() => void selectTranslation(load.translationId)}
         >
           {t("try-again", { defaultValue: "Try again" })}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -543,13 +547,14 @@ const TranslationListStatus = (props: {
               "Couldn't load the full list of translations, so some may be missing.",
           })}
         </p>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          shape="pill"
           className="sb-selector-retry"
           onClick={() => retryCatalog()}
         >
           {t("try-again", { defaultValue: "Try again" })}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -684,6 +689,7 @@ const SideBarBooks = (props: {
               aria-current={isSelected ? "true" : undefined}
               aria-expanded={isSelected}
               onClick={() => handleClick({ book })}
+              // find-the-verse-extension greys ruled-out books with #booktab-${id}.sidebar-itm. Renaming this id or class stops that grey with no type error.
               id={`booktab-${book.id}`}
               style={itemGridStyle}
             >
@@ -700,7 +706,7 @@ const SideBarBooks = (props: {
               </span>
               <span
                 style={{
-                  transition: "transform 0.3s",
+                  transition: "transform var(--sb-duration-slow)",
                   color: isSelected ? "var(--sb-primary-color)" : "",
                 }}
                 class={`material-symbols-outlined ${isSelected ? "upside-down" : ""}`}
@@ -1119,6 +1125,7 @@ const SideBarChapters = (props: {
       }, 1000);
       return (
         <button
+          // find-the-verse-extension greys ruled-out chapters with #chapter-btn-${n}.chapter-btn.
           id={`chapter-btn-${chapterNumber}`}
           style={
             isVisible === undefined
@@ -1470,20 +1477,21 @@ const ConfirmOfflineDelete = (props: {
         })}
       </p>
       <div className="sb-offline-delete-actions">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           className="sb-offline-delete-cancel"
           onClick={close}
         >
           {t("cancel")}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="primary"
+          tone="danger"
           className="sb-offline-delete-confirm"
           onClick={() => void confirm()}
         >
           {t("remove", { defaultValue: "Remove" })}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -1791,7 +1799,7 @@ const TranslationRowActions = (props: {
         bibleLanguageToUiLocale(translation.language) ??
         undefined,
     });
-    navigator.clipboard.writeText(url.href);
+    navigator.clipboard.writeText(toShareableUrl(url).href);
 
     app.toast(
       t("copied-translation-share-link", {
@@ -1961,17 +1969,12 @@ const ApocryphaInfo = (props: { bibleSelectorState: BibleSelectorState }) => {
               })}
             </h2>
 
-            <button
-              type="button"
-              class="sb-apocrypha-info-close"
-              aria-label={t("close", { defaultValue: "Close" })}
-              onClick={(event) => {
+            <CloseButton
+              onClose={(event) => {
                 event.stopPropagation();
                 showApocryphaInfo.value = false;
               }}
-            >
-              <span class="material-symbols-outlined">close</span>
-            </button>
+            />
           </div>
 
           <div class="sb-apocrypha-info-content">

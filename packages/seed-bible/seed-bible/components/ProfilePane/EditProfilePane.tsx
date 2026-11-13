@@ -3,6 +3,7 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n";
 import { ProfileAvatarButton, ProfileContactLine } from "./ProfilePane";
 import "./ProfilePane.css";
+import { Button } from "../Button/Button";
 
 export const EDIT_PROFILE_PANE_ID = "edit-profile-screen-pane";
 
@@ -161,19 +162,20 @@ export function EditProfilePane(props: EditProfileScreenProps) {
           />
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="lg"
           className="sb-profile-save"
           onClick={handleSave}
-          disabled={!isProfileLoaded.value || isSaving.value}
-          aria-busy={isSaving.value}
+          disabled={!isProfileLoaded.value}
+          loading={isSaving.value}
         >
           {!isProfileLoaded.value
             ? t("loading-profile", { defaultValue: "Loading your profile…" })
             : isSaving.value
               ? t("saving", { defaultValue: "Saving…" })
               : t("save-changes", { defaultValue: "Save changes" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

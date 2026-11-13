@@ -1,0 +1,821 @@
+import "./DiscoverContentPanel.css";
+import type { ComponentChildren } from "preact";
+import { Signal, useSignal, useSignalEffect } from "@preact/signals";
+import { useCallback, useLayoutEffect, useMemo, useRef } from "preact/hooks";
+import { useI18n } from "../../i18n/I18nManager";
+import type { ReaderTab } from "../../managers/TabsManager";
+import { getDiscoverPanelContent } from "../../managers/BibleReadingManager";
+import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import {
+  CrossReferencesSection,
+  StudyNotesSection,
+  ContentSection,
+  ContentTypeSection,
+  contentTypeResultsFor,
+  hasRegisteredContentType,
+  noTabHint,
+} from "./DiscoveredResultsSections";
+import { AnnotationsSection } from "./AnnotationsSection";
+import { DiscoverEmpty } from "./DiscoverSection";
+import { DiscoverPanelHeader } from "./DiscoverPanelHeader";
+import {
+  FriendPlaylistsSection,
+  friendPlaylistGroups,
+} from "./FriendPlaylistsSection";
+import { MaterialIcon } from "../icons";
+import { Spinner } from "../Spinner/Spinner";
+import {
+  ContextMenuWithButton,
+  ContextMenuItem,
+} from "../ContextMenu/ContextMenu";
+import { useHorizontalScroll } from "../useHorizontalScroll";
+import { translateTitle } from "../../app/utils";
+import {
+  findScrollContainer,
+  readBottomChromeCover,
+  readBottomChromeInset,
+} from "../BibleReader/readerViewport";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
+
+type FilterKey =
+  | "all"
+  | "annotations"
+  | "friends-playlists"
+  | "cross-references"
+  | "study-notes"
+  | "content"
+  | `type:${string}`;
+
+/**
+ * Keeps the panel from shrinking into an unusable sliver in very short
+ * windows, even if that means its bottom edge dips under the toolbar.
+ */
+const MIN_SIDE_PANEL_HEIGHT_PX = 192;
+
+/**
+ * How long after an arrow click the next one steps on from that click's
+ * destination. Longer than a browser's smooth scroll, which is about 300–500ms.
+ */
+const PENDING_SCROLL_MS = 600;
+
+/**
+ * Publishes `--sb-dcp-side-max-height` on the panel: the height of the part of
+ * its pane that's actually on screen, below the panel's sticky `top` and above
+ * the fixed bottom toolbar. A plain `100vh` cap ignores the tab bar above the
+ * pane, the toolbar floating over its bottom and split-pane layouts, so the
+ * bottom of a long panel (and its last items) ended up out of reach.
+ *
+ * Also publishes `--sb-dcp-list-cover-top`/`-bottom`: how much of the panel's
+ * list is hidden behind the mobile reader header and the bottom chrome, or
+ * scrolled out of its pane. Where the panel scrolls with the page (mobile,
+ * stacked below the scripture) its list can sit partly off screen, and sticky
+ * children of the list only know the list's own edges.
+ */
+function usePanelViewportMeasures() {
+  const cleanupRef = useRef<(() => void) | null>(null);
+
+  return useCallback((panel: HTMLElement | null) => {
+    cleanupRef.current?.();
+    cleanupRef.current = null;
+    if (!panel || typeof ResizeObserver === "undefined") return;
+
+    const scroller = findScrollContainer(panel);
+    const reader = panel.closest<HTMLElement>(".sb-bible-reader");
+    let frame = 0;
+
+    // Writing a custom property restyles the whole panel, and scrolling
+    // re-measures every frame, so only write values that changed.
+    const setPx = (name: string, px: number) => {
+      const value = `${Math.floor(px)}px`;
+      if (panel.style.getPropertyValue(name) !== value) {
+        panel.style.setProperty(name, value);
+      }
+    };
+
+    const measure = () => {
+      const viewportBottom = window.innerHeight - readBottomChromeInset();
+      const rect = scroller?.getBoundingClientRect();
+      const top = rect ? Math.max(rect.top, 0) : 0;
+      const bottom = rect
+        ? Math.min(rect.bottom, viewportBottom)
+        : viewportBottom;
+      const stickyTop = parseFloat(getComputedStyle(panel).top) || 0;
+      const available = Math.max(
+        bottom - top - stickyTop,
+        MIN_SIDE_PANEL_HEIGHT_PX
+      );
+      setPx("--sb-dcp-side-max-height", available);
+
+      const list = panel.querySelector<HTMLElement>(
+        ".sb-discover-content-panel-scroll"
+      );
+      if (!list) return;
+      const listRect = list.getBoundingClientRect();
+      const headerBottom =
+        reader
+          ?.querySelector(".sb-bible-reader-mobile-header")
+          ?.getBoundingClientRect().bottom ?? 0;
+      const visibleTop = Math.max(top, headerBottom);
+      const visibleBottom = Math.min(
+        rect?.bottom ?? window.innerHeight,
+        window.innerHeight - readBottomChromeCover()
+      );
+      setPx("--sb-dcp-list-cover-top", Math.max(visibleTop - listRect.top, 0));
+      setPx(
+        "--sb-dcp-list-cover-bottom",
+        Math.max(listRect.bottom - visibleBottom, 0)
+      );
+    };
+
+    const scheduleMeasure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
+    const resizeObserver = new ResizeObserver(scheduleMeasure);
+    if (scroller) resizeObserver.observe(scroller);
+    resizeObserver.observe(panel);
+    scroller?.addEventListener("scroll", scheduleMeasure, { passive: true });
+    // The mobile header slides away and back while scrolling; measure again
+    // once it has settled.
+    reader?.addEventListener("transitionend", scheduleMeasure);
+    // BibleReaderToolbar rewrites `--sb-reader-bottom-inset` inline on the
+    // root whenever the bottom chrome changes size.
+    const insetObserver =
+      typeof MutationObserver !== "undefined"
+        ? new MutationObserver(scheduleMeasure)
+        : null;
+    insetObserver?.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["style"],
+    });
+    window.addEventListener("resize", scheduleMeasure);
+    scheduleMeasure();
+
+    cleanupRef.current = () => {
+      cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+      insetObserver?.disconnect();
+      scroller?.removeEventListener("scroll", scheduleMeasure);
+      reader?.removeEventListener("transitionend", scheduleMeasure);
+      window.removeEventListener("resize", scheduleMeasure);
+    };
+  }, []);
+}
+
+/**
+ * The full panel's "+ Create" button: a menu offering a new annotation or a
+ * new playlist. Looks the same as the compact panel's button, which only
+ * creates annotations.
+ */
+function DiscoverCreateMenu(props: { state: SeedBibleState }) {
+  const { annotations, playlists } = props.state;
+  const { t } = useI18n();
+
+  return (
+    <ContextMenuWithButton
+      buttonClassName="sb-dcp-create-btn"
+      trigger={(menu) => (
+        <Button {...menu} variant="primary" size="sm" shape="pill" icon="add">
+          {t("create-playlist", { defaultValue: "Create" })}
+        </Button>
+      )}
+    >
+      <ContextMenuItem onClick={() => void annotations.createNewAnnotation()}>
+        <MaterialIcon className="sb-context-menu-item-icon">
+          edit_note
+        </MaterialIcon>
+        {t("create-annotation-menu-item", { defaultValue: "Annotation" })}
+      </ContextMenuItem>
+      <ContextMenuItem onClick={() => void playlists.createNewPlaylist()}>
+        <MaterialIcon className="sb-context-menu-item-icon">
+          queue_music
+        </MaterialIcon>
+        {t("create-playlist-menu-item", { defaultValue: "Playlist" })}
+      </ContextMenuItem>
+    </ContextMenuWithButton>
+  );
+}
+
+interface DiscoverFiltersProps {
+  filters: { key: FilterKey; label: string }[];
+  activeFilter: Signal<FilterKey>;
+  displayFilter: FilterKey;
+}
+
+type DiscoverPanelVariant = "full" | "compact";
+
+interface BaseDiscoverContentPanelProps {
+  tab: ReaderTab | null;
+  state: SeedBibleState;
+  variant: DiscoverPanelVariant;
+}
+
+interface CompactDiscoverContentPanelProps extends BaseDiscoverContentPanelProps {
+  variant: "compact";
+}
+
+interface FullDiscoverContentPanelProps extends BaseDiscoverContentPanelProps {
+  variant: "full";
+  onClose: () => void;
+}
+
+type DiscoverContentPanelProps =
+  | CompactDiscoverContentPanelProps
+  | FullDiscoverContentPanelProps;
+/**
+ * Renders the filters for discover content and provides horizontal
+ * scrolling controls when the filters do not fit within the available width.
+ *
+ * On smaller/coarse-pointer devices, the filters can be scrolled normally.
+ * The active filter is controlled through the provided signal.
+ */
+function DiscoverFilters({
+  filters,
+  activeFilter,
+  displayFilter,
+}: DiscoverFiltersProps) {
+  const { t } = useI18n();
+  // The pills scroll horizontally with the vertical wheel, and fade at an
+  // edge only while pills are hidden past it (see `updateScrollState`).
+  const filtersRef = useRef<HTMLDivElement>(null);
+  useHorizontalScroll(filtersRef);
+  // Where the arrows' last smooth scroll is headed, and when it was asked for.
+  const pendingScrollRef = useRef<{ left: number; at: number } | null>(null);
+
+  const hasScrollableFilters = useSignal(false);
+  const canScrollStart = useSignal(false);
+  const canScrollEnd = useSignal(false);
+  const filtersKey = filters
+    .map((filter) => `${filter.key}:${filter.label}`)
+    .join("|");
+
+  // The arrows and the edge fades both follow this, so they never disagree
+  // about whether there's more to scroll.
+  const updateScrollState = useCallback((isRtl: boolean) => {
+    const container = filtersRef.current;
+    const wrapper = container?.parentElement;
+    const setScrollable = (start: boolean, end: boolean) => {
+      canScrollStart.value = start;
+      canScrollEnd.value = end;
+      // The fades are physical sides; the start is on the right in RTL.
+      container?.toggleAttribute("data-fade-left", isRtl ? end : start);
+      container?.toggleAttribute("data-fade-right", isRtl ? start : end);
+    };
+    if (!container || !wrapper) {
+      hasScrollableFilters.value = false;
+      setScrollable(false, false);
+      return;
+    }
+    const hasOverflow = container.scrollWidth > wrapper.clientWidth + 1;
+    hasScrollableFilters.value = hasOverflow;
+    if (!hasOverflow) {
+      setScrollable(false, false);
+      return;
+    }
+    const maxScroll = Math.max(
+      0,
+      container.scrollWidth - container.clientWidth
+    );
+    const position = isRtl
+      ? Math.abs(container.scrollLeft)
+      : container.scrollLeft;
+
+    setScrollable(position > 1, position < maxScroll - 1);
+  }, []);
+
+  const scrollFilters = useCallback((direction: -1 | 1) => {
+    if (direction === -1 && !canScrollStart.value) return;
+    if (direction === 1 && !canScrollEnd.value) return;
+
+    const container = filtersRef.current;
+    if (!container) return;
+
+    const pills = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
+    );
+
+    if (pills.length === 0) return;
+
+    const isRtl = getComputedStyle(container).direction === "rtl";
+    const containerRect = container.getBoundingClientRect();
+    const current = container.scrollLeft;
+
+    // Pills in `scrollLeft` units, where the visible stretch runs from
+    // `scrollLeft` to `scrollLeft + clientWidth` (RTL's `scrollLeft` is
+    // negative, which this handles too).
+    const spans = pills.map((pill) => {
+      const rect = pill.getBoundingClientRect();
+      const start = rect.left - containerRect.left + current;
+      return { start, end: start + rect.width };
+    });
+
+    // Steps from where an earlier click's smooth scroll is headed rather than
+    // from where it has got to, so quick clicks each move on another pill.
+    const pending = pendingScrollRef.current;
+    const base =
+      pending && performance.now() - pending.at < PENDING_SCROLL_MS
+        ? pending.left
+        : current;
+    const viewStart = base;
+    const viewEnd = base + container.clientWidth;
+
+    // Toward the end is right in LTR, left in RTL. Bring the nearest pill
+    // hidden past that edge fully into view.
+    let next: number | undefined;
+    if ((direction === 1) !== isRtl) {
+      const hidden = spans.filter((span) => span.end > viewEnd + 1);
+      if (hidden.length > 0) {
+        next = base + Math.min(...hidden.map((span) => span.end)) - viewEnd;
+      }
+    } else {
+      const hidden = spans.filter((span) => span.start < viewStart - 1);
+      if (hidden.length > 0) {
+        next =
+          base - (viewStart - Math.max(...hidden.map((span) => span.start)));
+      }
+    }
+    if (next === undefined) return;
+
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    next = isRtl
+      ? Math.min(0, Math.max(-maxScroll, next))
+      : Math.min(maxScroll, Math.max(0, next));
+    pendingScrollRef.current = { left: next, at: performance.now() };
+
+    container.scrollBy({
+      left: next - current,
+      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+        ? "auto"
+        : "smooth",
+    });
+  }, []);
+  const showArrows = hasScrollableFilters.value;
+  useLayoutEffect(() => {
+    const container = filtersRef.current;
+    if (!container) return;
+
+    const active = container.querySelector<HTMLElement>(".sb-dcp-chip--active");
+
+    if (active) {
+      const row = container.getBoundingClientRect();
+      const chip = active.getBoundingClientRect();
+
+      if (chip.left < row.left) {
+        container.scrollLeft -= row.left - chip.left;
+      } else if (chip.right > row.right) {
+        container.scrollLeft += chip.right - row.right;
+      }
+    }
+
+    const update = () =>
+      updateScrollState(getComputedStyle(container).direction === "rtl");
+
+    update();
+    container.addEventListener("scroll", update);
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
+
+    if (resizeObserver) {
+      resizeObserver.observe(container);
+
+      const wrapper = container.parentElement;
+      if (wrapper) resizeObserver.observe(wrapper);
+
+      container
+        .querySelectorAll<HTMLElement>(".sb-dcp-chip")
+        .forEach((chip) => resizeObserver.observe(chip));
+    }
+
+    // Recheck when the viewport resizes. This also supports test
+    // environments where ResizeObserver is unavailable.
+    window.addEventListener("resize", update);
+
+    return () => {
+      container.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      resizeObserver?.disconnect();
+    };
+  }, [filtersKey, updateScrollState, showArrows]);
+
+  return (
+    <div
+      className={`sb-dcp-filters-wrapper${
+        hasScrollableFilters.value ? " sb-dcp-filters-wrapper--scrollable" : ""
+      }`}
+    >
+      {hasScrollableFilters.value && (
+        <IconButton
+          size="sm"
+          look="tinted"
+          className="sb-dcp-filters-arrow"
+          onClick={() => scrollFilters(-1)}
+          aria-disabled={!canScrollStart.value}
+          icon={
+            <MaterialIcon className="rtl-mirror">chevron_left</MaterialIcon>
+          }
+          label={t("scroll-filters-start", {
+            defaultValue: "Scroll filters toward start",
+          })}
+        />
+      )}
+
+      <div className="sb-dcp-filters" role="tablist" ref={filtersRef}>
+        {filters.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={displayFilter === key}
+            className={`sb-dcp-chip${
+              displayFilter === key ? " sb-dcp-chip--active" : ""
+            }`}
+            onClick={() => {
+              activeFilter.value = key;
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {hasScrollableFilters.value && (
+        <IconButton
+          size="sm"
+          look="tinted"
+          className="sb-dcp-filters-arrow"
+          onClick={() => scrollFilters(1)}
+          aria-disabled={!canScrollEnd.value}
+          icon={
+            <MaterialIcon className="rtl-mirror">chevron_right</MaterialIcon>
+          }
+          label={t("scroll-filters-end", {
+            defaultValue: "Scroll filters toward end",
+          })}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Discover content for one reading tab — the reader's and their friends'
+ * notes (annotations), discovered cross references/study notes and content —
+ * behind a header and filter chips. Comes in two variants:
+ *
+ * - `compact`: rendered by BibleReader once per visible tab, beside the
+ *   scripture text or below it (the "discover-content-panel" quick tool picks
+ *   which). Hides itself entirely when there's no tab or nothing to show for
+ *   the chapter, and omits the notes section when the chapter has no notes and
+ *   nothing waiting to sync. Its "+ Create" button creates an annotation.
+ * - `full`: the Discover side pane's main view (see DiscoverPane). The pane is
+ *   opened without its own header, so this one carries the close button and
+ *   always renders: without a tab it shows a hint to select one, and for a
+ *   chapter with nothing to show, the empty notes section's "Create a note"
+ *   prompt stands in as the empty state. Adds friends' playlists (with their
+ *   own chip), and its "+ Create" button offers a playlist as well as an
+ *   annotation.
+ */
+export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
+  const { state, variant } = props;
+  // In a compare step the user may be working in the passage shown beside the
+  // tab's own; Discover shows that passage's content then.
+  const activeReadingState = props.tab
+    ? state.tabs.activeReadingState(props.tab)
+    : null;
+  const tab = useMemo(
+    () =>
+      props.tab && activeReadingState
+        ? activeReadingState === props.tab.readingState
+          ? props.tab
+          : { ...props.tab, readingState: activeReadingState }
+        : null,
+    [props.tab, activeReadingState]
+  );
+
+  const { t } = useI18n();
+
+  const activeFilter = useSignal<FilterKey>("all");
+
+  useSignalEffect(() => {
+    const target = state.discover.scrollToVerse.value;
+    if (
+      !target ||
+      !tab ||
+      target.bookId !== tab.readingState.bookId.value ||
+      target.chapterNumber !== tab.readingState.chapterNumber.value
+    ) {
+      return;
+    }
+    const current = activeFilter.peek();
+    if (current !== "all" && current !== "annotations") {
+      activeFilter.value = "annotations";
+    }
+  });
+  const panelRef = usePanelViewportMeasures();
+
+  const chapterBook = tab?.readingState.chapterData.value?.book;
+  const bookName =
+    chapterBook?.commonName ??
+    chapterBook?.name ??
+    tab?.readingState.bookId.value ??
+    null;
+
+  const panel = (content: ComponentChildren) => {
+    const body = (
+      <div
+        ref={variant === "compact" ? panelRef : undefined}
+        className={`sb-discover-content-panel${variant === "full" ? " sb-discover-content-panel--full" : ""}`}
+        aria-label={t("discover-content-panel", {
+          defaultValue: "Discover content",
+        })}
+      >
+        <DiscoverPanelHeader
+          title={
+            <>
+              <MaterialIcon className="sb-dcp-header-icon">
+                explore
+              </MaterialIcon>
+              <span>
+                {bookName
+                  ? t("discover-book-title", {
+                      defaultValue: "Discover {{book}}",
+                      book: bookName,
+                    })
+                  : t("discover", { defaultValue: "Discover" })}
+              </span>
+            </>
+          }
+          actions={
+            props.variant === "full" ? (
+              <DiscoverCreateMenu state={state} />
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                shape="pill"
+                icon="add"
+                className="sb-dcp-create-btn"
+                onClick={() => void state.annotations.createNewAnnotation()}
+              >
+                {t("create-playlist", {
+                  defaultValue: "Create",
+                })}
+              </Button>
+            )
+          }
+          onClose={props.variant === "full" ? props.onClose : undefined}
+        />
+        {content}
+      </div>
+    );
+    // The wrapper only exists for BibleReader's layout, which sizes and
+    // places it beside or below the scripture; in the side pane the panel
+    // fills the pane instead.
+    return variant === "full" ? (
+      body
+    ) : (
+      <div className="sb-bible-reader-discover-panel">{body}</div>
+    );
+  };
+
+  // Out of the side pane, the compact panel just steps aside when there's
+  // nothing to show. The full panel holds the pane's only header and close
+  // button, so it always renders, with a hint in place of the content.
+  if (!tab) {
+    return variant === "full"
+      ? panel(
+          <div className="sb-discover-content-panel-scroll">{noTabHint(t)}</div>
+        )
+      : null;
+  }
+
+  const { hasAnnotations, showAnnotations, hasAny } = getDiscoverPanelContent(
+    tab.readingState,
+    state.annotations
+  );
+
+  // Only the full panel shows friends' playlists: they aren't tied to the
+  // chapter, so they'd crowd the compact panel's chapter summary.
+  const hasFriendPlaylists =
+    props.variant === "full" &&
+    friendPlaylistGroups(state.friends, state.playlists).length > 0;
+
+  if (!hasAny && variant !== "full") {
+    return null;
+  }
+
+  const hasCrossReferences =
+    tab.readingState.discoveredCrossReferences.value.flatMap(
+      (group) => group.results
+    ).length > 0;
+
+  const hasStudyNotes =
+    tab.readingState.discoveredStudyNotes.value.flatMap(
+      (group) => group.results
+    ).length > 0;
+
+  const contentTypes = state.discover.contentTypes.value;
+
+  const hasContent =
+    tab.readingState.discoveredContent.value
+      .flatMap((group) => group.results)
+      .filter((result) => !hasRegisteredContentType(result, contentTypes))
+      .length > 0;
+
+  const typesWithResults = contentTypes.filter(
+    (definition) => contentTypeResultsFor(tab, definition.id).length > 0
+  );
+
+  const hasOtherContentUnderAll =
+    hasFriendPlaylists ||
+    hasCrossReferences ||
+    hasStudyNotes ||
+    hasContent ||
+    typesWithResults.some((definition) => !definition.hiddenByDefault);
+
+  // Results stream in after the chapter opens, so until discovery is done
+  // "nothing yet" can't be told apart from "nothing at all".
+  const isDiscovering =
+    variant === "full" && tab.readingState.isDiscovering.value;
+
+  // The full panel never renders empty: when the chapter has nothing else to
+  // show, not even behind a filter chip, the notes section's "Create a note"
+  // prompt stands in as its empty state.
+  const showNotesAsEmptyState =
+    variant === "full" &&
+    !isDiscovering &&
+    !hasOtherContentUnderAll &&
+    typesWithResults.length === 0;
+  const showNotes = showAnnotations || showNotesAsEmptyState;
+
+  const hasVisibleUnderAll =
+    hasAnnotations ||
+    showNotesAsEmptyState ||
+    hasOtherContentUnderAll ||
+    isDiscovering;
+
+  const filters: {
+    key: FilterKey;
+    label: string;
+  }[] = [
+    {
+      key: "all",
+      label: t("all", {
+        defaultValue: "All",
+      }),
+    },
+
+    ...(showNotes
+      ? [
+          {
+            key: "annotations" as const,
+            label: t("notes", {
+              defaultValue: "Notes",
+            }),
+          },
+        ]
+      : []),
+
+    ...(hasFriendPlaylists
+      ? [
+          {
+            key: "friends-playlists" as const,
+            label: t("friends-playlists-filter", {
+              defaultValue: "Friends' playlists",
+            }),
+          },
+        ]
+      : []),
+
+    ...(hasCrossReferences
+      ? [
+          {
+            key: "cross-references" as const,
+            label: t("cross-references", {
+              defaultValue: "Cross Refs",
+            }),
+          },
+        ]
+      : []),
+
+    ...(hasStudyNotes
+      ? [
+          {
+            key: "study-notes" as const,
+            label: t("study-notes", {
+              defaultValue: "Study Notes",
+            }),
+          },
+        ]
+      : []),
+
+    ...(hasContent
+      ? [
+          {
+            key: "content" as const,
+            label: t("content", {
+              defaultValue: "Content",
+            }),
+          },
+        ]
+      : []),
+
+    ...typesWithResults.map((definition) => ({
+      key: `type:${definition.id}` as const,
+      label: translateTitle(t, definition.title),
+    })),
+  ];
+
+  const showFilters =
+    filters.length > 2 ||
+    typesWithResults.some((definition) => definition.hiddenByDefault);
+  // Falls back to "all" when the previously-active filter's content type is
+  // no longer available (e.g. the user filtered to "Cross Refs" then
+  // navigated to a chapter with none), so the chip row and content area don't
+  // go blank.
+  const f = filters.some((filter) => filter.key === activeFilter.value)
+    ? activeFilter.value
+    : "all";
+
+  return panel(
+    <>
+      {showFilters && (
+        <DiscoverFilters
+          filters={filters}
+          activeFilter={activeFilter}
+          displayFilter={f}
+        />
+      )}
+      <div className="sb-discover-content-panel-scroll">
+        {(f === "all" || f === "annotations") && showNotes && (
+          <AnnotationsSection
+            tab={tab}
+            annotations={state.annotations}
+            modals={state.modals}
+            toast={state.app.toast}
+            login={state.login}
+            friends={state.friends}
+            tabs={state.tabs}
+            discover={state.discover}
+            panes={state.panes}
+            onReferenceClick={state.app.openVerseReference}
+          />
+        )}
+
+        {(f === "all" || f === "friends-playlists") && hasFriendPlaylists && (
+          <FriendPlaylistsSection
+            friends={state.friends}
+            playlists={state.playlists}
+            modals={state.modals}
+            toast={state.app.toast}
+          />
+        )}
+
+        {(f === "all" || f === "cross-references") && (
+          <CrossReferencesSection tab={tab} />
+        )}
+
+        {(f === "all" || f === "study-notes") && (
+          <StudyNotesSection tab={tab} />
+        )}
+
+        {(f === "all" || f === "content") && (
+          <ContentSection tab={tab} contentTypes={contentTypes} />
+        )}
+
+        {typesWithResults.map((definition) =>
+          f === `type:${definition.id}` ||
+          (f === "all" && !definition.hiddenByDefault) ? (
+            <ContentTypeSection
+              key={definition.id}
+              tab={tab}
+              definition={definition}
+            />
+          ) : null
+        )}
+
+        {f === "all" &&
+          variant === "full" &&
+          tab.readingState.showDiscoveryLoader.value && (
+            <div className="sb-dcp-discovery-loader">
+              <Spinner
+                size="1.25rem"
+                label={t("loading", { defaultValue: "Loading…" })}
+              />
+            </div>
+          )}
+
+        {f === "all" && !hasVisibleUnderAll && (
+          <DiscoverEmpty
+            text={t("discover-choose-filter-hint", {
+              defaultValue:
+                "Pick a filter above to see more from this chapter.",
+            })}
+          />
+        )}
+      </div>
+    </>
+  );
+}

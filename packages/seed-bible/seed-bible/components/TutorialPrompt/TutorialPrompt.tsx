@@ -2,6 +2,7 @@ import "./TutorialPrompt.css";
 import { getBrandedAppText, useI18n } from "../../i18n/I18nManager";
 import type { TutorialManager } from "../../managers/TutorialManager";
 import { useAppConfig } from "../../app/appConfig";
+import { Button } from "../Button/Button";
 
 /**
  * First-run tutorial offer. A small card pinned to the top-right of the screen
@@ -55,23 +56,15 @@ export function TutorialPrompt({
         )}
       </p>
       <div className="sb-tutorial-prompt-actions">
-        <button
-          type="button"
-          className="sb-tutorial-prompt-btn sb-tutorial-prompt-btn-secondary"
-          onClick={tutorial.dismissPrompt}
-        >
+        <Button variant="ghost" onClick={tutorial.dismissPrompt}>
           {t("tutorial.promptDecline", { defaultValue: "No, thanks" })}
-        </button>
-        <button
-          type="button"
-          className="sb-tutorial-prompt-btn sb-tutorial-prompt-btn-primary"
-          onClick={tutorial.acceptPrompt}
-        >
+        </Button>
+        <Button variant="primary" onClick={tutorial.acceptPrompt}>
           {t("tutorial.promptAccept", { defaultValue: "Take the tour" })}
           <span className="sb-tutorial-prompt-arrow" aria-hidden="true">
             →
           </span>
-        </button>
+        </Button>
       </div>
     </div>
   );
