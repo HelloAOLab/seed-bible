@@ -180,20 +180,6 @@
 
 .sb-discover-item-play {
   flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border: none;
-  background: transparent;
-  border-radius: var(--sb-radius-sm);
-  cursor: pointer;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-}
-
-.sb-discover-item-play:hover {
-  background: var(--sb-divider-color);
-  color: var(--sb-font-color);
 }
 
 .sb-discover-item--row .sb-discover-item-title {
