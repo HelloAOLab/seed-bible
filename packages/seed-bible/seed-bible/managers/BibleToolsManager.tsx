@@ -481,6 +481,12 @@ export interface QuickToolContext {
 export interface BibleQuickToolbarTool extends ResolvedBibleTool {
   /** Optional class name for custom styling. */
   className?: string;
+  /**
+   * `"icon"` (the default) draws the tool as a round icon button. `"card"`
+   * draws a plain button sized to its icon, for a tool whose icon is wider
+   * than a glyph, like the "Now playing" card with the playlist title.
+   */
+  display?: "icon" | "card";
   /** Disabled signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility signal resolved for current context. */
@@ -498,6 +504,12 @@ export type ManagedBibleQuickToolbarToolItem =
 export interface ManagedBibleQuickToolbarTool extends BibleTool<QuickToolContext> {
   /** Optional class name for custom styling. */
   className?: string;
+  /**
+   * `"icon"` (the default) draws the tool as a round icon button. `"card"`
+   * draws a plain button sized to its icon, for a tool whose icon is wider
+   * than a glyph, like the "Now playing" card with the playlist title.
+   */
+  display?: "icon" | "card";
 
   /** Optional disabled predicate (boolean or signal). */
   isDisabled?: ToolPredicate<QuickToolContext>;
@@ -913,6 +925,7 @@ function getDefaultQuickToolbarTools(
         defaultValue: "Current Playlist",
       },
       className: "sb-quick-toolbar-current-playlist",
+      display: "card",
       icon: (c) => (
         <NowPlayingIcon playlists={c.playlists} readingState={c.readingState} />
       ),
@@ -1977,6 +1990,7 @@ export function createBibleToolsManager(
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
       className: tool.className,
+      display: tool.display,
     }));
 
     return sortBy(tools, [(tool) => tool.priority]);

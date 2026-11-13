@@ -1,9 +1,6 @@
 import "./QuickToolbar.inline.css";
 import "./QuickToolbar.css";
-import {
-  CURRENT_PLAYLIST_TOOL_ID,
-  type ToolsManager,
-} from "../../managers/BibleToolsManager";
+import type { ToolsManager } from "../../managers/BibleToolsManager";
 import { IconButton } from "../IconButton/IconButton";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import { useI18n } from "../../i18n/I18nManager";
@@ -103,9 +100,7 @@ export function QuickToolbar(props: QuickToolbarProps) {
             key={tool.id}
             className={`sb-quick-toolbar-item${tool.className ? ` ${tool.className}` : ""}`}
           >
-            {/* "Now playing" is a small card with the playlist's title, not
-                an icon, so it keeps a plain button sized to fit it. */}
-            {tool.id === CURRENT_PLAYLIST_TOOL_ID ? (
+            {tool.display === "card" ? (
               <button
                 type="button"
                 disabled={tool.disabled.value}
