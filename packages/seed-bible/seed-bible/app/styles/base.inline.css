@@ -385,6 +385,10 @@ html {
    * `.sb-bible-reader` (`.sb-reader-font-size-*`) and is therefore
    * unaffected. */
   font-size: calc(16px * var(--sb-ui-scale, 1));
+
+  /* Fallback canvas while ThemeManager / the pre-hydration script set the
+   * live `background-color` + `color-scheme` on this element. */
+  background-color: var(--sb-background);
 }
 
 /* Metric-matched stand-ins used while the Google web fonts download. The

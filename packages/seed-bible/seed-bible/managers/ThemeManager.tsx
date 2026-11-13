@@ -532,12 +532,100 @@ export function parseThemeBackgroundColor(css: string): string | null {
   return value && value.length > 0 ? value : null;
 }
 
+export type BrowserColorScheme = "light" | "dark";
+
+/**
+ * `#rgb` / `#rrggbb` / `#rrggbbaa` → sRGB channels. Anything else (named
+ * colors, `rgb()`, `color-mix()`, …) returns null so callers can leave the
+ * current browser chrome alone rather than guess wrong.
+ */
+export function parseCssHexColor(
+  color: string
+): [number, number, number] | null {
+  const raw = color.trim();
+  const match = /^#([\da-f]{3}|[\da-f]{6}|[\da-f]{8})$/i.exec(raw);
+  if (!match) return null;
+  const hex = match[1]!;
+  if (hex.length === 3) {
+    return [
+      parseInt(hex[0]! + hex[0]!, 16),
+      parseInt(hex[1]! + hex[1]!, 16),
+      parseInt(hex[2]! + hex[2]!, 16),
+    ];
+  }
+  return [
+    parseInt(hex.slice(0, 2), 16),
+    parseInt(hex.slice(2, 4), 16),
+    parseInt(hex.slice(4, 6), 16),
+  ];
+}
+
+function channelToLinear(channel: number): number {
+  const s = channel / 255;
+  return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+}
+
+/**
+ * Relative luminance where black and white text contrast equally against
+ * the background (WCAG). Used for Android PWA `color-scheme` so mid-gray
+ * custom branding backgrounds stay on the light strip/controls rather than
+ * flipping dark at the naive 0.5 midpoint. Keep in sync with the inline
+ * copy in `index.html`.
+ */
+export const LIGHT_DARK_CROSSOVER = 0.179;
+
+/**
+ * Whether the app background is dark enough that Android's installed-PWA
+ * system navigation strip should use the dark color-scheme (near-black)
+ * instead of the light one (near-white).
+ */
+export function browserColorSchemeForBackground(
+  color: string
+): BrowserColorScheme | null {
+  const rgb = parseCssHexColor(color);
+  if (!rgb) return null;
+  const luminance =
+    0.2126 * channelToLinear(rgb[0]) +
+    0.7152 * channelToLinear(rgb[1]) +
+    0.0722 * channelToLinear(rgb[2]);
+  return luminance < LIGHT_DARK_CROSSOVER ? "dark" : "light";
+}
+
+/**
+ * Installed Android PWAs paint the bottom system navigation / gesture
+ * strip from `<meta name="color-scheme">` (light → white, dark → black),
+ * not from `theme-color` (that one drives the top status bar). Keep the
+ * meta and the root `color-scheme` style in sync with the in-app theme so
+ * a Dark (or dark custom) background does not sit above a white strip.
+ */
+export function applyBrowserColorScheme(scheme: BrowserColorScheme): void {
+  if (typeof document === "undefined") return;
+  const metas = [
+    ...document.head.querySelectorAll('meta[name="color-scheme"]'),
+  ] as HTMLMetaElement[];
+  if (metas.length === 0) {
+    const tag = document.createElement("meta");
+    tag.name = "color-scheme";
+    tag.id = "sb-color-scheme";
+    tag.content = scheme;
+    document.head.appendChild(tag);
+  } else {
+    for (const tag of metas) {
+      tag.content = scheme;
+    }
+  }
+  document.documentElement.style.colorScheme = scheme;
+}
+
 /**
  * Android Chrome (and other browsers) color the installed-PWA status bar
  * from `<meta name="theme-color">`. A tag without `media` always matches,
  * so any leftover `prefers-color-scheme` tags from an older SSR document
  * would be ignored only if we also strip `media` and keep every copy in
  * sync — browsers walk the tags in tree order and stop at the first match.
+ *
+ * Also drives `<meta name="color-scheme">` and paints `html`'s background
+ * so the canvas matches the theme chrome (see `applyBrowserColorScheme`).
  */
 export function applyBrowserThemeColor(color: string): void {
   if (typeof document === "undefined") return;
@@ -550,12 +638,17 @@ export function applyBrowserThemeColor(color: string): void {
     tag.id = "sb-theme-color";
     tag.content = color;
     document.head.appendChild(tag);
-    return;
+  } else {
+    for (const tag of metas) {
+      tag.removeAttribute("media");
+      tag.content = color;
+    }
   }
-  for (const tag of metas) {
-    tag.removeAttribute("media");
-    tag.content = color;
-  }
+  // `html` does not inherit body-scoped `--sb-*` vars (ThemeManager paints
+  // those on `body`), so set the canvas color directly.
+  document.documentElement.style.backgroundColor = color;
+  const scheme = browserColorSchemeForBackground(color);
+  if (scheme) applyBrowserColorScheme(scheme);
 }
 
 function applyBrowserThemeColorFromCss(css: string): void {

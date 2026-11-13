@@ -1,11 +1,14 @@
 import {
+  applyBrowserColorScheme,
   applyBrowserThemeColor,
   applyHighlightOverrides,
+  browserColorSchemeForBackground,
   createTheme as createThemeManager,
   DARK_THEME,
   LIGHT_THEME,
   filterValidFontFamilyOverrides,
   composeThemeStyleText,
+  parseCssHexColor,
   parseThemeBackgroundColor,
   THEME_PRESET_STYLE_TEXT,
   generateThemeCssClasses,
@@ -194,11 +197,100 @@ describe("parseThemeBackgroundColor", () => {
   });
 });
 
+describe("parseCssHexColor", () => {
+  it("expands #rgb and reads #rrggbb / #rrggbbaa", () => {
+    expect(parseCssHexColor("#0af")).toEqual([0, 170, 255]);
+    expect(parseCssHexColor("#0a0a0a")).toEqual([10, 10, 10]);
+    expect(parseCssHexColor("#f8fafc80")).toEqual([248, 250, 252]);
+  });
+
+  it("returns null for non-hex colors so callers can leave chrome alone", () => {
+    expect(parseCssHexColor("rgb(10, 10, 10)")).toBeNull();
+    expect(parseCssHexColor("black")).toBeNull();
+    expect(parseCssHexColor("")).toBeNull();
+  });
+});
+
+describe("browserColorSchemeForBackground", () => {
+  it("maps the built-in Light and Dark backgrounds to matching schemes", () => {
+    expect(
+      browserColorSchemeForBackground(LIGHT_THEME.variables.background)
+    ).toBe("light");
+    expect(
+      browserColorSchemeForBackground(DARK_THEME.variables.background)
+    ).toBe("dark");
+  });
+
+  it("treats near-black custom backgrounds as dark and pale ones as light", () => {
+    expect(browserColorSchemeForBackground("#222222")).toBe("dark");
+    expect(browserColorSchemeForBackground("#eeeeee")).toBe("light");
+  });
+
+  it("keeps mid-gray branding backgrounds on the light scheme", () => {
+    // #b0b0b0 is clearly light (~0.43 luminance) but sits below the naive
+    // 0.5 midpoint — it must stay light so form controls and the Android
+    // nav strip don't flip dark on a light page.
+    expect(browserColorSchemeForBackground("#b0b0b0")).toBe("light");
+    expect(browserColorSchemeForBackground("#808080")).toBe("light");
+  });
+
+  it("returns null when the color cannot be parsed as hex", () => {
+    expect(browserColorSchemeForBackground("transparent")).toBeNull();
+  });
+});
+
+describe("applyBrowserColorScheme", () => {
+  afterEach(() => {
+    document
+      .querySelectorAll('meta[name="color-scheme"]')
+      .forEach((el) => el.remove());
+    document.documentElement.style.colorScheme = "";
+  });
+
+  it("creates a color-scheme meta tag when the document has none", () => {
+    applyBrowserColorScheme("dark");
+
+    const tag = document.querySelector(
+      'meta[name="color-scheme"]'
+    ) as HTMLMetaElement | null;
+    expect(tag).not.toBeNull();
+    expect(tag?.id).toBe("sb-color-scheme");
+    expect(tag?.content).toBe("dark");
+    expect(document.documentElement.style.colorScheme).toBe("dark");
+  });
+
+  it("updates every existing color-scheme tag", () => {
+    const first = document.createElement("meta");
+    first.name = "color-scheme";
+    first.content = "light";
+    document.head.appendChild(first);
+    const second = document.createElement("meta");
+    second.name = "color-scheme";
+    second.content = "light dark";
+    document.head.appendChild(second);
+
+    applyBrowserColorScheme("dark");
+
+    const metas = [
+      ...document.querySelectorAll('meta[name="color-scheme"]'),
+    ] as HTMLMetaElement[];
+    expect(metas).toHaveLength(2);
+    for (const meta of metas) {
+      expect(meta.content).toBe("dark");
+    }
+  });
+});
+
 describe("applyBrowserThemeColor", () => {
   afterEach(() => {
     document
       .querySelectorAll('meta[name="theme-color"]')
       .forEach((el) => el.remove());
+    document
+      .querySelectorAll('meta[name="color-scheme"]')
+      .forEach((el) => el.remove());
+    document.documentElement.style.colorScheme = "";
+    document.documentElement.style.backgroundColor = "";
   });
 
   it("creates a theme-color meta tag when the document has none", () => {
@@ -234,6 +326,44 @@ describe("applyBrowserThemeColor", () => {
       expect(meta.getAttribute("media")).toBeNull();
       expect(meta.content).toBe("#0a0a0a");
     }
+  });
+
+  it("sets color-scheme and the html canvas for a dark background", () => {
+    applyBrowserThemeColor(DARK_THEME.variables.background);
+
+    const scheme = document.querySelector(
+      'meta[name="color-scheme"]'
+    ) as HTMLMetaElement | null;
+    expect(scheme?.content).toBe("dark");
+    expect(document.documentElement.style.colorScheme).toBe("dark");
+    // jsdom may keep the hex or normalize to rgb().
+    expect(
+      document.documentElement.style.backgroundColor.toLowerCase()
+    ).toMatch(/^(#0a0a0a|rgb\(10,\s*10,\s*10\))$/);
+  });
+
+  it("sets color-scheme light for the Light theme background", () => {
+    applyBrowserThemeColor(LIGHT_THEME.variables.background);
+
+    const scheme = document.querySelector(
+      'meta[name="color-scheme"]'
+    ) as HTMLMetaElement | null;
+    expect(scheme?.content).toBe("light");
+    expect(document.documentElement.style.colorScheme).toBe("light");
+  });
+
+  it("leaves color-scheme unchanged when the background is not hex", () => {
+    applyBrowserColorScheme("dark");
+    applyBrowserThemeColor("rgb(10, 10, 10)");
+
+    const scheme = document.querySelector(
+      'meta[name="color-scheme"]'
+    ) as HTMLMetaElement | null;
+    expect(scheme?.content).toBe("dark");
+    expect(document.documentElement.style.colorScheme).toBe("dark");
+    expect(document.documentElement.style.backgroundColor).toBe(
+      "rgb(10, 10, 10)"
+    );
   });
 });
 
@@ -424,10 +554,15 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(tag?.textContent).toContain("--sb-background: #0a0a0a;");
   });
 
-  it("sets the theme-color meta to the active theme's background", () => {
+  it("sets the theme-color and color-scheme metas to the active theme", () => {
     document.querySelectorAll('meta[name="theme-color"]').forEach((el) => {
       el.remove();
     });
+    document.querySelectorAll('meta[name="color-scheme"]').forEach((el) => {
+      el.remove();
+    });
+    document.documentElement.style.colorScheme = "";
+    document.documentElement.style.backgroundColor = "";
     document.getElementById("sb-theme-styles")?.remove();
     const login = makeFakeLogin(null);
     const settings = makeSettings(login);
@@ -437,6 +572,10 @@ describe("ThemeManager storage (via SettingsManager)", () => {
       'meta[name="theme-color"]'
     ) as HTMLMetaElement | null;
     expect(tag?.content).toBe("#f8fafc");
+    expect(
+      (document.querySelector('meta[name="color-scheme"]') as HTMLMetaElement)
+        .content
+    ).toBe("light");
 
     theme.setTheme("dark");
 
@@ -444,6 +583,11 @@ describe("ThemeManager storage (via SettingsManager)", () => {
       (document.querySelector('meta[name="theme-color"]') as HTMLMetaElement)
         .content
     ).toBe("#0a0a0a");
+    expect(
+      (document.querySelector('meta[name="color-scheme"]') as HTMLMetaElement)
+        .content
+    ).toBe("dark");
+    expect(document.documentElement.style.colorScheme).toBe("dark");
   });
 
   it("does not clobber a dark #sb-theme-styles tag with the system default on boot", () => {
@@ -472,6 +616,10 @@ describe("ThemeManager storage (via SettingsManager)", () => {
       (document.querySelector('meta[name="theme-color"]') as HTMLMetaElement)
         .content
     ).toBe("#0a0a0a");
+    expect(
+      (document.querySelector('meta[name="color-scheme"]') as HTMLMetaElement)
+        .content
+    ).toBe("dark");
 
     // ...and once the real saved config lands, the tag still tracks it.
     login.localConfig.value = { themeId: "dark" };

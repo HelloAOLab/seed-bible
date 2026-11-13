@@ -19,6 +19,11 @@
          theme's --sb-background so the bar follows light/dark (and custom
          background colors) instead of the OS prefers-color-scheme. -->
     <meta name="theme-color" id="sb-theme-color" content="#f8fafc" />
+    <!-- Installed Android PWAs paint the bottom system navigation / gesture
+         strip from color-scheme (light → white, dark → black), not from
+         theme-color. Keep this in sync with the in-app theme alongside
+         theme-color so Dark mode does not sit above a white strip. -->
+    <meta name="color-scheme" id="sb-color-scheme" content="light" />
     <link rel="icon" href="/standalone/img/favicon.ico" />
     <link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />
     <link rel="preconnect" href="https://assets.seedbible.org" />
@@ -80,14 +85,15 @@
       // account's theme (from the profile copy LoginManager caches under
       // "sb-profile-cache-<userId>"), then the anonymous device store.
       (function () {
-        function readAccountThemeId() {
+        function readAccountThemeId(store) {
           try {
+            if (!store) return null;
             // A CasualOS session key is "vSK1.<base64 userId>.<...>".
-            var sessionKey = localStorage.getItem("sessionKey");
+            var sessionKey = store.getItem("sessionKey");
             if (!sessionKey || sessionKey.indexOf("vSK1.") !== 0) return null;
             var userId = atob(sessionKey.split(".")[1] || "");
             if (!userId) return null;
-            var cached = localStorage.getItem("sb-profile-cache-" + userId);
+            var cached = store.getItem("sb-profile-cache-" + userId);
             var profile = cached && JSON.parse(cached);
             // LoginManager ignores a cached copy that fails its profile
             // schema. Checking the fields it always requires keeps this
@@ -102,7 +108,18 @@
           }
         }
         try {
-          var raw = localStorage.getItem("sb-profile-config-local");
+          // Guard storage: privacy mode, blocked cookies, or a host with no
+          // Storage (Node 26's global localStorage is undefined without
+          // `--localstorage-file`) must not abort before we paint System
+          // light/dark from matchMedia — that was leaving Dark devices on
+          // the server's Light guess and a white Android nav strip.
+          var store = null;
+          try {
+            store = window.localStorage;
+          } catch (e) {
+            store = null;
+          }
+          var raw = store ? store.getItem("sb-profile-config-local") : null;
           var params = new URLSearchParams(window.location.search);
           var embed = (params.get("embed") || "").toLowerCase();
           var linkTheme =
@@ -111,7 +128,7 @@
               : null;
           var themeId =
             (linkTheme && linkTheme.trim()) ||
-            readAccountThemeId() ||
+            readAccountThemeId(store) ||
             (raw && JSON.parse(raw).themeId) ||
             "system";
           if (themeId === "system") {
@@ -126,13 +143,52 @@
           var tag = document.getElementById("sb-theme-styles");
           if (tag) tag.textContent = css;
           var bg = /--sb-background:\s*([^;]+)/.exec(css);
+          var color = bg && bg[1] ? bg[1].trim() : "";
           var themeColor =
             document.getElementById("sb-theme-color") ||
             document.querySelector('meta[name="theme-color"]');
-          if (bg && themeColor)
-            themeColor.setAttribute("content", bg[1].trim());
+          if (color && themeColor) themeColor.setAttribute("content", color);
+          // Bottom Android PWA nav strip follows color-scheme, not
+          // theme-color. Mirror ThemeManager.browserColorSchemeForBackground
+          // for #rgb / #rrggbb / #rrggbbaa only — leave the meta alone on
+          // anything else so we never flip light/dark on a bad parse.
+          if (color) {
+            var hex = /^#([\da-f]{3}|[\da-f]{6}|[\da-f]{8})$/i.exec(color);
+            if (hex) {
+              var h = hex[1];
+              var r, g, b;
+              if (h.length === 3) {
+                r = parseInt(h.charAt(0) + h.charAt(0), 16);
+                g = parseInt(h.charAt(1) + h.charAt(1), 16);
+                b = parseInt(h.charAt(2) + h.charAt(2), 16);
+              } else {
+                r = parseInt(h.slice(0, 2), 16);
+                g = parseInt(h.slice(2, 4), 16);
+                b = parseInt(h.slice(4, 6), 16);
+              }
+              var toLin = function (c) {
+                var s = c / 255;
+                return s <= 0.03928
+                  ? s / 12.92
+                  : Math.pow((s + 0.055) / 1.055, 2.4);
+              };
+              // Same crossover as ThemeManager.LIGHT_DARK_CROSSOVER: where
+              // black and white text contrast equally (not 0.5).
+              var scheme =
+                0.2126 * toLin(r) + 0.7152 * toLin(g) + 0.0722 * toLin(b) <
+                0.179
+                  ? "dark"
+                  : "light";
+              var schemeMeta =
+                document.getElementById("sb-color-scheme") ||
+                document.querySelector('meta[name="color-scheme"]');
+              if (schemeMeta) schemeMeta.setAttribute("content", scheme);
+              document.documentElement.style.colorScheme = scheme;
+              document.documentElement.style.backgroundColor = color;
+            }
+          }
         } catch (e) {
-          // Corrupt/inaccessible storage — keep the server's default.
+          // Corrupt JSON / unexpected DOM — keep the server's default.
         }
       })();
     </script>
