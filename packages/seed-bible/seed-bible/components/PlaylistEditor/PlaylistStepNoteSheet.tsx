@@ -11,6 +11,7 @@ import { MaterialIcon } from "../icons";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { NoteHeading } from "../ScriptureNote/ScriptureNote";
 import { PlaylistNoteComposer } from "./PlaylistNoteComposer";
+import { Button } from "../Button/Button";
 
 type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 
@@ -114,8 +115,10 @@ export function PlaylistStepNoteSheet(props: {
             onChange={(html) => update({ note: html || undefined })}
           />
           {hasNote ? (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
+              tone="danger"
               className="sb-pe-note-remove"
               onClick={() => {
                 update({ note: undefined, noteTitle: undefined });
@@ -125,7 +128,7 @@ export function PlaylistStepNoteSheet(props: {
               {t("playlist-editor-note-remove", {
                 defaultValue: "Remove note",
               })}
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : null}

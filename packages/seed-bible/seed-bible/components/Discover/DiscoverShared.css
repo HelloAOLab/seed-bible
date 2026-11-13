@@ -10,26 +10,6 @@
   gap: 8px;
 }
 
-/* Generic pane back button (reading plans, play view, create form, item input). */
-.sb-reading-plans-back:not(.sb-button) {
-  border: none;
-  border-radius: var(--sb-radius-md);
-  padding: 0.625rem 1.25rem;
-  background: transparent;
-  color: var(--sb-font-color);
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition:
-    transform 0.1s ease,
-    background-color var(--sb-duration-base) ease;
-}
-
-.sb-reading-plans-back:not(.sb-button):hover {
-  background: var(--sb-secondary-color);
-}
-
 /* Add-item row shared by the scripture, text, and link item inputs. */
 .sb-playlist-add-row {
   display: flex;

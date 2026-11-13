@@ -17,6 +17,8 @@ import {
   playlistTotalMinutes,
 } from "./playlistSteps";
 import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 const UNSAVED_CHANGES_CONFIRM_MODAL_ID = "playlist-unsaved-changes-confirm";
 
@@ -73,11 +75,15 @@ export function PlaylistEditorBackButton(props: {
     ? t("playlist-editor-back-to-items", { defaultValue: "Back to items" })
     : t("playlist-editor-close", { defaultValue: "Close playlist editor" });
   return (
-    <button
-      type="button"
+    <IconButton
       className="sb-pe-back"
-      aria-label={label}
-      title={label}
+      label={label}
+      icon={
+        <PeIcon
+          name="arrow-right"
+          className={isRtl ? undefined : "sb-pe-back-icon--flipped"}
+        />
+      }
       onClick={() => {
         if (onStep) {
           playlists.selectEditorStep(-1);
@@ -85,12 +91,7 @@ export function PlaylistEditorBackButton(props: {
           requestCancelPlaylistEditor(playlists, modals);
         }
       }}
-    >
-      <PeIcon
-        name="arrow-right"
-        className={isRtl ? undefined : "sb-pe-back-icon--flipped"}
-      />
-    </button>
+    />
   );
 }
 
@@ -218,14 +219,14 @@ export function PlaylistStepList(props: {
               "Add scripture, notes, questions or videos to get started.",
           })}
         </p>
-        <button
-          type="button"
+        <Button
+          size="lg"
+          icon="add"
           className="sb-pe-empty-list-add"
           onClick={() => openAddStepMenu(playlists)}
         >
-          <span aria-hidden="true">+</span>
           {t("playlist-editor-add-step-title", { defaultValue: "Add a step" })}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -266,30 +267,28 @@ export function PlaylistStepList(props: {
                     </span>
                   ) : (
                     <>
-                      <button
-                        type="button"
+                      <IconButton
+                        size="sm"
                         className="sb-pe-step-action"
-                        aria-label={t("playlist-editor-duplicate-step", {
+                        icon={<PeIcon name="copy" />}
+                        label={t("playlist-editor-duplicate-step", {
                           defaultValue: "Duplicate step",
                         })}
                         onClick={() =>
                           playlists.duplicateEditingPlaylistItem(index)
                         }
-                      >
-                        <PeIcon name="copy" />
-                      </button>
-                      <button
-                        type="button"
+                      />
+                      <IconButton
+                        size="sm"
                         className="sb-pe-step-action sb-pe-step-action--danger"
-                        aria-label={t("playlist-editor-delete-step", {
+                        icon={<PeIcon name="trash" />}
+                        label={t("playlist-editor-delete-step", {
                           defaultValue: "Delete step",
                         })}
                         onClick={() =>
                           playlists.removeEditingPlaylistItem(index)
                         }
-                      >
-                        <PeIcon name="trash" />
-                      </button>
+                      />
                     </>
                   )}
                 </div>
@@ -421,14 +420,7 @@ export function AddStepMenu(props: {
         <h3 id="sb-pe-add-menu-title" className="sb-pe-add-menu-title">
           {t("playlist-editor-add-step-title", { defaultValue: "Add a step" })}
         </h3>
-        <button
-          type="button"
-          className="sb-pe-add-menu-close"
-          aria-label={t("close", { defaultValue: "Close" })}
-          onClick={close}
-        >
-          <PeIcon name="close" />
-        </button>
+        <CloseButton className="sb-pe-add-menu-close" onClose={close} />
       </div>
       <p className="sb-pe-add-menu-where">
         {afterIndex < 0
@@ -486,11 +478,10 @@ export function AddStepToggle(props: { playlists: PlaylistManager }) {
     defaultValue: "Add a step",
   });
   return (
-    <button
-      type="button"
-      className="sb-pe-square-button sb-pe-add-toggle"
-      aria-label={add}
-      title={add}
+    <IconButton
+      size="lg"
+      className="sb-pe-add-toggle"
+      label={add}
       aria-expanded={menuOpen}
       onClick={() => {
         if (menuOpen) {
@@ -499,17 +490,14 @@ export function AddStepToggle(props: { playlists: PlaylistManager }) {
           openAddStepMenu(playlists);
         }
       }}
-    >
-      {/* Drawn rather than typed: a "+" sits on the text line, below the
-          button's middle. */}
-      <svg
-        className="sb-pe-add-toggle-plus"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path d="M12 5v14M5 12h14" />
-      </svg>
-    </button>
+      // Drawn rather than typed: a "+" sits on the text line, below the
+      // button's middle.
+      icon={
+        <svg className="sb-pe-add-toggle-plus" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      }
+    />
   );
 }
 

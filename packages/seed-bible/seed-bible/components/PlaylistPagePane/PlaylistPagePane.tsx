@@ -9,6 +9,7 @@ import {
   PlaylistOverview,
   PlaylistStepRow,
 } from "../PlaylistOverview/PlaylistOverview";
+import { IconButton } from "../IconButton/IconButton";
 
 /**
  * What a playlist's link (or its play button) opens on, filling the screen:
@@ -40,15 +41,13 @@ export function PlaylistPagePane(props: {
       onBack={props.onBack}
       headerActions={
         <>
-          <button
-            type="button"
+          <IconButton
+            size="lg"
             className="sb-playlist-page-back sb-playlist-page-share"
-            aria-label={t("share", { defaultValue: "Share" })}
-            title={t("share", { defaultValue: "Share" })}
+            icon="share"
+            label={t("share", { defaultValue: "Share" })}
             onClick={props.onShare}
-          >
-            <MaterialIcon>share</MaterialIcon>
-          </button>
+          />
           {props.onEdit || props.onDelete ? (
             <ContextMenuWithButton
               buttonClassName="sb-playlist-page-menu"
