@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
+  CustomizationEditPane,
   CustomizationEditPaneHelp,
   CustomizationEditPaneLeading,
 } from "@packages/seed-bible/seed-bible/components/CustomizationEditPane/CustomizationEditPane";
@@ -68,16 +69,25 @@ describe("CustomizationEditPaneHelp", () => {
     act(() => state.customizations.startEditing(BRANDING.id));
   }
 
-  function renderHelp() {
+  /** The pane header's back and help buttons, and optionally the editor itself. */
+  function renderHelp(options: { withEditor?: boolean } = {}) {
     act(() => {
       render(
         <TestHost state={state}>
-          <CustomizationEditPaneLeading />
+          <div className="leading">
+            <CustomizationEditPaneLeading />
+          </div>
           <CustomizationEditPaneHelp state={state} />
+          {options.withEditor && <CustomizationEditPane state={state} />}
         </TestHost>,
         container
       );
     });
+  }
+
+  /** The pane header's Back, shown on every screen but the main editor. */
+  function back() {
+    return container.querySelector(".leading button");
   }
 
   function clickHelp() {
@@ -107,8 +117,13 @@ describe("CustomizationEditPaneHelp", () => {
 
   it("starts even after the tour was seen and tours were turned off", () => {
     editBranding();
-    act(() => state.tutorial.optOut());
     renderHelp();
+    clickHelp();
+    act(() => state.tutorial.finish());
+    act(() => state.tutorial.optOut());
+    expect(state.tutorial.featuresSeen.value["customization-created"]).toBe(
+      true
+    );
 
     clickHelp();
 
@@ -145,13 +160,32 @@ describe("CustomizationEditPaneHelp", () => {
     goToStep(FIRST_THEME_STEP);
     const step = state.tutorial.currentStep.value?.id;
     // The tour has opened the theme editor, which has a back button.
-    const back = () => container.querySelector('button[aria-label="Back"]');
     expect(back()).not.toBeNull();
 
     clickHelp();
 
     expect(state.tutorial.currentStep.value?.id).toBe(step);
     expect(back()).not.toBeNull();
+  });
+
+  it("goes back to the main editor, where the tour starts, from a theme", () => {
+    editBranding();
+    renderHelp({ withEditor: true });
+    const themeCard = container.querySelector<HTMLButtonElement>(
+      ".sb-cz-theme-card-open"
+    )!;
+    act(() => themeCard.click());
+    expect(back()).not.toBeNull();
+
+    clickHelp();
+
+    expect(back()).toBeNull();
+    expect(state.tutorial.currentStep.value?.id).toBe(
+      "customization-tutorial-name"
+    );
+    expect(
+      container.querySelector('[data-tutorial="customization-name"]')
+    ).not.toBeNull();
   });
 
   it("isn't shown while no Custom Branding is open", () => {
