@@ -107,12 +107,12 @@ a.sb-button-primary:is(:link, :visited) {
 /* Hover only where there's a pointer, so a tap on a phone doesn't leave the
    tint stuck on. */
 @media (hover: hover) {
-  .sb-button-primary:hover:not(:disabled) {
+  .sb-button-primary:hover:not(:disabled, [aria-disabled="true"]) {
     background: color-mix(in srgb, var(--sb-button-accent), #000 8%);
   }
 
-  .sb-button-secondary:hover:not(:disabled),
-  .sb-button-ghost:hover:not(:disabled) {
+  .sb-button-secondary:hover:not(:disabled, [aria-disabled="true"]),
+  .sb-button-ghost:hover:not(:disabled, [aria-disabled="true"]) {
     background: color-mix(in srgb, var(--sb-button-color), transparent 92%);
   }
 }
@@ -122,7 +122,9 @@ a.sb-button-primary:is(:link, :visited) {
   outline-offset: 2px;
 }
 
-.sb-button:disabled {
+/* `aria-disabled` is for a button that's unavailable but stays focusable,
+   so it looks the same as a disabled one. */
+.sb-button:is(:disabled, [aria-disabled="true"]) {
   opacity: 0.55;
   cursor: default;
 }

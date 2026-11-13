@@ -123,11 +123,11 @@
 /* Hover only where there's a pointer, so a tap on a phone doesn't leave the
    tint stuck on. */
 @media (hover: hover) {
-  .sb-icon-button:hover:not(:disabled) {
+  .sb-icon-button:hover:not(:disabled, [aria-disabled="true"]) {
     color: var(--sb-icon-button-color);
   }
 
-  .sb-icon-button:hover:not(:disabled)::before {
+  .sb-icon-button:hover:not(:disabled, [aria-disabled="true"])::before {
     background: var(--sb-icon-button-hover-background);
   }
 }
@@ -142,7 +142,9 @@
   background: var(--sb-icon-button-hover-background);
 }
 
-.sb-icon-button:disabled {
+/* `aria-disabled` is for a button that's unavailable but stays focusable
+   (Discover's filter arrows), so it looks the same as a disabled one. */
+.sb-icon-button:is(:disabled, [aria-disabled="true"]) {
   opacity: 0.4;
   cursor: default;
 }

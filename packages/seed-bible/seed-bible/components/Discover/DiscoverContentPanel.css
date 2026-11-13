@@ -164,10 +164,6 @@
   border-color: color-mix(in srgb, var(--sb-primary-color), transparent 50%);
   color: var(--sb-font-color);
 }
-.sb-icon-button.sb-dcp-filters-arrow[aria-disabled="true"] {
-  opacity: 0.4;
-  cursor: default;
-}
 @media (pointer: coarse) {
   .sb-dcp-filters-wrapper--scrollable {
     display: block;
