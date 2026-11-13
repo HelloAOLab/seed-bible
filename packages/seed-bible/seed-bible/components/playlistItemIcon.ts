@@ -8,5 +8,8 @@ const ICON_BY_TYPE: Record<Playlist["items"][number]["type"], string> = {
 
 /** Material Symbols ligature name for a playlist item's type. */
 export function playlistItemIcon(item: Playlist["items"][number]): string {
+  if (item.type === "html" && item.question) {
+    return "help";
+  }
   return ICON_BY_TYPE[item.type];
 }

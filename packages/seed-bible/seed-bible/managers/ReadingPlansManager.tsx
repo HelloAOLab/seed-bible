@@ -38,6 +38,7 @@ import {
   type FriendReadLimiter,
 } from "./friendContentFreshness";
 import { createLinkPreviewLoader } from "./linkPreview";
+import { toShareableUrl } from "../app/publicLinks";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -1630,12 +1631,14 @@ export function createReadingPlansManager(
 
   /** Gets a shareable URL for the given plan. */
   const getReadingPlanShareUrl = (plan: ReadingPlan): string =>
-    buildReadingPlanShareUrl({
-      plan,
-      currentUrl: navigation.currentUrl.peek(),
-      basePath: navigation.basePath,
-      language: options.language?.peek() ?? DEFAULT_UI_LANGUAGE,
-    });
+    toShareableUrl(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: navigation.currentUrl.peek(),
+        basePath: navigation.basePath,
+        language: options.language?.peek() ?? DEFAULT_UI_LANGUAGE,
+      })
+    ).toString();
 
   const readingPlanPageLoader = createSharedPageLoader({
     os,

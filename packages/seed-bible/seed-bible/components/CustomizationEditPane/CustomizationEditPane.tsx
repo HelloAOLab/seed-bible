@@ -7,20 +7,24 @@ import "../BibleSelector/BibleSelector.css";
 import { signal, useSignal } from "@preact/signals";
 import { lazy, Suspense } from "preact/compat";
 import { useMemo, useRef } from "preact/hooks";
+import type { ComponentChildren } from "preact";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import {
   CUSTOMIZATION_COLOR_GROUPS,
   CUSTOMIZATION_CONTRAST_PAIRS,
   CUSTOMIZATION_FONT_FIELDS,
+  CUSTOMIZATION_ICON_IDS,
   EXTENSION_AVAILABILITY_VALUES,
   MIN_READABLE_CONTRAST_RATIO,
   buildCustomFontValue,
   getContrastRatio,
+  getCustomIconFileProblem,
   getDefaultExtensionAvailability,
   getExtensionAvailability,
   getExtensionSettingDefault,
   getFontPresetsForField,
+  type CustomizationIconId,
   type CustomizationThemeVariant,
   type CustomizationsManager,
   type DefaultExtensionAvailability,
@@ -43,7 +47,14 @@ import { UI_TO_BIBLE_LANGUAGE_CODES } from "../../managers/BibleReadingManager";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { i18n } from "../../i18n";
 import { useI18n } from "../../i18n/I18nManager";
-import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
+import {
+  FiltersIcon,
+  MaterialIcon,
+  SeedBibleIcon,
+  TickIcon,
+  TodayIcon,
+} from "../icons";
+import { CustomIconImage } from "../CustomizableIcon/CustomizableIcon";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
 import { SearchBar } from "../SearchBar/SearchBar";
@@ -94,6 +105,7 @@ type CustomizationEditView =
   | "edit"
   | "edit-variant"
   | "edit-extensions"
+  | "edit-icons"
   | "edit-content";
 
 /**
@@ -363,6 +375,9 @@ export function CustomizationEditPaneTitle(props: {
   if (view === "edit-extensions") {
     return <>{t("customization-extensions", { defaultValue: "Extensions" })}</>;
   }
+  if (view === "edit-icons") {
+    return <>{t("customization-icons", { defaultValue: "Icons" })}</>;
+  }
   if (view === "edit-content") {
     return (
       <>{t("custom-content-library", { defaultValue: "Content library" })}</>
@@ -601,6 +616,9 @@ export function CustomizationEditPane(props: { state: SeedBibleState }) {
   if (view === "edit-extensions") {
     return <CustomizationEditExtensionsView state={state} />;
   }
+  if (view === "edit-icons") {
+    return <CustomizationEditIconsView state={state} />;
+  }
   if (view === "edit-content") {
     return (
       <Suspense fallback={<ContentViewLoading />}>
@@ -666,7 +684,11 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                 defaultValue: "Loading the picture editor…",
               })}
             >
-              <Skeleton width="100%" height="16rem" radius="0.625rem" />
+              <Skeleton
+                width="100%"
+                height="16rem"
+                radius="var(--sb-radius-md)"
+              />
             </SkeletonContainer>
           }
         >
@@ -698,6 +720,10 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
     record,
     bibleData.availableTranslations.value
   );
+
+  const customIconCount = CUSTOMIZATION_ICON_IDS.filter(
+    (iconId) => !!record.icons?.[iconId]
+  ).length;
 
   const availabilityCounts = { available: 0, "auto-installed": 0, hidden: 0 };
   for (const entry of extensions.extensions.value) {
@@ -902,6 +928,33 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           type="button"
           className="sb-cz-row sb-cz-row-tall"
           onClick={() => {
+            customizationEditView.value = "edit-icons";
+          }}
+        >
+          <span className="material-symbols-outlined sb-cz-row-icon">
+            category
+          </span>
+          <span className="sb-cz-row-text">
+            <span className="sb-cz-row-label">
+              {t("customization-icons", { defaultValue: "Icons" })}
+            </span>
+            <span className="sb-cz-row-hint">
+              {t("customization-icons-summary", {
+                count: customIconCount,
+                total: CUSTOMIZATION_ICON_IDS.length,
+                defaultValue: "{{count}} of {{total}} customized",
+              })}
+            </span>
+          </span>
+          <span className="material-symbols-outlined rtl-mirror">
+            chevron_right
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className="sb-cz-row sb-cz-row-tall"
+          onClick={() => {
             customizationEditView.value = "edit-extensions";
           }}
         >
@@ -991,6 +1044,159 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           onSave={() => void handleSave()}
         />
       </footer>
+    </div>
+  );
+}
+
+const DEFAULT_CUSTOMIZATION_ICONS: Record<
+  CustomizationIconId,
+  ComponentChildren
+> = {
+  books: <SeedBibleIcon size={24} />,
+  search: <MaterialIcon>search</MaterialIcon>,
+  today: <TodayIcon />,
+  share: <MaterialIcon>share</MaterialIcon>,
+  chat: <MaterialIcon>chat_bubble_outline</MaterialIcon>,
+  discover: <MaterialIcon>explore</MaterialIcon>,
+};
+
+function CustomizationEditIconsView(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { customizations } = state;
+  const { t } = useI18n();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pickingIconId = useRef<CustomizationIconId | null>(null);
+  const uploadingIconId = useSignal<CustomizationIconId | null>(null);
+  const record = customizations.editingCustomization.value;
+  if (!record) {
+    return <CustomizationNotFound />;
+  }
+
+  const iconLabels: Record<CustomizationIconId, string> = {
+    books: t("books", { defaultValue: "Books" }),
+    search: t("search", { defaultValue: "Search" }),
+    today: t("today", { defaultValue: "Today" }),
+    share: t("share", { defaultValue: "Share" }),
+    chat: t("chat", { defaultValue: "Chat" }),
+    discover: t("discover", { defaultValue: "Discover" }),
+  };
+
+  const pickFile = (iconId: CustomizationIconId) => {
+    pickingIconId.current = iconId;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChosen = async (event: Event) => {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    const iconId = pickingIconId.current;
+    // Cleared so picking the same file again still fires `change`.
+    input.value = "";
+    pickingIconId.current = null;
+    if (!file || !iconId) {
+      return;
+    }
+    const problem = getCustomIconFileProblem(file);
+    if (problem === "not-svg") {
+      state.app.toast(
+        t("custom-icon-must-be-svg", {
+          defaultValue: "Icons must be SVG files.",
+        })
+      );
+      return;
+    }
+    if (problem === "too-large") {
+      state.app.toast(
+        t("custom-icon-too-large", {
+          defaultValue: "That SVG is too large. Icons can be up to 256 KB.",
+        })
+      );
+      return;
+    }
+    uploadingIconId.value = iconId;
+    try {
+      await customizations.uploadIcon(iconId, file);
+    } catch (error) {
+      console.error("Failed to upload icon.", error);
+      state.app.toast(
+        t("custom-icon-upload-failed", {
+          defaultValue: "Couldn't upload that icon. Please try again.",
+        })
+      );
+    } finally {
+      uploadingIconId.value = null;
+    }
+  };
+
+  return (
+    <div className="sb-settings-page sb-cz-page">
+      <section className="sb-settings-section sb-cz-body">
+        <p className="sb-cz-intro">
+          {t("customization-icons-hint", {
+            defaultValue:
+              "Upload an SVG to replace any of these icons. Icons are drawn as a single shape in the theme's icon color.",
+          })}
+        </p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".svg,image/svg+xml"
+          hidden
+          onChange={(event) => void handleFileChosen(event)}
+        />
+        <ul className="sb-cz-icon-list">
+          {CUSTOMIZATION_ICON_IDS.map((iconId) => {
+            const url = record.icons?.[iconId];
+            const isBusy = uploadingIconId.value !== null;
+            return (
+              <li key={iconId} className="sb-cz-icon-row">
+                <span className="sb-cz-icon-preview" aria-hidden="true">
+                  {url ? (
+                    <CustomIconImage url={url} />
+                  ) : (
+                    DEFAULT_CUSTOMIZATION_ICONS[iconId]
+                  )}
+                </span>
+                <span className="sb-cz-icon-name">{iconLabels[iconId]}</span>
+                <button
+                  type="button"
+                  className="sb-cz-button"
+                  onClick={() => pickFile(iconId)}
+                  disabled={isBusy}
+                  aria-label={t("upload-custom-icon-for", {
+                    name: iconLabels[iconId],
+                    defaultValue: "Upload an SVG for {{name}}",
+                  })}
+                >
+                  {url
+                    ? t("replace-logo", { defaultValue: "Replace" })
+                    : t("upload-custom-icon", { defaultValue: "Upload SVG" })}
+                </button>
+                {url && (
+                  <button
+                    type="button"
+                    className="sb-cz-icon-button"
+                    onClick={() =>
+                      void customizations.removeEditingIcon(iconId)
+                    }
+                    disabled={isBusy}
+                    aria-label={t("reset-custom-icon", {
+                      name: iconLabels[iconId],
+                      defaultValue: "Use the default {{name}} icon",
+                    })}
+                    title={t("reset-custom-icon", {
+                      name: iconLabels[iconId],
+                      defaultValue: "Use the default {{name}} icon",
+                    })}
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </div>
   );
 }

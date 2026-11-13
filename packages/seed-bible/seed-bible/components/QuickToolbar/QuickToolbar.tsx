@@ -35,6 +35,8 @@ interface QuickToolbarProps {
   /** Active customization locator, kept on the embed URL. */
   customizationLocator?: { readonly value: string | null };
   readingPlans: ReadingPlansManager;
+  /** Limits the toolbar to the tools this returns true for. */
+  toolFilter?: (toolId: string) => boolean;
 }
 
 /**
@@ -65,7 +67,9 @@ export function QuickToolbar(props: QuickToolbarProps) {
     settings,
     readingPlans,
   });
-  const visibleTools = tools.filter((tool) => tool.visible.value);
+  const visibleTools = tools.filter(
+    (tool) => (props.toolFilter?.(tool.id) ?? true) && tool.visible.value
+  );
 
   if (visibleTools.length === 0) {
     return null;

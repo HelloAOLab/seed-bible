@@ -1,0 +1,32 @@
+.sb-ask-come-back {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: var(--sb-radius-full);
+  border: 1px solid color-mix(in srgb, var(--sb-primary-color) 55%, transparent);
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: var(--sb-font-size-13);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sb-ask-come-back:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-primary-color) 10%, transparent);
+}
+
+.sb-ask-come-back-asked {
+  border-color: var(--sb-divider-color);
+  background: color-mix(in srgb, var(--sb-font-color) 6%, transparent);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  cursor: default;
+}
+
+.sb-ask-come-back-icon {
+  font-size: 1rem;
+}
