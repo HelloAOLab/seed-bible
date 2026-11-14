@@ -1049,6 +1049,7 @@ export function createSeedBibleState(
     {
       confirmAdoption: (owner) => askToAdopt(owner, "notes"),
       friendIds: friends.friendIds,
+      friendsLoaded: friends.hasLoaded,
       friendReads,
     }
   );

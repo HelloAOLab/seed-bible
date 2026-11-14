@@ -118,12 +118,18 @@ export interface AnnotationsManager {
   /**
    * The same notes as `visibleAnnotationsForChapter`, once every list they
    * come from has finished loading. Resolves to null when any of those lists
-   * couldn't be read (offline, say): a note missing from the result is then
-   * not known to be gone, only unseen.
+   * couldn't be read (offline, say), or while the friends list itself hasn't
+   * loaded: a note missing from the result is then not known to be gone, only
+   * unseen.
+   *
+   * `authorId` is the author of the note the caller is looking for. When that
+   * is the signed-in user, the friends list isn't needed to tell whether the
+   * note is there, so the answer doesn't wait for it.
    */
   loadVisibleAnnotationsForChapter: (
     bookId: string,
-    chapterNumber: number
+    chapterNumber: number,
+    authorId?: string | null
   ) => Promise<Annotation[] | null>;
 
   /** The annotation currently being created/edited in the pane, or null. */
@@ -645,6 +651,12 @@ export interface CreateAnnotationsManagerOptions {
    * own.
    */
   friendIds?: ReadonlySignal<readonly string[]>;
+  /**
+   * Whether `friendIds` has been read for the signed-in account. Until it
+   * has, an empty list means "not known yet" rather than "no friends".
+   * Omitted means the list is always taken as read.
+   */
+  friendsLoaded?: ReadonlySignal<boolean>;
   /**
    * Limits how many friends' chapters are read at once. Shared with the other
    * managers that read friends' content, so one limit covers them all.
@@ -1335,8 +1347,15 @@ export function createAnnotationsManager(
 
   const loadVisibleAnnotationsForChapter = async (
     bookId: string,
-    chapterNumber: number
+    chapterNumber: number,
+    authorId?: string | null
   ): Promise<Annotation[] | null> => {
+    const friendsLoaded = untracked(() => options.friendsLoaded?.value ?? true);
+    const lookingForOwnNote =
+      !!authorId && authorId === untracked(() => login.userId.value);
+    if (!friendsLoaded && !lookingForOwnNote) {
+      return null;
+    }
     const friendIds = untracked(() => options.friendIds?.value ?? []);
     const ownRecordId = untracked(effectiveRecordId);
     const sources: [string, AnnotationsEntry][] = [

@@ -354,7 +354,8 @@ function AnnotationCard(props: {
     try {
       visible = await state.annotations.loadVisibleAnnotationsForChapter(
         annotation.bookId,
-        annotation.chapterNumber
+        annotation.chapterNumber,
+        annotation.data.replyToUserId
       );
     } catch (error) {
       console.error("Couldn't check the note a reply answers:", error);

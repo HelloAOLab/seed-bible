@@ -1274,6 +1274,71 @@ describe("AnnotationsManager", () => {
         expect(notes).toBeNull();
         errorSpy.mockRestore();
       });
+
+      describe("before the friends list has loaded", () => {
+        function createManagerBeforeFriendsLoad() {
+          return createAnnotationsManager(
+            os,
+            login,
+            tabs,
+            discover,
+            undefined,
+            { friendIds: signal([]), friendsLoaded: signal(false) }
+          );
+        }
+
+        it("answers null when looking for a friend's note, rather than calling it gone", async () => {
+          mockChapterNotes({
+            "user-1": [reply("my-reply", "friend-note")],
+            "friend-user": [createCommentAnnotation({ id: "friend-note" })],
+          });
+
+          const notes =
+            await createManagerBeforeFriendsLoad().loadVisibleAnnotationsForChapter(
+              "GEN",
+              1,
+              "friend-user"
+            );
+
+          expect(notes).toBeNull();
+        });
+
+        it("still tells when one of your own notes is gone", async () => {
+          mockChapterNotes({
+            "user-1": [reply("my-reply", "deleted-note")],
+          });
+
+          const notes =
+            await createManagerBeforeFriendsLoad().loadVisibleAnnotationsForChapter(
+              "GEN",
+              1,
+              "user-1"
+            );
+
+          expect(notes).toEqual([]);
+        });
+
+        it("still finds one of your own notes", async () => {
+          mockChapterNotes({
+            "user-1": [
+              createCommentAnnotation({ id: "my-note" }),
+              reply("my-reply", "my-note"),
+            ],
+          });
+
+          const notes =
+            await createManagerBeforeFriendsLoad().loadVisibleAnnotationsForChapter(
+              "GEN",
+              1,
+              "user-1"
+            );
+
+          expect(notes?.map((a) => a.id).sort()).toEqual([
+            "my-note",
+            "my-reply",
+          ]);
+        });
+      });
     });
 
     it("keeps a friend's reply to one of your notes", async () => {
