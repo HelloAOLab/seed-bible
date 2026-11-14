@@ -8,7 +8,7 @@
   border: none;
   background: transparent;
   padding: 0.125rem 0.25rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   cursor: pointer;
 }
 
@@ -48,14 +48,14 @@
   height: 1.375rem;
   padding: 0 0.3125rem;
   margin-inline-start: -0.5rem;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: color-mix(
     in srgb,
     var(--sb-font-color) 16%,
     var(--sb-reader-background)
   );
   color: var(--sb-font-color);
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 700;
   box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
 }
@@ -75,7 +75,7 @@
   align-items: center;
   gap: 0.875rem;
   padding: 0.5rem;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
 }
 
 .sb-session-participants-list-item .sb-tab-user-icon {
@@ -95,7 +95,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   color: var(--sb-font-color);
 }
 
@@ -106,13 +106,13 @@
 }
 
 .sb-session-participants-list-location {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
 .sb-session-participants-section-title {
   margin: 0.75rem 0.5rem 0.125rem;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -134,10 +134,10 @@
   margin-top: 0.5rem;
   padding: 0.75rem 0.5rem;
   border: none;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-primary-color);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 500;
   font-family: inherit;
   text-align: start;
@@ -168,10 +168,10 @@
   margin-top: 0.5rem;
   padding: 0.75rem 0.5rem;
   border: none;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-primary-color);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 500;
   font-family: inherit;
   text-align: start;
@@ -216,7 +216,7 @@
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   background-size: cover;
   background-position: center;
 }
@@ -239,42 +239,23 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-session-participant-badge {
   flex-shrink: 0;
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 0.125rem 0.375rem;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
   color: var(--sb-primary-color);
 }
 
 .sb-session-participant-action {
   flex-shrink: 0;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 84%);
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-  padding: 0.3125rem 0.625rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.sb-session-participant-action:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-}
-
-.sb-session-participant-action-active {
-  border-color: transparent;
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 86%);
-  color: var(--sb-primary-color);
 }
 
 /* Wraps onto its own line under the name and badge. */
@@ -282,7 +263,7 @@
   flex-basis: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
@@ -306,11 +287,11 @@
   min-height: 2rem;
   padding: 0 0.25rem 0 0.5rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 700;
   cursor: pointer;
 }
@@ -319,8 +300,7 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }
 
-.sb-tab-participants-toggle .material-symbols-outlined,
-.sb-tab-participants-collapse .material-symbols-outlined {
+.sb-tab-participants-toggle .material-symbols-outlined {
   font-size: 1.125rem;
 }
 
@@ -344,32 +324,14 @@
 
 .sb-tab-participants-title {
   flex: 1;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
-}
-
-.sb-tab-participants-collapse {
-  width: 2rem;
-  height: 2rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 0.5rem;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.sb-tab-participants-collapse:hover,
-.sb-tab-participants-link:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }
 
 /* The shared list, tightened to fit the sidebar. */
 .sb-tab-participants .sb-session-participants-section-title {
   margin: 0.5rem 0 0;
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
 }
 
 .sb-tab-participants .sb-session-participants-list-item {
@@ -378,17 +340,11 @@
 }
 
 .sb-tab-participants .sb-session-participants-list-name {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-tab-participants .sb-session-participants-list-location {
-  font-size: 0.6875rem;
-}
-
-.sb-tab-participants .sb-ask-come-back {
-  min-height: 1.875rem;
-  padding: 0 0.625rem;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
 }
 
 .sb-tab-participants-footer {
@@ -397,25 +353,4 @@
   border-top: 1px solid var(--sb-divider-color);
   display: flex;
   flex-direction: column;
-}
-
-.sb-tab-participants-link {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 2.25rem;
-  padding: 0 0.25rem;
-  border: none;
-  border-radius: 0.5rem;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-align: start;
-  cursor: pointer;
-}
-
-.sb-tab-participants-link .material-symbols-outlined {
-  font-size: 1rem;
 }

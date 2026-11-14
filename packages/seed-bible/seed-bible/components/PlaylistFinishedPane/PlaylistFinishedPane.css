@@ -1,0 +1,40 @@
+.sb-playlist-finished-celebration {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem 1rem;
+  text-align: center;
+}
+
+/* Scoped so it outweighs the icon font's own size. */
+.sb-playlist-finished-celebration .sb-playlist-finished-icon {
+  color: var(--sb-primary-color);
+  font-size: 3.5rem;
+}
+
+.sb-playlist-finished-heading {
+  margin: 0;
+  font-family: var(
+    --sb-scripture-font-override,
+    var(--sb-book-title-font-family)
+  );
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+.sb-playlist-finished-message {
+  margin: 0;
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+/* Share beside Done, which takes the rest of the row. */
+.sb-playlist-finished-footer {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sb-playlist-finished-share {
+  flex: 0 0 auto;
+}

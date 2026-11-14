@@ -18,6 +18,8 @@ import { Spinner } from "../Spinner/Spinner";
 import { useI18n } from "../../i18n";
 import { friendsRowSubtitle } from "../FriendsPane/FriendsPane";
 import "./ProfilePane.css";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 export const PROFILE_PANE_ID = "profile-screen-pane";
 
@@ -127,15 +129,12 @@ function findActivePlan(state: SeedBibleState): ActivePlanSummary | null {
 export function ProfileBackButton(props: { onBack: () => void }) {
   const { t } = useI18n();
   return (
-    <button
-      type="button"
-      className="sb-pane-header-button sb-profile-pane-back"
+    <IconButton
+      className="sb-profile-pane-back"
+      icon="arrow_back"
+      label={t("back", { defaultValue: "Back" })}
       onClick={props.onBack}
-      aria-label={t("back", { defaultValue: "Back" })}
-      title={t("back", { defaultValue: "Back" })}
-    >
-      <MaterialIcon>arrow_back</MaterialIcon>
-    </button>
+    />
   );
 }
 
@@ -468,13 +467,15 @@ export function ProfilePane(props: ProfileScreenProps) {
                   "Sign in to keep your highlights, notes and plans on every device.",
               })}
             </p>
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="lg"
+              shape="pill"
               className="sb-profile-signin"
               onClick={() => void handleSignIn()}
             >
               {t("log-in", { defaultValue: "Log in" })}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -490,15 +491,12 @@ export function ProfilePane(props: ProfileScreenProps) {
            * labelled button, so the card stays about the person. The inset is
            * logical, which puts the pencil top-left under an RTL language.
            */}
-          <button
-            type="button"
+          <IconButton
             className="sb-profile-card-edit"
+            icon="edit"
+            label={t("edit-profile", { defaultValue: "Edit profile" })}
             onClick={onEditProfile}
-            aria-label={t("edit-profile", { defaultValue: "Edit profile" })}
-            title={t("edit-profile", { defaultValue: "Edit profile" })}
-          >
-            <MaterialIcon>edit</MaterialIcon>
-          </button>
+          />
 
           <ProfileAvatarButton state={state} onEdit={onEditPicture} />
 
@@ -550,14 +548,15 @@ export function ProfilePane(props: ProfileScreenProps) {
           onClick={props.onOpenFriends}
         />
 
-        <button
-          type="button"
+        <Button
+          tone="danger"
+          size="lg"
+          icon="logout"
           className="sb-profile-logout"
           onClick={() => void login.logout()}
         >
-          <span className="material-symbols-outlined">logout</span>
           {t("sign-out", { defaultValue: "Sign out" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

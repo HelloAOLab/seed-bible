@@ -1,7 +1,8 @@
 import { render } from "preact";
 import { useState } from "preact/hooks";
 import type { SeedBibleState } from "seed-bible";
-import { addTranslations } from "seed-bible/i18n";
+import { Button, CloseButton } from "seed-bible/components";
+import { addTranslations, I18nProvider } from "seed-bible/i18n";
 import "./styles.css";
 
 const DONATE_URL = "https://better.giving/donate/1118469";
@@ -64,17 +65,13 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
               favorite
             </span>
           </span>
-          <button
-            type="button"
-            class="sbd-close"
-            aria-label={t("close", {
+          <CloseButton
+            label={t("close", {
               ns: "transcription",
               defaultValue: "Close",
             })}
-            onClick={closeDonationDialog}
-          >
-            <span class="material-symbols-outlined sbd-close-icon">close</span>
-          </button>
+            onClose={closeDonationDialog}
+          />
         </div>
 
         <h2 class="sbd-title" id="sbd-title">
@@ -143,7 +140,12 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
           </button>
         </div>
 
-        <button type="button" class="sbd-donate" onClick={donate}>
+        <Button
+          className="sbd-donate"
+          variant="primary"
+          size="lg"
+          onClick={donate}
+        >
           {selected == null
             ? t("donate", { ns: "transcription", defaultValue: "Donate" })
             : t("donateAmount", {
@@ -151,7 +153,7 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
                 defaultValue: "Donate {{amount}}",
                 amount: `$${selected}`,
               })}
-        </button>
+        </Button>
 
         <button type="button" class="sbd-dismiss" onClick={closeDonationDialog}>
           {t("donationDismiss", {
@@ -207,8 +209,12 @@ export default async function openDonationDialog({
   container.id = "donation-container";
   container.className = "twitchPub";
   document.body.appendChild(container);
+  // Its own render root, outside the app's tree, so it brings its own
+  // I18nProvider for the shared components inside it (CloseButton).
   render(
-    <DonationDialog onSuccess={onSuccess} i18n={context.i18n} />,
+    <I18nProvider i18n={context.i18n}>
+      <DonationDialog onSuccess={onSuccess} i18n={context.i18n} />
+    </I18nProvider>,
     container
   );
 }

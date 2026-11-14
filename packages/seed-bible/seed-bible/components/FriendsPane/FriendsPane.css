@@ -5,7 +5,7 @@
  */
 .sb-friends-screen {
   --sb-friends-padding: 16px;
-  --sb-friends-radius: 12px;
+  --sb-friends-radius: var(--sb-radius-lg);
   --sb-friends-surface: color-mix(
     in srgb,
     var(--sb-font-color),
@@ -53,7 +53,7 @@
      ring in place of a border, plus a soft drop shadow. */
   box-shadow:
     0 0 0 1px var(--sb-divider-color),
-    0 4px 8px #0000002c;
+    var(--sb-shadow-raised);
 }
 
 .sb-friends-heading {
@@ -61,7 +61,7 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
 }
 
@@ -74,7 +74,7 @@
 .sb-friends-empty {
   margin: 0;
   color: var(--sb-friends-muted);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.4;
 }
 
@@ -125,13 +125,13 @@
 }
 
 .sb-friends-person-name {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
 
 .sb-friends-person-subtitle {
   color: var(--sb-friends-muted);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 /* The picture and name in a row, which open that person's profile. */
@@ -143,7 +143,7 @@
   min-width: 0;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: none;
   color: inherit;
   font: inherit;
@@ -164,94 +164,6 @@
   margin-inline-start: auto;
 }
 
-.sb-friends-button {
-  flex-shrink: 0;
-  padding: 6px 12px;
-  border: 1px solid var(--sb-friends-border);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: 0.8125rem;
-  cursor: pointer;
-}
-
-@media (hover: hover) {
-  .sb-friends-button:hover:not(:disabled) {
-    border-color: var(--sb-primary-color);
-    color: var(--sb-primary-color);
-  }
-}
-
-.sb-friends-button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.sb-friends-button--primary {
-  border-color: var(--sb-primary-color);
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-}
-
-@media (hover: hover) {
-  .sb-friends-button--primary:hover:not(:disabled) {
-    color: var(--sb-primary-font-color);
-    opacity: 0.9;
-  }
-}
-
-/* The spinner sits over the label rather than beside it, so a button never
-   changes size when it starts or stops working. */
-.sb-friends-busy-button {
-  position: relative;
-  /* A rotating icon's corners sweep outside its box; clipping here stops
-     that from making a scrolling parent (like a modal body) grow a scrollbar
-     mid-spin. */
-  overflow: hidden;
-}
-
-/* Hidden with opacity rather than visibility so it keeps both its space and
-   its place in the accessibility tree. */
-.sb-friends-busy-label--hidden {
-  opacity: 0;
-}
-
-/* Centred with negative margins, not a transform, so the transform is free
-   for the spin. Scoped under the button so it outranks the global
-   `body .material-symbols-outlined` size, and sized in `em` so it fits the
-   label it replaces in any button. */
-.sb-friends-busy-button .sb-friends-busy-spinner {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 1em;
-  height: 1em;
-  margin: -0.5em 0 0 -0.5em;
-  font-size: 1.25em;
-  line-height: 1;
-  animation: sb-friends-busy-spin 0.9s linear infinite;
-}
-
-/* A working button isn't an unavailable one, so it isn't faded like the
-   others are while it runs. */
-.sb-friends-busy-button[aria-busy="true"]:disabled {
-  opacity: 1;
-  cursor: progress;
-}
-
-@keyframes sb-friends-busy-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sb-friends-busy-button .sb-friends-busy-spinner {
-    animation: none;
-  }
-}
-
 .sb-friends-add-form {
   display: flex;
   gap: 8px;
@@ -262,11 +174,11 @@
   min-width: 0;
   padding: 8px 12px;
   border: 1px solid var(--sb-friends-border);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: inherit;
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-friends-add-outcome {
@@ -274,7 +186,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.4;
 }
 
@@ -291,7 +203,7 @@
   margin-top: 4px;
   padding-top: 12px;
   border-top: 1px solid var(--sb-friends-border);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-friends-share-row {
@@ -352,7 +264,7 @@
 .sb-participant-friend-status {
   flex-shrink: 0;
   color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 /* The person a friend link is about, at the top of its prompt: a card of its
@@ -362,7 +274,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
 }
 
@@ -386,7 +298,7 @@
 .sb-friend-link-description,
 .sb-friend-link-note {
   color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.4;
 }
 
@@ -401,5 +313,5 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }

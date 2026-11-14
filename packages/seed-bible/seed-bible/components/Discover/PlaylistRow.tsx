@@ -10,6 +10,7 @@ import {
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
+import { IconButton } from "../IconButton/IconButton";
 
 /**
  * One playlist in a `sb-discover-list`: title, description, a play button,
@@ -41,7 +42,7 @@ export function PlaylistRow(props: {
   const { playlist, playlists, modals, toast } = props;
   const { t } = useI18n();
   const play =
-    props.onPlay ?? ((target: Playlist) => playlists.startPlaying(target));
+    props.onPlay ?? ((target: Playlist) => playlists.openPlaylistPage(target));
   const edit =
     props.onEdit ?? ((target: Playlist) => playlists.editPlaylist(target));
   const copyLink = async () => {
@@ -94,22 +95,21 @@ export function PlaylistRow(props: {
           </ExpandableText>
         ) : null}
       </div>
-      <button
-        type="button"
+      <IconButton
+        size="sm"
         className="sb-discover-item-play"
-        aria-label={t("play-playlist", {
+        icon="play_arrow"
+        label={t("play-playlist", {
           defaultValue: "Play playlist",
         })}
         onClick={(e) => {
           e.stopPropagation();
           play(playlist);
         }}
-      >
-        <MaterialIcon>play_arrow</MaterialIcon>
-      </button>
+      />
       <ContextMenuWithButton
         buttonClassName="sb-discover-item-menu"
-        aria-label={t("playlist-options", {
+        label={t("playlist-options", {
           defaultValue: "Playlist options",
         })}
         onClick={(e) => e.stopPropagation()}
@@ -157,12 +157,16 @@ export function PlaylistRow(props: {
   );
 }
 
-/** Opens the delete-playlist confirmation modal. */
-function openDeletePlaylistConfirm(
+/**
+ * Opens the delete-playlist confirmation modal. `onDeleted` runs once it's
+ * gone, for a caller showing the playlist itself.
+ */
+export function openDeletePlaylistConfirm(
   modals: ModalManager,
   playlists: PlaylistManager,
   playlist: Playlist,
-  toast: SeedBibleState["app"]["toast"]
+  toast: SeedBibleState["app"]["toast"],
+  onDeleted?: () => void
 ) {
   openConfirmDeleteModal(modals, {
     id: `delete-playlist-confirm-${playlist.id}`,
@@ -177,7 +181,10 @@ function openDeletePlaylistConfirm(
           t("untitled-playlist", { defaultValue: "Untitled playlist" }),
         defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
       }),
-    onConfirm: () => playlists.deletePlaylist(playlist),
+    onConfirm: async () => {
+      await playlists.deletePlaylist(playlist);
+      onDeleted?.();
+    },
     failedMessage: (t) =>
       t("delete-playlist-failed", {
         defaultValue: "Couldn't delete the playlist.",

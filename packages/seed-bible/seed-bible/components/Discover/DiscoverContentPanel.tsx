@@ -1,7 +1,7 @@
 import "./DiscoverContentPanel.css";
 import type { ComponentChildren } from "preact";
 import { Signal, useSignal, useSignalEffect } from "@preact/signals";
-import { useCallback, useLayoutEffect, useRef } from "preact/hooks";
+import { useCallback, useLayoutEffect, useMemo, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import { getDiscoverPanelContent } from "../../managers/BibleReadingManager";
@@ -35,6 +35,8 @@ import {
   readBottomChromeCover,
   readBottomChromeInset,
 } from "../BibleReader/readerViewport";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 type FilterKey =
   | "all"
@@ -173,8 +175,11 @@ function DiscoverCreateMenu(props: { state: SeedBibleState }) {
   return (
     <ContextMenuWithButton
       buttonClassName="sb-dcp-create-btn"
-      aria-label={t("create-menu", { defaultValue: "Create" })}
-      icon={<>+ {t("create-playlist", { defaultValue: "Create" })}</>}
+      trigger={(menu) => (
+        <Button {...menu} variant="primary" size="sm" shape="pill" icon="add">
+          {t("create-playlist", { defaultValue: "Create" })}
+        </Button>
+      )}
     >
       <ContextMenuItem onClick={() => void annotations.createNewAnnotation()}>
         <MaterialIcon className="sb-context-menu-item-icon">
@@ -401,19 +406,19 @@ function DiscoverFilters({
       }`}
     >
       {hasScrollableFilters.value && (
-        <button
-          type="button"
+        <IconButton
+          size="sm"
+          look="tinted"
           className="sb-dcp-filters-arrow"
           onClick={() => scrollFilters(-1)}
           aria-disabled={!canScrollStart.value}
-          aria-label={t("scroll-filters-start", {
+          icon={
+            <MaterialIcon className="rtl-mirror">chevron_left</MaterialIcon>
+          }
+          label={t("scroll-filters-start", {
             defaultValue: "Scroll filters toward start",
           })}
-        >
-          <MaterialIcon className="rtl-mirror" aria-hidden="true">
-            chevron_left
-          </MaterialIcon>
-        </button>
+        />
       )}
 
       <div className="sb-dcp-filters" role="tablist" ref={filtersRef}>
@@ -436,19 +441,19 @@ function DiscoverFilters({
       </div>
 
       {hasScrollableFilters.value && (
-        <button
-          type="button"
+        <IconButton
+          size="sm"
+          look="tinted"
           className="sb-dcp-filters-arrow"
           onClick={() => scrollFilters(1)}
           aria-disabled={!canScrollEnd.value}
-          aria-label={t("scroll-filters-end", {
+          icon={
+            <MaterialIcon className="rtl-mirror">chevron_right</MaterialIcon>
+          }
+          label={t("scroll-filters-end", {
             defaultValue: "Scroll filters toward end",
           })}
-        >
-          <MaterialIcon className="rtl-mirror" aria-hidden="true">
-            chevron_right
-          </MaterialIcon>
-        </button>
+        />
       )}
     </div>
   );
@@ -473,7 +478,21 @@ function DiscoverFilters({
  *   annotation.
  */
 export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
-  const { tab, state, variant } = props;
+  const { state, variant } = props;
+  // In a compare step the user may be working in the passage shown beside the
+  // tab's own; Discover shows that passage's content then.
+  const activeReadingState = props.tab
+    ? state.tabs.activeReadingState(props.tab)
+    : null;
+  const tab = useMemo(
+    () =>
+      props.tab && activeReadingState
+        ? activeReadingState === props.tab.readingState
+          ? props.tab
+          : { ...props.tab, readingState: activeReadingState }
+        : null,
+    [props.tab, activeReadingState]
+  );
 
   const { t } = useI18n();
 
@@ -533,16 +552,18 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
             props.variant === "full" ? (
               <DiscoverCreateMenu state={state} />
             ) : (
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="sm"
+                shape="pill"
+                icon="add"
                 className="sb-dcp-create-btn"
                 onClick={() => void state.annotations.createNewAnnotation()}
               >
-                +{" "}
                 {t("create-playlist", {
                   defaultValue: "Create",
                 })}
-              </button>
+              </Button>
             )
           }
           onClose={props.variant === "full" ? props.onClose : undefined}

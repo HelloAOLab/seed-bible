@@ -608,11 +608,7 @@ describe("bookmarks", () => {
         await renderSidebar();
 
         expect(toggleRibbons()).toEqual([outlined, outlined]);
-        expect(
-          toggle().classList.contains(
-            "sb-sidebar-tabs-header-bookmarks-button-active"
-          )
-        ).toBe(false);
+        expect(toggle().getAttribute("aria-pressed")).toBe("false");
       });
 
       it("fills the same ribbons in the active color while the panel is open", async () => {
@@ -623,11 +619,7 @@ describe("bookmarks", () => {
 
         const filled = { fill: "currentColor", stroke: null };
         expect(toggleRibbons()).toEqual([filled, filled]);
-        expect(
-          toggle().classList.contains(
-            "sb-sidebar-tabs-header-bookmarks-button-active"
-          )
-        ).toBe(true);
+        expect(toggle().getAttribute("aria-pressed")).toBe("true");
       });
 
       it("is outlined on mobile too", async () => {

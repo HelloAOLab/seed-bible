@@ -1,10 +1,14 @@
 import { batch, effect, signal } from "@preact/signals";
 import {
   COME_BACK_REQUEST_COOLDOWN_MS,
+  countSessionPeople,
   GROUP_MOVE_GRACE_MS,
   createSessionsManager,
   getUserAnimalVisual,
+  isConnectedUserHost,
+  resolveViewingAreaVisibility,
   type BibleReadingSession,
+  type SessionOptions,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import {
   createBibleReadingState,
@@ -142,6 +146,9 @@ function createMockReadingState() {
   const chapterNumber = signal<number>(1);
   const scrollToVerse = signal<number | null>(null);
   const visibleVerseRange = signal<VisibleVerseRange | null>(null);
+  const visibleAreas = signal<ReadonlyMap<string, VisibleVerseRange>>(
+    new Map()
+  );
   const chapterData = signal<any>(null);
   const decorations = signal<VerseDecoration[]>([]);
 
@@ -204,6 +211,7 @@ function createMockReadingState() {
     chapterNumber,
     scrollToVerse,
     visibleVerseRange,
+    visibleAreas,
     chapterData,
     decorations,
     translationBooks: signal<any>(null),
@@ -357,6 +365,7 @@ describe("SessionsManager", () => {
   let mockUserProfilesMap: ReturnType<typeof createMockSharedMap>;
   let mockReadingPositionsMap: ReturnType<typeof createMockSharedMap>;
   let mockExtensionsMap: ReturnType<typeof createMockSharedMap>;
+  let mockQuestionAnswersMap: ReturnType<typeof createMockSharedMap>;
   let mockComeBackRequestsMap: ReturnType<typeof createMockSharedMap>;
   let mockHighlightsManager: {
     getChapterHighlights: Mock;
@@ -396,6 +405,7 @@ describe("SessionsManager", () => {
     mockUserProfilesMap = createMockSharedMap();
     mockReadingPositionsMap = createMockSharedMap();
     mockExtensionsMap = createMockSharedMap();
+    mockQuestionAnswersMap = createMockSharedMap();
     mockComeBackRequestsMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
     mockStatusUpdated = createMockStatusUpdatedObservable();
@@ -419,6 +429,10 @@ describe("SessionsManager", () => {
 
         if (name === "reading_extensions") {
           return mockExtensionsMap;
+        }
+
+        if (name === "question_answers") {
+          return mockQuestionAnswersMap;
         }
 
         if (name === "come_back_requests") {
@@ -511,6 +525,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     });
   });
 
@@ -709,6 +724,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     });
   });
 
@@ -743,6 +759,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     });
     expect(mockOptionsMap.set).not.toHaveBeenCalled();
   });
@@ -783,6 +800,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "everyone",
+      viewingAreaVisibility: "auto",
     });
   });
   it("updateOptions(newOptions) updates verse selection effect visibility", async () => {
@@ -911,6 +929,168 @@ describe("SessionsManager", () => {
     );
   });
 
+  describe("viewing area visibility", () => {
+    it.each([
+      ["default", "auto", 3, "everyone"],
+      ["default", "auto", 4, "hosts-only"],
+      ["default", "auto", 5, "hosts-only"],
+      ["default", undefined, 1, "everyone"],
+      ["default", "everyone", 10, "everyone"],
+      ["default", "hosts-only", 1, "hosts-only"],
+      ["everyone", "hosts-only", 10, "hosts-only"],
+      ["hosts-only", "everyone", 2, "hosts-only"],
+      ["everyone", "auto", 8, "everyone"],
+      ["hosts-only", "auto", 2, "hosts-only"],
+    ] as const)(
+      "preference %s with session %s and %i people shows %s",
+      (preference, sessionVisibility, count, expected) => {
+        expect(
+          resolveViewingAreaVisibility(sessionVisibility, count, preference)
+        ).toBe(expected);
+      }
+    );
+
+    it("shows everyone when hosts only would apply but no host is connected", () => {
+      expect(resolveViewingAreaVisibility("auto", 6, "default", false)).toBe(
+        "everyone"
+      );
+      expect(
+        resolveViewingAreaVisibility("hosts-only", 2, "everyone", false)
+      ).toBe("everyone");
+      expect(
+        resolveViewingAreaVisibility("hosts-only", 6, "default", true)
+      ).toBe("hosts-only");
+    });
+
+    it("counts one person with two tabs as one person, and each signed-out guest separately", () => {
+      expect(
+        countSessionPeople([
+          { userId: "ada", connectionId: "laptop" },
+          { userId: "ada", connectionId: "phone" },
+          { userId: null, connectionId: "guest" },
+          { userId: null, connectionId: "guest-2" },
+        ])
+      ).toBe(3);
+    });
+
+    it("recognizes a host by user id and a co-host by connection id", () => {
+      const options = {
+        hostUserId: "host",
+        coHostUserIds: ["co-connection"],
+      } as SessionOptions;
+
+      expect(
+        isConnectedUserHost(options, {
+          userId: "host",
+          connectionId: "other",
+        })
+      ).toBe(true);
+      expect(
+        isConnectedUserHost(options, {
+          userId: "someone",
+          connectionId: "co-connection",
+        })
+      ).toBe(true);
+      expect(
+        isConnectedUserHost(options, {
+          userId: "guest",
+          connectionId: "guest-connection",
+        })
+      ).toBe(false);
+    });
+
+    it("createSession() stores automatic viewing areas", async () => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+
+      const session = await manager.createSession();
+
+      expect(mockOptionsMap.set).toHaveBeenCalledWith(
+        "viewingAreaVisibility",
+        "auto"
+      );
+      expect(session.options.value.viewingAreaVisibility).toBe("auto");
+    });
+
+    it.each(["auto", "everyone", "hosts-only"] as const)(
+      "loads viewing area visibility %s from shared options",
+      async (visibility) => {
+        mockOptionsMap = createMockSharedMap({
+          viewingAreaVisibility: visibility,
+        });
+        mockDocument.getMap.mockImplementation((name: string) => {
+          if (name === "options") return mockOptionsMap;
+          if (name === "decorations") return mockDecorationsMap;
+          if (name === "user_profiles") return mockUserProfilesMap;
+          if (name === "reading_positions") return mockReadingPositionsMap;
+          if (name === "reading_extensions") return mockExtensionsMap;
+          return mockMap;
+        });
+
+        const manager = createSessionsManager(
+          os,
+          mockDataManager as any,
+          mockLoginManager as any,
+          mockHighlightsManager as any,
+          i18n
+        );
+        const session = await manager.joinSession("group-abc");
+
+        expect(session.options.value.viewingAreaVisibility).toBe(visibility);
+      }
+    );
+
+    it("falls back to automatic when the stored viewing area visibility is unrecognized", async () => {
+      mockOptionsMap = createMockSharedMap({
+        viewingAreaVisibility: "all",
+      });
+      mockDocument.getMap.mockImplementation((name: string) => {
+        if (name === "options") return mockOptionsMap;
+        return mockMap;
+      });
+
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      const session = await manager.joinSession("group-abc");
+
+      expect(session.options.value.viewingAreaVisibility).toBe("auto");
+    });
+
+    it("updateOptions writes viewing area visibility without clearing the other options", async () => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      const session = await manager.joinSession("group-abc");
+      mockOptionsMap.setEmitOnSet(true);
+
+      session.updateOptions({ viewingAreaVisibility: "hosts-only" });
+
+      expect(mockOptionsMap.set).toHaveBeenCalledWith(
+        "viewingAreaVisibility",
+        "hosts-only"
+      );
+      expect(session.options.value.viewingAreaVisibility).toBe("hosts-only");
+      expect(session.options.value.verseSelectionEffectVisibility).toBe(
+        "hosts-only"
+      );
+      expect(session.options.value.shareTranslation).toBe(false);
+    });
+  });
+
   it("updateOptions(newOptions) writes options to the shared options map", async () => {
     const manager = createSessionsManager(
       os,
@@ -940,6 +1120,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     });
   });
 
@@ -2562,6 +2743,112 @@ describe("SessionsManager", () => {
     );
   });
 
+  describe("answers to a playlist's question steps", () => {
+    const join = async () => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      return manager.joinSession("group-abc");
+    };
+    const peerAnswer = (overrides: Record<string, unknown> = {}) => ({
+      stepKey: "p1#2",
+      authorId: "user-maria",
+      text: "In the waiting room.",
+      updatedAtMs: 100,
+      name: "Maria",
+      pictureUrl: null,
+      visual: { color: "#3b6fb6", defaultIcon: "pets", colorName: "blue" },
+      ...overrides,
+    });
+
+    it("shares this participant's answer under their name, and takes it back when blanked", async () => {
+      mockLoginManager.userId.value = "user-me";
+      mockLoginManager.profile.value = { name: "Kal" };
+      mockQuestionAnswersMap.setEmitOnSet(true);
+      const session = await join();
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: true,
+        client: { connectionId: "test-config-bot-id", userId: "user-me" },
+      });
+      await waitFor(() => session.currentUser.value?.profile != null);
+
+      session.setQuestionAnswer("p1#2", "  A neighbour drove me to work.  ");
+
+      expect(session.questionAnswers.value).toEqual([
+        expect.objectContaining({
+          stepKey: "p1#2",
+          authorId: "user-me",
+          text: "A neighbour drove me to work.",
+          name: session.currentUser.value!.profile!.name,
+        }),
+      ]);
+      expect(mockQuestionAnswersMap.get("p1#2|user-me")).toEqual(
+        expect.objectContaining({ text: "A neighbour drove me to work." })
+      );
+
+      // Sharing again replaces it rather than adding a second.
+      session.setQuestionAnswer("p1#2", "Changed my mind.");
+      expect(session.questionAnswers.value.map((a) => a.text)).toEqual([
+        "Changed my mind.",
+      ]);
+
+      session.setQuestionAnswer("p1#2", "   ");
+      expect(session.questionAnswers.value).toEqual([]);
+      expect(mockQuestionAnswersMap.get("p1#2|user-me")).toBeUndefined();
+    });
+
+    it("shows a late joiner the answers already given, oldest first", async () => {
+      mockQuestionAnswersMap.set(
+        "p1#2|user-daniel",
+        peerAnswer({
+          authorId: "user-daniel",
+          name: "Daniel",
+          updatedAtMs: 300,
+        })
+      );
+      mockQuestionAnswersMap.set("p1#2|user-maria", peerAnswer());
+
+      const session = await join();
+
+      expect(session.questionAnswers.value.map((a) => a.name)).toEqual([
+        "Maria",
+        "Daniel",
+      ]);
+    });
+
+    it("picks up answers peers share later", async () => {
+      const session = await join();
+
+      mockQuestionAnswersMap.set("p1#2|user-maria", peerAnswer());
+      mockQuestionAnswersMap.emitChange();
+
+      expect(session.questionAnswers.value.map((a) => a.text)).toEqual([
+        "In the waiting room.",
+      ]);
+    });
+
+    it("ignores a malformed answer, one filed under someone else's name, and a picture that isn't a web address", async () => {
+      mockQuestionAnswersMap.set("p1#2|user-x", { stepKey: "p1#2" });
+      // Claims to be Maria's but sits under another author's key.
+      mockQuestionAnswersMap.set("p1#2|user-daniel", peerAnswer());
+      mockQuestionAnswersMap.set(
+        "p1#3|user-maria",
+        peerAnswer({ stepKey: "p1#3", pictureUrl: "javascript:alert(1)" })
+      );
+
+      const session = await join();
+
+      expect(session.questionAnswers.value).toEqual([
+        expect.objectContaining({ stepKey: "p1#3", pictureUrl: null }),
+      ]);
+    });
+  });
+
   it("exposes each participant's own broadcast position, not the session's", async () => {
     const manager = createSessionsManager(
       os,
@@ -2709,6 +2996,70 @@ describe("SessionsManager", () => {
       chapterNumber: 1,
       firstVerse: 3,
       lastVerse: 9,
+    });
+  });
+
+  it("publishes what else is on screen, like a playlist note's paragraphs, alongside the chapter", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await flushPublishDebounce();
+    mockReadingPositionsMap.set.mockClear();
+
+    session.readingState.visibleAreas.value = new Map([
+      ["step-2", { first: 1, last: 3 }],
+    ]);
+    await flushRangePublishDebounce();
+
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(os.connectionId, {
+      bookId: "GEN",
+      chapterNumber: 1,
+      areas: { "step-2": { first: 1, last: 3 } },
+    });
+  });
+
+  it("reads where a participant is in what else they have on screen, skipping anything malformed", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+    mockRemoteClients.emit({
+      type: "client_connected",
+      isSelf: false,
+      client: { connectionId: "conn-1", userId: "user-1" },
+    });
+    await waitFor(() => session.connectedUsers.value.length === 1);
+
+    mockReadingPositionsMap.set("conn-1", {
+      bookId: "GEN",
+      chapterNumber: 1,
+      firstVerse: 2,
+      lastVerse: 4,
+      areas: {
+        "step-2": { first: 2, last: 5 },
+        "step-2-second": { first: 9, last: 3 },
+        "step-2-note": "nonsense",
+      },
+    });
+    mockReadingPositionsMap.emitChange();
+    await waitFor(() => session.participantPositions.value.has("conn-1"));
+
+    expect(session.participantPositions.value.get("conn-1")).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      firstVerse: 2,
+      lastVerse: 4,
+      areas: { "step-2": { first: 2, last: 5 } },
     });
   });
 

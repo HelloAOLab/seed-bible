@@ -1,9 +1,5 @@
-import {
-  AskIcon,
-  MaterialIcon,
-  SeedBibleIcon,
-  StopIcon,
-} from "../components/icons";
+import { AskIcon, MaterialIcon, SeedBibleIcon } from "../components/icons";
+import { CustomizableIcon } from "../components/CustomizableIcon/CustomizableIcon";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
@@ -67,6 +63,7 @@ import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
 import type { SettingsManager } from "./SettingsManager";
 import type { ScriptureChapterLoader } from "../components/PlaylistItemInlinePreview/PlaylistItemInlinePreview";
+import { toShareableUrl } from "../app/publicLinks";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -486,6 +483,12 @@ export interface QuickToolContext {
 export interface BibleQuickToolbarTool extends ResolvedBibleTool {
   /** Optional class name for custom styling. */
   className?: string;
+  /**
+   * `"icon"` (the default) draws the tool as a round icon button. `"card"`
+   * draws a plain button sized to its icon, for a tool whose icon is wider
+   * than a glyph, like the "Now playing" card with the playlist title.
+   */
+  display?: "icon" | "card";
   /** Disabled signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility signal resolved for current context. */
@@ -503,6 +506,12 @@ export type ManagedBibleQuickToolbarToolItem =
 export interface ManagedBibleQuickToolbarTool extends BibleTool<QuickToolContext> {
   /** Optional class name for custom styling. */
   className?: string;
+  /**
+   * `"icon"` (the default) draws the tool as a round icon button. `"card"`
+   * draws a plain button sized to its icon, for a tool whose icon is wider
+   * than a glyph, like the "Now playing" card with the playlist title.
+   */
+  display?: "icon" | "card";
 
   /** Optional disabled predicate (boolean or signal). */
   isDisabled?: ToolPredicate<QuickToolContext>;
@@ -730,7 +739,11 @@ function ChevronLeftIcon() {
 }
 
 function OpenSelectorIcon() {
-  return <SeedBibleIcon size={28} animated className="sb-open-selector-icon" />;
+  return (
+    <CustomizableIcon id="books" size={28} className="sb-open-selector-icon">
+      <SeedBibleIcon size={28} animated className="sb-open-selector-icon" />
+    </CustomizableIcon>
+  );
 }
 
 function ChevronRightIcon() {
@@ -749,8 +762,12 @@ function CopyVerseIcon() {
   return <MaterialIcon>content_copy</MaterialIcon>;
 }
 
-function ShareVerseIcon() {
-  return <MaterialIcon>share</MaterialIcon>;
+function ShareIcon() {
+  return (
+    <CustomizableIcon id="share">
+      <MaterialIcon>share</MaterialIcon>
+    </CustomizableIcon>
+  );
 }
 
 function ClearSelectionIcon() {
@@ -888,26 +905,36 @@ function NowPlayingIcon({
     t("untitled-playlist", { defaultValue: "Untitled playlist" });
   return (
     <span className="sb-now-playing-icon">
-      <h4 className="sb-now-playing-icon-title">{title}</h4>
+      <h4 className="sb-now-playing-icon-title" dir="auto">
+        {title}
+      </h4>
       {currentItem && (
-        <span>{playlistItemLabel(currentItem, t, resolveBookName)}</span>
+        <span dir="auto">
+          {playlistItemLabel(currentItem, t, resolveBookName)}
+        </span>
       )}
     </span>
   );
 }
+
+/**
+ * The quick tool showing the playing playlist and its current step. The phone
+ * reader shows it beside its back arrow rather than with the other tools.
+ */
+export const CURRENT_PLAYLIST_TOOL_ID = "current-playlist";
 
 function getDefaultQuickToolbarTools(
   branding?: BrandingConfig
 ): ManagedBibleQuickToolbarTool[] {
   const tools: ManagedBibleQuickToolbarTool[] = [
     {
-      id: "current-playlist",
+      id: CURRENT_PLAYLIST_TOOL_ID,
       priority: 0,
       title: {
         key: "current-playlist",
         defaultValue: "Current Playlist",
       },
-      className: "sb-quick-toolbar-current-playlist",
+      display: "card",
       icon: (c) => (
         <NowPlayingIcon playlists={c.playlists} readingState={c.readingState} />
       ),
@@ -925,17 +952,16 @@ function getDefaultQuickToolbarTools(
         key: "discover-content-panel",
         defaultValue: "Discover content",
       },
-      icon: (c) => (
-        <MaterialIcon
-          className={
-            c.readingState.discoverContentPanelInline.value
-              ? "sb-quick-tool-icon-active"
-              : undefined
-          }
-        >
-          explore
-        </MaterialIcon>
-      ),
+      icon: (c) => {
+        const className = c.readingState.discoverContentPanelInline.value
+          ? "sb-quick-tool-icon-active"
+          : undefined;
+        return (
+          <CustomizableIcon id="discover" className={className}>
+            <MaterialIcon className={className}>explore</MaterialIcon>
+          </CustomizableIcon>
+        );
+      },
       isVisible: (c) => {
         if (
           c.app?.isMobile?.value ||
@@ -955,7 +981,7 @@ function getDefaultQuickToolbarTools(
       id: "share",
       priority: 100,
       title: { key: "share", defaultValue: "Share" },
-      icon: () => <MaterialIcon>share</MaterialIcon>,
+      icon: ShareIcon,
       // Header-level so Share stays visible instead of sitting in the bottom
       // toolbar (desktop) or More menu (mobile). Hidden on the
       // mobile-navigation-bar surface, which is reserved for the audio play
@@ -1109,7 +1135,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
             startIndex,
             // Reading plans reuse the playlist player but keep their own
             // progress records — don't also write playlist play history.
-            { history: false }
+            { history: false, openItem: true }
           );
         }}
         toast={toast}
@@ -1123,18 +1149,6 @@ function getDefaultToolbarTools(
   branding?: BrandingConfig
 ): ManagedBibleToolbarTool[] {
   const tools: ManagedBibleToolbarTool[] = [
-    {
-      id: "stop-playing",
-      priority: -1,
-      hideLabel: true,
-      title: { key: "stop", defaultValue: "Stop" },
-      icon: () => <StopIcon />,
-      isVisible: (context) => !!context.playlists?.playing?.value,
-      onSelect: (context) => {
-        context.playlists?.stopPlaying();
-      },
-      isControllable: false,
-    },
     {
       id: "previous-chapter",
       priority: 0,
@@ -1217,7 +1231,11 @@ function getDefaultToolbarTools(
       id: "open-search",
       priority: 110,
       title: { key: "search", defaultValue: "Search" },
-      icon: () => <MaterialIcon>search</MaterialIcon>,
+      icon: () => (
+        <CustomizableIcon id="search">
+          <MaterialIcon>search</MaterialIcon>
+        </CustomizableIcon>
+      ),
       onSelect: (context) => {
         if (context.toggleSearch) {
           context.toggleSearch();
@@ -1230,7 +1248,11 @@ function getDefaultToolbarTools(
       id: "open-chat",
       priority: 120,
       title: { key: "chat", defaultValue: "Chat" },
-      icon: () => <MaterialIcon>chat_bubble_outline</MaterialIcon>,
+      icon: () => (
+        <CustomizableIcon id="chat">
+          <MaterialIcon>chat_bubble_outline</MaterialIcon>
+        </CustomizableIcon>
+      ),
       isVisible: (context) => {
         // Hide when there are no providers and no chats
         return (
@@ -1246,7 +1268,11 @@ function getDefaultToolbarTools(
       id: "open-discover",
       priority: 120,
       title: { key: "discover", defaultValue: "Discover" },
-      icon: () => <MaterialIcon>explore</MaterialIcon>,
+      icon: () => (
+        <CustomizableIcon id="discover">
+          <MaterialIcon>explore</MaterialIcon>
+        </CustomizableIcon>
+      ),
       isVisible: (context) => !!context.openDiscover,
       onSelect: (context) => {
         if (!context.openDiscover) {
@@ -1473,7 +1499,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       priority: 300,
       showInEmbedded: true,
       title: { key: "share-verse", defaultValue: "Share" },
-      icon: ShareVerseIcon,
+      icon: ShareIcon,
       isVisible: (context) =>
         context.readingState.selectedVerses.value.length > 0,
       onSelect: (context) => {
@@ -1618,7 +1644,7 @@ export function getShareUrl(readingState: BibleReadingState) {
       }
     }
   }
-  return url;
+  return toShareableUrl(url);
 }
 
 /**
@@ -1984,6 +2010,7 @@ export function createBibleToolsManager(
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
       className: tool.className,
+      display: tool.display,
     }));
 
     return sortBy(tools, [(tool) => tool.priority]);

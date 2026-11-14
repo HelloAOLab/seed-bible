@@ -1,279 +1,149 @@
 # Tutorials & Tours — Developer Guide
 
-How to add guided coachmark tours (spotlight + popover) to a feature, including
-from an extension, without editing the built-in onboarding flow.
+How guided tours (a highlighted element plus a popover with Back / Next) work in Seed Bible, and how to add one for a feature.
 
-The system lives in [`TutorialManager.tsx`](./TutorialManager.tsx) and renders
-through the [`Tutorial`](../components/Tutorial.tsx) overlay.
+The logic lives in [`TutorialManager.tsx`](./TutorialManager.tsx). The overlay is drawn by [`Tutorial`](../components/Tutorial/Tutorial.tsx). The first-run "Would you like a tutorial?" card is [`TutorialPrompt`](../components/TutorialPrompt/TutorialPrompt.tsx), and the "Turn off tutorials?" question after Skip is [`TutorialSkipPrompt`](../components/TutorialSkipPrompt/TutorialSkipPrompt.tsx).
 
 ---
 
 ## TL;DR
 
 ```ts
-import { tourStep } from "../managers/TutorialManager";
-
-// 1. Register your tour once (e.g. when your feature/extension initializes).
-state.tutorial.registerTour("highlights", [
-  tourStep({
-    id: "hl-1",
-    target: ".hl-button",
-    title: "Highlights",
-    body: "Tap a verse, then tap here to highlight it.",
-  }),
-  tourStep({
-    id: "hl-2",
-    target: ".hl-list",
-    title: "Your highlights",
-    body: "Everything you mark collects here.",
+// 1. Add the tour's steps to CONTEXTUAL_TUTORIALS in TutorialManager.tsx
+//    (a made-up "bookmarks" tour, for example).
+"bookmarks": [
+  {
+    id: "bookmarks",
+    target: ".sb-bookmarks-pane",
+    titleKey: "tutorial.bookmarksTitle",
+    titleDefault: "Bookmarks",
+    bodyKey: "tutorial.bookmarksBody",
+    bodyDefault: "Everything you bookmark collects here.",
     placement: "left",
-  }),
-]);
+  },
+],
 
-// 2. Trigger it from your feature's own click/open handler.
-state.tutorial.startContextual("highlights"); // auto-shows once per user
-```
+// 2. Add tutorial.bookmarksTitle and tutorial.bookmarksBody to i18n/en.json.
 
-That's it — you get Back / Next / Done buttons anchored to fixed corners of
-the dialog, smart popover placement that never covers the highlighted
-element, a Skip button (which offers to turn off all tutorials once the user
-skips one), and per-tour "already seen" tracking, all for free.
-
----
-
-## Live example in the app
-
-There's a working demo wired into the app root ([`app/main.tsx`](../app/main.tsx),
-search for `DEMO_TOUR_ID`). It registers a 3-step tour and shows a small **▶ Demo
-tour** launcher button — but only when dev tours are enabled, so real users never
-see it. To try it:
-
-```js
-// In the devtools console, then reload:
-localStorage.setItem("sb-dev-tours", "1");
-// (or append ?devTour to the URL)
-```
-
-Click the launcher to run the tour. It's also a copy-paste reference for the
-`registerTour` + `tourStep` + `startTour` flow.
-
-There's a unit test covering the API at
-[`test/unit/seed-bible/managers/TutorialManager.test.ts`](../../../../test/unit/seed-bible/managers/TutorialManager.test.ts)
-(`npx jest TutorialManager`).
-
-## Core concepts
-
-- **Step** — one coachmark: a CSS `target` to spotlight, plus a title and body.
-- **Tour** — an ordered list of steps shown one at a time with Back/Next.
-- **Contextual tour** — a tour shown the first time a user uses a feature
-  (triggered from that feature's handler), as opposed to the first-run
-  onboarding tour. Custom tours are contextual.
-- The tour overlay is **modal** — see [Important: the overlay is modal](#important-the-overlay-is-modal).
-
----
-
-## Getting the manager
-
-Anywhere you have the app `state` (`SeedBibleState`), use `state.tutorial`:
-
-```ts
-function MyButton({ state }: { state: SeedBibleState }) {
-  return (
-    <button
-      onClick={() => {
-        openMyPanel();
-        state.tutorial.startContextual("my-feature");
-      }}
-    >
-      Open
-    </button>
-  );
-}
-```
-
-The instance type is `TutorialManager` (exported from
-`../managers/TutorialManager`).
-
----
-
-## Authoring steps
-
-### `tourStep(config)` — the easy way
-
-Pass plain strings; it fills in the i18n keys for you (namespaced as
-`tour.<id>.title` / `tour.<id>.body`, so translations can be added later without
-touching call sites).
-
-```ts
-tourStep({
-  id: "hl-1", // unique within the tour
-  target: ".hl-button", // CSS selector to spotlight
-  title: "Highlights",
-  body: "Tap to mark a verse.",
-  placement: "bottom", // optional: "top" | "bottom" | "left" | "right"
-  elevated: false, // optional: see "Pointing at panels/sheets"
-});
-```
-
-### Raw `TutorialStep` — full control
-
-```ts
-const step: TutorialStep = {
-  id: "hl-1",
-  target: ".hl-button",
-  titleDefault: "Highlights", // titleKey is optional; omit for no i18n
-  bodyDefault: "Tap to mark a verse.",
-  placement: "bottom",
-  onEnter: () => {}, // optional side effect when shown
-  onLeave: () => {}, // optional cleanup when leaving
-};
-```
-
-| Field                  | Required | Notes                                                                                                                                               |
-| ---------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`                   | ✓        | Unique within the tour.                                                                                                                             |
-| `target`               | ✓        | CSS selector. The element must be in the **light DOM** (queryable via `document.querySelector`). If missing, the popover centers with no spotlight. |
-| `titleDefault`         | ✓        | Shown verbatim unless `titleKey` resolves to a translation.                                                                                         |
-| `bodyDefault`          | ✓        | Same.                                                                                                                                               |
-| `titleKey` / `bodyKey` | –        | i18n keys; omit to skip translation.                                                                                                                |
-| `placement`            | –        | Preferred side; auto-flips when there's no room. Default `"bottom"`.                                                                                |
-| `elevated`             | –        | Lift the overlay above high z-index panels. See below.                                                                                              |
-| `group`                | –        | `"selector"` only — for steps inside the book-selector portal.                                                                                      |
-| `onEnter`/`onLeave`    | –        | Run when the step becomes active / is left.                                                                                                         |
-
----
-
-## Registering & triggering
-
-### `registerTour(id, steps, options?)`
-
-```ts
-state.tutorial.registerTour("highlights", steps); // once-only (default)
-state.tutorial.registerTour("debug-walkthrough", steps, { once: false }); // replayable
-```
-
-- `once: true` (default) — auto-shows at most once per user via
-  `startContextual` (tracked in the user's profile + local cache).
-- `once: false` — never marked "seen"; can replay every time.
-- Re-registering the same `id` replaces it.
-
-### `startContextual(id)`
-
-Use this from the feature's **own** event handler (the click that opens your
-panel, etc.). It is safe to call unconditionally — it no-ops when:
-
-- a tour is already running,
-- the user opted out of tutorials,
-- the tour is `once` and already seen.
-
-```ts
+// 3. Start it from the feature's own handler. It shows once per user.
 onClick={() => {
-  openSettingsSheet();
-  state.tutorial.startContextual("mobile-settings");
+  openBookmarks();
+  state.tutorial.startContextual("bookmarks");
 }}
 ```
 
-### `startTour(id)`
+---
 
-Starts immediately and **ignores** the "already seen" flag and opt-out — for an
-explicit "Show me again" / replay button.
+## Two kinds of tour
 
-```ts
-<button onClick={() => state.tutorial.startTour("highlights")}>
-  Replay tour
-</button>
-```
+**The introduction.** The first-run tour of the basics. Desktop uses `ONBOARDING_STEPS` and phones use `MOBILE_TUTORIAL_STEPS`. A new user is offered it with the `TutorialPrompt` card once the reader has stayed open and uncovered (no pane or modal over it) for `TUTORIAL_OFFER_DELAY_MS`. It can be started again from Settings and the About page, which call `start()`. Its id is `INTRODUCTION_TUTORIAL_ID` (`"introduction"`).
 
-Works with both your registered tours and built-in contextual ones.
+**Contextual tours.** A short tour of one feature, shown the first time the user opens that feature. Each has a feature id, which is also what "seen" is recorded under. Most are listed in `CONTEXTUAL_TUTORIALS`:
+
+| Feature id         | Started from                                                       |
+| ------------------ | ------------------------------------------------------------------ |
+| `mobile-settings`  | Opening the phone's settings sheet (`TabsLayout.tsx`)              |
+| `pane-layout`      | Opening the pane layout menu (`Tabs.tsx`)                          |
+| `add-tab`          | Nothing in the app yet; only a `?tutorial=add-tab` link            |
+| `offline-download` | The Books selector's offline download button (`BibleSelector.tsx`) |
+| `search`           | Nothing in the app yet; only a `?tutorial=search` link             |
+
+A tour whose steps need something only known at run time passes its steps instead of listing them. `customization-created` does this: its steps open the theme being edited, so `buildCustomizationTutorialSteps(state, variantId)` builds them per call (see `CustomizationEditPane.tsx`). It starts after a Custom Branding is created, and from the editor's **Take a tour** button.
 
 ---
 
-## Important: the overlay is modal
+## Starting a tour
 
-The tour overlay sits on top of the screen and **intercepts taps**. While a tour
-step is showing, the user cannot click the app underneath it.
+All of these are on `state.tutorial` (`TutorialManager`).
 
-**Consequence:** you cannot rely on the user "tapping the real target through the
-overlay" to advance or reveal a step. Instead, **trigger tips from the feature's
-own click handler** (the pattern shown above). This is how the built-in
-`pane-layout`, `search`, and `mobile-settings` tips work.
+| Method                         | Use it for                                                                                                     | Seen / turned off | Returns            |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------- | ----------------- | ------------------ |
+| `startContextual(id, steps?)`  | The first time a user opens a feature. Safe to call every time.                                                | Respected         | nothing            |
+| `replayContextual(id, steps?)` | A **Take a tour** button: the user asked, so it runs anyway.                                                   | Ignored           | whether it started |
+| `startTutorial(id, step?)`     | A known tour (the introduction or a `CONTEXTUAL_TUTORIALS` id) from a given step, as a `?tutorial=` link does. | Ignored           | whether it started |
+| `start()`                      | The introduction, from the start.                                                                              | Ignored           | nothing            |
 
-```ts
-// ✅ Do: fire the tip when your handler runs.
-onClick={() => { openThing(); state.tutorial.startContextual("thing"); }}
+`steps` replaces the `CONTEXTUAL_TUTORIALS[id]` lookup; "seen" is still recorded under `id`. Finishing a contextual tour, however it was started, records it seen.
 
-// ❌ Don't: expect the user to click `target` while the tour overlay is up.
-```
+### When a tour doesn't start
 
-### Pointing at panels/sheets that open
+`startContextual` does nothing when:
 
-If your handler opens a panel with a **high `z-index`** (e.g. a modal sheet), the
-tip would render _behind_ it. Mark the step `elevated: true` to lift the overlay
-above such panels:
+- another tour is already running,
+- Seed Bible is in a compact partner-site embed,
+- the visit started from a shared link (a session invite, a playlist, a reading plan),
+- the user turned tutorials off,
+- the user has already seen this tour.
 
-```ts
-state.tutorial.registerTour("mobile-settings", [
-  tourStep({
-    id: "mobile-settings",
-    target: ".sb-mobile-settings-sheet", // the panel that just opened
-    title: "Settings",
-    body: "Customize text, themes, and reading options here.",
-    placement: "top",
-    elevated: true,
-  }),
-]);
-```
-
-### Targets inside the book-selector portal
-
-The book selector renders in its own shadow-root portal. Steps whose target
-lives there must set `group: "selector"`; the selector draws those tips itself.
-This is an advanced case — most features don't need it.
-
----
-
-## Full example: a feature with a 2-step tour
+`replayContextual` stops only for the first two. `startTutorial` stops only in an embed, or for a desktop-only tour on a phone; it doesn't wait for a running tour but replaces it. Both return `false` when nothing started. If your **Take a tour** button also changes the screen for the tour, do that only when it returns `true`, or a tour that's already running ends up pointing at something that isn't shown. This is the one case where the screen changes after the tour starts; that's fine, because the overlay keeps looking for a step's target until it appears. The Custom Branding editor's button does this:
 
 ```ts
-import { tourStep } from "../managers/TutorialManager";
-import type { SeedBibleState } from "../managers/SeedBibleStateManager";
-
-export function registerHighlightTour(state: SeedBibleState) {
-  state.tutorial.registerTour("highlights", [
-    tourStep({
-      id: "hl-button",
-      target: ".hl-button",
-      title: "Highlight verses",
-      body: "Select a verse, then tap here to highlight it.",
-      placement: "bottom",
-    }),
-    tourStep({
-      id: "hl-panel",
-      target: ".hl-panel",
-      title: "Your highlights",
-      body: "Open this panel any time to revisit them.",
-      placement: "left",
-      elevated: true, // the panel opens above normal content
-    }),
-  ]);
-}
-
-// In the component that owns the feature:
-function HighlightButton({ state }: { state: SeedBibleState }) {
-  return (
-    <button
-      className="hl-button"
-      onClick={() => {
-        openHighlightPanel();
-        // First-time-only tip, right when the user uses the feature.
-        state.tutorial.startContextual("highlights");
-      }}
-    >
-      Highlight
-    </button>
+onClick={() => {
+  const started = state.tutorial.replayContextual(
+    "customization-created",
+    buildCustomizationTutorialSteps(state, variantId)
   );
-}
+  if (started) {
+    customizationEditView.value = "edit"; // the main editor, where step 1 points
+  }
+}}
 ```
+
+---
+
+## Writing steps
+
+```ts
+const step: TutorialStep = {
+  id: "bookmarks",
+  target: ".sb-bookmarks-pane",
+  titleKey: "tutorial.bookmarksTitle",
+  titleDefault: "Bookmarks",
+  bodyKey: "tutorial.bookmarksBody",
+  bodyDefault: "Everything you bookmark collects here.",
+  placement: "left",
+};
+```
+
+| Field                       | Required | Notes                                                                                                                                                                                                               |
+| --------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                        | ✓        | Unique within the tour.                                                                                                                                                                                             |
+| `target`                    | ✓        | CSS selector for the element to highlight. It must be findable with `document.querySelector`. If nothing matches, the popover is centered with no highlight. A `data-tutorial="…"` attribute makes a stable target. |
+| `titleKey` / `titleDefault` | ✓        | Translation key in `i18n/en.json`, and the English text used until the key is translated.                                                                                                                           |
+| `bodyKey` / `bodyDefault`   | ✓        | Same, for the body.                                                                                                                                                                                                 |
+| `placement`                 | –        | `"top"`, `"bottom"`, `"left"` or `"right"`. Flips when there's no room.                                                                                                                                             |
+| `onEnter` / `onLeave`       | –        | Run when the step becomes active / is left, for example to open the panel the step points at and close it again.                                                                                                    |
+| `elevated`                  | –        | Draws the overlay above high panels. See below.                                                                                                                                                                     |
+| `highlight`                 | –        | `"spotlight"` (default) dims everything around the target. `"glow"` leaves the page alone and rings the target, for a one-off tip about one small control.                                                          |
+| `group`                     | –        | `"selector"` only, for steps inside the Books selector. See below.                                                                                                                                                  |
+
+**Translations.** Add each key to `i18n/en.json` only (the other languages are left for translators). Write the four text fields as plain string literals: that's how the i18n lint recognizes a step and checks its keys exist. A step built in a loop or from variables isn't checked.
+
+### The overlay is modal
+
+While a step is showing, the overlay sits over the app and takes the taps, so the user can't click the real target underneath. Don't wait for the user to tap the target to move on. Start the tour from the feature's own handler instead, after it has opened what the tour points at. That's how all the built-in contextual tours work.
+
+### Pointing at a panel that just opened
+
+A panel with a high stacking layer (such as the phone's settings sheet) would cover the tour. Set `elevated: true` on the step to draw the overlay above it, as `mobile-settings` does.
+
+### Targets inside the Books selector
+
+The Books selector draws its own layer. Steps whose target is inside it set `group: "selector"`, and the selector draws those steps itself. Most tours don't need this.
+
+---
+
+## Links to a tour
+
+`?tutorial=<id>&tutorialStep=<n>` starts a tour when the page opens, on step `n` (counting from 0). Only the ids in `LINKABLE_TUTORIAL_IDS` work: `introduction`, `pane-layout`, `add-tab` and `search`. `pane-layout` is ignored on phones, where its menu isn't shown. While a linkable tour runs, the URL is kept up to date with its step, so the page can be refreshed or shared mid-tour.
+
+---
+
+## Extensions
+
+An extension gets `state.tutorial` through its `init(context)` state, so it can start a tour with its own steps: `state.tutorial.startContextual("my-extension-feature", steps)`. Use an id unlikely to clash with Seed Bible's own.
+
+One limitation: the overlay looks step text up in Seed Bible's own `en.json`, and the lint requires a step's keys to be there, so an extension's tour can't be translated yet.
 
 ---
 
@@ -281,41 +151,38 @@ function HighlightButton({ state }: { state: SeedBibleState }) {
 
 `state.tutorial` (`TutorialManager`):
 
-| Member                                    | Type    | Purpose                                                                                              |
-| ----------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
-| `registerTour(id, steps, opts?)`          | method  | Register a custom tour. `opts.once` (default `true`).                                                |
-| `startContextual(id)`                     | method  | Auto-show once; respects opt-out & seen flag. Use in handlers.                                       |
-| `startTour(id)`                           | method  | Force-start now (ignores seen flag & opt-out). For replay.                                           |
-| `start()`                                 | method  | Restart the first-run onboarding tour.                                                               |
-| `next()` / `prev()` / `finish()`          | method  | Manual navigation / end (the popover buttons call these).                                            |
-| `skip()`                                  | method  | End the tour (like `finish()`) and raise the "turn off tutorials?" follow-up dialog.                 |
-| `keepTutorials()`                         | method  | Dismiss that follow-up dialog, leaving future tutorials enabled.                                     |
-| `optOut()`                                | method  | End and record "don't show tutorials again" — also what the follow-up dialog's confirm button calls. |
-| `running`                                 | signal  | Whether a tour is showing.                                                                           |
-| `currentStep`                             | signal  | The active `TutorialStep` or `null`.                                                                 |
-| `index` / `isLast` / `canGoBack`          | signals | Position helpers for custom UI.                                                                      |
-| `completed` / `optedOut` / `featuresSeen` | signals | Onboarding done / opted out / per-tour seen map.                                                     |
-| `skipPromptVisible`                       | signal  | Whether the "turn off tutorials?" follow-up dialog is showing.                                       |
+| Member                                    | Type    | Purpose                                                                                          |
+| ----------------------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `startContextual(id, steps?)`             | method  | Show a contextual tour once; respects "seen" and "turned off".                                   |
+| `replayContextual(id, steps?)`            | method  | Start a contextual tour on request; ignores "seen" and "turned off". Returns whether it started. |
+| `startTutorial(id, step?)`                | method  | Start a known tour at a step, as links do. Returns whether it started.                           |
+| `start()`                                 | method  | Start the introduction from the beginning.                                                       |
+| `next()` / `prev()` / `finish()`          | method  | Move through the tour, or end it (the popover's buttons call these).                             |
+| `skip()`                                  | method  | End the tour and ask whether to turn tutorials off.                                              |
+| `keepTutorials()`                         | method  | Answer that question with "keep them".                                                           |
+| `optOut()`                                | method  | Turn tutorials off (what the "turn off tutorials?" question's confirm button calls).             |
+| `acceptPrompt()` / `dismissPrompt()`      | method  | Answer the first-run offer card.                                                                 |
+| `running`                                 | signal  | Whether a tour is showing.                                                                       |
+| `activeTutorialId`                        | signal  | `"introduction"`, a contextual feature id, or `null`.                                            |
+| `currentStep`                             | signal  | The step showing, or `null`.                                                                     |
+| `index` / `isLast` / `canGoBack`          | signals | Where the tour is, for custom UI.                                                                |
+| `completed` / `optedOut` / `featuresSeen` | signals | Introduction seen / tutorials turned off / contextual tours seen, by id.                         |
+| `promptVisible` / `skipPromptVisible`     | signals | Whether the first-run offer card / the "turn off tutorials?" question is showing.                |
 
-Helpers (exported from `../managers/TutorialManager`):
-
-- `tourStep(config)` → `TutorialStep`
-- types: `TutorialStep`, `TutorialPlacement`, `TutorialManager`
+Also exported from `TutorialManager.tsx`: the `TutorialStep`, `TutorialPlacement` and `TutorialManager` types; `CONTEXTUAL_TUTORIALS`, `ONBOARDING_STEPS`, `MOBILE_TUTORIAL_STEPS`, `INTRODUCTION_TUTORIAL_ID`, `LINKABLE_TUTORIAL_IDS` and `TUTORIAL_OFFER_DELAY_MS`.
 
 ---
 
-## Testing / resetting
+## Testing
 
-Tours marked `once` won't show again after being seen. To re-test, clear the
-seen flags (the profile record is the durable source; localStorage is the cache):
+Tests are in [`test/unit/seed-bible/managers/TutorialManager.test.tsx`](../../../../test/unit/seed-bible/managers/TutorialManager.test.tsx) (`pnpm vitest run TutorialManager`).
+
+To see a once-only tour again in the browser, clear what's been recorded and reload:
 
 ```js
-// In the browser devtools console:
-localStorage.removeItem("sb-tutorial-features-seen"); // contextual/custom tours
-localStorage.removeItem("sb-tutorial-seen"); // first-run onboarding
-localStorage.removeItem("sb-tutorial-opted-out"); // opt-out flag
+localStorage.removeItem("sb-tutorial-features-seen"); // contextual tours
+localStorage.removeItem("sb-tutorial-seen"); // the introduction
+localStorage.removeItem("sb-tutorial-opted-out"); // "turn off tutorials"
 ```
 
-Then reload (and, if signed in, the matching `profile.config` values still apply
-across devices — clear those too for a full reset). Or use `startTour(id)`, which
-ignores the seen flag entirely.
+When signed in, the same flags are also saved on the profile (`tutorialFeaturesSeen`, `tutorialSeen`, `tutorialOptedOut` in `profile.config`) and come back on reload. A `?tutorial=` link starts a linkable tour without clearing anything.

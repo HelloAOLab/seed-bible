@@ -3,7 +3,7 @@
   height: 2.25rem;
   padding: 0.125rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   cursor: pointer;
   display: inline-flex;
@@ -24,7 +24,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   box-shadow: inset 0 0 0 1px
     color-mix(in srgb, var(--sb-font-color), transparent 85%);
 }
@@ -39,23 +39,23 @@
 .sb-color-picker-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1100;
+  z-index: var(--sb-layer-prompt);
   background: color-mix(in srgb, #000, transparent 55%);
 }
 
 .sb-color-picker-dialog {
   position: fixed;
-  z-index: 1102;
+  z-index: calc(var(--sb-layer-prompt) + 2);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   width: min(16.5rem, calc(100vw - 2rem));
   padding: 0.75rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-menu-background, var(--sb-reader-background, #fff));
   color: var(--sb-menu-font-color, var(--sb-font-color));
-  box-shadow: 0 10px 30px #00000024;
+  box-shadow: var(--sb-shadow-modal);
   box-sizing: border-box;
 }
 
@@ -71,14 +71,14 @@
   transform: translateX(-50%);
   width: min(22rem, calc(100vw - 1.5rem));
   padding: 1rem 0.875rem;
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
 }
 
 .sb-color-picker-sv {
   position: relative;
   width: 100%;
   aspect-ratio: 1.15 / 1;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   touch-action: none;
   cursor: crosshair;
   overflow: hidden;
@@ -104,7 +104,7 @@
 .sb-color-picker-hue {
   position: relative;
   height: 0.875rem;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   touch-action: none;
   cursor: pointer;
   background: linear-gradient(
@@ -147,7 +147,7 @@
 .sb-color-picker-preview {
   width: 2rem;
   height: 2rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   flex-shrink: 0;
   box-shadow: inset 0 0 0 1px
     color-mix(in srgb, var(--sb-font-color), transparent 80%);
@@ -158,7 +158,7 @@
   align-items: center;
   flex: 1;
   min-width: 0;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   padding: 0 0.5rem;
 }
@@ -166,7 +166,7 @@
 .sb-color-picker-hex-hash {
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-color-picker-hex {
@@ -176,7 +176,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   letter-spacing: 0.04em;
   text-transform: lowercase;
   padding: 0.5rem 0.25rem;
@@ -197,36 +197,6 @@
   gap: 0.5rem;
 }
 
-.sb-color-picker-cancel,
-.sb-color-picker-confirm {
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.875rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.sb-color-picker-cancel {
-  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 10%);
-  background: transparent;
-  color: var(--sb-primary-color);
-}
-
-.sb-color-picker-cancel:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
-}
-
-.sb-color-picker-confirm {
-  border: 1px solid var(--sb-primary-color);
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color, var(--sb-reader-background, #fff));
-}
-
-.sb-color-picker-confirm:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), #000 12%);
-}
-
 @media (max-width: 480px) {
   .sb-color-picker-sv {
     aspect-ratio: 1 / 0.85;
@@ -242,10 +212,11 @@
     height: 1.375rem;
   }
 
-  .sb-color-picker-cancel,
-  .sb-color-picker-confirm {
+  /* Two classes, to outrank the Button's own size. */
+  .sb-button.sb-color-picker-cancel,
+  .sb-button.sb-color-picker-confirm {
     flex: 1;
-    padding: 0.75rem 0.875rem;
-    font-size: 0.875rem;
+    --sb-button-height: 2.75rem;
+    --sb-button-font-size: var(--sb-font-size-14);
   }
 }

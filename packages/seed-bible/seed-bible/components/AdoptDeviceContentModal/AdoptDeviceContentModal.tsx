@@ -3,6 +3,7 @@ import { effect } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { AdoptionChoice } from "../../managers/RecordSyncManager";
+import { Button } from "../Button/Button";
 
 /** The id every sign-in shares, so only one prompt is ever open. */
 const MODAL_ID = "adopt-device-content";
@@ -40,16 +41,12 @@ export function AdoptDeviceContentModalContent(props: {
         })}
       </p>
       <div className="sb-adopt-device-content-actions">
-        <button type="button" onClick={() => onChoose("discard")}>
+        <Button variant="secondary" onClick={() => onChoose("discard")}>
           {t("adopt-device-content-skip", { defaultValue: "Don't add" })}
-        </button>
-        <button
-          type="button"
-          className="sb-adopt-device-content-add"
-          onClick={() => onChoose("add")}
-        >
+        </Button>
+        <Button variant="primary" onClick={() => onChoose("add")}>
           {t("adopt-device-content-add", { defaultValue: "Add to account" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

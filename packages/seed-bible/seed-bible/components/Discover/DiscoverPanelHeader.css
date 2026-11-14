@@ -13,7 +13,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 1.125rem;
+  font-size: var(--sb-font-size-18);
   font-weight: 700;
   color: var(--sb-font-color);
   min-width: 0;
@@ -27,27 +27,6 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-/* Matches `PaneHeader`'s close button, so closing Discover looks the same as
-   closing any other pane. */
-.sb-discover-panel-header-close {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 2.5rem;
-  min-width: 2.5rem;
-  padding: 0;
-  border: none;
-  border-radius: 0.5rem;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.sb-discover-panel-header-close:hover {
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 65%);
 }
 
 .sb-discover-panel-layout {

@@ -484,13 +484,13 @@ interface VerseTargeting {
  * "whole chapter".
  */
 function deriveVerseTargeting(
-  tab: ReaderTab,
+  readingState: ReaderTab["readingState"],
   bookId: string,
   chapterNumber: number
 ): VerseTargeting {
   const selectedVerseNumbers = Array.from(
     new Set(
-      tab.readingState.selectedVerses.value
+      readingState.selectedVerses.value
         .filter((v) => v.bookId === bookId && v.chapterNumber === chapterNumber)
         .map((v) => v.verse.number)
     )
@@ -1536,12 +1536,15 @@ export function createAnnotationsManager(
     if (!current || !!current.data.replyTo || !tab) {
       return;
     }
+    // The passage the user is working in, which in a compare step can be
+    // the one shown beside the tab's own.
+    const readingState = tabs.activeReadingState(tab);
     // A tab with no chapter loaded (mid-navigation) keeps the draft where it
     // was rather than leaving it with nowhere to be saved.
-    const bookId = tab.readingState.bookId.value ?? current.bookId;
+    const bookId = readingState.bookId.value ?? current.bookId;
     const chapterNumber =
-      tab.readingState.chapterNumber.value || current.chapterNumber;
-    const targeting = deriveVerseTargeting(tab, bookId, chapterNumber);
+      readingState.chapterNumber.value || current.chapterNumber;
+    const targeting = deriveVerseTargeting(readingState, bookId, chapterNumber);
     if (
       current.bookId === bookId &&
       current.chapterNumber === chapterNumber &&
@@ -1601,8 +1604,9 @@ export function createAnnotationsManager(
     }
 
     const tab = activeTab.value;
-    const bookId = tab?.readingState.bookId.value ?? null;
-    const chapterNumber = tab?.readingState.chapterNumber.value ?? null;
+    const readingState = tab ? tabs.activeReadingState(tab) : null;
+    const bookId = readingState?.bookId.value ?? null;
+    const chapterNumber = readingState?.chapterNumber.value ?? null;
     if (!tab || !bookId || !chapterNumber) {
       console.warn("Cannot create an annotation: no active chapter.");
       return;

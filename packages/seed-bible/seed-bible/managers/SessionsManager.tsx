@@ -11,6 +11,7 @@ import {
   type InitialBibleReadingOptions,
   type VerseDecoration,
   type VerseDecorationInput,
+  type VisibleVerseRange,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
 import type { BibleReadingExtensionManager } from "../managers/BibleReadingExtensionManager";
@@ -24,6 +25,7 @@ import type {
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
 import type { AnnotationsManager } from "./AnnotationsManager";
+import { toShareableUrl } from "../app/publicLinks";
 
 export interface ConnectionSessionUserVisual {
   defaultIcon: string;
@@ -139,6 +141,60 @@ export type SessionStartPosition = Pick<
 >;
 export type VerseSelectionEffectVisibility = "hosts-only" | "everyone" | "none";
 
+/**
+ * Whose viewing-area bars a shared session draws beside the chapter.
+ *
+ * "auto" is the default: everyone while fewer than
+ * `VIEWING_AREA_HOSTS_ONLY_MIN_USERS` people are connected, and only hosts
+ * from that many on. A host can set "everyone" or "hosts-only" instead.
+ */
+export type ViewingAreaVisibility = "auto" | "everyone" | "hosts-only";
+
+/**
+ * A person's own choice of whose bars they see. "default" follows the
+ * session. "hosts-only" hides other people's bars on this screen, including
+ * when the session is set to everyone. "everyone" cannot widen a session
+ * the host has set to hosts only.
+ */
+export type ViewingAreaPreference = "default" | "everyone" | "hosts-only";
+
+/**
+ * Connected people at which "auto" switches from everyone's bars to hosts
+ * only. Past this the gutter starts to crowd.
+ */
+export const VIEWING_AREA_HOSTS_ONLY_MIN_USERS = 4;
+
+/**
+ * Whose bars to draw. Hosts only from either the session or this person
+ * hides other bars. A personal "everyone" applies on automatic and when the
+ * session is showing everyone, and does not widen a hosts-only session.
+ * "auto" with no personal choice follows `connectedUserCount`. Hosts-only
+ * falls back to everyone when no host is connected, so the margin is not
+ * left blank.
+ */
+export function resolveViewingAreaVisibility(
+  sessionVisibility: ViewingAreaVisibility | null | undefined,
+  connectedUserCount: number,
+  preference: ViewingAreaPreference | null | undefined = "default",
+  hostConnected = true
+): "everyone" | "hosts-only" {
+  let mode: "everyone" | "hosts-only";
+  if (sessionVisibility === "hosts-only" || preference === "hosts-only") {
+    mode = "hosts-only";
+  } else if (sessionVisibility === "everyone" || preference === "everyone") {
+    mode = "everyone";
+  } else {
+    mode =
+      connectedUserCount >= VIEWING_AREA_HOSTS_ONLY_MIN_USERS
+        ? "hosts-only"
+        : "everyone";
+  }
+  if (mode === "hosts-only" && !hostConnected) {
+    return "everyone";
+  }
+  return mode;
+}
+
 export interface SessionOptions {
   allowedNavigators: string[] | null;
   allowedDecorators: string[] | null;
@@ -176,6 +232,12 @@ export interface SessionOptions {
    */
   coHostUserIds: string[];
   verseSelectionEffectVisibility: VerseSelectionEffectVisibility;
+  /**
+   * Whose viewing-area bars are drawn beside the chapter. See
+   * `ViewingAreaVisibility`. Each person can still choose hosts only for
+   * their own screen. They cannot widen a hosts-only session.
+   */
+  viewingAreaVisibility: ViewingAreaVisibility;
 }
 
 /**
@@ -192,6 +254,21 @@ export function isSessionHost(
   return (
     options.hostUserId === sessionId ||
     (options.coHostUserIds ?? []).includes(sessionId)
+  );
+}
+
+/**
+ * True when this connected user is the host or a co-host. Checks both ids
+ * because a signed-in host is stored by user id and an anonymous one by
+ * connection id.
+ */
+export function isConnectedUserHost(
+  options: SessionOptions,
+  user: { userId?: string | null; connectionId?: string | null }
+): boolean {
+  return (
+    isSessionHost(options, user.userId ?? null) ||
+    isSessionHost(options, user.connectionId ?? null)
   );
 }
 
@@ -285,6 +362,28 @@ export interface ParticipantReadingPosition {
    */
   firstVerse?: number;
   lastVerse?: number;
+  /**
+   * What else that participant has on screen, by area (see
+   * `BibleReadingState.visibleAreas`): the first and last unit of each.
+   * Absent when there's nothing else, and in entries from older clients.
+   */
+  areas?: Record<string, { first: number; last: number }>;
+}
+
+function parseAreas(
+  value: unknown
+): Record<string, { first: number; last: number }> | null {
+  if (!value || typeof value !== "object") return null;
+  const areas: Record<string, { first: number; last: number }> = {};
+  for (const [key, range] of Object.entries(value)) {
+    if (!range || typeof range !== "object") continue;
+    const first = toPositiveIntOrNull((range as Record<string, unknown>).first);
+    const last = toPositiveIntOrNull((range as Record<string, unknown>).last);
+    if (first !== null && last !== null && last >= first) {
+      areas[key] = { first, last };
+    }
+  }
+  return Object.keys(areas).length > 0 ? areas : null;
 }
 
 function parseParticipantReadingPosition(
@@ -299,10 +398,82 @@ function parseParticipantReadingPosition(
   const lastVerse = toPositiveIntOrNull(record.lastVerse);
   // A half-written range says nothing, so both ends have to be there and in
   // order before it is reported.
+  const areas = parseAreas(record.areas);
+  const withAreas = areas ? { areas } : {};
   if (firstVerse === null || lastVerse === null || lastVerse < firstVerse) {
-    return { bookId, chapterNumber };
+    return { bookId, chapterNumber, ...withAreas };
   }
-  return { bookId, chapterNumber, firstVerse, lastVerse };
+  return { bookId, chapterNumber, firstVerse, lastVerse, ...withAreas };
+}
+
+/** The longest answer to a question step the session keeps, in characters. */
+export const MAX_QUESTION_ANSWER_LENGTH = 4000;
+
+/**
+ * One participant's answer to a playlist's question step, as kept in the
+ * session's `question_answers` map. Who wrote it is copied in when it's
+ * written, so it still reads right after they leave.
+ */
+export interface SessionQuestionAnswer {
+  /** Which question, as the caller names it (see `questionAnswerStepKey`). */
+  stepKey: string;
+  /** The author's user id, or their connection id when signed out. */
+  authorId: string;
+  text: string;
+  updatedAtMs: number;
+  name: string;
+  pictureUrl: string | null;
+  visual: ConnectionSessionUserVisual;
+}
+
+/**
+ * Names a playlist's question step for its answers: everyone in a session
+ * plays the same queue, so its place there (with the playlist, in case the
+ * session plays another) means the same question for all of them.
+ */
+export function questionAnswerStepKey(
+  playlistId: string | null | undefined,
+  index: number
+): string {
+  return `${playlistId ?? "queue"}#${index}`;
+}
+
+function parseQuestionAnswer(value: unknown): SessionQuestionAnswer | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const stepKey = toStringOrNull(record.stepKey);
+  const authorId = toStringOrNull(record.authorId);
+  const text =
+    typeof record.text === "string"
+      ? record.text.slice(0, MAX_QUESTION_ANSWER_LENGTH)
+      : null;
+  const name = toStringOrNull(record.name);
+  const visual = record.visual as Record<string, unknown> | undefined;
+  const color = toStringOrNull(visual?.color);
+  const defaultIcon = toStringOrNull(visual?.defaultIcon);
+  if (!stepKey || !authorId || !text?.trim() || !name || !color) return null;
+  if (!defaultIcon) return null;
+  const pictureUrl = toStringOrNull(record.pictureUrl);
+  return {
+    stepKey,
+    authorId,
+    text,
+    updatedAtMs:
+      typeof record.updatedAtMs === "number" ? record.updatedAtMs : 0,
+    name,
+    // Shown as an <img>, so only a web address is taken from a peer.
+    pictureUrl:
+      pictureUrl && /^https?:\/\//.test(pictureUrl) ? pictureUrl : null,
+    visual: {
+      color,
+      defaultIcon,
+      colorName: toStringOrNull(visual?.colorName) ?? "",
+    },
+  };
+}
+
+function questionAnswerKey(stepKey: string, authorId: string): string {
+  return `${stepKey}|${authorId}`;
 }
 
 /**
@@ -338,7 +509,14 @@ const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   shareTranslation: false,
   coHostUserIds: [],
   verseSelectionEffectVisibility: "hosts-only",
+  viewingAreaVisibility: "auto",
 };
+
+function parseViewingAreaVisibility(value: unknown): ViewingAreaVisibility {
+  return value === "auto" || value === "everyone" || value === "hosts-only"
+    ? value
+    : DEFAULT_SESSION_OPTIONS.viewingAreaVisibility;
+}
 
 function getSessionDataSnapshot(
   readingState: Pick<
@@ -401,6 +579,9 @@ function getSessionOptionsFromMap(
       rawVerseSelectionEffectVisibility === "none"
         ? rawVerseSelectionEffectVisibility
         : DEFAULT_SESSION_OPTIONS.verseSelectionEffectVisibility,
+    viewingAreaVisibility: parseViewingAreaVisibility(
+      optionsMap.get("viewingAreaVisibility")
+    ),
     endedAt:
       typeof rawEndedAt === "number" && Number.isFinite(rawEndedAt)
         ? rawEndedAt
@@ -439,6 +620,7 @@ function sessionOptionsMatch(
     left.highlightDurationSeconds === right.highlightDurationSeconds &&
     left.verseSelectionEffectVisibility ===
       right.verseSelectionEffectVisibility &&
+    left.viewingAreaVisibility === right.viewingAreaVisibility &&
     left.endedAt === right.endedAt &&
     left.shareTranslation === right.shareTranslation &&
     stringArraysMatch(left.coHostUserIds, right.coHostUserIds)
@@ -645,6 +827,20 @@ export function getConnectedUserVisualKey(user: {
   return user.userId ?? user.connectionId ?? "anonymous";
 }
 
+/**
+ * Distinct people in a session. One person with the session open in two
+ * tabs counts once. A signed-out guest has no user id, so each of their
+ * connections still counts as its own person.
+ */
+export function countSessionPeople(
+  users: readonly {
+    userId?: string | null;
+    connectionId?: string | null;
+  }[]
+): number {
+  return new Set(users.map((user) => getConnectedUserVisualKey(user))).size;
+}
+
 export interface BibleReadingSession {
   id: string;
   document: SharedDocument;
@@ -665,6 +861,18 @@ export interface BibleReadingSession {
   participantPositions: ReadonlySignal<
     ReadonlyMap<string, ParticipantReadingPosition>
   >;
+
+  /**
+   * Everyone's answers to the playlist's question steps, oldest first. Kept
+   * for as long as the session is, so someone joining late sees them too.
+   */
+  questionAnswers: ReadonlySignal<readonly SessionQuestionAnswer[]>;
+
+  /**
+   * Shares this participant's answer to a question step, replacing the one
+   * they shared before. Blank text takes their answer back.
+   */
+  setQuestionAnswer: (stepKey: string, text: string) => void;
 
   /**
    * Where the group is: the session-wide position that navigators publish
@@ -786,7 +994,7 @@ export function getSessionUrl(session: BibleReadingSession): URL {
   if (pattern) {
     url.searchParams.set("pattern", pattern);
   }
-  return url;
+  return toShareableUrl(url);
 }
 
 function createSessionId(): string {
@@ -853,6 +1061,12 @@ async function createBibleReadingSession(
   // in for this.
   const readingPositionsMap =
     document.getMap<ParticipantReadingPosition>("reading_positions");
+  // Answers to playlist question steps, keyed by question and author. Unlike
+  // positions they outlive their author's connection, so a late joiner reads
+  // the whole discussion.
+  const questionAnswersMap =
+    document.getMap<SessionQuestionAnswer>("question_answers");
+  const questionAnswers = signal<readonly SessionQuestionAnswer[]>([]);
   // Keyed by the connection being asked, so asking someone again replaces the
   // previous request instead of piling them up.
   const comeBackRequestsMap =
@@ -897,6 +1111,12 @@ async function createBibleReadingSession(
       }
       if (optionsMap.get("coHostUserIds") === undefined) {
         optionsMap.set("coHostUserIds", defaultOptions.coHostUserIds);
+      }
+      if (optionsMap.get("viewingAreaVisibility") === undefined) {
+        optionsMap.set(
+          "viewingAreaVisibility",
+          defaultOptions.viewingAreaVisibility
+        );
       }
     });
   }
@@ -1393,14 +1613,29 @@ async function createBibleReadingSession(
     const range = tabVisible.value
       ? readingState.visibleVerseRange.value
       : null;
+    const visibleAreas = tabVisible.value
+      ? readingState.visibleAreas.value
+      : new Map<string, VisibleVerseRange>();
+    const areas =
+      visibleAreas.size > 0
+        ? {
+            areas: Object.fromEntries(
+              Array.from(visibleAreas, ([key, area]) => [
+                key,
+                { first: area.first, last: area.last },
+              ])
+            ),
+          }
+        : {};
     const next: ParticipantReadingPosition = range
       ? {
           bookId,
           chapterNumber,
           firstVerse: range.first,
           lastVerse: range.last,
+          ...areas,
         }
-      : { bookId, chapterNumber };
+      : { bookId, chapterNumber, ...areas };
     const currentEntry = parseParticipantReadingPosition(
       readingPositionsMap.get(localConnectionId)
     );
@@ -1409,7 +1644,9 @@ async function createBibleReadingSession(
       currentEntry.bookId === next.bookId &&
       currentEntry.chapterNumber === next.chapterNumber &&
       currentEntry.firstVerse === next.firstVerse &&
-      currentEntry.lastVerse === next.lastVerse
+      currentEntry.lastVerse === next.lastVerse &&
+      JSON.stringify(currentEntry.areas ?? {}) ===
+        JSON.stringify(next.areas ?? {})
     ) {
       return;
     }
@@ -1435,6 +1672,7 @@ async function createBibleReadingSession(
     const chapterNumber = readingState.chapterNumber.value;
     const visible = tabVisible.value;
     void readingState.visibleVerseRange.value;
+    void readingState.visibleAreas.value;
 
     // A navigation is always chased by range changes — the old chapter's
     // verses leave the screen and the new one's are measured — so whether this
@@ -1471,6 +1709,51 @@ async function createBibleReadingSession(
       syncParticipantPositions();
     }
   );
+
+  const syncQuestionAnswers = () => {
+    const answers: SessionQuestionAnswer[] = [];
+    questionAnswersMap.forEach((value, key) => {
+      const answer = parseQuestionAnswer(value);
+      // An entry only counts under its own key, so nobody can write one in
+      // someone else's name.
+      if (
+        answer &&
+        key === questionAnswerKey(answer.stepKey, answer.authorId)
+      ) {
+        answers.push(answer);
+      }
+    });
+    answers.sort((a, b) => a.updatedAtMs - b.updatedAtMs);
+    questionAnswers.value = answers;
+  };
+  syncQuestionAnswers();
+  const questionAnswersSubscription = questionAnswersMap.changes.subscribe(
+    () => {
+      syncQuestionAnswers();
+    }
+  );
+
+  const setQuestionAnswer = (stepKey: string, text: string) => {
+    const authorId = localSessionId.peek();
+    const key = questionAnswerKey(stepKey, authorId);
+    const trimmed = text.trim();
+    if (!trimmed) {
+      questionAnswersMap.delete(key);
+      return;
+    }
+    const self = currentUser.peek();
+    const visual = self?.visual ?? getUserAnimalVisual(authorId);
+    const answer: SessionQuestionAnswer = {
+      stepKey,
+      authorId,
+      text: trimmed.slice(0, MAX_QUESTION_ANSWER_LENGTH),
+      updatedAtMs: Date.now(),
+      name: self?.profile?.name ?? `User ${authorId.slice(0, 8)}`,
+      pictureUrl: self?.profile?.pictureUrl ?? null,
+      visual,
+    };
+    questionAnswersMap.set(key, answer);
+  };
 
   const subscribeToRemoteClients = () =>
     document.remoteClients.subscribe((event) => {
@@ -1863,6 +2146,10 @@ async function createBibleReadingSession(
         typeof newOptions.verseSelectionEffectVisibility === "undefined"
           ? currentOptions.verseSelectionEffectVisibility
           : newOptions.verseSelectionEffectVisibility,
+      viewingAreaVisibility:
+        typeof newOptions.viewingAreaVisibility === "undefined"
+          ? currentOptions.viewingAreaVisibility
+          : newOptions.viewingAreaVisibility,
       endedAt:
         typeof newOptions.endedAt === "undefined"
           ? currentOptions.endedAt
@@ -1920,6 +2207,15 @@ async function createBibleReadingSession(
         optionsMap.set(
           "verseSelectionEffectVisibility",
           nextOptions.verseSelectionEffectVisibility
+        );
+      }
+      if (
+        currentOptions.viewingAreaVisibility !==
+        nextOptions.viewingAreaVisibility
+      ) {
+        optionsMap.set(
+          "viewingAreaVisibility",
+          nextOptions.viewingAreaVisibility
         );
       }
 
@@ -1984,6 +2280,7 @@ async function createBibleReadingSession(
     extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
     readingPositionsSubscription.unsubscribe();
+    questionAnswersSubscription.unsubscribe();
     comeBackRequestsSubscription.unsubscribe();
     stopSettlingComeBackRequests();
     remoteClientsSubscription.unsubscribe();
@@ -2195,6 +2492,8 @@ async function createBibleReadingSession(
     connectedUsers,
     currentUser,
     participantPositions,
+    questionAnswers,
+    setQuestionAnswer,
     groupPosition,
     isAwayFromGroup,
     participantsAwayFromGroup,

@@ -241,6 +241,7 @@ function createMockSharedSession(
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     }),
     updateOptions: vi.fn(),
     removeSharedDecoration: vi.fn(),
@@ -249,6 +250,8 @@ function createMockSharedSession(
     allUsers: signal([]),
     connectedUsers: signal([]),
     participantPositions: signal(new Map()),
+    questionAnswers: signal([]),
+    setQuestionAnswer: vi.fn(),
     groupPosition: signal({
       translationId: null,
       bookId: null,

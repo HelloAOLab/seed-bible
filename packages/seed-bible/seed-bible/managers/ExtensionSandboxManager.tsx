@@ -42,6 +42,7 @@ import type {
 import type { PanesManager } from "./PanesManager";
 import type { I18nManager } from "../i18n/I18nManager";
 import type { BookId } from "./BibleDataManager";
+import { SHARED_TOKENS_CSS } from "../app/styles/sharedTokens";
 import {
   expandSandboxPermissions,
   SANDBOX_METHOD_PERMISSIONS,
@@ -620,7 +621,7 @@ export function startSandboxSession(
   const computeState = (): SandboxState => {
     const language = context.i18n.language.value;
     return {
-      themeCss: context.theme.themeCssVariables.value,
+      themeCss: `${SHARED_TOKENS_CSS}\n${context.theme.themeCssVariables.value}`,
       language,
       direction: context.i18n.isRtl.value ? "rtl" : "ltr",
       strings: { ...translations.en, ...translations[language] },
@@ -1325,9 +1326,9 @@ function SandboxPaneBadge({ name }: { name: string }) {
   return (
     <span
       style={{
-        fontSize: "0.75rem",
+        fontSize: "var(--sb-font-size-12)",
         padding: "0.125rem 0.5rem",
-        borderRadius: "999px",
+        borderRadius: "var(--sb-radius-full)",
         border: "1px solid var(--sb-divider-color)",
         opacity: 0.8,
         whiteSpace: "nowrap",

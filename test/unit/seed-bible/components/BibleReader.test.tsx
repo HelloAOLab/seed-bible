@@ -1,3 +1,8 @@
+import {
+  createAttachedReadingStates,
+  type ReaderTab,
+} from "@packages/seed-bible/seed-bible/managers/TabsManager";
+import { currentScriptureNoteItem } from "@packages/seed-bible/seed-bible/components/ScriptureNote/ScriptureNote";
 import { render } from "preact";
 import { act, setupRerender, teardown } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
@@ -62,9 +67,15 @@ import {
   type WebResponse,
 } from "../managers/testUtils/mockBibleApiData";
 
+const i18nDirection = vi.hoisted(() => ({ isRtl: false }));
+
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
-  return mockI18nManager();
+  return mockI18nManager({
+    get isRtl() {
+      return i18nDirection.isRtl;
+    },
+  });
 });
 const testBranding: BrandingConfig = {
   appName: "Test App",
@@ -323,6 +334,7 @@ function createFixture(): ReaderFixture {
     selectionAnnotations: signal([]),
     pendingAnnotationScrollVerse: signal<number | null>(null),
     visibleVerseRange: signal<VisibleVerseRange | null>(null),
+    visibleAreas: signal<ReadonlyMap<string, VisibleVerseRange>>(new Map()),
   } as BibleReadingState;
 
   const selectorState = {
@@ -466,7 +478,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       connectionId: "test-connection",
     },
     tools: createBibleToolsManager(testBranding),
-    tabs: { selectedTabId: signal("") },
+    tabs: { selectedTabId: signal(""), ...createAttachedReadingStates() },
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover: { scrollToVerse: signal(null), view: signal(null) },
@@ -581,6 +593,7 @@ beforeEach(() => {
   setupRerender();
   resetLastVersePointerTypeForTests();
   resetMockI18n();
+  i18nDirection.isRtl = false;
 });
 
 afterEach(() => {
@@ -4197,6 +4210,7 @@ describe("BibleReader", () => {
     function createSession(
       users: Array<{
         connectionId: string;
+        userId?: string | null;
         isSelf?: boolean;
         name?: string;
         pictureUrl?: string | null;
@@ -4209,13 +4223,18 @@ describe("BibleReader", () => {
           firstVerse?: number;
           lastVerse?: number;
         }
-      >
+      >,
+      sessionOptions?: {
+        hostUserId?: string | null;
+        coHostUserIds?: string[];
+        viewingAreaVisibility?: "auto" | "everyone" | "hosts-only";
+      }
     ) {
       return {
         connectedUsers: signal(
           users.map((user) => ({
             connectionId: user.connectionId,
-            userId: user.connectionId,
+            userId: user.userId === undefined ? user.connectionId : user.userId,
             isSelf: user.isSelf ?? false,
             isActive: true,
             joinedAtMs: 0,
@@ -4227,23 +4246,38 @@ describe("BibleReader", () => {
           }))
         ),
         participantPositions: signal(new Map(Object.entries(positions))),
-        options: signal({ hostUserId: null, allowedNavigators: [] }),
+        options: signal({
+          hostUserId: sessionOptions?.hostUserId ?? null,
+          coHostUserIds: sessionOptions?.coHostUserIds ?? [],
+          allowedNavigators: [],
+          viewingAreaVisibility: sessionOptions?.viewingAreaVisibility,
+        }),
       } as any;
     }
 
-    function renderReader(session: unknown, fixture: ReaderFixture) {
+    function renderReader(
+      session: unknown,
+      fixture: ReaderFixture,
+      state = createMobileState()
+    ) {
       act(() => {
         render(
           <BibleReader
             currentSlot={fixture.slot}
             selectorState={fixture.selectorState}
             readingState={fixture.readingState}
-            state={createMobileState()}
+            state={state}
             sharedSession={session as any}
           />,
           container
         );
       });
+    }
+
+    function markerNames() {
+      return [
+        ...container.querySelectorAll(".sb-presence-avatars .sb-tab-user-icon"),
+      ].map((icon) => icon.getAttribute("title"));
     }
 
     it("draws a bar spanning the verses another participant can see", () => {
@@ -4379,7 +4413,10 @@ describe("BibleReader", () => {
               id,
               { bookId: "GEN", chapterNumber: 1, firstVerse: 1, lastVerse: 2 },
             ])
-          )
+          ),
+          // Six people would otherwise hide everyone but the hosts. This case
+          // is about how a crowd on the same verses is drawn.
+          { viewingAreaVisibility: "everyone" }
         ),
         fixture
       );
@@ -4912,6 +4949,225 @@ describe("BibleReader", () => {
       } finally {
         restoreScreen();
       }
+    });
+
+    const sameChapter = (ids: string[]) =>
+      Object.fromEntries(
+        ids.map((id) => [
+          id,
+          { bookId: "GEN", chapterNumber: 1, firstVerse: 1, lastVerse: 2 },
+        ])
+      );
+
+    it("shows everyone's place while fewer than four people are here", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "auto" }
+        ),
+        fixture
+      );
+
+      expect(markerNames().sort()).toEqual(["Host", "Mary"]);
+    });
+
+    it("shows only hosts once four people are here, until the host says otherwise", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const session = createSession(
+        [
+          { connectionId: "me", isSelf: true },
+          { connectionId: "host", name: "Host" },
+          { connectionId: "cohost", name: "Co-host" },
+          { connectionId: "mary", name: "Mary" },
+        ],
+        sameChapter(["host", "cohost", "mary"]),
+        {
+          hostUserId: "host",
+          coHostUserIds: ["cohost"],
+          viewingAreaVisibility: "auto",
+        }
+      );
+      renderReader(session, fixture);
+
+      expect(markerNames().sort()).toEqual(["Co-host", "Host"]);
+
+      act(() => {
+        session.options.value = {
+          ...session.options.value,
+          viewingAreaVisibility: "everyone",
+        };
+      });
+
+      expect(markerNames().sort()).toEqual(["Co-host", "Host", "Mary"]);
+    });
+
+    it("hides other participants when the host chooses hosts only, even in a small session", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "hosts-only" }
+        ),
+        fixture
+      );
+
+      expect(markerNames()).toEqual(["Host"]);
+      expect(container.querySelector(".sb-presence-gutter")).not.toBeNull();
+    });
+
+    it("lets a person choose to see everyone even when the session would show only hosts", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const state = createMobileState();
+      state.settings.settings.value = {
+        ...state.settings.settings.value,
+        viewingAreaIndicators: "everyone",
+      };
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+            { connectionId: "john", name: "John" },
+          ],
+          sameChapter(["host", "mary", "john"]),
+          { hostUserId: "host", viewingAreaVisibility: "auto" }
+        ),
+        fixture,
+        state
+      );
+
+      expect(markerNames().sort()).toEqual(["Host", "John", "Mary"]);
+    });
+
+    it("lets a person choose to see only hosts even when the session is small", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const state = createMobileState();
+      state.settings.settings.value = {
+        ...state.settings.settings.value,
+        viewingAreaIndicators: "hosts-only",
+      };
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "auto" }
+        ),
+        fixture,
+        state
+      );
+
+      expect(markerNames()).toEqual(["Host"]);
+    });
+
+    it("keeps the host's hosts-only choice when someone set Everyone for themselves", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const state = createMobileState();
+      state.settings.settings.value = {
+        ...state.settings.settings.value,
+        viewingAreaIndicators: "everyone",
+      };
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "hosts-only" }
+        ),
+        fixture,
+        state
+      );
+
+      expect(markerNames()).toEqual(["Host"]);
+    });
+
+    it("lets someone choose hosts only even when the host is showing everyone", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const state = createMobileState();
+      state.settings.settings.value = {
+        ...state.settings.settings.value,
+        viewingAreaIndicators: "hosts-only",
+      };
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "everyone" }
+        ),
+        fixture,
+        state
+      );
+
+      expect(markerNames()).toEqual(["Host"]);
+    });
+
+    it("counts a person with two tabs once, so three people still show everyone's place", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", userId: "me", isSelf: true },
+            { connectionId: "ada-laptop", userId: "ada", name: "Ada" },
+            { connectionId: "ada-phone", userId: "ada", name: "Ada" },
+            { connectionId: "bob", userId: "bob", name: "Bob" },
+          ],
+          sameChapter(["ada-laptop", "ada-phone", "bob"]),
+          { hostUserId: "me", viewingAreaVisibility: "auto" }
+        ),
+        fixture
+      );
+
+      expect(markerNames().sort()).toEqual(["Ada", "Ada", "Bob"]);
+    });
+
+    it("shows everyone when automatic would show only hosts but none of them are here", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "mary", name: "Mary" },
+            { connectionId: "john", name: "John" },
+            { connectionId: "ann", name: "Ann" },
+          ],
+          sameChapter(["mary", "john", "ann"]),
+          { hostUserId: "host", viewingAreaVisibility: "auto" }
+        ),
+        fixture
+      );
+
+      expect(markerNames().sort()).toEqual(["Ann", "John", "Mary"]);
     });
 
     it("draws no gutter outside a shared session", () => {
@@ -5615,7 +5871,7 @@ describe("BibleReader", () => {
         openVerseReference,
       },
       tools: createBibleToolsManager(testBranding),
-      tabs: { selectedTabId: signal("") },
+      tabs: { selectedTabId: signal(""), ...createAttachedReadingStates() },
       discover: { scrollToVerse: signal(null) },
       playlists: {
         playing: signal(null),
@@ -5859,6 +6115,110 @@ describe("BibleReader", () => {
     expect(
       container.querySelector(".sb-bible-reader-mobile-header-account")
     ).toBeNull();
+  });
+
+  // The row follows the app's text direction, so the end is the right in
+  // LTR languages and the left in RTL ones.
+  describe("the mobile header's back arrow during playlist playback", () => {
+    const renderPlaying = (playing: boolean) => {
+      const { slot, selectorState, readingState } = createFixture();
+      const state = createMobileState(selectorState);
+      const stopPlaying = vi.fn();
+      const view = signal<string | null>(null);
+      Object.assign(state.playlists, {
+        view,
+        playing: signal(
+          playing
+            ? createPlayingState(
+                [
+                  {
+                    id: "playlist-1",
+                    recordName: "user-1",
+                    title: "The Love of Jesus",
+                    description: null,
+                    items: [{ type: "html", html: "a" }],
+                  } as SimplePlaylist,
+                ],
+                null,
+                () => {}
+              )
+            : null
+        ),
+        isMobile: signal(true),
+        stopPlaying,
+      });
+      renderMobileReader(
+        { slot, selectorState, readingState },
+        state,
+        container
+      );
+      const back = container.querySelector<HTMLButtonElement>(
+        "button.sb-bible-reader-mobile-header-back"
+      );
+      return { back, stopPlaying, view };
+    };
+
+    it("starts the header row and goes back to the playlist's steps, still playing, when tapped", () => {
+      const { back, stopPlaying, view } = renderPlaying(true);
+
+      expect(back).not.toBeNull();
+      expect(back?.getAttribute("aria-label")).toBe("Back to the playlist");
+      expect(back?.textContent).toBe("arrow_back");
+      const header = container.querySelector(".sb-bible-reader-mobile-header")!;
+      expect(header.firstElementChild).toBe(back);
+
+      act(() => {
+        back!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(view.value).toBe("play_playlist");
+      expect(stopPlaying).not.toHaveBeenCalled();
+    });
+
+    it("is followed by the playing playlist's info, not grouped with the other tools", () => {
+      const { back } = renderPlaying(true);
+
+      const info = back?.nextElementSibling;
+      expect(info?.querySelector(".sb-quick-toolbar-card")).not.toBeNull();
+      expect(info?.textContent).toContain("The Love of Jesus");
+      expect(
+        container.querySelector(
+          ".sb-bible-reader-mobile-header-actions .sb-quick-toolbar-card"
+        )
+      ).toBeNull();
+    });
+
+    // The row is mirrored in RTL, putting the arrow on the right, so it
+    // points right.
+    it("points the other way in RTL languages", () => {
+      i18nDirection.isRtl = true;
+
+      const { back } = renderPlaying(true);
+
+      expect(back?.textContent).toBe("arrow_forward");
+    });
+
+    it("isn't shown when no playlist is playing", () => {
+      const { back } = renderPlaying(false);
+
+      expect(back).toBeNull();
+    });
+  });
+
+  it("puts the mobile header's translation button at the end of the row, after settings", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    const state = createMobileState();
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const header = container.querySelector(".sb-bible-reader-mobile-header")!;
+    const buttons = Array.from(header.querySelectorAll("button"));
+    expect(buttons.at(-1)?.className).toBe(
+      "sb-bible-reader-mobile-header-translation"
+    );
+    expect(buttons.at(-2)?.classList).toContain(
+      "sb-bible-reader-mobile-header-settings"
+    );
   });
 
   it("opens the translation picker from the mobile header's translation button", async () => {
@@ -6908,5 +7268,780 @@ describe("BibleReader — ways out of a failed chapter load", () => {
     await clickReload();
 
     expect(offline.recoveryPrompt.value).toBeNull();
+  });
+});
+
+describe("BibleReader — a playing playlist's text and link steps", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  const NOTE = {
+    type: "html" as const,
+    title: "Before we begin",
+    html: "<p>Take a moment with this.</p>",
+  };
+
+  function renderStep(
+    items: SimplePlaylist["items"],
+    options: {
+      compact: boolean;
+      /** Where a compare step's second passage is shown. */
+      compareReadingState?: BibleReadingState;
+      sharedSession?: unknown;
+    }
+  ) {
+    const { selectorState, readingState } = createFixture();
+    const slot: TabSlot = {
+      id: "slot-1",
+      tab: { id: "tab-1", readingState } as any,
+    };
+    const second = options.compareReadingState;
+    const base = createMobileState(selectorState);
+    // Linked to the tab as playback links it, so the reader's handlers can
+    // point the verse toolbar at it.
+    const playing = createPlayingState(
+      [{ id: "p", title: "P", description: null, items } as SimplePlaylist],
+      slot.tab as any,
+      undefined,
+      second
+        ? () => ({
+            readingState: second,
+            dispose: base.tabs.attachReadingState(slot.tab!, second),
+          })
+        : undefined
+    );
+    const state = {
+      ...base,
+      app: {
+        ...base.app,
+        isMobile: signal(options.compact),
+        isCompactReader: signal(options.compact),
+      },
+      playlists: {
+        ...base.playlists,
+        playing: signal(playing),
+        isMobile: signal(options.compact),
+      },
+    } as any as SeedBibleState;
+    stepState = state;
+    stepTab = slot.tab!;
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+          sharedSession={options.sharedSession as any}
+        />,
+        container
+      );
+    });
+    return playing;
+  }
+  /** The app state and tab the last `renderStep` played in. */
+  let stepState: SeedBibleState;
+  let stepTab: ReaderTab;
+
+  const page = () => container.querySelector(".sb-playlist-step-page");
+  const chapterText = () =>
+    container.textContent?.includes("In the beginning") ?? false;
+
+  it("shows a note step's title and text where the chapter goes, on a phone", async () => {
+    renderStep([NOTE], { compact: true });
+
+    expect(
+      page()?.querySelector(".sb-playlist-step-page-title")?.textContent
+    ).toBe("Before we begin");
+    // Set once it's been sanitized.
+    await vi.waitFor(() =>
+      expect(page()?.textContent).toContain("Take a moment with this.")
+    );
+    expect(chapterText()).toBe(false);
+    // Nothing of its own to close it or move on: the chapter pill does that.
+    expect(page()?.querySelector("button")).toBeNull();
+  });
+
+  it("puts a step's title in the reader's heading on desktop, in place of the chapter's", async () => {
+    renderStep([NOTE], { compact: false });
+
+    expect(
+      container.querySelector(".sb-bible-reader-heading")?.textContent
+    ).toBe("Before we begin");
+    expect(container.querySelector(".sb-bible-reader-translation")).toBeNull();
+    // Set once it's been sanitized.
+    await vi.waitFor(() =>
+      expect(page()?.textContent).toContain("Take a moment with this.")
+    );
+    expect(chapterText()).toBe(false);
+  });
+
+  it("titles a link step with its page's title when it has none of its own", () => {
+    renderStep(
+      [
+        {
+          type: "link",
+          url: "https://example.com/talk",
+          preview: { title: "A talk on John" },
+        },
+      ],
+      { compact: true }
+    );
+
+    expect(
+      page()?.querySelector(".sb-playlist-step-page-title")?.textContent
+    ).toBe("A talk on John");
+  });
+
+  describe("where others in a shared session are", () => {
+    const visual = { color: "rgb(10, 20, 30)", animal: "fox" };
+    function session(
+      peerAreas: Record<string, { first: number; last: number }>
+    ) {
+      return {
+        connectedUsers: signal([
+          {
+            connectionId: "me",
+            userId: "me",
+            isSelf: true,
+            isActive: true,
+            joinedAtMs: 0,
+            profile: { name: "Me" },
+            visual,
+          },
+          {
+            connectionId: "peer",
+            userId: "peer",
+            isSelf: false,
+            isActive: true,
+            joinedAtMs: 0,
+            profile: { name: "Mary", pictureUrl: null },
+            visual,
+          },
+        ]),
+        participantPositions: signal(
+          new Map([
+            ["peer", { bookId: "EXO", chapterNumber: 9, areas: peerAreas }],
+          ])
+        ),
+        options: signal({ hostUserId: null, allowedNavigators: [] }),
+      };
+    }
+    const THREE_PARAGRAPHS = {
+      type: "html" as const,
+      title: "Pray",
+      html: "<p>First.</p><p>Second.</p><p>Third.</p>",
+    };
+    const paragraphs = () => [
+      ...container.querySelectorAll(".sb-play-playlist-content-html > p"),
+    ];
+
+    /** Lays the note's paragraphs out 30px apart, each 20px tall. */
+    function stubParagraphBoxes() {
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+        function (this: Element) {
+          const index = paragraphs().indexOf(this);
+          const top = index >= 0 ? index * 30 : 0;
+          return {
+            top,
+            bottom: index >= 0 ? top + 20 : 0,
+            left: 0,
+            right: 100,
+            width: 100,
+            height: index >= 0 ? 20 : 0,
+            x: 0,
+            y: top,
+            toJSON: () => ({}),
+          } as DOMRect;
+        }
+      );
+    }
+
+    /**
+     * Catches what each observer watches, and reports any of it on screen to
+     * the observer watching it.
+     */
+    function stubIntersections() {
+      const observed: Element[] = [];
+      const watcher = new Map<Element, (entries: unknown[]) => void>();
+      vi.stubGlobal(
+        "IntersectionObserver",
+        class {
+          fire: (entries: unknown[]) => void;
+          mine: Element[] = [];
+          constructor(callback: IntersectionObserverCallback) {
+            this.fire = (entries) =>
+              callback(
+                entries as IntersectionObserverEntry[],
+                this as unknown as IntersectionObserver
+              );
+          }
+          observe(el: Element) {
+            observed.push(el);
+            this.mine.push(el);
+            watcher.set(el, this.fire);
+          }
+          unobserve() {}
+          disconnect() {
+            for (const el of this.mine) {
+              observed.splice(observed.indexOf(el), 1);
+              watcher.delete(el);
+            }
+            this.mine = [];
+          }
+          takeRecords() {
+            return [];
+          }
+        }
+      );
+      return {
+        observed,
+        show: (...elements: Element[]) =>
+          act(() => {
+            for (const target of elements) {
+              watcher.get(target)?.([{ target, isIntersecting: true }]);
+            }
+          }),
+      };
+    }
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+    });
+
+    it("draws a bar beside the paragraphs of a note another participant on the same step can see", async () => {
+      stubParagraphBoxes();
+      renderStep([THREE_PARAGRAPHS], {
+        compact: true,
+        sharedSession: session({ "step-0": { first: 2, last: 3 } }),
+      });
+      await vi.waitFor(() => expect(paragraphs()).toHaveLength(3));
+
+      // Renders wait for `act` here (see `setupRerender`), so each check
+      // flushes the one the measured bar asked for.
+      await vi.waitFor(async () => {
+        await act(async () => {});
+        expect(container.querySelectorAll(".sb-presence-marker")).toHaveLength(
+          1
+        );
+      });
+      const marker = container.querySelector(
+        ".sb-presence-marker"
+      ) as HTMLElement;
+      // From the top of the second paragraph to the bottom of the third.
+      expect(marker.style.top).toBe("30px");
+      expect(marker.style.height).toBe("50px");
+    });
+
+    it("draws no bar for a participant on another step", async () => {
+      stubParagraphBoxes();
+      renderStep([THREE_PARAGRAPHS], {
+        compact: true,
+        sharedSession: session({ "step-4": { first: 1, last: 3 } }),
+      });
+      await vi.waitFor(() => expect(paragraphs()).toHaveLength(3));
+
+      expect(container.querySelector(".sb-presence-marker")).toBeNull();
+      // The gutter is still open, so the text doesn't shift as people come.
+      expect(container.querySelector(".sb-presence-area-open")).not.toBeNull();
+    });
+
+    it("tells the session which of a note's paragraphs are on screen", async () => {
+      const { observed, show } = stubIntersections();
+      const playing = renderStep([THREE_PARAGRAPHS], {
+        compact: true,
+        sharedSession: session({}),
+      });
+      await vi.waitFor(() => expect(paragraphs()).toHaveLength(3));
+      await vi.waitFor(() => expect(observed).toContain(paragraphs()[2]));
+
+      show(paragraphs()[1]!, paragraphs()[2]!);
+
+      expect(
+        playing.tab!.readingState.visibleAreas.value.get("step-0")
+      ).toEqual({ first: 2, last: 3 });
+    });
+
+    it("counts a question's answer as one block, revealed or not", async () => {
+      const { observed } = stubIntersections();
+      renderStep(
+        [
+          {
+            type: "html",
+            html: "<p>Why?</p>",
+            question: { answer: "<p>Because.</p><p>And more.</p>" },
+          },
+        ],
+        { compact: true, sharedSession: session({}) }
+      );
+      const blocks = () =>
+        observed.filter((el) => el.closest(".sb-playlist-step-page"));
+      await vi.waitFor(() => expect(blocks()).toHaveLength(2));
+
+      act(() => {
+        (
+          [...container.querySelectorAll("button")].find(
+            (b) => b.textContent === "Show answer"
+          ) as HTMLButtonElement
+        ).click();
+      });
+      await vi.waitFor(() =>
+        expect(container.textContent).toContain("And more.")
+      );
+
+      // Still the question and the answer, so peers who haven't opened it
+      // count the same blocks.
+      expect(blocks()).toHaveLength(2);
+    });
+
+    it("gives a compare step's second passage and its note their own areas", async () => {
+      const { observed, show } = stubIntersections();
+      const second = createFixture();
+      const playing = renderStep(
+        [
+          {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 1, verse: 1 },
+            compare: { ref: { bookId: "GEN", chapter: 1, verse: 2 } },
+            note: "<p>Notice.</p>",
+          },
+        ],
+        {
+          compact: true,
+          compareReadingState: second.readingState,
+          sharedSession: session({}),
+        }
+      );
+      await act(async () => {
+        await playing.jumpTo(0);
+      });
+      await vi.waitFor(() =>
+        expect(container.textContent).toContain("Notice.")
+      );
+
+      const secondVerse = container
+        .querySelectorAll(".sb-playlist-compare-column")[1]!
+        .querySelector(".sb-verse")!;
+      const note = container.querySelector(
+        ".sb-playlist-compare-note .sb-play-playlist-content-html > p"
+      )!;
+      await vi.waitFor(() => expect(observed).toContain(note));
+      show(secondVerse, note);
+
+      const areas = playing.tab!.readingState.visibleAreas.value;
+      expect(areas.get("step-0-second")).toEqual({ first: 2, last: 2 });
+      expect(areas.get("step-0-note")).toEqual({ first: 1, last: 1 });
+    });
+
+    it("draws no gutter outside a shared session", async () => {
+      renderStep([THREE_PARAGRAPHS], { compact: true });
+      await vi.waitFor(() => expect(paragraphs()).toHaveLength(3));
+
+      expect(container.querySelector(".sb-presence-area-open")).toBeNull();
+      expect(container.querySelector(".sb-presence-gutter")).toBeNull();
+    });
+  });
+
+  describe("a compare step", () => {
+    const COMPARE = {
+      type: "bible-verse" as const,
+      ref: { bookId: "GEN", chapter: 1, verse: 1 },
+      compare: { ref: { bookId: "GEN", chapter: 1, verse: 2 } },
+      noteTitle: "Look closer",
+      note: "<p>Notice the poetry.</p>",
+    };
+
+    async function renderCompare(options: { compact: boolean }) {
+      const second = createFixture();
+      const playing = renderStep([COMPARE], {
+        ...options,
+        compareReadingState: second.readingState,
+      });
+      await act(async () => {
+        await playing.jumpTo(0);
+      });
+      return { second, playing };
+    }
+
+    const compare = () => container.querySelector(".sb-playlist-compare");
+    const columns = () => [
+      ...container.querySelectorAll(".sb-playlist-compare-column"),
+    ];
+
+    describe("in a shared session, the second passage's verse flares", () => {
+      async function renderInSession(
+        flareSession: ReturnType<typeof createVerseFlareSession>["session"]
+      ) {
+        const second = createFixture();
+        const playing = renderStep([COMPARE], {
+          compact: true,
+          compareReadingState: second.readingState,
+          sharedSession: flareSession,
+        });
+        await act(async () => {
+          await playing.jumpTo(0);
+        });
+        const secondVerse = () =>
+          columns()[1]!.querySelector<HTMLElement>(
+            '.sb-verse[data-verse-number="2"]'
+          )!;
+        const tapSecondVerse = () =>
+          act(() => {
+            // On its words: a poetry verse takes a mouse click only there.
+            secondVerse()
+              .querySelector(".sb-verse-decorator")!
+              .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+          });
+        await vi.waitFor(() => expect(secondVerse()).not.toBeNull());
+        return { second, secondVerse, tapSecondVerse };
+      }
+
+      it("go out to the session when a verse there is selected", async () => {
+        const { session, decorateVerses } = createVerseFlareSession({
+          userId: "host",
+          connectionId: "connection-host",
+          hostUserId: "host",
+        });
+        const { tapSecondVerse } = await renderInSession(session);
+
+        tapSecondVerse();
+
+        expect(decorateVerses).toHaveBeenCalledWith(
+          "GEN",
+          1,
+          [2],
+          expect.objectContaining({ className: "sb-verse-number-flare" }),
+          expect.stringMatching(/^selected-verse-flare-connection-host-\d+$/)
+        );
+      });
+
+      it("keep running while the verse stays selected there", async () => {
+        const { session, decorations } = createVerseFlareSession({
+          userId: "host",
+          connectionId: "connection-host",
+          hostUserId: "host",
+        });
+        const { second, tapSecondVerse } = await renderInSession(session);
+        tapSecondVerse();
+        const verse = second.chapterData.value!.chapter.content.find(
+          (entry): entry is ChapterVerse =>
+            entry.type === "verse" && entry.number === 2
+        )!;
+
+        // Selecting in one passage clears the other's selection.
+        act(() => {
+          second.selectedVerses.value = [
+            { bookId: "GEN", chapterNumber: 1, translationId: "BSB", verse },
+          ];
+        });
+        act(() => {
+          (
+            stepTab.readingState.selectedVerses as typeof second.selectedVerses
+          ).value = [];
+        });
+
+        expect(decorations.value).toEqual([
+          expect.objectContaining({
+            verses: [2],
+            className: "sb-verse-number-flare",
+          }),
+        ]);
+      });
+
+      it("show a peer's flare there", async () => {
+        const { session } = createVerseFlareSession({
+          userId: "me",
+          connectionId: "connection-me",
+          visibility: "everyone",
+          ownerByDecoration: { "selected-verse-flare-peer": "connection-peer" },
+        });
+        const { second, secondVerse } = await renderInSession(session);
+
+        // As a peer's flare reaches it from the session's tab.
+        act(() => {
+          second.decorations.value = [
+            {
+              id: "selected-verse-flare-peer",
+              translationId: "BSB",
+              bookId: "GEN",
+              chapterNumber: 1,
+              verses: [2],
+              className: "sb-verse-number-flare",
+              style: { "--sb-selection-flare-color": "#ff0000" },
+            } as VerseDecoration,
+          ];
+        });
+
+        const number = secondVerse().querySelector(".sb-verse-number");
+        expect(number?.classList.contains("sb-verse-number-flare")).toBe(true);
+      });
+    });
+
+    it("shows each passage in its own column, cut to its verses, and titles it Compare … to …", async () => {
+      await renderCompare({ compact: true });
+
+      expect(
+        compare()?.querySelector(".sb-playlist-step-page-title")?.textContent
+      ).toBe("Compare Genesis 1:1 to Genesis 1:2");
+      expect(
+        columns().map(
+          (column) =>
+            column.querySelector(".sb-playlist-compare-passage")?.textContent
+        )
+      ).toEqual(["Genesis 1:1", "Genesis 1:2"]);
+      const [first, secondColumn] = columns();
+      expect(first?.textContent).toContain("In the beginning");
+      expect(first?.textContent).not.toContain("Poetry A");
+      // The heading right above the first verse comes along with it.
+      expect(first?.textContent).toContain("Creation");
+      expect(secondColumn?.textContent).toContain("Poetry A");
+      expect(secondColumn?.textContent).not.toContain("In the beginning");
+      expect(chapterText()).toBe(true);
+    });
+
+    it("draws the second passage with its own highlights, as the reader does", async () => {
+      const second = createFixture();
+      second.highlights.value = {
+        highlights: [{ verse: 2, colorId: "yellow" }],
+      };
+      const playing = renderStep([COMPARE], {
+        compact: true,
+        compareReadingState: second.readingState,
+      });
+      await act(async () => {
+        await playing.jumpTo(0);
+      });
+
+      const [first, secondColumn] = columns();
+      expect(
+        secondColumn?.querySelector(".sb-highlight-yellow")
+      ).not.toBeNull();
+      expect(first?.querySelector(".sb-highlight-yellow")).toBeNull();
+    });
+
+    it.each([true, false])(
+      "shows its note once, below both passages (compact: %s)",
+      async (compact) => {
+        await renderCompare({ compact });
+
+        const note = compare()?.querySelector(".sb-playlist-compare-note");
+        expect(
+          note?.querySelector(".sb-playlist-compare-note-title")?.textContent
+        ).toBe("Look closer");
+        await vi.waitFor(() =>
+          expect(note?.textContent).toContain("Notice the poetry.")
+        );
+        // After the columns, not beside them.
+        expect(
+          compare()?.lastElementChild?.classList.contains(
+            "sb-playlist-compare-note"
+          )
+        ).toBe(true);
+        expect(container.textContent?.split("Notice the poetry.").length).toBe(
+          2
+        );
+      }
+    );
+
+    it("leaves its note out of the usual note pop-up and sheet, which would repeat it", async () => {
+      const { playing } = await renderCompare({ compact: false });
+
+      expect(currentScriptureNoteItem(playing)).toBeNull();
+    });
+
+    describe("its second passage", () => {
+      const secondColumn = () => columns()[1]!;
+      const click = (element: Element | null | undefined) =>
+        act(() => {
+          element?.dispatchEvent(
+            new MouseEvent("click", { bubbles: true, clientX: 5, clientY: 6 })
+          );
+        });
+
+      it("selects a tapped verse in its own reading state, not the tab's", async () => {
+        const { second } = await renderCompare({ compact: true });
+
+        // On its words: a poetry verse takes a mouse click only there.
+        click(secondColumn().querySelector(".sb-verse-decorator"));
+
+        expect(second.readingState.selectVerse).toHaveBeenCalledWith(
+          expect.objectContaining({
+            verse: expect.objectContaining({ number: 2 }),
+          }),
+          5,
+          6
+        );
+      });
+
+      it("opens its footnotes, and points the verse toolbar and notes at it", async () => {
+        // Its second passage is verse 1 here, which has a footnote.
+        const second = createFixture();
+        const playing = renderStep(
+          [
+            {
+              ...COMPARE,
+              compare: { ref: { bookId: "GEN", chapter: 1, verse: 1 } },
+            },
+          ],
+          { compact: true, compareReadingState: second.readingState }
+        );
+        await act(async () => {
+          await playing.jumpTo(0);
+        });
+
+        click(
+          secondColumn().querySelector(
+            '.sb-inline-footnote-button[aria-label="Open footnote 7"]'
+          )
+        );
+
+        expect(second.readingState.selectFootnote).toHaveBeenCalledWith(7);
+        expect(stepState.tabs.activeReadingState(stepTab)).toBe(
+          second.readingState
+        );
+
+        // Once open, it shows in the same footnote box as the tab's own.
+        const chapter = second.chapterData.value!;
+        act(() => {
+          second.selectedFootnote.value = {
+            note: chapter.chapter.footnotes[0]!,
+            verse: null,
+            chapter,
+          };
+        });
+        expect(
+          container.querySelector(".sb-footnote-modal-content")?.textContent
+        ).toContain("Footnote text");
+        click(container.querySelector(".sb-footnote-modal-close"));
+        expect(second.readingState.selectFootnote).toHaveBeenCalledWith(null);
+      });
+
+      it("hands the verse toolbar back to the tab's own passage when it's used", async () => {
+        const { second } = await renderCompare({ compact: true });
+        click(secondColumn().querySelector(".sb-verse-decorator"));
+        expect(stepState.tabs.activeReadingState(stepTab)).toBe(
+          second.readingState
+        );
+
+        click(columns()[0]!.querySelector(".sb-inline-footnote-button"));
+
+        expect(stepState.tabs.activeReadingState(stepTab)).toBe(
+          stepTab.readingState
+        );
+      });
+    });
+
+    it("puts its title in the reader's heading on desktop", async () => {
+      await renderCompare({ compact: false });
+
+      expect(
+        container.querySelector(".sb-bible-reader-heading")?.textContent
+      ).toBe("Compare Genesis 1:1 to Genesis 1:2");
+      expect(
+        compare()?.querySelector(".sb-playlist-step-page-title")
+      ).toBeNull();
+    });
+  });
+
+  describe("a question step", () => {
+    const QUESTION = {
+      type: "html" as const,
+      html: "<p>What does light reveal?</p>",
+      question: {
+        hint: "<p>Think about this week.</p>",
+        answer: "<p>What was hidden.</p>",
+      },
+    };
+    const button = (label: string) =>
+      [...(page()?.querySelectorAll("button") ?? [])].find(
+        (b) => b.textContent === label
+      );
+    const click = (label: string) =>
+      act(() => {
+        button(label)!.click();
+      });
+
+    it("shows the question like a note, with its answer hidden until asked for", async () => {
+      renderStep([QUESTION], { compact: true });
+
+      await vi.waitFor(() =>
+        expect(page()?.textContent).toContain("What does light reveal?")
+      );
+      expect(page()?.textContent).not.toContain("What was hidden.");
+      expect(button("Show answer")?.getAttribute("aria-expanded")).toBe(
+        "false"
+      );
+
+      click("Show answer");
+      await vi.waitFor(() =>
+        expect(page()?.textContent).toContain("What was hidden.")
+      );
+      expect(button("Hide answer")?.getAttribute("aria-expanded")).toBe("true");
+
+      click("Hide answer");
+      expect(page()?.textContent).not.toContain("What was hidden.");
+    });
+
+    it("hides its hint behind a button of its own", async () => {
+      renderStep([QUESTION], { compact: true });
+
+      click("Show hint");
+      await vi.waitFor(() =>
+        expect(page()?.textContent).toContain("Think about this week.")
+      );
+      // The answer stays hidden.
+      expect(page()?.textContent).not.toContain("What was hidden.");
+    });
+
+    it("offers nothing to reveal when its author gave no hint or answer", async () => {
+      renderStep([{ type: "html", html: "<p>Q?</p>", question: {} }], {
+        compact: true,
+      });
+
+      await vi.waitFor(() => expect(page()?.textContent).toContain("Q?"));
+      expect(page()?.querySelector("button")).toBeNull();
+    });
+
+    it("starts the next question with its answer hidden again", async () => {
+      const playing = renderStep(
+        [
+          QUESTION,
+          {
+            ...QUESTION,
+            html: "<p>Second?</p>",
+            question: { answer: "<p>Second answer.</p>" },
+          },
+        ],
+        { compact: true }
+      );
+      click("Show answer");
+
+      await act(async () => {
+        await playing.next();
+      });
+      await vi.waitFor(() => expect(page()?.textContent).toContain("Second?"));
+
+      expect(page()?.textContent).not.toContain("Second answer.");
+      expect(button("Show answer")).toBeDefined();
+    });
+  });
+
+  it("shows the chapter on a scripture step", () => {
+    renderStep([{ type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } }], {
+      compact: true,
+    });
+
+    expect(page()).toBeNull();
+    expect(chapterText()).toBe(true);
   });
 });

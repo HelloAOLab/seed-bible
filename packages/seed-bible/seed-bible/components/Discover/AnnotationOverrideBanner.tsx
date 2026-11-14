@@ -1,5 +1,6 @@
 import "./AnnotationOverrideBanner.css";
 import { useI18n } from "../../i18n/I18nManager";
+import { Button } from "../Button/Button";
 
 /**
  * Shown atop the notes section whenever annotations are being routed through
@@ -31,15 +32,15 @@ export default function AnnotationOverrideBanner() {
             "Notes are being saved and loaded from your team's account.",
         })}
       </span>
-      <button
-        type="button"
+      <Button
+        size="sm"
         className="sb-annotation-override-banner-button"
         onClick={saveToMyAccount}
       >
         {t("annotation-override-save-to-my-account", {
           defaultValue: "Save to my account",
         })}
-      </button>
+      </Button>
     </div>
   );
 }

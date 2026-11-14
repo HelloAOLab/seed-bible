@@ -35,23 +35,7 @@
 }
 
 .sb-extensions-page-add-link {
-  min-height: 2.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0 1.125rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-extensions-page-add-link:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  flex-shrink: 0;
 }
 
 .sb-extensions-page-columns {
@@ -77,11 +61,11 @@
   gap: 0.5rem;
   padding: 0 0.875rem;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   text-align: start;
   cursor: pointer;
 }
@@ -97,7 +81,7 @@
 }
 
 .sb-extensions-page-filter-count {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--sb-extensions-page-muted);
 }
 
@@ -115,7 +99,7 @@
 
 .sb-extensions-page-filters-title {
   padding: 0 0.875rem 0.25rem;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -133,7 +117,7 @@
 .sb-extensions-page-note,
 .sb-extensions-page-empty {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   color: var(--sb-extensions-page-muted);
 }
 
@@ -145,7 +129,7 @@
 
 .sb-extensions-page-section-title {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--sb-font-size-18);
   font-weight: 600;
 }
 
@@ -168,7 +152,7 @@
   gap: 0.75rem;
   padding: 1.125rem;
   border: 1px solid var(--sb-extensions-page-border);
-  border-radius: 1.125rem;
+  border-radius: var(--sb-radius-xl);
   background: transparent;
   color: inherit;
   font-family: inherit;
@@ -195,8 +179,8 @@
 .sb-extensions-card-identity .sb-extension-consent-tile {
   width: 3.25rem;
   height: 3.25rem;
-  border-radius: 0.875rem;
-  font-size: 1.125rem;
+  border-radius: var(--sb-radius-xl);
+  font-size: var(--sb-font-size-18);
 }
 
 .sb-extensions-card-titles {
@@ -207,12 +191,12 @@
 }
 
 .sb-extensions-card-name {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
 }
 
 .sb-extensions-card-source {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--sb-extensions-page-muted);
 }
 
@@ -222,7 +206,7 @@
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 18%);
 }

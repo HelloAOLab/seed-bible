@@ -179,6 +179,7 @@ function createMockState(
     tabs: {
       tabs: signal(overrides.tab ? [overrides.tab] : []),
       selectedTabId: signal(overrides.tab?.id ?? null),
+      activeReadingState: (tab: ReaderTab) => tab.readingState,
     },
     panes: { closeFullscreenPanes: vi.fn() },
     modals: overrides.modals ?? { openModal: vi.fn(), closeModal: vi.fn() },

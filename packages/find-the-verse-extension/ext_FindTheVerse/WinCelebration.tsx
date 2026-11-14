@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { Button } from "seed-bible/components";
 import { formatReference } from "./books";
 import { SoundToggle } from "./SoundToggle";
 import type { TargetVerse } from "./types";
@@ -135,19 +136,19 @@ export default function WinCelebration({
           </p>
         )}
         <div className="ftv-celebration-actions">
-          <button
-            ref={backRef}
-            type="button"
-            className="ftv-btn ftv-btn--primary"
-            onClick={onBack}
-          >
+          <Button buttonRef={backRef} variant="primary" onClick={onBack}>
             {translate("back-to-menu", { defaultValue: "Back to games" })}
-          </button>
-          <button type="button" className="ftv-btn" onClick={onDismiss}>
+          </Button>
+          <Button onClick={onDismiss}>
             {translate("keep-reading", { defaultValue: "Keep reading" })}
-          </button>
+          </Button>
         </div>
-        <SoundToggle t={translate} className="ftv-celebration-sound" />
+        <SoundToggle
+          t={translate}
+          className="ftv-celebration-sound"
+          variant="ghost"
+          size="sm"
+        />
       </div>
     </div>
   );

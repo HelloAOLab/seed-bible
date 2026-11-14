@@ -22,7 +22,7 @@
 .sb-playlist-history-empty {
   margin: 8px 0 0;
   color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   line-height: 1.4;
 }
 
@@ -39,7 +39,7 @@
 .sb-playlist-history-day {
   margin: 0 0 2px;
   padding: 0 2px;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;

@@ -1,7 +1,7 @@
 /* Terms of service modal --------------------------------------------------- */
 
 .sb-tos-content {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-tos-content h1,

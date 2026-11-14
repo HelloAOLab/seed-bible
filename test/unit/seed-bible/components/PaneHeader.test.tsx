@@ -110,6 +110,37 @@ describe("PaneHeader", () => {
     expect(onPointerDown).not.toHaveBeenCalled();
   });
 
+  it("does not start a drag or bubble a click from the close button", () => {
+    const onPointerDown = vi.fn();
+    const onClose = vi.fn();
+    const onHeaderClick = vi.fn();
+
+    act(() => {
+      render(
+        <div onClick={onHeaderClick}>
+          <PaneHeader
+            title={"My Pane"}
+            onClose={onClose}
+            onPointerDown={onPointerDown}
+          />
+        </div>,
+        container
+      );
+    });
+
+    const close = container.querySelector(
+      ".sb-pane-header-close-button"
+    ) as HTMLButtonElement;
+    act(() => {
+      close.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+      close.click();
+    });
+
+    expect(onPointerDown).not.toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onHeaderClick).not.toHaveBeenCalled();
+  });
+
   it("still starts a drag from the header body itself", () => {
     const onPointerDown = vi.fn();
 
@@ -133,5 +164,26 @@ describe("PaneHeader", () => {
     });
 
     expect(onPointerDown).toHaveBeenCalled();
+  });
+
+  it("draws a plain close button unless the pane asks for the tinted look", () => {
+    act(() => {
+      render(<PaneHeader title={"My Pane"} onClose={vi.fn()} />, container);
+    });
+    const close = () =>
+      container.querySelector(".sb-pane-header-close-button")!.classList;
+    expect(close()).toContain("sb-icon-button-plain");
+
+    act(() => {
+      render(
+        <PaneHeader
+          title={"My Pane"}
+          onClose={vi.fn()}
+          closeButtonLook="tinted"
+        />,
+        container
+      );
+    });
+    expect(close()).toContain("sb-icon-button-tinted");
   });
 });

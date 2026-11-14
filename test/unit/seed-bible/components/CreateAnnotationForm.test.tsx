@@ -381,7 +381,7 @@ describe("CreateAnnotationForm", () => {
 
       act(() => {
         container
-          .querySelector(".sb-discover-panel-header .sb-pane-header-button")!
+          .querySelector(".sb-discover-panel-header .sb-icon-button")!
           .dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
 

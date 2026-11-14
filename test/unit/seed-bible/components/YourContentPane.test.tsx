@@ -1782,7 +1782,9 @@ describe("YourContentPane", () => {
     const create = container.querySelector(".sb-content-create");
     const chips = container.querySelector(".sb-content-chips");
     if (!create || !chips) throw new Error("The toolbar did not render.");
-    expect(create.textContent).toBe("+ Create");
+    expect(create.querySelector(".sb-button-label")?.textContent).toBe(
+      "Create"
+    );
     expect(
       create.compareDocumentPosition(chips) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
