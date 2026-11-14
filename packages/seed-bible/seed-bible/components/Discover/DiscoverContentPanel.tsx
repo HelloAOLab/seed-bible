@@ -484,6 +484,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     if (
       !target ||
       !tab ||
+      (target.tabId !== undefined && target.tabId !== tab.id) ||
       target.bookId !== tab.readingState.bookId.value ||
       target.chapterNumber !== tab.readingState.chapterNumber.value
     ) {

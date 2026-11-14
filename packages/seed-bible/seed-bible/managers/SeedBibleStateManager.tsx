@@ -17,6 +17,7 @@ import {
   createTodayManager,
   getTodayPageRedirect,
   isTodayPagePath,
+  openTodayAnnotationThread,
   openTodayPassage,
   shouldRedirectToTodayPage,
   type TodayManager,
@@ -4180,6 +4181,11 @@ export function createSeedBibleState(
     closeProfile();
     openTodayPassage(state, today, target);
   };
+  const openAnnotationThreadFromContent = (annotation: Annotation) => {
+    closeYourContent();
+    closeProfile();
+    openTodayAnnotationThread(state, today, annotation);
+  };
   const playPlaylistFromContent = (playlist: Playlist) => {
     closeYourContent();
     closeProfile();
@@ -4267,6 +4273,7 @@ export function createSeedBibleState(
     <YourContentPane
       state={state}
       onOpenPassage={openPassageFromContent}
+      onOpenAnnotationThread={openAnnotationThreadFromContent}
       onPlayPlaylist={playPlaylistFromContent}
       onEditPlaylist={editPlaylistFromContent}
       onEditAnnotation={editAnnotationFromContent}

@@ -20,7 +20,11 @@ import {
 } from "./StaticPagePath";
 import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { Translation, TranslationBooks } from "./FreeUseBibleAPI";
-import type { Annotation, AnnotationsManager } from "./AnnotationsManager";
+import {
+  annotationVerseNumbers,
+  type Annotation,
+  type AnnotationsManager,
+} from "./AnnotationsManager";
 import {
   buildCommunityFeed,
   type CommunityFeedItem,
@@ -591,7 +595,7 @@ export function openTodayPassage(
   state: SeedBibleState,
   today: TodayManager,
   { bookId, chapter, verse, translationId }: TodayPassageTarget
-): void {
+): ReaderTab {
   // First, so leaving Today pushes a history entry that selecting the new tab
   // below then rewrites in place: Back returns to Today instead of skipping it.
   today.close();
@@ -615,4 +619,42 @@ export function openTodayPassage(
     state.tabsLayout.openTabInSlot(slotId, tab.id);
   }
   state.app.selectTab(tab.id);
+  return tab;
+}
+
+/**
+ * Opens the passage a note is on, like `openTodayPassage`, and shows the note
+ * in Discover: its thread unfolded, and its verse group scrolled to and
+ * flashed the way clicking an annotated verse number does in the reader.
+ */
+export function openTodayAnnotationThread(
+  state: SeedBibleState,
+  today: TodayManager,
+  annotation: Annotation
+): void {
+  const { bookId, chapterNumber } = annotation;
+  const verseNumber = annotationVerseNumbers(annotation)[0];
+  const tab = openTodayPassage(state, today, {
+    bookId,
+    chapter: chapterNumber,
+    verse: verseNumber,
+  });
+
+  state.annotations.setThreadOpen(
+    annotation.data.replyTo ?? annotation.id,
+    true
+  );
+  if (state.settings.settings.value.discoveredContent.showContent) {
+    tab.readingState.discoverContentPanelInline.value = true;
+  } else {
+    state.discover.view.value = "discover";
+  }
+  if (verseNumber !== undefined) {
+    state.discover.scrollToVerse.value = {
+      bookId,
+      chapterNumber,
+      verseNumber,
+      tabId: tab.id,
+    };
+  }
 }

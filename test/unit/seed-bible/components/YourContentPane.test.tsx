@@ -191,6 +191,8 @@ interface StateOptions {
   customizations?: SeedBibleCustomization[];
   /** `null` for a signed-out reader. */
   userId?: string | null;
+  /** Profile names by user id, as the records server would return them. */
+  profileNames?: Record<string, string>;
   unhighlightError?: Error;
   /** Verse wording per highlight key, as the manager would have read it back. */
   highlightVerseText?: Record<string, string>;
@@ -243,6 +245,9 @@ function createState(options: StateOptions = {}) {
   const removeSave = vi.fn(async (_id: string) => {});
   const login = {
     userId: signal(options.userId === undefined ? "user-1" : options.userId),
+    getUserProfile: vi.fn(async (userId: string) => ({
+      name: options.profileNames?.[userId],
+    })),
   };
   // Bookmarks run on the real manager; the records server under it is the
   // one boundary faked.
@@ -495,6 +500,7 @@ function photo(
 describe("YourContentPane", () => {
   let container: HTMLDivElement;
   let onOpenPassage: Mock<(target: unknown) => void>;
+  let onOpenAnnotationThread: Mock<(annotation: unknown) => void>;
   let onPlayPlaylist: Mock<(playlist: unknown) => void>;
   let onEditPlaylist: Mock<(playlist: unknown) => void>;
   let onEditAnnotation: Mock<(annotation: unknown) => void>;
@@ -508,6 +514,7 @@ describe("YourContentPane", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     onOpenPassage = vi.fn((_target: unknown) => {});
+    onOpenAnnotationThread = vi.fn((_annotation: unknown) => {});
     onPlayPlaylist = vi.fn((_playlist: unknown) => {});
     onEditPlaylist = vi.fn((_playlist: unknown) => {});
     onEditAnnotation = vi.fn((_annotation: unknown) => {});
@@ -529,6 +536,7 @@ describe("YourContentPane", () => {
         <YourContentPane
           state={state}
           onOpenPassage={onOpenPassage}
+          onOpenAnnotationThread={onOpenAnnotationThread}
           onPlayPlaylist={onPlayPlaylist}
           onEditPlaylist={onEditPlaylist}
           onEditAnnotation={onEditAnnotation}
@@ -1900,6 +1908,69 @@ describe("YourContentPane", () => {
     });
   });
 
+  describe("replies", () => {
+    function reply(replyToUserId: string): Annotation {
+      const base = annotation("r", "<p>Agreed</p>", 5);
+      return {
+        ...base,
+        data: { ...base.data, replyTo: "parent", replyToUserId },
+      } as Annotation;
+    }
+
+    const metaText = () =>
+      container.querySelector(".sb-content-annotation-meta")?.textContent;
+
+    it("says whose note a reply answers", async () => {
+      const { state } = createState({
+        annotations: [reply("ana-id")],
+        profileNames: { "ana-id": "Ana" },
+      });
+      renderPane(state);
+
+      await vi.waitFor(() => expect(metaText()).toContain("Reply to Ana"));
+    });
+
+    it("says just Reply when it answers the user's own note", async () => {
+      const { state } = createState({
+        annotations: [reply("user-1")],
+        profileNames: { "user-1": "Me" },
+      });
+      renderPane(state);
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(metaText()).toContain("Reply");
+      expect(metaText()).not.toContain("Reply to");
+    });
+
+    it("leaves a note that isn't a reply unlabelled", () => {
+      const { state } = createState({
+        annotations: [annotation("a", "<p>note</p>")],
+      });
+      renderPane(state);
+
+      expect(
+        container.querySelector(".sb-content-annotation-reply-to")
+      ).toBeNull();
+    });
+
+    it("opens a reply under the note it answers, instead of only its passage", () => {
+      const target = reply("ana-id");
+      const { state } = createState({ annotations: [target] });
+      renderPane(state);
+
+      act(() => {
+        (
+          container.querySelector(".sb-content-quote") as HTMLButtonElement
+        ).click();
+      });
+
+      expect(onOpenAnnotationThread).toHaveBeenCalledWith(target);
+      expect(onOpenPassage).not.toHaveBeenCalled();
+    });
+  });
+
   // Once confirmed, deleting hides the card immediately rather than waiting
   // on the server — a note that stays on screen after "Delete" reads as a
   // failure.
@@ -2344,6 +2415,7 @@ describe("YourContentPane save options", () => {
         <YourContentPane
           state={created.state}
           onOpenPassage={vi.fn()}
+          onOpenAnnotationThread={vi.fn()}
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
@@ -2441,6 +2513,7 @@ describe("YourContentPane save options", () => {
         <YourContentPane
           state={created.state}
           onOpenPassage={vi.fn()}
+          onOpenAnnotationThread={vi.fn()}
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
@@ -2470,6 +2543,7 @@ describe("YourContentPane save options", () => {
         <YourContentPane
           state={created.state}
           onOpenPassage={vi.fn()}
+          onOpenAnnotationThread={vi.fn()}
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
@@ -2503,6 +2577,7 @@ describe("YourContentPane save options", () => {
         <YourContentPane
           state={created.state}
           onOpenPassage={onOpenPassage}
+          onOpenAnnotationThread={vi.fn()}
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
@@ -2547,6 +2622,7 @@ describe("YourContentPane clearing a highlight", () => {
         <YourContentPane
           state={created.state}
           onOpenPassage={vi.fn()}
+          onOpenAnnotationThread={vi.fn()}
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
@@ -2641,6 +2717,7 @@ describe("YourContentPane clearing a highlight", () => {
         <YourContentPane
           state={created.state}
           onOpenPassage={onOpenPassage}
+          onOpenAnnotationThread={vi.fn()}
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}

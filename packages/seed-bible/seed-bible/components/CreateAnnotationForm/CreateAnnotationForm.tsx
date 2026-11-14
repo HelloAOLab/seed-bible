@@ -11,8 +11,10 @@ import {
 } from "../../managers/AnnotationsManager";
 import { extractContentText } from "../../managers/ChapterText";
 import {
+  AnnotationAuthor,
   annotationBookName,
   annotationLocationLabel,
+  AnnotationPreview,
 } from "../Discover/AnnotationsSection";
 import { DiscoverPanelLayout } from "../Discover/DiscoverPanelHeader";
 import { MaterialIcon } from "../icons";
@@ -26,6 +28,8 @@ import {
   type AnnotationEditorProps,
 } from "./PlainTextAnnotationEditor";
 import { retryChunkImport } from "./retryChunkImport";
+import { useAnnotationAuthorProfile } from "../Discover/useAnnotationAuthorProfile";
+import type { LoginManager } from "../../managers";
 
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
 // actually opens the annotation composer. If that fetch fails (e.g. offline
@@ -84,6 +88,7 @@ interface CreateAnnotationFormProps {
   tabs: TabsManager;
   toast: (message: string) => void;
   onClose: () => void;
+  login: LoginManager;
 }
 
 /** Back button plus "Annotate {location}", for the form's header. */
@@ -91,9 +96,13 @@ function CreateAnnotationTitle(props: {
   annotations: AnnotationsManager;
   editing: Annotation;
   tabs: TabsManager;
+  login: LoginManager;
+  parent?: Annotation | undefined;
 }) {
-  const { annotations, editing, tabs } = props;
+  const { annotations, editing, tabs, login, parent } = props;
   const { t } = useI18n();
+  const parentAuthorId = editing.data.replyToUserId ?? parent?.data.userId;
+  const { name } = useAnnotationAuthorProfile(parentAuthorId, login);
 
   return (
     <div className="sb-discover-title-row">
@@ -106,18 +115,49 @@ function CreateAnnotationTitle(props: {
         <MaterialIcon>arrow_back</MaterialIcon>
       </button>
       <span className="sb-discover-title" dir="auto">
-        {t("annotate-title", {
-          location: annotationLocationLabel(editing, tabs),
-          defaultValue: "Annotate {{location}}",
-        })}
+        {editing.data.replyTo
+          ? name.value.length > 0 && parentAuthorId !== login.userId.value
+            ? t("reply-title", {
+                author: name.value,
+                defaultValue: "Reply to {{author}}",
+              })
+            : t("reply", {
+                defaultValue: "Reply",
+              })
+          : t("annotate-title", {
+              location: annotationLocationLabel(editing, tabs),
+              defaultValue: "Annotate {{location}}",
+            })}
       </span>
+    </div>
+  );
+}
+
+function ParentPreview(props: {
+  parent: Annotation;
+  login: LoginManager;
+  verseReference: string | null;
+}) {
+  const { parent, login, verseReference } = props;
+
+  return (
+    <div className="sb-reply-parent-preview">
+      <div className="sb-reply-parent-preview-header">
+        <AnnotationAuthor login={login} userId={parent.data.userId} />
+        {verseReference && (
+          <span className="sb-reply-parent-preview-reference">
+            {verseReference}
+          </span>
+        )}
+      </div>
+      <AnnotationPreview html={parent.data.html} />
     </div>
   );
 }
 
 /** Create/edit-annotation screen shown inside the discover pane. */
 export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
-  const { annotations, tabs, toast, onClose } = props;
+  const { annotations, tabs, toast, onClose, login } = props;
   const { t } = useI18n();
   const EditorComponent = useAnnotationEditor();
   const editorRef = useRef<AnnotationEditorHandle | null>(null);
@@ -151,6 +191,13 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
         .map((verse) => extractContentText(verse.content))
         .join(" ")
     : null;
+
+  const replyTo = editing.data.replyTo;
+  const parent = replyTo
+    ? annotations
+        .visibleAnnotationsForChapter(editing.bookId, editing.chapterNumber)
+        .find((curr) => curr.id === replyTo)
+    : undefined;
 
   const doSave = async () => {
     if (savingRef.current || editorEmpty) {
@@ -196,10 +243,19 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
           annotations={annotations}
           editing={editing}
           tabs={tabs}
+          parent={parent}
+          login={login}
         />
       }
       onClose={onClose}
     >
+      {parent && (
+        <ParentPreview
+          login={login}
+          parent={parent}
+          verseReference={verseReference}
+        />
+      )}
       {verseReference ? (
         <div className="sb-annotation-verse-quote">
           <p className="sb-annotation-verse-quote-reference">
@@ -210,6 +266,12 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
           ) : null}
         </div>
       ) : null}
+
+      {replyTo && (
+        <span className="sb-reply-editor-label">
+          {t("your-reply", { defaultValue: "Your reply" })}
+        </span>
+      )}
 
       <Suspense
         fallback={
@@ -261,7 +323,9 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
         >
           {saving
             ? t("saving", { defaultValue: "Saving…" })
-            : t("save", { defaultValue: "Save" })}
+            : replyTo
+              ? t("reply", { defaultValue: "Reply" })
+              : t("save", { defaultValue: "Save" })}
         </button>
       </div>
     </DiscoverPanelLayout>

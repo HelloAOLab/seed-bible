@@ -80,6 +80,38 @@
   gap: 4px;
 }
 
+.sb-annotation-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-annotation-replies {
+  display: flex;
+  gap: 0;
+  padding-left: 14px;
+}
+
+.sb-annotation-replies-border {
+  width: 2px;
+  flex: 0 0 2px;
+  background: var(--sb-divider-color);
+  border-radius: 1px;
+  margin: 2px 0px 10px;
+}
+
+.sb-annotation-replies-list {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  padding-inline-start: 12px;
+  list-style: none;
+}
+
 .sb-discover-item {
   display: flex;
   flex-direction: column;
@@ -143,15 +175,15 @@
 .sb-annotation-item {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   border-radius: 8px;
   cursor: pointer;
 }
 
-/* Annotations can run for pages, which would leave the centred ⋮ off-screen
-   while reading the card. Sticky to both edges, it stays centred on short
-   cards and on long ones stays within view, but never leaves its card. */
+/* Annotations can run for pages, which would leave the top-aligned ⋮
+   off-screen while reading the card. Sticky to both edges, it stays within
+   view on long cards, but never leaves its card. */
 .sb-annotation-item > .sb-context-menu-anchor {
   position: sticky;
   top: 0.5rem;
@@ -198,6 +230,68 @@
 
 .sb-annotation-item-main {
   gap: 4px;
+}
+
+.sb-annotation-item-footer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.sb-annotation-item-footer > button {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sb-annotation-item-footer > button:hover {
+  background: var(--sb-divider-color);
+}
+
+.sb-annotation-item-footer .sb-annotation-item-footer-icon {
+  font-size: 1rem;
+}
+
+.sb-annotation-item-reply {
+  gap: 6px;
+}
+
+.sb-annotation-item-replies {
+  gap: 4px;
+}
+
+.sb-annotation-item-replies-avatars {
+  display: inline-flex;
+  align-items: center;
+}
+
+.sb-annotation-item-replies-count,
+.sb-annotation-item-reply-label {
+  text-box: trim-both cap alphabetic;
+}
+
+.sb-annotation-item-replies-avatars .sb-tab-user-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  box-shadow: 0 0 0 1.5px var(--sb-background);
+}
+
+.sb-annotation-item-replies-avatars
+  .sb-tab-user-icon-animal
+  .material-symbols-outlined {
+  font-size: 0.6875rem;
+}
+
+.sb-annotation-item-replies-avatars .sb-tab-user-icon + .sb-tab-user-icon {
+  margin-inline-start: -0.3125rem;
 }
 
 .sb-discover-item-edit,

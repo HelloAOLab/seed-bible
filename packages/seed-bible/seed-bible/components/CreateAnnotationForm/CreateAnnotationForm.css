@@ -57,8 +57,69 @@
   color: var(--sb-secondary-font-color);
 }
 
+.sb-reply-parent-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.5rem;
+}
+
+.sb-reply-parent-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sb-reply-parent-preview-header .sb-annotation-comment-author {
+  gap: 0.375rem;
+}
+
+.sb-reply-parent-preview-header .sb-tab-user-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.sb-reply-parent-preview-header .sb-annotation-comment-author-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.sb-reply-parent-preview-reference {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+}
+
+.sb-reply-parent-preview .sb-annotation-item-preview {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+}
+
+.sb-reply-editor-label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+}
+
 @media (max-width: 480px) {
   .sb-annotation-verse-quote {
     display: block;
+  }
+
+  /* The verse quote above already names the passage on phones. */
+  .sb-reply-parent-preview-reference {
+    display: none;
   }
 }

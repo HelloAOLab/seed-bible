@@ -60,6 +60,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         tabs={tabs}
         toast={props.toast}
         onClose={close}
+        login={state.login}
       />
     );
   }

@@ -127,6 +127,14 @@ export interface DiscoverScrollTarget {
   bookId: string;
   chapterNumber: number;
   verseNumber: number;
+  /**
+   * The tab whose panel should act on the target. Set when the target is
+   * raised together with a switch to a new tab: the panel is mounted per
+   * reader slot, not per tab, so until it re-renders it still shows the
+   * previous tab, which may be on the same chapter and would take the target
+   * for itself. Omitted, any panel showing the chapter acts on it.
+   */
+  tabId?: string;
 }
 
 export interface DiscoverManager {

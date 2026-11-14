@@ -222,6 +222,20 @@
   font-size: 0.8125rem;
 }
 
+.sb-content-annotation-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  color: var(--sb-content-muted);
+  font-size: 0.8125rem;
+}
+
+.sb-content-annotation-reply-to {
+  font-weight: 600;
+}
+
 .sb-content-kebab {
   display: flex;
   align-items: center;

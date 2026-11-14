@@ -30,6 +30,8 @@ import {
   AnnotationPreview,
   openDeleteAnnotationConfirm,
 } from "../Discover/AnnotationsSection";
+import { useAnnotationAuthorProfile } from "../Discover/useAnnotationAuthorProfile";
+import type { LoginManager } from "../../managers/LoginManager";
 import { PlaylistRow } from "../Discover/PlaylistRow";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import type { Bookmark } from "../../managers/BookmarksManager";
@@ -65,6 +67,11 @@ export interface YourContentScreenProps {
   state: SeedBibleState;
   /** Opens a passage in the reader and leaves this screen. */
   onOpenPassage: (target: TodayPassageTarget) => void;
+  /**
+   * Opens the passage a note is on with its thread unfolded in Discover, and
+   * leaves this screen.
+   */
+  onOpenAnnotationThread: (annotation: Annotation) => void;
   /** Starts a playlist and leaves this screen. */
   onPlayPlaylist: (playlist: Playlist) => void;
   /** Opens a playlist in the editor and leaves this screen. */
@@ -243,10 +250,32 @@ function SectionHeader(props: {
   );
 }
 
+/** "Reply to {author}" on a reply's card, or just "Reply" when it answers the user's own note. */
+function AnnotationReplyLabel(props: {
+  replyToUserId: string | null | undefined;
+  login: LoginManager;
+}) {
+  const { replyToUserId, login } = props;
+  const { t } = useI18n();
+  const { name } = useAnnotationAuthorProfile(replyToUserId, login);
+  return (
+    <span className="sb-content-annotation-reply-to">
+      {name.value.length > 0 && replyToUserId !== login.userId.value
+        ? t("reply-title", {
+            author: name.value,
+            defaultValue: "Reply to {{author}}",
+          })
+        : t("reply", { defaultValue: "Reply" })}
+    </span>
+  );
+}
+
 function AnnotationCard(props: {
   state: SeedBibleState;
   annotation: Annotation;
   onOpenPassage: (target: TodayPassageTarget) => void;
+  /** Opens a reply in Discover, under the note it answers. */
+  onOpenThread: () => void;
   onEdit: () => void;
   /** Erases the annotation, once the user has confirmed. */
   onDelete: () => Promise<void>;
@@ -269,18 +298,32 @@ function AnnotationCard(props: {
     verses
   );
 
+  const isReply = !!annotation.data.replyTo;
   const open = () =>
-    props.onOpenPassage({
-      bookId: annotation.bookId,
-      chapter: annotation.chapterNumber,
-      verse: verses[0],
-    });
+    isReply
+      ? props.onOpenThread()
+      : props.onOpenPassage({
+          bookId: annotation.bookId,
+          chapter: annotation.chapterNumber,
+          verse: verses[0],
+        });
 
   return (
     <div className="sb-content-annotation">
       <div className="sb-content-annotation-head">
-        <span className="sb-content-date">
-          {formatDate(annotation.data.createdAtMs, language)}
+        <span className="sb-content-annotation-meta">
+          <span className="sb-content-date">
+            {formatDate(annotation.data.createdAtMs, language)}
+          </span>
+          {isReply ? (
+            <>
+              <MetaSeparator />
+              <AnnotationReplyLabel
+                replyToUserId={annotation.data.replyToUserId}
+                login={state.login}
+              />
+            </>
+          ) : null}
         </span>
         <ContextMenuWithButton
           icon="more_horiz"
@@ -1154,6 +1197,9 @@ export function YourContentPane(props: YourContentScreenProps) {
                     state={state}
                     annotation={annotation}
                     onOpenPassage={onOpenPassage}
+                    onOpenThread={() =>
+                      props.onOpenAnnotationThread(annotation)
+                    }
                     onEdit={() => props.onEditAnnotation(annotation)}
                     onDelete={async () => {
                       // Drop it from the list straight away — waiting on the
