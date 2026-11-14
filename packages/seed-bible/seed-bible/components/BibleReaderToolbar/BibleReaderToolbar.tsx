@@ -63,25 +63,20 @@ import type { AudioPlaybackController } from "../../managers/AudioPlaybackManage
 import {
   annotationVerseNumbers,
   annotationListHasOtherAuthors,
+  buildThreads,
   groupAnnotationsByVerseRange,
   type Annotation,
   type AnnotationGroup,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
 import {
-  AnnotationPreview,
-  AnnotationCommentMeta,
+  AnnotationThread,
   annotationLocationLabel,
-  openDeleteAnnotationConfirm,
 } from "../Discover/AnnotationsSection";
 import {
   VerseTaggedResultsSections,
   verseTaggedResultsFor,
 } from "../Discover/DiscoveredResultsSections";
-import {
-  ContextMenuWithButton,
-  ContextMenuItem,
-} from "../ContextMenu/ContextMenu";
 import type { TabsManager } from "../../managers/TabsManager";
 import type { VerseRef } from "../../managers/BibleDataManager";
 import type { LoginManager } from "../../managers/LoginManager";
@@ -817,7 +812,7 @@ function VerseToolbarAnnotationGroup(props: {
     onReferenceClick,
     otherPeoplePresent,
   } = props;
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const expanded = useSignal(true);
   const label = annotationLocationLabel(group.annotations[0]!, tabs);
 
@@ -847,61 +842,19 @@ function VerseToolbarAnnotationGroup(props: {
       </button>
       {expanded.value ? (
         <ul className="sb-annotation-group-list">
-          {group.annotations.map((annotation) => (
-            <li key={annotation.id} className="sb-annotation-item" dir="auto">
-              <div className="sb-annotation-item-main">
-                {annotation.data.type === "comment" && (
-                  <AnnotationPreview
-                    html={annotation.data.html}
-                    onReferenceClick={onReferenceClick}
-                  />
-                )}
-                <AnnotationCommentMeta
-                  annotation={annotation}
-                  login={login}
-                  t={t}
-                  language={language}
-                  otherPeoplePresent={otherPeoplePresent}
-                />
-              </div>
-              {ownAnnotations.has(annotation) ? (
-                <ContextMenuWithButton
-                  buttonClassName="sb-annotation-item-menu"
-                  label={t("annotation-options", {
-                    defaultValue: "Annotation options",
-                  })}
-                >
-                  <ContextMenuItem
-                    onClick={() => {
-                      console.log("Editing annotation", annotation);
-                      annotations.editAnnotation(annotation);
-                    }}
-                  >
-                    <MaterialIcon className="sb-context-menu-item-icon">
-                      edit
-                    </MaterialIcon>
-                    {t("edit-annotation", { defaultValue: "Edit" })}
-                  </ContextMenuItem>
-                  <ContextMenuItem
-                    className="sb-context-menu-item--danger"
-                    onClick={() => {
-                      openDeleteAnnotationConfirm(
-                        modals,
-                        annotations,
-                        annotation,
-                        label,
-                        toast
-                      );
-                    }}
-                  >
-                    <MaterialIcon className="sb-context-menu-item-icon">
-                      delete
-                    </MaterialIcon>
-                    {t("delete-annotation", { defaultValue: "Delete" })}
-                  </ContextMenuItem>
-                </ContextMenuWithButton>
-              ) : null}
-            </li>
+          {buildThreads(group).map((thread) => (
+            <AnnotationThread
+              key={thread.annotation.id}
+              thread={thread}
+              label={label}
+              annotations={annotations}
+              modals={modals}
+              toast={toast}
+              login={login}
+              onReferenceClick={onReferenceClick}
+              otherPeoplePresent={otherPeoplePresent}
+              ownAnnotations={ownAnnotations}
+            />
           ))}
         </ul>
       ) : null}

@@ -1,7 +1,7 @@
 import "./DiscoverPane.css";
 import { effect, useSignal } from "@preact/signals";
 import { lazy, Suspense } from "preact/compat";
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import type { JSX } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
@@ -18,6 +18,7 @@ import {
   visibleChapterAnnotations,
   type Annotation,
   type AnnotationGroup,
+  type AnnotationReplyThread,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
 import { setSafeHtml } from "../../managers/Sanitization";
@@ -29,10 +30,15 @@ import {
 } from "../ContextMenu/ContextMenu";
 import { DiscoverSection } from "./DiscoverSection";
 import { noTabHint } from "./DiscoveredResultsSections";
+import { useAnnotationAuthorProfile } from "./useAnnotationAuthorProfile";
 import { Avatar } from "../Avatar/Avatar";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import { emphasizeVerses, type PanesManager } from "../../managers";
+import {
+  buildThreads,
+  emphasizeVerses,
+  type PanesManager,
+} from "../../managers";
 import {
   parseVerseReference,
   type BookId,
@@ -135,61 +141,36 @@ export function AnnotationPreview({
   );
 }
 
-// Shared across every `AnnotationAuthor` instance so authors of multiple
-// comments (or comments re-rendered across chapters) resolve their profile
-// once per session instead of once per row. `LoginManager.getUserProfile`
-// has no built-in cache of its own for arbitrary user ids (only for the
-// signed-in account), so this mirrors the per-id cache already used in
-// `SessionsManager.tsx`.
-const annotationAuthorProfileCache = new Map<
-  string,
-  ReturnType<LoginManager["getUserProfile"]>
->();
+function AnnotationAuthorAvatar(props: {
+  userId: string;
+  login: LoginManager;
+  otherPeoplePresent?: boolean;
+}) {
+  const { userId, login, otherPeoplePresent = false } = props;
+  const { name, pictureUrl } = useAnnotationAuthorProfile(userId, login);
+  return (
+    <Avatar
+      imageUrl={pictureUrl.value}
+      visual={getUserAnimalVisual(userId)}
+      title={name.value}
+      genericFallback={userId === login.userId.value && !otherPeoplePresent}
+    />
+  );
+}
 
 /**
  * Shows a comment annotation's author avatar and name, resolved live from
  * their profile by user id.
  */
-function AnnotationAuthor(props: {
+export function AnnotationAuthor(props: {
   userId: string | null | undefined;
   login: LoginManager;
   otherPeoplePresent?: boolean;
 }) {
   const { userId, login, otherPeoplePresent = false } = props;
-  const name = useSignal("");
-  const pictureUrl = useSignal<string | null>(null);
+  const { name, pictureUrl } = useAnnotationAuthorProfile(userId, login);
   const isSelf = userId === login.userId.value;
   const { t } = useI18n();
-
-  useEffect(() => {
-    if (!userId) {
-      return;
-    }
-    let cancelled = false;
-    let promise = annotationAuthorProfileCache.get(userId);
-    if (!promise) {
-      promise = login.getUserProfile(userId);
-      annotationAuthorProfileCache.set(userId, promise);
-    }
-    promise
-      .then((profile) => {
-        if (cancelled) {
-          return;
-        }
-        if (profile.name) {
-          name.value = profile.name;
-        }
-        if (profile.pictureUrl) {
-          pictureUrl.value = profile.pictureUrl;
-        }
-      })
-      .catch(() => {
-        // No profile available; author renders with no name/picture.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
 
   if (!userId) {
     return null;
@@ -266,6 +247,241 @@ export function AnnotationCommentMeta(props: {
   );
 }
 
+function AnnotationItem(props: {
+  annotation: Annotation;
+  /** The verse label of the group this note belongs to, e.g. "Genesis 3:3-5". */
+  label: string;
+  isOwnAnnotation: boolean;
+  annotations: AnnotationsManager;
+  modals: ModalManager;
+  toast: SeedBibleState["app"]["toast"];
+  login: LoginManager;
+  /** Runs when the note itself is clicked. Omitted where a click does nothing. */
+  onSelect?: (annotation: Annotation) => void;
+  onReferenceClick?: (ref: VerseRef) => void;
+  otherPeoplePresent?: boolean;
+  replies?: Annotation[];
+  showReplies: boolean;
+  onToggleReplies?: () => void;
+}) {
+  const {
+    annotation,
+    label,
+    isOwnAnnotation,
+    annotations,
+    modals,
+    toast,
+    login,
+    onSelect,
+    onReferenceClick,
+    otherPeoplePresent,
+    replies = [],
+    showReplies,
+    onToggleReplies,
+  } = props;
+  const { t, language } = useI18n();
+
+  const replyAuthorIds = [
+    ...new Set(
+      replies.flatMap((reply) => (reply.data.userId ? [reply.data.userId] : []))
+    ),
+  ].slice(0, 3);
+
+  return (
+    <div
+      className="sb-annotation-item"
+      dir="auto"
+      onClick={onSelect ? () => onSelect(annotation) : undefined}
+    >
+      <div className="sb-annotation-item-main">
+        <AnnotationPreview
+          html={annotation.data.html}
+          onReferenceClick={onReferenceClick}
+        />
+        <AnnotationCommentMeta
+          annotation={annotation}
+          login={login}
+          t={t}
+          language={language}
+          otherPeoplePresent={otherPeoplePresent}
+        />
+        <div className="sb-annotation-item-footer">
+          <button
+            className="sb-annotation-item-reply"
+            onClick={(e) => {
+              e.stopPropagation();
+              annotations.createReply(annotation);
+            }}
+          >
+            <MaterialIcon className="sb-annotation-item-footer-icon">
+              reply
+            </MaterialIcon>
+            <span className="sb-annotation-item-reply-label">
+              {t("reply", { defaultValue: "Reply" })}
+            </span>
+          </button>
+          {replies.length > 0 && onToggleReplies && (
+            <button
+              aria-expanded={showReplies}
+              className="sb-annotation-item-replies"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleReplies();
+              }}
+            >
+              {!showReplies && (
+                <span className="sb-annotation-item-replies-avatars">
+                  {replyAuthorIds.map((authorId) => (
+                    <AnnotationAuthorAvatar
+                      key={authorId}
+                      userId={authorId}
+                      login={login}
+                      otherPeoplePresent={otherPeoplePresent}
+                    />
+                  ))}
+                </span>
+              )}
+              <span className="sb-annotation-item-replies-count">
+                {t("replies-count", {
+                  count: replies.length,
+                  defaultValue_one: "{{count}} reply",
+                  defaultValue_other: "{{count}} replies",
+                })}
+              </span>
+              <MaterialIcon className="sb-annotation-item-footer-icon">
+                {showReplies ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+              </MaterialIcon>
+            </button>
+          )}
+        </div>
+      </div>
+      {isOwnAnnotation ? (
+        <ContextMenuWithButton
+          buttonClassName="sb-annotation-item-menu"
+          label={t("annotation-options", {
+            defaultValue: "Annotation options",
+          })}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ContextMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              annotations.editAnnotation(annotation);
+            }}
+          >
+            <MaterialIcon className="sb-context-menu-item-icon">
+              edit
+            </MaterialIcon>
+            {t("edit-annotation", { defaultValue: "Edit" })}
+          </ContextMenuItem>
+          <ContextMenuItem
+            className="sb-context-menu-item--danger"
+            onClick={(e) => {
+              e.stopPropagation();
+              openDeleteAnnotationConfirm(
+                modals,
+                annotations,
+                annotation,
+                label,
+                toast
+              );
+            }}
+          >
+            <MaterialIcon className="sb-context-menu-item-icon">
+              delete
+            </MaterialIcon>
+            {t("delete-annotation", { defaultValue: "Delete" })}
+          </ContextMenuItem>
+        </ContextMenuWithButton>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * One note with its replies, which start folded away until the user unfolds
+ * them or replies to the note (see `AnnotationsManager.openThreadIds`).
+ * Shared by Discover's notes list and the mobile verse sheet.
+ */
+export function AnnotationThread(props: {
+  thread: AnnotationReplyThread;
+  label: string;
+  annotations: AnnotationsManager;
+  modals: ModalManager;
+  toast: SeedBibleState["app"]["toast"];
+  login: LoginManager;
+  /** Runs when a note in the thread is clicked. Omitted where a click does nothing. */
+  onSelect?: (annotation: Annotation) => void;
+  onReferenceClick?: (ref: VerseRef) => void;
+  otherPeoplePresent?: boolean;
+  ownAnnotations: ReadonlySet<Annotation>;
+}) {
+  const {
+    thread: { annotation, replies },
+    label,
+    annotations,
+    modals,
+    toast,
+    login,
+    onSelect,
+    onReferenceClick,
+    otherPeoplePresent,
+    ownAnnotations,
+  } = props;
+  const showReplies = annotations.openThreadIds.value.has(annotation.id);
+  // Friends' annotations can appear in this same list; only
+  // the author may edit or delete their own annotation.
+  const isOwnAnnotation = ownAnnotations.has(annotation);
+  return (
+    <li className="sb-annotation-thread">
+      <AnnotationItem
+        annotation={annotation}
+        replies={replies}
+        showReplies={showReplies}
+        onToggleReplies={() =>
+          annotations.setThreadOpen(annotation.id, !showReplies)
+        }
+        label={label}
+        isOwnAnnotation={isOwnAnnotation}
+        annotations={annotations}
+        modals={modals}
+        toast={toast}
+        login={login}
+        onSelect={onSelect}
+        onReferenceClick={onReferenceClick}
+        otherPeoplePresent={otherPeoplePresent}
+      />
+      {showReplies && replies.length > 0 && (
+        <div className="sb-annotation-replies">
+          <div className="sb-annotation-replies-border"></div>
+          <ul className="sb-annotation-replies-list">
+            {replies.map((reply) => {
+              const isOwnReply = ownAnnotations.has(reply);
+              return (
+                <li key={reply.id}>
+                  <AnnotationItem
+                    annotation={reply}
+                    label={label}
+                    isOwnAnnotation={isOwnReply}
+                    annotations={annotations}
+                    modals={modals}
+                    toast={toast}
+                    login={login}
+                    onSelect={onSelect}
+                    onReferenceClick={onReferenceClick}
+                    otherPeoplePresent={otherPeoplePresent}
+                    showReplies={false}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </li>
+  );
+}
+
 /**
  * One verse-range group of annotations: a collapsible header showing the
  * shared verse label, and (while expanded) the annotation rows themselves.
@@ -303,9 +519,49 @@ function AnnotationGroupSection(props: {
     otherPeoplePresent,
     highlighted,
   } = props;
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const expanded = useSignal(true);
   const label = annotationLocationLabel(group.annotations[0]!, tabs);
+  const threads = buildThreads(group);
+
+  // A layout effect, so the notes are back in place before the scroll to this
+  // group runs on the next frame.
+  useLayoutEffect(() => {
+    if (highlighted) {
+      expanded.value = true;
+    }
+  }, [highlighted]);
+
+  const selectAnnotation = async (annotation: Annotation) => {
+    if (!annotation.verseNumber) {
+      return;
+    }
+    const tab = tabs.tabs.value.find((t) => t.id === tabs.selectedTabId.value);
+    if (!tab) {
+      return;
+    }
+
+    panes.closeFullscreenPanes();
+    // `translationId` is optional on the item; fall back to the tab's current
+    // translation. `.peek()` avoids re-navigating when the tab changes it.
+    await tab.readingState.selectTranslationAndChapter(
+      tab.readingState.translationId.peek(),
+      annotation.bookId,
+      annotation.chapterNumber,
+      { scrollToVerse: annotation.verseNumber }
+    );
+
+    emphasizeVerses(
+      tab.readingState,
+      {
+        book: annotation.bookId as BookId,
+        chapter: annotation.chapterNumber,
+        verse: annotation.verseNumber,
+        endVerse: annotation.endVerseNumber ?? undefined,
+      },
+      annotationVerseNumbers(annotation)
+    );
+  };
 
   return (
     <div
@@ -338,101 +594,21 @@ function AnnotationGroupSection(props: {
       </button>
       {expanded.value ? (
         <ul className="sb-annotation-group-list">
-          {group.annotations.map((annotation) => {
-            // Friends' annotations can appear in this same list; only
-            // the author may edit or delete their own annotation.
-            const isOwnAnnotation = ownAnnotations.has(annotation);
+          {threads.map((thread) => {
             return (
-              <li
-                key={annotation.id}
-                className="sb-annotation-item"
-                dir="auto"
-                onClick={async () => {
-                  if (!annotation.verseNumber) {
-                    return;
-                  }
-                  const tab = tabs.tabs.value.find(
-                    (t) => t.id === tabs.selectedTabId.value
-                  );
-                  if (!tab) {
-                    return;
-                  }
-
-                  panes.closeFullscreenPanes();
-                  // `translationId` is optional on the item; fall back to the tab's current
-                  // translation. `.peek()` avoids re-navigating when the tab changes it.
-                  await tab.readingState.selectTranslationAndChapter(
-                    tab.readingState.translationId.peek(),
-                    annotation.bookId,
-                    annotation.chapterNumber,
-                    { scrollToVerse: annotation.verseNumber }
-                  );
-
-                  emphasizeVerses(
-                    tab.readingState,
-                    {
-                      book: annotation.bookId as BookId,
-                      chapter: annotation.chapterNumber,
-                      verse: annotation.verseNumber,
-                      endVerse: annotation.endVerseNumber ?? undefined,
-                    },
-                    annotationVerseNumbers(annotation)
-                  );
-                }}
-              >
-                <div className="sb-annotation-item-main">
-                  <AnnotationPreview
-                    html={annotation.data.html}
-                    onReferenceClick={onReferenceClick}
-                  />
-                  <AnnotationCommentMeta
-                    annotation={annotation}
-                    login={login}
-                    t={t}
-                    language={language}
-                    otherPeoplePresent={otherPeoplePresent}
-                  />
-                </div>
-                {isOwnAnnotation ? (
-                  <ContextMenuWithButton
-                    buttonClassName="sb-annotation-item-menu"
-                    label={t("annotation-options", {
-                      defaultValue: "Annotation options",
-                    })}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <ContextMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        annotations.editAnnotation(annotation);
-                      }}
-                    >
-                      <MaterialIcon className="sb-context-menu-item-icon">
-                        edit
-                      </MaterialIcon>
-                      {t("edit-annotation", { defaultValue: "Edit" })}
-                    </ContextMenuItem>
-                    <ContextMenuItem
-                      className="sb-context-menu-item--danger"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openDeleteAnnotationConfirm(
-                          modals,
-                          annotations,
-                          annotation,
-                          label,
-                          toast
-                        );
-                      }}
-                    >
-                      <MaterialIcon className="sb-context-menu-item-icon">
-                        delete
-                      </MaterialIcon>
-                      {t("delete-annotation", { defaultValue: "Delete" })}
-                    </ContextMenuItem>
-                  </ContextMenuWithButton>
-                ) : null}
-              </li>
+              <AnnotationThread
+                key={thread.annotation.id}
+                thread={thread}
+                label={label}
+                annotations={annotations}
+                modals={modals}
+                toast={toast}
+                login={login}
+                onSelect={(annotation) => void selectAnnotation(annotation)}
+                onReferenceClick={onReferenceClick}
+                otherPeoplePresent={otherPeoplePresent}
+                ownAnnotations={ownAnnotations}
+              />
             );
           })}
         </ul>
@@ -485,9 +661,10 @@ export function AnnotationsSection(props: {
   // instead of leaving the highlight permanently on.
   const highlightedGroupKey = useSignal<string | null>(null);
 
-  // Clicking an annotated verse number on desktop (BibleReader.tsx) sets
-  // this once; scroll to and highlight that verse's annotation group if it's
-  // this tab's chapter, then clear it. Mirrors the mobile equivalent in
+  // Clicking an annotated verse number on desktop (BibleReader.tsx), or opening
+  // a note from another screen (`openTodayAnnotationThread`), sets this once;
+  // scroll to and highlight that verse's annotation group if it's this tab's
+  // chapter, then clear it. Mirrors the mobile equivalent in
   // BibleReaderToolbar.tsx.
   useEffect(() => {
     if (!tab) return;
@@ -498,12 +675,12 @@ export function AnnotationsSection(props: {
       const target = discover.scrollToVerse.value;
       if (!target) return;
       if (
+        (target.tabId !== undefined && target.tabId !== tab.id) ||
         target.bookId !== tab.readingState.bookId.value ||
         target.chapterNumber !== tab.readingState.chapterNumber.value
       ) {
         return;
       }
-      discover.scrollToVerse.value = null; // consume once, immediately
 
       const chapterAnnotations = visibleChapterAnnotations(
         annotations,
@@ -516,7 +693,11 @@ export function AnnotationsSection(props: {
           annotationVerseNumbers(a).includes(target.verseNumber)
         )
       );
+      // Left in place while the chapter's notes are still loading (in a tab
+      // that was just opened on it, say): this effect re-runs when they
+      // arrive, and the group can be found then.
       if (!group) return;
+      discover.scrollToVerse.value = null; // consume once
 
       const groupKey = `${group.startVerseNumber ?? "chapter"}-${
         group.endVerseNumber ?? "chapter"
@@ -539,6 +720,9 @@ export function AnnotationsSection(props: {
     return () => {
       cancelAnimationFrame(frame);
       window.clearTimeout(highlightTimer);
+      // The timer that would have cleared the highlight is gone; clear it now,
+      // or the next highlight of the same group never restarts its animation.
+      highlightedGroupKey.value = null;
       dispose();
     };
   }, [tab, discover, annotations, friends]);

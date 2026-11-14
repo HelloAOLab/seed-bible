@@ -2,6 +2,7 @@ import {
   annotationCollection,
   annotationVerseNumbers,
   annotationListHasOtherAuthors,
+  buildThreads,
   createAnnotationsManager,
   formatAnnotationVerseNumbers,
   groupAnnotationsByVerseRange,
@@ -1165,6 +1166,159 @@ describe("AnnotationsManager", () => {
     });
   });
 
+  describe("visibleAnnotationsForChapter with replies", () => {
+    const reply = (id: string, replyTo: string) =>
+      createCommentAnnotation({
+        id,
+        data: { type: "comment", html: "<p>Reply</p>", replyTo },
+      });
+
+    function mockChapterNotes(byUser: Record<string, Annotation[]>) {
+      listDataByMarkerMock.mockImplementation(
+        async (recordName: string, _marker: string, lastAddress?: string) => {
+          if (lastAddress) {
+            return { success: true, items: [] };
+          }
+          return {
+            success: true,
+            items: (byUser[recordName] ?? []).map((a) => ({
+              address: a.id,
+              data: a,
+            })),
+          };
+        }
+      );
+    }
+
+    function visibleIds() {
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        { friendIds: signal(["friend-user"]) }
+      );
+      return computed(() =>
+        manager
+          .visibleAnnotationsForChapter("GEN", 1)
+          .map((a) => a.id)
+          .sort()
+      );
+    }
+
+    function createManagerWithFriend() {
+      return createAnnotationsManager(os, login, tabs, discover, undefined, {
+        friendIds: signal(["friend-user"]),
+      });
+    }
+
+    describe("loadVisibleAnnotationsForChapter", () => {
+      it("waits for your notes and your friends' before answering", async () => {
+        mockChapterNotes({
+          "user-1": [createCommentAnnotation({ id: "my-note" })],
+          "friend-user": [reply("friend-reply", "my-note")],
+        });
+
+        const notes =
+          await createManagerWithFriend().loadVisibleAnnotationsForChapter(
+            "GEN",
+            1
+          );
+
+        expect(notes?.map((a) => a.id).sort()).toEqual([
+          "friend-reply",
+          "my-note",
+        ]);
+      });
+
+      it("leaves out a reply whose note is gone", async () => {
+        mockChapterNotes({
+          "user-1": [reply("my-reply", "deleted-note")],
+        });
+
+        const notes =
+          await createManagerWithFriend().loadVisibleAnnotationsForChapter(
+            "GEN",
+            1
+          );
+
+        expect(notes).toEqual([]);
+      });
+
+      it("answers null when a friend's notes couldn't be read, rather than an incomplete list", async () => {
+        const errorSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
+        listDataByMarkerMock.mockImplementation(async (recordName: string) =>
+          recordName === "friend-user"
+            ? { success: false, errorCode: "server_error" }
+            : {
+                success: true,
+                items: [
+                  {
+                    address: "my-note",
+                    data: createCommentAnnotation({ id: "my-note" }),
+                  },
+                ],
+                totalCount: 1,
+              }
+        );
+
+        const notes =
+          await createManagerWithFriend().loadVisibleAnnotationsForChapter(
+            "GEN",
+            1
+          );
+
+        expect(notes).toBeNull();
+        errorSpy.mockRestore();
+      });
+    });
+
+    it("keeps a friend's reply to one of your notes", async () => {
+      mockChapterNotes({
+        "user-1": [createCommentAnnotation({ id: "my-note" })],
+        "friend-user": [reply("friend-reply", "my-note")],
+      });
+
+      const ids = visibleIds();
+
+      await vi.waitFor(() =>
+        expect(ids.value).toEqual(["friend-reply", "my-note"])
+      );
+    });
+
+    it("leaves out a friend's reply to a note you can't see", async () => {
+      mockChapterNotes({
+        "user-1": [createCommentAnnotation({ id: "my-note" })],
+        "friend-user": [
+          createCommentAnnotation({ id: "friend-note" }),
+          reply("friend-reply", "stranger-note"),
+        ],
+      });
+
+      const ids = visibleIds();
+
+      await vi.waitFor(() =>
+        expect(ids.value).toEqual(["friend-note", "my-note"])
+      );
+    });
+
+    it("leaves out your reply once the note it answered is gone", async () => {
+      mockChapterNotes({
+        "user-1": [
+          createCommentAnnotation({ id: "my-note" }),
+          reply("my-reply", "deleted-note"),
+        ],
+      });
+
+      const ids = visibleIds();
+
+      await vi.waitFor(() => expect(ids.value).toEqual(["my-note"]));
+    });
+  });
+
   describe("getUserAnnotationsForChapter", () => {
     const mockPerUserAnnotations = () => {
       listDataByMarkerMock.mockImplementation(
@@ -1611,6 +1765,160 @@ describe("AnnotationsManager", () => {
       ] as never;
 
       expect(manager.editingAnnotation.value).toBeNull();
+    });
+  });
+
+  describe("createReply", () => {
+    const parent = createCommentAnnotation({
+      id: "parent",
+      verseNumber: 2,
+      endVerseNumber: 3,
+      verseNumbers: [2, 3],
+      data: { type: "comment", html: "<p>Parent</p>", userId: "friend-user" },
+    });
+
+    it("starts a draft on the parent's verses that answers it, and switches the view", async () => {
+      const manager = createManager();
+
+      await manager.createReply(parent);
+
+      const draft = manager.editingAnnotation.value;
+      expect(draft).toMatchObject({
+        bookId: "GEN",
+        chapterNumber: 1,
+        verseNumber: 2,
+        endVerseNumber: 3,
+        verseNumbers: [2, 3],
+        data: {
+          type: "comment",
+          html: "",
+          userId: "user-1",
+          replyTo: "parent",
+          replyToUserId: "friend-user",
+        },
+      });
+      expect(draft?.id).not.toBe("parent");
+      expect(discover.view.value).toBe("create_annotation");
+    });
+
+    it("answers the note that started the thread, and its author, when replying to a reply", async () => {
+      const manager = createManager();
+
+      await manager.createReply(
+        createCommentAnnotation({
+          id: "a-reply",
+          data: {
+            type: "comment",
+            html: "<p>Reply</p>",
+            userId: "replier",
+            replyTo: "thread-start",
+            replyToUserId: "thread-author",
+          },
+        })
+      );
+
+      expect(manager.editingAnnotation.value?.data).toMatchObject({
+        replyTo: "thread-start",
+        replyToUserId: "thread-author",
+      });
+    });
+
+    it("unfolds the thread it answers, so the reply shows once the composer closes", async () => {
+      const manager = createManager();
+
+      await manager.createReply(parent);
+      await manager.createReply(
+        createCommentAnnotation({
+          id: "a-reply",
+          data: {
+            type: "comment",
+            html: "<p>Reply</p>",
+            replyTo: "thread-start",
+          },
+        })
+      );
+      manager.cancelEditingAnnotation();
+
+      expect([...manager.openThreadIds.value]).toEqual([
+        "parent",
+        "thread-start",
+      ]);
+    });
+
+    it("stays on the parent's verses as the reader's selection changes, even over an unsaved new note", async () => {
+      const manager = createManager();
+      await manager.createNewAnnotation();
+
+      await manager.createReply(parent);
+      tab.readingState.selectedVerses.value = [
+        { bookId: "GEN", chapterNumber: 1, verse: { number: 7 } },
+      ] as never;
+
+      expect(manager.editingAnnotation.value).toMatchObject({
+        verseNumber: 2,
+        endVerseNumber: 3,
+        verseNumbers: [2, 3],
+      });
+    });
+
+    it("saves the reply to your own record, where it joins your notes", async () => {
+      const manager = createManager();
+      await manager.createReply(parent);
+      const draft = manager.editingAnnotation.value!;
+      manager.editingAnnotation.value = {
+        ...draft,
+        data: { ...draft.data, html: "<p>Agreed</p>" },
+      };
+
+      await manager.saveEditingAnnotation();
+
+      expect(recordDataMock).toHaveBeenCalledWith(
+        "user-1",
+        draft.id,
+        expect.objectContaining({
+          data: expect.objectContaining({
+            html: "<p>Agreed</p>",
+            replyTo: "parent",
+          }),
+        }),
+        { marker: "publicRead:annotations/GEN/1" }
+      );
+      expect(
+        manager
+          .getAnnotationsForChapter("GEN", 1)
+          .value.map((a) => a.data.replyTo)
+      ).toEqual(["parent"]);
+    });
+
+    it("no-ops and warns when signed out and login is declined", async () => {
+      login.userId.value = null;
+      login.login.mockResolvedValue(null);
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const manager = createManager();
+
+      await manager.createReply(parent);
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(manager.openThreadIds.value.size).toBe(0);
+      expect(warn).toHaveBeenCalled();
+    });
+  });
+
+  describe("setThreadOpen", () => {
+    it("starts with every thread folded", () => {
+      const manager = createManager();
+
+      expect(manager.openThreadIds.value.size).toBe(0);
+    });
+
+    it("unfolds and folds a thread without touching the others", () => {
+      const manager = createManager();
+
+      manager.setThreadOpen("a", true);
+      manager.setThreadOpen("b", true);
+      manager.setThreadOpen("a", false);
+
+      expect([...manager.openThreadIds.value]).toEqual(["b"]);
     });
   });
 
@@ -2700,5 +3008,47 @@ describe("groupAnnotationsByVerseRange", () => {
     const groups = groupAnnotationsByVerseRange([a, b]);
 
     expect(groups[0]?.annotations.map((x) => x.id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("buildThreads", () => {
+  const note = (id: string, replyTo?: string) =>
+    createCommentAnnotation({
+      id,
+      data: { type: "comment", html: "", replyTo },
+    });
+  const group = (...annotations: Annotation[]) => ({
+    startVerseNumber: 1,
+    endVerseNumber: 1,
+    annotations,
+  });
+  const summarize = (threads: ReturnType<typeof buildThreads>) =>
+    threads.map((t) => [t.annotation.id, t.replies.map((r) => r.id)]);
+
+  it("hangs each reply under the note it answers, keeping the group's order", () => {
+    const threads = buildThreads(
+      group(
+        note("a"),
+        note("b"),
+        note("a-1", "a"),
+        note("b-1", "b"),
+        note("a-2", "a")
+      )
+    );
+
+    expect(summarize(threads)).toEqual([
+      ["a", ["a-1", "a-2"]],
+      ["b", ["b-1"]],
+    ]);
+  });
+
+  it("keeps a note nobody replied to as a thread of its own", () => {
+    expect(summarize(buildThreads(group(note("a"))))).toEqual([["a", []]]);
+  });
+
+  it("drops a reply whose note isn't in the group", () => {
+    expect(
+      summarize(buildThreads(group(note("a"), note("orphan", "gone"))))
+    ).toEqual([["a", []]]);
   });
 });

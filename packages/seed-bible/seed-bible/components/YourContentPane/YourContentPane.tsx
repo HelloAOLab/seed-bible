@@ -30,6 +30,8 @@ import {
   AnnotationPreview,
   openDeleteAnnotationConfirm,
 } from "../Discover/AnnotationsSection";
+import { useAnnotationAuthorProfile } from "../Discover/useAnnotationAuthorProfile";
+import type { LoginManager } from "../../managers/LoginManager";
 import { PlaylistRow } from "../Discover/PlaylistRow";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import type { Bookmark } from "../../managers/BookmarksManager";
@@ -66,6 +68,11 @@ export interface YourContentScreenProps {
   state: SeedBibleState;
   /** Opens a passage in the reader and leaves this screen. */
   onOpenPassage: (target: TodayPassageTarget) => void;
+  /**
+   * Opens the passage a note is on with its thread unfolded in Discover, and
+   * leaves this screen.
+   */
+  onOpenAnnotationThread: (annotation: Annotation) => void;
   /** Starts a playlist and leaves this screen. */
   onPlayPlaylist: (playlist: Playlist) => void;
   /** Opens a playlist in the editor and leaves this screen. */
@@ -244,10 +251,66 @@ function SectionHeader(props: {
   );
 }
 
+/** "Reply to {author}" on a reply's card, or just "Reply" when it answers the user's own note. */
+function AnnotationReplyLabel(props: {
+  replyToUserId: string | null | undefined;
+  login: LoginManager;
+}) {
+  const { replyToUserId, login } = props;
+  const { t } = useI18n();
+  const { name } = useAnnotationAuthorProfile(replyToUserId, login);
+  return (
+    <span className="sb-content-annotation-reply-to">
+      {name.value.length > 0 && replyToUserId !== login.userId.value
+        ? t("reply-title", {
+            author: name.value,
+            defaultValue: "Reply to {{author}}",
+          })
+        : t("reply", { defaultValue: "Reply" })}
+    </span>
+  );
+}
+
+/**
+ * Offers to delete a reply whose note can't be shown any more, so opening it
+ * would land on a Discover panel without it, or to open its chapter anyway.
+ */
+function openReplyParentUnavailable(
+  state: SeedBibleState,
+  reply: Annotation,
+  onDelete: () => Promise<void>,
+  onOpenChapter: () => void
+) {
+  openConfirmDeleteModal(state.modals, {
+    id: `reply-parent-unavailable-${reply.id}`,
+    title: {
+      key: "reply-parent-unavailable-title",
+      defaultValue: "Original note unavailable",
+    },
+    message: (t) =>
+      t("reply-parent-unavailable-message", {
+        defaultValue:
+          "The note this reply answered isn't available anymore. It may have been deleted, or you may no longer be friends with its author. Delete your reply?",
+      }),
+    onConfirm: onDelete,
+    failedMessage: (t) =>
+      t("delete-annotation-failed", {
+        defaultValue: "Couldn't delete the annotation.",
+      }),
+    toast: state.app.toast,
+    secondaryAction: {
+      label: (t) => t("open-chapter", { defaultValue: "Open chapter" }),
+      onSelect: onOpenChapter,
+    },
+  });
+}
+
 function AnnotationCard(props: {
   state: SeedBibleState;
   annotation: Annotation;
   onOpenPassage: (target: TodayPassageTarget) => void;
+  /** Opens a reply in Discover, under the note it answers. */
+  onOpenThread: () => void;
   onEdit: () => void;
   /** Erases the annotation, once the user has confirmed. */
   onDelete: () => Promise<void>;
@@ -270,18 +333,64 @@ function AnnotationCard(props: {
     verses
   );
 
-  const open = () =>
+  const isReply = !!annotation.data.replyTo;
+  const checkingReply = useSignal(false);
+  const openPassage = () =>
     props.onOpenPassage({
       bookId: annotation.bookId,
       chapter: annotation.chapterNumber,
       verse: verses[0],
     });
 
+  // Checked before leaving this screen: a reply whose note isn't visible is
+  // hidden in Discover too. When the chapter's notes couldn't all be read,
+  // there's no telling, so the reply is opened as usual.
+  const openReply = async () => {
+    if (checkingReply.peek()) {
+      return;
+    }
+    checkingReply.value = true;
+    let visible: Annotation[] | null = null;
+    try {
+      visible = await state.annotations.loadVisibleAnnotationsForChapter(
+        annotation.bookId,
+        annotation.chapterNumber
+      );
+    } catch (error) {
+      console.error("Couldn't check the note a reply answers:", error);
+    } finally {
+      checkingReply.value = false;
+    }
+    if (visible && !visible.some((a) => a.id === annotation.data.replyTo)) {
+      openReplyParentUnavailable(
+        state,
+        annotation,
+        props.onDelete,
+        openPassage
+      );
+      return;
+    }
+    props.onOpenThread();
+  };
+
+  const open = () => (isReply ? void openReply() : openPassage());
+
   return (
     <div className="sb-content-annotation">
       <div className="sb-content-annotation-head">
-        <span className="sb-content-date">
-          {formatDate(annotation.data.createdAtMs, language)}
+        <span className="sb-content-annotation-meta">
+          <span className="sb-content-date">
+            {formatDate(annotation.data.createdAtMs, language)}
+          </span>
+          {isReply ? (
+            <>
+              <MetaSeparator />
+              <AnnotationReplyLabel
+                replyToUserId={annotation.data.replyToUserId}
+                login={state.login}
+              />
+            </>
+          ) : null}
         </span>
         <ContextMenuWithButton
           icon="more_horiz"
@@ -320,7 +429,12 @@ function AnnotationCard(props: {
         </ContextMenuWithButton>
       </div>
 
-      <button type="button" className="sb-content-quote" onClick={open}>
+      <button
+        type="button"
+        className="sb-content-quote"
+        onClick={open}
+        aria-busy={checkingReply.value || undefined}
+      >
         {verseText ? (
           <span className="sb-content-quote-text">{verseText}</span>
         ) : null}
@@ -1162,6 +1276,9 @@ export function YourContentPane(props: YourContentScreenProps) {
                     state={state}
                     annotation={annotation}
                     onOpenPassage={onOpenPassage}
+                    onOpenThread={() =>
+                      props.onOpenAnnotationThread(annotation)
+                    }
                     onEdit={() => props.onEditAnnotation(annotation)}
                     onDelete={async () => {
                       // Drop it from the list straight away — waiting on the

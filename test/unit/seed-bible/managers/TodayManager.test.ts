@@ -1,7 +1,9 @@
 import {
   TODAY_PANE_ID,
+  openTodayAnnotationThread,
   openTodayPassage,
 } from "@packages/seed-bible/seed-bible/managers/TodayManager";
+import type { Annotation } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import {
   createTestSeedBibleState,
   waitFor,
@@ -90,6 +92,71 @@ describe("Today pane wiring", () => {
     window.history.back();
     await waitFor(() => paneIsOpen(state));
     expect(window.location.pathname).toBe("/en/today");
+  });
+
+  describe("openTodayAnnotationThread", () => {
+    const reply = {
+      id: "reply",
+      bookId: "EXO",
+      chapterNumber: 2,
+      verseNumber: 3,
+      data: {
+        type: "comment",
+        html: "<p>Agreed</p>",
+        replyTo: "parent",
+        replyToUserId: "ana-id",
+      },
+    } as Annotation;
+
+    type State = Awaited<ReturnType<typeof createTestSeedBibleState>>;
+
+    const selectedTab = (state: State) =>
+      state.tabs.tabs.value.find(
+        (tab) => tab.id === state.tabs.selectedTabId.value
+      )!;
+
+    /** Puts the reader's discover panel below the text, and shows discovered content there or not. */
+    const setDiscoverSettings = (state: State, showContent: boolean) => {
+      const current = state.settings.settings.value;
+      state.settings.settings.value = {
+        ...current,
+        discoverContentPanelInline: false,
+        discoveredContent: { ...current.discoveredContent, showContent },
+      };
+    };
+
+    it("opens the note's chapter with its thread unfolded and its verse group targeted in Discover", async () => {
+      window.history.replaceState(null, "", "/en/AAB/genesis/1");
+      const state = await createTestSeedBibleState();
+      setDiscoverSettings(state, true);
+
+      openTodayAnnotationThread(state, state.today, reply);
+
+      const tab = selectedTab(state);
+      expect(tab.readingState.bookId.value).toBe("EXO");
+      expect(tab.readingState.chapterNumber.value).toBe(2);
+      expect([...state.annotations.openThreadIds.value]).toEqual(["parent"]);
+      expect(state.discover.scrollToVerse.value).toEqual({
+        bookId: "EXO",
+        chapterNumber: 2,
+        verseNumber: 3,
+        tabId: tab.id,
+      });
+      expect(tab.readingState.discoverContentPanelInline.value).toBe(true);
+    });
+
+    it("opens the Discover pane instead when discovered content is shown there", async () => {
+      window.history.replaceState(null, "", "/en/AAB/genesis/1");
+      const state = await createTestSeedBibleState();
+      setDiscoverSettings(state, false);
+
+      openTodayAnnotationThread(state, state.today, reply);
+
+      expect(state.discover.view.value).toBe("discover");
+      expect(
+        selectedTab(state).readingState.discoverContentPanelInline.value
+      ).toBe(false);
+    });
   });
 
   // Removing the pane directly has to clear the open state too, or the toolbar

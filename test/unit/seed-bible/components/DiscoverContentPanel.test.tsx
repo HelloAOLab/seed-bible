@@ -151,9 +151,14 @@ function createMockState(
     modals?: ModalManager;
     hasRecordOverride?: boolean;
     deleteAnnotationAndRefreshImpl?: () => Promise<void>;
+    /** Notes whose replies the manager already has unfolded. */
+    openThreadIds?: string[];
   } = {}
 ): SeedBibleState {
   const friendPlaylists = overrides.friendPlaylists ?? [];
+  const openThreadIds = signal<ReadonlySet<string>>(
+    new Set(overrides.openThreadIds ?? [])
+  );
   const readingPlansForChapter = overrides.readingPlansForChapter ?? [];
   const discover = createDiscoverManager();
   for (const definition of overrides.contentTypes ?? []) {
@@ -192,6 +197,17 @@ function createMockState(
         () => overrides.annotationsForChapter ?? []
       ),
       createNewAnnotation: vi.fn().mockResolvedValue(undefined),
+      createReply: vi.fn().mockResolvedValue(undefined),
+      openThreadIds,
+      setThreadOpen: vi.fn((threadId: string, open: boolean) => {
+        const next = new Set(openThreadIds.value);
+        if (open) {
+          next.add(threadId);
+        } else {
+          next.delete(threadId);
+        }
+        openThreadIds.value = next;
+      }),
       editAnnotation: vi.fn(),
       deleteAnnotationAndRefresh: vi.fn(
         overrides.deleteAnnotationAndRefreshImpl ?? (() => Promise.resolve())
@@ -1459,6 +1475,189 @@ describe("DiscoverContentPanel", () => {
       }
     });
 
+    describe("a target raised from another screen", () => {
+      const verse7 = createAnnotation({
+        id: "verse-7",
+        verseNumber: 7,
+      } as Partial<Annotation>);
+      const target = (tabId?: string) => ({
+        bookId: "GEN",
+        chapterNumber: 1,
+        verseNumber: 7,
+        tabId,
+      });
+
+      /** Frames queue up as in a browser, so a cleanup can cancel one before it runs. */
+      function queueFrames() {
+        const frames = new Map<number, FrameRequestCallback>();
+        let next = 0;
+        const raf = vi
+          .spyOn(window, "requestAnimationFrame")
+          .mockImplementation((callback) => {
+            frames.set(++next, callback);
+            return next;
+          });
+        const caf = vi
+          .spyOn(window, "cancelAnimationFrame")
+          .mockImplementation((id) => {
+            frames.delete(id);
+          });
+        return {
+          flush: () => {
+            const pending = [...frames.values()];
+            frames.clear();
+            act(() => pending.forEach((callback) => callback(0)));
+          },
+          restore: () => {
+            raf.mockRestore();
+            caf.mockRestore();
+          },
+        };
+      }
+
+      const group = () =>
+        container.querySelector<HTMLElement>(".sb-annotation-group");
+      const isHighlighted = () =>
+        !!group()?.classList.contains("sb-annotation-group--highlighted");
+
+      it("is handled by the panel once it shows the new tab, not by the tab it showed before on the same chapter", () => {
+        const previousTab = createMockTab({ chapterData: genesis1 });
+        const newTab = {
+          ...createMockTab({ chapterData: genesis1 }),
+          id: "tab-2",
+        };
+        const state = createMockState({
+          tab: newTab,
+          annotationsForChapter: [verse7],
+        });
+        vi.useFakeTimers();
+        const frames = queueFrames();
+        scrollIntoView.mockClear();
+
+        try {
+          renderFull(previousTab, state);
+
+          // As in the app: the new tab is selected and the target raised in
+          // one go, before the panel has re-rendered with the new tab.
+          act(() => {
+            state.discover.scrollToVerse.value = target(newTab.id);
+            render(
+              <DiscoverContentPanel
+                variant="full"
+                onClose={vi.fn()}
+                tab={newTab}
+                state={state}
+              />,
+              container
+            );
+          });
+          frames.flush();
+
+          expect(state.discover.scrollToVerse.value).toBeNull();
+          expect(group()?.id).toContain("tab-2");
+          expect(scrollIntoView).toHaveBeenCalledTimes(1);
+          expect(isHighlighted()).toBe(true);
+
+          act(() => {
+            vi.advanceTimersByTime(2000);
+          });
+          expect(isHighlighted()).toBe(false);
+        } finally {
+          frames.restore();
+          vi.useRealTimers();
+        }
+      });
+
+      it("doesn't leave a highlight stuck on when the panel switches tabs mid-flash", () => {
+        const firstTab = createMockTab({ chapterData: genesis1 });
+        const secondTab = {
+          ...createMockTab({ chapterData: genesis1 }),
+          id: "tab-2",
+        };
+        const state = createMockState({
+          tab: firstTab,
+          annotationsForChapter: [verse7],
+        });
+        vi.useFakeTimers();
+        const frames = queueFrames();
+
+        try {
+          renderFull(firstTab, state);
+          act(() => {
+            state.discover.scrollToVerse.value = target();
+          });
+          expect(isHighlighted()).toBe(true);
+
+          renderFull(secondTab, state);
+          act(() => {
+            vi.advanceTimersByTime(2000);
+          });
+
+          expect(isHighlighted()).toBe(false);
+        } finally {
+          frames.restore();
+          vi.useRealTimers();
+        }
+      });
+
+      it("waits for the chapter's notes to load instead of being dropped", () => {
+        const tab = createMockTab({ chapterData: genesis1 });
+        const state = createMockState({ tab });
+        const notes = signal<Annotation[]>([]);
+        Object.assign(state.annotations, {
+          getAnnotationsForChapter: vi.fn(() => notes),
+          visibleAnnotationsForChapter: vi.fn(() => notes.value),
+        });
+        const frames = queueFrames();
+
+        try {
+          renderFull(tab, state);
+          act(() => {
+            state.discover.scrollToVerse.value = target(tab.id);
+          });
+          expect(state.discover.scrollToVerse.value).not.toBeNull();
+
+          act(() => {
+            notes.value = [verse7];
+          });
+          frames.flush();
+
+          expect(state.discover.scrollToVerse.value).toBeNull();
+          expect(isHighlighted()).toBe(true);
+        } finally {
+          frames.restore();
+        }
+      });
+
+      it("unfolds the targeted group if it was folded", () => {
+        const tab = createMockTab({ chapterData: genesis1 });
+        const state = createMockState({ tab, annotationsForChapter: [verse7] });
+        const frames = queueFrames();
+
+        try {
+          renderFull(tab, state);
+          const header = container.querySelector<HTMLButtonElement>(
+            ".sb-annotation-group-header"
+          )!;
+          act(() => {
+            header.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+          });
+          expect(header.getAttribute("aria-expanded")).toBe("false");
+
+          act(() => {
+            state.discover.scrollToVerse.value = target(tab.id);
+          });
+
+          expect(header.getAttribute("aria-expanded")).toBe("true");
+          expect(
+            container.querySelectorAll(".sb-annotation-item")
+          ).toHaveLength(1);
+        } finally {
+          frames.restore();
+        }
+      });
+    });
+
     it("shows a note's author name resolved from their profile and a formatted updated time", async () => {
       const getUserProfile = vi
         .fn()
@@ -1853,6 +2052,125 @@ describe("DiscoverContentPanel", () => {
 
       render(null, modalContainer);
       modalContainer.remove();
+    });
+
+    describe("replies", () => {
+      const note = createAnnotation({
+        id: "note",
+        verseNumber: 3,
+        data: { type: "comment", html: "<p>The note</p>", createdAtMs: 1 },
+      } as Partial<Annotation>);
+      const reply = createAnnotation({
+        id: "reply",
+        verseNumber: 3,
+        data: {
+          type: "comment",
+          html: "<p>The reply</p>",
+          replyTo: "note",
+          createdAtMs: 2,
+        },
+      } as Partial<Annotation>);
+
+      const previews = () =>
+        Array.from(
+          container.querySelectorAll(".sb-annotation-item-preview")
+        ).map((el) => el.textContent);
+
+      it("folds a note's replies under it until its replies button is pressed", () => {
+        const selectTranslationAndChapter = vi
+          .fn()
+          .mockResolvedValue(undefined);
+        const tab = createMockTab({
+          chapterData: genesis1,
+          selectTranslationAndChapter,
+        });
+        renderFull(
+          tab,
+          createMockState({ tab, annotationsForChapter: [note, reply] })
+        );
+
+        expect(groupTitles()).toEqual(["Genesis 1:3"]);
+        expect(previews()).toEqual(["The note"]);
+        const toggle = container.querySelector<HTMLButtonElement>(
+          ".sb-annotation-item-replies"
+        )!;
+        expect(toggle.textContent).toContain("1 reply");
+        expect(toggle.getAttribute("aria-expanded")).toBe("false");
+
+        act(() => {
+          toggle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        });
+
+        expect(previews()).toEqual(["The note", "The reply"]);
+        expect(
+          container.querySelector(
+            ".sb-annotation-replies-list .sb-annotation-item-preview"
+          )?.textContent
+        ).toBe("The reply");
+        expect(toggle.getAttribute("aria-expanded")).toBe("true");
+        expect(selectTranslationAndChapter).not.toHaveBeenCalled();
+      });
+
+      it("Reply starts a reply to that note, without navigating to its verse", async () => {
+        const selectTranslationAndChapter = vi
+          .fn()
+          .mockResolvedValue(undefined);
+        const tab = createMockTab({
+          chapterData: genesis1,
+          selectTranslationAndChapter,
+        });
+        const state = createMockState({ tab, annotationsForChapter: [note] });
+        renderFull(tab, state);
+
+        await act(async () => {
+          container
+            .querySelector(".sb-annotation-item-reply")!
+            .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+          await Promise.resolve();
+        });
+
+        expect(state.annotations.createReply).toHaveBeenCalledWith(note);
+        expect(selectTranslationAndChapter).not.toHaveBeenCalled();
+      });
+
+      it("shows a thread the manager has open already unfolded, as when returning from a reply", () => {
+        const tab = createMockTab({ chapterData: genesis1 });
+        renderFull(
+          tab,
+          createMockState({
+            tab,
+            annotationsForChapter: [note, reply],
+            openThreadIds: ["note"],
+          })
+        );
+
+        expect(previews()).toEqual(["The note", "The reply"]);
+        expect(
+          container
+            .querySelector(".sb-annotation-item-replies")
+            ?.getAttribute("aria-expanded")
+        ).toBe("true");
+      });
+
+      it("leaves out a reply to a note that isn't shown, instead of an empty verse group", () => {
+        const orphan = createAnnotation({
+          id: "orphan",
+          verseNumber: 5,
+          data: {
+            type: "comment",
+            html: "<p>Orphan</p>",
+            replyTo: "hidden-note",
+          },
+        } as Partial<Annotation>);
+        const tab = createMockTab({ chapterData: genesis1 });
+        renderFull(
+          tab,
+          createMockState({ tab, annotationsForChapter: [note, orphan] })
+        );
+
+        expect(groupTitles()).toEqual(["Genesis 1:3"]);
+        expect(previews()).toEqual(["The note"]);
+      });
     });
   });
 
