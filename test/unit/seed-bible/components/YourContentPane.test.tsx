@@ -193,6 +193,11 @@ interface StateOptions {
   userId?: string | null;
   /** Profile names by user id, as the records server would return them. */
   profileNames?: Record<string, string>;
+  /**
+   * A chapter's visible notes once loaded, or null when they couldn't all be
+   * read. Defaults to null.
+   */
+  visibleChapterNotes?: Annotation[] | null;
   unhighlightError?: Error;
   /** Verse wording per highlight key, as the manager would have read it back. */
   highlightVerseText?: Record<string, string>;
@@ -416,7 +421,12 @@ function createState(options: StateOptions = {}) {
     },
     modals: { openModal, closeModal },
     app: { toast },
-    annotations: { deleteAnnotationAndRefresh },
+    annotations: {
+      deleteAnnotationAndRefresh,
+      loadVisibleAnnotationsForChapter: vi.fn(
+        async () => options.visibleChapterNotes ?? null
+      ),
+    },
     readingPlans: {
       userReadingPlans: signal(options.readingPlans ?? []),
       fullReadingPlans: signal(
@@ -1955,19 +1965,94 @@ describe("YourContentPane", () => {
       ).toBeNull();
     });
 
-    it("opens a reply under the note it answers, instead of only its passage", () => {
-      const target = reply("ana-id");
-      const { state } = createState({ annotations: [target] });
-      renderPane(state);
-
-      act(() => {
+    async function clickQuote() {
+      await act(async () => {
         (
           container.querySelector(".sb-content-quote") as HTMLButtonElement
         ).click();
       });
+    }
+
+    const parent = annotation("parent", "<p>The note</p>", 5);
+
+    it("opens a reply under the note it answers, instead of only its passage", async () => {
+      const target = reply("ana-id");
+      const { state, openModal } = createState({
+        annotations: [target],
+        visibleChapterNotes: [parent, target],
+      });
+      renderPane(state);
+
+      await clickQuote();
 
       expect(onOpenAnnotationThread).toHaveBeenCalledWith(target);
       expect(onOpenPassage).not.toHaveBeenCalled();
+      expect(openModal).not.toHaveBeenCalled();
+    });
+
+    it("opens the reply as usual when the chapter's notes couldn't all be read", async () => {
+      const target = reply("ana-id");
+      const { state, openModal } = createState({
+        annotations: [target],
+        visibleChapterNotes: null,
+      });
+      renderPane(state);
+
+      await clickQuote();
+
+      expect(onOpenAnnotationThread).toHaveBeenCalledWith(target);
+      expect(openModal).not.toHaveBeenCalled();
+    });
+
+    describe("whose note is no longer shown", () => {
+      it("says so instead of opening it, and offers to delete it", async () => {
+        const target = reply("ana-id");
+        const {
+          state,
+          openModal,
+          removeAnnotation,
+          deleteAnnotationAndRefresh,
+        } = createState({ annotations: [target], visibleChapterNotes: [] });
+        renderPane(state);
+
+        await clickQuote();
+
+        expect(onOpenAnnotationThread).not.toHaveBeenCalled();
+        const dialog = renderOpenedModal(openModal);
+        expect(dialog.textContent).toContain(
+          "The note this reply answered isn't available anymore."
+        );
+
+        await confirmDelete(dialog);
+
+        expect(removeAnnotation).toHaveBeenCalledWith("r");
+        expect(deleteAnnotationAndRefresh).toHaveBeenCalledWith(target);
+      });
+
+      it("can open its chapter instead, without Discover", async () => {
+        const { state, openModal, deleteAnnotationAndRefresh } = createState({
+          annotations: [reply("ana-id")],
+          visibleChapterNotes: [],
+        });
+        renderPane(state);
+
+        await clickQuote();
+        const dialog = renderOpenedModal(openModal);
+        const openChapter = Array.from(dialog.querySelectorAll("button")).find(
+          (button) => button.textContent === "Open chapter"
+        )!;
+        act(() => {
+          openChapter.click();
+        });
+
+        expect(onOpenPassage).toHaveBeenCalledWith({
+          bookId: "GEN",
+          chapter: 1,
+          verse: 5,
+        });
+        expect(onOpenAnnotationThread).not.toHaveBeenCalled();
+        expect(deleteAnnotationAndRefresh).not.toHaveBeenCalled();
+      });
     });
   });
 

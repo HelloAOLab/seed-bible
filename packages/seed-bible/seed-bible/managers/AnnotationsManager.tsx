@@ -115,6 +115,17 @@ export interface AnnotationsManager {
     chapterNumber: number
   ) => Annotation[];
 
+  /**
+   * The same notes as `visibleAnnotationsForChapter`, once every list they
+   * come from has finished loading. Resolves to null when any of those lists
+   * couldn't be read (offline, say): a note missing from the result is then
+   * not known to be gone, only unseen.
+   */
+  loadVisibleAnnotationsForChapter: (
+    bookId: string,
+    chapterNumber: number
+  ) => Promise<Annotation[] | null>;
+
   /** The annotation currently being created/edited in the pane, or null. */
   editingAnnotation: Signal<Annotation | null>;
 
@@ -1322,6 +1333,32 @@ export function createAnnotationsManager(
     return view;
   };
 
+  const loadVisibleAnnotationsForChapter = async (
+    bookId: string,
+    chapterNumber: number
+  ): Promise<Annotation[] | null> => {
+    const friendIds = untracked(() => options.friendIds?.value ?? []);
+    const ownRecordId = untracked(effectiveRecordId);
+    const sources: [string, AnnotationsEntry][] = [
+      [ownRecordId, getOrCreateEntry(ownRecordId, bookId, chapterNumber)],
+      ...friendIds.map((userId): [string, AnnotationsEntry] => [
+        userId,
+        getOrCreateEntry(userId, bookId, chapterNumber, true),
+      ]),
+    ];
+    await Promise.all(
+      sources.map(([recordId, entry]) =>
+        ensureLoaded(recordId, bookId, chapterNumber, entry)
+      )
+    );
+    if (sources.some(([, entry]) => entry.loadFailed)) {
+      return null;
+    }
+    return untracked(() =>
+      visibleChapterAnnotations(manager, friendIds, bookId, chapterNumber)
+    );
+  };
+
   const upsertIntoCache = (annotation: Annotation, recordId?: string): void => {
     const cacheRecordId = recordId ?? effectiveRecordId();
     const entry = getOrCreateEntry(
@@ -1721,6 +1758,7 @@ export function createAnnotationsManager(
         bookId,
         chapterNumber
       ),
+    loadVisibleAnnotationsForChapter,
     editingAnnotation,
     createNewAnnotation,
     createReply,

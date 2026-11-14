@@ -19,6 +19,11 @@ export interface ConfirmDeleteModalOptions {
   onConfirm: () => Promise<void>;
   failedMessage: (t: Translate) => string;
   toast?: (message: string) => void;
+  /** A way forward other than deleting, shown between Cancel and Delete. Closes the modal first. */
+  secondaryAction?: {
+    label: (t: Translate) => string;
+    onSelect: () => void;
+  };
 }
 
 /**
@@ -44,7 +49,15 @@ function ConfirmDeleteModalContent(
     onClose: () => void;
   }
 ) {
-  const { id, message, onConfirm, failedMessage, toast, onClose } = props;
+  const {
+    id,
+    message,
+    onConfirm,
+    failedMessage,
+    toast,
+    secondaryAction,
+    onClose,
+  } = props;
   const { t } = useI18n();
   const isDeleting = deletingIds.value.has(id);
 
@@ -76,6 +89,19 @@ function ConfirmDeleteModalContent(
         >
           {t("cancel")}
         </button>
+        {secondaryAction ? (
+          <button
+            type="button"
+            className="sb-session-settings-cancel"
+            onClick={() => {
+              onClose();
+              secondaryAction.onSelect();
+            }}
+            disabled={isDeleting}
+          >
+            {secondaryAction.label(t)}
+          </button>
+        ) : null}
         <button
           type="button"
           className="sb-session-settings-end sb-delete-button"

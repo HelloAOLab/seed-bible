@@ -695,6 +695,8 @@
   "annotate-title": "Annotate {{location}}",
   "reply-title": "Reply to {{author}}",
   "your-reply": "Your reply",
+  "reply-parent-unavailable-title": "Original note unavailable",
+  "reply-parent-unavailable-message": "The note this reply answered isn't available anymore. It may have been deleted, or you may no longer be friends with its author. Delete your reply?",
   "annotation-options": "Annotation options",
   "edit-annotation": "Edit",
   "delete-annotation": "Delete",

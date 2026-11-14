@@ -1205,6 +1205,75 @@ describe("AnnotationsManager", () => {
       );
     }
 
+    function createManagerWithFriend() {
+      return createAnnotationsManager(os, login, tabs, discover, undefined, {
+        friendIds: signal(["friend-user"]),
+      });
+    }
+
+    describe("loadVisibleAnnotationsForChapter", () => {
+      it("waits for your notes and your friends' before answering", async () => {
+        mockChapterNotes({
+          "user-1": [createCommentAnnotation({ id: "my-note" })],
+          "friend-user": [reply("friend-reply", "my-note")],
+        });
+
+        const notes =
+          await createManagerWithFriend().loadVisibleAnnotationsForChapter(
+            "GEN",
+            1
+          );
+
+        expect(notes?.map((a) => a.id).sort()).toEqual([
+          "friend-reply",
+          "my-note",
+        ]);
+      });
+
+      it("leaves out a reply whose note is gone", async () => {
+        mockChapterNotes({
+          "user-1": [reply("my-reply", "deleted-note")],
+        });
+
+        const notes =
+          await createManagerWithFriend().loadVisibleAnnotationsForChapter(
+            "GEN",
+            1
+          );
+
+        expect(notes).toEqual([]);
+      });
+
+      it("answers null when a friend's notes couldn't be read, rather than an incomplete list", async () => {
+        const errorSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
+        listDataByMarkerMock.mockImplementation(async (recordName: string) =>
+          recordName === "friend-user"
+            ? { success: false, errorCode: "server_error" }
+            : {
+                success: true,
+                items: [
+                  {
+                    address: "my-note",
+                    data: createCommentAnnotation({ id: "my-note" }),
+                  },
+                ],
+                totalCount: 1,
+              }
+        );
+
+        const notes =
+          await createManagerWithFriend().loadVisibleAnnotationsForChapter(
+            "GEN",
+            1
+          );
+
+        expect(notes).toBeNull();
+        errorSpy.mockRestore();
+      });
+    });
+
     it("keeps a friend's reply to one of your notes", async () => {
       mockChapterNotes({
         "user-1": [createCommentAnnotation({ id: "my-note" })],

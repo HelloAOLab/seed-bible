@@ -270,6 +270,40 @@ function AnnotationReplyLabel(props: {
   );
 }
 
+/**
+ * Offers to delete a reply whose note can't be shown any more, so opening it
+ * would land on a Discover panel without it, or to open its chapter anyway.
+ */
+function openReplyParentUnavailable(
+  state: SeedBibleState,
+  reply: Annotation,
+  onDelete: () => Promise<void>,
+  onOpenChapter: () => void
+) {
+  openConfirmDeleteModal(state.modals, {
+    id: `reply-parent-unavailable-${reply.id}`,
+    title: {
+      key: "reply-parent-unavailable-title",
+      defaultValue: "Original note unavailable",
+    },
+    message: (t) =>
+      t("reply-parent-unavailable-message", {
+        defaultValue:
+          "The note this reply answered isn't available anymore. It may have been deleted, or you may no longer be friends with its author. Delete your reply?",
+      }),
+    onConfirm: onDelete,
+    failedMessage: (t) =>
+      t("delete-annotation-failed", {
+        defaultValue: "Couldn't delete the annotation.",
+      }),
+    toast: state.app.toast,
+    secondaryAction: {
+      label: (t) => t("open-chapter", { defaultValue: "Open chapter" }),
+      onSelect: onOpenChapter,
+    },
+  });
+}
+
 function AnnotationCard(props: {
   state: SeedBibleState;
   annotation: Annotation;
@@ -299,14 +333,46 @@ function AnnotationCard(props: {
   );
 
   const isReply = !!annotation.data.replyTo;
-  const open = () =>
-    isReply
-      ? props.onOpenThread()
-      : props.onOpenPassage({
-          bookId: annotation.bookId,
-          chapter: annotation.chapterNumber,
-          verse: verses[0],
-        });
+  const checkingReply = useSignal(false);
+  const openPassage = () =>
+    props.onOpenPassage({
+      bookId: annotation.bookId,
+      chapter: annotation.chapterNumber,
+      verse: verses[0],
+    });
+
+  // Checked before leaving this screen: a reply whose note isn't visible is
+  // hidden in Discover too. When the chapter's notes couldn't all be read,
+  // there's no telling, so the reply is opened as usual.
+  const openReply = async () => {
+    if (checkingReply.peek()) {
+      return;
+    }
+    checkingReply.value = true;
+    let visible: Annotation[] | null = null;
+    try {
+      visible = await state.annotations.loadVisibleAnnotationsForChapter(
+        annotation.bookId,
+        annotation.chapterNumber
+      );
+    } catch (error) {
+      console.error("Couldn't check the note a reply answers:", error);
+    } finally {
+      checkingReply.value = false;
+    }
+    if (visible && !visible.some((a) => a.id === annotation.data.replyTo)) {
+      openReplyParentUnavailable(
+        state,
+        annotation,
+        props.onDelete,
+        openPassage
+      );
+      return;
+    }
+    props.onOpenThread();
+  };
+
+  const open = () => (isReply ? void openReply() : openPassage());
 
   return (
     <div className="sb-content-annotation">
@@ -362,7 +428,12 @@ function AnnotationCard(props: {
         </ContextMenuWithButton>
       </div>
 
-      <button type="button" className="sb-content-quote" onClick={open}>
+      <button
+        type="button"
+        className="sb-content-quote"
+        onClick={open}
+        aria-busy={checkingReply.value || undefined}
+      >
         {verseText ? (
           <span className="sb-content-quote-text">{verseText}</span>
         ) : null}
