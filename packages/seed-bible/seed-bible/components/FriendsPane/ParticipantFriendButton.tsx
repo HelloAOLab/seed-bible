@@ -3,12 +3,9 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { SessionConnectionInfo } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { displayNameOf } from "../../managers/Utils";
-import {
-  answerFriendRequest,
-  BusyButton,
-  sendFriendRequestTo,
-} from "./friendActions";
+import { answerFriendRequest, sendFriendRequestTo } from "./friendActions";
 import { openPersonProfile } from "./PersonCard";
+import { Button } from "../Button/Button";
 
 /**
  * The connection IDs of the participant rows that get a friend button: one per
@@ -147,10 +144,11 @@ export function ParticipantFriendButton(props: {
   };
 
   return (
-    <BusyButton
+    <Button
+      size="sm"
       className="sb-session-participant-action"
-      busy={busy.value}
-      ariaLabel={
+      loading={busy.value}
+      aria-label={
         theirRequest
           ? t("accept-friend-user", {
               name: requesterName,
@@ -166,6 +164,6 @@ export function ParticipantFriendButton(props: {
       {theirRequest
         ? t("accept", { defaultValue: "Accept" })
         : t("add-friend-button", { defaultValue: "Add friend" })}
-    </BusyButton>
+    </Button>
   );
 }

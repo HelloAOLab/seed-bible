@@ -2,6 +2,7 @@ import { useManager } from "./context";
 import { FilePicker } from "./FilePicker";
 import { LivePanel } from "./LivePanel";
 import { ResultView } from "./ResultView";
+import { Button, IconButton } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import "./styles.css";
 
@@ -38,11 +39,10 @@ export function App() {
             </p>
           </div>
           <div class="ts_app__actions">
-            <button
-              class="ts_btn ts_app__mode"
-              disabled={busy}
-              onClick={() => tm.toggleMode()}
-              title={
+            <IconButton
+              look="tinted"
+              icon={live ? "upload_file" : "mic"}
+              label={
                 live
                   ? t("Switch_to_file_upload", {
                       ns: "ext_AI_Transcript_UI",
@@ -53,13 +53,12 @@ export function App() {
                       defaultValue: "Switch to live transcription",
                     })
               }
-            >
-              <span class="material-symbols-outlined">
-                {live ? "upload_file" : "mic"}
-              </span>
-            </button>
-            <button
-              class="ts_btn ts_app__refresh"
+              disabled={busy}
+              onClick={() => tm.toggleMode()}
+            />
+            <Button
+              className="ts_app__refresh"
+              icon="refresh"
               disabled={busy || !file}
               onClick={() => tm.clearFiles()}
               title={t("Refresh_title", {
@@ -67,12 +66,11 @@ export function App() {
                 defaultValue: "Clear the file and result and start over",
               })}
             >
-              ↻{" "}
               {t("Refresh", {
                 ns: "ext_AI_Transcript_UI",
                 defaultValue: "Refresh",
               })}
-            </button>
+            </Button>
           </div>
         </header>
 

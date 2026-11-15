@@ -2,7 +2,7 @@ import { batch, effect, signal, untracked } from "@preact/signals";
 import { render } from "preact";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { extractContentText } from "seed-bible/managers";
-import { MaterialIcon } from "seed-bible/components";
+import { Button, MaterialIcon } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { isKnownBookId } from "./books";
 import {
@@ -87,9 +87,9 @@ function GamePane({
                 "A creator picks a secret verse. Players guess where it is using book, chapter, and verse feedback. Saved games stay on your account.",
             })}
           </p>
-          <button
-            type="button"
-            className="ftv-btn ftv-btn--primary ftv-btn--large"
+          <Button
+            variant="primary"
+            size="lg"
             onClick={() => {
               // A leftover id from Edit would make the next Save overwrite
               // that game. Start from a blank draft.
@@ -98,7 +98,7 @@ function GamePane({
             }}
           >
             {t("create-game", { defaultValue: "Create a game" })}
-          </button>
+          </Button>
         </div>
 
         {game.notice.value && <p className="ftv-notice">{game.notice.value}</p>}

@@ -1,5 +1,6 @@
 import { type TwitchPubState } from "./interface";
 import { useState, useRef, useEffect } from "preact/hooks";
+import { Button } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 
 const TwitchSettings = (props: { state: TwitchPubState }) => {
@@ -230,12 +231,12 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
           </div>
           <div className="twitchPub-settings-item">
             <span className="twitchPub-settings-label"></span>
-            <button onClick={resetState} className="twitchPub-logout-btn">
+            <Button size="sm" onClick={resetState}>
               {t("twitchSettings.logout", {
                 ns: "ext_twitchPub",
                 defaultValue: "Logout",
               })}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

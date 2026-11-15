@@ -107,7 +107,8 @@ export function CustomizationCard(props: {
       <ContextMenuWithButton
         anchorClassName="sb-cz-card-menu"
         buttonClassName="sb-cz-icon-button"
-        aria-label={t("customization-options", {
+        size="md"
+        label={t("customization-options", {
           defaultValue: "Custom Branding options",
         })}
       >

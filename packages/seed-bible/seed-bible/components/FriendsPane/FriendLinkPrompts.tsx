@@ -11,11 +11,7 @@ import type { ModalManager } from "../../managers/ModalManager";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import { displayNameOf } from "../../managers/Utils";
 import { useI18n } from "../../i18n/I18nManager";
-import {
-  answerFriendRequest,
-  BusyButton,
-  sendFriendRequestTo,
-} from "./friendActions";
+import { answerFriendRequest, sendFriendRequestTo } from "./friendActions";
 import { emptyProfileNote, hasEmptyProfile, PersonCard } from "./PersonCard";
 import {
   ADD_FRIEND_PARAM,
@@ -23,6 +19,7 @@ import {
   parseUserId,
 } from "./friendLinks";
 import type { FriendLinkPreviewLoader } from "../../managers/FriendLinkPreviewLoader";
+import { Button } from "../Button/Button";
 
 type Toast = (message: string) => void;
 type ProfileLookup = "found" | "no_account" | "failed";
@@ -52,17 +49,12 @@ function PromptActions(props: { children: ComponentChildren }) {
 function CloseButton(props: { onClose: () => void; primary?: boolean }) {
   const { t } = useI18n();
   return (
-    <button
-      type="button"
-      className={
-        props.primary
-          ? "sb-friends-button sb-friends-button--primary"
-          : "sb-session-settings-cancel"
-      }
+    <Button
+      variant={props.primary ? "primary" : "secondary"}
       onClick={props.onClose}
     >
       {t("close", { defaultValue: "Close" })}
-    </button>
+    </Button>
   );
 }
 
@@ -78,13 +70,9 @@ function SignInPrompt(props: {
       <p className="sb-confirm-delete-message">{props.message}</p>
       <PromptActions>
         <CloseButton onClose={props.onClose} />
-        <button
-          type="button"
-          className="sb-friends-button sb-friends-button--primary"
-          onClick={props.onSignIn}
-        >
+        <Button variant="primary" onClick={props.onSignIn}>
           {t("log-in", { defaultValue: "Log in" })}
-        </button>
+        </Button>
       </PromptActions>
     </div>
   );
@@ -229,21 +217,16 @@ function AddFriendLinkPrompt(props: {
       <PromptActions>
         {action ? (
           <>
-            <button
-              type="button"
-              className="sb-session-settings-cancel"
-              disabled={busy.value}
-              onClick={onClose}
-            >
+            <Button disabled={busy.value} onClick={onClose}>
               {t("cancel", { defaultValue: "Cancel" })}
-            </button>
-            <BusyButton
-              className="sb-friends-button sb-friends-button--primary"
-              busy={busy.value}
+            </Button>
+            <Button
+              variant="primary"
+              loading={busy.value}
               onClick={() => void runAction()}
             >
               {action.label}
-            </BusyButton>
+            </Button>
           </>
         ) : (
           <CloseButton onClose={onClose} primary />
@@ -331,13 +314,9 @@ function FriendRequestLinkPrompt(props: {
           {loadFailed ? (
             <>
               <CloseButton onClose={onClose} />
-              <button
-                type="button"
-                className="sb-friends-button sb-friends-button--primary"
-                onClick={() => void friends.refresh()}
-              >
+              <Button variant="primary" onClick={() => void friends.refresh()}>
                 {t("try-again", { defaultValue: "Try again" })}
-              </button>
+              </Button>
             </>
           ) : (
             <CloseButton onClose={onClose} primary />
@@ -369,22 +348,21 @@ function FriendRequestLinkPrompt(props: {
         })}
       </p>
       <PromptActions>
-        <BusyButton
-          className="sb-session-settings-cancel"
-          busy={answering.value === "decline"}
+        <Button
+          loading={answering.value === "decline"}
           disabled={answering.value !== null}
           onClick={() => void answer(false)}
         >
           {t("decline", { defaultValue: "Decline" })}
-        </BusyButton>
-        <BusyButton
-          className="sb-friends-button sb-friends-button--primary"
-          busy={answering.value === "accept"}
+        </Button>
+        <Button
+          variant="primary"
+          loading={answering.value === "accept"}
           disabled={answering.value !== null}
           onClick={() => void answer(true)}
         >
           {t("accept", { defaultValue: "Accept" })}
-        </BusyButton>
+        </Button>
       </PromptActions>
     </div>
   );

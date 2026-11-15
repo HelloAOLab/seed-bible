@@ -50,19 +50,24 @@
   margin-bottom: 0.75rem;
 }
 
+/* A dot shrinks toward a short tick when a long tour's row doesn't fit
+   between back and next. */
 .sb-tour-dot {
-  width: 1rem;
+  flex: 0 1 1rem;
+  min-width: 0.25rem;
   height: 0.1875rem;
   border-radius: var(--sb-radius-full);
   background: var(--sb-font-color);
   transition:
-    width var(--sb-duration-base) ease,
+    flex-basis var(--sb-duration-base) ease,
     background var(--sb-duration-base) ease;
   opacity: 0.2;
 }
 
+/* Keeps its full length when the others shrink, so the current step stays easy to spot. */
 .sb-tour-dot-active {
-  width: 1.125rem;
+  flex-basis: 1.125rem;
+  flex-shrink: 0;
   background: var(--sb-primary-color);
   opacity: 1;
 }
@@ -122,23 +127,13 @@
   align-items: center;
   justify-content: center;
   flex: 1 1 auto;
+  min-width: 0;
   gap: 0.3125rem;
 }
 
 .sb-tour-popover-actions-right {
   display: flex;
   gap: 0.5rem;
-}
-
-.sb-tour-btn-back {
-  background: transparent;
-  color: var(--sb-font-color);
-  opacity: 0.75;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding-left: 0.125rem;
-  padding-right: 0.125rem;
 }
 
 .sb-tour-btn {
@@ -176,6 +171,19 @@
   padding-right: 0.125rem;
 }
 
+/* After `.sb-tour-btn`, so its tight side padding wins over the shared
+   padding, as next's does: both sit flush with the card's edges. */
+.sb-tour-btn-back {
+  background: transparent;
+  color: var(--sb-font-color);
+  opacity: 0.75;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-left: 0.125rem;
+  padding-right: 0.125rem;
+}
+
 .sb-tour-btn-next {
   background: transparent;
   color: var(--sb-primary-color);
@@ -189,14 +197,16 @@
   margin-inline-start: auto;
 }
 
+.sb-tour-back-arrow,
 .sb-tour-next-arrow {
   font-size: 1.05em;
   line-height: 1;
 }
 
-/* RTL reverses the button's flex row, which would park the right-pointing
-   arrow on the label's left. Reverse it back so the arrow stays trailing the
-   label and pointing right, as it does in LTR. */
+/* RTL reverses the buttons' flex rows, which would swap each arrow to the
+   other side of its label. Reverse them back so the buttons look as they do
+   in LTR: ← before Back, → after Next. */
+[dir="rtl"] .sb-tour-btn-back,
 [dir="rtl"] .sb-tour-btn-next {
   flex-direction: row-reverse;
 }

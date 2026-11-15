@@ -3,10 +3,10 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { CasualOSManager } from "../../managers/OsManager";
 import type { GalleryPhoto } from "../../managers/UserGalleryManager";
-import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n";
 import { download } from "../../app/utils";
 import "./YourContentPane.css";
+import { Button } from "../Button/Button";
 
 /** The parts of the app a delete touches: the gallery and the two cover users. */
 type DeleteState = Pick<
@@ -123,23 +123,23 @@ function ConfirmDeleteImageModalContent(props: {
         </>
       ) : null}
       <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
+        <Button
           className="sb-session-settings-cancel"
           onClick={onClose}
           disabled={isDeleting.value}
         >
           {t("cancel", { defaultValue: "Cancel" })}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="primary"
+          tone="danger"
+          icon="delete"
           className="sb-session-settings-end sb-delete-button"
           onClick={() => void confirm()}
-          disabled={isDeleting.value}
+          loading={isDeleting.value}
         >
-          <MaterialIcon aria-hidden="true">delete</MaterialIcon>
           {t("delete", { defaultValue: "Delete" })}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -347,10 +347,10 @@ function ImagePreviewActions(props: {
   const isDownloading = useSignal(false);
   return (
     <div className="sb-confirm-delete-actions">
-      <button
-        type="button"
-        className="sb-session-settings-cancel sb-images-preview-download"
-        disabled={isDownloading.value}
+      <Button
+        icon="download"
+        className="sb-images-preview-download"
+        loading={isDownloading.value}
         onClick={async () => {
           isDownloading.value = true;
           try {
@@ -366,24 +366,20 @@ function ImagePreviewActions(props: {
           }
         }}
       >
-        <MaterialIcon aria-hidden="true">download</MaterialIcon>
         {t("download", { defaultValue: "Download" })}
-      </button>
-      <button
-        type="button"
-        className="sb-session-settings-cancel"
-        onClick={props.onClose}
-      >
+      </Button>
+      <Button className="sb-session-settings-cancel" onClick={props.onClose}>
         {t("close", { defaultValue: "Close" })}
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Button
+        variant="primary"
+        tone="danger"
+        icon="delete"
         className="sb-session-settings-end sb-delete-button"
         onClick={props.onDelete}
       >
-        <MaterialIcon aria-hidden="true">delete</MaterialIcon>
         {t("delete", { defaultValue: "Delete" })}
-      </button>
+      </Button>
     </div>
   );
 }

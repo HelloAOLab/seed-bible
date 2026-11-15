@@ -150,21 +150,9 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
-.sb-compare-retry {
+.sb-button.sb-compare-retry {
   align-self: flex-start;
-  padding: 4px 10px;
-  border: 1px solid var(--sb-divider-color);
-  border-radius: var(--sb-radius-sm);
-  background: transparent;
-  color: var(--sb-font-color);
-  font-size: var(--sb-font-size-13);
-  cursor: pointer;
 }
-
-.sb-compare-retry:hover {
-  background: var(--sb-divider-color);
-}
-
 /* Bottom padding matches `.sb-compare-picker`'s padding, so "Add translation"
    and "Done" line up when switching screens. */
 .sb-compare-add-bar {
@@ -172,25 +160,9 @@
   padding: 8px 12px 12px;
 }
 
-.sb-compare-add-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+.sb-button.sb-compare-add-button {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--sb-primary-color);
-  border-radius: var(--sb-radius-md);
-  background: var(--sb-primary-color);
-  color: var(--sb-background);
-  font-size: var(--sb-font-size-13);
-  cursor: pointer;
 }
-
-.sb-compare-add-button:hover {
-  opacity: 0.9;
-}
-
 /* On desktop the floating reader toolbar can drift over this pane and cover
    the button below; reserve clearance for it. Mobile panes render fullscreen
    and already inset for the toolbar, so they don't need this. */
@@ -253,23 +225,6 @@
   flex: 1;
   min-height: 0;
   padding-bottom: 12px;
-}
-
-.sb-compare-settings-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border: none;
-  border-radius: var(--sb-radius-sm);
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-  cursor: pointer;
-}
-
-.sb-compare-settings-button:hover {
-  background: var(--sb-divider-color);
-  color: var(--sb-font-color);
 }
 
 /* Centred rather than baseline-aligned: a long translation name wraps to two
@@ -425,22 +380,7 @@
   height: auto;
 }
 
-.sb-compare-picker-done {
+.sb-button.sb-compare-picker-done {
   flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--sb-primary-color);
-  border-radius: var(--sb-radius-md);
-  background: var(--sb-primary-color);
-  color: var(--sb-background);
-  font-size: var(--sb-font-size-13);
-  cursor: pointer;
-}
-
-.sb-compare-picker-done:hover {
-  opacity: 0.9;
 }

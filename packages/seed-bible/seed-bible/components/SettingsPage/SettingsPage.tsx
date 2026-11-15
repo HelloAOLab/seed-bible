@@ -11,7 +11,9 @@ import {
   type TextSize,
   type UISize,
   type VerseSelectionEffects,
+  type ViewingAreaIndicators,
 } from "../../managers/SettingsManager";
+import { VIEWING_AREA_HOSTS_ONLY_MIN_USERS } from "../../managers/SessionsManager";
 import {
   DARK_THEME,
   LIGHT_THEME,
@@ -43,6 +45,8 @@ import { useExtensionCatalog } from "./useExtensionCatalog";
 
 export { AddExtensionFromLink } from "./useExtensionCatalog";
 import { ExtensionTile } from "../ExtensionConsentModal/ExtensionConsentModal";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 function FlagImg({ cc }: { cc: string }) {
   return (
@@ -66,14 +70,13 @@ function SettingsBreadcrumbs(props: { onBack: () => void; trail: string[] }) {
   const { t } = useI18n();
   return (
     <div className="sb-settings-breadcrumbs">
-      <button
+      <IconButton
+        size="sm"
         className="sb-settings-breadcrumbs-back"
+        icon="arrow_back"
+        label={t("back", { defaultValue: "Back" })}
         onClick={props.onBack}
-        aria-label={t("back", { defaultValue: "Back" })}
-        title={t("back", { defaultValue: "Back" })}
-      >
-        <span className="material-symbols-outlined">arrow_back</span>
-      </button>
+      />
       {props.trail.map((item, index) => (
         <span key={index} className="sb-settings-breadcrumbs-item">
           {index > 0 && (
@@ -728,6 +731,50 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             </option>
           </select>
         </div>
+        <div className="sb-settings-field-row">
+          <label
+            className="sb-settings-field-label"
+            htmlFor="sb-viewing-area-indicators"
+          >
+            {t("viewing-area-indicators", {
+              defaultValue: "Viewing areas",
+            })}
+          </label>
+
+          <select
+            id="sb-viewing-area-indicators"
+            className="sb-settings-language-select"
+            value={current.viewingAreaIndicators ?? "default"}
+            onChange={(event: Event) => {
+              const target = event.currentTarget as HTMLSelectElement;
+
+              settings.setViewingAreaIndicators(
+                target.value as ViewingAreaIndicators
+              );
+            }}
+          >
+            <option value="default">
+              {t("default", { defaultValue: "Default" })}
+            </option>
+            <option value="everyone">
+              {t("session-settings-viewing-areas-everyone", {
+                defaultValue: "Everyone",
+              })}
+            </option>
+            <option value="hosts-only">
+              {t("session-settings-viewing-areas-hosts-only", {
+                defaultValue: "Hosts only",
+              })}
+            </option>
+          </select>
+          <p className="sb-settings-field-description">
+            {t("viewing-area-indicators-desc", {
+              count: VIEWING_AREA_HOSTS_ONLY_MIN_USERS,
+              defaultValue:
+                "Default follows the session: everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more. Hosts only hides the other bars on your screen, even when the session is showing everyone. Everyone cannot show those bars when the host has set the session to hosts only.",
+            })}
+          </p>
+        </div>
         <h3 className="sb-settings-subheading">
           {t("display", { defaultValue: "Display" })}
         </h3>
@@ -1111,16 +1158,15 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           t={t}
         />
 
-        <button
-          type="button"
+        <Button
+          size="lg"
+          shape="pill"
+          icon="link"
           className="sb-extensions-add-link-button"
           onClick={openAddFromLink}
         >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            link
-          </span>
           {t("extension-add-link-label")}
-        </button>
+        </Button>
       </section>
     </div>
   );
@@ -1361,17 +1407,12 @@ function SettingsMainView(props: { state: SeedBibleState }) {
           </li>
           <li>
             <div className="sb-settings-field-row">
-              <button
-                className="sb-settings-action-button"
-                onClick={() => {
-                  window.open(
-                    "https://docs.google.com/forms/d/e/1FAIpQLSejiuVM8xguEHKZ2Kv5DX-jE98zYwxFiPwpYrFSmvVgMejZzQ/viewform",
-                    "_blank"
-                  );
-                }}
+              <Button
+                href="https://docs.google.com/forms/d/e/1FAIpQLSejiuVM8xguEHKZ2Kv5DX-jE98zYwxFiPwpYrFSmvVgMejZzQ/viewform"
+                target="_blank"
               >
                 {t("report-a-bug", { defaultValue: "Report a bug" })}
-              </button>
+              </Button>
             </div>
           </li>
         </ul>
