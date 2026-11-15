@@ -21,6 +21,7 @@ import {
   getSessionUrl,
   type BibleReadingSession,
 } from "../../managers/SessionsManager";
+import { Button } from "../Button/Button";
 
 export interface ShareModalProps {
   /** Called when the sheet should close (Cancel or Escape). */
@@ -259,15 +260,15 @@ export const ShareModal = (props: ShareModalProps) => {
           />
         </div>
         <footer className="sb-share-embed-footer">
-          <button
-            type="button"
-            className="sb-share-embed-copy"
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => {
               void copyEmbedHtml();
             }}
           >
             {t("copy", { defaultValue: "Copy" })}
-          </button>
+          </Button>
         </footer>
       </div>
     );

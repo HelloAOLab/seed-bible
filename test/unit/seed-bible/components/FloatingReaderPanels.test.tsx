@@ -63,18 +63,37 @@ vi.mock(
       anchorClassName,
       onClick,
       icon,
-      ...props
+      label,
+      trigger,
     }: {
       children: ComponentChildren;
       buttonClassName?: string;
       anchorClassName?: string;
       onClick?: () => void;
       icon?: string;
+      label?: string;
+      // A menu that draws its own button gets the props it would spread.
+      trigger?: (menu: Record<string, unknown>) => ComponentChildren;
     }) => (
       <div className={anchorClassName}>
-        <button className={buttonClassName} onClick={onClick} {...props}>
-          {icon}
-        </button>
+        {trigger ? (
+          trigger({
+            className: buttonClassName,
+            "aria-haspopup": "menu",
+            "aria-expanded": false,
+            onClick: () => onClick?.(),
+            onKeyDown: () => {},
+          })
+        ) : (
+          <button
+            className={buttonClassName}
+            aria-label={label}
+            title={label}
+            onClick={onClick}
+          >
+            {icon}
+          </button>
+        )}
         <div>{children}</div>
       </div>
     ),

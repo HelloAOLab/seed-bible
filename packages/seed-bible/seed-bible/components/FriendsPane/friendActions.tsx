@@ -8,6 +8,7 @@ import type {
 import type { ModalManager } from "../../managers/ModalManager";
 import { displayNameOf } from "../../managers/Utils";
 import { useI18n } from "../../i18n/I18nManager";
+import { Button, type ButtonSize } from "../Button/Button";
 
 type Toast = (message: string) => void;
 type T = ReturnType<typeof useI18n>["t"];
@@ -20,7 +21,8 @@ export function CopyButton(props: {
   text: string;
   label: string;
   toast: Toast;
-  className?: string;
+  /** `sm` (the default) in a list row, `md` in a dialog. */
+  size?: ButtonSize;
   /** For when the visible label alone doesn't say whose link it copies. */
   ariaLabel?: string;
 }) {
@@ -43,9 +45,8 @@ export function CopyButton(props: {
   };
   return (
     <>
-      <button
-        type="button"
-        className={props.className ?? "sb-friends-button"}
+      <Button
+        size={props.size ?? "sm"}
         aria-label={props.ariaLabel}
         onClick={() => void copy()}
       >
@@ -59,58 +60,13 @@ export function CopyButton(props: {
             {t("copied", { defaultValue: "Copied" })}
           </span>
         </span>
-      </button>
+      </Button>
       {/* The label flipping to "Copied" isn't announced on its own. Kept
         outside the button so it doesn't become part of the button's name. */}
       <span className="sr-only" role="status">
         {copied.value ? t("copied", { defaultValue: "Copied" }) : ""}
       </span>
     </>
-  );
-}
-
-/**
- * A button that shows a spinner while its request is in flight. The label
- * stays in place (just invisible) under the spinner, so the button keeps its
- * size and screen readers still hear what it is.
- */
-export function BusyButton(props: {
-  busy: boolean;
-  disabled?: boolean;
-  className: string;
-  type?: "button" | "submit";
-  onClick?: () => void;
-  /** For when the visible label alone doesn't say who it acts on. */
-  ariaLabel?: string;
-  children: string;
-}) {
-  return (
-    <button
-      type={props.type ?? "button"}
-      className={`${props.className} sb-friends-busy-button`}
-      disabled={props.busy || props.disabled}
-      aria-busy={props.busy}
-      aria-label={props.ariaLabel}
-      onClick={props.onClick}
-    >
-      <span
-        className={
-          props.busy
-            ? "sb-friends-busy-label sb-friends-busy-label--hidden"
-            : "sb-friends-busy-label"
-        }
-      >
-        {props.children}
-      </span>
-      {props.busy ? (
-        <span
-          className="material-symbols-outlined sb-friends-busy-spinner"
-          aria-hidden="true"
-        >
-          progress_activity
-        </span>
-      ) : null}
-    </button>
   );
 }
 
@@ -313,20 +269,12 @@ function ConfirmRemoveFriend(props: {
         })}
       </p>
       <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onClose}
-        >
+        <Button onClick={onClose}>
           {t("cancel", { defaultValue: "Cancel" })}
-        </button>
-        <button
-          type="button"
-          className="sb-session-settings-end"
-          onClick={confirm}
-        >
+        </Button>
+        <Button variant="primary" tone="danger" onClick={confirm}>
           {t("remove", { defaultValue: "Remove" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

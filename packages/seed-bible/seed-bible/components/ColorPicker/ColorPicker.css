@@ -197,36 +197,6 @@
   gap: 0.5rem;
 }
 
-.sb-color-picker-cancel,
-.sb-color-picker-confirm {
-  border-radius: var(--sb-radius-md);
-  padding: 0.5rem 0.875rem;
-  font-size: var(--sb-font-size-13);
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.sb-color-picker-cancel {
-  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 10%);
-  background: transparent;
-  color: var(--sb-primary-color);
-}
-
-.sb-color-picker-cancel:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
-}
-
-.sb-color-picker-confirm {
-  border: 1px solid var(--sb-primary-color);
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color, var(--sb-reader-background, #fff));
-}
-
-.sb-color-picker-confirm:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), #000 12%);
-}
-
 @media (max-width: 480px) {
   .sb-color-picker-sv {
     aspect-ratio: 1 / 0.85;
@@ -242,10 +212,11 @@
     height: 1.375rem;
   }
 
-  .sb-color-picker-cancel,
-  .sb-color-picker-confirm {
+  /* Two classes, to outrank the Button's own size. */
+  .sb-button.sb-color-picker-cancel,
+  .sb-button.sb-color-picker-confirm {
     flex: 1;
-    padding: 0.75rem 0.875rem;
-    font-size: var(--sb-font-size-14);
+    --sb-button-height: 2.75rem;
+    --sb-button-font-size: var(--sb-font-size-14);
   }
 }

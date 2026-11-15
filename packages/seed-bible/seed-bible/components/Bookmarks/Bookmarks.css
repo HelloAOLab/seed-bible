@@ -199,32 +199,7 @@
 }
 
 .sb-bookmark-picker-remove {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
   margin-inline-end: 0.25rem;
-  border: none;
-  border-radius: var(--sb-radius-md);
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  cursor: pointer;
-}
-
-.sb-bookmark-picker-remove:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-  color: var(--sb-font-color);
-}
-
-.sb-bookmark-picker-remove:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.sb-bookmark-picker-remove .material-symbols-outlined {
-  font-size: 1.125rem;
 }
 
 /* The create form takes its own line under the row's label. */
@@ -290,43 +265,6 @@
 .sb-bookmark-picker-save,
 .sb-bookmark-edit-cancel {
   min-width: 5.25rem;
-  height: 2.25rem;
-  padding: 0 1rem;
-  border-radius: var(--sb-radius-md);
-  font: inherit;
-  font-size: var(--sb-font-size-14);
-  font-weight: 500;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition:
-    background-color var(--sb-duration-fast) ease,
-    opacity var(--sb-duration-fast) ease;
-}
-
-.sb-bookmark-picker-save {
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-  border-color: var(--sb-primary-color);
-}
-
-.sb-bookmark-picker-save:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-primary-color), #000 8%);
-}
-
-.sb-bookmark-edit-cancel {
-  background: transparent;
-  color: var(--sb-font-color);
-  border-color: color-mix(in srgb, var(--sb-font-color), transparent 75%);
-}
-
-.sb-bookmark-edit-cancel:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
-}
-
-.sb-bookmark-picker-save:disabled,
-.sb-bookmark-edit-cancel:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 
 /* ------------------------------------------------------------------

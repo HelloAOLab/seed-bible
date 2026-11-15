@@ -176,51 +176,7 @@
 }
 
 .sb-login-submit {
-  border: none;
-  border-radius: var(--sb-radius-md);
-  padding: 0.75rem 1rem;
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-  font-size: var(--sb-font-size-15);
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
   width: 100%;
-  transition:
-    filter var(--sb-duration-base) ease,
-    opacity var(--sb-duration-base) ease;
-}
-
-.sb-login-submit:hover:not(:disabled) {
-  filter: brightness(1.05);
-}
-
-.sb-login-submit:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.sb-login-secondary {
-  border: none;
-  border-radius: var(--sb-radius-md);
-  padding: 0.625rem 1rem;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-  font-size: var(--sb-font-size-14);
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  width: 100%;
-  transition: background-color var(--sb-duration-base) ease;
-}
-
-.sb-login-secondary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-}
-
-.sb-login-secondary:disabled {
-  opacity: 0.6;
-  cursor: default;
 }
 
 /* "Change email address" link rendered as a button in the code-step header. */
@@ -290,12 +246,4 @@
 .sb-login-actions-row .sb-login-secondary {
   width: auto;
   flex: 1;
-}
-
-.sb-login-actions-row .sb-login-secondary {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-}
-
-.sb-login-actions-row .sb-login-secondary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
 }

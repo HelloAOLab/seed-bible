@@ -8,6 +8,7 @@ import { useSignal } from "@preact/signals";
 import AvatarEditor, { useAvatarEditor } from "react-avatar-editor";
 import { useI18n } from "../../i18n/I18nManager";
 import { cropToFile, type PhotoCropTarget } from "./photoCrop";
+import { Button } from "../Button/Button";
 
 export type { PhotoCropTarget };
 
@@ -112,33 +113,30 @@ export function PhotoCropModalContent(props: {
 
         <div className="sb-photo-modal-actions">
           {onBack ? (
-            <button
-              type="button"
-              className="sb-photo-modal-button"
+            <Button
+              variant="secondary"
               onClick={onBack}
               disabled={isUploading.value}
             >
               {t("back", { defaultValue: "Back" })}
-            </button>
+            </Button>
           ) : null}
-          <button
-            type="button"
-            className="sb-photo-modal-button"
+          <Button
+            variant="secondary"
             onClick={onClose}
             disabled={isUploading.value}
           >
             {t("cancel", { defaultValue: "Cancel" })}
-          </button>
-          <button
-            type="button"
-            className="sb-photo-modal-button sb-photo-modal-button-primary"
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleConfirm}
-            disabled={isUploading.value}
+            loading={isUploading.value}
           >
             {isUploading.value
               ? t("uploading", { defaultValue: "Uploading..." })
               : confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

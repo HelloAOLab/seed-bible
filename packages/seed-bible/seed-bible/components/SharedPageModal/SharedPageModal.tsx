@@ -1,5 +1,6 @@
 import "./SharedPageModal.css";
 import { useI18n } from "../../i18n/I18nManager";
+import { Button } from "../Button/Button";
 
 /** A button in the shared-page modal, beside its Close button. */
 export interface SharedPageModalAction {
@@ -48,19 +49,18 @@ export function SharedPageModalContent(props: {
       <p className="sb-shared-page-modal-count">{lengthLabel}</p>
       {status ? <p className="sb-shared-page-modal-status">{status}</p> : null}
       <div className="sb-shared-page-modal-actions">
-        <button type="button" onClick={props.onClose}>
+        <Button variant="secondary" onClick={props.onClose}>
           {t("close", { defaultValue: "Close" })}
-        </button>
+        </Button>
         {props.actions.map((action) => (
-          <button
+          <Button
             key={action.label}
-            type="button"
-            className={action.primary ? "sb-shared-page-modal-start" : ""}
+            variant={action.primary ? "primary" : "secondary"}
             onClick={action.onClick}
             disabled={action.disabled}
           >
             {action.label}
-          </button>
+          </Button>
         ))}
       </div>
     </div>
@@ -81,13 +81,9 @@ export function SharedPageNotFoundModalContent(props: {
     <div className="sb-shared-page-modal sb-shared-page-modal--not-found">
       <p className="sb-shared-page-modal-description">{props.message}</p>
       <div className="sb-shared-page-modal-actions">
-        <button
-          type="button"
-          className="sb-shared-page-modal-start"
-          onClick={props.onClose}
-        >
+        <Button variant="primary" onClick={props.onClose}>
           {t("close", { defaultValue: "Close" })}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -109,17 +105,16 @@ export function SharedPageLoadFailedModalContent(props: {
     <div className="sb-shared-page-modal sb-shared-page-modal--load-failed">
       <p className="sb-shared-page-modal-description">{props.message}</p>
       <div className="sb-shared-page-modal-actions">
-        <button type="button" onClick={props.onClose}>
+        <Button variant="secondary" onClick={props.onClose}>
           {t("close", { defaultValue: "Close" })}
-        </button>
-        <button
-          type="button"
-          className="sb-shared-page-modal-start"
+        </Button>
+        <Button
+          variant="primary"
           onClick={props.onRetry}
-          disabled={props.retrying}
+          loading={props.retrying}
         >
           {t("try-again", { defaultValue: "Try again" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

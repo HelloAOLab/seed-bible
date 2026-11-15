@@ -62,8 +62,10 @@ import {
 } from "../../managers/AnnotationsManager";
 import type { FriendsManager } from "../../managers/FriendsManager";
 import {
-  isSessionHost,
+  countSessionPeople,
+  isConnectedUserHost,
   getConnectedUserVisualKey,
+  resolveViewingAreaVisibility,
   type BibleReadingSession,
   type ParticipantReadingPosition,
   type ConnectionSessionUserVisual,
@@ -73,7 +75,7 @@ import { useI18n } from "../../i18n/I18nManager";
 import { useOverlayDismiss } from "../useOverlayDismiss";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
-import { InfoSettingsIcon, MaterialIcon } from "../../components/icons";
+import { InfoSettingsIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
 import { Spinner } from "../Spinner/Spinner";
@@ -127,6 +129,8 @@ import {
   PlaylistReaderHint,
 } from "../PlaylistEditor/PlaylistEditorWorkspace";
 import { CloseButton } from "../CloseButton/CloseButton";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 interface ReaderChapterActionProps {
   state: SeedBibleState;
@@ -153,11 +157,12 @@ function ReaderSaveButton(props: ReaderChapterActionProps) {
     state.saves.isLocationSaved(translationId, bookId, chapterNumber);
 
   return (
-    <button
-      type="button"
+    <IconButton
       className={`sb-bible-reader-save-button${
         isSaved ? " sb-bible-reader-save-button-saved" : ""
       }`}
+      icon={<SaveStarIcon isSaved={isSaved} />}
+      label={saveChapterLabel(t, isSaved)}
       onClick={() => {
         if (!canSave || !translationId || !bookId || !chapterNumber) {
           return;
@@ -169,11 +174,7 @@ function ReaderSaveButton(props: ReaderChapterActionProps) {
         });
       }}
       disabled={!canSave}
-      aria-label={saveChapterLabel(t, isSaved)}
-      title={saveChapterLabel(t, isSaved)}
-    >
-      <SaveStarIcon isSaved={isSaved} />
-    </button>
+    />
   );
 }
 
@@ -197,8 +198,8 @@ function OfflineFallbackSwitch(props: {
   }
 
   return translations.length === 1 ? (
-    <button
-      type="button"
+    <Button
+      variant="secondary"
       className="sb-reader-error-switch"
       onClick={() => onSwitch(selected)}
     >
@@ -206,7 +207,7 @@ function OfflineFallbackSwitch(props: {
         defaultValue: "Switch to {{name}}",
         name: selected.name,
       })}
-    </button>
+    </Button>
   ) : (
     <div className="sb-reader-error-offline-pick">
       <label
@@ -230,15 +231,15 @@ function OfflineFallbackSwitch(props: {
           defaultValue: "No matching translations",
         })}
       />
-      <button
-        type="button"
+      <Button
+        variant="secondary"
         className="sb-reader-error-switch"
         onClick={() => onSwitch(selected)}
       >
         {t("chapter-unavailable-offline-switch-confirm", {
           defaultValue: "Switch",
         })}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -260,11 +261,12 @@ function ReaderBookmarkButton(props: ReaderChapterActionProps) {
   const label = bookmarkButtonLabel(t, bookmarksHere);
 
   return (
-    <button
-      type="button"
+    <IconButton
       className={`sb-bible-reader-bookmark-button${
         bookmarksHere.length > 0 ? " sb-bible-reader-bookmark-button-set" : ""
       }`}
+      icon={<BookmarkStackIcon bookmarks={bookmarksHere} />}
+      label={label}
       onClick={() => {
         if (!translationId || !bookId || !chapterNumber) {
           return;
@@ -272,11 +274,7 @@ function ReaderBookmarkButton(props: ReaderChapterActionProps) {
         void openBookmarkModal(state, { translationId, bookId, chapterNumber });
       }}
       disabled={!canBookmark}
-      aria-label={label}
-      title={label}
-    >
-      <BookmarkStackIcon bookmarks={bookmarksHere} />
-    </button>
+    />
   );
 }
 
@@ -490,13 +488,7 @@ function broadcastSelectedVerse(
   const options = session.options.value;
   const visibility = options.verseSelectionEffectVisibility ?? "hosts-only";
   if (visibility === "none") return null;
-  if (
-    visibility === "hosts-only" &&
-    !(
-      isSessionHost(options, user.userId) ||
-      isSessionHost(options, user.connectionId)
-    )
-  ) {
+  if (visibility === "hosts-only" && !isConnectedUserHost(options, user)) {
     return null;
   }
   const connectionId = user.connectionId ?? user.userId ?? "anonymous";
@@ -966,10 +958,7 @@ function renderChapterContent(
 
         if (
           !ownerUser ||
-          !(
-            isSessionHost(session.options.value, ownerUser.userId) ||
-            isSessionHost(session.options.value, ownerUser.connectionId)
-          )
+          !isConnectedUserHost(session.options.value, ownerUser)
         ) {
           return false;
         }
@@ -3188,8 +3177,22 @@ export function BibleReader(props: BibleReaderProps) {
     const found: ParticipantPresence[] = [];
     if (!sharedSession) return found;
     const positions = sharedSession.participantPositions.value;
-    for (const user of sharedSession.connectedUsers.value) {
+    const sessionOptions = sharedSession.options.value;
+    const connectedUsers = sharedSession.connectedUsers.value;
+    const viewingAreas = resolveViewingAreaVisibility(
+      sessionOptions.viewingAreaVisibility,
+      countSessionPeople(connectedUsers),
+      state?.settings?.settings.value.viewingAreaIndicators,
+      connectedUsers.some((user) => isConnectedUserHost(sessionOptions, user))
+    );
+    for (const user of connectedUsers) {
       if (user.isSelf) continue;
+      if (
+        viewingAreas === "hosts-only" &&
+        !isConnectedUserHost(sessionOptions, user)
+      ) {
+        continue;
+      }
       const position = positions.get(user.connectionId);
       const range = position ? rangeOf(position) : null;
       if (!range) continue;
@@ -3953,8 +3956,9 @@ export function BibleReader(props: BibleReaderProps) {
               })}
             </p>
             {translationBooks.value?.books[0] && (
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="lg"
                 className="sb-reader-not-found-action"
                 onClick={() => {
                   const firstBook = translationBooks.value!.books[0]!;
@@ -3970,7 +3974,7 @@ export function BibleReader(props: BibleReaderProps) {
                   chapterNumber:
                     translationBooks.value.books[0].firstChapterNumber ?? 1,
                 })}
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -4008,16 +4012,14 @@ export function BibleReader(props: BibleReaderProps) {
               </p>
             )}
             <div className="sb-reader-error-actions">
-              <button
-                type="button"
+              <Button
+                variant="primary"
                 className="sb-reader-error-retry"
                 onClick={() => void retryChapterLoad()}
-                disabled={retrying}
-                aria-busy={retrying}
+                loading={retrying}
               >
-                {retrying && <Spinner size="1.125rem" />}
                 {t("reload", { defaultValue: "Reload" })}
-              </button>
+              </Button>
               {offlineFallbackTranslations.length > 0 && (
                 <OfflineFallbackSwitch
                   translations={offlineFallbackTranslations}
@@ -4045,23 +4047,18 @@ export function BibleReader(props: BibleReaderProps) {
                         "Or keep reading in a translation saved on this device:",
                     })}
                   </p>
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
+                    icon="translate"
                     className="sb-reader-error-action"
                     onClick={() =>
                       void selectorState.openDownloadedTranslations(currentSlot)
                     }
                   >
-                    <span
-                      className="material-symbols-outlined"
-                      aria-hidden="true"
-                    >
-                      translate
-                    </span>
                     {t("chapter-unavailable-choose-saved", {
                       defaultValue: "Choose a saved translation",
                     })}
-                  </button>
+                  </Button>
                 </div>
               )}
           </div>
@@ -4220,21 +4217,14 @@ export function BibleReader(props: BibleReaderProps) {
             }`}
           >
             {!isMinimalEmbed && state.playlists.playing.value ? (
-              <button
-                type="button"
+              <IconButton
                 className="sb-bible-reader-mobile-header-back"
-                aria-label={t("playlist-show-steps", {
-                  defaultValue: "Back to the playlist",
-                })}
-                title={t("playlist-show-steps", {
+                icon={isRtl ? "arrow_forward" : "arrow_back"}
+                label={t("playlist-show-steps", {
                   defaultValue: "Back to the playlist",
                 })}
                 onClick={() => (state.playlists.view.value = "play_playlist")}
-              >
-                <MaterialIcon>
-                  {isRtl ? "arrow_forward" : "arrow_back"}
-                </MaterialIcon>
-              </button>
+              />
             ) : null}
             {!isMinimalEmbed && (
               <QuickToolbar
@@ -4284,13 +4274,11 @@ export function BibleReader(props: BibleReaderProps) {
             <div className="sb-bible-reader-mobile-header-actions">
               {isMinimalEmbed ? (
                 <>
-                  <button
-                    type="button"
+                  <IconButton
+                    look="tinted"
                     className="sb-bible-reader-mobile-header-open-tab"
-                    aria-label={t("open-in-new-tab", {
-                      defaultValue: "Open in New Tab",
-                    })}
-                    title={t("open-in-new-tab", {
+                    icon="open_in_new"
+                    label={t("open-in-new-tab", {
                       defaultValue: "Open in New Tab",
                     })}
                     onClick={() => {
@@ -4301,18 +4289,13 @@ export function BibleReader(props: BibleReaderProps) {
                         "noopener,noreferrer"
                       );
                     }}
-                  >
-                    <MaterialIcon>open_in_new</MaterialIcon>
-                  </button>
-                  <button
-                    type="button"
+                  />
+                  <IconButton
                     className="sb-bible-reader-mobile-header-settings"
+                    icon={<InfoSettingsIcon />}
+                    label={t("settings", { defaultValue: "Settings" })}
                     onClick={() => mobileChrome?.onOpenMobileSettings()}
-                    aria-label={t("settings", { defaultValue: "Settings" })}
-                    title={t("settings", { defaultValue: "Settings" })}
-                  >
-                    <InfoSettingsIcon />
-                  </button>
+                  />
                 </>
               ) : (
                 <>
@@ -4362,15 +4345,12 @@ export function BibleReader(props: BibleReaderProps) {
                       session={sharedSession}
                     />
                   ) : null}
-                  <button
-                    type="button"
+                  <IconButton
                     className="sb-bible-reader-mobile-header-settings"
+                    icon={<InfoSettingsIcon />}
+                    label={t("settings", { defaultValue: "Settings" })}
                     onClick={() => mobileChrome?.onOpenMobileSettings()}
-                    aria-label={t("settings", { defaultValue: "Settings" })}
-                    title={t("settings", { defaultValue: "Settings" })}
-                  >
-                    <InfoSettingsIcon />
-                  </button>
+                  />
                 </>
               )}
               {/* At the end of the row: the right on LTR, the left on RTL. */}
