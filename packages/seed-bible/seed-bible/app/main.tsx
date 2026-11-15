@@ -44,6 +44,7 @@ import {
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
 import { TutorialSkipPrompt } from "../components/TutorialSkipPrompt/TutorialSkipPrompt";
+import { DisplayNamePrompt } from "../components/DisplayNamePrompt/DisplayNamePrompt";
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
 import { OfflineUpdatePrompt } from "../components/OfflineDownloadPrompt/OfflineUpdatePrompt";
 import { OfflineRecoveryToast } from "../components/OfflineDownloadPrompt/OfflineRecoveryToast";
@@ -363,6 +364,12 @@ function MainContent(props: {
           customizationName={
             state.customizations.activeCustomization.value?.name
           }
+        />
+
+        <DisplayNamePrompt
+          login={state.login}
+          onboarding={state.onboarding}
+          className={`${webkitClass}`}
         />
 
         <TutorialPrompt

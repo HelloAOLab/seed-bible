@@ -23,6 +23,7 @@ import {
   getUserAnimalVisual,
   type ConnectionSessionUserVisual,
 } from "../../managers/SessionsManager";
+import { visualAnonymousLabel } from "../../managers/Utils";
 import { Avatar } from "../Avatar/Avatar";
 import { formatRelativeTime, translateTitle } from "../../app/utils";
 import { AskIcon, MaterialIcon } from "../icons";
@@ -453,13 +454,7 @@ function getVisualLabel(
   visual: ConnectionSessionUserVisual,
   t: (key: string, options?: Record<string, unknown>) => string
 ): string {
-  return t(`visual-color-animal-anonymous`, {
-    defaultValue: `{{color}} {{animal}} (Anonymous)`,
-    color: t(`color-${visual.colorName}`, { defaultValue: visual.colorName }),
-    animal: t(`animal-${visual.defaultIcon}`, {
-      defaultValue: visual.defaultIcon,
-    }),
-  });
+  return visualAnonymousLabel(visual, t);
 }
 
 export function getParticipantDisplayLabel(

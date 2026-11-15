@@ -26,6 +26,7 @@ import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
 import type { AnnotationsManager } from "./AnnotationsManager";
 import { toShareableUrl } from "../app/publicLinks";
+import { trimmedOrNull } from "./Utils";
 
 export interface ConnectionSessionUserVisual {
   defaultIcon: string;
@@ -1748,7 +1749,11 @@ async function createBibleReadingSession(
       authorId,
       text: trimmed.slice(0, MAX_QUESTION_ANSWER_LENGTH),
       updatedAtMs: Date.now(),
-      name: self?.profile?.name ?? `User ${authorId.slice(0, 8)}`,
+      // Empty-string names (brand-new accounts) must not land in the shared
+      // map: parseQuestionAnswer drops answers with a blank name, and peers
+      // would see a nameless row. Fall back to a short id when unset.
+      name:
+        trimmedOrNull(self?.profile?.name) ?? `User ${authorId.slice(0, 8)}`,
       pictureUrl: self?.profile?.pictureUrl ?? null,
       visual,
     };

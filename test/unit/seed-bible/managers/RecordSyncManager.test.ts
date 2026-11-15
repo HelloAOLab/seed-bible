@@ -109,6 +109,8 @@ function createLoginMock(userId: string | null): Mocked<LoginManager> {
     profilePromise: null,
     isProfileLoading: signal(false),
     isSavingProfile: signal(false),
+    needsDisplayNamePrompt: signal(false),
+    dismissDisplayNamePrompt: vi.fn(),
     login: vi.fn().mockResolvedValue(undefined),
     logout: vi.fn().mockResolvedValue(undefined),
     updateProfile: vi.fn().mockResolvedValue(undefined),

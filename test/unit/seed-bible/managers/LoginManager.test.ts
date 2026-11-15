@@ -2052,6 +2052,52 @@ describe("createLoginManager", () => {
       expect(recordDataMock).not.toHaveBeenCalled();
     });
 
+    it("asks for a display name once when inventing a brand-new blank profile", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.profile.value !== null);
+
+      expect(manager.needsDisplayNamePrompt.value).toBe(true);
+
+      manager.dismissDisplayNamePrompt();
+      expect(manager.needsDisplayNamePrompt.value).toBe(false);
+    });
+
+    it("does not ask for a display name when the account already has a profile", async () => {
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { name: "" },
+      });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.profile.value !== null);
+
+      expect(manager.needsDisplayNamePrompt.value).toBe(false);
+    });
+
+    it("clears the display-name prompt when a name is saved", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value !== null);
+      expect(manager.needsDisplayNamePrompt.value).toBe(true);
+
+      manager.updateProfile({ name: "Ada" });
+      expect(manager.needsDisplayNamePrompt.value).toBe(false);
+      expect(manager.profile.value?.name).toBe("Ada");
+    });
+
     it("keeps the local config in place if persisting the adopted profile fails", async () => {
       localStorage.setItem(
         "sb-profile-config-local",

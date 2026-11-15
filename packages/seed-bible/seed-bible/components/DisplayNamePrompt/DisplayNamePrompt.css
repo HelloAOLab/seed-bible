@@ -1,0 +1,42 @@
+.sb-display-name-prompt-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 4px 0 0;
+  padding: 12px;
+  border-radius: var(--sb-radius-lg);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  text-align: start;
+}
+
+.sb-display-name-prompt-default {
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-display-name-prompt-label {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 8px 0 0;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  font-size: var(--sb-font-size-13);
+  text-align: start;
+}
+
+.sb-display-name-prompt-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  border-radius: var(--sb-radius-md);
+  background: var(--sb-bg-color);
+  color: var(--sb-font-color);
+  font: inherit;
+  text-align: start;
+}

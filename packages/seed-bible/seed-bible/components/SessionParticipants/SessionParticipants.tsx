@@ -93,7 +93,7 @@ export function MobileSessionParticipants({
               <Avatar
                 imageUrl={user.profile?.pictureUrl ?? null}
                 visual={user.visual}
-                title={getUserDisplayName(user)}
+                title={getUserDisplayName(user, t)}
                 isSelf={user.isSelf}
               />
             </span>
@@ -273,7 +273,7 @@ export function SessionParticipantList({
             <ParticipantName
               state={state}
               userId={user.userId}
-              displayName={getUserDisplayName(user)}
+              displayName={getUserDisplayName(user, t)}
               onOpenProfile={onOpenProfile}
               onCloseProfile={onCloseProfile}
             />
@@ -307,7 +307,7 @@ export function SessionParticipantList({
           <ParticipantFriendButton
             state={state}
             userId={user.userId}
-            displayName={getUserDisplayName(user)}
+            displayName={getUserDisplayName(user, t)}
           />
         )}
       </li>
