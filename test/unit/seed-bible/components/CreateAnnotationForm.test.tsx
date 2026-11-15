@@ -109,12 +109,19 @@ function createMockAnnotationsManager(editing: Annotation | null) {
   const editingAnnotation = signal(editing);
   const saveEditingAnnotation = vi.fn().mockResolvedValue(undefined);
   const cancelEditingAnnotation = vi.fn();
+  const setAnnotationEditorDirtyCheck = vi.fn();
   const annotations = {
     editingAnnotation,
     saveEditingAnnotation,
     cancelEditingAnnotation,
+    setAnnotationEditorDirtyCheck,
   } as unknown as AnnotationsManager;
-  return { annotations, saveEditingAnnotation, cancelEditingAnnotation };
+  return {
+    annotations,
+    saveEditingAnnotation,
+    cancelEditingAnnotation,
+    setAnnotationEditorDirtyCheck,
+  };
 }
 
 function createChapterVerse(number: number, text: string) {
@@ -300,6 +307,43 @@ describe("CreateAnnotationForm", () => {
 
       expect(onClose).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it("registers a dirty check while mounted and clears it on unmount", async () => {
+    const { annotations, setAnnotationEditorDirtyCheck } =
+      createMockAnnotationsManager(
+        createAnnotation({ data: { type: "comment", html: "<p>Saved</p>" } })
+      );
+    const tabs = createMockTabsManager();
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={vi.fn()}
+        />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    expect(setAnnotationEditorDirtyCheck).toHaveBeenCalled();
+    const check = setAnnotationEditorDirtyCheck.mock.calls.find(
+      (call) => typeof call[0] === "function"
+    )?.[0];
+    expect(typeof check).toBe("function");
+    // Untouched editor matches the baseline snapshot taken on mount.
+    expect(check!()).toBe(false);
+    // Mutate the stub the same way TipTap would after typing.
+    fakeEditor!.getHTML = () => "<p>Changed</p>";
+    expect(check!()).toBe(true);
+
+    await act(async () => {
+      render(null, container);
+    });
+    expect(setAnnotationEditorDirtyCheck).toHaveBeenLastCalledWith(null);
   });
 
   it("disables Save while the editor is empty, and enables it once typed", async () => {

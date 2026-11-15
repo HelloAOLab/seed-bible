@@ -338,14 +338,18 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
           state.app.openDiscover();
           return;
         }
-        if (!state.settings.settings.value.discoveredContent.showContent) {
-          state.discover.view.value = "discover";
-        }
-        state.discover.scrollToVerse.value = {
-          bookId,
-          chapterNumber,
-          verseNumber: firstAnnotatedVerse,
-        };
+        // Don't yank Discover off an unsaved note — ask first, then show
+        // the notes list (and scroll) once the editor is clear.
+        state.annotations.runAfterLeavingAnnotationEditor(() => {
+          if (!state.settings.settings.value.discoveredContent.showContent) {
+            state.discover.view.value = "discover";
+          }
+          state.discover.scrollToVerse.value = {
+            bookId,
+            chapterNumber,
+            verseNumber: firstAnnotatedVerse,
+          };
+        });
       }}
       aria-label={label}
       title={label}
@@ -3329,20 +3333,24 @@ export function BibleReader(props: BibleReaderProps) {
       return;
     }
 
-    if (state.settings.settings.value.discoveredContent.showContent) {
-      readingState.discoverContentPanelInline.value = true;
-    } else {
-      state.discover.view.value = "discover";
-    }
+    // Switching Discover to the notes list unmounts the annotation editor.
+    // Ask before discarding typed text; once clear, open/scroll as usual.
+    state.annotations.runAfterLeavingAnnotationEditor(() => {
+      if (state.settings.settings.value.discoveredContent.showContent) {
+        readingState.discoverContentPanelInline.value = true;
+      } else {
+        state.discover.view.value = "discover";
+      }
 
-    // AnnotationsSection's shared effect reacts to this target either way —
-    // scrolling to and highlighting the note's group — whether it's mounted
-    // in this tab's compact panel or the toolbar-toggled Discover pane.
-    state.discover.scrollToVerse.value = {
-      bookId: verse.bookId,
-      chapterNumber: verse.chapterNumber,
-      verseNumber,
-    };
+      // AnnotationsSection's shared effect reacts to this target either way —
+      // scrolling to and highlighting the note's group — whether it's mounted
+      // in this tab's compact panel or the toolbar-toggled Discover pane.
+      state.discover.scrollToVerse.value = {
+        bookId: verse.bookId,
+        chapterNumber: verse.chapterNumber,
+        verseNumber,
+      };
+    });
   };
   const handleAnnotationVerseClick = annotationVerseClickIn(readingState);
 

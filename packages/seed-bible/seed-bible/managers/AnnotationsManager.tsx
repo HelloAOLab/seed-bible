@@ -149,9 +149,38 @@ export interface AnnotationsManager {
 
   /**
    * Discards the current edit and returns Discover to the same view
-   * `saveEditingAnnotation` would.
+   * `saveEditingAnnotation` would. When the editor reports unsaved text,
+   * asks before discarding (see {@link runAfterLeavingAnnotationEditor}).
    */
   cancelEditingAnnotation: () => void;
+
+  /**
+   * Registers how the open annotation form reports unsaved text. The form
+   * passes a checker on mount and `null` on unmount. Used by
+   * {@link isAnnotationEditorDirty} and {@link runAfterLeavingAnnotationEditor}.
+   */
+  setAnnotationEditorDirtyCheck: (check: (() => boolean) | null) => void;
+
+  /**
+   * True when the annotation editor is open and its dirty checker says the
+   * text differs from when editing started. False when nothing is being
+   * edited, the form isn't mounted yet, or the checker says clean.
+   */
+  isAnnotationEditorDirty: () => boolean;
+
+  /**
+   * Runs `action` once Discover is no longer on the annotation editor.
+   * - Editor not open: runs `action` immediately.
+   * - Editor open and clean (empty new note / unchanged existing note):
+   *   discards the draft and runs `action`.
+   * - Editor open and dirty: asks whether to discard; only on confirm does
+   *   it leave and run `action`. Keep-editing leaves the draft alone and
+   *   does not run `action`.
+   *
+   * Prefer this over assigning `discover.view` directly whenever leaving
+   * the editor might throw away typed text.
+   */
+  runAfterLeavingAnnotationEditor: (action: () => void) => void;
 
   /**
    * Deletes an annotation, updates the chapter cache, and clears the editing
@@ -600,6 +629,19 @@ export interface CreateAnnotationsManagerOptions {
    * Omitted means a limit of this manager's own.
    */
   friendReads?: FriendReadLimiter;
+  /**
+   * Opens the "Discard your note?" prompt when
+   * {@link AnnotationsManager.runAfterLeavingAnnotationEditor} would leave
+   * with unsaved text. Production wires this to the unsaved-annotation
+   * modal; tests inject a stub (or omit it to discard without asking).
+   */
+  confirmDiscardUnsavedAnnotation?: (onDiscard: () => void) => void;
+  /**
+   * Runs whenever the annotation editor is cleared (save, discard, or
+   * delete). Used to dismiss a still-open "Discard your note?" prompt so
+   * it can't act on an editor that's already gone.
+   */
+  onAnnotationEditorClosed?: () => void;
 }
 
 /**
@@ -1376,6 +1418,11 @@ export function createAnnotationsManager(
   // `null` means Discover was closed.
   let viewBeforeEditing: DiscoverView | null = null;
 
+  // Live dirty check from CreateAnnotationForm while it is mounted. Null when
+  // the form isn't up (or hasn't registered yet), which means "not dirty" —
+  // the user can't have typed into an editor that isn't on screen.
+  let annotationEditorDirtyCheck: (() => boolean) | null = null;
+
   const rememberViewBeforeEditing = () => {
     const current = discover.view.peek();
     // A second open while the editor is already up keeps the original
@@ -1389,10 +1436,58 @@ export function createAnnotationsManager(
     isDraftingNewAnnotation.value = false;
     draftTabId.value = null;
     editingAnnotation.value = null;
+    annotationEditorDirtyCheck = null;
     if (discover.view.peek() === "create_annotation") {
       discover.view.value = viewBeforeEditing;
     }
     viewBeforeEditing = null;
+    options.onAnnotationEditorClosed?.();
+  };
+
+  const setAnnotationEditorDirtyCheck = (
+    check: (() => boolean) | null
+  ): void => {
+    annotationEditorDirtyCheck = check;
+  };
+
+  const isAnnotationEditorOpen = (): boolean =>
+    discover.view.peek() === "create_annotation" &&
+    editingAnnotation.peek() !== null;
+
+  const isAnnotationEditorDirty = (): boolean => {
+    if (!isAnnotationEditorOpen()) {
+      return false;
+    }
+    return annotationEditorDirtyCheck?.() ?? false;
+  };
+
+  const runAfterLeavingAnnotationEditor = (action: () => void): void => {
+    if (!isAnnotationEditorOpen()) {
+      action();
+      return;
+    }
+
+    const leaveThenAct = () => {
+      // Save/cancel may have already cleared the editor while the prompt
+      // was up; only leave when it's still open, then run the deferred work.
+      if (isAnnotationEditorOpen()) {
+        leaveAnnotationEditor();
+      }
+      action();
+    };
+
+    if (!isAnnotationEditorDirty()) {
+      leaveThenAct();
+      return;
+    }
+
+    const confirm = options.confirmDiscardUnsavedAnnotation;
+    if (!confirm) {
+      // Tests (and any caller that skips the prompt) discard immediately.
+      leaveThenAct();
+      return;
+    }
+    confirm(leaveThenAct);
   };
 
   const activeTab = computed(
@@ -1453,6 +1548,36 @@ export function createAnnotationsManager(
     }
   });
 
+  const beginNewAnnotationDraft = (
+    tab: ReaderTab,
+    bookId: string,
+    chapterNumber: number,
+    userId: string | null
+  ): void => {
+    const now = Date.now();
+    isDraftingNewAnnotation.value = true;
+    draftTabId.value = tab.id;
+    // Verse targeting starts null; the sync effect above fills it in
+    // immediately from the current selection, then keeps it live.
+    editingAnnotation.value = annotationSchema.parse({
+      id: `annotation_${uuid()}`,
+      bookId,
+      chapterNumber,
+      verseNumber: null,
+      endVerseNumber: null,
+      verseNumbers: null,
+      data: {
+        type: "comment",
+        html: "",
+        userId,
+        createdAtMs: now,
+        updatedAtMs: now,
+      },
+    });
+    rememberViewBeforeEditing();
+    discover.view.value = "create_annotation";
+  };
+
   const createNewAnnotation = async (): Promise<void> => {
     let userId = login.userId.value;
 
@@ -1482,36 +1607,33 @@ export function createAnnotationsManager(
       return;
     }
 
-    const now = Date.now();
-    isDraftingNewAnnotation.value = true;
-    draftTabId.value = tab.id;
-    // Verse targeting starts null; the sync effect above fills it in
-    // immediately from the current selection, then keeps it live.
-    editingAnnotation.value = annotationSchema.parse({
-      id: `annotation_${uuid()}`,
-      bookId,
-      chapterNumber,
-      verseNumber: null,
-      endVerseNumber: null,
-      verseNumbers: null,
-      data: {
-        type: "comment",
-        html: "",
-        userId,
-        createdAtMs: now,
-        updatedAtMs: now,
-      },
+    // Opening a new draft while another note is mid-edit would otherwise
+    // replace it (and drop typed text) without asking.
+    runAfterLeavingAnnotationEditor(() => {
+      beginNewAnnotationDraft(tab, bookId, chapterNumber, userId);
     });
-    rememberViewBeforeEditing();
-    discover.view.value = "create_annotation";
   };
 
-  const editAnnotation = (annotation: Annotation): void => {
+  const beginEditAnnotation = (annotation: Annotation): void => {
     isDraftingNewAnnotation.value = false;
     draftTabId.value = null;
     editingAnnotation.value = { ...annotation };
     rememberViewBeforeEditing();
     discover.view.value = "create_annotation";
+  };
+
+  const editAnnotation = (annotation: Annotation): void => {
+    // Same note already open: keep the in-progress text rather than resetting
+    // from the saved copy.
+    if (
+      isAnnotationEditorOpen() &&
+      editingAnnotation.peek()?.id === annotation.id
+    ) {
+      return;
+    }
+    runAfterLeavingAnnotationEditor(() => {
+      beginEditAnnotation(annotation);
+    });
   };
 
   const saveEditingAnnotation = async (): Promise<void> => {
@@ -1544,7 +1666,7 @@ export function createAnnotationsManager(
   };
 
   const cancelEditingAnnotation = (): void => {
-    leaveAnnotationEditor();
+    runAfterLeavingAnnotationEditor(() => {});
   };
 
   const saveAnnotationAndRefresh = async (
@@ -1564,8 +1686,10 @@ export function createAnnotationsManager(
     const recordId = effectiveRecordId();
     await deleteAnnotation(annotation.id);
     removeFromCache(annotation, recordId);
+    // Force-leave: the note is gone, so asking to keep editing it would be
+    // wrong even if the editor still had unsaved text for it.
     if (editingAnnotation.peek()?.id === annotation.id) {
-      cancelEditingAnnotation();
+      leaveAnnotationEditor();
     }
   };
 
@@ -1590,6 +1714,9 @@ export function createAnnotationsManager(
     editAnnotation,
     saveEditingAnnotation,
     cancelEditingAnnotation,
+    setAnnotationEditorDirtyCheck,
+    isAnnotationEditorDirty,
+    runAfterLeavingAnnotationEditor,
     deleteAnnotationAndRefresh,
     isDraftingNewAnnotation: computed(() => isDraftingNewAnnotation.value),
     hasRecordOverride: !!recordOverride,

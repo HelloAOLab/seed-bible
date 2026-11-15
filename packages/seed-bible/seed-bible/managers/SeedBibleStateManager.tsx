@@ -210,6 +210,10 @@ import {
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
 import { syncAnnotationConflictModal } from "../components/AnnotationConflictModal/AnnotationConflictModal";
+import {
+  closeUnsavedAnnotationConfirm,
+  openUnsavedAnnotationConfirm,
+} from "../components/CreateAnnotationForm/unsavedAnnotationConfirm";
 import { createAdoptionPrompt } from "../components/AdoptDeviceContentModal/AdoptDeviceContentModal";
 import {
   createModalManager,
@@ -1049,6 +1053,9 @@ export function createSeedBibleState(
       confirmAdoption: (owner) => askToAdopt(owner, "notes"),
       friendIds: friends.friendIds,
       friendReads,
+      confirmDiscardUnsavedAnnotation: (onDiscard) =>
+        openUnsavedAnnotationConfirm(modals, onDiscard),
+      onAnnotationEditorClosed: () => closeUnsavedAnnotationConfirm(modals),
     }
   );
   const yourContent = createYourContentManager({
