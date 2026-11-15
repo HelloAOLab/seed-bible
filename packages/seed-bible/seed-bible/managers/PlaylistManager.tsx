@@ -1438,7 +1438,7 @@ function PauseAudioReaderConfirm(props: {
       <p className="sb-confirm-delete-message">
         {t("pause-audio-for-playlist-message", {
           defaultValue:
-            "Playing this playlist will pause Audio Reader. When the playlist ends, it continues from where you left off.",
+            "Playing this playlist will pause Audio Reader. When the playlist ends, its controls come back paused where you left off.",
         })}
       </p>
       <div className="sb-confirm-delete-actions">
@@ -3166,12 +3166,12 @@ export function createPlaylistManager(
   };
 
   /**
-   * Continues narration a playlist paused. Runs when that playlist's own
-   * extension instance is disposed, which is every way the playlist ends.
-   * A tab that has already closed drops its narration instead of starting it.
-   * Another playlist still running inherits it, so this one does not talk
-   * over that one. After any chapter restore, rewrites the address bar for
-   * the owner tab when it is still selected (restore itself uses
+   * Puts back narration a playlist paused — still paused, at the same place.
+   * Runs when that playlist's own extension instance is disposed, which is
+   * every way the playlist ends. A tab that has already closed drops its
+   * narration. Another playlist still running inherits it, so this one does
+   * not talk over that one. After any chapter restore, rewrites the address
+   * bar for the owner tab when it is still selected (restore itself uses
    * updateUrl: false so it does not).
    */
   const resumeNarrationHeldBy = (
@@ -3228,21 +3228,13 @@ export function createPlaylistManager(
         // playlist chapter. Rewrite it from the restored tab whenever that
         // tab is still selected (replace — no Back entry). Do this while
         // restoring is still marked so a URL-sync stopPlaying bails instead
-        // of re-entering endPlaylist, and before the heir return so handing
-        // narration off cannot leave the wrong chapter in the address bar.
+        // of re-entering endPlaylist. Controllers stay paused: the place is
+        // kept, but speech must not start on its own.
         if (toReturn.length > 0 && activeTab.peek()?.readingState === owner) {
           tabs.leaveStaticPage();
         }
         for (const item of toReturn) {
           clearRestoring(item.readingState);
-        }
-        if (heir) {
-          return;
-        }
-        for (const item of live) {
-          if (controllerFor(item.readingState) === item.controller) {
-            item.controller.play();
-          }
         }
       };
 
@@ -3575,12 +3567,12 @@ export function createPlaylistManager(
   };
 
   /**
-   * Stops the active tab's playlist. Narration that playlist paused continues
-   * from the extension instance's dispose, so a stop that arrived because
-   * some other tab's address replaced the URL does not resume it. While a
-   * chapter restore is in flight, a second stop would run endPlaylist again
-   * (and rewrite the address from the playlist chapter) before finish() can
-   * write the restored one — so bail until that restore completes.
+   * Stops the active tab's playlist. Narration that playlist paused comes
+   * back paused from the extension instance's dispose, so a stop that arrived
+   * because some other tab's address replaced the URL does not resume it.
+   * While a chapter restore is in flight, a second stop would run endPlaylist
+   * again (and rewrite the address from the playlist chapter) before finish()
+   * can write the restored one — so bail until that restore completes.
    */
   const stopPlaying = (): void => {
     const readingState = activeTab.peek()?.readingState;

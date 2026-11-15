@@ -401,7 +401,7 @@
   "playlist-add-link-embed": "Embed this link",
   "play-playlist": "Play playlist",
   "pause-audio-for-playlist-title": "Pause Audio Reader?",
-  "pause-audio-for-playlist-message": "Playing this playlist will pause Audio Reader. When the playlist ends, it continues from where you left off.",
+  "pause-audio-for-playlist-message": "Playing this playlist will pause Audio Reader. When the playlist ends, its controls come back paused where you left off.",
   "stop": "Stop",
   "previous": "Previous",
   "next": "Next",

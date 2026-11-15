@@ -2738,7 +2738,7 @@ describe("createPlaylistManager", () => {
       expect(audio.isPlaying.value).toBe(true);
     });
 
-    it("pauses every tab on confirm and continues from that place when the playlist ends", async () => {
+    it("pauses every tab on confirm and leaves them paused at that place when the playlist ends", async () => {
       const first = makeTab("tab-1", selectTranslationAndChapterMock);
       const second = makeTab("tab-2", selectTranslationAndChapterMock);
       const tabs = makeTabs(first);
@@ -2776,15 +2776,15 @@ describe("createPlaylistManager", () => {
       manager.stopPlaying();
       await flush();
 
-      expect(here.play).toHaveBeenCalledTimes(1);
-      expect(elsewhere.play).toHaveBeenCalledTimes(1);
-      expect(here.isPlaying.value).toBe(true);
-      expect(elsewhere.isPlaying.value).toBe(true);
+      expect(here.play).not.toHaveBeenCalled();
+      expect(elsewhere.play).not.toHaveBeenCalled();
+      expect(here.isPlaying.value).toBe(false);
+      expect(elsewhere.isPlaying.value).toBe(false);
       expect(here.currentTime.value).toBe(12);
       expect(elsewhere.currentTime.value).toBe(34);
     });
 
-    it("goes back to the chapter Audio Reader paused in before continuing it", async () => {
+    it("goes back to the chapter Audio Reader paused in, still paused", async () => {
       const tab = makeTab("tab-1", selectTranslationAndChapterMock);
       tab.readingState.bookId.value = "JHN";
       tab.readingState.chapterNumber.value = 3;
@@ -2814,9 +2814,9 @@ describe("createPlaylistManager", () => {
         3,
         { updateUrl: false }
       );
-      expect(audio.play).toHaveBeenCalledTimes(1);
+      expect(audio.play).not.toHaveBeenCalled();
       expect(audio.currentTime.value).toBe(12);
-      expect(audio.isPlaying.value).toBe(true);
+      expect(audio.isPlaying.value).toBe(false);
     });
 
     it("writes the restored Audio Reader chapter to the address bar after Stop", async () => {
@@ -3047,7 +3047,7 @@ describe("createPlaylistManager", () => {
       expect(audio.isPlaying.value).toBe(false);
     });
 
-    it("continues Audio Reader when the playlist extension goes away without Stop", async () => {
+    it("leaves Audio Reader paused when the playlist extension goes away without Stop", async () => {
       const tab = makeTab("tab-1", selectTranslationAndChapterMock);
       const manager = makeManager("user-1", makeTabs(tab));
       await flush();
@@ -3066,8 +3066,8 @@ describe("createPlaylistManager", () => {
       tab.readingState.disableExtension("playlist");
       await flush();
 
-      expect(audio.play).toHaveBeenCalledTimes(1);
-      expect(audio.isPlaying.value).toBe(true);
+      expect(audio.play).not.toHaveBeenCalled();
+      expect(audio.isPlaying.value).toBe(false);
       expect(audio.currentTime.value).toBe(12);
     });
 
