@@ -1,5 +1,6 @@
 {
   "id": "bible-atlas",
+  "autoinstall": true,
   "translations": {
     "en": {
       "title": "Bible Atlas",

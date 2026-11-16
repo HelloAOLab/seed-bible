@@ -9,6 +9,11 @@ import {
   type AtlasVisualization,
 } from "./bibleAtlasApi";
 
+// Lower sorts first. In the verse toolbar this lands after Compare (250) and
+// before Share (300); in the main toolbar, after Discover (120) and before
+// Next chapter (1000).
+const TOOL_PRIORITY = 260;
+
 const ICON_BY_TYPE: Record<string, string> = {
   person: "person",
   place: "place",
@@ -143,7 +148,7 @@ export default function initBibleAtlasExtension() {
 
       yield context.tools.registerToolbarTool({
         id: "bible-atlas-catalog",
-        priority: 110,
+        priority: TOOL_PRIORITY,
         title: {
           key: "browse-title",
           ns: "bible-atlas",
@@ -165,7 +170,7 @@ export default function initBibleAtlasExtension() {
 
       yield context.tools.registerVerseToolbarTool({
         id: "bible-atlas",
-        priority: 110,
+        priority: TOOL_PRIORITY,
         title: { key: "title", ns: "bible-atlas", defaultValue: "Bible Atlas" },
         icon: () => <MaterialIcon>travel_explore</MaterialIcon>,
         isVisible: () => entitiesLoading.value || entities.value.length > 0,
