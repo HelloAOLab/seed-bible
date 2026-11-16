@@ -1,6 +1,5 @@
 import "./SessionParticipants.css";
 import { signal, useSignal } from "@preact/signals";
-import { createPortal } from "preact/compat";
 import type {
   BibleReadingSession,
   ConnectedSessionUser,
@@ -31,7 +30,7 @@ import {
   ParticipantName,
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
-import { CloseButton } from "../CloseButton/CloseButton";
+import { BottomSheet } from "../BottomSheet/BottomSheet";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
 
@@ -106,60 +105,17 @@ export function MobileSessionParticipants({
         )}
       </button>
 
-      {/* Portal to <body>: the mobile reader header is its own stacking context
-       * (z-index + overflow:hidden), so a sheet rendered inside it would sit
-       * behind the bottom nav. Rendering to body lets it cover the whole
-       * screen. The portal only runs on click, so SSR is unaffected. */}
-      {isSheetOpen.value &&
-        createPortal(
-          <>
-            <div
-              className="sb-mobile-settings-sheet-overlay"
-              onClick={() => {
-                isSheetOpen.value = false;
-              }}
-              aria-hidden="true"
-            />
-            <div
-              className="sb-mobile-settings-sheet sb-session-participants-sheet"
-              role="dialog"
-              aria-modal="true"
-              aria-label={t("participants", { defaultValue: "Participants" })}
-            >
-              <div className="sb-mobile-settings-sheet-header">
-                <div className="sb-mobile-settings-sheet-title">
-                  <span
-                    className="material-symbols-outlined"
-                    aria-hidden="true"
-                    style={{ fontSize: 22 }}
-                  >
-                    group
-                  </span>
-                  <span>
-                    {t("participants", { defaultValue: "Participants" })}
-                  </span>
-                </div>
-
-                <CloseButton
-                  onClose={() => {
-                    isSheetOpen.value = false;
-                  }}
-                />
-              </div>
-              <div className="sb-mobile-settings-sheet-body">
-                <SessionParticipantList
-                  state={state}
-                  session={session}
-                  // The sheet sits above every modal, so it closes to let a
-                  // participant's profile show, and comes back after.
-                  onOpenProfile={() => {
-                    isSheetOpen.value = false;
-                  }}
-                  onCloseProfile={() => {
-                    isSheetOpen.value = true;
-                  }}
-                />
-              </div>
+      {isSheetOpen.value && (
+        <BottomSheet
+          className="sb-session-participants-sheet"
+          label={t("participants", { defaultValue: "Participants" })}
+          title={t("participants", { defaultValue: "Participants" })}
+          titleIcon="group"
+          onClose={() => {
+            isSheetOpen.value = false;
+          }}
+          footer={
+            <>
               <div className="sb-mobile-settings-sheet-divider" />
               {isHost && (
                 <button
@@ -213,10 +169,23 @@ export function MobileSessionParticipants({
                   chevron_right
                 </MaterialIcon>
               </button>
-            </div>
-          </>,
-          document.body
-        )}
+            </>
+          }
+        >
+          <SessionParticipantList
+            state={state}
+            session={session}
+            // The sheet sits above every modal, so it closes to let a
+            // participant's profile show, and comes back after.
+            onOpenProfile={() => {
+              isSheetOpen.value = false;
+            }}
+            onCloseProfile={() => {
+              isSheetOpen.value = true;
+            }}
+          />
+        </BottomSheet>
+      )}
     </>
   );
 }
