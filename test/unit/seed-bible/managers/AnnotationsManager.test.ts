@@ -1275,69 +1275,143 @@ describe("AnnotationsManager", () => {
         errorSpy.mockRestore();
       });
 
-      describe("before the friends list has loaded", () => {
-        function createManagerBeforeFriendsLoad() {
-          return createAnnotationsManager(
-            os,
-            login,
-            tabs,
-            discover,
-            undefined,
-            { friendIds: signal([]), friendsLoaded: signal(false) }
-          );
-        }
+      it("answers null while the friends list hasn't loaded, since a friend's notes may be missing", async () => {
+        mockChapterNotes({
+          "user-1": [createCommentAnnotation({ id: "my-note" })],
+        });
+        const manager = createAnnotationsManager(
+          os,
+          login,
+          tabs,
+          discover,
+          undefined,
+          { friendIds: signal([]), friendsLoaded: signal(false) }
+        );
 
-        it("answers null when looking for a friend's note, rather than calling it gone", async () => {
-          mockChapterNotes({
-            "user-1": [reply("my-reply", "friend-note")],
-            "friend-user": [createCommentAnnotation({ id: "friend-note" })],
-          });
+        expect(
+          await manager.loadVisibleAnnotationsForChapter("GEN", 1)
+        ).toBeNull();
+      });
+    });
 
-          const notes =
-            await createManagerBeforeFriendsLoad().loadVisibleAnnotationsForChapter(
-              "GEN",
-              1,
-              "friend-user"
-            );
+    describe("isAnnotationVisible", () => {
+      function createManagerWith(friendIds: string[], friendsLoaded = true) {
+        return createAnnotationsManager(os, login, tabs, discover, undefined, {
+          friendIds: signal(friendIds),
+          friendsLoaded: signal(friendsLoaded),
+        });
+      }
+      const readRecords = () =>
+        listDataByMarkerMock.mock.calls.map(([recordName]) => recordName);
 
-          expect(notes).toBeNull();
+      it("finds a friend's note reading only that friend's notes", async () => {
+        mockChapterNotes({
+          "friend-user": [createCommentAnnotation({ id: "friend-note" })],
+          "other-friend": [createCommentAnnotation({ id: "other-note" })],
         });
 
-        it("still tells when one of your own notes is gone", async () => {
-          mockChapterNotes({
-            "user-1": [reply("my-reply", "deleted-note")],
-          });
+        const visible = await createManagerWith([
+          "friend-user",
+          "other-friend",
+        ]).isAnnotationVisible("GEN", 1, "friend-note", "friend-user");
 
-          const notes =
-            await createManagerBeforeFriendsLoad().loadVisibleAnnotationsForChapter(
-              "GEN",
-              1,
-              "user-1"
-            );
+        expect(visible).toBe(true);
+        expect(readRecords()).toContain("friend-user");
+        expect(readRecords()).not.toContain("other-friend");
+      });
 
-          expect(notes).toEqual([]);
+      it("says no when the note is gone from its author's notes", async () => {
+        mockChapterNotes({ "friend-user": [] });
+
+        expect(
+          await createManagerWith(["friend-user"]).isAnnotationVisible(
+            "GEN",
+            1,
+            "friend-note",
+            "friend-user"
+          )
+        ).toBe(false);
+      });
+
+      it("says no without reading anything when its author isn't a friend", async () => {
+        mockChapterNotes({
+          stranger: [createCommentAnnotation({ id: "their-note" })],
         });
 
-        it("still finds one of your own notes", async () => {
-          mockChapterNotes({
-            "user-1": [
-              createCommentAnnotation({ id: "my-note" }),
-              reply("my-reply", "my-note"),
-            ],
-          });
+        expect(
+          await createManagerWith([]).isAnnotationVisible(
+            "GEN",
+            1,
+            "their-note",
+            "stranger"
+          )
+        ).toBe(false);
+        expect(readRecords()).not.toContain("stranger");
+      });
 
-          const notes =
-            await createManagerBeforeFriendsLoad().loadVisibleAnnotationsForChapter(
-              "GEN",
-              1,
-              "user-1"
-            );
-
-          expect(notes?.map((a) => a.id).sort()).toEqual([
-            "my-note",
-            "my-reply",
-          ]);
+      it("can't tell for a friend's note while the friends list hasn't loaded", async () => {
+        mockChapterNotes({
+          "friend-user": [createCommentAnnotation({ id: "friend-note" })],
         });
+
+        expect(
+          await createManagerWith([], false).isAnnotationVisible(
+            "GEN",
+            1,
+            "friend-note",
+            "friend-user"
+          )
+        ).toBeNull();
+      });
+
+      it("still tells about your own note while the friends list hasn't loaded", async () => {
+        mockChapterNotes({
+          "user-1": [createCommentAnnotation({ id: "my-note" })],
+        });
+        const manager = createManagerWith([], false);
+
+        expect(
+          await manager.isAnnotationVisible("GEN", 1, "my-note", "user-1")
+        ).toBe(true);
+        expect(
+          await manager.isAnnotationVisible("GEN", 1, "deleted-note", "user-1")
+        ).toBe(false);
+      });
+
+      it("can't tell when its author's notes couldn't be read", async () => {
+        const errorSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => {});
+        listDataByMarkerMock.mockResolvedValue({
+          success: false,
+          errorCode: "server_error",
+        });
+
+        expect(
+          await createManagerWith(["friend-user"]).isAnnotationVisible(
+            "GEN",
+            1,
+            "friend-note",
+            "friend-user"
+          )
+        ).toBeNull();
+        errorSpy.mockRestore();
+      });
+
+      it("checks every friend's notes when the reply doesn't say whose note it is", async () => {
+        mockChapterNotes({
+          "user-1": [createCommentAnnotation({ id: "my-note" })],
+          "friend-user": [createCommentAnnotation({ id: "friend-note" })],
+        });
+
+        expect(
+          await createManagerWith(["friend-user"]).isAnnotationVisible(
+            "GEN",
+            1,
+            "friend-note",
+            undefined
+          )
+        ).toBe(true);
       });
     });
 

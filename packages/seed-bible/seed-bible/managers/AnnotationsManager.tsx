@@ -121,16 +121,26 @@ export interface AnnotationsManager {
    * couldn't be read (offline, say), or while the friends list itself hasn't
    * loaded: a note missing from the result is then not known to be gone, only
    * unseen.
-   *
-   * `authorId` is the author of the note the caller is looking for. When that
-   * is the signed-in user, the friends list isn't needed to tell whether the
-   * note is there, so the answer doesn't wait for it.
    */
   loadVisibleAnnotationsForChapter: (
     bookId: string,
-    chapterNumber: number,
-    authorId?: string | null
+    chapterNumber: number
   ) => Promise<Annotation[] | null>;
+
+  /**
+   * Whether a note (not a reply) by `authorId` is among the chapter's notes
+   * the signed-in user sees, reading only that author's list instead of every
+   * friend's. A note by someone who isn't the user or a friend isn't seen.
+   * Resolves to null when it can't tell: that list couldn't be read, or the
+   * friends list hasn't loaded yet for a note that isn't the user's own.
+   * Without an `authorId`, falls back to `loadVisibleAnnotationsForChapter`.
+   */
+  isAnnotationVisible: (
+    bookId: string,
+    chapterNumber: number,
+    annotationId: string,
+    authorId: string | null | undefined
+  ) => Promise<boolean | null>;
 
   /** The annotation currently being created/edited in the pane, or null. */
   editingAnnotation: Signal<Annotation | null>;
@@ -1357,15 +1367,14 @@ export function createAnnotationsManager(
     return view;
   };
 
+  const friendsListLoaded = () =>
+    untracked(() => options.friendsLoaded?.value ?? true);
+
   const loadVisibleAnnotationsForChapter = async (
     bookId: string,
-    chapterNumber: number,
-    authorId?: string | null
+    chapterNumber: number
   ): Promise<Annotation[] | null> => {
-    const friendsLoaded = untracked(() => options.friendsLoaded?.value ?? true);
-    const lookingForOwnNote =
-      !!authorId && authorId === untracked(() => login.userId.value);
-    if (!friendsLoaded && !lookingForOwnNote) {
+    if (!friendsListLoaded()) {
       return null;
     }
     const friendIds = untracked(() => options.friendIds?.value ?? []);
@@ -1388,6 +1397,50 @@ export function createAnnotationsManager(
     return untracked(() =>
       visibleChapterAnnotations(manager, friendIds, bookId, chapterNumber)
     );
+  };
+
+  const isAnnotationVisible = async (
+    bookId: string,
+    chapterNumber: number,
+    annotationId: string,
+    authorId: string | null | undefined
+  ): Promise<boolean | null> => {
+    if (!authorId) {
+      const visible = await loadVisibleAnnotationsForChapter(
+        bookId,
+        chapterNumber
+      );
+      return visible ? visible.some((a) => a.id === annotationId) : null;
+    }
+
+    let recordId: string;
+    let readAsAccount = false;
+    if (authorId === untracked(() => login.userId.value)) {
+      recordId = untracked(effectiveRecordId);
+    } else {
+      if (!friendsListLoaded()) {
+        return null;
+      }
+      if (!untracked(() => options.friendIds?.value ?? []).includes(authorId)) {
+        return false;
+      }
+      recordId = authorId;
+      readAsAccount = true;
+    }
+
+    const entry = getOrCreateEntry(
+      recordId,
+      bookId,
+      chapterNumber,
+      readAsAccount
+    );
+    await ensureLoaded(recordId, bookId, chapterNumber, entry);
+    if (entry.loadFailed) {
+      return null;
+    }
+    return entry.data
+      .peek()
+      .some((a) => a.id === annotationId && !a.data.replyTo);
   };
 
   const upsertIntoCache = (annotation: Annotation, recordId?: string): void => {
@@ -1812,6 +1865,7 @@ export function createAnnotationsManager(
         chapterNumber
       ),
     loadVisibleAnnotationsForChapter,
+    isAnnotationVisible,
     editingAnnotation,
     createNewAnnotation,
     createReply,

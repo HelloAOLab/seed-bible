@@ -348,18 +348,19 @@ function AnnotationCard(props: {
     });
 
   // Checked before leaving this screen: a reply whose note isn't visible is
-  // hidden in Discover too. When the chapter's notes couldn't all be read,
+  // hidden in Discover too. When the note's author's notes couldn't be read,
   // there's no telling, so the reply is opened as usual.
-  const openReply = async () => {
+  const openReply = async (parentId: string) => {
     if (checkingReply.peek()) {
       return;
     }
     checkingReply.value = true;
-    let visible: Annotation[] | null = null;
+    let parentVisible: boolean | null = null;
     try {
-      visible = await state.annotations.loadVisibleAnnotationsForChapter(
+      parentVisible = await state.annotations.isAnnotationVisible(
         annotation.bookId,
         annotation.chapterNumber,
+        parentId,
         annotation.data.replyToUserId
       );
     } catch (error) {
@@ -367,7 +368,7 @@ function AnnotationCard(props: {
     } finally {
       checkingReply.value = false;
     }
-    if (visible && !visible.some((a) => a.id === annotation.data.replyTo)) {
+    if (parentVisible === false) {
       openReplyParentUnavailable(
         state,
         annotation,
@@ -423,7 +424,14 @@ function AnnotationCard(props: {
     );
   };
 
-  const open = () => (isReply ? void openReply() : openPassage());
+  const open = () => {
+    const parentId = annotation.data.replyTo;
+    if (parentId) {
+      void openReply(parentId);
+    } else {
+      openPassage();
+    }
+  };
 
   return (
     <div className="sb-content-annotation">

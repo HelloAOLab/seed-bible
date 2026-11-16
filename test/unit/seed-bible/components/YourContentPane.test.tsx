@@ -431,6 +431,12 @@ function createState(options: StateOptions = {}) {
       loadVisibleAnnotationsForChapter: vi.fn(
         async () => options.visibleChapterNotes ?? null
       ),
+      isAnnotationVisible: vi.fn(
+        async (_bookId: string, _chapter: number, annotationId: string) =>
+          options.visibleChapterNotes
+            ? options.visibleChapterNotes.some((a) => a.id === annotationId)
+            : null
+      ),
     },
     readingPlans: {
       userReadingPlans: signal(options.readingPlans ?? []),
