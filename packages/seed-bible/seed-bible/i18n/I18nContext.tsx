@@ -217,3 +217,9 @@ export function useI18n(ns?: string) {
     [t, i18n.language]
   );
 }
+
+/**
+ * @deprecated Use {@link useI18n}, which now works without an `I18nProvider`.
+ * This never returns null any more.
+ */
+export const useOptionalI18n = () => useI18n();

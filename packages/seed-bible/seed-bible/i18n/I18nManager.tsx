@@ -546,6 +546,7 @@ export {
   isRightToLeftLanguage,
   setDefaultI18n,
   useI18n,
+  useOptionalI18n,
   type I18nHook,
   type I18nSource,
 } from "./I18nContext";

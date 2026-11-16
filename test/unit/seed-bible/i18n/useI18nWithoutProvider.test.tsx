@@ -10,6 +10,7 @@ import {
   type I18nManager,
 } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import type { NavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { useOptionalI18n } from "@packages/seed-bible/seed-bible/i18n";
 
 // An extension's own root: rendered with `render(..., container)`, so no
 // I18nProvider is above it.
@@ -138,5 +139,27 @@ describe("useI18n() without an I18nProvider", () => {
     });
 
     expect(label().textContent).toBe("From the provider");
+  });
+
+  it("keeps the deprecated useOptionalI18n() working from seed-bible/i18n, translating instead of returning null", async () => {
+    manager = createManager();
+    await manager.ready;
+    await manager.changeLanguage("es");
+    setDefaultI18n(manager);
+    function OldCaller() {
+      const i18n = useOptionalI18n();
+      return (
+        <span data-language={i18n?.language}>
+          {i18n ? i18n.t("close") : "No translations"}
+        </span>
+      );
+    }
+
+    act(() => {
+      render(<OldCaller />, container);
+    });
+
+    expect(label().textContent).toBe("Cerca");
+    expect(label().dataset.language).toBe("es");
   });
 });
