@@ -1064,19 +1064,20 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
         toResources(init.extensionId, message.strings)
       );
     } else if (message.type === "state") {
-      state.value = { ...state.value, ...message.state };
-      applyDocumentState(state.value);
+      const next = { ...state.value, ...message.state };
+      // Strings first, so nothing sees the new language without them.
       if (!init.strings && message.state.strings) {
-        const { language, strings } = state.value;
         translations.set(
-          language,
+          next.language,
           toResources(init.extensionId, {
-            language,
+            language: next.language,
             app: {},
-            extension: { [language]: strings },
+            extension: { [next.language]: next.strings },
           })
         );
       }
+      state.value = next;
+      applyDocumentState(next);
     } else if (message.name === "tool.select") {
       const handlers = toolHandlers.get(message.toolId);
       runHandler(

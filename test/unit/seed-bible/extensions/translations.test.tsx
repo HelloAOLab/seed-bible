@@ -138,6 +138,19 @@ describe("translations in a sandboxed extension", () => {
       expect(sb.i18n.t("greeting")).toBe("Hola");
     });
 
+    it("already answers in the new language when sb.i18n.language reports it", async () => {
+      const { host, sb } = await start();
+      // `subscribe` runs untracked: it reads `t` once, at that moment.
+      const seen: string[] = [];
+      sb.i18n.language.subscribe((language) =>
+        seen.push(`${language}: ${sb.i18n.t("greeting")}`)
+      );
+
+      await host.setState({ language: "es" });
+
+      expect(seen).toEqual(["en: Hello", "es: Hola"]);
+    });
+
     it("works with an id like the app gives a published extension", async () => {
       const { sb } = await start({
         extensionId: "https://files.example.com/publisher-a/#verse-art",
@@ -253,12 +266,18 @@ describe("translations from a host older than the strings message", () => {
     expect(
       sb.i18n.t("close", { ns: "seed-bible", defaultValue: "Close" })
     ).toBe("Close");
+    const seen: string[] = [];
+    sb.i18n.language.subscribe((language) =>
+      seen.push(`${language}: ${sb.i18n.t("greeting")}`)
+    );
 
     channel.port1.postMessage({
       type: "state",
       state: { language: "fr", strings: { greeting: "Bonjour" } },
     });
     await vi.waitFor(() => expect(sb.i18n.t("greeting")).toBe("Bonjour"));
+    // The language never arrived ahead of its strings.
+    expect(seen).toEqual(["es: Hola", "fr: Bonjour"]);
 
     channel.port1.close();
     channel.port2.close();

@@ -1277,21 +1277,18 @@ export function startSandboxSession(
     post(background, { type: "ping" });
   }, heartbeatInterval);
 
+  // The strings go apart from the state, and only when the language changes,
+  // since the app's are far too many to send every time a verse is selected.
+  // They go first, so a frame never has the new language without its strings.
+  // i18next reports the change once the new language's strings have loaded.
+  let stringsLanguage = context.i18n.language.peek();
   const stopStateEffect = effect(() => {
     const state = computeState();
-    broadcast({ type: "state", state });
-  });
-  // Apart from the state, and only when the language changes, since the app's
-  // strings are far too many to send every time a verse is selected. i18next
-  // reports the change once the new language's strings have loaded.
-  let stringsLanguage = context.i18n.language.peek();
-  const stopStringsEffect = effect(() => {
-    const language = context.i18n.language.value;
-    if (language === stringsLanguage) {
-      return;
+    if (state.language !== stringsLanguage) {
+      stringsLanguage = state.language;
+      broadcast({ type: "strings", strings: computeStrings() });
     }
-    stringsLanguage = language;
-    broadcast({ type: "strings", strings: computeStrings() });
+    broadcast({ type: "state", state });
   });
   // Runs before `permissions.request` replies, so the extension sees the
   // grant as soon as its request resolves.
@@ -1309,7 +1306,6 @@ export function startSandboxSession(
       void storage.dispose();
     }
     stopStateEffect();
-    stopStringsEffect();
     stopPermissionsEffect();
     for (const cleanup of destroyCallbacks) {
       try {

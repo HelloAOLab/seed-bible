@@ -306,10 +306,11 @@ export async function createTestHost(
       if (stringsChanged) {
         extensionTranslations[state.language] = state.strings;
       }
-      broadcast({ type: "state", state: next });
+      // As the app sends them: the strings first.
       if (languageChanged || stringsChanged) {
         broadcast({ type: "strings", strings: currentStrings() });
       }
+      broadcast({ type: "state", state: next });
       await settle();
     },
     discover: async (providerId, request) =>

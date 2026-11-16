@@ -102,6 +102,22 @@ describe("sandboxed extension strings", () => {
     ]);
   });
 
+  it("sends the new strings before the state that names the new language", async () => {
+    const frame = await loadRawFrame();
+    const from = frame.messages.length;
+
+    h.host.language.value = "fr";
+    await frame.call("storage.keys", {});
+
+    const sent = frame.messages.slice(from);
+    const strings = sent.findIndex((m) => m.type === "strings");
+    const state = sent.findIndex(
+      (m) => m.type === "state" && m.state.language === "fr"
+    );
+    expect(strings).toBeGreaterThanOrEqual(0);
+    expect(strings).toBeLessThan(state);
+  });
+
   it("keeps the extension's own strings in the state, for extensions built before the strings message", async () => {
     h.host.language.value = "es";
     const frame = await loadRawFrame();
