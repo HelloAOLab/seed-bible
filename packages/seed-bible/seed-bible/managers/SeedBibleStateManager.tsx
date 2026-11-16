@@ -1,6 +1,5 @@
 import { createBibleSelectorState } from "../managers/BibleSelectorManager";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
-import type { Signal } from "@preact/signals";
 import {
   createBibleDataManager,
   type BibleDataManager,
