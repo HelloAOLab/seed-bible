@@ -1434,6 +1434,10 @@ export function createAnnotationsManager(
       chapterNumber,
       readAsAccount
     );
+    // A friend's chapter is otherwise only read again while it's on screen,
+    // and this check runs from another screen: without this, a copy read
+    // long ago (or a read that failed) would answer for good.
+    refreshFriendEntry(entry);
     await ensureLoaded(recordId, bookId, chapterNumber, entry);
     if (entry.loadFailed) {
       return null;

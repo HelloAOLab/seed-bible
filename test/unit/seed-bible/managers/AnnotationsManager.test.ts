@@ -1398,6 +1398,85 @@ describe("AnnotationsManager", () => {
         errorSpy.mockRestore();
       });
 
+      describe("with a friend's chapter read earlier", () => {
+        const START = Date.UTC(2026, 10, 1);
+        let friendNotes: Annotation[];
+        let friendReadFails: boolean;
+        /** Reads of the friend's chapter, counted by their first page. */
+        const friendReads = () =>
+          listDataByMarkerMock.mock.calls.filter(
+            ([recordName, , lastAddress]) =>
+              recordName === "friend-user" && !lastAddress
+          ).length;
+        const check = (manager: AnnotationsManager) =>
+          manager.isAnnotationVisible("GEN", 1, "friend-note", "friend-user");
+
+        beforeEach(() => {
+          vi.useFakeTimers({ toFake: ["Date"] });
+          vi.setSystemTime(START);
+          friendNotes = [createCommentAnnotation({ id: "friend-note" })];
+          friendReadFails = false;
+          listDataByMarkerMock.mockImplementation(
+            async (
+              recordName: string,
+              _marker: string,
+              lastAddress?: string
+            ) => {
+              if (recordName !== "friend-user" || lastAddress) {
+                return { success: true, items: [] };
+              }
+              return friendReadFails
+                ? { success: false, errorCode: "server_error" }
+                : {
+                    success: true,
+                    items: friendNotes.map((data) => ({
+                      address: data.id,
+                      data,
+                    })),
+                  };
+            }
+          );
+        });
+
+        afterEach(() => {
+          vi.useRealTimers();
+        });
+
+        it("notices the note was deleted once that copy is over 30 seconds old", async () => {
+          const manager = createManagerWith(["friend-user"]);
+          expect(await check(manager)).toBe(true);
+
+          friendNotes = [];
+          vi.setSystemTime(START + 31_000);
+
+          expect(await check(manager)).toBe(false);
+        });
+
+        it("answers from a copy under 30 seconds old without reading it again", async () => {
+          const manager = createManagerWith(["friend-user"]);
+          expect(await check(manager)).toBe(true);
+
+          vi.setSystemTime(START + 10_000);
+
+          expect(await check(manager)).toBe(true);
+          expect(friendReads()).toBe(1);
+        });
+
+        it("tries a read that failed again on the next check", async () => {
+          const errorSpy = vi
+            .spyOn(console, "error")
+            .mockImplementation(() => {});
+          friendReadFails = true;
+          const manager = createManagerWith(["friend-user"]);
+          expect(await check(manager)).toBeNull();
+
+          friendReadFails = false;
+
+          expect(await check(manager)).toBe(true);
+          errorSpy.mockRestore();
+        });
+      });
+
       it("checks every friend's notes when the reply doesn't say whose note it is", async () => {
         mockChapterNotes({
           "user-1": [createCommentAnnotation({ id: "my-note" })],
