@@ -47,6 +47,7 @@ import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/Offli
 import { OfflineUpdatePrompt } from "../components/OfflineDownloadPrompt/OfflineUpdatePrompt";
 import { OfflineRecoveryToast } from "../components/OfflineDownloadPrompt/OfflineRecoveryToast";
 import { customFontStylesheet } from "./fontStylesheets";
+import { JoiningSessionModal } from "../components/JoinSessionModal/JoinSessionModal";
 
 /**
  * Font `<link>`s, plus the CSS for the active Customization layered on top
@@ -345,6 +346,7 @@ function MainContent(props: {
         <ModalHost manager={state.modals} />
 
         <LoginModal login={state.login} navigation={state.navigation} />
+        {state.app.isJoiningSession.value && <JoiningSessionModal />}
 
         <TermsOfServiceModal
           isOpen={state.isTermsOpen.value}

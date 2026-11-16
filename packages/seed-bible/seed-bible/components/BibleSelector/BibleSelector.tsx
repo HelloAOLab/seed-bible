@@ -156,6 +156,7 @@ export function BibleSelector(props: BibleSelectorProps) {
       setPopoverSize({ w, h });
     }
   });
+
   // Padded so the card clears the glow ring rather than butting against it.
   const anchorPad = 8;
   const layout = anchor
@@ -203,7 +204,6 @@ export function BibleSelector(props: BibleSelectorProps) {
         {selectorState.showApocryphaInfo.value && (
           <ApocryphaInfo bibleSelectorState={selectorState} />
         )}
-        {app.isJoiningSession.value && <JoiningSessionModal />}
       </div>
 
       {tourStep && (
@@ -219,7 +219,7 @@ export function BibleSelector(props: BibleSelectorProps) {
               ? {
                   position: "fixed",
                   boxSizing: "border-box",
-                  zIndex: 10000,
+                  zIndex: "calc(var(--sb-layer-tour) + 1)",
                   ...layout.style,
                 }
               : {
@@ -230,7 +230,7 @@ export function BibleSelector(props: BibleSelectorProps) {
                   width: "100%",
                   maxWidth: "28.625rem",
                   boxSizing: "border-box",
-                  zIndex: 10000,
+                  zIndex: "calc(var(--sb-layer-tour) + 1)",
                 }
           }
           onClick={(event: MouseEvent) => event.stopPropagation()}
@@ -254,34 +254,6 @@ export function BibleSelector(props: BibleSelectorProps) {
         </div>
       )}
     </>
-  );
-}
-export function JoiningSessionModal() {
-  const { t } = useI18n();
-  return (
-    <div
-      className="sb-joining-session-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="sb-joining-session-title"
-    >
-      <div className="sb-joining-session-modal">
-        <div className="sb-joining-session-spinner" aria-hidden="true" />
-
-        <h3 id="sb-joining-session-title">
-          {t("joining-session", {
-            defaultValue: "Joining session…",
-          })}
-        </h3>
-
-        <p>
-          {t("joining-session-description", {
-            defaultValue:
-              "Please wait while we connect you to the shared session.",
-          })}
-        </p>
-      </div>
-    </div>
   );
 }
 

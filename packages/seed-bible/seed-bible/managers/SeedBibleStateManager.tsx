@@ -416,7 +416,8 @@ export interface AppState {
   createSharedSession: () => Promise<BibleReadingSession>;
   /** Joins an existing shared session and opens it in a new tab. */
   joinSharedSession: (id: string) => Promise<BibleReadingSession>;
-  isJoiningSession: Signal<boolean>;
+  /** True while one or more shared sessions are being joined. */
+  isJoiningSession: ReadonlySignal<boolean>;
 
   /**
    * The Canonical URL for the current page.
@@ -1841,7 +1842,9 @@ export function createSeedBibleState(
   // visitor's saved tabs with a one-tab state before anything ever restored
   // them — the saved session would be destroyed by the act of loading the page.
   const tabsRestored = signal(false);
-  const isJoiningSession = signal(false);
+  const joinsInProgress = signal(0);
+  /** True while one or more shared sessions are being joined. */
+  const isJoiningSession = computed(() => joinsInProgress.value > 0);
 
   // Persist the non-ephemeral tab state (translation/book/chapter per tab, the
   // selected tab, the layout preset, and the slot arrangement) to localStorage
@@ -3104,15 +3107,28 @@ export function createSeedBibleState(
     id: string,
     startPosition?: SessionStartPosition
   ) => {
-    closeSidebarAndSettings();
-    const session = await sessions.joinSession(id, startPosition);
-    captureEvent("join_session", {
-      sessionId: session.id,
-    });
-    wrapSessionLifecycle(session);
-    const tab = tabs.addTab(session);
-    tabsLayout.setSelectedSlotTab(tab.id);
-    return session;
+    joinsInProgress.value++;
+    console.log("Joining started:", id);
+
+    try {
+      closeSidebarAndSettings();
+
+      const session = await sessions.joinSession(id, startPosition);
+
+      captureEvent("join_session", {
+        sessionId: session.id,
+      });
+
+      wrapSessionLifecycle(session);
+
+      const tab = tabs.addTab(session);
+      tabsLayout.setSelectedSlotTab(tab.id);
+
+      return session;
+    } finally {
+      joinsInProgress.value--;
+      console.log("Joining finished:", joinsInProgress.value);
+    }
   };
 
   const handleOpenVerseReference = async (ref: VerseRef) => {
@@ -3207,15 +3223,12 @@ export function createSeedBibleState(
         }
       });
     };
-
-    // Show joining modal
-    isJoiningSession.value = true;
-
     try {
       await handleJoinSharedSession(initialSessionId, startPosition);
     } catch (error) {
       console.error("Failed to join the session from the URL:", error);
-
+      // Destructured for the translation lint rules, which only recognise a
+      // bare `t` — see the sign-out toast below.
       const { t } = i18n;
 
       toast(
@@ -3230,9 +3243,6 @@ export function createSeedBibleState(
       }
 
       return;
-    } finally {
-      // Hide modal whether joining succeeds or fails.
-      isJoiningSession.value = false;
     }
 
     if (!startPosition || !bootTab) {
