@@ -74,6 +74,11 @@ export const TOKEN_FAMILIES = {
   duration: { prefix: "--sb-duration-", normalize: toMs },
   fontSize: { prefix: "--sb-font-size-", normalize: toPx },
   shadow: { prefix: "--sb-shadow-", normalize: squash },
+  // One step so far, named `--sb-backdrop` itself.
+  backdrop: {
+    prefix: "--sb-backdrop-",
+    normalize: (v) => v.replace(/\s+/g, "").toLowerCase(),
+  },
 };
 
 // Shares the shadow prefix, but it's the theme's color, not a token.
@@ -83,7 +88,8 @@ const NOT_TOKENS = new Set(["--sb-shadow-color"]);
 export function tokenFamily(name) {
   if (NOT_TOKENS.has(name)) return null;
   for (const [kind, { prefix }] of Object.entries(TOKEN_FAMILIES)) {
-    if (name.startsWith(prefix)) return kind;
+    // A family's own name (`--sb-backdrop`) can be a token as well as its steps.
+    if (name.startsWith(prefix) || `${name}-` === prefix) return kind;
   }
   return null;
 }
@@ -138,6 +144,7 @@ function propKind(prop) {
   if (p === "font-size" || /-font-size$/.test(p)) return "fontSize";
   if (p === "font") return "font";
   if (p === "box-shadow" || /-box-shadow$/.test(p)) return "shadow";
+  if (p === "background" || p === "background-color") return "backdrop";
   return null;
 }
 
@@ -161,6 +168,12 @@ function findRawTokens(kind, decl, lookups) {
   }
   if (kind === "layer") {
     const token = lookups.layer.get(value.trim());
+    return token ? [[value.trim(), token]] : [];
+  }
+  if (kind === "backdrop") {
+    const token = lookups.backdrop.get(
+      TOKEN_FAMILIES.backdrop.normalize(value)
+    );
     return token ? [[value.trim(), token]] : [];
   }
   if (kind === "fontSize" || kind === "font") {
