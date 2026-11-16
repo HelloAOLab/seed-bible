@@ -167,23 +167,62 @@ When the user turns an optional permission off in Settings, your extension is re
 
 ### `sb.i18n`
 
-Your extension's own translations, from the `translations` section of `extension.json`.
+Translations: your own strings, and Seed Bible's. Both go through the translator Seed Bible itself uses ([i18next](https://www.i18next.com)), so they behave the same way as the app's text.
 
 ```ts
 i18n: {
   language: ReadonlySignal<string>;           // e.g. "en", "es"
   direction: ReadonlySignal<"ltr" | "rtl">;
   t(key: string, defaultValue?: string, values?: Record<string, string | number>): string;
+  app: {
+    t(key: string, defaultValue?: string, values?: Record<string, string | number>): string;
+  };
 };
 ```
 
-`t` looks `key` up in the strings for the current language, falls back to `en`, then to `defaultValue`, then to the key itself. It fills `{{name}}` placeholders from `values`:
+**`t` reads your own strings**, from the `translations` section of `extension.json`. It looks `key` up in the current language, falls back to `en`, then to `defaultValue`, then to the key itself. It fills `{{name}}` placeholders from `values`:
 
 ```ts
 sb.i18n.t("verses-found", "Found {{count}} verses", { count: 3 });
 ```
 
-`t` is synchronous and reads the current language each time, so calling it inside a component re-renders it in the new language when the user switches.
+**Plurals.** When `values` has a `count`, a `key_one` or `key_other` string wins over `key`, picked by the language's rules. Without them, `key` is used as before.
+
+```json
+"verses-found_one": "Found {{count}} verse",
+"verses-found_other": "Found {{count}} verses"
+```
+
+**`app.t` reads Seed Bible's own strings**, so a button can say "Close" the way the app does, in every language the app has:
+
+```ts
+sb.i18n.app.t("close", "Close");
+```
+
+Always pass `defaultValue` to `app.t`. Seed Bible's keys aren't part of this API: one can be renamed or removed, and your extension then shows `defaultValue` instead of the bare key.
+
+The two never mix. `t` only reads your strings and `app.t` only Seed Bible's, even when a key exists in just one of them.
+
+**In a view**, the `useI18n` hook gives you the same two sets: `useI18n(sb.extensionId)` for yours, and `useI18n()` for Seed Bible's. Seed Bible's shared components use the same hook, so they show the user's language too. Its `t` takes an options object instead: `t(key, { defaultValue, ...values })`.
+
+```tsx
+import { useI18n, type SandboxViewProps } from "seed-bible/extensions";
+
+function Toolbar({ sb }: SandboxViewProps) {
+  const own = useI18n(sb.extensionId);
+  const app = useI18n();
+  return (
+    <p>
+      {own.t("verses-found", { count: 3 })} ·{" "}
+      {app.t("close", { defaultValue: "Close" })}
+    </p>
+  );
+}
+```
+
+`t` and `app.t` read the current language each time, so calling them inside a component re-renders it in the new language when the user switches.
+
+**Keys can't contain `:`.** The translator reads `a:b` as the key `b` in a set of strings named `a`, so the string is never found. A `.` is fine. Inside a string, `$t(other-key)` is replaced with that key's text.
 
 ### `sb.app`
 
@@ -1133,7 +1172,7 @@ The manifest sits at the root of your project. `seed-bible-extension-scripts` va
 | `network`             | Every host your frames may contact (`fetch`, images, media, fonts), as bare hosts like `api.example.com` or `example.com:8443`. Everything else is blocked. Can't be optional.                                                                                                                                                |
 | `settings`            | Settings the user can change on your extension's Settings tab. See below.                                                                                                                                                                                                                                                     |
 | `sensitive`           | Destinations for sensitive settings. See below.                                                                                                                                                                                                                                                                               |
-| `translations`        | Strings by language code. `title` and `description` name your extension in the app; other keys are yours for `sb.i18n.t` and `{ key }` titles. `en` is the fallback.                                                                                                                                                          |
+| `translations`        | Strings by language code. `title` and `description` name your extension in the app; other keys are yours for `sb.i18n.t` and `{ key }` titles, with `_one` and `_other` forms for [plurals](#sbi18n). Keys can't contain `:`. `en` is the fallback.                                                                           |
 
 **A manifest that names a permission this version of Seed Bible doesn't know won't install**, rather than install without it. A sandboxed extension can't declare `dependencies`, and `autoinstall` is ignored: it's never installed without the user being asked.
 

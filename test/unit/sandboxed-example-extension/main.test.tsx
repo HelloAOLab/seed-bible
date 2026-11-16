@@ -23,6 +23,12 @@ const manifest = JSON.parse(
   await readFile(path.join(root, "extension.json"), "utf-8")
 );
 
+// Two of the app's own strings, the ones the greeting pane borrows.
+const APP_TRANSLATIONS = {
+  en: { close: "Close", loading: "Loading…" },
+  es: { close: "Cerrar", loading: "Cargando…" },
+};
+
 describe("sandboxed example extension", () => {
   let host: TestHost;
   afterEach(() => host?.dispose());
@@ -32,7 +38,8 @@ describe("sandboxed example extension", () => {
       extensionId: manifest.id,
       granted: manifest.permissions,
       optional: manifest.optionalPermissions,
-      state: { strings: manifest.translations.en },
+      translations: manifest.translations,
+      appTranslations: APP_TRANSLATIONS,
       ...options,
     });
     await host.ready;
@@ -120,6 +127,47 @@ describe("sandboxed example extension", () => {
       method: "POST",
       body: { hello: "world" },
     });
+  });
+
+  it("says how many times the greeting is shown, in the right plural", async () => {
+    await start({ settings: { greeting: "Hi", repeatCount: 1 } });
+    const once = await host.renderView("greeting");
+    await vi.waitFor(() =>
+      expect(once.textContent).toContain("The greeting is shown once.")
+    );
+    host.dispose();
+
+    await start({ settings: { greeting: "Hi", repeatCount: 3 } });
+    const thrice = await host.renderView("greeting");
+    await vi.waitFor(() =>
+      expect(thrice.textContent).toContain("The greeting is shown 3 times.")
+    );
+  });
+
+  it("closes its pane with a Close button in the app's language", async () => {
+    await start({ state: { language: "es" }, settings: { greeting: "Hi" } });
+    await host.selectTool("my-example-tool");
+    const [paneId] = [...host.panes.keys()];
+
+    const pane = await host.renderView("greeting", { paneId });
+    await vi.waitFor(() => expect(pane.textContent).toContain("Hi"));
+    const close = [...pane.querySelectorAll("button")].find(
+      (button) => button.textContent === "Cerrar"
+    );
+    close!.click();
+
+    await vi.waitFor(() => expect(host.panes.size).toBe(0));
+  });
+
+  it("shows the app's loading text while its settings load", async () => {
+    await start({
+      state: { language: "es" },
+      answers: { "settings.get": () => new Promise(() => {}) },
+    });
+
+    const pane = await host.renderView("greeting");
+
+    expect(pane.textContent).toBe("Cargando…");
   });
 
   it("asks before showing a portal, and both portals share one pane", async () => {

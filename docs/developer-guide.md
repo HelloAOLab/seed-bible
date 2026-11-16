@@ -193,7 +193,7 @@ The [API reference](./extension-api.md#3-the-sb-object) has every call in detail
 - **`sb.app.toast(message)`** (shown with your extension's name) and **`sb.app.isMobile`**.
 - **`sb.storage.get/set/remove/keys`**: your own JSON key/value store, up to 256 KB. The frame has no `localStorage`. While the user is signed in it syncs to a private record in their account, so it follows them to their other devices (the newer write to a key wins). Signed out, it stays on the device. It's cleared everywhere when the user uninstalls your extension.
 - **`sb.settings.get(key)`**: your own non-sensitive settings from `extension.json`, which the user changes on your extension's page in Settings.
-- **`sb.i18n.t(key, defaultValue, values)`**, **`sb.i18n.language`** and **`sb.i18n.direction`**: strings come from your `extension.json` translations.
+- **`sb.i18n.t(key, defaultValue, values)`**, **`sb.i18n.language`** and **`sb.i18n.direction`**: your strings come from your `extension.json` translations, with `_one`/`_other` forms for plurals. **`sb.i18n.app.t(key, defaultValue)`** reads Seed Bible's own, like "Close"; always pass `defaultValue`, since those keys can change. In a view, `useI18n(sb.extensionId)` and `useI18n()` give the same two. See [`sb.i18n`](./extension-api.md#sbi18n).
 - **`sb.reading.position`**, **`sb.reading.selection`** and **`sb.reading.open(ref)`**, if granted (below).
 
 A call that isn't allowed rejects with a `SandboxError` whose `code` says why: `permission_denied`, `invalid_request`, `not_found`, `limit_exceeded` or `unavailable`. The [reference](./extension-api.md#5-errors) says what each means and what to do about it.

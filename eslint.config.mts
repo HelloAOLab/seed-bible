@@ -6,6 +6,7 @@ import i18nMissingKeysRule from "./script/eslint/i18nMissingKeysRule";
 import i18nUnusedKeysRule from "./script/eslint/i18nUnusedKeysRule";
 import i18nIncompleteTranslationsRule from "./script/eslint/i18nIncompleteTranslationsRule";
 import i18nExtensionIncompleteTranslationsRule from "./script/eslint/i18nExtensionIncompleteTranslationsRule";
+import i18nExtensionKeyFormatRule from "./script/eslint/i18nExtensionKeyFormatRule";
 import i18nUntranslatedContentRule from "./script/eslint/i18nUntranslatedContentRule";
 import noImmediateStorageAccessRule from "./script/eslint/noImmediateStorageAccessRule";
 import json from "@eslint/json";
@@ -33,6 +34,7 @@ const i18nJsonPlugin = {
     "translation-incomplete-translations": i18nIncompleteTranslationsRule,
     "translation-extension-incomplete-translations":
       i18nExtensionIncompleteTranslationsRule,
+    "translation-extension-key-format": i18nExtensionKeyFormatRule,
   },
 } as unknown as Record<string, unknown>;
 
@@ -215,6 +217,7 @@ export default defineConfig([
     },
     rules: {
       "seed-bible-i18n/translation-extension-incomplete-translations": "warn",
+      "seed-bible-i18n/translation-extension-key-format": "error",
     },
   },
   {
