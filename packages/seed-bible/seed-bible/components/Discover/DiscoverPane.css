@@ -222,10 +222,10 @@
   align-items: center;
   padding: 5px 8px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 500;
   cursor: pointer;
 }
