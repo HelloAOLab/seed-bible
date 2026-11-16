@@ -4,6 +4,16 @@
 
 ### ✨ Added
 
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.18.0 — 2026-11-16
+
+### ✨ Added
+
 - Add native iOS and Android apps, built with Capacitor from the same code as the website. ([#2092](https://github.com/HelloAOLab/seed-bible/pull/2092), [#2166](https://github.com/HelloAOLab/seed-bible/pull/2166))
   - Links shared from the apps point at seedbible.org, and seedbible.org links open in the app when it's installed.
   - Both apps use the Seed Bible icon, and Android's splash screen plays the seed-growing intro.
@@ -42,8 +52,6 @@
 - Fix the AI Transcript extension restyling text boxes across the app, such as the language picker's search. ([#2161](https://github.com/HelloAOLab/seed-bible/pull/2161))
 - Fix language options scrolling through a gap above the language picker's search. ([#2161](https://github.com/HelloAOLab/seed-bible/pull/2161))
 - Fix "Shared with you" cards covering the close buttons of dialogs on phones. ([#2161](https://github.com/HelloAOLab/seed-bible/pull/2161))
-
-### 🗑️ Removed
 
 ## v1.17.0 — 2026-11-09
 
