@@ -30,7 +30,7 @@ import {
   AnnotationPreview,
   openDeleteAnnotationConfirm,
 } from "../Discover/AnnotationsSection";
-import { useAnnotationAuthorProfile } from "../Discover/useAnnotationAuthorProfile";
+import { useReplyToLabel } from "../Discover/useReplyToLabel";
 import type { LoginManager } from "../../managers/LoginManager";
 import { PlaylistRow } from "../Discover/PlaylistRow";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
@@ -256,19 +256,8 @@ function AnnotationReplyLabel(props: {
   replyToUserId: string | null | undefined;
   login: LoginManager;
 }) {
-  const { replyToUserId, login } = props;
-  const { t } = useI18n();
-  const { name } = useAnnotationAuthorProfile(replyToUserId, login);
-  return (
-    <span className="sb-content-annotation-reply-to">
-      {name.value.length > 0 && replyToUserId !== login.userId.value
-        ? t("reply-title", {
-            author: name.value,
-            defaultValue: "Reply to {{author}}",
-          })
-        : t("reply", { defaultValue: "Reply" })}
-    </span>
-  );
+  const label = useReplyToLabel(props.replyToUserId, props.login);
+  return <span className="sb-content-annotation-reply-to">{label}</span>;
 }
 
 /**

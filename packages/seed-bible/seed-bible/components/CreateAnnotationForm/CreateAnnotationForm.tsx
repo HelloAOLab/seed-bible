@@ -27,7 +27,7 @@ import {
   type AnnotationEditorProps,
 } from "./PlainTextAnnotationEditor";
 import { retryChunkImport } from "./retryChunkImport";
-import { useAnnotationAuthorProfile } from "../Discover/useAnnotationAuthorProfile";
+import { useReplyToLabel } from "../Discover/useReplyToLabel";
 import type { LoginManager } from "../../managers";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
@@ -102,8 +102,10 @@ function CreateAnnotationTitle(props: {
 }) {
   const { annotations, editing, tabs, login, parent } = props;
   const { t } = useI18n();
-  const parentAuthorId = editing.data.replyToUserId ?? parent?.data.userId;
-  const { name } = useAnnotationAuthorProfile(parentAuthorId, login);
+  const replyLabel = useReplyToLabel(
+    editing.data.replyToUserId ?? parent?.data.userId,
+    login
+  );
 
   return (
     <div className="sb-discover-title-row">
@@ -114,14 +116,7 @@ function CreateAnnotationTitle(props: {
       />
       <span className="sb-discover-title" dir="auto">
         {editing.data.replyTo
-          ? name.value.length > 0 && parentAuthorId !== login.userId.value
-            ? t("reply-title", {
-                author: name.value,
-                defaultValue: "Reply to {{author}}",
-              })
-            : t("reply", {
-                defaultValue: "Reply",
-              })
+          ? replyLabel
           : t("annotate-title", {
               location: annotationLocationLabel(editing, tabs),
               defaultValue: "Annotate {{location}}",
