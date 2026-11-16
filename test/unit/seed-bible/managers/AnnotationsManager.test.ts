@@ -2303,6 +2303,58 @@ describe("AnnotationsManager", () => {
     });
   });
 
+  describe("deleteAnnotationAndReplies", () => {
+    const note = createCommentAnnotation({ id: "note" });
+    const replies = ["r1", "r2"].map((id) =>
+      createCommentAnnotation({
+        id,
+        data: { type: "comment", html: "<p>Reply</p>", replyTo: "note" },
+      })
+    );
+    const erasedIds = () => eraseDataMock.mock.calls.map(([, id]) => id);
+
+    it("deletes the note, then the replies", async () => {
+      const failed = await createManager().deleteAnnotationAndReplies(
+        note,
+        replies
+      );
+
+      expect(erasedIds()).toEqual(["note", "r1", "r2"]);
+      expect(failed).toEqual([]);
+    });
+
+    it("leaves every reply in place when the note couldn't be deleted", async () => {
+      eraseDataMock.mockResolvedValueOnce({
+        success: false,
+        errorCode: "not_allowed",
+      });
+
+      await expect(
+        createManager().deleteAnnotationAndReplies(note, replies)
+      ).rejects.toThrow();
+
+      expect(erasedIds()).toEqual(["note"]);
+    });
+
+    it("resolves to the replies that couldn't be deleted once the note was", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      eraseDataMock.mockImplementation(async (_record: string, id: string) =>
+        id === "r2"
+          ? { success: false, errorCode: "server_error" }
+          : { success: true }
+      );
+
+      const failed = await createManager().deleteAnnotationAndReplies(
+        note,
+        replies
+      );
+
+      expect(failed.map((reply) => reply.id)).toEqual(["r2"]);
+      expect(erasedIds()).toEqual(["note", "r1", "r2"]);
+      errorSpy.mockRestore();
+    });
+  });
+
   // The default store is IndexedDB, which jsdom doesn't have — so the tests
   // above all exercise the no-store fallback that talks straight to the server.
   // These inject the in-memory store to cover the offline paths.

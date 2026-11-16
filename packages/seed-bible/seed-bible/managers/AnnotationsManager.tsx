@@ -201,6 +201,18 @@ export interface AnnotationsManager {
   deleteAnnotationAndRefresh: (annotation: Annotation) => Promise<void>;
 
   /**
+   * Deletes a note the way `deleteAnnotationAndRefresh` does, then `replies`:
+   * the signed-in user's own replies to it, which would otherwise be left
+   * hidden with nothing to hang from. The note goes first, so a note that
+   * couldn't be deleted rejects with every reply left in place. A reply that
+   * then fails is left as it was, and resolves among the ones returned.
+   */
+  deleteAnnotationAndReplies: (
+    annotation: Annotation,
+    replies: readonly Annotation[]
+  ) => Promise<Annotation[]>;
+
+  /**
    * Saves an annotation (upsert) and updates the chapter cache, so it shows
    * up on screen without a reload. Unlike `saveEditingAnnotation`, it leaves
    * the editing draft and the Discover view alone. Rethrows on failure.
@@ -1765,6 +1777,24 @@ export function createAnnotationsManager(
     }
   };
 
+  const deleteAnnotationAndReplies = async (
+    annotation: Annotation,
+    replies: readonly Annotation[]
+  ): Promise<Annotation[]> => {
+    await deleteAnnotationAndRefresh(annotation);
+    const results = await Promise.allSettled(
+      replies.map((reply) => deleteAnnotationAndRefresh(reply))
+    );
+    return replies.filter((reply, index) => {
+      const result = results[index];
+      if (result?.status !== "rejected") {
+        return false;
+      }
+      console.error(`Couldn't delete the reply ${reply.id}:`, result.reason);
+      return true;
+    });
+  };
+
   const manager: AnnotationsManager = {
     saveAnnotation,
     saveAnnotationAndRefresh,
@@ -1791,6 +1821,7 @@ export function createAnnotationsManager(
     saveEditingAnnotation,
     cancelEditingAnnotation,
     deleteAnnotationAndRefresh,
+    deleteAnnotationAndReplies,
     isDraftingNewAnnotation: computed(() => isDraftingNewAnnotation.value),
     hasRecordOverride: !!recordOverride,
     sync,

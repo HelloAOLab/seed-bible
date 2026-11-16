@@ -150,7 +150,8 @@ function createMockState(
     openVerseReference?: ReturnType<typeof vi.fn>;
     modals?: ModalManager;
     hasRecordOverride?: boolean;
-    deleteAnnotationAndRefreshImpl?: () => Promise<void>;
+    /** Erases a note. Its replies aren't erased when this rejects. */
+    deleteAnnotationImpl?: () => Promise<void>;
     /** Notes whose replies the manager already has unfolded. */
     openThreadIds?: string[];
   } = {}
@@ -212,9 +213,10 @@ function createMockState(
         openThreadIds.value = next;
       }),
       editAnnotation: vi.fn(),
-      deleteAnnotationAndRefresh: vi.fn(
-        overrides.deleteAnnotationAndRefreshImpl ?? (() => Promise.resolve())
-      ),
+      deleteAnnotationAndReplies: vi.fn(async () => {
+        await (overrides.deleteAnnotationImpl ?? (() => Promise.resolve()))();
+        return [];
+      }),
       hasRecordOverride: overrides.hasRecordOverride ?? false,
       pendingCountForChapter: vi.fn(
         () => overrides.pendingCountForChapter ?? 0
@@ -2072,8 +2074,9 @@ describe("DiscoverContentPanel", () => {
         await Promise.resolve();
       });
 
-      expect(state.annotations.deleteAnnotationAndRefresh).toHaveBeenCalledWith(
-        annotation
+      expect(state.annotations.deleteAnnotationAndReplies).toHaveBeenCalledWith(
+        annotation,
+        []
       );
       expect(
         modals.modals.value.some((m) => m.id === "delete-annotation-confirm-a1")
@@ -2090,7 +2093,7 @@ describe("DiscoverContentPanel", () => {
         tab,
         userId: "user-1",
         modals,
-        deleteAnnotationAndRefreshImpl: () => Promise.reject(new Error("nope")),
+        deleteAnnotationImpl: () => Promise.reject(new Error("nope")),
         annotationsForChapter: [
           createAnnotation({
             id: "a1",
@@ -2156,6 +2159,152 @@ describe("DiscoverContentPanel", () => {
         Array.from(
           container.querySelectorAll(".sb-annotation-item-preview")
         ).map((el) => el.textContent);
+
+      describe("deleting a note that has them", () => {
+        const myReply = createAnnotation({
+          id: "my-reply",
+          verseNumber: 3,
+          data: {
+            type: "comment",
+            html: "<p>Mine</p>",
+            replyTo: "note",
+            userId: "user-1",
+            createdAtMs: 3,
+          },
+        } as Partial<Annotation>);
+        const friendReply = createAnnotation({
+          id: "friend-reply",
+          verseNumber: 3,
+          data: {
+            type: "comment",
+            html: "<p>A friend's</p>",
+            replyTo: "note",
+            userId: "friend-1",
+            createdAtMs: 2,
+          },
+        } as Partial<Annotation>);
+
+        let modalContainer: HTMLDivElement;
+        afterEach(() => {
+          render(null, modalContainer);
+          modalContainer.remove();
+        });
+
+        /**
+         * Opens the delete confirmation of `note`, which is the user's own,
+         * with replies from their record and from friend-1's.
+         */
+        function openDeleteDialog(
+          ownReplies: Annotation[],
+          friendReplies: Annotation[],
+          failingReplies: Annotation[] = []
+        ) {
+          const modals = createModalManager();
+          const tab = createMockTab({ chapterData: genesis1 });
+          const state = createMockState({
+            tab,
+            userId: "user-1",
+            modals,
+          });
+          Object.assign(state.annotations, {
+            getAnnotationsForChapter: vi.fn(() =>
+              signal([note, ...ownReplies])
+            ),
+            getUserAnnotationsForChapter: vi.fn(() => signal(friendReplies)),
+            deleteAnnotationAndReplies: vi.fn(async () => failingReplies),
+          });
+          Object.assign(state.friends, { friendIds: signal(["friend-1"]) });
+          renderFull(tab, state);
+
+          const deleteItem = openNoteMenu().find((el) =>
+            el.textContent?.includes("Delete")
+          )!;
+          act(() => {
+            deleteItem.dispatchEvent(
+              new MouseEvent("click", { bubbles: true })
+            );
+          });
+          const modal = modals.modals.value.find(
+            (m) => m.id === "delete-annotation-confirm-note"
+          )!;
+          modalContainer = document.createElement("div");
+          document.body.appendChild(modalContainer);
+          act(() => {
+            render(
+              modal.content({
+                t: (key, options) => (options?.defaultValue as string) ?? key,
+              }),
+              modalContainer
+            );
+          });
+          return {
+            state,
+            checkbox: () =>
+              modalContainer.querySelector<HTMLInputElement>(
+                ".sb-confirm-delete-option input"
+              ),
+            confirm: () =>
+              act(async () => {
+                modalContainer
+                  .querySelector(".sb-session-settings-end")!
+                  .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+                await Promise.resolve();
+                await Promise.resolve();
+              }),
+          };
+        }
+
+        it("says how many replies it has, and deletes your own with it unless you untick them", async () => {
+          const { state, checkbox, confirm } = openDeleteDialog(
+            [myReply],
+            [friendReply]
+          );
+
+          expect(modalContainer.textContent).toContain(
+            "It has 2 replies, which will no longer be shown."
+          );
+          expect(modalContainer.textContent).toContain("Also delete my reply");
+          expect(checkbox()?.checked).toBe(true);
+
+          await confirm();
+
+          expect(
+            state.annotations.deleteAnnotationAndReplies
+          ).toHaveBeenCalledWith(note, [myReply]);
+        });
+
+        it("keeps your replies when the box is unticked", async () => {
+          const { state, checkbox, confirm } = openDeleteDialog([myReply], []);
+
+          act(() => {
+            checkbox()!.click();
+          });
+          await confirm();
+
+          expect(
+            state.annotations.deleteAnnotationAndReplies
+          ).toHaveBeenCalledWith(note, []);
+        });
+
+        it("offers nothing to tick when the replies are all friends'", () => {
+          const { checkbox } = openDeleteDialog([], [friendReply]);
+
+          expect(modalContainer.textContent).toContain(
+            "It has 1 reply, which will no longer be shown."
+          );
+          expect(checkbox()).toBeNull();
+        });
+
+        it("says so when one of your replies couldn't be deleted with it", async () => {
+          const { state, confirm } = openDeleteDialog([myReply], [], [myReply]);
+
+          await confirm();
+
+          expect(state.app.toast).toHaveBeenCalledWith(
+            "The annotation was deleted, but your reply couldn't be."
+          );
+        });
+      });
 
       it("folds a note's replies under it until its replies button is pressed", () => {
         const selectTranslationAndChapter = vi

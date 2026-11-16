@@ -414,6 +414,19 @@
   line-height: 1.5;
 }
 
+.sb-confirm-delete-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--sb-font-size-14);
+  cursor: pointer;
+}
+
+.sb-confirm-delete-option input {
+  margin: 0;
+  accent-color: var(--sb-primary-color);
+}
+
 .sb-confirm-delete-actions {
   display: flex;
   justify-content: flex-end;

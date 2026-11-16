@@ -4,7 +4,10 @@ import {
   createModalManager,
   type ModalManager,
 } from "@packages/seed-bible/seed-bible/managers/ModalManager";
-import { openConfirmDeleteModal } from "@packages/seed-bible/seed-bible/components/ConfirmDeleteModal/ConfirmDeleteModal";
+import {
+  openConfirmDeleteModal,
+  type ConfirmDeleteModalOptions,
+} from "@packages/seed-bible/seed-bible/components/ConfirmDeleteModal/ConfirmDeleteModal";
 import {
   I18nProvider,
   createI18nManager,
@@ -17,7 +20,7 @@ describe("openConfirmDeleteModal", () => {
   let container: HTMLDivElement;
   let modals: ModalManager;
   let finishDelete: () => void;
-  let onConfirm: () => Promise<void>;
+  let onConfirm: ConfirmDeleteModalOptions["onConfirm"];
   let toast: (message: string) => void;
 
   beforeEach(() => {
@@ -43,7 +46,7 @@ describe("openConfirmDeleteModal", () => {
   });
 
   /** Opens the modal and renders it, as the modal host would. */
-  function openAndRender() {
+  function openAndRender(extra: Partial<ConfirmDeleteModalOptions> = {}) {
     openConfirmDeleteModal(modals, {
       id: MODAL_ID,
       title: "Delete thing?",
@@ -51,6 +54,7 @@ describe("openConfirmDeleteModal", () => {
       onConfirm,
       failedMessage: () => "Couldn't delete the thing.",
       toast,
+      ...extra,
     });
     const modal = modals.modals.value.find((m) => m.id === MODAL_ID);
     act(() => {
@@ -160,6 +164,70 @@ describe("openConfirmDeleteModal", () => {
 
     expect(toast).toHaveBeenCalledWith("Couldn't delete the thing.");
     expect(deleteButton.querySelector(".sb-spinner")).toBeNull();
+  });
+
+  describe("with something to delete along with it", () => {
+    const checkbox = {
+      label: () => "Also delete its parts",
+      initiallyChecked: true,
+    };
+    const box = () =>
+      container.querySelector<HTMLInputElement>(
+        ".sb-confirm-delete-option input"
+      )!;
+
+    it("asks with a box ticked as given, and deletes with it", async () => {
+      const { deleteButton } = openAndRender({ checkbox });
+
+      expect(container.textContent).toContain("Also delete its parts");
+      expect(box().checked).toBe(true);
+      act(() => {
+        click(deleteButton);
+      });
+
+      expect(onConfirm).toHaveBeenCalledWith(true);
+      await finishTheDelete();
+    });
+
+    it("deletes without it once the box is unticked", async () => {
+      const { deleteButton } = openAndRender({ checkbox });
+
+      act(() => {
+        box().click();
+      });
+      act(() => {
+        click(deleteButton);
+      });
+
+      expect(onConfirm).toHaveBeenCalledWith(false);
+      await finishTheDelete();
+    });
+
+    it("shows no box, and says nothing was ticked, when there's nothing to ask", async () => {
+      const { deleteButton } = openAndRender();
+
+      expect(container.querySelector(".sb-confirm-delete-option")).toBeNull();
+      act(() => {
+        click(deleteButton);
+      });
+
+      expect(onConfirm).toHaveBeenCalledWith(false);
+      await finishTheDelete();
+    });
+  });
+
+  it("says what couldn't be deleted when the delete only partly worked", async () => {
+    onConfirm = vi.fn(async () => () => "Some of it is still there.");
+    const { deleteButton } = openAndRender();
+
+    await act(async () => {
+      click(deleteButton);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(toast).toHaveBeenCalledWith("Some of it is still there.");
+    expect(modals.modals.value.some((m) => m.id === MODAL_ID)).toBe(false);
   });
 
   it("deletes once when the modal is closed and reopened while the first delete is running", async () => {

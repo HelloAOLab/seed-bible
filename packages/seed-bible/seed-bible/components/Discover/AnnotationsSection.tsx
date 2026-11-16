@@ -264,6 +264,8 @@ function AnnotationItem(props: {
   onReferenceClick?: (ref: VerseRef) => void;
   otherPeoplePresent?: boolean;
   replies?: Annotation[];
+  /** The user's own replies among `replies`, which deleting the note offers to delete too. */
+  ownReplies?: Annotation[];
   showReplies: boolean;
   onToggleReplies?: () => void;
 }) {
@@ -279,6 +281,7 @@ function AnnotationItem(props: {
     onReferenceClick,
     otherPeoplePresent,
     replies = [],
+    ownReplies = [],
     showReplies,
     onToggleReplies,
   } = props;
@@ -386,7 +389,8 @@ function AnnotationItem(props: {
                 annotations,
                 annotation,
                 label,
-                toast
+                toast,
+                { replyCount: replies.length, ownReplies }
               );
             }}
           >
@@ -440,6 +444,7 @@ export function AnnotationThread(props: {
       <AnnotationItem
         annotation={annotation}
         replies={replies}
+        ownReplies={replies.filter((reply) => ownAnnotations.has(reply))}
         showReplies={showReplies}
         onToggleReplies={() =>
           annotations.setThreadOpen(annotation.id, !showReplies)
@@ -862,8 +867,9 @@ export function AnnotationsSection(props: {
 
 /**
  * Opens the delete-annotation confirmation modal, naming the verses it's on
- * (`reference`, e.g. "Genesis 3:3-5"). `erase` replaces the plain delete, for
- * a caller that keeps its own list of annotations to update.
+ * (`reference`, e.g. "Genesis 3:3-5"). A note with replies says how many it
+ * has, and offers to delete the user's own ones (`ownReplies`) with it,
+ * ticked by default.
  */
 export function openDeleteAnnotationConfirm(
   modals: ModalManager,
@@ -871,9 +877,24 @@ export function openDeleteAnnotationConfirm(
   annotation: Annotation,
   reference: string,
   toast: SeedBibleState["app"]["toast"],
-  erase: () => Promise<void> = () =>
-    annotations.deleteAnnotationAndRefresh(annotation)
+  options: {
+    /** How many replies the note has, from anyone. */
+    replyCount?: number;
+    ownReplies?: readonly Annotation[];
+    /**
+     * Replaces the plain delete, for a caller that keeps its own list of
+     * annotations to update. Resolves to the replies that couldn't be
+     * deleted, as `deleteAnnotationAndReplies` does.
+     */
+    erase?: (replies: readonly Annotation[]) => Promise<readonly Annotation[]>;
+  } = {}
 ) {
+  const {
+    replyCount = 0,
+    ownReplies = [],
+    erase = (replies) =>
+      annotations.deleteAnnotationAndReplies(annotation, replies),
+  } = options;
   openConfirmDeleteModal(modals, {
     id: `delete-annotation-confirm-${annotation.id}`,
     title: {
@@ -881,12 +902,45 @@ export function openDeleteAnnotationConfirm(
       defaultValue: "Delete annotation?",
     },
     message: (t) =>
-      t("delete-annotation-on-confirm-message", {
-        reference,
-        defaultValue:
-          "Delete the annotation on {{reference}}? This can't be undone.",
-      }),
-    onConfirm: erase,
+      replyCount > 0
+        ? t("delete-annotation-with-replies-confirm-message", {
+            reference,
+            count: replyCount,
+            defaultValue_one:
+              "Delete the annotation on {{reference}}? It has {{count}} reply, which will no longer be shown. This can't be undone.",
+            defaultValue_other:
+              "Delete the annotation on {{reference}}? It has {{count}} replies, which will no longer be shown. This can't be undone.",
+          })
+        : t("delete-annotation-on-confirm-message", {
+            reference,
+            defaultValue:
+              "Delete the annotation on {{reference}}? This can't be undone.",
+          }),
+    checkbox:
+      ownReplies.length > 0
+        ? {
+            label: (t) =>
+              t("delete-own-replies-too", {
+                count: ownReplies.length,
+                defaultValue_one: "Also delete my reply",
+                defaultValue_other: "Also delete my {{count}} replies",
+              }),
+            initiallyChecked: true,
+          }
+        : undefined,
+    onConfirm: async (deleteOwnReplies) => {
+      const failed = await erase(deleteOwnReplies ? ownReplies : []);
+      return failed.length > 0
+        ? (t) =>
+            t("delete-replies-failed", {
+              count: failed.length,
+              defaultValue_one:
+                "The annotation was deleted, but your reply couldn't be.",
+              defaultValue_other:
+                "The annotation was deleted, but {{count}} of your replies couldn't be.",
+            })
+        : undefined;
+    },
     failedMessage: (t) =>
       t("delete-annotation-failed", {
         defaultValue: "Couldn't delete the annotation.",
