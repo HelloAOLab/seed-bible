@@ -121,7 +121,9 @@ export default defineExtension({
     });
   },
   views: {
-    hello: ({ sb }) => <p>{sb.i18n.t("greeting", "Hello!")}</p>,
+    hello: ({ sb }) => (
+      <p>{sb.i18n.t("greeting", { defaultValue: "Hello!" })}</p>
+    ),
   },
 });
 ```
@@ -167,60 +169,51 @@ When the user turns an optional permission off in Settings, your extension is re
 
 ### `sb.i18n`
 
-Translations: your own strings, and Seed Bible's. Both go through the translator Seed Bible itself uses ([i18next](https://www.i18next.com)), so they behave the same way as the app's text.
+Translations, through [i18next](https://www.i18next.com), the translator Seed Bible itself uses. `t` is i18next's own `t`, so [its documentation](https://www.i18next.com/translation-function/essentials) applies as it stands. The one difference: it reads your extension's strings unless you name another set.
 
 ```ts
 i18n: {
   language: ReadonlySignal<string>;           // e.g. "en", "es"
   direction: ReadonlySignal<"ltr" | "rtl">;
-  t(key: string, defaultValue?: string, values?: Record<string, string | number>): string;
-  app: {
-    t(key: string, defaultValue?: string, values?: Record<string, string | number>): string;
-  };
+  t(key: string, options?: Record<string, unknown>): string;
 };
 ```
 
-**`t` reads your own strings**, from the `translations` section of `extension.json`. It looks `key` up in the current language, falls back to `en`, then to `defaultValue`, then to the key itself. It fills `{{name}}` placeholders from `values`:
+**Your own strings** come from the `translations` section of `extension.json`. `t` looks `key` up in the current language, falls back to `en`, then to `defaultValue`, then to the key itself. The other options fill in `{{name}}` placeholders:
 
 ```ts
-sb.i18n.t("verses-found", "Found {{count}} verses", { count: 3 });
+sb.i18n.t("verses-found", { defaultValue: "Found {{count}} verses", count: 3 });
 ```
 
-**Plurals.** When `values` has a `count`, a `key_one` or `key_other` string wins over `key`, picked by the language's rules. Without them, `key` is used as before.
+**Plurals.** With a `count`, a `key_one` or `key_other` string wins over `key`, picked by the language's rules:
 
 ```json
 "verses-found_one": "Found {{count}} verse",
 "verses-found_other": "Found {{count}} verses"
 ```
 
-**`app.t` reads Seed Bible's own strings**, so a button can say "Close" the way the app does, in every language the app has:
+**Seed Bible's own strings** are the `seed-bible` set, so a button can say "Close" the way the app does, in every language the app has:
 
 ```ts
-sb.i18n.app.t("close", "Close");
+sb.i18n.t("close", { ns: "seed-bible", defaultValue: "Close" });
 ```
 
-Always pass `defaultValue` to `app.t`. Seed Bible's keys aren't part of this API: one can be renamed or removed, and your extension then shows `defaultValue` instead of the bare key.
+Always pass `defaultValue` for these. Seed Bible's keys aren't part of this API: one can be renamed or removed, and your extension then shows `defaultValue` instead of the bare key. The two sets never mix: without `ns`, `t` only reads your strings, even when a key exists only in Seed Bible's.
 
-The two never mix. `t` only reads your strings and `app.t` only Seed Bible's, even when a key exists in just one of them.
-
-**In a view**, the `useI18n` hook gives you the same two sets: `useI18n(sb.extensionId)` for yours, and `useI18n()` for Seed Bible's. Seed Bible's shared components use the same hook, so they show the user's language too. Its `t` takes an options object instead: `t(key, { defaultValue, ...values })`.
+**In a view**, the `useI18n` hook gives the same `t`: `useI18n(sb.extensionId)` for your strings, and `useI18n()` for Seed Bible's. Seed Bible's shared components use the same hook, so they show the user's language too.
 
 ```tsx
 import { useI18n, type SandboxViewProps } from "seed-bible/extensions";
 
 function Toolbar({ sb }: SandboxViewProps) {
-  const own = useI18n(sb.extensionId);
-  const app = useI18n();
-  return (
-    <p>
-      {own.t("verses-found", { count: 3 })} ·{" "}
-      {app.t("close", { defaultValue: "Close" })}
-    </p>
-  );
+  const { t } = useI18n(sb.extensionId);
+  return <p>{t("verses-found", { count: 3 })}</p>;
 }
 ```
 
-`t` and `app.t` read the current language each time, so calling them inside a component re-renders it in the new language when the user switches.
+`t` reads the current language each time, so calling it inside a component re-renders it in the new language when the user switches.
+
+An older form, `t(key, "Default text", values)`, still works, for extensions written before `t` became i18next's.
 
 **Keys can't contain `:`.** The translator reads `a:b` as the key `b` in a set of strings named `a`, so the string is never found. A `.` is fine. Inside a string, `$t(other-key)` is replaced with that key's text.
 
@@ -1050,7 +1043,9 @@ try {
   await sb.notes.create({ bookId: "JHN", chapter: 3, text: "…" });
 } catch (err) {
   if (err instanceof SandboxError && err.code === "unavailable") {
-    void sb.app.toast(sb.i18n.t("sign-in-to-save", "Sign in to save notes."));
+    void sb.app.toast(
+      sb.i18n.t("sign-in-to-save", { defaultValue: "Sign in to save notes." })
+    );
   } else {
     throw err;
   }

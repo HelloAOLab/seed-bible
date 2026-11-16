@@ -85,7 +85,9 @@ function GreetingPane({ sb, paneId }: { sb: SandboxContext; paneId: string }) {
     // The app's strings without the hook, which works anywhere, `main`
     // included. Always pass the text to fall back on: the app's keys change.
     return (
-      <p style={{ padding: 20 }}>{sb.i18n.app.t("loading", "Loading…")}</p>
+      <p style={{ padding: 20 }}>
+        {sb.i18n.t("loading", { ns: "seed-bible", defaultValue: "Loading…" })}
+      </p>
     );
   }
   const { greeting, greetingSize, subtitle, showBanner, repeatCount, tone } =
@@ -124,7 +126,7 @@ function GreetingPane({ sb, paneId }: { sb: SandboxContext; paneId: string }) {
       {typeof repeatCount === "number" && (
         <p style={{ opacity: 0.75 }}>
           {/* `count` picks `greeting-shown_one` or `greeting-shown_other`. */}
-          {sb.i18n.t("greeting-shown", undefined, { count: repeatCount })}
+          {sb.i18n.t("greeting-shown", { count: repeatCount })}
         </p>
       )}
       {typeof subtitle === "string" && subtitle && (
@@ -142,7 +144,7 @@ function GreetingPane({ sb, paneId }: { sb: SandboxContext; paneId: string }) {
               body: { hello: "world" },
             });
             await sb.app.toast(
-              sb.i18n.t("sensitive-result", undefined, {
+              sb.i18n.t("sensitive-result", {
                 status: response.status,
               })
             );
@@ -198,9 +200,7 @@ export default defineExtension({
         title: title(id),
         icon: { material: index === 0 ? "looks_one" : "looks_two" },
         onSelect: () =>
-          void sb.app.toast(
-            sb.i18n.t("item-clicked", undefined, { item: sb.i18n.t(id) })
-          ),
+          void sb.app.toast(sb.i18n.t("item-clicked", { item: sb.i18n.t(id) })),
       })),
     });
 

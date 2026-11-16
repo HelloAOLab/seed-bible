@@ -99,26 +99,37 @@ describe("translations in a sandboxed extension", () => {
     it("falls back to English, then the default text, then the key", async () => {
       const { sb } = await start({ state: { language: "es" } });
       expect(sb.i18n.t("farewell")).toBe("Goodbye");
-      expect(sb.i18n.t("missing", "Default")).toBe("Default");
+      expect(sb.i18n.t("missing", { defaultValue: "Default" })).toBe("Default");
       expect(sb.i18n.t("missing")).toBe("missing");
     });
 
     it("fills in values", async () => {
       const { sb } = await start();
-      expect(sb.i18n.t("missing", "Hi {{name}}", { name: "Ann" })).toBe(
-        "Hi Ann"
-      );
+      expect(
+        sb.i18n.t("missing", { defaultValue: "Hi {{name}}", name: "Ann" })
+      ).toBe("Hi Ann");
     });
 
     it("picks the plural form for a count", async () => {
       const { sb } = await start();
-      expect(sb.i18n.t("verses", undefined, { count: 1 })).toBe("1 verse");
-      expect(sb.i18n.t("verses", undefined, { count: 3 })).toBe("3 verses");
+      expect(sb.i18n.t("verses", { count: 1 })).toBe("1 verse");
+      expect(sb.i18n.t("verses", { count: 3 })).toBe("3 verses");
     });
 
     it("never answers with one of the app's strings", async () => {
       const { sb } = await start();
-      expect(sb.i18n.t("close", "Own default")).toBe("Own default");
+      expect(sb.i18n.t("close", { defaultValue: "Own default" })).toBe(
+        "Own default"
+      );
+    });
+
+    it("still takes the default text and values the older way", async () => {
+      const { sb } = await start();
+      expect(sb.i18n.t("missing", "Default")).toBe("Default");
+      expect(sb.i18n.t("missing", "Hi {{name}}", { name: "Ann" })).toBe(
+        "Hi Ann"
+      );
+      expect(sb.i18n.t("verses", undefined, { count: 3 })).toBe("3 verses");
     });
 
     it("follows the language when the app changes it", async () => {
@@ -136,21 +147,28 @@ describe("translations in a sandboxed extension", () => {
     });
   });
 
-  describe("sb.i18n.app.t", () => {
+  describe('sb.i18n.t with ns: "seed-bible"', () => {
+    const app = (options: Record<string, unknown> = {}) => ({
+      ns: "seed-bible",
+      ...options,
+    });
+
     it("reads the app's strings in the current language", async () => {
       const { sb } = await start({ state: { language: "es" } });
-      expect(sb.i18n.app.t("close", "Close")).toBe("Cerrar");
+      expect(sb.i18n.t("close", app({ defaultValue: "Close" }))).toBe("Cerrar");
     });
 
     it("never answers with one of the extension's own strings", async () => {
       const { sb } = await start();
-      expect(sb.i18n.app.t("farewell", "App default")).toBe("App default");
-      expect(sb.i18n.app.t("greeting")).toBe("The app's hello");
+      expect(sb.i18n.t("farewell", app({ defaultValue: "App default" }))).toBe(
+        "App default"
+      );
+      expect(sb.i18n.t("greeting", app())).toBe("The app's hello");
     });
 
     it("shows the default text without the app's strings", async () => {
       const { sb } = await start({ appTranslations: {} });
-      expect(sb.i18n.app.t("close", "Close")).toBe("Close");
+      expect(sb.i18n.t("close", app({ defaultValue: "Close" }))).toBe("Close");
     });
   });
 
@@ -232,7 +250,9 @@ describe("translations from a host older than the strings message", () => {
     };
     const { sb } = createSandboxClient(channel.port2, init);
     expect(sb.i18n.t("greeting")).toBe("Hola");
-    expect(sb.i18n.app.t("close", "Close")).toBe("Close");
+    expect(
+      sb.i18n.t("close", { ns: "seed-bible", defaultValue: "Close" })
+    ).toBe("Close");
 
     channel.port1.postMessage({
       type: "state",

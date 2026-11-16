@@ -747,7 +747,7 @@ export type SandboxHostRequestKind = keyof SandboxHostRequests;
  */
 export interface SandboxStrings {
   language: string;
-  /** The app's own strings, which `useI18n()` and `sb.i18n.app.t` read. */
+  /** The app's own strings: `useI18n()`, and `sb.i18n.t` with `ns: "seed-bible"`. */
   app: Record<string, Record<string, string>>;
   /** This extension's, from its `extension.json`. */
   extension: Record<string, Record<string, string>>;

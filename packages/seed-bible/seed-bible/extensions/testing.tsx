@@ -76,7 +76,7 @@ export interface TestHostOptions {
    */
   translations?: Record<string, Record<string, string>>;
   /**
-   * Seed Bible's own strings by language, for `sb.i18n.app.t` and shared
+   * Seed Bible's own strings by language, for `ns: "seed-bible"` and shared
    * components. Without them, each call shows its `defaultValue`.
    *
    * @example

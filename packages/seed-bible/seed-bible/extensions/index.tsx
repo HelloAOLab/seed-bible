@@ -297,44 +297,34 @@ export interface SandboxContext {
       permissions: SandboxPermission | SandboxPermission[]
     ) => Promise<boolean>;
   };
-  /**
-   * Translations, from the same translator the app uses (i18next). Inside a
-   * view, `useI18n(sb.extensionId)` and `useI18n()` give the same strings.
-   */
+  /** Translations, through the translator the app itself uses: i18next. */
   i18n: {
     /** The app's current language code, like `"en"` or `"es"`. */
     language: ReadonlySignal<string>;
     /** The current language's text direction. Already set on `<html>`. */
     direction: ReadonlySignal<"ltr" | "rtl">;
     /**
-     * Looks `key` up in this extension's own `extension.json` translations
-     * for the current language (falling back to `en`, then `defaultValue`,
-     * then `key`), and fills `{{name}}` placeholders from `values`. With a
-     * `count` value, a `key_one` / `key_other` string wins over `key`.
+     * i18next's `t`, reading this extension's own `extension.json` strings
+     * unless `options.ns` names another set: `"seed-bible"` for the app's
+     * own. Options are i18next's: `defaultValue`, `count` for plurals, and
+     * the values for `{{name}}` placeholders. In a view, `useI18n(sb.extensionId)`
+     * gives the same `t`.
      *
      * @example
-     * sb.i18n.t("found", "Found {{count}} verses", { count: 3 });
+     * sb.i18n.t("found", { defaultValue: "Found {{count}} verses", count: 3 });
+     * sb.i18n.t("close", { ns: "seed-bible", defaultValue: "Close" });
      */
-    t: (
-      key: string,
-      defaultValue?: string,
-      values?: Record<string, string | number>
-    ) => string;
-    /** Seed Bible's own strings. */
-    app: {
+    t: {
+      (key: string, options?: Record<string, unknown>): string;
       /**
-       * `t`, for one of Seed Bible's own strings, so an extension can say
-       * "Close" the way the app does. Always pass `defaultValue`: the app
-       * renames and removes its keys, and the user then sees it instead.
-       *
-       * @example
-       * sb.i18n.app.t("close", "Close");
+       * The form from before `t` was i18next's, still supported: the
+       * default text, then the placeholder values.
        */
-      t: (
+      (
         key: string,
         defaultValue?: string,
         values?: Record<string, string | number>
-      ) => string;
+      ): string;
     };
   };
   /** The app itself. */
@@ -968,22 +958,24 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
   // So shared components, and `useI18n()` in the extension's own views, use
   // these strings too.
   setDefaultI18n(translations.source);
-  const translate =
-    (ns: string) =>
-    (
-      key: string,
-      defaultValue?: string,
-      values?: Record<string, string | number>
-    ): string => {
-      // Reading the language subscribes a component that calls this, so it
-      // re-renders in the new language.
-      void translations.source.language.value;
-      return translations.source.i18n.t(key, {
-        ...values,
-        ns,
-        defaultValue,
-      });
-    };
+  const translate = (
+    key: string,
+    options?: string | Record<string, unknown>,
+    values?: Record<string, string | number>
+  ): string => {
+    // Reading the language subscribes a component that calls this, so it
+    // re-renders in the new language.
+    void translations.source.language.value;
+    // `t(key, "Default text", values)`, from before `t` was i18next's.
+    const i18nextOptions =
+      typeof options === "string" || values
+        ? { ...values, defaultValue: options }
+        : options;
+    return translations.source.i18n.t(key, {
+      ns: init.extensionId,
+      ...i18nextOptions,
+    });
+  };
   const granted = signal<readonly SandboxPermission[]>(init.granted);
   const pending = new Map<
     number,
@@ -1270,8 +1262,7 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     i18n: {
       language,
       direction,
-      t: translate(init.extensionId),
-      app: { t: translate("seed-bible") },
+      t: translate,
     },
     app: {
       isMobile,
