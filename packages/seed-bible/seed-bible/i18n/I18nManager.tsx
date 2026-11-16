@@ -1,10 +1,8 @@
 import i18n from "i18next";
 import type { TFunction } from "i18next";
 import resourcesToBackend from "i18next-resources-to-backend";
-import { useContext, useMemo } from "preact/hooks";
 import en from "./en.json";
 import { navigatorLanguages, safeSessionStorage } from "../app/ssrEnv";
-import { createContext, type ComponentChildren } from "preact";
 import type { NavigationManager } from "../managers/NavigationManager";
 import { computed, signal } from "@preact/signals";
 import {
@@ -20,6 +18,7 @@ import {
 import { parseStaticPagePath } from "../managers/StaticPagePath";
 import { parseSharedPagePath } from "../managers/SharedPagePath";
 import type { BrandingConfig } from "../app/appConfig";
+import { isRightToLeftLanguage } from "./I18nContext";
 
 function getLanguageName(importPath: string): string {
   const match = importPath.match(/\.\/([a-z-]+)\.json$/i);
@@ -541,158 +540,12 @@ export function createI18nManager(
 }
 
 export type I18nManager = ReturnType<typeof createI18nManager>;
-const I18nContext = createContext(null as I18nManager | null);
 
-export function I18nProvider(props: {
-  i18n: I18nManager;
-  children: ComponentChildren;
-}) {
-  return (
-    <I18nContext.Provider value={props.i18n}>
-      {props.children}
-    </I18nContext.Provider>
-  );
-}
-
-export type I18nHook = ReturnType<typeof useI18n>;
-
-/** The parts of an {@link I18nManager} that `useI18n()` reads. */
-export type I18nSource = Pick<
-  I18nManager,
-  | "i18n"
-  | "language"
-  | "requestLanguageChange"
-  | "confirmLanguageFallback"
-  | "cancelLanguageFallback"
-  | "languageFallbackPrompt"
-  | "uiLanguageSwitchPrompt"
-  | "confirmUiLanguageSwitch"
-  | "dismissUiLanguageSwitch"
-  | "neverAskUiLanguageSwitch"
->;
-
-let defaultI18n: I18nSource | null = null;
-
-/**
- * Sets the translations `useI18n()` uses where no `I18nProvider` is above it,
- * such as an extension that renders into a root of its own. Only the browser
- * sets it: the server renders many visitors' pages in one process, each with
- * its own language, all inside a provider.
- */
-export function setDefaultI18n(source: I18nSource | null) {
-  defaultI18n = source;
-}
-
-let englishOnlyI18n: I18nSource | null = null;
-
-/**
- * The last resort when there is no provider and nothing set as the default,
- * as in a unit test or an extension frame: the app's English strings, so a
- * shared component still shows real text.
- */
-function getEnglishOnlyI18n(): I18nSource {
-  if (!englishOnlyI18n) {
-    // Its own instance: initializing the app's shared one here would stop
-    // `createI18nManager` from setting it up with the language loader later.
-    const instance = i18n.createInstance();
-    void instance.init({
-      lng: DEFAULT_UI_LANGUAGE,
-      fallbackLng: DEFAULT_UI_LANGUAGE,
-      ns: ["seed-bible"],
-      initAsync: false,
-      interpolation: { escapeValue: false },
-      resources: { [DEFAULT_UI_LANGUAGE]: { "seed-bible": en } },
-    });
-    englishOnlyI18n = {
-      i18n: instance,
-      language: signal<string>(DEFAULT_UI_LANGUAGE),
-      requestLanguageChange: async () => {},
-      confirmLanguageFallback: async () => {},
-      cancelLanguageFallback: () => {},
-      languageFallbackPrompt: signal<LanguageFallbackPrompt | null>(null),
-      uiLanguageSwitchPrompt: signal<UiLanguageSwitchPrompt | null>(null),
-      confirmUiLanguageSwitch: async () => {},
-      dismissUiLanguageSwitch: () => {},
-      neverAskUiLanguageSwitch: () => {},
-    };
-  }
-  return englishOnlyI18n;
-}
-
-const RTL_LANGUAGE_CODES = new Set(["ar", "fa", "he", "ur", "ps", "dv", "yi"]);
-
-export function isRightToLeftLanguage(languageCode: string): boolean {
-  const normalizedCode = languageCode.trim();
-  if (!normalizedCode) {
-    return false;
-  }
-
-  const primarySubtag = normalizedCode.split("-")[0]?.toLowerCase();
-  if (primarySubtag && RTL_LANGUAGE_CODES.has(primarySubtag)) {
-    return true;
-  }
-
-  if (typeof Intl !== "undefined" && typeof Intl.Locale === "function") {
-    try {
-      const locale = new Intl.Locale(normalizedCode) as Intl.Locale & {
-        textInfo?: { direction: string };
-        getTextInfo?: () => { direction: string };
-      };
-      if (typeof locale.getTextInfo === "function") {
-        const textInfo = locale.getTextInfo();
-        return textInfo.direction === "rtl";
-      }
-      return locale.textInfo?.direction === "rtl";
-    } catch {
-      return false;
-    }
-  }
-
-  return false;
-}
-
-/**
- * Gets the i18n manager, which provides access to the translation function, current language, available languages, and a function to change the language. Also provides a helper function for translating keys within a specific namespace.
- *
- * Works anywhere: it uses the nearest `I18nProvider`, then the one set with {@link setDefaultI18n} (the app's own, in the browser), then English.
- * @param ns The namespace for the translations, typically the extension ID to avoid conflicts with other extensions. This is optional, as the returned manager will still work without it, but it can be used to create a namespaced translation function that automatically applies the namespace to translation keys.
- * @returns
- */
-export function useI18n(ns?: string) {
-  const i18nManager =
-    useContext(I18nContext) ?? defaultI18n ?? getEnglishOnlyI18n();
-  const i18n = i18nManager.i18n;
-  const { t } = i18n;
-
-  const isRtl = isRightToLeftLanguage(i18nManager.language.value);
-
-  const setLanguage = async (language: string) => {
-    await i18nManager.requestLanguageChange(language);
-  };
-
-  const translate = ns
-    ? (key: string, options?: Record<string, unknown>) =>
-        t(key, { ...options, ns })
-    : t;
-
-  return useMemo(
-    () => ({
-      t: translate,
-      ns,
-      language: i18nManager.language.value,
-      isRtl,
-      availableLanguages,
-      setLanguage,
-      requestLanguageChange: i18nManager.requestLanguageChange,
-      confirmLanguageFallback: i18nManager.confirmLanguageFallback,
-      cancelLanguageFallback: i18nManager.cancelLanguageFallback,
-      languageFallbackPrompt: i18nManager.languageFallbackPrompt,
-      uiLanguageSwitchPrompt: i18nManager.uiLanguageSwitchPrompt,
-      confirmUiLanguageSwitch: i18nManager.confirmUiLanguageSwitch,
-      dismissUiLanguageSwitch: i18nManager.dismissUiLanguageSwitch,
-      neverAskUiLanguageSwitch: i18nManager.neverAskUiLanguageSwitch,
-      i18n: i18n,
-    }),
-    [t, i18n.language]
-  );
-}
+export {
+  I18nProvider,
+  isRightToLeftLanguage,
+  setDefaultI18n,
+  useI18n,
+  type I18nHook,
+  type I18nSource,
+} from "./I18nContext";

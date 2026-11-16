@@ -53,33 +53,32 @@ describe("useI18n() without an I18nProvider", () => {
     return container.querySelector("span")!;
   }
 
-  it("shows the app's English strings when nothing is set", () => {
-    act(() => {
-      render(<Label k="close" />, container);
-    });
-
-    expect(label().textContent).toBe("Close");
-    expect(label().dataset.language).toBe("en");
-    expect(label().dir).toBe("ltr");
-  });
-
-  it("fills in values and falls back to the default text in English", () => {
+  it("shows each call's default text, with its values, when nothing is set", () => {
     act(() => {
       render(
-        <>
-          <Label
-            k="image-details-dimensions-value"
-            values={{ width: 640, height: 480 }}
-          />
-          <Label k="no-such-key" values={{ defaultValue: "Fallback" }} />
-        </>,
+        <Label
+          k="image-details-dimensions-value"
+          values={{
+            defaultValue: "{{width}} × {{height}} px",
+            width: 640,
+            height: 480,
+          }}
+        />,
         container
       );
     });
 
-    const [dimensions, fallback] = container.querySelectorAll("span");
-    expect(dimensions!.textContent).toBe("640 × 480 px");
-    expect(fallback!.textContent).toBe("Fallback");
+    expect(label().textContent).toBe("640 × 480 px");
+    expect(label().dataset.language).toBe("en");
+    expect(label().dir).toBe("ltr");
+  });
+
+  it("shows the key for a call without default text when nothing is set", () => {
+    act(() => {
+      render(<Label k="close" />, container);
+    });
+
+    expect(label().textContent).toBe("close");
   });
 
   it("speaks the app's language once the app's translations are set as the default", async () => {

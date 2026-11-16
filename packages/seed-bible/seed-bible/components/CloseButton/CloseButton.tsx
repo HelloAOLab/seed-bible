@@ -5,7 +5,7 @@ import {
   type IconButtonProps,
   type IconButtonSize,
 } from "../IconButton/IconButton";
-import { useI18n } from "../../i18n";
+import { useI18n } from "../../i18n/I18nContext";
 
 export type CloseButtonSize = IconButtonSize;
 export type CloseButtonLook = IconButtonLook;
