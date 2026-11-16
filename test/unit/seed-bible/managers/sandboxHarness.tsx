@@ -348,6 +348,12 @@ function createHost() {
   const language = signal("en");
   // The app's own strings by language, as its i18next would hold them.
   const appStrings: Record<string, Record<string, string>> = {};
+  const loadedListeners = new Set<() => void>();
+  /** A language's strings arrive, as i18next reports when a file loads. */
+  const loadAppStrings = (lng: string, strings: Record<string, string>) => {
+    appStrings[lng] = strings;
+    for (const listener of loadedListeners) listener();
+  };
   const openedReferences: unknown[] = [];
   const userId = signal<string | null>(null);
   const profile = signal<UserProfile | null>(null);
@@ -409,6 +415,14 @@ function createHost() {
       i18n: {
         getResourceBundle: (lng: string, ns: string) =>
           ns === "seed-bible" ? appStrings[lng] : undefined,
+        hasResourceBundle: (lng: string, ns: string) =>
+          ns === "seed-bible" && lng in appStrings,
+        on: (event: string, listener: () => void) => {
+          if (event === "loaded") loadedListeners.add(listener);
+        },
+        off: (event: string, listener: () => void) => {
+          if (event === "loaded") loadedListeners.delete(listener);
+        },
       },
       t: (key: string, options?: Record<string, unknown>) =>
         options ? `${key} ${JSON.stringify(options)}` : key,
@@ -563,6 +577,8 @@ function createHost() {
     toasts,
     language,
     appStrings,
+    loadAppStrings,
+    loadedListenerCount: () => loadedListeners.size,
     openedReferences,
     userId,
     profile,

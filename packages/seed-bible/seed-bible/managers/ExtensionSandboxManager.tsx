@@ -645,8 +645,14 @@ export function startSandboxSession(
     };
   };
 
+  // Whether the strings last sent lacked the app's, for their language.
+  let appStringsMissing = false;
   const computeStrings = (): SandboxStrings => {
     const language = context.i18n.language.peek();
+    appStringsMissing = !context.i18n.i18n.hasResourceBundle(
+      language,
+      "seed-bible"
+    );
     const languages = [...new Set([language, "en"])];
     const byLanguage = (
       read: (language: string) => Record<string, string> | undefined
@@ -1290,6 +1296,21 @@ export function startSandboxSession(
     }
     broadcast({ type: "state", state });
   });
+  // On a first visit the app takes its language before that language's
+  // strings have loaded, so a frame started in between gets none of them, and
+  // no language change follows to send them. Send them once they arrive.
+  const onStringsLoaded = () => {
+    if (
+      appStringsMissing &&
+      context.i18n.i18n.hasResourceBundle(
+        context.i18n.language.peek(),
+        "seed-bible"
+      )
+    ) {
+      broadcast({ type: "strings", strings: computeStrings() });
+    }
+  };
+  context.i18n.i18n.on("loaded", onStringsLoaded);
   // Runs before `permissions.request` replies, so the extension sees the
   // grant as soon as its request resolves.
   const stopPermissionsEffect = effect(() => {
@@ -1306,6 +1327,7 @@ export function startSandboxSession(
       void storage.dispose();
     }
     stopStateEffect();
+    context.i18n.i18n.off("loaded", onStringsLoaded);
     stopPermissionsEffect();
     for (const cleanup of destroyCallbacks) {
       try {

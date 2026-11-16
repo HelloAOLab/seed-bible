@@ -10,7 +10,7 @@ vi.mock(
 );
 import type { ExtensionManager } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import type { SandboxHostMessage } from "@packages/seed-bible/seed-bible/extensions/protocol";
-import { createRawFrame, useSandboxHarness } from "./sandboxHarness";
+import { createRawFrame, sourced, useSandboxHarness } from "./sandboxHarness";
 
 /*
  * What the host tells a frame about translations: every string it needs when
@@ -116,6 +116,46 @@ describe("sandboxed extension strings", () => {
     );
     expect(strings).toBeGreaterThanOrEqual(0);
     expect(strings).toBeLessThan(state);
+  });
+
+  it("sends the app's strings once they load, to a frame that started before they had", async () => {
+    // A first visit: the app is already in Japanese, but `ja` hasn't loaded.
+    h.host.language.value = "ja";
+    const frame = await loadRawFrame();
+    expect(frame.init!.strings!.app.ja).toEqual({});
+
+    h.host.loadAppStrings("ja", { close: "閉じる" });
+    await frame.call("storage.keys", {});
+
+    expect(stringsMessages(frame.messages)).toEqual([
+      {
+        type: "strings",
+        strings: expect.objectContaining({
+          language: "ja",
+          app: expect.objectContaining({ ja: { close: "閉じる" } }),
+        }),
+      },
+    ]);
+  });
+
+  it("doesn't send the strings again when another language loads", async () => {
+    const frame = await loadRawFrame();
+
+    h.host.loadAppStrings("de", { close: "Schließen" });
+    await frame.call("storage.keys", {});
+
+    expect(stringsMessages(frame.messages)).toEqual([]);
+  });
+
+  it("stops listening for loaded strings when the extension stops", async () => {
+    // i18next lives as long as the page, so a listener left on it would keep
+    // the stopped extension's session alive.
+    await loadRawFrame();
+    expect(h.host.loadedListenerCount()).toBe(1);
+
+    manager.unloadExtension(sourced("ext.strings"));
+
+    expect(h.host.loadedListenerCount()).toBe(0);
   });
 
   it("keeps the extension's own strings in the state, for extensions built before the strings message", async () => {
