@@ -10,6 +10,49 @@
 
 ### 🗑️ Removed
 
+## v1.18.0 — 2026-11-16
+
+### ✨ Added
+
+- Add native iOS and Android apps, built with Capacitor from the same code as the website. ([#2092](https://github.com/HelloAOLab/seed-bible/pull/2092), [#2166](https://github.com/HelloAOLab/seed-bible/pull/2166))
+  - Links shared from the apps point at seedbible.org, and seedbible.org links open in the app when it's installed.
+  - Both apps use the Seed Bible icon, and Android's splash screen plays the seed-growing intro.
+- Show where the group is above the toolbar, with a Rejoin button, when you read a different chapter in a session where only hosts can navigate. ([#2130](https://github.com/HelloAOLab/seed-bible/pull/2130))
+- Show who in a shared session is reading elsewhere and which passage they're on, in the participants list and on their faded avatar on the session's tab. ([#2130](https://github.com/HelloAOLab/seed-bible/pull/2130))
+  - On desktop, open the participant list right inside the session's tab.
+  - Hosts can ask someone reading elsewhere to come back, and that person can choose Not now or Rejoin group.
+- Add a Viewing areas setting to shared sessions, so hosts can show where everyone is reading or only where the hosts are. ([#2113](https://github.com/HelloAOLab/seed-bible/pull/2113))
+  - It starts on Automatic: everyone with fewer than 4 people, only hosts with 4 or more.
+  - Each person can also hide everyone else's bars on their own screen from Settings.
+- Add Question and Compare steps to playlists. ([#2132](https://github.com/HelloAOLab/seed-bible/pull/2132))
+  - A question step can have a hint and an answer, and people in a shared session can write and share their answers.
+  - A compare step shows two passages side by side, with a note below.
+- Let Custom Branding replace the Books, Search, Today, Share, Chat and Discover icons with its own SVGs, drawn in the theme's icon color. ([#2084](https://github.com/HelloAOLab/seed-bible/pull/2084))
+- Add a "Take a tour" button to the Custom Branding editor that replays its tour. ([#2165](https://github.com/HelloAOLab/seed-bible/pull/2165))
+- Let extensions use Seed Bible's own buttons, close buttons and phone bottom sheet, so their screens look and behave like the app's. ([#2165](https://github.com/HelloAOLab/seed-bible/pull/2165), [#2162](https://github.com/HelloAOLab/seed-bible/pull/2162), [#2133](https://github.com/HelloAOLab/seed-bible/pull/2133))
+
+### 🔧 Changed
+
+- Edit playlists right in the reader instead of in a form in the Discover pane. ([#2132](https://github.com/HelloAOLab/seed-bible/pull/2132))
+  - The steps sit in a panel beside the reader, or a sheet on phones, and picking verses in the reader re-points a scripture step.
+  - Unsaved edits survive a refresh, and leaving offers Discard Changes, Save Draft or Save & Publish.
+- Open a playlist's introduction page when you press play, and open shared playlist links on that full-screen page instead of a pop-up. ([#2132](https://github.com/HelloAOLab/seed-bible/pull/2132))
+  - The page has Share, and Edit and Delete for the playlist's owner.
+  - A playing playlist's text and link steps show in the reader instead of a pop-up.
+- Manage a friendship from someone's profile card, which shows where you stand and lets you send, accept, decline, cancel or remove right there. ([#2098](https://github.com/HelloAOLab/seed-bible/pull/2098))
+- Give buttons and close buttons the same look across the app and its extensions, with the theme's new danger red only for deleting, ending and signing out. ([#2165](https://github.com/HelloAOLab/seed-bible/pull/2165), [#2162](https://github.com/HelloAOLab/seed-bible/pull/2162))
+  - Buttons that wait for something, like Login, Save and Install, show a spinner.
+  - Custom Branding can change the danger color.
+  - Screen readers now say whether toggle buttons such as Settings and Bookmarks are on.
+
+### 🐛 Fixed
+
+- Fix all of an account's playlists failing to load when one of them was damaged; the rest now load. ([#2132](https://github.com/HelloAOLab/seed-bible/pull/2132))
+- Fix your profile picture sometimes showing square instead of round until a reload. ([#2157](https://github.com/HelloAOLab/seed-bible/pull/2157))
+- Fix the AI Transcript extension restyling text boxes across the app, such as the language picker's search. ([#2161](https://github.com/HelloAOLab/seed-bible/pull/2161))
+- Fix language options scrolling through a gap above the language picker's search. ([#2161](https://github.com/HelloAOLab/seed-bible/pull/2161))
+- Fix "Shared with you" cards covering the close buttons of dialogs on phones. ([#2161](https://github.com/HelloAOLab/seed-bible/pull/2161))
+
 ## v1.17.0 — 2026-11-09
 
 ### ✨ Added

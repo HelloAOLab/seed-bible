@@ -3,7 +3,9 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { SessionConnectionInfo } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { displayNameOf } from "../../managers/Utils";
-import { BusyButton } from "./FriendsPane";
+import { answerFriendRequest, sendFriendRequestTo } from "./friendActions";
+import { openPersonProfile } from "./PersonCard";
+import { Button } from "../Button/Button";
 
 /**
  * The connection IDs of the participant rows that get a friend button: one per
@@ -22,6 +24,43 @@ export function rowsWithFriendButton(
     }
   }
   return rows;
+}
+
+/**
+ * A session participant's name, as a button that opens their profile when
+ * they're signed in to an account. Anonymous participants have only a per-tab
+ * connection ID, so there's no profile to open and the name stays plain text.
+ */
+export function ParticipantName(props: {
+  state: SeedBibleState;
+  userId: string | null | undefined;
+  displayName: string;
+  /** Runs first, for a list that has to get out of the profile's way. */
+  onOpenProfile?: () => void;
+  /** Runs when the user closes the profile, for that list to come back. */
+  onCloseProfile?: () => void;
+}) {
+  const { state, userId, displayName, onOpenProfile, onCloseProfile } = props;
+  const { t } = useI18n();
+  if (!userId) {
+    return <>{displayName}</>;
+  }
+  return (
+    <button
+      type="button"
+      className="sb-participant-profile-button"
+      aria-label={t("view-profile-of", {
+        name: displayName,
+        defaultValue: "View {{name}}'s profile",
+      })}
+      onClick={() => {
+        onOpenProfile?.();
+        openPersonProfile(state, userId, { onDismiss: onCloseProfile });
+      }}
+    >
+      {displayName}
+    </button>
+  );
 }
 
 /**
@@ -79,52 +118,37 @@ export function ParticipantFriendButton(props: {
     busy.value = true;
     try {
       if (theirRequest) {
-        const result = await friends.acceptRequest(theirRequest.id);
-        toast(
-          result.success
-            ? t("now-friends-with", {
-                name: requesterName,
-                defaultValue: "You're now friends with {{name}}.",
-              })
-            : t("friend-request-unavailable", {
-                defaultValue: "That request is no longer available.",
-              })
+        await answerFriendRequest(
+          friends,
+          toast,
+          t,
+          theirRequest,
+          displayNameOf(theirRequest, t),
+          true
         );
         return;
       }
-      const result = await friends.sendRequest({ userId });
-      if (result.status === "sent") {
-        toast(
-          t("friend-request-sent-to", {
-            name: displayName,
-            defaultValue: "Friend request sent to {{name}}.",
-          })
-        );
-      } else if (result.status === "accepted") {
-        toast(
-          t("now-friends-with", {
-            name: displayName,
-            defaultValue: "You're now friends with {{name}}.",
-          })
-        );
-      }
-    } catch (error) {
-      console.error("Failed to add friend from session:", error);
-      toast(
-        t("friend-request-failed", {
-          defaultValue: "Couldn't send the request. Try again.",
-        })
+      // Not in the friends lists, so their profile is read here for the name,
+      // alongside sending rather than before it.
+      const name = login.getPublicProfile(userId).then(
+        (profile) => displayNameOf({ userId, name: profile?.name }, t),
+        (error) => {
+          console.warn(`Could not load the profile for ${userId}:`, error);
+          return displayNameOf({ userId }, t);
+        }
       );
+      await sendFriendRequestTo(friends, toast, t, userId, name);
     } finally {
       busy.value = false;
     }
   };
 
   return (
-    <BusyButton
+    <Button
+      size="sm"
       className="sb-session-participant-action"
-      busy={busy.value}
-      ariaLabel={
+      loading={busy.value}
+      aria-label={
         theirRequest
           ? t("accept-friend-user", {
               name: requesterName,
@@ -140,6 +164,6 @@ export function ParticipantFriendButton(props: {
       {theirRequest
         ? t("accept", { defaultValue: "Accept" })
         : t("add-friend-button", { defaultValue: "Add friend" })}
-    </BusyButton>
+    </Button>
   );
 }

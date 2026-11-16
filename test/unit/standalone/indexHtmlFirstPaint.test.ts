@@ -312,7 +312,7 @@ describe("index.html early config script: limits and tables", () => {
 
     const cssSizes: Record<string, number> = {};
     for (const m of baseCss.matchAll(
-      /\.sb-font-size-(\w+)\s*{\s*font-size:\s*(\d+)px/g
+      /\.sb-reader-font-size-(\w+)\s*{\s*font-size:\s*(\d+)px/g
     )) {
       cssSizes[m[1]!.toUpperCase()] = Number(m[2]);
     }

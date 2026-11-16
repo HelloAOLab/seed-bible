@@ -14,6 +14,7 @@
 .sb-seed-icon-trunk-reveal {
   transform-box: fill-box;
   transform-origin: bottom;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- one step in the seed intro's timed sequence */
   animation: sb-seed-icon-trunk 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) both;
   animation-delay: calc(0.12s - var(--sb-seed-icon-elapsed, 0s));
 }

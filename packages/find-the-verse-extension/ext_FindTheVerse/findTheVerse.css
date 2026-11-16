@@ -2,33 +2,6 @@
    panel, the reader bar, and the creator follow light, dark, and custom
    themes. The fallbacks are only for a theme that leaves a variable out. */
 
-.ftv-btn {
-  padding: 8px 14px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  background: var(--sb-tertiary-color, #f0f0f0);
-  color: var(--sb-font-color, #333);
-}
-
-.ftv-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.ftv-btn--primary {
-  background: var(--sb-primary-color, #e07b4c);
-  color: var(--sb-primary-font-color, #fff);
-}
-
-.ftv-btn--large {
-  padding: 10px 20px;
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
 .ftv-btn--block {
   width: 100%;
 }
@@ -37,21 +10,10 @@
   align-self: flex-start;
 }
 
-.ftv-sound-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.ftv-sound-toggle .material-symbols-outlined {
-  font-size: 1.1rem;
-}
-
 .ftv-notice {
   margin: 0;
   color: var(--sb-error-color, #d64545);
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 /* Start screen */
@@ -78,14 +40,14 @@
 .ftv-home-title {
   margin: 0;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: var(--sb-font-size-18);
 }
 
 .ftv-home-intro {
   margin: 0;
   opacity: 0.6;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 /* Saved games */
@@ -98,7 +60,7 @@
 
 .ftv-saved-heading {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -107,7 +69,7 @@
 
 .ftv-saved-card {
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-tertiary-color, #f0f0f0);
   display: flex;
   gap: 10px;
@@ -124,48 +86,34 @@
 
 .ftv-saved-ref {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .ftv-saved-meta {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   opacity: 0.55;
 }
 
-.ftv-saved-action {
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
+.sb-button.ftv-saved-action {
   flex-shrink: 0;
-  background: transparent;
-  color: var(--sb-font-color, #333);
 }
-
-.ftv-saved-action--primary {
-  background: var(--sb-primary-color, #e07b4c);
-  color: var(--sb-primary-font-color, #fff);
-}
-
 .ftv-show-reference {
   padding: 0;
   border: none;
   background: transparent;
   color: var(--sb-font-color, #333);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
   text-align: left;
   cursor: pointer;
 }
 
 .ftv-show-reference--link {
   font-weight: 500;
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
   opacity: 0.7;
   width: fit-content;
 }
@@ -182,13 +130,13 @@
 
 .ftv-creator-heading {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: var(--sb-font-size-18);
   font-weight: 600;
 }
 
 .ftv-label {
   margin-bottom: 6px;
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -199,11 +147,11 @@
   width: 100%;
   box-sizing: border-box;
   padding: 8px 10px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   border: 1px solid var(--sb-divider-color, rgb(0 0 0 / 12%));
   background: var(--sb-background, #fff);
   color: var(--sb-font-color, #333);
-  font-size: 0.95rem;
+  font-size: var(--sb-font-size-15);
 }
 
 .ftv-input--invalid {
@@ -213,16 +161,16 @@
 .ftv-verse-preview {
   margin-bottom: 8px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-tertiary-color, #f0f0f0);
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-verse-preview-text {
   margin: 6px 0 0;
   font-style: italic;
   opacity: 0.85;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-reference-row {
@@ -237,21 +185,20 @@
 
 .ftv-selecting-banner {
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-primary-color, #e07b4c);
   color: var(--sb-primary-font-color, #fff);
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
-.ftv-selecting-banner .ftv-btn {
-  display: block;
+.ftv-selecting-banner > .sb-button {
+  display: flex;
   margin-top: 8px;
 }
-
 .ftv-chances-help {
   margin: 0 0 8px;
   opacity: 0.6;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-steps {
@@ -271,7 +218,7 @@
   padding-top: 8px;
   font-weight: 600;
   opacity: 0.5;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-hint-box {
@@ -282,17 +229,10 @@
   line-height: 1.4;
 }
 
-.ftv-step-remove {
+.sb-icon-button.ftv-step-remove {
+  --sb-icon-button-color: var(--sb-danger-color);
   margin-top: 4px;
-  padding: 4px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--sb-error-color, #d64545);
-  font-size: 1rem;
-  line-height: 1;
 }
-
 .ftv-add-step {
   margin-top: 8px;
 }
@@ -336,7 +276,7 @@
 }
 
 .ftv-field--error {
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   outline: 2px solid var(--sb-error-color, #d64545);
   outline-offset: 4px;
 }
@@ -344,13 +284,13 @@
 .ftv-field-error {
   margin: 8px 0 0;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-background, #fff);
   color: var(--sb-error-color, #d64545);
   border: 1px solid var(--sb-error-color, #d64545);
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
   transform-origin: center top;
-  box-shadow: 0 8px 20px var(--sb-shadow-color, rgb(0 0 0 / 15%));
+  box-shadow: var(--sb-shadow-popover);
 }
 
 .ftv-field-error--zoom {
@@ -370,11 +310,11 @@
 .ftv-game-name {
   margin: 0;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .ftv-bar .ftv-game-name {
-  font-size: 0.95rem;
+  font-size: var(--sb-font-size-15);
 }
 
 .ftv-chance-row {
@@ -386,10 +326,10 @@
 .ftv-pill {
   display: inline-block;
   padding: 2px 10px;
-  border-radius: 99px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-primary-color, #e07b4c);
   color: var(--sb-primary-font-color, #fff);
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
 }
 
@@ -399,7 +339,7 @@
 
 .ftv-card {
   padding: 12px 14px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-tertiary-color, #f0f0f0);
 }
 
@@ -413,14 +353,14 @@
 
 .ftv-card-label {
   margin-bottom: 4px;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
   opacity: 0.55;
 }
 
 .ftv-card-text {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-card-text--italic {
@@ -433,7 +373,7 @@
 
 .ftv-card-footnote {
   margin: 8px 0 0;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
   opacity: 0.65;
 }
 
@@ -446,7 +386,7 @@
 .ftv-tap-hint {
   margin: 0;
   opacity: 0.5;
-  font-size: 0.8rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .ftv-win {
@@ -460,7 +400,7 @@
 .ftv-win-title {
   margin: 8px 0 4px;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: var(--sb-font-size-18);
 }
 
 .ftv-win-reference {
@@ -472,43 +412,27 @@
   margin: 8px 0 0;
   font-style: italic;
   opacity: 0.8;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-win-guesses {
   margin: 4px 0 0;
   opacity: 0.6;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 
 /* Hint ? button */
 
 .ftv-hint-text {
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
   white-space: pre-wrap;
-}
-
-.ftv-hint-button {
-  width: 1.6rem;
-  height: 1.6rem;
-  border-radius: 99px;
-  border: 1px solid var(--sb-divider-color, rgb(0 0 0 / 12%));
-  background: var(--sb-tertiary-color, #f0f0f0);
-  color: var(--sb-font-color, #333);
-  cursor: pointer;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.ftv-bar .ftv-hint-button {
-  background: var(--sb-secondary-color, #f3f3f3);
 }
 
 /* Reader bar. Its position is set inline: it follows the phone toolbar. */
 
 .ftv-bar {
   position: fixed;
-  z-index: 90;
+  z-index: calc(var(--sb-layer-chrome) - 10);
   left: 12px;
   right: 12px;
   bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
@@ -519,11 +443,24 @@
   color: var(--sb-reader-toolbar-font-color, var(--sb-font-color, #333));
   border: var(--sb-reader-toolbar-border, 1px solid rgb(0 0 0 / 14%));
   box-shadow: var(--sb-reader-toolbar-box-shadow, 0 8px 32px rgb(0 0 0 / 12%));
-  border-radius: 1.25rem;
+  border-radius: var(--sb-radius-2xl);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: transform 0.3s ease;
+  transition: transform var(--sb-duration-slow) ease;
+}
+
+/* The bar's buttons sit on the toolbar's surface, so they take its text
+   color. Set on the buttons, since each one sets its own color. */
+.ftv-bar .sb-button:not(.sb-button-danger) {
+  --sb-button-color: var(--sb-reader-toolbar-font-color, var(--sb-font-color));
+}
+
+.ftv-bar .sb-icon-button {
+  --sb-icon-button-color: var(
+    --sb-reader-toolbar-font-color,
+    var(--sb-font-color)
+  );
 }
 
 .ftv-bar-row {
@@ -541,30 +478,16 @@
 
 .ftv-bar-chances {
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-bar-text {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .ftv-bar-text--italic {
   font-style: italic;
-}
-
-.ftv-bar-button {
-  flex-shrink: 0;
-  padding: 8px 14px;
-  border-radius: 0.75rem;
-  border: 1px solid
-    color-mix(in srgb, var(--sb-font-color, #333) 16%, transparent);
-  background: var(--sb-secondary-color, #f3f3f3);
-  color: var(--sb-font-color, #333);
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.85rem;
-  line-height: 1.2;
 }
 
 .ftv-bar-button--end {

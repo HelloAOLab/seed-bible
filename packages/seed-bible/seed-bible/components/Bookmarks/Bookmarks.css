@@ -31,7 +31,7 @@
   align-items: baseline;
   column-gap: 0.375rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-bookmark-label-chapter {
@@ -41,7 +41,7 @@
 /* Matches the translation label on a tab row. */
 .sb-bookmark-label-translation {
   font-weight: 500;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   letter-spacing: 0.02em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -67,11 +67,11 @@
   width: 100%;
   padding: 0.625rem 0.75rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   box-sizing: border-box;
 }
 
@@ -135,8 +135,8 @@
   flex-wrap: wrap;
   align-items: center;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
-  border-radius: 0.625rem;
-  transition: border-color 0.15s ease;
+  border-radius: var(--sb-radius-md);
+  transition: border-color var(--sb-duration-fast) ease;
 }
 
 /* Tapping a bookmark moves it, so hovering one previews that choice. Only the
@@ -153,13 +153,13 @@
 /* The menu is portaled to <body>, so without this it opens under the modal
    overlay (z-index 1000) it was opened from. */
 .sb-context-menu.sb-bookmark-picker-menu {
-  z-index: 1001;
+  z-index: calc(var(--sb-layer-modal) + 1);
 }
 
 .sb-bookmark-picker-hint {
   margin: 0;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-bookmark-picker-new-heading {
@@ -169,7 +169,7 @@
   align-items: center;
   gap: 0.625rem;
   padding: 0.75rem 0.875rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: var(--sb-font-color);
 }
 
@@ -181,11 +181,11 @@
   gap: 0.625rem;
   padding: 0.75rem 0.875rem;
   border: none;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   text-align: start;
   cursor: pointer;
 }
@@ -199,32 +199,7 @@
 }
 
 .sb-bookmark-picker-remove {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
   margin-inline-end: 0.25rem;
-  border: none;
-  border-radius: 0.5rem;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  cursor: pointer;
-}
-
-.sb-bookmark-picker-remove:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-  color: var(--sb-font-color);
-}
-
-.sb-bookmark-picker-remove:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.sb-bookmark-picker-remove .material-symbols-outlined {
-  font-size: 1.125rem;
 }
 
 /* The create form takes its own line under the row's label. */
@@ -251,7 +226,7 @@
   background: transparent;
   color: var(--sb-primary-color);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   padding: 0.25rem 0;
   cursor: pointer;
@@ -269,7 +244,7 @@
 .sb-bookmark-cap-note {
   margin: 0;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 /* The edit modal: the form over its Cancel and Save. */
@@ -290,43 +265,6 @@
 .sb-bookmark-picker-save,
 .sb-bookmark-edit-cancel {
   min-width: 5.25rem;
-  height: 2.25rem;
-  padding: 0 1rem;
-  border-radius: 0.5rem;
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition:
-    background-color 0.15s ease,
-    opacity 0.15s ease;
-}
-
-.sb-bookmark-picker-save {
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-  border-color: var(--sb-primary-color);
-}
-
-.sb-bookmark-picker-save:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-primary-color), #000 8%);
-}
-
-.sb-bookmark-edit-cancel {
-  background: transparent;
-  color: var(--sb-font-color);
-  border-color: color-mix(in srgb, var(--sb-font-color), transparent 75%);
-}
-
-.sb-bookmark-edit-cancel:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
-}
-
-.sb-bookmark-picker-save:disabled,
-.sb-bookmark-edit-cancel:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 
 /* ------------------------------------------------------------------
@@ -344,7 +282,7 @@
   margin: 0;
   padding: 0.5rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-bookmarks-panel-row {
@@ -353,7 +291,7 @@
   /* Lines the "more" button up with the tab rows' (see
      `.sb-save-category-header` in Tabs.css). */
   padding-inline-end: calc(0.375rem + 1px);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
 }
 
 .sb-bookmarks-panel-row:hover {
@@ -371,7 +309,7 @@
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   text-align: start;
   cursor: pointer;
 }

@@ -20,7 +20,7 @@
 .sb-translation-list-language {
   padding: 0.3125rem 0.625rem;
   cursor: pointer;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
 }
 
 /* Hover is behind `hover: hover` because a touch device keeps the hover state
@@ -38,7 +38,7 @@
 }
 
 .sb-translation-list-chevron {
-  transition: transform 0.3s;
+  transition: transform var(--sb-duration-slow);
 }
 
 .sb-translation-list-chevron--open {
@@ -64,7 +64,7 @@
   display: flex;
   background: var(--sb-primary-color);
   padding: 0.3125rem 1rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   border: none;
   outline: none;
   color: var(--sb-primary-font-color);
@@ -80,11 +80,11 @@
   width: 100%;
   padding: 0.5rem 0.625rem;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   cursor: pointer;
 }
 
@@ -100,7 +100,7 @@
 
 .sb-translation-list-load-more-count {
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 .sb-translation-list-actions {
@@ -111,20 +111,20 @@
   margin-bottom: 0.3125rem;
   width: 100%;
   padding: 0.3125rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   cursor: pointer;
 }
 
 .translation-title {
   width: 100%;
   font-weight: bold;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-family: system-ui, sans-serif;
 }
 
 .translation-description {
   font-weight: normal;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   width: 100%;
   font-family: system-ui, sans-serif;
 }

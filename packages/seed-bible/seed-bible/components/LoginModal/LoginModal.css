@@ -84,7 +84,7 @@
 
 .sb-login-subtitle {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
 }
@@ -102,7 +102,7 @@
 }
 
 .sb-login-label {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
 }
@@ -111,7 +111,7 @@
   display: flex;
   align-items: flex-start;
   gap: 0.625rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.4;
   color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
   cursor: pointer;
@@ -145,7 +145,7 @@
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-login-legal .sb-login-link {
@@ -163,7 +163,7 @@
 
 .sb-login-error {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.4;
   color: #dc2626;
 }
@@ -176,51 +176,7 @@
 }
 
 .sb-login-submit {
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-  font-size: 0.9375rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
   width: 100%;
-  transition:
-    filter 0.2s ease,
-    opacity 0.2s ease;
-}
-
-.sb-login-submit:hover:not(:disabled) {
-  filter: brightness(1.05);
-}
-
-.sb-login-submit:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.sb-login-secondary {
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.625rem 1rem;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-  font-size: 0.875rem;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  width: 100%;
-  transition: background-color 0.2s ease;
-}
-
-.sb-login-secondary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-}
-
-.sb-login-secondary:disabled {
-  opacity: 0.6;
-  cursor: default;
 }
 
 /* "Change email address" link rendered as a button in the code-step header. */
@@ -230,7 +186,7 @@
   padding: 0;
   margin-top: 0.25rem;
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   cursor: pointer;
 }
 
@@ -261,11 +217,11 @@
   padding: 0 0.5rem;
   color: var(--sb-primary-color);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
-  transition: filter 0.2s ease;
+  transition: filter var(--sb-duration-base) ease;
 }
 
 .sb-login-resend:hover:not(:disabled) {
@@ -290,12 +246,4 @@
 .sb-login-actions-row .sb-login-secondary {
   width: auto;
   flex: 1;
-}
-
-.sb-login-actions-row .sb-login-secondary {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-}
-
-.sb-login-actions-row .sb-login-secondary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
 }

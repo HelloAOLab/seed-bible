@@ -556,6 +556,19 @@ export function I18nProvider(props: {
 
 export type I18nHook = ReturnType<typeof useI18n>;
 
+/**
+ * For shared components an extension may render in a root of its own, with no
+ * `I18nProvider` above: the translate function, or null there instead of
+ * `useI18n()`'s error.
+ */
+export function useOptionalI18n() {
+  const i18nManager = useContext(I18nContext);
+  // Reading the language subscribes the caller, as `useI18n()` does, so it
+  // re-renders when the language changes.
+  const language = i18nManager?.language.value;
+  return i18nManager ? { t: i18nManager.i18n.t, language } : null;
+}
+
 const RTL_LANGUAGE_CODES = new Set(["ar", "fa", "he", "ur", "ps", "dv", "yi"]);
 
 export function isRightToLeftLanguage(languageCode: string): boolean {

@@ -4,10 +4,10 @@
   padding: 6px 10px;
   margin-bottom: 10px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   cursor: pointer;
 }
 
@@ -25,7 +25,7 @@
 
 .sb-playlist-item-input {
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   padding: 8px;
 }
 

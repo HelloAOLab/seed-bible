@@ -26,7 +26,7 @@
   min-height: 1.25rem;
   padding: 8px 16px 0;
   padding-inline: calc(var(--rp-column-inset) + 16px);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--rp-muted);
   text-align: end;
   white-space: nowrap;
@@ -54,19 +54,19 @@
 
 .sb-rp-editor-section-title {
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
 }
 
 .sb-rp-field-label {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   color: var(--rp-muted);
 }
 
 .sb-rp-hint {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
 }
 
@@ -82,11 +82,11 @@
   box-sizing: border-box;
   padding: 10px 12px;
   border: 1px solid var(--rp-border);
-  border-radius: 10px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
 }
 
 .sb-rp-text-input:focus-visible {
@@ -118,14 +118,14 @@
   width: 100%;
   padding: 14px 16px;
   border: 1px solid var(--rp-border);
-  border-radius: 10px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: inherit;
   text-align: start;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
+    border-color var(--sb-duration-fast) ease,
+    background var(--sb-duration-fast) ease;
 }
 
 .sb-rp-choice:hover {
@@ -183,7 +183,7 @@
   width: 22px;
   height: 22px;
   border: 2px solid var(--rp-border);
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   color: var(--rp-accent-contrast);
 }
 
@@ -228,7 +228,7 @@
   gap: 8px;
   padding: 10px;
   border: 1px solid var(--rp-border);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
 }
 
 .sb-rp-session-selected {
@@ -264,15 +264,15 @@
   flex: none;
   width: 26px;
   height: 26px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--rp-accent) 18%, transparent);
   color: var(--rp-accent);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 700;
 }
 
 .sb-rp-session-name {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -282,16 +282,8 @@
 .sb-rp-session-count {
   margin-inline-start: auto;
   flex: none;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--rp-muted);
-}
-
-.sb-rp-session-remove {
-  color: var(--rp-muted);
-}
-
-.sb-rp-session-remove:hover {
-  color: #dc2626;
 }
 
 .sb-rp-add-session {
@@ -301,11 +293,11 @@
   gap: 6px;
   padding: 10px 14px;
   border: 1px dashed var(--rp-border);
-  border-radius: 10px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--rp-accent);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
   cursor: pointer;
 }
@@ -323,12 +315,12 @@
 }
 
 .sb-rp-choice-title {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
 
 .sb-rp-choice-description {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
 }
 
@@ -345,18 +337,19 @@
   flex: none;
   width: 42px;
   height: 42px;
-  border-radius: 10px;
+  border-radius: var(--sb-radius-md);
   background: var(--rp-accent);
   color: var(--rp-accent-contrast);
 }
 
 .sb-rp-add-button:hover {
   opacity: 0.9;
+  background: color-mix(in srgb, var(--sb-font-color) 8%, transparent);
 }
 
 .sb-rp-empty-day {
   margin: 4px 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
   text-align: center;
 }
@@ -378,7 +371,7 @@
   gap: 8px;
   padding: 8px 8px 8px 12px;
   border: 1px solid var(--rp-border);
-  border-radius: 10px;
+  border-radius: var(--sb-radius-md);
 }
 
 /* The item body: a leading type icon, the label with its summary, and a
@@ -411,7 +404,7 @@
   flex: none;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--rp-accent) 10%, transparent);
   color: var(--rp-accent);
 }
@@ -428,7 +421,7 @@
 }
 
 .sb-rp-reading-label {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   min-width: 0;
   overflow: hidden;
@@ -444,42 +437,12 @@
    a link's host. Already truncated in code, but clipped here too so a long
    unbroken string can't stretch the row. */
 .sb-rp-reading-preview {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--rp-muted);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.sb-rp-reading-remove {
-  color: var(--rp-muted);
-}
-
-.sb-rp-reading-remove:hover {
-  color: #dc2626;
-}
-
-/* Icon buttons */
-.sb-rp-icon-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.sb-rp-icon-button:hover {
-  background: color-mix(in srgb, var(--sb-font-color) 8%, transparent);
-}
-
-.sb-rp-add-button:hover,
-.sb-rp-reading-remove:hover {
-  background: color-mix(in srgb, var(--sb-font-color) 8%, transparent);
 }
 
 /* Footer.
@@ -519,14 +482,14 @@
 
 .sb-rp-footer-note {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--rp-muted);
   text-align: center;
 }
 
 .sb-rp-error {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: #dc2626;
 }
 
@@ -535,48 +498,10 @@
   gap: 10px;
 }
 
-.sb-rp-button {
-  padding: 11px 18px;
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.sb-rp-button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.sb-rp-button-secondary {
-  border: 1px solid var(--rp-border);
-  background: transparent;
-  color: var(--sb-font-color);
-}
-
-.sb-rp-button-primary {
-  border: 1px solid var(--rp-accent);
-  background: var(--rp-accent);
-  color: var(--rp-accent-contrast);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.02);
-}
-
 /* The primary button only grows to fill the editor's side-by-side footer row.
    Elsewhere (celebration, start CTA) it must size to its content instead. */
-.sb-rp-editor-actions .sb-rp-button-primary {
+.sb-rp-editor-actions .sb-button-primary {
   flex: 1;
-}
-
-/* Second press of "Discard" — the one that actually erases the plan. */
-.sb-rp-button-danger {
-  border-color: #dc2626;
-  color: #dc2626;
-}
-
-.sb-rp-button-primary:not(:disabled):hover {
-  opacity: 0.92;
 }
 
 /* Soft accent button — Figma's peach "Mark as complete" */
@@ -596,12 +521,4 @@
 
 .sb-rp-button-soft:not(:disabled):hover {
   background: color-mix(in srgb, var(--sb-primary-color) 18%, transparent);
-}
-
-.sb-rp-reading-edit {
-  color: var(--rp-muted);
-}
-
-.sb-rp-reading-edit[aria-pressed="true"] {
-  color: var(--sb-primary-color);
 }

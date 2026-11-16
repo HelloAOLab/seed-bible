@@ -26,6 +26,7 @@ import {
   resolveChapterInBook,
   uiLocaleForDefaultTranslation,
   type BibleReadingState,
+  type VerseDecoration,
   type InitialBibleReadingOptions,
   type ReadingNavigationOptions,
   type TranslationWithLanguage,
@@ -376,6 +377,38 @@ export interface TabsManager {
     initialReadingOptions?: InitialBibleReadingOptions,
     tabOptions?: { slotOnly?: boolean }
   ) => ReaderTab;
+
+  /**
+   * Creates a reading state that belongs to no tab, for showing a second
+   * passage beside a tab's own (a playing playlist's compare step). It shows
+   * the user's highlights and notes like any tab, but nothing about it is
+   * saved or put in the URL. Whoever creates it disposes it.
+   */
+  createDetachedReadingState: (
+    initialReadingOptions?: InitialBibleReadingOptions
+  ) => BibleReadingState;
+
+  /**
+   * Shows `readingState` inside `tab`, beside the tab's own (a compare step's
+   * second passage), so the user can work in either. Selecting verses in one
+   * clears the other's selection, so only one is ever selected. Returns a
+   * function that ends this.
+   */
+  attachReadingState: (
+    tab: ReaderTab,
+    readingState: BibleReadingState
+  ) => () => void;
+
+  /**
+   * The reading state in `tab` the user is working in: the one shown beside
+   * the tab's own when they last selected verses or opened a footnote or note
+   * there, else the tab's own. What the verse toolbar, the note editor and
+   * Discover act on; chapter navigation stays with the tab's own.
+   */
+  activeReadingState: (tab: ReaderTab) => BibleReadingState;
+
+  /** Marks one of `tab`'s reading states as the one the user is working in. */
+  focusReadingState: (tab: ReaderTab, readingState: BibleReadingState) => void;
 
   /**
    * Removes a tab by ID.
@@ -1321,6 +1354,23 @@ export function createTabs(
     });
   };
 
+  const createDetachedReadingState = (
+    initialReadingOptions?: InitialBibleReadingOptions
+  ): BibleReadingState =>
+    createBibleReadingState(
+      dataManager,
+      highlightsManager,
+      i18nManager,
+      initialReadingOptions,
+      // So its notes and other discovered content show for its passage.
+      discoverManager,
+      undefined,
+      getAnnotationsManager
+    );
+
+  const { attachReadingState, activeReadingState, focusReadingState } =
+    createAttachedReadingStates();
+
   const preferredTranslationId = (): string => {
     const savedTranslationId = getProfileConfigValue(
       login.profile.peek(),
@@ -1342,10 +1392,163 @@ export function createTabs(
     tabs,
     selectedTabId,
     addTab,
+    createDetachedReadingState,
+    attachReadingState,
+    activeReadingState,
+    focusReadingState,
     removeTab,
     selectTab,
     leaveStaticPage,
     hydrateStoredTabs,
     isRestoringProfileTranslation: () => restoringProfileTranslation,
   };
+}
+
+/**
+ * Tracks reading states shown inside a tab beside its own (a compare step's
+ * second passage) and which of a tab's reading states the user is working in.
+ * The {@link TabsManager} methods of the same names.
+ */
+/**
+ * Copies `from`'s shareable decorations (those `include` lets through) into
+ * `to`, keeping them there as they change, and taking one out of `to` once
+ * it's gone from `from`. Decorations kept to this device (`localOnly`) stay
+ * where they are.
+ */
+function copyDecorations(
+  from: BibleReadingState,
+  to: BibleReadingState,
+  include: (decoration: VerseDecoration) => boolean
+): () => void {
+  // Copied from `from` as of the last pass.
+  const copied = new Set<string>();
+  const sameDecoration = (x: VerseDecoration, y: VerseDecoration) =>
+    JSON.stringify(x) === JSON.stringify(y);
+  return effect(() => {
+    const source = from.decorations.value.filter(
+      (d) => !d.localOnly && include(d)
+    );
+    untracked(() => {
+      const target = new Map(to.decorations.peek().map((d) => [d.id, d]));
+      for (const decoration of source) {
+        copied.add(decoration.id);
+        const existing = target.get(decoration.id);
+        if (existing && sameDecoration(existing, decoration)) {
+          continue;
+        }
+        const { id, bookId, chapterNumber, verses, ...input } = decoration;
+        to.decorateVerses(bookId, chapterNumber, verses, input, id);
+      }
+      const present = new Set(source.map((d) => d.id));
+      for (const id of [...copied]) {
+        if (!present.has(id)) {
+          copied.delete(id);
+          if (target.has(id)) {
+            to.removeDecoration(id);
+          }
+        }
+      }
+    });
+  });
+}
+
+/**
+ * Shares a reader shown beside a tab's own (a compare step's second passage)
+ * through the tab's shared session, which publishes only the tab's own
+ * decorations: everything decorated beside goes into the tab's own to be
+ * published, and what comes in for the chapter beside is copied out to it.
+ * Each reader draws only those for the chapter it shows.
+ */
+export function shareDecorationsWithTab(
+  own: BibleReadingState,
+  beside: BibleReadingState
+): () => void {
+  const stopOut = copyDecorations(beside, own, () => true);
+  const stopIn = copyDecorations(
+    own,
+    beside,
+    (d) =>
+      d.bookId === beside.bookId.value &&
+      d.chapterNumber === beside.chapterNumber.value
+  );
+  return () => {
+    stopOut();
+    stopIn();
+  };
+}
+
+export function createAttachedReadingStates(): Pick<
+  TabsManager,
+  "attachReadingState" | "activeReadingState" | "focusReadingState"
+> {
+  /** Reading states shown inside a tab beside its own, by tab id. */
+  const attachedReadingStates = signal<
+    ReadonlyMap<
+      string,
+      { readingState: BibleReadingState; active: Signal<boolean> }
+    >
+  >(new Map());
+
+  const attachReadingState = (
+    tab: ReaderTab,
+    readingState: BibleReadingState
+  ): (() => void) => {
+    const active = signal(false);
+    attachedReadingStates.value = new Map(attachedReadingStates.peek()).set(
+      tab.id,
+      { readingState, active }
+    );
+    const stopAttached = effect(() => {
+      if (readingState.selectedVerses.value.length > 0) {
+        untracked(() => {
+          active.value = true;
+          if (tab.readingState.selectedVerses.peek().length > 0) {
+            tab.readingState.clearSelectedVerses();
+          }
+        });
+      }
+    });
+    // A shared session publishes its tab's decorations, so the other reader's
+    // go out through it and peers' come back in to it.
+    const stopMirror = tab.sharedSession
+      ? shareDecorationsWithTab(tab.readingState, readingState)
+      : () => {};
+    const stopOwn = effect(() => {
+      if (tab.readingState.selectedVerses.value.length > 0) {
+        untracked(() => {
+          active.value = false;
+          if (readingState.selectedVerses.peek().length > 0) {
+            readingState.clearSelectedVerses();
+          }
+        });
+      }
+    });
+    return () => {
+      stopAttached();
+      stopOwn();
+      stopMirror();
+      const next = new Map(attachedReadingStates.peek());
+      if (next.get(tab.id)?.readingState === readingState) {
+        next.delete(tab.id);
+        attachedReadingStates.value = next;
+      }
+    };
+  };
+
+  const activeReadingState = (tab: ReaderTab): BibleReadingState => {
+    const attached = attachedReadingStates.value.get(tab.id);
+    return attached?.active.value ? attached.readingState : tab.readingState;
+  };
+
+  const focusReadingState = (
+    tab: ReaderTab,
+    readingState: BibleReadingState
+  ): void => {
+    const attached = attachedReadingStates.peek().get(tab.id);
+    if (attached) {
+      attached.active.value = attached.readingState === readingState;
+    }
+  };
+
+  return { attachReadingState, activeReadingState, focusReadingState };
 }

@@ -11,8 +11,11 @@ async function loadDonationDialog(language: string) {
   await i18n.init({ lng: "en", fallbackLng: "en", resources: {} });
   const { default: openDonationDialog } =
     await import("@packages/transcription/donation");
+  const t = i18n.getFixedT(language);
+  // The dialog wraps itself in an I18nProvider, so the shared components
+  // inside it read the manager's i18next instance and language too.
   const context = {
-    i18n: { t: i18n.getFixedT(language) },
+    i18n: { t, i18n: { t, language }, language: { value: language } },
   } as unknown as SeedBibleState;
   return { openDonationDialog, context };
 }
@@ -62,5 +65,14 @@ describe("openDonationDialog", () => {
     ]);
 
     expect(document.querySelectorAll("#donation-container")).toHaveLength(1);
+  });
+
+  it("closes from its close button", async () => {
+    const { openDonationDialog, context } = await loadDonationDialog("en");
+    await openDonationDialog({ onSuccess: () => {}, context });
+
+    document.querySelector<HTMLButtonElement>("[aria-label='Close']")!.click();
+
+    expect(document.getElementById("donation-container")).toBeNull();
   });
 });

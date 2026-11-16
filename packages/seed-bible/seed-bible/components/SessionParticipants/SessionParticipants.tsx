@@ -1,7 +1,9 @@
 import "./SessionParticipants.css";
-import { useSignal } from "@preact/signals";
-import { createPortal } from "preact/compat";
-import type { BibleReadingSession } from "../../managers/SessionsManager";
+import { signal, useSignal } from "@preact/signals";
+import type {
+  BibleReadingSession,
+  ConnectedSessionUser,
+} from "../../managers/SessionsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -9,7 +11,8 @@ import {
   SessionUserAvatar,
   getUserDisplayName,
   getUserSessionRole,
-  sessionRoleRank,
+  sessionRoleLabel,
+  sortUsersByRole,
 } from "../Avatar/Avatar";
 import {
   isLocalSessionHost,
@@ -18,9 +21,18 @@ import {
 } from "../Tabs/Tabs";
 import { MaterialIcon } from "../icons";
 import {
+  AskToComeBackButton,
+  getParticipantLocation,
+  sessionGroupPassage,
+} from "./participantLocations";
+import {
   ParticipantFriendButton,
+  ParticipantName,
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
+import { BottomSheet } from "../BottomSheet/BottomSheet";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 /** How many avatars the compact stack shows before collapsing into a "+N" chip. */
 const MAX_STACK_AVATARS = 3;
@@ -50,15 +62,8 @@ export function MobileSessionParticipants({
 
   const isHost = isLocalSessionHost(state, session);
 
-  // Host first, then co-hosts, then everyone else. Array.sort is stable so
-  // peers keep their existing order within a rank — matches the sidebar tab row.
-  const sortedUsers = [...connectedUsers].sort(
-    (a, b) =>
-      sessionRoleRank(getUserSessionRole(options, a)) -
-      sessionRoleRank(getUserSessionRole(options, b))
-  );
+  const sortedUsers = sortUsersByRole(connectedUsers, options);
 
-  const friendButtonRows = rowsWithFriendButton(sortedUsers);
   const stackUsers = sortedUsers.slice(0, MAX_STACK_AVATARS);
   const overflowCount = sortedUsers.length - stackUsers.length;
 
@@ -100,86 +105,17 @@ export function MobileSessionParticipants({
         )}
       </button>
 
-      {/* Portal to <body>: the mobile reader header is its own stacking context
-       * (z-index + overflow:hidden), so a sheet rendered inside it would sit
-       * behind the bottom nav. Rendering to body lets it cover the whole
-       * screen. The portal only runs on click, so SSR is unaffected. */}
-      {isSheetOpen.value &&
-        createPortal(
-          <>
-            <div
-              className="sb-mobile-settings-sheet-overlay"
-              onClick={() => {
-                isSheetOpen.value = false;
-              }}
-              aria-hidden="true"
-            />
-            <div
-              className="sb-mobile-settings-sheet sb-session-participants-sheet"
-              role="dialog"
-              aria-modal="true"
-              aria-label={t("participants", { defaultValue: "Participants" })}
-            >
-              <div className="sb-mobile-settings-sheet-header">
-                <div className="sb-mobile-settings-sheet-title">
-                  <span
-                    className="material-symbols-outlined"
-                    aria-hidden="true"
-                    style={{ fontSize: 22 }}
-                  >
-                    group
-                  </span>
-                  <span>
-                    {t("participants", { defaultValue: "Participants" })}
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  className="sb-mobile-settings-sheet-close"
-                  onClick={() => {
-                    isSheetOpen.value = false;
-                  }}
-                  aria-label={t("close", { defaultValue: "Close" })}
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
-              </div>
-              <div className="sb-mobile-settings-sheet-body">
-                <ul className="sb-session-participants-list">
-                  {sortedUsers.map((user) => {
-                    const role = getUserSessionRole(options, user);
-                    const roleLabel =
-                      role === "host"
-                        ? t("host", { defaultValue: "Host" })
-                        : role === "co-host"
-                          ? t("co-host", { defaultValue: "Co-host" })
-                          : undefined;
-                    return (
-                      <li
-                        key={user.connectionId}
-                        className="sb-session-participants-list-item"
-                      >
-                        <SessionUserAvatar
-                          user={user}
-                          role={role}
-                          roleLabel={roleLabel}
-                        />
-                        <span className="sb-session-participants-list-name">
-                          {getUserDisplayName(user)}
-                        </span>
-                        {friendButtonRows.has(user.connectionId) && (
-                          <ParticipantFriendButton
-                            state={state}
-                            userId={user.userId}
-                            displayName={getUserDisplayName(user)}
-                          />
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
+      {isSheetOpen.value && (
+        <BottomSheet
+          className="sb-session-participants-sheet"
+          label={t("participants", { defaultValue: "Participants" })}
+          title={t("participants", { defaultValue: "Participants" })}
+          titleIcon="group"
+          onClose={() => {
+            isSheetOpen.value = false;
+          }}
+          footer={
+            <>
               <div className="sb-mobile-settings-sheet-divider" />
               {isHost && (
                 <button
@@ -233,10 +169,269 @@ export function MobileSessionParticipants({
                   chevron_right
                 </MaterialIcon>
               </button>
-            </div>
-          </>,
-          document.body
-        )}
+            </>
+          }
+        >
+          <SessionParticipantList
+            state={state}
+            session={session}
+            // The sheet sits above every modal, so it closes to let a
+            // participant's profile show, and comes back after.
+            onOpenProfile={() => {
+              isSheetOpen.value = false;
+            }}
+            onCloseProfile={() => {
+              isSheetOpen.value = true;
+            }}
+          />
+        </BottomSheet>
+      )}
     </>
+  );
+}
+
+/**
+ * Everyone in the session, host first. Once anyone is reading a different
+ * chapter, it splits into "With the group" and "Reading elsewhere", with the
+ * passage under each name that's elsewhere. Hosts get "Ask to come back" for
+ * people elsewhere; a reader who is elsewhere themselves gets "Rejoin" on
+ * their own row. Shared by the mobile sheet and the desktop session tab.
+ */
+export function SessionParticipantList({
+  state,
+  session,
+  onOpenProfile,
+  onCloseProfile,
+}: {
+  state: SeedBibleState;
+  session: BibleReadingSession;
+  /** For a list that has to get out of the way of a participant's profile. */
+  onOpenProfile?: () => void;
+  /** Runs when that profile closes, for the list to come back. */
+  onCloseProfile?: () => void;
+}) {
+  const { t } = useI18n();
+  const options = session.options.value;
+  const isHost = isLocalSessionHost(state, session);
+
+  const sortedUsers = sortUsersByRole(session.connectedUsers.value, options);
+  const friendButtonRows = rowsWithFriendButton(sortedUsers);
+  const groupPassage = sessionGroupPassage(session);
+  const locations = new Map(
+    sortedUsers.map((user) => [
+      user.connectionId,
+      getParticipantLocation(session, user),
+    ])
+  );
+  const elsewhereUsers = sortedUsers.filter(
+    (user) => locations.get(user.connectionId)?.isElsewhere
+  );
+  const withGroupUsers = sortedUsers.filter(
+    (user) => !locations.get(user.connectionId)?.isElsewhere
+  );
+
+  const renderParticipant = (user: ConnectedSessionUser) => {
+    const role = getUserSessionRole(options, user);
+    const roleLabel = sessionRoleLabel(role, t);
+    const location = locations.get(user.connectionId);
+    return (
+      <li key={user.connectionId} className="sb-session-participants-list-item">
+        <SessionUserAvatar user={user} role={role} roleLabel={roleLabel} />
+        <span className="sb-session-participants-list-name">
+          <span>
+            <ParticipantName
+              state={state}
+              userId={user.userId}
+              displayName={getUserDisplayName(user)}
+              onOpenProfile={onOpenProfile}
+              onCloseProfile={onCloseProfile}
+            />
+            {user.isSelf &&
+              ` ${t("session-participant-you", { defaultValue: "(you)" })}`}
+          </span>
+          {location?.isElsewhere && location.passage && (
+            <span className="sb-session-participants-list-location">
+              {location.passage}
+            </span>
+          )}
+        </span>
+        {isHost && location?.isElsewhere && !role && !user.isSelf && (
+          <AskToComeBackButton session={session} user={user} />
+        )}
+        {user.isSelf && session.isAwayFromGroup.value && (
+          <Button
+            variant="secondary"
+            size="sm"
+            shape="pill"
+            icon={<MaterialIcon className="rtl-mirror">undo</MaterialIcon>}
+            className="sb-ask-come-back"
+            onClick={() => {
+              void session.rejoinGroup();
+            }}
+          >
+            {t("session-rejoin-group", { defaultValue: "Rejoin" })}
+          </Button>
+        )}
+        {friendButtonRows.has(user.connectionId) && (
+          <ParticipantFriendButton
+            state={state}
+            userId={user.userId}
+            displayName={getUserDisplayName(user)}
+          />
+        )}
+      </li>
+    );
+  };
+
+  if (elsewhereUsers.length === 0) {
+    return (
+      <ul className="sb-session-participants-list">
+        {sortedUsers.map(renderParticipant)}
+      </ul>
+    );
+  }
+
+  return (
+    <>
+      <h3 className="sb-session-participants-section-title">
+        {groupPassage
+          ? t("session-with-the-group-at", {
+              defaultValue: "With the group · {{passage}}",
+              passage: groupPassage,
+            })
+          : t("session-with-the-group", { defaultValue: "With the group" })}
+      </h3>
+      <ul className="sb-session-participants-list">
+        {withGroupUsers.map(renderParticipant)}
+      </ul>
+      <h3 className="sb-session-participants-section-title">
+        {t("session-reading-elsewhere", {
+          defaultValue: "Reading elsewhere",
+        })}
+      </h3>
+      <ul className="sb-session-participants-list">
+        {elsewhereUsers.map(renderParticipant)}
+      </ul>
+    </>
+  );
+}
+
+/** Whether session tabs show their participant list; remembered per device. */
+export const TAB_PARTICIPANTS_EXPANDED_STORAGE_KEY =
+  "sb-tab-participants-expanded";
+
+function readStoredTabParticipantsExpanded(): boolean {
+  try {
+    return (
+      typeof window !== "undefined" &&
+      window.localStorage.getItem(TAB_PARTICIPANTS_EXPANDED_STORAGE_KEY) ===
+        "true"
+    );
+  } catch {
+    return false;
+  }
+}
+
+// Read straight from storage: session tabs only ever render in the browser,
+// once a session has attached, so there's no server render to keep in step.
+export const isTabParticipantsListExpanded = signal(
+  readStoredTabParticipantsExpanded()
+);
+
+function setTabParticipantsListExpanded(expanded: boolean) {
+  isTabParticipantsListExpanded.value = expanded;
+  try {
+    window.localStorage.setItem(
+      TAB_PARTICIPANTS_EXPANDED_STORAGE_KEY,
+      expanded ? "true" : "false"
+    );
+  } catch {
+    // Not remembered next time, but still applies for this visit.
+  }
+}
+
+/**
+ * The desktop session tab's participants: collapsed, a small toggle beside
+ * the tab's avatar row saying how many are away; expanded, the full list
+ * under the tab, with session settings (hosts) and sharing below it. Open or
+ * closed applies to every session tab and is remembered on this device.
+ */
+export function TabSessionParticipants({
+  state,
+  session,
+}: {
+  state: SeedBibleState;
+  session: BibleReadingSession;
+}) {
+  const { t } = useI18n();
+  const users = session.connectedUsers.value;
+  if (users.length === 0) return null;
+
+  if (!isTabParticipantsListExpanded.value) {
+    const awayCount = users.filter(
+      (user) => getParticipantLocation(session, user).isElsewhere
+    ).length;
+    return (
+      <button
+        type="button"
+        className="sb-tab-participants-toggle"
+        aria-expanded="false"
+        aria-label={t("show-participants", {
+          defaultValue: "Show participants",
+        })}
+        title={t("show-participants", { defaultValue: "Show participants" })}
+        onClick={() => setTabParticipantsListExpanded(true)}
+      >
+        {awayCount > 0 &&
+          t("session-away-count", {
+            defaultValue: "{{count}} away",
+            count: awayCount,
+          })}
+        <MaterialIcon aria-hidden="true">expand_more</MaterialIcon>
+      </button>
+    );
+  }
+
+  return (
+    <div className="sb-tab-participants">
+      <div className="sb-tab-participants-header">
+        <span className="sb-tab-participants-title">
+          {t("session-participants-count", {
+            defaultValue: "Participants · {{count}}",
+            count: users.length,
+          })}
+        </span>
+        <IconButton
+          className="sb-tab-participants-collapse"
+          aria-expanded="true"
+          icon="expand_less"
+          label={t("hide-participants", { defaultValue: "Hide participants" })}
+          onClick={() => setTabParticipantsListExpanded(false)}
+        />
+      </div>
+      <SessionParticipantList state={state} session={session} />
+      <div className="sb-tab-participants-footer">
+        {isLocalSessionHost(state, session) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            icon="settings"
+            className="sb-tab-participants-link"
+            onClick={() => openSessionSettingsModal(state, session)}
+          >
+            {t("session-settings", { defaultValue: "Session settings" })}
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          icon="share"
+          className="sb-tab-participants-link"
+          onClick={() => openShareSessionModal(state, session)}
+        >
+          {t("share-session", { defaultValue: "Share session" })}
+        </Button>
+      </div>
+    </div>
   );
 }

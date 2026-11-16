@@ -16,25 +16,27 @@ import {
   findScrollContainer,
   readBottomChromeInset,
 } from "../BibleReader/readerViewport";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 
 /**
  * The playing step's scripture item when it carries a note — a body, a title,
- * or both — else null.
+ * or both — else null. A compare step's note is shown below its passages
+ * instead, so it never counts.
  */
 export function currentScriptureNoteItem(
   playing: PlayingState | null
 ): ScriptureItem | null {
   const item = playing?.currentItem.value ?? null;
-  return hasScriptureNote(item) ? item : null;
+  return hasScriptureNote(item) && !item.compare ? item : null;
 }
 
 /**
  * A note's heading: its title, with the passage it's about as a small line
  * above, or just the passage when the note has no title.
  */
-function NoteHeading(props: {
+export function NoteHeading(props: {
   title: string | undefined;
   passage: string;
   as: "h3" | "span";
@@ -270,7 +272,7 @@ function placePopover(
  * Shown on a note while the reader is at a passage the note links to, to
  * bring it back to the step's own passage.
  */
-function ReturnToStepButton(props: { playing: PlayingState }) {
+export function ReturnToStepButton(props: { playing: PlayingState }) {
   const { t } = useI18n();
   return (
     <button
@@ -470,22 +472,20 @@ function ScriptureNotePopoverBody(props: {
         ) : null}
         <div className="sb-scripture-note-header">
           <NoteHeading title={item.noteTitle} passage={label} as="h3" />
-          <button
-            type="button"
-            className="sb-scripture-note-hide"
-            onClick={() => playing.setNoteExpanded(false)}
-            aria-label={t("playlist-scripture-note-hide", {
+          <CloseButton
+            size="sm"
+            label={t("playlist-scripture-note-hide", {
               defaultValue: "Hide note",
             })}
-          >
-            <MaterialIcon>close</MaterialIcon>
-          </button>
+            onClose={() => playing.setNoteExpanded(false)}
+          />
         </div>
         {item.note?.trim() ? (
           <div className="sb-scripture-note-body">
             <PlaylistHtmlContent
               html={item.note}
               onReferenceClick={(ref) => void playing.visitReference(ref)}
+              onStepClick={(index) => void playing.jumpTo(index)}
             />
           </div>
         ) : null}
@@ -639,6 +639,7 @@ function ScriptureNoteSheetBody(props: {
           <PlaylistHtmlContent
             html={item.note!}
             onReferenceClick={(ref) => void playing.visitReference(ref)}
+            onStepClick={(index) => void playing.jumpTo(index)}
           />
         </div>
       ) : null}

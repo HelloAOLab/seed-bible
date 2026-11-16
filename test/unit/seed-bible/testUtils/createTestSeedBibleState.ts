@@ -252,8 +252,21 @@ if (typeof afterEach === "function") {
     // cross-origin `replaceState` is a SecurityError).
     if (typeof window !== "undefined") {
       window.history.replaceState(null, "", "/");
+      forgetPlaylistDrafts();
     }
   });
+}
+
+/**
+ * Removes the unsaved playlist drafts the editor keeps in localStorage, which
+ * would otherwise be restored into a later test's editor.
+ */
+export function forgetPlaylistDrafts(): void {
+  for (const key of Object.keys(window.localStorage)) {
+    if (key.startsWith("sb-playlist-draft:")) {
+      window.localStorage.removeItem(key);
+    }
+  }
 }
 
 export async function createTestSeedBibleState(

@@ -50,6 +50,7 @@ import type {
   SandboxReference,
   SandboxState,
 } from "../extensions/protocol";
+import { Button } from "../components/Button/Button";
 
 /**
  * An id for a person that's stable per extension but reveals neither: the
@@ -510,13 +511,15 @@ function SandboxMessage({
     <div className="sb-confirm-delete">
       <p className="sb-confirm-delete-message">{message}</p>
       <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="lg"
+          shape="pill"
           className="sb-extension-consent-allow"
           onClick={onClose}
         >
           {t("extension-modal-ok")}
-        </button>
+        </Button>
       </div>
     </div>
   );

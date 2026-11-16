@@ -1,5 +1,6 @@
 packages:
   - "packages/*"
+  - "mobile"
 allowBuilds:
   "@google/genai": false
   esbuild: false

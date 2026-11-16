@@ -5,6 +5,7 @@ import {
   groupTranslationsByLanguage,
 } from "seed-bible/managers";
 import {
+  Button,
   FiltersIcon,
   MaterialIcon,
   SearchBar,
@@ -227,16 +228,18 @@ export function TranslationPicker(props: {
         onLoadMore={() => setLimit((current) => current + PAGE_SIZE)}
       />
 
-      <button
-        type="button"
+      <Button
         className="sb-compare-picker-done"
+        variant="primary"
+        size="lg"
+        shape="pill"
+        icon="check"
         onClick={() => {
           state.view.value = state.addReturnTo.value;
         }}
       >
-        <MaterialIcon>check</MaterialIcon>
         {t("done", { defaultValue: "Done" })}
-      </button>
+      </Button>
     </div>
   );
 }
