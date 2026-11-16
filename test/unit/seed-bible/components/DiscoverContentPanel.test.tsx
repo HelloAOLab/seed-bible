@@ -187,6 +187,7 @@ function createMockState(
     friends: {
       friends: signal(friendPlaylists.map((entry) => entry.friend)),
       friendIds: signal(friendPlaylists.map((entry) => entry.friend.userId)),
+      hasLoaded: signal(true),
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() =>
@@ -196,6 +197,8 @@ function createMockState(
       visibleAnnotationsForChapter: vi.fn(
         () => overrides.annotationsForChapter ?? []
       ),
+      // Still loading unless a test settles it.
+      loadVisibleAnnotationsForChapter: vi.fn(() => new Promise(() => {})),
       createNewAnnotation: vi.fn().mockResolvedValue(undefined),
       createReply: vi.fn().mockResolvedValue(undefined),
       openThreadIds,
@@ -1619,6 +1622,84 @@ describe("DiscoverContentPanel", () => {
 
           act(() => {
             notes.value = [verse7];
+          });
+          frames.flush();
+
+          expect(state.discover.scrollToVerse.value).toBeNull();
+          expect(isHighlighted()).toBe(true);
+        } finally {
+          frames.restore();
+        }
+      });
+
+      /** A tab whose chapter has no notes yet, and a way to add some later. */
+      function setUpEmptyChapter(options: { friendsLoaded: boolean }) {
+        const tab = createMockTab({ chapterData: genesis1 });
+        const state = createMockState({ tab, userId: "me" });
+        const notes = signal<Annotation[]>([]);
+        Object.assign(state.annotations, {
+          getAnnotationsForChapter: vi.fn(() => notes),
+          visibleAnnotationsForChapter: vi.fn(() => notes.value),
+          loadVisibleAnnotationsForChapter: vi.fn(() =>
+            Promise.resolve(notes.peek())
+          ),
+        });
+        const friendsLoaded = signal(options.friendsLoaded);
+        Object.assign(state.friends, { hasLoaded: friendsLoaded });
+        return { tab, state, notes, friendsLoaded };
+      }
+
+      const settle = () =>
+        act(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+
+      it("is dropped once the chapter's notes have loaded without it, so a note added later doesn't flash", async () => {
+        const { tab, state, notes } = setUpEmptyChapter({
+          friendsLoaded: true,
+        });
+        const frames = queueFrames();
+        scrollIntoView.mockClear();
+
+        try {
+          renderFull(tab, state);
+          act(() => {
+            state.discover.scrollToVerse.value = target(tab.id);
+          });
+          await settle();
+
+          expect(state.discover.scrollToVerse.value).toBeNull();
+
+          act(() => {
+            notes.value = [verse7];
+          });
+          frames.flush();
+
+          expect(isHighlighted()).toBe(false);
+          expect(scrollIntoView).not.toHaveBeenCalled();
+        } finally {
+          frames.restore();
+        }
+      });
+
+      it("keeps waiting while the friends list is still loading, since the note may be a friend's", async () => {
+        const { tab, state, notes, friendsLoaded } = setUpEmptyChapter({
+          friendsLoaded: false,
+        });
+        const frames = queueFrames();
+
+        try {
+          renderFull(tab, state);
+          act(() => {
+            state.discover.scrollToVerse.value = target(tab.id);
+          });
+          await settle();
+
+          expect(state.discover.scrollToVerse.value).not.toBeNull();
+
+          act(() => {
+            notes.value = [verse7];
+            friendsLoaded.value = true;
           });
           frames.flush();
 

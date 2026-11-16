@@ -5,7 +5,10 @@ import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import type { JSX } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
-import type { DiscoverManager } from "../../managers/DiscoverManager";
+import type {
+  DiscoverManager,
+  DiscoverScrollTarget,
+} from "../../managers/DiscoverManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import type { FriendsManager } from "../../managers/FriendsManager";
@@ -671,6 +674,22 @@ export function AnnotationsSection(props: {
 
     let frame = 0;
     let highlightTimer = 0;
+    let settlingTarget: DiscoverScrollTarget | null = null;
+
+    const findGroup = (target: DiscoverScrollTarget) =>
+      groupAnnotationsByVerseRange(
+        visibleChapterAnnotations(
+          annotations,
+          friends.friendIds.value,
+          target.bookId,
+          target.chapterNumber
+        )
+      ).find((g) =>
+        g.annotations.some((a) =>
+          annotationVerseNumbers(a).includes(target.verseNumber)
+        )
+      );
+
     const dispose = effect(() => {
       const target = discover.scrollToVerse.value;
       if (!target) return;
@@ -682,21 +701,34 @@ export function AnnotationsSection(props: {
         return;
       }
 
-      const chapterAnnotations = visibleChapterAnnotations(
-        annotations,
-        friends.friendIds.value,
-        target.bookId,
-        target.chapterNumber
-      );
-      const group = groupAnnotationsByVerseRange(chapterAnnotations).find((g) =>
-        g.annotations.some((a) =>
-          annotationVerseNumbers(a).includes(target.verseNumber)
-        )
-      );
+      const group = findGroup(target);
       // Left in place while the chapter's notes are still loading (in a tab
       // that was just opened on it, say): this effect re-runs when they
-      // arrive, and the group can be found then.
-      if (!group) return;
+      // arrive, and the group can be found then. Once every list has loaded
+      // without it, the target is dropped, or it would fire whenever a note
+      // later lands on that verse. A friends list still being read counts as
+      // loading, since an empty one would hide the friend's note.
+      if (!group) {
+        const friendsKnown = friends.hasLoaded.value || !login.userId.value;
+        if (friendsKnown && settlingTarget !== target) {
+          settlingTarget = target;
+          void annotations
+            .loadVisibleAnnotationsForChapter(
+              target.bookId,
+              target.chapterNumber
+            )
+            .catch(() => null)
+            .then(() => {
+              if (
+                discover.scrollToVerse.peek() === target &&
+                !findGroup(target)
+              ) {
+                discover.scrollToVerse.value = null;
+              }
+            });
+        }
+        return;
+      }
       discover.scrollToVerse.value = null; // consume once
 
       const groupKey = `${group.startVerseNumber ?? "chapter"}-${
@@ -725,7 +757,7 @@ export function AnnotationsSection(props: {
       highlightedGroupKey.value = null;
       dispose();
     };
-  }, [tab, discover, annotations, friends]);
+  }, [tab, discover, annotations, friends, login]);
 
   if (!tab) {
     return (
