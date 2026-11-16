@@ -2,6 +2,10 @@
   "id": "sandboxed-example-extension",
   "version": "1.0.0",
   "icon": "icon.svg",
+  "screenshots": [
+    { "src": "screenshot-greeting.webp", "caption": "screenshot-greeting" },
+    { "src": "screenshot-settings.webp", "caption": "screenshot-settings" }
+  ],
   "permissions": ["reading:position"],
   "optionalPermissions": ["embed:casualos"],
   "network": [],
@@ -53,6 +57,8 @@
   },
   "translations": {
     "en": {
+      "screenshot-greeting": "Example greeting pane beside the reader",
+      "screenshot-settings": "Example greeting settings",
       "title": "Sandboxed Example Extension",
       "description": "The example extension, written as a sandboxed extension: a working reference for third-party developers.",
       "my-example-tool": "My Example Tool",
