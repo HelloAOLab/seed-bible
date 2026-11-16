@@ -12,6 +12,7 @@ import { effect, signal, type ReadonlySignal } from "@preact/signals";
 import { render, type ComponentChild } from "preact";
 import {
   createFixedI18n,
+  I18nProvider,
   setDefaultI18n,
   type I18nResources,
 } from "../i18n/I18nContext";
@@ -963,9 +964,9 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     options?: string | Record<string, unknown>,
     values?: Record<string, string | number>
   ): string => {
-    // Reading the language subscribes a component that calls this, so it
-    // re-renders in the new language.
-    void translations.source.language.value;
+    // Read only to subscribe a component that calls this, so it redraws in a
+    // new language, or when strings arrive late.
+    void translations.source.revision?.value;
     // `t(key, "Default text", values)`, from before `t` was i18next's.
     const i18nextOptions =
       typeof options === "string" || values
@@ -1420,7 +1421,7 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     },
   };
 
-  return { sb, call };
+  return { sb, call, i18n: translations.source };
 }
 
 /**
@@ -1446,7 +1447,7 @@ export function defineExtension(
   definition: SandboxExtensionDefinition
 ): SandboxExtension {
   const start = async (port: MessagePort, init: SandboxInit) => {
-    const { sb, call } = createSandboxClient(port, init);
+    const { sb, call, i18n } = createSandboxClient(port, init);
     if (init.mode.kind === "view") {
       const { view, surface, paneId, props } = init.mode;
       const View = definition.views?.[view];
@@ -1458,8 +1459,12 @@ export function defineExtension(
         return;
       }
       try {
+        // Its own frame's strings, even where frames share a page, as the
+        // testing helpers' do; the default only covers roots of its own.
         render(
-          <View sb={sb} props={props} surface={surface} paneId={paneId} />,
+          <I18nProvider i18n={i18n}>
+            <View sb={sb} props={props} surface={surface} paneId={paneId} />
+          </I18nProvider>,
           root
         );
       } catch (err) {

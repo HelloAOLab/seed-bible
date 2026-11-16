@@ -1,7 +1,7 @@
 import i18n from "i18next";
 import { createContext, type ComponentChildren } from "preact";
 import { useContext, useMemo } from "preact/hooks";
-import { signal } from "@preact/signals";
+import { batch, signal, type ReadonlySignal } from "@preact/signals";
 import type {
   I18nManager,
   LanguageFallbackPrompt,
@@ -28,7 +28,13 @@ export type I18nSource = Pick<
   | "confirmUiLanguageSwitch"
   | "dismissUiLanguageSwitch"
   | "neverAskUiLanguageSwitch"
->;
+> & {
+  /**
+   * Changes whenever the strings do while the language stays the same, as
+   * when its strings arrive late, so what shows them redraws.
+   */
+  revision?: ReadonlySignal<number>;
+};
 
 const I18nContext = createContext(null as I18nSource | null);
 
@@ -53,6 +59,11 @@ let defaultI18n: I18nSource | null = null;
  */
 export function setDefaultI18n(source: I18nSource | null) {
   defaultI18n = source;
+}
+
+/** What `setDefaultI18n` last set, to put back afterwards. */
+export function getDefaultI18n(): I18nSource | null {
+  return defaultI18n;
 }
 
 /** Strings by language, then by namespace: `{ en: { "seed-bible": { ... } } }`. */
@@ -80,9 +91,11 @@ export function createFixedI18n(language: string, resources: I18nResources) {
     resources,
   });
   const currentLanguage = signal(language);
+  const revision = signal(0);
   const source: I18nSource = {
     i18n: instance,
     language: currentLanguage,
+    revision,
     availableLanguages: [],
     requestLanguageChange: async () => {},
     confirmLanguageFallback: async () => {},
@@ -101,7 +114,10 @@ export function createFixedI18n(language: string, resources: I18nResources) {
     }
     // With every string already added, this switches straight away.
     void instance.changeLanguage(nextLanguage);
-    currentLanguage.value = nextLanguage;
+    batch(() => {
+      currentLanguage.value = nextLanguage;
+      revision.value++;
+    });
   };
   return { source, set };
 }
@@ -166,6 +182,8 @@ export function useI18n(ns?: string) {
   const { t } = i18n;
 
   const isRtl = isRightToLeftLanguage(i18nManager.language.value);
+  // Read only to subscribe: the caller redraws when strings arrive late.
+  void i18nManager.revision?.value;
 
   const setLanguage = async (language: string) => {
     await i18nManager.requestLanguageChange(language);

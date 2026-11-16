@@ -15,6 +15,7 @@ import {
   SANDBOX_PROTOCOL_VERSION,
   type SandboxInit,
   type SandboxState,
+  type SandboxStrings,
 } from "@packages/seed-bible/seed-bible/extensions/protocol";
 import { setDefaultI18n } from "@packages/seed-bible/seed-bible/i18n/I18nContext";
 import { BottomSheet } from "@packages/seed-bible/seed-bible/components/BottomSheet/BottomSheet";
@@ -61,6 +62,8 @@ const extension = defineExtension({
         </p>
       );
     },
+    // Nothing but `sb.i18n.t`, so only it can make the view redraw.
+    sbOnly: ({ sb }) => <p class="sb-only">{sb.i18n.t("greeting")}</p>,
     components: () => (
       <BottomSheet label="Sheet" onClose={() => {}} portal={false}>
         <CloseButton onClose={() => {}} />
@@ -207,6 +210,57 @@ describe("translations in a sandboxed extension", () => {
       expect(view.querySelector(".sb")!.textContent).toBe("Hola");
     });
 
+    it("redraws a view that only calls sb.i18n.t when the language changes", async () => {
+      const { host } = await start();
+      const view = await host.renderView("sbOnly");
+      expect(view.textContent).toBe("Hello");
+
+      await act(() => host.setState({ language: "es" }));
+
+      expect(view.textContent).toBe("Hola");
+    });
+
+    it("redraws when the strings change and the language doesn't", async () => {
+      const { host } = await start({
+        translations: undefined,
+        state: { language: "es", strings: { greeting: "Hola" } },
+      });
+      const view = await host.renderView("sbOnly");
+      expect(view.textContent).toBe("Hola");
+
+      await act(() => host.setState({ strings: { greeting: "¡Hola!" } }));
+
+      expect(view.textContent).toBe("¡Hola!");
+    });
+
+    it("gives each host's views their own frame's strings", async () => {
+      const { host: first } = await start();
+      const view = await first.renderView("hooks");
+      // A second host's view, rendered later, makes its strings the page's
+      // default.
+      const { host: arabic } = await start({ state: { language: "ar" } });
+      await arabic.renderView("hooks");
+
+      // The first view redraws, and must still read its own frame's strings.
+      await act(() => first.setState({ language: "es" }));
+
+      expect(view.querySelector(".own")!.textContent).toBe("Hola");
+      expect(view.querySelector(".app")!.textContent).toBe("Cerrar");
+    });
+
+    it("leaves no strings behind for the next test once disposed", async () => {
+      const { host } = await start({ state: { language: "es" } });
+      host.dispose();
+
+      const root = document.body.appendChild(document.createElement("div"));
+      act(() => render(<CloseButton onClose={() => {}} />, root));
+
+      expect(
+        root.querySelector(".sb-close-button")!.getAttribute("aria-label")
+      ).toBe("Close");
+      render(null, root);
+    });
+
     it("translates shared components and lays them out right to left in Arabic", async () => {
       const { host } = await start({ state: { language: "ar" } });
       const view = await host.renderView("components");
@@ -279,6 +333,54 @@ describe("translations from a host older than the strings message", () => {
     // The language never arrived ahead of its strings.
     expect(seen).toEqual(["es: Hola", "fr: Bonjour"]);
 
+    channel.port1.close();
+    channel.port2.close();
+  });
+});
+
+describe("the app's strings arriving after a frame starts", () => {
+  afterEach(() => setDefaultI18n(null));
+
+  it("redraws a shared component already on screen", async () => {
+    const channel = new MessageChannel();
+    const strings = (close?: string): SandboxStrings => ({
+      language: "ja",
+      app: { ja: close ? { close } : {}, en: { close: "Close" } },
+      extension: { ja: {}, en: {} },
+    });
+    createSandboxClient(channel.port2, {
+      protocol: SANDBOX_PROTOCOL_VERSION,
+      extensionId: "late-strings-extension",
+      mode: { kind: "background" },
+      granted: [],
+      optional: [],
+      state: {
+        themeCss: "",
+        language: "ja",
+        direction: "ltr",
+        strings: {},
+        isMobile: false,
+        position: null,
+        selection: [],
+        identity: null,
+        fontStylesheets: [],
+        session: null,
+        playback: null,
+      },
+      // The app is in Japanese, but its Japanese strings haven't loaded.
+      strings: strings(),
+    });
+    const root = document.body.appendChild(document.createElement("div"));
+    act(() => render(<CloseButton onClose={() => {}} />, root));
+    const label = () =>
+      root.querySelector(".sb-close-button")!.getAttribute("aria-label");
+    expect(label()).toBe("Close");
+
+    channel.port1.postMessage({ type: "strings", strings: strings("閉じる") });
+
+    await vi.waitFor(() => expect(label()).toBe("閉じる"));
+    render(null, root);
+    root.remove();
     channel.port1.close();
     channel.port2.close();
   });

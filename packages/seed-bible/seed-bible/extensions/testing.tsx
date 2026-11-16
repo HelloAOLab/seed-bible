@@ -48,6 +48,7 @@ import {
   type SandboxVerseRef,
 } from "./protocol";
 import type { SandboxExtension } from "./index";
+import { getDefaultI18n, setDefaultI18n } from "../i18n/I18nContext";
 
 /** Answers one call the stand-in doesn't simulate (or replaces its answer). */
 export type TestAnswer<M extends SandboxMethod> = (
@@ -225,6 +226,7 @@ export async function createTestHost(
   const optional = options.optional ?? [];
   let granted = expandSandboxPermissions(options.granted ?? []);
   let state: SandboxState = { ...DEFAULT_STATE, ...options.state };
+  const defaultI18nBefore = getDefaultI18n();
   const extensionTranslations = options.translations ?? {
     [state.language]: state.strings,
   };
@@ -350,6 +352,9 @@ export async function createTestHost(
       for (const port of ports) {
         port.close();
       }
+      // Each frame makes its strings the page's default, as in its own
+      // iframe; here they share one, so the next test mustn't inherit them.
+      setDefaultI18n(defaultI18nBefore);
     },
   };
 
