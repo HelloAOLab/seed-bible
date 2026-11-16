@@ -17,7 +17,8 @@
   right: 0;
   bottom: 0;
   /* Without a backdrop (the verse sheet) the page stays usable, so the sheet
-   * stays with the reader chrome, just above the mobile toolbar (chrome + 1). */
+   * stays with the reader chrome, just above the mobile toolbar (chrome + 1)
+   * and below the floating search and chat panels (chrome + 3). */
   z-index: calc(var(--sb-layer-chrome) + 2);
   display: flex;
   flex-direction: column;
