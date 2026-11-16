@@ -80,9 +80,11 @@
 }
 
 /* While dragging, the sheet follows the finger exactly; easing towards it
- * would feel like lag. */
+ * would feel like lag. A rise still running would override the drag's
+ * transform until it ended, then jump to the finger, so it stops too. */
 .sb-bottom-sheet-dragging {
   transition: none;
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
