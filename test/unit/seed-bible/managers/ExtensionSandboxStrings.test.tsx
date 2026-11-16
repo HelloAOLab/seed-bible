@@ -138,13 +138,30 @@ describe("sandboxed extension strings", () => {
     ]);
   });
 
-  it("doesn't send the strings again when another language loads", async () => {
+  it("waits for the current language's strings, not just any language's", async () => {
+    // Japanese is the language but hasn't loaded, so the frame is waiting.
+    h.host.language.value = "ja";
     const frame = await loadRawFrame();
 
     h.host.loadAppStrings("de", { close: "Schließen" });
     await frame.call("storage.keys", {});
-
     expect(stringsMessages(frame.messages)).toEqual([]);
+
+    h.host.loadAppStrings("ja", { close: "閉じる" });
+    await frame.call("storage.keys", {});
+    expect(stringsMessages(frame.messages)).toHaveLength(1);
+  });
+
+  it("doesn't send the strings again once they've arrived", async () => {
+    h.host.language.value = "ja";
+    const frame = await loadRawFrame();
+    h.host.loadAppStrings("ja", { close: "閉じる" });
+
+    // Another file loading later, say for a translation the user previews.
+    h.host.loadAppStrings("de", { close: "Schließen" });
+    await frame.call("storage.keys", {});
+
+    expect(stringsMessages(frame.messages)).toHaveLength(1);
   });
 
   it("stops listening for loaded strings when the extension stops", async () => {
