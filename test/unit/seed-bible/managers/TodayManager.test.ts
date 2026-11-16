@@ -157,6 +157,36 @@ describe("Today pane wiring", () => {
         selectedTab(state).readingState.discoverContentPanelInline.value
       ).toBe(false);
     });
+
+    it("leaves a note being written open in the Discover pane, so it isn't lost", async () => {
+      window.history.replaceState(null, "", "/en/AAB/genesis/1");
+      const state = await createTestSeedBibleState();
+      setDiscoverSettings(state, false);
+      const note = {
+        id: "note-being-written",
+        bookId: "GEN",
+        chapterNumber: 1,
+        verseNumber: 1,
+        data: { type: "comment", html: "<p>Half a thought</p>" },
+      } as Annotation;
+      state.annotations.editAnnotation(note);
+
+      openTodayAnnotationThread(state, state.today, reply);
+
+      expect(state.discover.view.value).toBe("create_annotation");
+      expect(state.annotations.editingAnnotation.value?.id).toBe(
+        "note-being-written"
+      );
+      const tab = selectedTab(state);
+      expect(tab.readingState.bookId.value).toBe("EXO");
+      expect([...state.annotations.openThreadIds.value]).toEqual(["parent"]);
+      expect(state.discover.scrollToVerse.value).toEqual({
+        bookId: "EXO",
+        chapterNumber: 2,
+        verseNumber: 3,
+        tabId: tab.id,
+      });
+    });
   });
 
   // Removing the pane directly has to clear the open state too, or the toolbar

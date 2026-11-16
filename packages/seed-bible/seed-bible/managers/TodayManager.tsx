@@ -646,7 +646,10 @@ export function openTodayAnnotationThread(
   );
   if (state.settings.settings.value.discoveredContent.showContent) {
     tab.readingState.discoverContentPanelInline.value = true;
-  } else {
+  } else if (state.discover.view.peek() !== "create_annotation") {
+    // Switching away from the note editor would throw away what's being
+    // written. The thread is still unfolded and targeted, so it shows once
+    // the note is saved or cancelled and Discover returns to its notes.
     state.discover.view.value = "discover";
   }
   if (verseNumber !== undefined) {
