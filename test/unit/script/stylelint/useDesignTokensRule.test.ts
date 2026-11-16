@@ -1,6 +1,7 @@
 import stylelint from "stylelint";
 import useDesignTokensRule, {
   readSharedTokens,
+  tokenFamily,
   ruleName,
 } from "../../../../script/stylelint/useDesignTokensRule.mjs";
 import { SHARED_TOKENS } from "@packages/seed-bible/seed-bible/app/styles/sharedTokens";
@@ -85,8 +86,20 @@ describe(ruleName, () => {
       "@keyframes k { from { font-size: 1rem; } to { font-size: 2rem; } }",
     ],
     ["the token definitions", ":root { --sb-radius-md: 0.5rem; }"],
+    ["a different dimming", ".a { background: rgba(0, 0, 0, 0.45); }"],
+    ["the backdrop token", ".a { background: var(--sb-backdrop); }"],
+    [
+      "the backdrop color in a layered background",
+      ".a { background: rgba(0, 0, 0, 0.3) url(dots.svg); }",
+    ],
   ])("ignores %s", async (_name, code) => {
     expect(await lint(code)).toEqual([]);
+  });
+
+  it("counts a family's own name as a token, not names that merely start with it", () => {
+    expect(tokenFamily("--sb-backdrop")).toBe("backdrop");
+    expect(tokenFamily("--sb-backdropped")).toBeNull();
+    expect(tokenFamily("--sb-radius-md")).toBe("radius");
   });
 
   it("respects a reasoned disable comment", async () => {

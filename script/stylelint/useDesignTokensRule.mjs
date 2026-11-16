@@ -74,8 +74,9 @@ export const TOKEN_FAMILIES = {
   duration: { prefix: "--sb-duration-", normalize: toMs },
   fontSize: { prefix: "--sb-font-size-", normalize: toPx },
   shadow: { prefix: "--sb-shadow-", normalize: squash },
+  // One step so far, named `--sb-backdrop` itself.
   backdrop: {
-    prefix: "--sb-backdrop",
+    prefix: "--sb-backdrop-",
     normalize: (v) => v.replace(/\s+/g, "").toLowerCase(),
   },
 };
@@ -87,7 +88,8 @@ const NOT_TOKENS = new Set(["--sb-shadow-color"]);
 export function tokenFamily(name) {
   if (NOT_TOKENS.has(name)) return null;
   for (const [kind, { prefix }] of Object.entries(TOKEN_FAMILIES)) {
-    if (name.startsWith(prefix)) return kind;
+    // A family's own name (`--sb-backdrop`) can be a token as well as its steps.
+    if (name.startsWith(prefix) || `${name}-` === prefix) return kind;
   }
   return null;
 }
