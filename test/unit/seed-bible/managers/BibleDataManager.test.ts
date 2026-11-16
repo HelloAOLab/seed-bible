@@ -508,6 +508,25 @@ describe("createBibleDataManager", () => {
     ).toBe(3);
   });
 
+  it("reads lexicon entries from the default endpoint", async () => {
+    setWebResponses({
+      [makeEndpointUrl(
+        EXAMPLE_API_ENDPOINT,
+        "api/d/stepbible-lexicon/lexicon/G3056.json"
+      )]: createResponse({
+        entry: { id: "G3056", language: "greek", senses: [] },
+      }),
+    });
+    const manager = createManager();
+
+    const result = await manager.getDatasetLexiconEntry(
+      "stepbible-lexicon",
+      "G3056"
+    );
+
+    expect(result.entry.id).toBe("G3056");
+  });
+
   describe("translationsCache option", () => {
     function createTestCache(): TranslationsCache {
       const store = new Map<string, Promise<Translation[]>>();

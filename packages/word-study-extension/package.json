@@ -1,0 +1,17 @@
+{
+  "name": "@seed-bible/word-study-extension",
+  "version": "1.0.0",
+  "description": "The original Hebrew and Greek words behind a verse, with Strong's numbers, grammar and lexicon definitions, from the Free Use Bible API.",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": {
+      "import": "./index.ts"
+    }
+  },
+  "dependencies": {
+    "seed-bible": "workspace:*"
+  },
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.1"
+}

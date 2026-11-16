@@ -17,6 +17,8 @@ import {
   type Dataset,
   type DatasetBookChapter,
   type DatasetBooks,
+  type DatasetLexiconEntry,
+  type DatasetVerseFor,
   type PromiseCache,
   type Translation,
   type TranslationBook,
@@ -205,12 +207,21 @@ export interface BibleDataManager {
     datasetId: string,
     options?: ApiRequestOptions
   ) => Promise<DatasetBooks>;
-  getDatasetBookChapter: (
-    datasetId: string,
+  getDatasetBookChapter: <D extends string>(
+    datasetId: D,
     book: string,
     chapter: number,
     options?: ApiRequestOptions
-  ) => Promise<DatasetBookChapter>;
+  ) => Promise<DatasetBookChapter<DatasetVerseFor<D>>>;
+  /**
+   * Gets one entry of a lexicon dataset by its plain Strong's number
+   * ("H0430", not the extended "H0430G").
+   */
+  getDatasetLexiconEntry: (
+    datasetId: string,
+    id: string,
+    options?: ApiRequestOptions
+  ) => Promise<DatasetLexiconEntry>;
 
   /**
    * Gets the API endpoint associated with a given translation. If the translation is not associated with a specific endpoint, it returns the default endpoint.
@@ -1438,8 +1449,8 @@ export function createBibleDataManager(
   const getDatasetBooks = (datasetId: string, options?: ApiRequestOptions) =>
     api.getDatasetBooks(datasetId, defaultEndpoint, options);
 
-  const getDatasetBookChapter = (
-    datasetId: string,
+  const getDatasetBookChapter = <D extends string>(
+    datasetId: D,
     book: string,
     chapter: number,
     options?: ApiRequestOptions
@@ -1451,6 +1462,12 @@ export function createBibleDataManager(
       defaultEndpoint,
       options
     );
+
+  const getDatasetLexiconEntry = (
+    datasetId: string,
+    id: string,
+    options?: ApiRequestOptions
+  ) => api.getDatasetLexiconEntry(datasetId, id, defaultEndpoint, options);
 
   const buildTranslationId = (translationId: string) => {
     const endpoint = getTranslationEndpointInfo(translationId);
@@ -1554,6 +1571,7 @@ export function createBibleDataManager(
     getDatasets,
     getDatasetBooks,
     getDatasetBookChapter,
+    getDatasetLexiconEntry,
     getTranslationEndpointInfo,
     buildTranslationId,
     hydrateCachedCatalog,
