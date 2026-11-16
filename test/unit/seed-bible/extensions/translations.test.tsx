@@ -305,6 +305,23 @@ describe("translations in a sandboxed extension", () => {
       render(null, root);
     });
 
+    it("leaves no strings behind when hosts are disposed in the order they were made", async () => {
+      const { host: first } = await start({ state: { language: "es" } });
+      const { host: second } = await start({ state: { language: "ar" } });
+      first.dispose();
+      second.dispose();
+      // Disposing again changes nothing.
+      second.dispose();
+
+      const root = document.body.appendChild(document.createElement("div"));
+      act(() => render(<CloseButton onClose={() => {}} />, root));
+
+      expect(
+        root.querySelector(".sb-close-button")!.getAttribute("aria-label")
+      ).toBe("Close");
+      render(null, root);
+    });
+
     it("translates shared components and lays them out right to left in Arabic", async () => {
       const { host } = await start({ state: { language: "ar" } });
       const view = await host.renderView("components");

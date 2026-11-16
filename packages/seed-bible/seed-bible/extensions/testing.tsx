@@ -48,7 +48,11 @@ import {
   type SandboxVerseRef,
 } from "./protocol";
 import type { SandboxExtension } from "./index";
-import { getDefaultI18n, setDefaultI18n } from "../i18n/I18nContext";
+import {
+  getDefaultI18n,
+  setDefaultI18n,
+  type I18nSource,
+} from "../i18n/I18nContext";
 
 /** Answers one call the stand-in doesn't simulate (or replaces its answer). */
 export type TestAnswer<M extends SandboxMethod> = (
@@ -183,6 +187,13 @@ export interface TestHost {
   dispose: () => void;
 }
 
+// Every host's frames share this page, and each makes its strings the page's
+// default, as it would in an iframe of its own. The default from before the
+// first live host comes back when the last one is disposed, in any order, so
+// the next test doesn't inherit a disposed host's strings.
+let liveHosts = 0;
+let defaultI18nBeforeHosts: I18nSource | null = null;
+
 const DEFAULT_STATE: SandboxState = {
   themeCss: "",
   language: "en",
@@ -226,7 +237,11 @@ export async function createTestHost(
   const optional = options.optional ?? [];
   let granted = expandSandboxPermissions(options.granted ?? []);
   let state: SandboxState = { ...DEFAULT_STATE, ...options.state };
-  const defaultI18nBefore = getDefaultI18n();
+  if (liveHosts === 0) {
+    defaultI18nBeforeHosts = getDefaultI18n();
+  }
+  liveHosts += 1;
+  let disposed = false;
   const extensionTranslations = options.translations ?? {
     [state.language]: state.strings,
   };
@@ -352,9 +367,14 @@ export async function createTestHost(
       for (const port of ports) {
         port.close();
       }
-      // Each frame makes its strings the page's default, as in its own
-      // iframe; here they share one, so the next test mustn't inherit them.
-      setDefaultI18n(defaultI18nBefore);
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      liveHosts -= 1;
+      if (liveHosts === 0) {
+        setDefaultI18n(defaultI18nBeforeHosts);
+      }
     },
   };
 
