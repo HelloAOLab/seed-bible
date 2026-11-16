@@ -118,7 +118,7 @@ function ConfirmDeleteModalContent(
         {secondaryAction ? (
           <Button
             variant="secondary"
-            className="sb-session-settings-cancel"
+            className="sb-confirm-delete-secondary"
             onClick={() => {
               onClose();
               secondaryAction.onSelect();

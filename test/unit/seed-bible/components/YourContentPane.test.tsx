@@ -2051,9 +2051,14 @@ describe("YourContentPane", () => {
 
         await clickQuote();
         const dialog = renderOpenedModal(openModal);
-        const openChapter = Array.from(dialog.querySelectorAll("button")).find(
-          (button) => button.textContent === "Open chapter"
+        const openChapter = dialog.querySelector<HTMLButtonElement>(
+          ".sb-confirm-delete-secondary"
         )!;
+        expect(openChapter.textContent).toBe("Open chapter");
+        // Cancel is found by its own class in tests across the app.
+        expect(
+          dialog.querySelectorAll(".sb-session-settings-cancel")
+        ).toHaveLength(1);
         act(() => {
           openChapter.click();
         });
