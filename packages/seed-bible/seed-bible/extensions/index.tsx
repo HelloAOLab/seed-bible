@@ -967,14 +967,16 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     // Read only to subscribe a component that calls this, so it redraws in a
     // new language, or when strings arrive late.
     void translations.source.revision?.value;
-    // `t(key, "Default text", values)`, from before `t` was i18next's.
-    const i18nextOptions =
+    // `t(key, "Default text", values)`, from before `t` was i18next's. Its
+    // values only ever filled in placeholders, so they go in `replace`, where
+    // one named like an option (`lng`, `ns`) can't change the lookup.
+    const i18nextOptions: Record<string, unknown> | undefined =
       typeof options === "string" || values
-        ? { ...values, defaultValue: options }
+        ? { defaultValue: options, count: values?.count, replace: values }
         : options;
     return translations.source.i18n.t(key, {
-      ns: init.extensionId,
       ...i18nextOptions,
+      ns: i18nextOptions?.ns ?? init.extensionId,
     });
   };
   const granted = signal<readonly SandboxPermission[]>(init.granted);

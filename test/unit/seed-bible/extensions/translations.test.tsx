@@ -138,6 +138,28 @@ describe("translations in a sandboxed extension", () => {
       );
     });
 
+    it("only fills in placeholders with the older way's values, whatever they're called", async () => {
+      const { sb } = await start({
+        state: { language: "es" },
+        translations: {
+          ...TRANSLATIONS,
+          es: { ...TRANSLATIONS.es, shown: "Mostrado en {{lng}} por {{ns}}" },
+        },
+      });
+
+      expect(
+        sb.i18n.t("shown", "Shown in {{lng}} by {{ns}}", {
+          lng: "Genesis",
+          ns: "Moses",
+        })
+      ).toBe("Mostrado en Genesis por Moses");
+    });
+
+    it("reads the extension's strings when ns is left undefined", async () => {
+      const { sb } = await start({ state: { language: "es" } });
+      expect(sb.i18n.t("greeting", { ns: undefined })).toBe("Hola");
+    });
+
     it("still takes the default text and values the older way", async () => {
       const { sb } = await start();
       expect(sb.i18n.t("missing", "Default")).toBe("Default");
