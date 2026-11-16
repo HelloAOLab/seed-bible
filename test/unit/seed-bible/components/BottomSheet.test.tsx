@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
+import { MaterialIcon } from "@packages/seed-bible/seed-bible/components/icons";
 import {
   BottomSheet,
   type BottomSheetProps,
@@ -200,12 +201,15 @@ describe("BottomSheet", () => {
       const { onClose } = renderSheet({
         onCloseButton: onBack,
         closeLabel: "Back",
-        closeIcon: "arrow_back",
+        // An element, so the caller decides it points the other way in
+        // right-to-left languages.
+        closeIcon: (
+          <MaterialIcon className="rtl-mirror">arrow_back</MaterialIcon>
+        ),
       });
       expect(closeButton()!.getAttribute("aria-label")).toBe("Back");
       // Drawn like the ✕ it replaces.
       expect(closeButton()!.classList).toContain("sb-icon-button-tinted");
-      // A back arrow has to point the other way in right-to-left languages.
       expect(closeButton()!.querySelector(".rtl-mirror")?.textContent).toBe(
         "arrow_back"
       );

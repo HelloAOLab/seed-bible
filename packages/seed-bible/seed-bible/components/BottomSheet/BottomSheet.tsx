@@ -1,12 +1,11 @@
 import "./BottomSheet.css";
-import type { ComponentChildren, JSX, Ref } from "preact";
+import type { ComponentChild, ComponentChildren, JSX, Ref } from "preact";
 import { createPortal } from "preact/compat";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
 import { useOverlayDismiss } from "../useOverlayDismiss";
 import { IconButton } from "../IconButton/IconButton";
-import { MaterialIcon } from "../icons";
 
 /** A press that moves less than this is a tap, not a drag. */
 const TAP_SLOP_PX = 6;
@@ -69,7 +68,12 @@ export interface BottomSheetProps {
    */
   onEscape?: () => void;
   closeLabel?: string;
-  closeIcon?: string;
+  /**
+   * The corner button's icon: a Material Symbols name, or an icon element. An
+   * arrow that should point the other way in right-to-left languages is an
+   * element, e.g. `<MaterialIcon className="rtl-mirror">arrow_back</MaterialIcon>`.
+   */
+  closeIcon?: string | ComponentChild;
   /**
    * Full-screen backdrop that closes the sheet when tapped. Defaults to true.
    * Without one the page behind stays usable, so the sheet is non-modal.
@@ -116,7 +120,7 @@ function assignRef<T>(ref: Ref<T> | undefined, value: T | null): void {
 }
 
 /**
- * The mobile bottom sheet every sheet in the app is built on: rises from the
+ * The shared mobile bottom sheet: rises from the
  * bottom above the toolbar layer, with a grab handle that drags it down to
  * dismiss (and up to expand, when `expansion` is given).
  */
@@ -378,13 +382,7 @@ export function BottomSheet(props: BottomSheetProps) {
     <IconButton
       className={closePlacement}
       look="tinted"
-      icon={
-        closeIcon === "arrow_back" ? (
-          <MaterialIcon className="rtl-mirror">arrow_back</MaterialIcon>
-        ) : (
-          closeIcon
-        )
-      }
+      icon={closeIcon}
       label={closeLabel}
       onClick={onCloseButton ?? onClose}
     />

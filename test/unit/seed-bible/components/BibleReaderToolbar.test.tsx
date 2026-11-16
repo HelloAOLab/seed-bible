@@ -3239,6 +3239,10 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     const cornerButton = () =>
       container.querySelector<HTMLButtonElement>(".sb-bottom-sheet-close")!;
     expect(cornerButton().getAttribute("aria-label")).toBe("Back");
+    // Points the other way in right-to-left languages.
+    expect(cornerButton().querySelector(".rtl-mirror")?.textContent).toBe(
+      "arrow_back"
+    );
 
     const pressEscape = async () => {
       await act(async () => {

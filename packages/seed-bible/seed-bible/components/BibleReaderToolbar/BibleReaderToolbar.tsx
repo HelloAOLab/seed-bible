@@ -3410,7 +3410,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             closeLabel: isHighlightPickerOpen.value
               ? t("back", { defaultValue: "Back" })
               : t("close", { defaultValue: "Close" }),
-            closeIcon: isHighlightPickerOpen.value ? "arrow_back" : "close",
+            closeIcon: isHighlightPickerOpen.value ? (
+              <MaterialIcon className="rtl-mirror">arrow_back</MaterialIcon>
+            ) : (
+              "close"
+            ),
             backdrop: false,
             portal: false,
             scrollBody: false,
