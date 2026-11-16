@@ -1,4 +1,11 @@
-import { existsSync, readFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 
 // A sandboxed extension's build packs everything it imports into one file, so
@@ -42,8 +49,37 @@ const STATIC_IMPORT =
   /^\s*(?:import|export)\s+(?!type\b)(?:[^"';]*?\bfrom\s*)?["']([^"']+)["']/gm;
 const DYNAMIC_IMPORT = /\bimport\(\s*["']([^"']+)["']\s*\)/g;
 
-function resolveRelative(from: string, specifier: string): string | null {
-  const base = path.resolve(path.dirname(from), specifier);
+/** `seed-bible`'s own entry points, as `packages/seed-bible/vite.config.ts` maps them. */
+const SELF_ENTRIES: Record<string, string> = {
+  "seed-bible": "app/api.tsx",
+  "seed-bible/managers": "managers/index.tsx",
+  "seed-bible/components": "components/index.tsx",
+  "seed-bible/i18n": "i18n/index.tsx",
+  "seed-bible/extensions": "extensions/index.tsx",
+  "seed-bible/extensions/testing": "extensions/testing.tsx",
+};
+const packagesDir = path.resolve(appDir, "../..");
+
+/** Where an import leads: a file in the repo, or an npm package by name. */
+function resolveImport(from: string, specifier: string): string | null {
+  if (specifier.startsWith(".")) {
+    return resolveFile(path.resolve(path.dirname(from), specifier));
+  }
+  // The repo's path alias, as `tsconfig.json` defines it.
+  if (specifier.startsWith("@packages/")) {
+    return resolveFile(
+      path.join(packagesDir, specifier.slice("@packages/".length))
+    );
+  }
+  const entry = SELF_ENTRIES[specifier];
+  if (entry) {
+    return path.join(appDir, entry);
+  }
+  const parts = specifier.split("/");
+  return `npm:${specifier.startsWith("@") ? parts.slice(0, 2).join("/") : parts[0]}`;
+}
+
+function resolveFile(base: string): string | null {
   const candidates = [
     base,
     `${base}.tsx`,
@@ -79,14 +115,7 @@ function importGraph(start: string): Map<string, string | null> {
       ...source.matchAll(DYNAMIC_IMPORT),
     ].map((match) => match[1]!);
     for (const specifier of specifiers) {
-      let target: string | null;
-      if (specifier.startsWith(".")) {
-        target = resolveRelative(file, specifier);
-      } else {
-        // The package name, without any subpath.
-        const parts = specifier.split("/");
-        target = `npm:${specifier.startsWith("@") ? parts.slice(0, 2).join("/") : parts[0]}`;
-      }
+      const target = resolveImport(file, specifier);
       if (target && !importedBy.has(target)) {
         importedBy.set(target, file);
         queue.push(target);
@@ -122,5 +151,31 @@ describe.each(ENTRIES)("$name", ({ file, reaches }) => {
     // Guards the check above against quietly reading nothing.
     const names = [...importGraph(entry).keys()].map(toName);
     expect(names).toEqual(expect.arrayContaining(reaches));
+  });
+});
+
+describe("the import walk", () => {
+  it("follows the repo's path alias and seed-bible's own entry points", () => {
+    // Either route into I18nManager would bring every locale back, so the
+    // walk has to see through both, not just relative imports.
+    const dir = mkdtempSync(path.join(tmpdir(), "bundle-imports-"));
+    try {
+      const viaAlias = path.join(dir, "alias.ts");
+      writeFileSync(
+        viaAlias,
+        'import { useI18n } from "@packages/seed-bible/seed-bible/i18n/I18nManager";\n'
+      );
+      const viaEntry = path.join(dir, "entry.ts");
+      writeFileSync(viaEntry, 'import { useI18n } from "seed-bible/i18n";\n');
+
+      expect([...importGraph(viaAlias).keys()].map(toName)).toContain(
+        "i18n/I18nManager.tsx"
+      );
+      expect([...importGraph(viaEntry).keys()].map(toName)).toContain(
+        "i18n/I18nManager.tsx"
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
