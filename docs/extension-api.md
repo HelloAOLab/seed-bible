@@ -213,7 +213,7 @@ function Toolbar({ sb }: SandboxViewProps) {
 
 `t` reads the current language each time, so calling it inside a component re-renders it in the new language when the user switches.
 
-An older form, `t(key, "Default text", values)`, still works, for extensions written before `t` became i18next's.
+An older form, `sb.i18n.t(key, "Default text", values)`, still works, for extensions written before `t` became i18next's. The hook's `t` only takes the options form.
 
 **Keys can't contain `:`.** The translator reads `a:b` as the key `b` in a set of strings named `a`, so the string is never found. A `.` is fine. Inside a string, `$t(other-key)` is replaced with that key's text.
 

@@ -189,9 +189,11 @@ export function useI18n(ns?: string) {
     await i18nManager.requestLanguageChange(language);
   };
 
+  // `ns` is only the default: a call that names another, as i18next allows,
+  // reads that one.
   const translate = ns
     ? (key: string, options?: Record<string, unknown>) =>
-        t(key, { ...options, ns })
+        t(key, { ...options, ns: options?.ns ?? ns })
     : t;
 
   return useMemo(

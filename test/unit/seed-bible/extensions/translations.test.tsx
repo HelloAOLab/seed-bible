@@ -62,6 +62,18 @@ const extension = defineExtension({
         </p>
       );
     },
+    // The extension's own hook, borrowing one of the app's strings by `ns`.
+    borrowing: ({ sb }) => {
+      const { t } = useI18n(sb.extensionId);
+      const close = { ns: "seed-bible", defaultValue: "Close" };
+      return (
+        <p>
+          <span class="hook">{t("close", close)}</span>
+          <span class="sb">{sb.i18n.t("close", close)}</span>
+          <span class="undefined-ns">{t("greeting", { ns: undefined })}</span>
+        </p>
+      );
+    },
     // Nothing but `sb.i18n.t`, so only it can make the view redraw.
     sbOnly: ({ sb }) => <p class="sb-only">{sb.i18n.t("greeting")}</p>,
     components: () => (
@@ -196,6 +208,16 @@ describe("translations in a sandboxed extension", () => {
       expect(view.querySelector(".own")!.textContent).toBe("Hola");
       expect(view.querySelector(".app")!.textContent).toBe("Cerrar");
       expect(view.querySelector(".sb")!.textContent).toBe("Hola");
+    });
+
+    it("lets useI18n(sb.extensionId) read the app's strings when a call names them, as sb.i18n.t does", async () => {
+      const { host } = await start({ state: { language: "es" } });
+      const view = await host.renderView("borrowing");
+
+      expect(view.querySelector(".hook")!.textContent).toBe("Cerrar");
+      expect(view.querySelector(".sb")!.textContent).toBe("Cerrar");
+      // An `ns` left undefined still means the extension's own strings.
+      expect(view.querySelector(".undefined-ns")!.textContent).toBe("Hola");
     });
 
     it("re-renders in the new language when the app changes it", async () => {
