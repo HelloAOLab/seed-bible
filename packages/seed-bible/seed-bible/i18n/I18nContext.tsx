@@ -9,9 +9,10 @@ import type {
 } from "./I18nManager";
 
 // `useI18n()` and what it needs, kept apart from `I18nManager.tsx` because
-// shared components import it, and a sandboxed extension that uses one bundles
-// everything it imports into its single file. `I18nManager.tsx` brings every
-// locale with its language loader (6.4 MB), so only types come from there.
+// shared components and the extension SDK import it, and a sandboxed extension
+// bundles everything they import into its single file. `I18nManager.tsx`
+// brings every locale with its language loader (6.4 MB), so only types come
+// from there.
 
 /** The parts of an {@link I18nManager} that `useI18n()` reads. */
 export type I18nSource = Pick<
@@ -54,6 +55,57 @@ export function setDefaultI18n(source: I18nSource | null) {
   defaultI18n = source;
 }
 
+/** Strings by language, then by namespace: `{ en: { "seed-bible": { ... } } }`. */
+export type I18nResources = Record<
+  string,
+  Record<string, Record<string, string>>
+>;
+
+/**
+ * Translations that are handed over rather than loaded: a sandboxed
+ * extension's frame, which the app sends its strings and language to. It
+ * can't change the language itself. `set` swaps in another language's strings.
+ */
+export function createFixedI18n(language: string, resources: I18nResources) {
+  // Its own instance: initializing the app's shared one here would stop
+  // `createI18nManager` from setting it up with the language loader later.
+  const instance = i18n.createInstance();
+  void instance.init({
+    lng: language,
+    fallbackLng: "en",
+    ns: ["seed-bible"],
+    // Synchronous, so `t` answers in the right language as soon as this returns.
+    initAsync: false,
+    interpolation: { escapeValue: false },
+    resources,
+  });
+  const currentLanguage = signal(language);
+  const source: I18nSource = {
+    i18n: instance,
+    language: currentLanguage,
+    availableLanguages: [],
+    requestLanguageChange: async () => {},
+    confirmLanguageFallback: async () => {},
+    cancelLanguageFallback: () => {},
+    languageFallbackPrompt: signal<LanguageFallbackPrompt | null>(null),
+    uiLanguageSwitchPrompt: signal<UiLanguageSwitchPrompt | null>(null),
+    confirmUiLanguageSwitch: async () => {},
+    dismissUiLanguageSwitch: () => {},
+    neverAskUiLanguageSwitch: () => {},
+  };
+  const set = (nextLanguage: string, nextResources: I18nResources) => {
+    for (const [lng, namespaces] of Object.entries(nextResources)) {
+      for (const [ns, strings] of Object.entries(namespaces)) {
+        instance.addResourceBundle(lng, ns, strings, false, true);
+      }
+    }
+    // With every string already added, this switches straight away.
+    void instance.changeLanguage(nextLanguage);
+    currentLanguage.value = nextLanguage;
+  };
+  return { source, set };
+}
+
 let untranslatedI18n: I18nSource | null = null;
 
 /**
@@ -62,31 +114,7 @@ let untranslatedI18n: I18nSource | null = null;
  * or its key without one.
  */
 function getUntranslatedI18n(): I18nSource {
-  if (!untranslatedI18n) {
-    // Its own instance: initializing the app's shared one here would stop
-    // `createI18nManager` from setting it up with the language loader later.
-    const instance = i18n.createInstance();
-    void instance.init({
-      lng: "en",
-      ns: ["seed-bible"],
-      initAsync: false,
-      interpolation: { escapeValue: false },
-      resources: {},
-    });
-    untranslatedI18n = {
-      i18n: instance,
-      language: signal("en"),
-      availableLanguages: [],
-      requestLanguageChange: async () => {},
-      confirmLanguageFallback: async () => {},
-      cancelLanguageFallback: () => {},
-      languageFallbackPrompt: signal<LanguageFallbackPrompt | null>(null),
-      uiLanguageSwitchPrompt: signal<UiLanguageSwitchPrompt | null>(null),
-      confirmUiLanguageSwitch: async () => {},
-      dismissUiLanguageSwitch: () => {},
-      neverAskUiLanguageSwitch: () => {},
-    };
-  }
+  untranslatedI18n ??= createFixedI18n("en", {}).source;
   return untranslatedI18n;
 }
 

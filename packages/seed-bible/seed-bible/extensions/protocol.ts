@@ -249,7 +249,11 @@ export interface SandboxState {
   themeCss: string;
   language: string;
   direction: "ltr" | "rtl";
-  /** This extension's own translation strings for `language`, over `en`. */
+  /**
+   * This extension's own translation strings for `language`, over `en`. The
+   * SDK reads `SandboxInit.strings` instead; this stays for extensions built
+   * with an SDK from before it.
+   */
   strings: Record<string, string>;
   isMobile: boolean;
   /** Null unless `reading:position` is granted. */
@@ -735,6 +739,20 @@ export interface SandboxHostRequests {
 
 export type SandboxHostRequestKind = keyof SandboxHostRequests;
 
+/**
+ * The translation strings a frame needs, sent when it starts and again when
+ * the language changes, rather than with every state change, since the app's
+ * run to well over 100 KB. Each set is by language code: `language`, and `en`,
+ * which fills in what `language` lacks.
+ */
+export interface SandboxStrings {
+  language: string;
+  /** The app's own strings, which `useI18n()` and `sb.i18n.app.t` read. */
+  app: Record<string, Record<string, string>>;
+  /** This extension's, from its `extension.json`. */
+  extension: Record<string, Record<string, string>>;
+}
+
 /** Sent with the port that connects a frame to the host. */
 export interface SandboxInit {
   protocol: number;
@@ -744,6 +762,8 @@ export interface SandboxInit {
   /** What the manifest lets the extension ask for later. */
   optional: SandboxPermission[];
   state: SandboxState;
+  /** Missing from a host older than this SDK, which only sends `state.strings`. */
+  strings?: SandboxStrings;
 }
 
 /** Each frame → host call, by method: what it takes and what it returns. */
@@ -1086,6 +1106,8 @@ export type SandboxHostEvent =
   /** Checks the background frame is still answering; it replies with `pong`. */
   | { type: "ping" }
   | { type: "state"; state: Partial<SandboxState> }
+  /** The language changed; every string the frame uses, in the new one. */
+  | { type: "strings"; strings: SandboxStrings }
   /** The permissions granted now, after the user granted an optional one. */
   | { type: "permissions"; granted: SandboxPermission[] };
 

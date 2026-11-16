@@ -5,10 +5,16 @@
  * Bible page, and reaches the app only by messages to the host's broker
  * (`managers/ExtensionSandboxManager.tsx`), which checks each one against the
  * permissions the user granted. It is bundled into every extension, so it
- * must not import anything from the app.
+ * must not import anything from the app except `i18n/I18nContext`, which is
+ * kept small for it (`extensionBundleImports.test.ts` checks).
  */
 import { effect, signal, type ReadonlySignal } from "@preact/signals";
 import { render, type ComponentChild } from "preact";
+import {
+  createFixedI18n,
+  setDefaultI18n,
+  type I18nResources,
+} from "../i18n/I18nContext";
 import {
   SANDBOX_START_KEY,
   type SandboxCapture,
@@ -49,6 +55,7 @@ import {
   type SandboxSelectedVerse,
   type SandboxSharedSession,
   type SandboxState,
+  type SandboxStrings,
   type SandboxTitle,
   type SandboxToolDefinition,
   type SandboxToolItem,
@@ -103,6 +110,9 @@ export type {
   SandboxVerseRef,
 };
 export { SANDBOX_PERMISSIONS, SANDBOX_PERMISSION_INFO } from "./protocol";
+// The same hook shared components use, from the module kept small for
+// extensions. `seed-bible/i18n` has it too, but brings every locale with it.
+export { useI18n } from "../i18n/I18nContext";
 
 /**
  * Why a call to Seed Bible failed. Every `sb.*` promise rejects with one of
@@ -287,7 +297,10 @@ export interface SandboxContext {
       permissions: SandboxPermission | SandboxPermission[]
     ) => Promise<boolean>;
   };
-  /** The extension's own translations, from `extension.json`. */
+  /**
+   * Translations, from the same translator the app uses (i18next). Inside a
+   * view, `useI18n(sb.extensionId)` and `useI18n()` give the same strings.
+   */
   i18n: {
     /** The app's current language code, like `"en"` or `"es"`. */
     language: ReadonlySignal<string>;
@@ -296,7 +309,8 @@ export interface SandboxContext {
     /**
      * Looks `key` up in this extension's own `extension.json` translations
      * for the current language (falling back to `en`, then `defaultValue`,
-     * then `key`), and fills `{{name}}` placeholders from `values`.
+     * then `key`), and fills `{{name}}` placeholders from `values`. With a
+     * `count` value, a `key_one` / `key_other` string wins over `key`.
      *
      * @example
      * sb.i18n.t("found", "Found {{count}} verses", { count: 3 });
@@ -306,6 +320,22 @@ export interface SandboxContext {
       defaultValue?: string,
       values?: Record<string, string | number>
     ) => string;
+    /** Seed Bible's own strings. */
+    app: {
+      /**
+       * `t`, for one of Seed Bible's own strings, so an extension can say
+       * "Close" the way the app does. Always pass `defaultValue`: the app
+       * renames and removes its keys, and the user then sees it instead.
+       *
+       * @example
+       * sb.i18n.app.t("close", "Close");
+       */
+      t: (
+        key: string,
+        defaultValue?: string,
+        values?: Record<string, string | number>
+      ) => string;
+    };
   };
   /** The app itself. */
   app: {
@@ -866,15 +896,26 @@ interface ToolHandlers {
 const toBlob = (capture: SandboxCapture | null) =>
   capture ? new Blob([capture.bytes], { type: capture.type }) : null;
 
-function interpolate(
-  text: string,
-  values: Record<string, string | number> | undefined
-): string {
-  if (!values) {
-    return text;
-  }
-  return text.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, name: string) =>
-    name in values ? String(values[name]) : match
+/**
+ * The frame's strings, filed the way the app's i18next files them: the app's
+ * under `seed-bible`, the extension's under its id.
+ */
+function toResources(
+  extensionId: string,
+  strings: SandboxStrings
+): I18nResources {
+  const languages = new Set([
+    ...Object.keys(strings.app),
+    ...Object.keys(strings.extension),
+  ]);
+  return Object.fromEntries(
+    [...languages].map((language) => [
+      language,
+      {
+        "seed-bible": strings.app[language] ?? {},
+        [extensionId]: strings.extension[language] ?? {},
+      },
+    ])
   );
 }
 
@@ -914,6 +955,35 @@ function applyDocumentState(state: SandboxState) {
  */
 export function createSandboxClient(port: MessagePort, init: SandboxInit) {
   const state = signal<SandboxState>(init.state);
+  // A host older than this SDK sends only the extension's own strings.
+  const initialStrings: SandboxStrings = init.strings ?? {
+    language: init.state.language,
+    app: {},
+    extension: { [init.state.language]: init.state.strings },
+  };
+  const translations = createFixedI18n(
+    initialStrings.language,
+    toResources(init.extensionId, initialStrings)
+  );
+  // So shared components, and `useI18n()` in the extension's own views, use
+  // these strings too.
+  setDefaultI18n(translations.source);
+  const translate =
+    (ns: string) =>
+    (
+      key: string,
+      defaultValue?: string,
+      values?: Record<string, string | number>
+    ): string => {
+      // Reading the language subscribes a component that calls this, so it
+      // re-renders in the new language.
+      void translations.source.language.value;
+      return translations.source.i18n.t(key, {
+        ...values,
+        ns,
+        defaultValue,
+      });
+    };
   const granted = signal<readonly SandboxPermission[]>(init.granted);
   const pending = new Map<
     number,
@@ -996,9 +1066,25 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
       void call("pong", {}).catch(() => {});
     } else if (message.type === "permissions") {
       granted.value = message.granted;
+    } else if (message.type === "strings") {
+      translations.set(
+        message.strings.language,
+        toResources(init.extensionId, message.strings)
+      );
     } else if (message.type === "state") {
       state.value = { ...state.value, ...message.state };
       applyDocumentState(state.value);
+      if (!init.strings && message.state.strings) {
+        const { language, strings } = state.value;
+        translations.set(
+          language,
+          toResources(init.extensionId, {
+            language,
+            app: {},
+            extension: { [language]: strings },
+          })
+        );
+      }
     } else if (message.name === "tool.select") {
       const handlers = toolHandlers.get(message.toolId);
       runHandler(
@@ -1184,8 +1270,8 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     i18n: {
       language,
       direction,
-      t: (key, defaultValue, values) =>
-        interpolate(state.value.strings[key] ?? defaultValue ?? key, values),
+      t: translate(init.extensionId),
+      app: { t: translate("seed-bible") },
     },
     app: {
       isMobile,

@@ -63,6 +63,7 @@ import {
   type SandboxSelectedVerse,
   type SandboxSharedSession,
   type SandboxState,
+  type SandboxStrings,
   type SandboxTitle,
   type SandboxToolDefinition,
 } from "../extensions/protocol";
@@ -89,7 +90,7 @@ export interface SandboxHostContext extends SandboxServicesContext {
     AppState,
     "toast" | "currentReadingState" | "isMobile" | "openVerseReference"
   >;
-  i18n: Pick<I18nManager, "language" | "isRtl">;
+  i18n: Pick<I18nManager, "language" | "isRtl" | "i18n">;
 }
 
 export interface SandboxFrameRequest {
@@ -641,6 +642,21 @@ export function startSandboxSession(
       ],
       session: has("session:read") ? currentSession() : null,
       ...services.state(),
+    };
+  };
+
+  const computeStrings = (): SandboxStrings => {
+    const language = context.i18n.language.peek();
+    const languages = [...new Set([language, "en"])];
+    const byLanguage = (
+      read: (language: string) => Record<string, string> | undefined
+    ) => Object.fromEntries(languages.map((lng) => [lng, read(lng) ?? {}]));
+    return {
+      language,
+      app: byLanguage((lng) =>
+        context.i18n.i18n.getResourceBundle(lng, "seed-bible")
+      ),
+      extension: byLanguage((lng) => translations[lng]),
     };
   };
 
@@ -1227,6 +1243,7 @@ export function startSandboxSession(
         granted: [...grantedPermissions.peek()],
         optional: [...optional],
         state: computeState(),
+        strings: computeStrings(),
       },
     });
     connection.port.onmessage = (event) =>
@@ -1264,6 +1281,18 @@ export function startSandboxSession(
     const state = computeState();
     broadcast({ type: "state", state });
   });
+  // Apart from the state, and only when the language changes, since the app's
+  // strings are far too many to send every time a verse is selected. i18next
+  // reports the change once the new language's strings have loaded.
+  let stringsLanguage = context.i18n.language.peek();
+  const stopStringsEffect = effect(() => {
+    const language = context.i18n.language.value;
+    if (language === stringsLanguage) {
+      return;
+    }
+    stringsLanguage = language;
+    broadcast({ type: "strings", strings: computeStrings() });
+  });
   // Runs before `permissions.request` replies, so the extension sees the
   // grant as soon as its request resolves.
   const stopPermissionsEffect = effect(() => {
@@ -1280,6 +1309,7 @@ export function startSandboxSession(
       void storage.dispose();
     }
     stopStateEffect();
+    stopStringsEffect();
     stopPermissionsEffect();
     for (const cleanup of destroyCallbacks) {
       try {

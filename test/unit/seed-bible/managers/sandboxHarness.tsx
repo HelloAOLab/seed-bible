@@ -345,6 +345,9 @@ function createHost() {
     chapterNumber: 3 as number | null,
   });
   const toasts: string[] = [];
+  const language = signal("en");
+  // The app's own strings by language, as its i18next would hold them.
+  const appStrings: Record<string, Record<string, string>> = {};
   const openedReferences: unknown[] = [];
   const userId = signal<string | null>(null);
   const profile = signal<UserProfile | null>(null);
@@ -401,8 +404,12 @@ function createHost() {
       googleFontFamiliesToLoad: signal<string[]>([]),
     },
     i18n: {
-      language: signal("en"),
+      language,
       isRtl: signal(false),
+      i18n: {
+        getResourceBundle: (lng: string, ns: string) =>
+          ns === "seed-bible" ? appStrings[lng] : undefined,
+      },
       t: (key: string, options?: Record<string, unknown>) =>
         options ? `${key} ${JSON.stringify(options)}` : key,
     },
@@ -554,6 +561,8 @@ function createHost() {
     reading,
     selectedVerses,
     toasts,
+    language,
+    appStrings,
     openedReferences,
     userId,
     profile,
