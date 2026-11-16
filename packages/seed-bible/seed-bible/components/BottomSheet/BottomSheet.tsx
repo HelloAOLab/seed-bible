@@ -5,7 +5,6 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
 import { useOverlayDismiss } from "../useOverlayDismiss";
-import { CloseButton } from "../CloseButton/CloseButton";
 import { IconButton } from "../IconButton/IconButton";
 import { MaterialIcon } from "../icons";
 
@@ -363,15 +362,10 @@ export function BottomSheet(props: BottomSheetProps) {
   const closePlacement = `sb-bottom-sheet-close${
     title === undefined ? " sb-bottom-sheet-close-corner" : ""
   }`;
-  const closeButton = !showClose ? null : closeIcon === "close" ? (
-    <CloseButton
-      className={closePlacement}
-      look="tinted"
-      label={closeLabel}
-      onClose={onCloseButton ?? onClose}
-    />
-  ) : (
-    // Not a close: the same tinted button, with its own icon and label.
+  // One IconButton for ✕ and any other icon (such as a back arrow), not a
+  // CloseButton for ✕: switching component would replace the button and drop
+  // keyboard focus when a sheet swaps between the two.
+  const closeButton = !showClose ? null : (
     <IconButton
       className={closePlacement}
       look="tinted"

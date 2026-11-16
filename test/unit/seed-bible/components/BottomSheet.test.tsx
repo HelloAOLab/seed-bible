@@ -216,6 +216,35 @@ describe("BottomSheet", () => {
       expect(onClose).not.toHaveBeenCalled();
     });
 
+    it("keeps keyboard focus on the corner button when Back turns it into ✕", () => {
+      const inColors = signal(true);
+      function Host() {
+        return (
+          <BottomSheet
+            label="Verse actions"
+            onClose={() => {}}
+            backdrop={false}
+            closeIcon={inColors.value ? "arrow_back" : "close"}
+            closeLabel={inColors.value ? "Back" : "Close"}
+            onCloseButton={() => {
+              inColors.value = false;
+            }}
+          >
+            <p>Colors</p>
+          </BottomSheet>
+        );
+      }
+      act(() => {
+        render(<Host />, container);
+      });
+      closeButton()!.focus();
+      act(() => {
+        closeButton()!.click();
+      });
+      expect(closeButton()!.getAttribute("aria-label")).toBe("Close");
+      expect(document.activeElement).toBe(closeButton());
+    });
+
     it("has no ✕ button when asked not to", () => {
       renderSheet({ showClose: false, title: "Participants" });
       expect(closeButton()).toBeNull();
