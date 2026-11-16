@@ -20,14 +20,26 @@ export function useAnnotationAuthorProfile(
   const name = useSignal("");
   const pictureUrl = useSignal<string | null>(null);
   useEffect(() => {
+    // A caller whose author changes (the composer's "Reply to" title) mustn't
+    // keep showing the previous author while the new one loads, or for good
+    // when the new one has no name.
+    name.value = "";
+    pictureUrl.value = null;
     if (!userId) {
       return;
     }
     let cancelled = false;
     let promise = annotationAuthorProfileCache.get(userId);
     if (!promise) {
-      promise = login.getUserProfile(userId);
-      annotationAuthorProfileCache.set(userId, promise);
+      const request = login.getUserProfile(userId);
+      // A failed read isn't kept, so the next row by this author asks again.
+      request.catch(() => {
+        if (annotationAuthorProfileCache.get(userId) === request) {
+          annotationAuthorProfileCache.delete(userId);
+        }
+      });
+      annotationAuthorProfileCache.set(userId, request);
+      promise = request;
     }
     promise
       .then((profile) => {
