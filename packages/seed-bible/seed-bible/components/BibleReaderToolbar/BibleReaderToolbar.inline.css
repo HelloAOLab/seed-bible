@@ -238,7 +238,8 @@
 /* Submenu opened from a card inside the drag-to-reveal row. That row clips
    with overflow: hidden, so the menu is portaled to the document and pinned
    to the trigger in viewport coordinates. Hidden until that placement runs,
-   and stacked above the verse sheet (--sb-verse-toolbar-z-index: 100). */
+   and stacked above the verse toolbar: the phone sheet sits at chrome + 2
+   (BottomSheet.css), the desktop box at --sb-verse-toolbar-z-index. */
 .sb-tool-context-menu-floating {
   position: fixed;
   top: auto;
