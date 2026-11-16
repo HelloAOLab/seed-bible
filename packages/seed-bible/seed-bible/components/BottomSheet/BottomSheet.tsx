@@ -60,6 +60,11 @@ export interface BottomSheetProps {
   showClose?: boolean;
   /** Overrides what the ✕ button does; defaults to `onClose`. */
   onCloseButton?: () => void;
+  /**
+   * Overrides what Escape does; defaults to `onClose`. A sheet whose ✕ goes
+   * back a step should pass the same handler, so Escape goes back too.
+   */
+  onEscape?: () => void;
   closeLabel?: string;
   closeIcon?: string;
   /**
@@ -153,10 +158,10 @@ export function BottomSheet(props: BottomSheetProps) {
     [sheetRef]
   );
 
-  // Handlers read through a ref so the document listener added once on mount
-  // always calls the latest `onClose`.
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  // Read through a ref so the document listener added once on mount always
+  // calls the latest handler.
+  const onEscapeRef = useRef(onClose);
+  onEscapeRef.current = props.onEscape ?? onClose;
 
   // A modal sheet takes focus while open and hands it back when it closes, so
   // keyboard and screen-reader users land where they were.
@@ -182,7 +187,7 @@ export function BottomSheet(props: BottomSheetProps) {
       // Escape while it has focus.
       if (target !== document.body && !sheet?.contains(target)) return;
       event.preventDefault();
-      onCloseRef.current();
+      onEscapeRef.current();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -191,7 +196,7 @@ export function BottomSheet(props: BottomSheetProps) {
   const handleSheetKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Escape" && !modal && !event.defaultPrevented) {
       event.preventDefault();
-      onClose();
+      onEscapeRef.current();
       return;
     }
     if (event.key !== "Tab" || !modal) return;

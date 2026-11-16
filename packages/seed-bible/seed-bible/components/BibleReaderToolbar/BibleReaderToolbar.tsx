@@ -1947,6 +1947,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const VERSE_SHEET_DRAG_IGNORE_SELECTOR =
     ".sb-verse-toolbar-swatches, .sb-verse-toolbar-discovered, .sb-verse-toolbar-overflow-scrollable";
 
+  /**
+   * The phone verse sheet's ✕ and Escape: in the highlight colors they go back
+   * to the verse actions, keeping the selection; otherwise they clear it.
+   */
+  const leaveVerseSheetStep = () => {
+    if (isHighlightPickerOpen.value) {
+      isHighlightPickerOpen.value = false;
+      return;
+    }
+    selectionState.value?.clearSelectedVerses();
+  };
+
   // Verse toolbar highlight picker state
   const customColorAnchorRef = useRef<HTMLButtonElement | null>(null);
   const customColorPickerOpen = useSignal(false);
@@ -3393,16 +3405,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             }`,
             label: t("verse-actions", { defaultValue: "Verse actions" }),
             onClose: () => selectionState.value?.clearSelectedVerses(),
-            // In highlight-picker mode the button just leaves the picker, so
-            // the user can return to verse actions without losing the
-            // selection.
-            onCloseButton: () => {
-              if (isHighlightPickerOpen.value) {
-                isHighlightPickerOpen.value = false;
-                return;
-              }
-              selectionState.value?.clearSelectedVerses();
-            },
+            onCloseButton: leaveVerseSheetStep,
+            onEscape: leaveVerseSheetStep,
             closeLabel: isHighlightPickerOpen.value
               ? t("back", { defaultValue: "Back" })
               : t("close", { defaultValue: "Close" }),

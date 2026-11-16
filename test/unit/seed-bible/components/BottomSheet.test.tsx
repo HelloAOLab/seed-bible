@@ -232,6 +232,24 @@ describe("BottomSheet", () => {
       expect(sheet()).toBeNull();
     });
 
+    it.each([
+      ["with a backdrop", true],
+      ["without a backdrop", false],
+    ])(
+      "lets Escape do something else, such as going back (%s)",
+      (_, backdrop) => {
+        const onBack = vi.fn();
+        const { onClose } = renderSheet({ backdrop, onEscape: onBack });
+        pressKey(
+          document.querySelector<HTMLElement>(".first-action")!,
+          "Escape"
+        );
+        expect(onBack).toHaveBeenCalledTimes(1);
+        expect(onClose).not.toHaveBeenCalled();
+        expect(sheet()).not.toBeNull();
+      }
+    );
+
     it("leaves Escape to a control inside it that already handled it", () => {
       const { onClose } = renderSheet({
         children: (
