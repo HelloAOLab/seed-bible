@@ -117,11 +117,5 @@ export async function mockI18nManager(
       },
       ...overrides,
     }),
-    useOptionalI18n: () => ({
-      t: mockTranslate,
-      get language() {
-        return mockI18nState.language;
-      },
-    }),
   };
 }

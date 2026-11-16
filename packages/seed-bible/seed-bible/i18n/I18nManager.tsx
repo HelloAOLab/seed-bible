@@ -556,17 +556,67 @@ export function I18nProvider(props: {
 
 export type I18nHook = ReturnType<typeof useI18n>;
 
+/** The parts of an {@link I18nManager} that `useI18n()` reads. */
+export type I18nSource = Pick<
+  I18nManager,
+  | "i18n"
+  | "language"
+  | "requestLanguageChange"
+  | "confirmLanguageFallback"
+  | "cancelLanguageFallback"
+  | "languageFallbackPrompt"
+  | "uiLanguageSwitchPrompt"
+  | "confirmUiLanguageSwitch"
+  | "dismissUiLanguageSwitch"
+  | "neverAskUiLanguageSwitch"
+>;
+
+let defaultI18n: I18nSource | null = null;
+
 /**
- * For shared components an extension may render in a root of its own, with no
- * `I18nProvider` above: the translate function, or null there instead of
- * `useI18n()`'s error.
+ * Sets the translations `useI18n()` uses where no `I18nProvider` is above it,
+ * such as an extension that renders into a root of its own. Only the browser
+ * sets it: the server renders many visitors' pages in one process, each with
+ * its own language, all inside a provider.
  */
-export function useOptionalI18n() {
-  const i18nManager = useContext(I18nContext);
-  // Reading the language subscribes the caller, as `useI18n()` does, so it
-  // re-renders when the language changes.
-  const language = i18nManager?.language.value;
-  return i18nManager ? { t: i18nManager.i18n.t, language } : null;
+export function setDefaultI18n(source: I18nSource | null) {
+  defaultI18n = source;
+}
+
+let englishOnlyI18n: I18nSource | null = null;
+
+/**
+ * The last resort when there is no provider and nothing set as the default,
+ * as in a unit test or an extension frame: the app's English strings, so a
+ * shared component still shows real text.
+ */
+function getEnglishOnlyI18n(): I18nSource {
+  if (!englishOnlyI18n) {
+    // Its own instance: initializing the app's shared one here would stop
+    // `createI18nManager` from setting it up with the language loader later.
+    const instance = i18n.createInstance();
+    void instance.init({
+      lng: DEFAULT_UI_LANGUAGE,
+      fallbackLng: DEFAULT_UI_LANGUAGE,
+      ns: ["seed-bible"],
+      initAsync: false,
+      interpolation: { escapeValue: false },
+      resources: { [DEFAULT_UI_LANGUAGE]: { "seed-bible": en } },
+    });
+    englishOnlyI18n = {
+      i18n: instance,
+      language: signal<string>(DEFAULT_UI_LANGUAGE),
+      requestLanguageChange: async () => {},
+      confirmLanguageFallback: async () => {},
+      cancelLanguageFallback: () => {},
+      languageFallbackPrompt: signal<LanguageFallbackPrompt | null>(null),
+      uiLanguageSwitchPrompt: signal<UiLanguageSwitchPrompt | null>(null),
+      confirmUiLanguageSwitch: async () => {},
+      dismissUiLanguageSwitch: () => {},
+      neverAskUiLanguageSwitch: () => {},
+    };
+  }
+  return englishOnlyI18n;
 }
 
 const RTL_LANGUAGE_CODES = new Set(["ar", "fa", "he", "ur", "ps", "dv", "yi"]);
@@ -603,14 +653,14 @@ export function isRightToLeftLanguage(languageCode: string): boolean {
 
 /**
  * Gets the i18n manager, which provides access to the translation function, current language, available languages, and a function to change the language. Also provides a helper function for translating keys within a specific namespace.
+ *
+ * Works anywhere: it uses the nearest `I18nProvider`, then the one set with {@link setDefaultI18n} (the app's own, in the browser), then English.
  * @param ns The namespace for the translations, typically the extension ID to avoid conflicts with other extensions. This is optional, as the returned manager will still work without it, but it can be used to create a namespaced translation function that automatically applies the namespace to translation keys.
  * @returns
  */
 export function useI18n(ns?: string) {
-  const i18nManager = useContext(I18nContext);
-  if (!i18nManager) {
-    throw new Error("useI18n() must be used within an I18nProvider");
-  }
+  const i18nManager =
+    useContext(I18nContext) ?? defaultI18n ?? getEnglishOnlyI18n();
   const i18n = i18nManager.i18n;
   const { t } = i18n;
 
