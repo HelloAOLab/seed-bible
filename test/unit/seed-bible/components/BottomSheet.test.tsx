@@ -361,6 +361,26 @@ describe("BottomSheet", () => {
       }
     });
 
+    it.each([
+      ["a text field", <input className="field" />],
+      ["a text area", <textarea className="field" />],
+      ["an editable area", <div className="field" contentEditable />],
+    ])("leaves Escape in %s to the field", (_, field) => {
+      const { onClose } = renderSheet({ backdrop: false, children: field });
+      pressKey(document.querySelector<HTMLElement>(".field")!, "Escape");
+      expect(onClose).not.toHaveBeenCalled();
+      expect(sheet()).not.toBeNull();
+    });
+
+    it("still closes on Escape from a checkbox", () => {
+      const { onClose } = renderSheet({
+        backdrop: false,
+        children: <input type="checkbox" className="field" />,
+      });
+      pressKey(document.querySelector<HTMLElement>(".field")!, "Escape");
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
     it("still closes on Escape from inside the sheet", () => {
       const { onClose } = renderSheet({ backdrop: false });
       pressKey(document.querySelector(".first-action")!, "Escape");

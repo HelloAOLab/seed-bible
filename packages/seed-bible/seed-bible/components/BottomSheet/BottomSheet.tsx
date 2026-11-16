@@ -23,6 +23,10 @@ const EXPAND_SNAP_DISTANCE_PX = 50;
 const DEFAULT_DRAG_IGNORE_SELECTOR =
   "button, input, select, textarea, a, label";
 
+/** Where Escape belongs to the field (clearing or cancelling an edit). */
+const EDITABLE_SELECTOR =
+  'textarea, select, input:not([type="checkbox"], [type="radio"], [type="button"], [type="submit"], [type="reset"], [type="range"], [type="color"]), [contenteditable]:not([contenteditable="false"])';
+
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -194,6 +198,11 @@ export function BottomSheet(props: BottomSheetProps) {
 
   const handleSheetKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Escape" && !modal && !event.defaultPrevented) {
+      // A non-modal sheet can hold other people's content (extension cards in
+      // the verse sheet), whose fields may use Escape without preventing it.
+      if ((event.target as Element | null)?.closest?.(EDITABLE_SELECTOR)) {
+        return;
+      }
       event.preventDefault();
       onEscapeRef.current();
       return;
