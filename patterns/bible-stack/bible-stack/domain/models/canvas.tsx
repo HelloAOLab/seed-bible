@@ -48,9 +48,14 @@ export interface SectionShadow extends Piece<"StackSectionShadow"> {
   sectionDataId: string;
 }
 
+export type ActivityIndicatorType = "regular" | "extraContent";
+
+export type ActivityContainerPieceType =
+  | typeof BiblePieces.StackChapter
+  | typeof BiblePieces.InfoLabelTransformer;
+
 export interface ActivityIndicator extends Piece<"ActivityIndicator"> {
-  indicatorType: "regular" | "extraContent" | "extraBackground";
-  index: number;
+  dataId: string;
 }
 
 export type ActivityNotification = Piece<"ActivityNotification">;
@@ -235,4 +240,19 @@ export interface PieceDataMap {
   [BiblePieces.StackSection]: StackSectionData;
   [BiblePieces.StackSectionBook]: StackSectionBookData;
   [BiblePieces.StackTestament]: StackTestamentData;
+}
+
+export type AnyStackData =
+  | StackTestamentData
+  | StackSectionData
+  | StackSectionBookData
+  | StackBookData
+  | StackChapterData;
+
+export interface ParentDataChain {
+  bibleData: StackBibleData | undefined;
+  testamentData: StackTestamentData | undefined;
+  sectionData: StackSectionData | undefined;
+  sectionBookData: StackSectionBookData | undefined;
+  bookData: StackBookData | undefined;
 }

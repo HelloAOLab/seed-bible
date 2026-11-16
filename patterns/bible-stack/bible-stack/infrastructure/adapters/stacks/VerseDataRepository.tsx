@@ -1,6 +1,7 @@
 import type { VerseData } from "../../../domain/entities/VerseData";
+import type { VerseDataRepositoryPort } from "../../../application/ports/out/VerseDataRepository";
 
-export class VerseRepository {
+export class VerseDataRepository implements VerseDataRepositoryPort {
   #dataSet: Set<VerseData> = new Set();
 
   addVerseData(data: VerseData) {

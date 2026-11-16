@@ -10,7 +10,7 @@ import { type SeedBibleState } from "seed-bible";
 import sendMessage from "./sendMessage";
 import { fromByteArray } from "base64-js";
 import { v4 as uuid } from "uuid";
-import { type TranscriptionManager } from "@seed-bible/ai-transcript-extension/transcriptionManager";
+import { type TranscriptionManager } from "@seed-bible/transcription/transcriptionManager";
 import type { Pane } from "seed-bible/managers";
 import { pick } from "es-toolkit";
 

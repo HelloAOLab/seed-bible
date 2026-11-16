@@ -1,26 +1,25 @@
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
+import { BookShapes } from "../../domain/models/canvas";
 import type {
-  BookStackUpdaterPort as UpdaterServicePort,
+  BookStackUpdaterServicePort as UpdaterServicePort,
   PrepareBookCommand,
   PrepareSectionBookCommand,
   PrepareCommand,
-} from "../ports/in/BookStackUpdates";
-import type {
-  BookStackUpdaterPort as UpdaterAdapterPort,
-  LoggerPort,
-} from "../ports/out/StackBookUpdater";
-import type { BookChaptersManagementServicePort } from "../ports/bibleLifecycle";
-import type { PieceLabelServicePort } from "../ports/pieceLifecycle";
-import { BookShapes } from "../../domain/models/canvas";
+} from "../ports/in/BookStackUpdater";
+import type { BookChaptersManagementServicePort } from "../ports/in/BookChaptersManagement";
+import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
+import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
+import type { BookStackUpdaterPort } from "../ports/out/BookStackUpdater";
+import type { LoggerPort } from "../ports/out/Logger";
 
 type BookEntity = StackBookData | StackSectionBookData;
 
 interface ServiceParams {
-  updaterAdapterPort: UpdaterAdapterPort;
+  updaterAdapterPort: BookStackUpdaterPort;
   bookChaptersManagementServicePort: BookChaptersManagementServicePort;
-  pieceLabelServicePort: PieceLabelServicePort;
+  pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
   loggerPort: LoggerPort;
 }
 
@@ -47,29 +46,26 @@ export class BookStackUpdaterService implements UpdaterServicePort {
    * adapter resets the book's shape). The management service no-ops when the
    * book isn't currently showing chapters.
    */
-  prepareBook(command: PrepareCommand) {
-    // The legacy only hid chapters when the book was actually showing them
-    // (and, for a selected book, only inside a non-exploded section). That
-    // selected/non-exploded branch needs the parent-section context, which the
-    // standalone update() flow doesn't carry — so from update() only the
-    // Deselecting path fires. It IS reachable when a split section drives the
-    // update: SectionStackUpdaterService.prepareSection passes sectionData for
-    // each of its books, which enables the selected/non-exploded chapter-hide.
+  prepareBook(command: PrepareCommand): boolean {
     switch (command.data.type) {
       case "StackBook":
-        this.#prepareRegularBook(command as PrepareBookCommand);
-        break;
+        return this.#prepareRegularBook(command as PrepareBookCommand);
 
       case "StackSectionBook":
-        this.#prepareSectionBook(command as PrepareSectionBookCommand);
-        break;
+        return this.#prepareSectionBook(command as PrepareSectionBookCommand);
 
       default:
-        break;
+        return false;
     }
   }
 
-  #prepareRegularBook(command: PrepareBookCommand) {
+  #prepareRegularBook(command: PrepareBookCommand): boolean {
+    if (!command.data.piece) {
+      this.#loggerPort.error(
+        "BookStackUpdaterService: command.data.piece not defined at prepareRegularBook"
+      );
+      return false;
+    }
     if (command.data.isShowingChapters) {
       if (
         (command.data.selectionState === "Selected" &&
@@ -78,29 +74,27 @@ export class BookStackUpdaterService implements UpdaterServicePort {
         command.data.selectionState === "Deselecting"
       ) {
         this.#bookChaptersManagementServicePort.hideChapters(command.data);
-        if (!command.data.piece) {
-          throw new Error(
-            "BookStackUpdaterService: command.data.piece not defined at prepareRegularBook"
-          );
-        }
         this.#pieceLabelServicePort.hideLabel(command.data.piece);
       }
     }
+    return true;
   }
 
-  #prepareSectionBook(command: PrepareSectionBookCommand) {
+  #prepareSectionBook(command: PrepareSectionBookCommand): boolean {
+    if (!command.data.piece) {
+      this.#loggerPort.error(
+        "BookStackUpdaterService: command.data.piece not defined at prepareRegularBook"
+      );
+      return false;
+    }
     if (
       command.data.isShowingChapters &&
       command.data.selectionState === "Deselecting"
     ) {
       this.#bookChaptersManagementServicePort.hideChapters(command.data);
-      if (!command.data.piece) {
-        throw new Error(
-          "BookStackUpdaterService: command.data.piece not defined at prepareRegularBook"
-        );
-      }
       this.#pieceLabelServicePort.hideLabel(command.data.piece);
     }
+    return true;
   }
 
   /**
@@ -112,8 +106,7 @@ export class BookStackUpdaterService implements UpdaterServicePort {
     if (isSelectedShape) {
       this.#bookChaptersManagementServicePort.showChapters(data);
 
-      const piece = data.piece;
-      if (!piece) return;
+      const piece = data.piece!;
 
       try {
         await this.#pieceLabelServicePort.showLabel({
@@ -140,8 +133,18 @@ export class BookStackUpdaterService implements UpdaterServicePort {
     // branch (StackSectionBookData vs StackBookData) so each `{ data }` matches
     // a concrete member of the PrepareCommand union. A single `{ data }` would
     // type as the un-narrowed union and fail to assign.
-    this.prepareBook(data.type === "StackSectionBook" ? { data } : { data });
-    await this.#updaterAdapterPort.update({ data, pacing });
-    await this.finalizeBook(data);
+    const prepared = this.prepareBook(
+      data.type === "StackSectionBook" ? { data } : { data }
+    );
+    if (!prepared) return;
+
+    try {
+      await this.#updaterAdapterPort.update({ data, pacing });
+      await this.finalizeBook(data);
+    } catch (error) {
+      this.#loggerPort.error("BookStackUpdaterService: Error at update", {
+        error,
+      });
+    }
   }
 }

@@ -118,3 +118,108 @@ describe("CasualOSManager.listAllData()", () => {
     consoleError.mockRestore();
   });
 });
+
+/**
+ * The server says how much a listing holds, so a reader can stop at the last
+ * page instead of asking for one more that comes back empty. What `totalCount`
+ * means depends on the server's store: the ones that page by ten (Prisma,
+ * SQLite) count every matching item on every page, while MongoDB returns
+ * everything at once and counts only what's after the starting address.
+ */
+describe("CasualOSManager listings stop once everything is listed", () => {
+  let os: ReturnType<typeof CasualOSManager>;
+
+  beforeEach(() => {
+    os = CasualOSManager();
+  });
+
+  type Item = { address: string; data: unknown };
+  const items = (count: number): Item[] =>
+    Array.from({ length: count }, (_, i) => ({
+      address: `item-${String(i).padStart(3, "0")}`,
+      data: i,
+    }));
+
+  /** Answers `listData` the way a server store holding `all` does. */
+  const stubStore = (
+    all: Item[],
+    store: { pageSize: number; counts: "everything" | "what's left" }
+  ) => {
+    const listData = vi.fn(async ({ address }: { address?: string }) => {
+      const after = address ? all.filter((i) => i.address > address) : all;
+      return {
+        success: true,
+        items: after.slice(0, store.pageSize),
+        totalCount: store.counts === "everything" ? all.length : after.length,
+      };
+    });
+    (os.client as unknown as { listData: unknown }).listData = listData;
+    return listData;
+  };
+
+  const pagesByTen = { pageSize: 10, counts: "everything" } as const;
+
+  it("reads a short listing in one request from a store that pages by ten", async () => {
+    const listData = stubStore(items(3), pagesByTen);
+
+    const result = await os.listAllDataByMarker("friend", "publicRead:notes");
+
+    expect(result.items).toEqual(items(3));
+    expect(listData).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads 25 items in three requests, without asking for an empty fourth", async () => {
+    const listData = stubStore(items(25), pagesByTen);
+
+    const result = await os.listAllDataByMarker("friend", "publicRead:notes");
+
+    expect(result.items).toEqual(items(25));
+    expect(listData).toHaveBeenCalledTimes(3);
+  });
+
+  it("reads everything in one request from a store that counts what's left", async () => {
+    const listData = stubStore(items(25), {
+      pageSize: Infinity,
+      counts: "what's left",
+    });
+
+    const result = await os.listAllDataByMarker("friend", "publicRead:notes");
+
+    expect(result.items).toEqual(items(25));
+    expect(listData).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks once for an empty listing", async () => {
+    const listData = stubStore([], pagesByTen);
+
+    const result = await os.listAllDataByMarker("friend", "publicRead:notes");
+
+    expect(result.items).toEqual([]);
+    expect(listData).toHaveBeenCalledTimes(1);
+  });
+
+  it("still stops at an empty page when the total is never reached", async () => {
+    // An item written before the starting address mid-listing raises the total
+    // without ever appearing on a later page.
+    const listData = vi.fn(async ({ address }: { address?: string }) => ({
+      success: true,
+      items: address ? [] : items(2),
+      totalCount: 3,
+    }));
+    (os.client as unknown as { listData: unknown }).listData = listData;
+
+    const result = await os.listAllDataByMarker("friend", "publicRead:notes");
+
+    expect(result.items).toEqual(items(2));
+    expect(listData).toHaveBeenCalledTimes(2);
+  });
+
+  it("stops at the total when sweeping a whole record too", async () => {
+    const listData = stubStore(items(12), pagesByTen);
+
+    const result = await os.listAllData("user-1");
+
+    expect(result.items).toEqual(items(12));
+    expect(listData).toHaveBeenCalledTimes(2);
+  });
+});

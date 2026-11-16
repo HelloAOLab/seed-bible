@@ -18,6 +18,10 @@ function deferred<T>() {
 const flush = () => new Promise<void>((r) => setTimeout(r, 0));
 
 describe("createReadingHistoryState", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it("is empty and fetches nothing when there is no user", () => {
     const userId = signal<string | null>(null);
     const refetchTrigger = signal(0);
@@ -34,7 +38,7 @@ describe("createReadingHistoryState", () => {
     dispose();
   });
 
-  it("goes loading → ready when the user has history", async () => {
+  it("starts on Welcome, then shows the resume card when the user has history", async () => {
     const userId = signal<string | null>("A");
     const refetchTrigger = signal(0);
     const d = deferred<UserLastReading>();
@@ -46,7 +50,9 @@ describe("createReadingHistoryState", () => {
       getUserLastReading,
     });
 
-    expect(readingHistory.value).toEqual({ status: "loading" });
+    // No remembered history for this account, so Welcome is up while the
+    // fetch runs — the personalized page must not paint first.
+    expect(readingHistory.value).toEqual({ status: "empty" });
     expect(getUserLastReading).toHaveBeenCalledWith("A", expect.any(Object));
 
     d.resolve({ bookId: "GEN", chapter: 2 });
@@ -56,10 +62,34 @@ describe("createReadingHistoryState", () => {
       status: "ready",
       lastReading: { bookId: "GEN", chapter: 2 },
     });
+    expect(localStorage.getItem("sb-today-history-A")).toBe("ready");
     dispose();
   });
 
-  it("goes loading → empty when the logged-in user has never read", async () => {
+  it("stays on Welcome when the logged-in user has never read", async () => {
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const d = deferred<UserLastReading>();
+    const getUserLastReading = vi.fn(() => d.promise);
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    expect(readingHistory.value).toEqual({ status: "empty" });
+
+    d.resolve(undefined);
+    await flush();
+
+    expect(readingHistory.value).toEqual({ status: "empty" });
+    expect(localStorage.getItem("sb-today-history-A")).toBe("empty");
+    dispose();
+  });
+
+  it("keeps the personalized layout for an account already known to have history", async () => {
+    localStorage.setItem("sb-today-history-A", "ready");
     const userId = signal<string | null>("A");
     const refetchTrigger = signal(0);
     const d = deferred<UserLastReading>();
@@ -73,10 +103,13 @@ describe("createReadingHistoryState", () => {
 
     expect(readingHistory.value).toEqual({ status: "loading" });
 
-    d.resolve(undefined);
+    d.resolve({ bookId: "GEN", chapter: 2 });
     await flush();
 
-    expect(readingHistory.value).toEqual({ status: "empty" });
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 2 },
+    });
     dispose();
   });
 
@@ -107,10 +140,11 @@ describe("createReadingHistoryState", () => {
       lastReading: { bookId: "GEN", chapter: 9 },
     });
 
-    // B's fetch is still in flight: until it lands, the screen must not be
-    // showing A's chapter to whoever just signed in.
+    // B's fetch is still in flight. B has no remembered history, so Welcome
+    // is up — A's chapter must not stay on screen, and the personalized page
+    // must not blink in while we find out.
     userId.value = "B";
-    expect(readingHistory.value).toEqual({ status: "loading" });
+    expect(readingHistory.value).toEqual({ status: "empty" });
 
     dB.resolve({ bookId: "JHN", chapter: 1 });
     await flush();
@@ -136,7 +170,7 @@ describe("createReadingHistoryState", () => {
       getUserLastReading,
     });
 
-    expect(readingHistory.value).toEqual({ status: "loading" });
+    expect(readingHistory.value).toEqual({ status: "empty" });
 
     // Switch to a second account before A's fetch resolves.
     userId.value = "B";
@@ -171,7 +205,7 @@ describe("createReadingHistoryState", () => {
       getUserLastReading,
     });
 
-    expect(readingHistory.value).toEqual({ status: "loading" });
+    expect(readingHistory.value).toEqual({ status: "empty" });
 
     userId.value = null;
     expect(readingHistory.value).toEqual({ status: "empty" });

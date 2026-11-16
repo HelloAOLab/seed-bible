@@ -1,4 +1,4 @@
-import { signal } from "@preact/signals";
+import { signal, type ReadonlySignal } from "@preact/signals";
 
 vi.mock("@packages/seed-bible/seed-bible/components/icons", () => ({
   MaterialIcon: () => null,
@@ -14,12 +14,24 @@ import {
   type BibleToolContext,
   type QuickToolContext,
 } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
-import type { ReadingPlan } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
-import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import {
+  createReadingPlan,
+  type ReadingPlan,
+  type ReadingPlanDraft,
+  type ReadingPlansManager,
+} from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
+import type {
+  BibleReadingState,
+  BibleSelectedVerse,
+} from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import { formatSelectedVerses } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
-import type { PlaylistItemData } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import {
+  createPlayingState,
+  type PlaylistItemData,
+} from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import type { BrandingConfig } from "@packages/seed-bible/seed-bible/app/appConfig";
 import { extractContentText } from "@packages/seed-bible/seed-bible/managers/ChapterText";
+import { injectNativeAppConfig } from "../testUtils/nativeAppConfig";
 
 const CUSTOM_TOOL_ID = "test-toolbar-tool";
 const CUSTOM_VERSE_TOOL_ID = "test-verse-toolbar-tool";
@@ -113,6 +125,10 @@ function createQuickToolContext(
     discoverContentPanelInline?: boolean;
     annotationsForChapter?: unknown[];
     isMobile?: boolean;
+    isDiscoverOpen?: ReadonlySignal<boolean>;
+    settings?: ReadonlySignal<{ discoveredContent: { showContent: boolean } }>;
+    readingPlansForChapter?: unknown[];
+    pendingAnnotationChangesForChapter?: number;
   } = {}
 ): QuickToolContext {
   return {
@@ -136,13 +152,30 @@ function createQuickToolContext(
       getAnnotationsForChapter: vi.fn(() =>
         signal(overrides.annotationsForChapter ?? [])
       ),
+      pendingCountForChapter: vi.fn(
+        () => overrides.pendingAnnotationChangesForChapter ?? 0
+      ),
+      visibleAnnotationsForChapter: vi.fn(
+        () => overrides.annotationsForChapter ?? []
+      ),
     } as any,
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     } as any,
+    settings: {
+      settings:
+        overrides.settings ??
+        signal({ discoveredContent: { showContent: true } }),
+    } as any,
     surface: "quick-toolbar",
     app: {
       isMobile: signal(overrides.isMobile ?? false),
+      isDiscoverOpen: overrides.isDiscoverOpen ?? signal(false),
+    } as any,
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(
+        () => overrides.readingPlansForChapter ?? []
+      ),
     } as any,
   };
 }
@@ -202,6 +235,18 @@ describe("getShareUrl", () => {
     expect(url.toString()).toBe(
       "https://example.test/en/NIV/genesis/1?verse=1%2C3"
     );
+  });
+
+  it("points at the public website when shared from the native apps", () => {
+    jsdom.reconfigure({ url: "https://localhost/en/NIV/genesis/1" });
+    const remove = injectNativeAppConfig();
+    try {
+      const url = getShareUrl(createShareUrlReadingState() as any);
+
+      expect(url.toString()).toBe("https://seedbible.org/en/NIV/genesis/1");
+    } finally {
+      remove();
+    }
   });
 
   it("builds supports consecutive verses", () => {
@@ -298,22 +343,24 @@ describe("readingPlanDayPlaylist", () => {
     title: "Through the Psalms",
     description: "Thirty days in the Psalter",
     heroImageUrl: "https://example.com/psalms.jpg",
+    authorUserId: "author-1",
   } satisfies Pick<
     ReadingPlan,
-    "address" | "title" | "description" | "heroImageUrl"
+    "address" | "title" | "description" | "heroImageUrl" | "authorUserId"
   >;
   const items = [
     { type: "verse", reference: { bookId: "PSA", chapter: 1, verse: 1 } },
   ] as unknown as PlaylistItemData[];
 
-  // The player takes its cover art from the playlist it is handed, so a plan
-  // that drops its hero image plays with a blank cover.
+  // The player takes its cover art, description and author from the
+  // playlist it is handed, so a plan that drops them plays without them.
   it("carries the plan's own presentation into playback", () => {
     expect(readingPlanDayPlaylist(plan, items)).toEqual({
       id: "plan-address",
       title: "Through the Psalms",
       description: "Thirty days in the Psalter",
       heroImageUrl: "https://example.com/psalms.jpg",
+      authorUserId: "author-1",
       items,
     });
   });
@@ -920,7 +967,6 @@ describe("createBibleToolsManager", () => {
       expect(chats.composerDraft.value).toBe(
         `${formatSelectedVerses(context.readingState)}\n\n`
       );
-      expect(context.readingState.clearSelectedVerses).toHaveBeenCalledTimes(1);
     });
 
     it("does nothing when the single-agent shortcut is invoked with no selected verses", () => {
@@ -1062,7 +1108,6 @@ describe("createBibleToolsManager", () => {
       expect(chats.createLocalSession).not.toHaveBeenCalled();
       expect(addParticipant).toHaveBeenCalledWith("apologist");
       expect(chats.selectChat).toHaveBeenCalledWith("recent-apologist-chat");
-      expect(context.readingState.clearSelectedVerses).toHaveBeenCalledTimes(1);
     });
 
     it("does not reuse a shared chat or a local chat for a different agent", async () => {
@@ -1578,6 +1623,26 @@ describe("createBibleToolsManager", () => {
       expect(tool?.visible.value).toBe(false);
     });
 
+    it("is hidden while the full Discover pane is open and returns when it closes", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const isDiscoverOpen = signal(true);
+      const context = createQuickToolContext({
+        discoveredCrossReferences: [{ providerId: "p1", results: [{}] }],
+        annotationsForChapter: [{ id: "ann-1" }],
+        isDiscoverOpen,
+      });
+
+      const resolveTool = () =>
+        manager
+          .getQuickTools(context)
+          .find((t) => t.id === "discover-content-panel");
+
+      expect(resolveTool()?.visible.value).toBe(false);
+
+      isDiscoverOpen.value = false;
+      expect(resolveTool()?.visible.value).toBe(true);
+    });
+
     it("flips the tab's discoverContentPanelInline signal when selected", () => {
       const manager = createBibleToolsManager(testBranding);
       const context = createQuickToolContext({
@@ -1593,6 +1658,86 @@ describe("createBibleToolsManager", () => {
 
       tool?.onSelect();
       expect(context.readingState.discoverContentPanelInline.value).toBe(true);
+    });
+
+    it("is visible while the showContent option in settings is enabled, otherwise is hidden", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const settings = signal({ discoveredContent: { showContent: true } });
+      const context = createQuickToolContext({
+        discoveredCrossReferences: [{ providerId: "p1", results: [{}] }],
+        annotationsForChapter: [{ id: "ann-1" }],
+        settings,
+      });
+
+      const resolveTool = () =>
+        manager
+          .getQuickTools(context)
+          .find((t) => t.id === "discover-content-panel");
+
+      expect(resolveTool()?.visible.value).toBe(true);
+
+      settings.value = { discoveredContent: { showContent: false } };
+      expect(resolveTool()?.visible.value).toBe(false);
+    });
+
+    it("is visible when the chapter only has pending annotation changes", () => {
+      const manager = createBibleToolsManager(testBranding);
+      const context = createQuickToolContext({
+        pendingAnnotationChangesForChapter: 3,
+      });
+
+      const tool = manager
+        .getQuickTools(context)
+        .find((t) => t.id === "discover-content-panel");
+
+      expect(tool).toBeDefined();
+      expect(tool?.visible.value).toBe(true);
+    });
+  });
+
+  describe("next-item tool while a playlist plays", () => {
+    const items: PlaylistItemData[] = [
+      { type: "html", html: "a" },
+      { type: "html", html: "b" },
+    ];
+
+    async function nextItemToolOnLastItem(recordName?: string) {
+      const onFinish = vi.fn();
+      const playing = createPlayingState(
+        [
+          {
+            id: "playlist-1",
+            title: "The Love of Jesus",
+            description: null,
+            items,
+            ...(recordName ? { recordName } : {}),
+          },
+        ],
+        null,
+        onFinish
+      );
+      await playing.jumpTo(items.length - 1);
+      const context = createContext({
+        playlists: { playing: signal(playing) } as any,
+      });
+      const tool = createBibleToolsManager(testBranding)
+        .getToolbarTools(context)
+        .find((t) => t.id === "next-item");
+      return { tool, onFinish };
+    }
+
+    it("stays enabled on a saved playlist's last item and finishes the playlist", async () => {
+      const { tool, onFinish } = await nextItemToolOnLastItem("user-1");
+
+      expect(tool?.disabled.value).toBe(false);
+      await tool?.onSelect();
+      expect(onFinish).toHaveBeenCalledTimes(1);
+    });
+
+    it("is disabled on the last item of a queue with no saved playlist", async () => {
+      const { tool } = await nextItemToolOnLastItem();
+
+      expect(tool?.disabled.value).toBe(true);
     });
   });
 
@@ -1794,9 +1939,17 @@ describe("createBibleToolsManager", () => {
         } as any,
         annotations: {
           getAnnotationsForChapter: () => signal([]),
+          pendingCountForChapter: vi.fn(() => 0),
+          visibleAnnotationsForChapter: () => [],
         } as any,
         features: {} as any,
+        settings: {
+          settings: signal({ discoveredContent: { showContent: true } }),
+        } as any,
         surface: "quick-toolbar",
+        readingPlans: {
+          getReadingPlansForChapter: vi.fn(() => []),
+        } as any,
         ...overrides,
       };
     }
@@ -1876,6 +2029,7 @@ describe("createBibleToolsManager", () => {
         key: "share-sheet-title",
         defaultValue: "Share",
       });
+      expect(openModal.mock.calls[0]?.[0]?.mobileSheet).toBe(true);
     });
   });
 
@@ -1928,12 +2082,11 @@ describe("createBibleToolsManager", () => {
 
     it("adds one playlist item for a contiguous verse run", async () => {
       const manager = createBibleToolsManager(testBranding);
-      const { context, editingPlaylist, clearSelectedVerses } =
-        createPlaylistContext({
-          verses: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((n) =>
-            selectedVerse("EXO", 26, n)
-          ),
-        });
+      const { context, editingPlaylist } = createPlaylistContext({
+        verses: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((n) =>
+          selectedVerse("EXO", 26, n)
+        ),
+      });
 
       const tool = manager
         .getVerseToolbarTools(context)
@@ -1947,7 +2100,6 @@ describe("createBibleToolsManager", () => {
           ref: { bookId: "EXO", chapter: 26, verse: 1, endVerse: 11 },
         },
       ]);
-      expect(clearSelectedVerses).toHaveBeenCalledTimes(1);
     });
 
     it("adds one playlist item per gapped range", async () => {
@@ -2033,5 +2185,196 @@ describe("createBibleToolsManager", () => {
 
       expect(clearSelectedVerses).not.toHaveBeenCalled();
     });
+  });
+
+  describe("add-to-reading-plan", () => {
+    function selectedVerse(): BibleSelectedVerse {
+      return {
+        bookId: "GEN",
+        chapterNumber: 1,
+        translationId: "BSB",
+        verse: {
+          type: "verse",
+          number: 1,
+          content: ["In the beginning"],
+        },
+      };
+    }
+
+    function planContext(options: {
+      editing?: boolean;
+      verses?: BibleSelectedVerse[];
+    }) {
+      const draft: ReadingPlanDraft = {
+        plan: createReadingPlan(
+          "user-1",
+          "user-1",
+          "plan_1",
+          Date.UTC(2026, 0, 1),
+          { status: "draft" }
+        ),
+        selectedSessionIndex: 0,
+        persisted: false,
+        isNew: true,
+      };
+      const readingPlans: Pick<ReadingPlansManager, "editingReadingPlan"> = {
+        editingReadingPlan: signal(options.editing ? draft : null),
+      };
+      const context = createContext({
+        // Every flag off, so the tool can't be leaning on one to show.
+        features: { isFeatureEnabled: vi.fn(() => signal(false)) },
+        readingPlans: readingPlans as ReadingPlansManager,
+      });
+      context.readingState.selectedVerses.value = options.verses ?? [];
+      return context;
+    }
+
+    function toolFor(context: BibleToolContext) {
+      return createBibleToolsManager(testBranding)
+        .getVerseToolbarTools(context)
+        .find((entry) => entry.id === "add-to-reading-plan");
+    }
+
+    it("is visible while a plan draft is open and verses are selected", () => {
+      const context = planContext({
+        editing: true,
+        verses: [selectedVerse()],
+      });
+
+      expect(toolFor(context)?.visible.value).toBe(true);
+    });
+
+    it("stays hidden when no plan draft is open", () => {
+      const context = planContext({
+        editing: false,
+        verses: [selectedVerse()],
+      });
+
+      expect(toolFor(context)?.visible.value).toBe(false);
+    });
+
+    it("stays hidden when a draft is open but no verses are selected", () => {
+      const context = planContext({ editing: true, verses: [] });
+
+      expect(toolFor(context)?.visible.value).toBe(false);
+    });
+  });
+});
+
+describe("showInEmbedded", () => {
+  function embeddedApp(embedded: boolean) {
+    return { isMinimalEmbed: signal(embedded) } as any;
+  }
+
+  it("hides reader toolbar tools in an embed unless they opt in", () => {
+    const manager = createBibleToolsManager(testBranding);
+    const embedded = signal(false);
+    const context = createContext({
+      app: { isMinimalEmbed: embedded } as any,
+    });
+
+    const resolved = manager.getToolbarTools(context);
+    const visible = (id: string) =>
+      resolved.find((tool) => tool.id === id)?.visible.value;
+
+    expect(visible("open-search")).toBe(true);
+    expect(visible("previous-chapter")).toBe(true);
+    expect(visible("next-chapter")).toBe(true);
+    expect(visible("open-selector")).toBe(true);
+
+    embedded.value = true;
+
+    expect(visible("open-search")).toBe(false);
+    expect(visible("previous-chapter")).toBe(true);
+    expect(visible("next-chapter")).toBe(true);
+    expect(visible("open-selector")).toBe(true);
+  });
+
+  it("keeps only copy and share on the verse toolbar in an embed", () => {
+    const manager = createBibleToolsManager(testBranding);
+    const context = createContext({ app: embeddedApp(true) });
+    context.readingState.selectedVerses.value = [
+      { verse: { number: 1 } },
+    ] as any;
+
+    const tools = manager.getVerseToolbarTools(context);
+    const visible = (id: string) =>
+      tools.find((tool) => tool.id === id)?.visible.value;
+
+    expect(visible("copy-verse")).toBe(true);
+    expect(visible("share-verse")).toBe(true);
+    expect(visible("clear-selection")).toBe(false);
+    expect(visible("annotate-verse")).toBe(false);
+    expect(visible("ask-ai")).toBe(false);
+  });
+
+  it("lets a registered tool opt in, and hides one that does not", () => {
+    const manager = createBibleToolsManager(testBranding);
+    const context = createContext({ app: embeddedApp(true) });
+
+    manager.registerVerseToolbarTool({
+      id: "embed-opt-in",
+      priority: 1,
+      title: "Shown",
+      icon: () => null as any,
+      showInEmbedded: true,
+      onSelect: vi.fn(),
+    });
+    manager.registerVerseToolbarTool({
+      id: "embed-opt-out",
+      priority: 2,
+      title: "Hidden",
+      icon: () => null as any,
+      onSelect: vi.fn(),
+    });
+
+    const tools = manager.getVerseToolbarTools(context);
+    expect(
+      tools.find((tool) => tool.id === "embed-opt-in")?.visible.value
+    ).toBe(true);
+    expect(
+      tools.find((tool) => tool.id === "embed-opt-out")?.visible.value
+    ).toBe(false);
+  });
+
+  it("hides quick toolbar tools in an embed", () => {
+    const manager = createBibleToolsManager(testBranding);
+    const context = createQuickToolContext();
+    context.app = embeddedApp(true);
+    context.modals = {} as any;
+
+    const share = manager
+      .getQuickTools(context)
+      .find((tool) => tool.id === "share");
+
+    expect(share?.visible.value).toBe(false);
+  });
+
+  it("hides below-reader tools in an embed", () => {
+    const manager = createBibleToolsManager(testBranding);
+    const context = {
+      ...createContext({ app: embeddedApp(true) }),
+      currentSlot: {} as any,
+    };
+
+    const poweredBy = manager
+      .getBelowReaderTools(context)
+      .find((tool) => tool.id === "powered-by");
+
+    expect(poweredBy?.visible.value).toBe(false);
+  });
+
+  it("leaves below-reader tools available outside an embed", () => {
+    const manager = createBibleToolsManager(testBranding);
+    const context = {
+      ...createContext({ app: embeddedApp(false) }),
+      currentSlot: {} as any,
+    };
+
+    const poweredBy = manager
+      .getBelowReaderTools(context)
+      .find((tool) => tool.id === "powered-by");
+
+    expect(poweredBy?.visible.value).toBe(true);
   });
 });

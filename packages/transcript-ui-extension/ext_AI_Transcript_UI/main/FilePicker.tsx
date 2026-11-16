@@ -1,7 +1,8 @@
 import { useRef, useState } from "preact/hooks";
 import { useManager } from "./context";
+import { Button } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
-import type { FileStatus } from "@seed-bible/ai-transcript-extension/types";
+import type { FileStatus } from "@seed-bible/transcription/types";
 
 const STATUS_TEXT: Record<FileStatus, string> = {
   queued: "Ready",
@@ -122,8 +123,8 @@ export function FilePicker() {
       <div class="ts_picker__footer">
         <span class="ts_picker__spacer" />
 
-        <button
-          class="ts_btn ts_btn--primary"
+        <Button
+          variant="primary"
           disabled={processing || !file || file.status === "done"}
           onClick={() => tm.transcribeAll()}
         >
@@ -136,7 +137,7 @@ export function FilePicker() {
                 ns: "ext_AI_Transcript_UI",
                 defaultValue: "Transcribe",
               })}
-        </button>
+        </Button>
       </div>
     </section>
   );

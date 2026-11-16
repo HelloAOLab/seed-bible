@@ -18,24 +18,28 @@ export function canPreviewPlaylistItem(item: PlaylistItemData): boolean {
  * depending on what its URL points at. Scripture items are ignored — they have
  * no preview.
  *
- * `modalId` is the caller's own, so a reading-plan preview can't close the
- * playlist playback modal (or the reverse) out from under the user.
+ * `modalId` is the caller's own, so one preview can't close another's modal
+ * out from under the user. `onDismiss` runs only when the user closes it.
  *
- * Shared by playlist playback, the reading-plan wizard, and the plan detail
- * view so an item looks the same wherever it is previewed.
+ * Shared by the reading-plan wizard and the plan detail view. A playing
+ * playlist shows its steps in the reader instead (see `PlaylistStepPage`).
  */
 export function openPlaylistItemPreview(
   modals: ModalManager,
   item: PlaylistItemData,
   modalId: string,
-  t: ReturnType<typeof useI18n>["t"]
+  t: ReturnType<typeof useI18n>["t"],
+  onDismiss?: () => void
 ): void {
   if (item.type === "bible-verse") {
     return;
   }
   modals.openModal({
     id: modalId,
-    title: item.title?.trim() || t("content", { defaultValue: "Content" }),
+    title:
+      item.title?.trim() ||
+      (item.type === "link" ? item.preview?.title : undefined) ||
+      t("content", { defaultValue: "Content" }),
     content: () =>
       item.type === "html" ? (
         <PlaylistHtmlContent html={item.html} />
@@ -44,7 +48,9 @@ export function openPlaylistItemPreview(
           url={item.url}
           title={item.title}
           embed={item.embed}
+          preview={item.preview}
         />
       ),
+    onDismiss,
   });
 }

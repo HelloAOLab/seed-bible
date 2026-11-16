@@ -3,7 +3,6 @@ import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
 import { TodayPane } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayPane";
 import type { ReadingHistoryState } from "@packages/seed-bible/seed-bible/managers/TodayReadingHistory";
-import type { Bookmark } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
 import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { todayStub, loginStub } from "../../testUtils/todayStubs";
@@ -67,12 +66,12 @@ function renderCounts(body: () => void): Map<string, number> {
 describe("Today screen reactivity", () => {
   let container: HTMLDivElement;
   let originalResizeObserver: unknown;
+  let originalScrollIntoView: unknown;
 
   // One signal per input the screen takes.
   let readingHistory: Signal<ReadingHistoryState>;
   let bookNames: Signal<Map<string, string>>;
   let profile: Signal<UserProfile | null>;
-  let bookmarks: Signal<Bookmark[]>;
   let theme: Signal<BibleTheme>;
   let isMobile: Signal<boolean>;
 
@@ -87,6 +86,12 @@ describe("Today screen reactivity", () => {
     ).ResizeObserver;
     (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
       MockResizeObserver;
+    // jsdom has no scrollIntoView, which the timeline calls on mount.
+    originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: () => {},
+    });
 
     readingHistory = signal<ReadingHistoryState>({
       status: "ready",
@@ -94,8 +99,7 @@ describe("Today screen reactivity", () => {
     } as ReadingHistoryState);
     bookNames = signal(new Map([["GEN", "Genesis"]]));
     profile = signal({ name: "Alice" } as UserProfile);
-    bookmarks = signal<Bookmark[]>([]);
-    theme = signal(themeWith({ secondaryFontColor: "rgb(1, 2, 3)" }));
+    theme = signal(themeWith({ dividerColor: "rgb(1, 2, 3)" }));
     isMobile = signal(false);
   });
 
@@ -104,6 +108,10 @@ describe("Today screen reactivity", () => {
     container.remove();
     (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
       originalResizeObserver;
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: originalScrollIntoView,
+    });
     vi.clearAllMocks();
   });
 
@@ -118,9 +126,12 @@ describe("Today screen reactivity", () => {
       translationBooksMap: signal(new Map()),
       getDefaultTranslation: () => "KJV",
       getVerseText: async () => "In the beginning",
+      getVerseOfTheDay: async () => null,
       getTranslationBooks: async () => ({ books: [] }) as never,
       searchVerses: async () => [],
-      getCommunityReading: async () => ({}),
+      communityMembers: signal(["u1"]),
+      getCommunityFeed: async () => [],
+      friendReaders: signal([]),
       getReadingHistoryEvents: async () => [],
     });
     const login = loginStub({ userId: signal("u1"), profile });
@@ -130,12 +141,13 @@ describe("Today screen reactivity", () => {
         <TodayPane
           today={today}
           login={login}
-          bookmarks={bookmarks}
           theme={theme}
           isMobile={isMobile}
+          bookmarks={signal([])}
           onOpenPassage={vi.fn()}
           onOpenBookSelector={vi.fn()}
-          onShowBookmarksList={vi.fn()}
+          onTakeTour={vi.fn()}
+          onClose={vi.fn()}
         />,
         container
       )
@@ -143,17 +155,21 @@ describe("Today screen reactivity", () => {
   }
 
   const q = (sel: string) => container.querySelector(sel);
-  const text = (sel: string) => q(sel)?.textContent ?? null;
 
-  const aBookmark = () =>
-    ({
-      id: "b1",
-      translationId: "KJV",
-      bookId: "GEN",
-      chapterNumber: 3,
-      createdAt: 0,
-      category: "Favorites",
-    }) as Bookmark;
+  /**
+   * The timeline is the one card that still colours itself from the theme in
+   * code, and it only mounts while the community feed's history is open.
+   */
+  function showTimeline() {
+    act(() => {
+      (
+        container.querySelector(
+          ".sb-today-feed-history-button"
+        ) as HTMLButtonElement
+      ).click();
+    });
+  }
+  const text = (sel: string) => q(sel)?.textContent ?? null;
 
   it("swaps Welcome for the personalized layout when history arrives", () => {
     readingHistory.value = { status: "empty" };
@@ -195,29 +211,22 @@ describe("Today screen reactivity", () => {
     expect(text(".sb-today-resume-card h1")).toContain("Génesis");
   });
 
-  it("reveals the bookmarks strip once a bookmark exists", () => {
-    setup();
-    expect(q(".sb-today-bookmarks-section")).toBeNull();
-
-    act(() => {
-      bookmarks.value = [aBookmark()];
-    });
-
-    expect(q(".sb-today-bookmarks-section")).not.toBeNull();
-  });
-
   // The regression that prompted this suite: a theme switch has to repaint
   // immediately, without waiting for an unrelated re-render to carry it.
   it("restyles on a theme switch", () => {
     setup();
-    const icon = () => q(".sb-today-seed-bible-icon") as SVGSVGElement;
-    expect(icon().style.fill).toBe("rgb(1, 2, 3)");
+    showTimeline();
+    // The legend's first swatch is the colour of an unread day, which the
+    // timeline takes from the theme's divider colour.
+    const unreadSwatch = () =>
+      q(".sb-today-content .legend span[style]") as HTMLElement;
+    expect(unreadSwatch().style.backgroundColor).toBe("rgb(1, 2, 3)");
 
     act(() => {
-      theme.value = themeWith({ secondaryFontColor: "rgb(9, 9, 9)" });
+      theme.value = themeWith({ dividerColor: "rgb(9, 9, 9)" });
     });
 
-    expect(icon().style.fill).toBe("rgb(9, 9, 9)");
+    expect(unreadSwatch().style.backgroundColor).toBe("rgb(9, 9, 9)");
   });
 
   it("resizes chrome when the viewport crosses the mobile breakpoint", () => {
@@ -237,7 +246,6 @@ describe("Today screen reactivity", () => {
   // the old config bag both of these signals were read in the pane's root
   // render function, so either change re-rendered every card on the screen.
   it("re-renders only the header when the signed-in profile changes", () => {
-    bookmarks.value = [aBookmark()];
     setup();
 
     const counts = renderCounts(() => {
@@ -250,27 +258,26 @@ describe("Today screen reactivity", () => {
     expect(counts.get("TodayContainer") ?? 0).toBe(0);
     expect(counts.get("TodayContent") ?? 0).toBe(0);
     expect(counts.get("ResumeReadingSection") ?? 0).toBe(0);
-    expect(counts.get("BookmarksSection") ?? 0).toBe(0);
     expect(counts.get("SearchSection") ?? 0).toBe(0);
   });
 
   it("leaves the cards that don't read the theme alone on a theme switch", () => {
-    bookmarks.value = [aBookmark()];
     setup();
+    showTimeline();
 
     const counts = renderCounts(() => {
       act(() => {
-        theme.value = themeWith({ secondaryFontColor: "rgb(9, 9, 9)" });
+        theme.value = themeWith({ dividerColor: "rgb(9, 9, 9)" });
       });
     });
 
-    // The search card is the one that reads the theme directly, so it is the
+    // The timeline card is the one that reads the theme directly, so it is the
     // proof the switch was actually delivered rather than dropped.
-    expect(counts.get("SearchSection")).toBe(1);
+    expect(counts.get("ReadingHistoryTimelineSection")).toBe(1);
+    expect(counts.get("SearchSection") ?? 0).toBe(0);
     expect(counts.get("TodayContainer") ?? 0).toBe(0);
     expect(counts.get("TodayContent") ?? 0).toBe(0);
     expect(counts.get("Header") ?? 0).toBe(0);
     expect(counts.get("ResumeReadingSection") ?? 0).toBe(0);
-    expect(counts.get("BookmarksSection") ?? 0).toBe(0);
   });
 });

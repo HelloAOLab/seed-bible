@@ -7,5 +7,4 @@ Commit all staged changes.
    - Followed by a colon and a concise description of what changed and why
    - If a description is needed, keep it terse.
    - Example: `feat: simplify movement to orthogonal tile steps on shared position`
-   - DO NOT include Co-authored by lines.
 4. Commit using that message (do not amend — always create a new commit).

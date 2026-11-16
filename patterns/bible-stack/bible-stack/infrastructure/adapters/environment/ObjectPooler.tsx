@@ -1,4 +1,4 @@
-import type { BaseEventManager } from "../../../application/services/BaseEventManager";
+import type { EventManager } from "../../utils/EventManager";
 import type { TypedBot, PieceBotTags } from "../../models/casualos";
 import type { BibleStackInfrastructureEvents } from "../../models/events";
 import type { PoolData, Pool } from "../../models/objectPooler";
@@ -18,7 +18,7 @@ interface AdapterParams<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
     getDimension: () => string;
   };
   poolsData: ObjectPoolerConfig<P>;
-  eventManager: BaseEventManager<BibleStackInfrastructureEvents>;
+  eventManager: EventManager<BibleStackInfrastructureEvents>;
 }
 
 export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {

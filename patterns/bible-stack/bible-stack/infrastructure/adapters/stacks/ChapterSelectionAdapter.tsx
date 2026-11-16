@@ -1,6 +1,6 @@
 import type {
-  ChapterSelectionAdapterPort,
   ChapterSelectionParams,
+  ChapterSelectionPort,
 } from "../../../application/ports/out/ChapterSelection";
 import type { StackChapterData } from "../../../domain/entities/StackChapterData";
 import type { StackChapterMapper } from "../../mappers/StackChapterMapper";
@@ -49,7 +49,7 @@ interface ChapterSelectContext {
   easing: ReturnType<ChapterSelectionConfigProvider["getSelectionEasing"]>;
 }
 
-export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
+export class ChapterSelectionAdapter implements ChapterSelectionPort {
   #getDimension: AdapterParams["getDimension"];
   #configProvider: AdapterParams["configProvider"];
   #mapper: AdapterParams["mapper"];

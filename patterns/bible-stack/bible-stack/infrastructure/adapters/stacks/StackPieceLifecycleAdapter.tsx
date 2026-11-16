@@ -1,6 +1,5 @@
-import type { StackPieceLifecycleAdapterPort as PieceLifecycleAdapterPort } from "../../../application/ports/pieceLifecycle";
-import type { StackPieceLifecycleAdapterPort as BibleLifecycleAdapterPort } from "../../../application/ports/bibleLifecycle";
 import type {
+  ActivityIndicatorBot,
   BookBot,
   ChapterBot,
   SectionBot,
@@ -9,7 +8,11 @@ import type {
   VerseBot,
   VersesBundleBot,
 } from "../../models/stack";
-import type { Piece, SectionShadow } from "../../../domain/models/canvas";
+import type {
+  ActivityIndicator,
+  Piece,
+  SectionShadow,
+} from "../../../domain/models/canvas";
 import type { StackBibleData } from "../../../domain/entities/StackBibleData";
 import type {
   StackCover,
@@ -32,7 +35,8 @@ import type { StackTransformerMapper } from "../../mappers/StackTransformerMappe
 import type { StackCoverMapper } from "../../mappers/StackCoverMapper";
 import type { StackCrossLineMapper } from "../../mappers/StackCrossLineMapper";
 import type { StackShadowMapper } from "../../mappers/StackShadowMapper";
-import type { PieceLifecycleAdapterPort as BibleLifecyclePieceLifecycleAdapterPort } from "../../../application/ports/bibleLifecycle";
+import type { ActivityIndicatorMapper } from "../../mappers/ActivityIndicatorMapper";
+import type { StackPieceLifecyclePort } from "../../../application/ports/out/StackPieceLifecycle";
 
 export interface StackPieceLifecycleAdapterParams {
   objectPoolerPort: ObjectPooler<BibleStackObjectPoolerMap>;
@@ -48,10 +52,11 @@ export interface StackPieceLifecycleAdapterParams {
   coverMapperPort: StackCoverMapper;
   crossLineMapperPort: StackCrossLineMapper;
   stackShadowMapperPort: StackShadowMapper;
+  activityIndicatorMapperPort: ActivityIndicatorMapper;
 }
 
 // prettier-ignore
-export class StackPieceLifecycleAdapter implements PieceLifecycleAdapterPort, BibleLifecycleAdapterPort, BibleLifecyclePieceLifecycleAdapterPort {
+export class StackPieceLifecycleAdapter implements StackPieceLifecyclePort {
   #objectPoolerPort: StackPieceLifecycleAdapterParams["objectPoolerPort"];
   #testamentMapperPort: StackPieceLifecycleAdapterParams["testamentMapperPort"];
   #sectionMapperPort: StackPieceLifecycleAdapterParams["sectionMapperPort"];
@@ -65,6 +70,7 @@ export class StackPieceLifecycleAdapter implements PieceLifecycleAdapterPort, Bi
   #coverMapperPort: StackPieceLifecycleAdapterParams["coverMapperPort"];
   #crossLineMapperPort: StackPieceLifecycleAdapterParams["crossLineMapperPort"];
   #stackShadowMapperPort: StackPieceLifecycleAdapterParams["stackShadowMapperPort"];
+  #activityIndicatorMapperPort: StackPieceLifecycleAdapterParams["activityIndicatorMapperPort"];
 
   constructor({
     objectPoolerPort,
@@ -80,6 +86,7 @@ export class StackPieceLifecycleAdapter implements PieceLifecycleAdapterPort, Bi
     coverMapperPort,
     crossLineMapperPort,
     stackShadowMapperPort,
+    activityIndicatorMapperPort,
   }: StackPieceLifecycleAdapterParams) {
     this.#objectPoolerPort = objectPoolerPort;
     this.#testamentMapperPort = testamentMapperPort;
@@ -94,6 +101,17 @@ export class StackPieceLifecycleAdapter implements PieceLifecycleAdapterPort, Bi
     this.#coverMapperPort = coverMapperPort;
     this.#crossLineMapperPort = crossLineMapperPort;
     this.#stackShadowMapperPort = stackShadowMapperPort;
+    this.#activityIndicatorMapperPort = activityIndicatorMapperPort;
+  }
+
+  spawnActivityIndicator(): ActivityIndicatorBot {
+    return this.#objectPoolerPort.getObject("ActivityIndicator");
+  }
+
+  spawnActivityIndicatorDomain(dataId: string): ActivityIndicator {
+    const bot = this.spawnActivityIndicator();
+    SetStrictTag(bot, "dataId", dataId);
+    return this.#activityIndicatorMapperPort.toDomain(bot);
   }
 
   spawnTestament(): TestamentBot {

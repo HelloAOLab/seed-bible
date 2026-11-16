@@ -2,9 +2,9 @@ import { useSignal, type ReadonlySignal } from "@preact/signals";
 import { useRef, useEffect } from "preact/hooks";
 import { TitledSection } from "./TitledSection";
 import { useClickOutside } from "../useClickOutside";
-import { MaterialIcon, SeedBibleIcon } from "../icons";
+import { SeedBibleIcon } from "../icons";
+import { SearchBar } from "../SearchBar/SearchBar";
 import { useI18n } from "../../i18n";
-import type { BibleTheme } from "../../managers/ThemeManager";
 import type {
   TodayManager,
   TodayPassageTarget,
@@ -13,16 +13,13 @@ import type {
 
 export const SearchSection = (props: {
   today: TodayManager;
-  theme: ReadonlySignal<BibleTheme>;
   isMobile: ReadonlySignal<boolean>;
   onOpenBookSelector: () => void;
   onOpenPassage: (target: TodayPassageTarget) => void;
 }) => {
   const { t } = useI18n();
-  // Both read here in the render body, which is a reactive scope, so a theme
-  // switch or a breakpoint crossing restyles the icon immediately (see
-  // useReadingHistoryTimeline).
-  const theme = props.theme.value;
+  // Read here in the render body, which is a reactive scope, so a breakpoint
+  // crossing resizes the icon immediately (see useReadingHistoryTimeline).
   const isMobile = props.isMobile.value;
   const iconSize = isMobile ? "1.25rem" : "1.5rem";
 
@@ -41,12 +38,12 @@ export const SearchSection = (props: {
             style={{
               width: iconSize,
               height: iconSize,
-              fill: theme.variables.secondaryFontColor,
+              fill: "var(--sb-secondary-font-color)",
             }}
           />
           {t("books", { defaultValue: "Books" })}
         </button>
-        <SearchBar today={props.today} onOpenPassage={props.onOpenPassage} />
+        <VerseSearch today={props.today} onOpenPassage={props.onOpenPassage} />
       </div>
     </TitledSection>
   );
@@ -54,7 +51,7 @@ export const SearchSection = (props: {
 
 const DEBOUNCE_MS = 180;
 
-function SearchBar(props: {
+function VerseSearch(props: {
   today: TodayManager;
   onOpenPassage: (target: TodayPassageTarget) => void;
 }) {
@@ -141,17 +138,15 @@ function SearchBar(props: {
 
   return (
     <div className="sb-today-searchbar" ref={containerRef}>
-      <MaterialIcon>search</MaterialIcon>
-      <input
-        type="text"
-        placeholder={t("today-search-verses", {
-          defaultValue: "Search books, chapters, verses...",
-        })}
+      <SearchBar
         value={query.value}
-        onInput={(e) => runSearch((e.target as HTMLInputElement).value)}
+        onInput={runSearch}
         onFocus={() => {
           isOpen.value = true;
         }}
+        placeholder={t("today-search-verses", {
+          defaultValue: "Search books, chapters, verses...",
+        })}
       />
       {showDropdown && (
         <div className="sb-today-searchbar-dropdown">

@@ -1,3 +1,3 @@
-export interface SpatialNavigationPort {
+export interface SpatialNavigationServicePort {
   handleUserStoppedNavigation(): Promise<void>;
 }

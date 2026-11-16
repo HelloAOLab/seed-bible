@@ -3,6 +3,16 @@ import type { ZodStandardJSONSchemaPayload } from "zod/v4/core";
 import type { PlaylistItemData } from "./PlaylistManager";
 import { getBookId, type BookId } from "./BibleDataManager";
 
+/**
+ * Which chat and which AI invoked a tool. Core tools are shared by every
+ * chat, so a tool that posts into a conversation has to be told which one
+ * called it instead of guessing from the chat the user has selected.
+ */
+export interface AIToolCallContext {
+  chatId?: string;
+  providerId?: string;
+}
+
 export interface AIProviderFunctionTool {
   name: string;
   type: "function";
@@ -12,9 +22,10 @@ export interface AIProviderFunctionTool {
   /**
    * The function that should be called by the AI provider if the AI model chooses to call this tool.
    * @param args The arguments to provide to the function.
+   * @param context The chat and provider that invoked the tool, when the caller knows them.
    * @returns A promise that resolves with the result of the function call.
    */
-  function: (args: unknown) => Promise<unknown>;
+  function: (args: unknown, context?: AIToolCallContext) => Promise<unknown>;
 }
 
 export interface AIProviderGenerateOptions {
@@ -47,6 +58,18 @@ export const AIBibleVerseRefSchema = z.object({
     verse: z.number().positive().nullable(),
     endVerse: z.number().positive().nullable(),
   }),
+  note: z
+    .string()
+    .nullable()
+    .default(null)
+    .describe(
+      "Optional HTML note shown alongside the passage while it plays. Null for no note."
+    ),
+  noteTitle: z
+    .string()
+    .nullable()
+    .default(null)
+    .describe("Optional plain-text heading for the note. Null for none."),
 });
 
 /**
@@ -104,6 +127,10 @@ export function convertToPlaylistItem(
           verse: item.bibleVerse.ref.verse ?? undefined,
           endVerse: item.bibleVerse.ref.endVerse ?? undefined,
         },
+        ...(item.bibleVerse.note ? { note: item.bibleVerse.note } : {}),
+        ...(item.bibleVerse.noteTitle
+          ? { noteTitle: item.bibleVerse.noteTitle }
+          : {}),
       };
     case "link":
       if (!item.link) {
@@ -141,6 +168,8 @@ export function convertToAiPlaylistItem(
             verse: item.ref.verse ?? null,
             endVerse: item.ref.endVerse ?? null,
           },
+          note: item.note ?? null,
+          noteTitle: item.noteTitle ?? null,
         },
         link: null,
         html: null,
@@ -172,19 +201,19 @@ export function generateFunctionTool<T>(options: {
   name: string;
   description: string;
   parameters: ZodSchema<T>;
-  function: (args: T) => Promise<unknown>;
+  function: (args: T, context?: AIToolCallContext) => Promise<unknown>;
 }): { tool: AIProviderFunctionTool; schema: ZodSchema<T> } {
   const tool: AIProviderFunctionTool = {
     name: options.name,
     type: "function",
     description: options.description,
     parameters: options.parameters.toJSONSchema({ io: "input" }),
-    function: (args: unknown) => {
+    function: (args: unknown, context?: AIToolCallContext) => {
       const result = options.parameters.safeParse(args);
       if (!result.success) {
         return Promise.reject(result.error);
       }
-      return options.function(result.data);
+      return options.function(result.data, context);
     },
   };
   return {

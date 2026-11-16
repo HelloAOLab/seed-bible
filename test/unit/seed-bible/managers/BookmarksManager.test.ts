@@ -1,741 +1,520 @@
 import {
-  bookmarkBelongsToCategory,
   createBookmarksManager,
-  DEFAULT_BOOKMARK_CATEGORY,
-  getBookmarkCategories,
-  serializeBookmarkCategories,
+  MAX_BOOKMARKS,
   type Bookmark,
 } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { signal } from "@preact/signals";
-import type { Mock, Mocked } from "vitest";
+import type { Mock } from "vitest";
 
-function createBookmark(overrides: Partial<Bookmark> = {}): Bookmark {
+const GEN_10 = { translationId: "BSB", bookId: "GEN", chapterNumber: 10 };
+const EXO_3 = { translationId: "BSB", bookId: "EXO", chapterNumber: 3 };
+
+function aBookmark(overrides: Partial<Bookmark> = {}): Bookmark {
   return {
     id: "bm-1",
-    translationId: "BSB",
-    bookId: "GEN",
-    chapterNumber: 1,
+    name: "My bookmark",
+    colorId: "orange",
+    ...GEN_10,
     createdAt: 1000,
-    category: DEFAULT_BOOKMARK_CATEGORY,
+    updatedAt: 1000,
     ...overrides,
   };
 }
+
+const NOT_FOUND = {
+  success: false,
+  errorCode: "data_not_found",
+  errorMessage: "Data not found",
+};
 
 describe("BookmarksManager", () => {
   let getDataMock: Mock;
   let recordDataMock: Mock;
   let warnSpy: Mock;
-  let login: Mocked<LoginManager>;
+  let login: LoginManager;
   let os: CasualOSManager;
+  /** What the records server holds, by address. */
+  let records: Record<string, unknown>;
 
+  /** Settles the load the manager kicks off for the signed-in user. */
   const flushPromises = async () => {
-    await Promise.resolve();
-    await Promise.resolve();
+    for (let i = 0; i < 10; i++) {
+      await Promise.resolve();
+    }
+  };
+
+  /** The bookmarks the most recent write sent to the server. */
+  const lastWritten = (): Bookmark[] => {
+    const call = recordDataMock.mock.calls.at(-1);
+    return (call?.[2] as { bookmarks: Bookmark[] }).bookmarks;
   };
 
   beforeEach(() => {
+    records = {};
     os = CasualOSManager();
-    getDataMock = vi.spyOn(os, "getData").mockResolvedValue({
-      success: false,
-      errorCode: "data_not_found",
-      errorMessage: "Data not found",
-    });
+    getDataMock = vi.spyOn(os, "getData") as unknown as Mock;
+    getDataMock.mockImplementation(async (_userId: string, address: string) =>
+      address in records ? { success: true, data: records[address] } : NOT_FOUND
+    );
     recordDataMock = vi
       .spyOn(os, "recordData")
-      .mockResolvedValue(undefined as never);
+      .mockResolvedValue(undefined as never) as unknown as Mock;
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-
     login = {
-      authBot: signal(null),
-      sessionEnded: signal(null),
-      userId: signal("user-1"),
-      connectionId: "conn-1",
-      profile: signal(null),
-      cachedProfile: signal(null),
-      localConfig: signal({}),
-      hydrateLocalConfig: vi.fn(),
-      profilePromise: null,
-      isProfileLoading: signal(false),
-      isSavingProfile: signal(false),
-      updateProfile: vi.fn().mockResolvedValue(undefined),
+      userId: signal<string | null>("user-1"),
       login: vi.fn().mockResolvedValue(undefined),
-      logout: vi.fn().mockResolvedValue(undefined),
-      getUserProfile: vi.fn().mockResolvedValue(null),
-      uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
-      userInfo: signal({ id: "user-1", email: "test@example.com" }),
-      cancelLogin: vi.fn().mockResolvedValue(undefined),
-      isLoginOpen: signal(false),
-      requestLoginByEmail: vi
-        .fn()
-        .mockResolvedValue({ success: true, requestId: "req-1" }),
-      submitLoginCode: vi.fn().mockResolvedValue({
-        success: true,
-        userInfo: { id: "user-1", email: "test@example.com" },
-      }),
-    };
+    } as unknown as LoginManager;
   });
 
   afterEach(() => {
     warnSpy.mockRestore();
-    delete (globalThis as any).authBot;
   });
 
-  it("starts empty when logged out", () => {
+  it("starts empty and reads nothing when signed out", () => {
     login.userId.value = null;
 
     const manager = createBookmarksManager(os, login);
 
     expect(manager.bookmarks.value).toEqual([]);
-    expect(manager.categories.value).toEqual([
-      { name: DEFAULT_BOOKMARK_CATEGORY },
-    ]);
-    expect(Array.from(manager.expandedCategories.value)).toEqual([
-      DEFAULT_BOOKMARK_CATEGORY,
-    ]);
-    expect(manager.isFilterActive.value).toBe(false);
     expect(getDataMock).not.toHaveBeenCalled();
   });
 
-  it("loads persisted bookmarks and normalizes legacy payloads", async () => {
-    getDataMock.mockResolvedValue({
-      success: true,
-      data: {
-        bookmarks: [
-          {
-            id: "legacy-1",
-            translationId: "BSB",
-            bookId: "GEN",
-            chapterNumber: 1,
-            createdAt: 1,
-          },
-          {
-            id: "fav-1",
-            translationId: "BSB",
-            bookId: "EXO",
-            chapterNumber: 2,
-            createdAt: 2,
-            category: "Favorites",
-          },
-          {
-            id: "multi-1",
-            translationId: "BSB",
-            bookId: "LEV",
-            chapterNumber: 3,
-            createdAt: 3,
-            category: ["Favorites", "To Study"],
-          },
-        ],
-      },
-    });
+  it("loads only the readingBookmarks record", async () => {
+    // A user with a full saves history must not see it as bookmarks.
+    records = {
+      readingBookmarks: { bookmarks: [aBookmark()] },
+      bookmarks: { bookmarks: [aBookmark({ id: "legacy" })] },
+      saves: { saves: [aBookmark({ id: "save" })] },
+    };
 
     const manager = createBookmarksManager(os, login);
     await flushPromises();
 
-    expect(getDataMock).toHaveBeenCalledWith("user-1", "bookmarks");
-    expect(manager.bookmarks.value).toEqual([
-      createBookmark({ id: "legacy-1", createdAt: 1 }),
-      createBookmark({
-        id: "fav-1",
-        bookId: "EXO",
-        chapterNumber: 2,
-        createdAt: 2,
-        category: "Favorites",
-      }),
-      createBookmark({
-        id: "multi-1",
-        bookId: "LEV",
-        chapterNumber: 3,
-        createdAt: 3,
-        category: ["Favorites", "To Study"],
-      }),
-    ]);
-    expect(manager.categories.value).toEqual([
-      { name: DEFAULT_BOOKMARK_CATEGORY },
-      { name: "Favorites" },
-      { name: "To Study" },
+    expect(manager.bookmarks.value.map((b) => b.id)).toEqual(["bm-1"]);
+    expect(getDataMock.mock.calls.map((call) => call[1])).toEqual([
+      "readingBookmarks",
     ]);
   });
 
-  it("adds a bookmark and avoids duplicates", async () => {
+  it("orders bookmarks most recently moved first", async () => {
+    records = {
+      readingBookmarks: {
+        bookmarks: [
+          aBookmark({ id: "old", updatedAt: 100 }),
+          aBookmark({ id: "new", updatedAt: 300 }),
+          aBookmark({ id: "mid", updatedAt: 200 }),
+        ],
+      },
+    };
+
     const manager = createBookmarksManager(os, login);
     await flushPromises();
 
-    await manager.addBookmark("BSB", "GEN", 1);
+    expect(manager.bookmarks.value.map((b) => b.id)).toEqual([
+      "new",
+      "mid",
+      "old",
+    ]);
+  });
 
-    expect(manager.isLocationBookmarked("BSB", "GEN", 1)).toBe(true);
-    expect(manager.bookmarks.value).toHaveLength(1);
-    expect(recordDataMock).toHaveBeenCalledTimes(1);
+  it("creates a bookmark at a chapter and writes it", async () => {
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    const created = await manager.createBookmark(
+      { name: "  Reading plan  ", colorId: "blue" },
+      GEN_10
+    );
+
+    expect(created).toMatchObject({
+      name: "Reading plan",
+      colorId: "blue",
+      ...GEN_10,
+    });
+    expect(manager.bookmarks.value).toEqual([created]);
     expect(recordDataMock).toHaveBeenCalledWith(
       "user-1",
-      "bookmarks",
-      {
-        bookmarks: [
-          expect.objectContaining({
-            translationId: "BSB",
-            bookId: "GEN",
-            chapterNumber: 1,
-            category: DEFAULT_BOOKMARK_CATEGORY,
-          }),
-        ],
-        categories: [{ name: DEFAULT_BOOKMARK_CATEGORY }],
-      },
+      "readingBookmarks",
+      { bookmarks: [created] },
       { marker: "publicRead" }
     );
-
-    await manager.addBookmark("BSB", "GEN", 1);
-
-    expect(manager.bookmarks.value).toHaveLength(1);
-    expect(recordDataMock).toHaveBeenCalledTimes(1);
   });
 
-  it("adds a bookmark to multiple categories", async () => {
+  it("refuses a blank name", async () => {
     const manager = createBookmarksManager(os, login);
     await flushPromises();
 
-    await manager.addBookmark("BSB", "GEN", 1, {
-      category: [DEFAULT_BOOKMARK_CATEGORY, "Favorites"],
-    });
-
-    expect(manager.bookmarks.value[0]?.category).toEqual([
-      DEFAULT_BOOKMARK_CATEGORY,
-      "Favorites",
-    ]);
-    expect(manager.categories.value).toEqual([
-      { name: DEFAULT_BOOKMARK_CATEGORY },
-      { name: "Favorites" },
-    ]);
-  });
-
-  it("looks up the bookmark saved at a location", async () => {
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    await manager.addBookmark("BSB", "GEN", 1);
-    await manager.addBookmark("BSB", "GEN", 1, { verse: 3 });
-    await manager.addBookmark("BSB", "GEN", 1, { verse: [5, 7] });
-
-    const chapter = manager.getBookmarkForLocation("BSB", "GEN", 1);
-    expect(chapter?.verse).toBeUndefined();
-
-    expect(manager.getBookmarkForLocation("BSB", "GEN", 1, 3)?.id).toBe(
-      manager.bookmarks.value.find((b) => b.verse === 3)?.id
+    const created = await manager.createBookmark(
+      { name: "   ", colorId: "blue" },
+      GEN_10
     );
-    expect(
-      manager.getBookmarkForLocation("BSB", "GEN", 1, [5, 7])?.verse
-    ).toEqual([5, 7]);
 
-    // A verse the user never bookmarked, and a range that only partly overlaps
-    // a saved one, both count as misses.
-    expect(manager.getBookmarkForLocation("BSB", "GEN", 1, 4)).toBeUndefined();
-    expect(
-      manager.getBookmarkForLocation("BSB", "GEN", 1, [5, 6])
-    ).toBeUndefined();
-    expect(manager.getBookmarkForLocation("BSB", "EXO", 1)).toBeUndefined();
+    expect(created).toBeNull();
+    expect(recordDataMock).not.toHaveBeenCalled();
   });
 
-  it("removes a bookmark from every folder it belongs to", async () => {
+  describe("the cap", () => {
+    const stored = (count: number) =>
+      Array.from({ length: count }, (_, i) => aBookmark({ id: `bm-${i}` }));
+
+    it("stops creating at the cap", async () => {
+      records = { readingBookmarks: { bookmarks: stored(MAX_BOOKMARKS) } };
+      const manager = createBookmarksManager(os, login);
+      await flushPromises();
+
+      expect(manager.canCreate.value).toBe(false);
+      const created = await manager.createBookmark(
+        { name: "One more", colorId: "red" },
+        GEN_10
+      );
+
+      expect(created).toBeNull();
+      expect(manager.bookmarks.value).toHaveLength(MAX_BOOKMARKS);
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("never truncates a stored list that is already over the cap", async () => {
+      records = {
+        readingBookmarks: { bookmarks: stored(MAX_BOOKMARKS + 2) },
+      };
+      const manager = createBookmarksManager(os, login);
+      await flushPromises();
+
+      expect(manager.bookmarks.value).toHaveLength(MAX_BOOKMARKS + 2);
+
+      await manager.moveBookmark("bm-0", EXO_3);
+
+      expect(lastWritten()).toHaveLength(MAX_BOOKMARKS + 2);
+    });
+  });
+
+  it("moves a bookmark and brings it to the front", async () => {
+    records = {
+      readingBookmarks: {
+        bookmarks: [
+          aBookmark({ id: "a", updatedAt: 100 }),
+          aBookmark({ id: "b", updatedAt: 200 }),
+        ],
+      },
+    };
     const manager = createBookmarksManager(os, login);
     await flushPromises();
 
-    await manager.addBookmark("BSB", "GEN", 1, {
-      category: ["Favorites", "To Study"],
-      verse: 3,
-    });
-    const id = manager.bookmarks.value[0]!.id;
+    await manager.moveBookmark("a", EXO_3);
 
-    await manager.removeBookmark(id);
+    const [front] = manager.bookmarks.value;
+    expect(front).toMatchObject({ id: "a", ...EXO_3 });
+    expect(front!.updatedAt).toBeGreaterThan(200);
+    expect(lastWritten().find((b) => b.id === "a")).toMatchObject(EXO_3);
+  });
+
+  it("renames and recolors without moving", async () => {
+    records = { readingBookmarks: { bookmarks: [aBookmark()] } };
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    await manager.updateBookmark("bm-1", {
+      name: "Sermon prep",
+      colorId: "purple",
+    });
+
+    expect(manager.bookmarks.value[0]).toEqual(
+      aBookmark({ name: "Sermon prep", colorId: "purple" })
+    );
+  });
+
+  it("deletes a bookmark", async () => {
+    records = { readingBookmarks: { bookmarks: [aBookmark()] } };
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    await manager.removeBookmark("bm-1");
 
     expect(manager.bookmarks.value).toEqual([]);
-    expect(manager.getBookmarkForLocation("BSB", "GEN", 1, 3)).toBeUndefined();
-    // The folders themselves outlive the bookmarks stored in them.
-    expect(manager.categories.value).toEqual([
-      { name: DEFAULT_BOOKMARK_CATEGORY },
-      { name: "Favorites" },
-      { name: "To Study" },
-    ]);
+    expect(lastWritten()).toEqual([]);
   });
 
-  it("attempts login before adding when unauthenticated", async () => {
+  describe("lookups by chapter", () => {
+    it("returns every bookmark on the chapter, most recently moved first", async () => {
+      records = {
+        readingBookmarks: {
+          bookmarks: [
+            aBookmark({ id: "first", updatedAt: 100 }),
+            aBookmark({ id: "elsewhere", ...EXO_3, updatedAt: 300 }),
+            aBookmark({ id: "latest", updatedAt: 200 }),
+          ],
+        },
+      };
+      const manager = createBookmarksManager(os, login);
+      await flushPromises();
+
+      expect(
+        manager
+          .getBookmarksForLocation("BSB", "GEN", 10)
+          .map((bookmark) => bookmark.id)
+      ).toEqual(["latest", "first"]);
+    });
+
+    it("ignores a bookmark on the same chapter in another translation", async () => {
+      records = {
+        readingBookmarks: {
+          bookmarks: [aBookmark({ translationId: "KJV" })],
+        },
+      };
+      const manager = createBookmarksManager(os, login);
+      await flushPromises();
+
+      expect(manager.getBookmarksForLocation("BSB", "GEN", 10)).toEqual([]);
+    });
+
+    it("returns nothing for an unknown location", () => {
+      const manager = createBookmarksManager(os, login);
+      expect(manager.getBookmarksForLocation(null, "GEN", 10)).toEqual([]);
+    });
+  });
+
+  describe("when the record can't be read", () => {
+    beforeEach(() => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "Server error",
+      });
+    });
+
+    it("writes nothing rather than replace a record it never saw", async () => {
+      const manager = createBookmarksManager(os, login);
+      await flushPromises();
+
+      expect(await manager.ensureLoaded()).toBe(false);
+      const created = await manager.createBookmark(
+        { name: "My bookmark", colorId: "orange" },
+        GEN_10
+      );
+
+      expect(created).toBeNull();
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("recovers on the next action once the read succeeds", async () => {
+      const manager = createBookmarksManager(os, login);
+      await flushPromises();
+
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { bookmarks: [aBookmark()] },
+      });
+
+      expect(await manager.ensureLoaded()).toBe(true);
+      expect(manager.bookmarks.value.map((b) => b.id)).toEqual(["bm-1"]);
+    });
+  });
+
+  it("surfaces a rejected write as an error", async () => {
+    recordDataMock.mockResolvedValue({
+      success: false,
+      errorCode: "not_authorized",
+    });
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+
+    await expect(
+      manager.createBookmark({ name: "My bookmark", colorId: "orange" }, GEN_10)
+    ).rejects.toThrow("not_authorized");
+  });
+
+  describe("when a write fails", () => {
+    const failures = [
+      [
+        "is rejected",
+        () =>
+          recordDataMock.mockResolvedValue({
+            success: false,
+            errorCode: "not_authorized",
+          }),
+      ],
+      [
+        "throws",
+        () => recordDataMock.mockRejectedValue(new Error("Network error")),
+      ],
+    ] as const;
+
+    describe.each(failures)("because it %s", (_label, failWrites) => {
+      let manager: ReturnType<typeof createBookmarksManager>;
+
+      beforeEach(async () => {
+        records = {
+          readingBookmarks: {
+            bookmarks: [
+              aBookmark({ id: "a", updatedAt: 200 }),
+              aBookmark({ id: "b", name: "Sermon prep", updatedAt: 100 }),
+            ],
+          },
+        };
+        manager = createBookmarksManager(os, login);
+        await flushPromises();
+        failWrites();
+      });
+
+      const before = () => [
+        aBookmark({ id: "a", updatedAt: 200 }),
+        aBookmark({ id: "b", name: "Sermon prep", updatedAt: 100 }),
+      ];
+
+      it("puts a deleted bookmark back", async () => {
+        await expect(manager.removeBookmark("a")).rejects.toThrow();
+        expect(manager.bookmarks.value).toEqual(before());
+      });
+
+      it("takes a created bookmark away again", async () => {
+        await expect(
+          manager.createBookmark({ name: "New", colorId: "red" }, EXO_3)
+        ).rejects.toThrow();
+        expect(manager.bookmarks.value).toEqual(before());
+      });
+
+      it("moves a bookmark back to where it was", async () => {
+        await expect(manager.moveBookmark("b", EXO_3)).rejects.toThrow();
+        expect(manager.bookmarks.value).toEqual(before());
+      });
+
+      it("puts back a bookmark's old name and color", async () => {
+        await expect(
+          manager.updateBookmark("a", { name: "Renamed", colorId: "purple" })
+        ).rejects.toThrow();
+        expect(manager.bookmarks.value).toEqual(before());
+      });
+    });
+
+    it("keeps a later change that was saved while the failed write was out", async () => {
+      records = {
+        readingBookmarks: {
+          bookmarks: [aBookmark({ id: "a" }), aBookmark({ id: "b" })],
+        },
+      };
+      const manager = createBookmarksManager(os, login);
+      await flushPromises();
+      let failFirstWrite: () => void = () => {};
+      recordDataMock.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            failFirstWrite = () =>
+              resolve({ success: false, errorCode: "server_error" });
+          })
+      );
+
+      const removing = manager.removeBookmark("a");
+      await flushPromises();
+      await manager.updateBookmark("b", { name: "Renamed", colorId: "red" });
+      failFirstWrite();
+      await expect(removing).rejects.toThrow("server_error");
+
+      // The rename's write sent the list without "a", and it was saved.
+      expect(lastWritten().map((b) => b.id)).toEqual(["b"]);
+      expect(manager.bookmarks.value).toEqual([
+        aBookmark({ id: "b", name: "Renamed", colorId: "red" }),
+      ]);
+    });
+
+    describe("with two writes out at once", () => {
+      type Outcome = "saves" | "fails";
+      /** Writes that wait to be settled by the test, in the order sent. */
+      let settle: ((outcome: Outcome) => void)[];
+
+      beforeEach(() => {
+        settle = [];
+        recordDataMock.mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              settle.push((outcome) =>
+                resolve(
+                  outcome === "saves"
+                    ? { success: true }
+                    : { success: false, errorCode: "server_error" }
+                )
+              );
+            })
+        );
+      });
+
+      const a = aBookmark({ id: "a", updatedAt: 200 });
+      const b = aBookmark({ id: "b", updatedAt: 100 });
+      const renamedB = { ...b, name: "Renamed" };
+
+      // Deleting "a" sends [b]; renaming "b" while that is out sends [b′].
+      it.each([
+        ["the delete", "fails", "the rename", "fails", [a, b]],
+        ["the rename", "fails", "the delete", "fails", [a, b]],
+        ["the delete", "saves", "the rename", "fails", [b]],
+        ["the rename", "fails", "the delete", "saves", [b]],
+        ["the delete", "fails", "the rename", "saves", [renamedB]],
+        ["the rename", "saves", "the delete", "fails", [renamedB]],
+      ] as const)(
+        "when %s %s and then %s %s, shows what the server holds",
+        async (firstName, firstOutcome, _secondName, secondOutcome, shown) => {
+          records = { readingBookmarks: { bookmarks: [a, b] } };
+          const manager = createBookmarksManager(os, login);
+          await flushPromises();
+
+          const deleting = manager.removeBookmark("a").catch(() => undefined);
+          await flushPromises();
+          const renaming = manager
+            .updateBookmark("b", { name: "Renamed", colorId: b.colorId })
+            .catch(() => undefined);
+          await flushPromises();
+          expect(settle).toHaveLength(2);
+
+          const [settleDelete, settleRename] = settle as [
+            (outcome: Outcome) => void,
+            (outcome: Outcome) => void,
+          ];
+          const [settleFirst, settleSecond] =
+            firstName === "the delete"
+              ? [settleDelete, settleRename]
+              : [settleRename, settleDelete];
+          settleFirst(firstOutcome);
+          await flushPromises();
+          settleSecond(secondOutcome);
+          await Promise.all([deleting, renaming]);
+
+          expect(manager.bookmarks.value).toEqual(shown);
+        }
+      );
+    });
+
+    it("doesn't bring bookmarks back after a sign-out", async () => {
+      records = { readingBookmarks: { bookmarks: [aBookmark()] } };
+      const manager = createBookmarksManager(os, login);
+      await flushPromises();
+      let failWrite: () => void = () => {};
+      recordDataMock.mockImplementationOnce(
+        () =>
+          new Promise((_resolve, reject) => {
+            failWrite = () => reject(new Error("Network error"));
+          })
+      );
+
+      const removing = manager.removeBookmark("bm-1");
+      await flushPromises();
+      login.userId.value = null;
+      failWrite();
+      await expect(removing).rejects.toThrow();
+
+      expect(manager.bookmarks.value).toEqual([]);
+    });
+  });
+
+  it("clears bookmarks and closes the panel on sign-out", async () => {
+    records = { readingBookmarks: { bookmarks: [aBookmark()] } };
+    const manager = createBookmarksManager(os, login);
+    await flushPromises();
+    manager.isPanelOpen.value = true;
+
     login.userId.value = null;
-    login.login.mockImplementation(async () => {
-      login.userId.value = "user-2";
-      (globalThis as any).authBot = { id: "user-2" };
-      return { id: "user-2", email: "test@example.com" };
-    });
-
-    const manager = createBookmarksManager(os, login);
-
-    await manager.addBookmark("BSB", "GEN", 1);
-
-    expect(login.login).toHaveBeenCalledTimes(1);
-    expect(manager.bookmarks.value).toHaveLength(1);
-    expect(recordDataMock).toHaveBeenCalledWith(
-      "user-2",
-      "bookmarks",
-      expect.any(Object),
-      { marker: "publicRead" }
-    );
-  });
-
-  it("does not persist if login fails to authenticate", async () => {
-    login.userId.value = null;
-
-    const manager = createBookmarksManager(os, login);
-
-    await manager.addBookmark("BSB", "GEN", 1);
-
-    expect(login.login).toHaveBeenCalledTimes(1);
-    expect(manager.bookmarks.value).toEqual([]);
-    expect(recordDataMock).not.toHaveBeenCalled();
-  });
-
-  it("removes bookmark for a location", async () => {
-    getDataMock.mockResolvedValue({
-      success: true,
-      data: {
-        bookmarks: [createBookmark()],
-        categories: [{ name: DEFAULT_BOOKMARK_CATEGORY }],
-      },
-    });
-
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    await manager.removeBookmarkForLocation("BSB", "GEN", 1);
 
     expect(manager.bookmarks.value).toEqual([]);
-    expect(recordDataMock).toHaveBeenCalledWith(
-      "user-1",
-      "bookmarks",
-      {
-        bookmarks: [],
-        categories: [{ name: DEFAULT_BOOKMARK_CATEGORY }],
-      },
-      { marker: "publicRead" }
-    );
-  });
-
-  it("removes a bookmark from one category without touching the others", async () => {
-    getDataMock.mockResolvedValue({
-      success: true,
-      data: {
-        bookmarks: [
-          createBookmark({
-            category: [DEFAULT_BOOKMARK_CATEGORY, "Favorites", "To Study"],
-          }),
-        ],
-        categories: [
-          { name: DEFAULT_BOOKMARK_CATEGORY },
-          { name: "Favorites" },
-          { name: "To Study" },
-        ],
-      },
-    });
-
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    await manager.removeBookmarkFromCategory("bm-1", "Favorites");
-
-    expect(manager.bookmarks.value).toEqual([
-      createBookmark({ category: [DEFAULT_BOOKMARK_CATEGORY, "To Study"] }),
-    ]);
-    expect(manager.categories.value).toEqual([
-      { name: DEFAULT_BOOKMARK_CATEGORY },
-      { name: "Favorites" },
-      { name: "To Study" },
-    ]);
-    expect(recordDataMock).toHaveBeenCalledWith(
-      "user-1",
-      "bookmarks",
-      {
-        bookmarks: [
-          createBookmark({ category: [DEFAULT_BOOKMARK_CATEGORY, "To Study"] }),
-        ],
-        categories: [
-          { name: DEFAULT_BOOKMARK_CATEGORY },
-          { name: "Favorites" },
-          { name: "To Study" },
-        ],
-      },
-      { marker: "publicRead" }
-    );
-  });
-
-  it("collapses to a single category name when one membership remains", async () => {
-    getDataMock.mockResolvedValue({
-      success: true,
-      data: {
-        bookmarks: [
-          createBookmark({
-            category: [DEFAULT_BOOKMARK_CATEGORY, "Favorites"],
-          }),
-        ],
-        categories: [
-          { name: DEFAULT_BOOKMARK_CATEGORY },
-          { name: "Favorites" },
-        ],
-      },
-    });
-
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    await manager.removeBookmarkFromCategory("bm-1", "Favorites");
-
-    expect(manager.bookmarks.value).toEqual([
-      createBookmark({ category: DEFAULT_BOOKMARK_CATEGORY }),
-    ]);
-  });
-
-  it("deletes the bookmark when removing it from its last category", async () => {
-    getDataMock.mockResolvedValue({
-      success: true,
-      data: {
-        bookmarks: [createBookmark({ category: "Favorites" })],
-        categories: [
-          { name: DEFAULT_BOOKMARK_CATEGORY },
-          { name: "Favorites" },
-        ],
-      },
-    });
-
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    await manager.removeBookmarkFromCategory("bm-1", "Favorites");
-
-    expect(manager.bookmarks.value).toEqual([]);
-    expect(manager.categories.value).toEqual([
-      { name: DEFAULT_BOOKMARK_CATEGORY },
-      { name: "Favorites" },
-    ]);
-  });
-
-  it("ignores removal for an unknown bookmark or a category it is not in", async () => {
-    getDataMock.mockResolvedValue({
-      success: true,
-      data: {
-        bookmarks: [createBookmark({ category: "Favorites" })],
-        categories: [
-          { name: DEFAULT_BOOKMARK_CATEGORY },
-          { name: "Favorites" },
-        ],
-      },
-    });
-
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    await manager.removeBookmarkFromCategory("missing", "Favorites");
-    await manager.removeBookmarkFromCategory("bm-1", "To Study");
-
-    expect(manager.bookmarks.value).toEqual([
-      createBookmark({ category: "Favorites" }),
-    ]);
-    expect(recordDataMock).not.toHaveBeenCalled();
-  });
-
-  it("toggles bookmark by location and ignores incomplete locations", async () => {
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    await manager.toggleBookmarkAtLocation(null, "GEN", 1);
-    await manager.toggleBookmarkAtLocation("BSB", null, 1);
-    await manager.toggleBookmarkAtLocation("BSB", "GEN", null);
-
-    expect(manager.bookmarks.value).toEqual([]);
-    expect(recordDataMock).not.toHaveBeenCalled();
-
-    await manager.toggleBookmarkAtLocation("BSB", "GEN", 1);
-    expect(manager.bookmarks.value).toHaveLength(1);
-
-    await manager.toggleBookmarkAtLocation("BSB", "GEN", 1);
-    expect(manager.bookmarks.value).toHaveLength(0);
-  });
-
-  it("toggles bookmark for tab reading location", async () => {
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    const tab = {
-      readingState: {
-        translationId: signal("BSB"),
-        bookId: signal("PSA"),
-        chapterNumber: signal(23),
-      },
-    } as any;
-
-    await manager.toggleBookmarkForTab(tab);
-
-    expect(manager.isLocationBookmarked("BSB", "PSA", 23)).toBe(true);
-  });
-
-  it("creates, renames, and deletes categories with bookmark updates", async () => {
-    getDataMock.mockResolvedValue({
-      success: true,
-      data: {
-        bookmarks: [
-          createBookmark({ id: "cat-1", category: "To Study" }),
-          createBookmark({ id: "cat-2", bookId: "EXO", category: "To Study" }),
-          createBookmark({
-            id: "multi-1",
-            bookId: "LEV",
-            category: ["To Study", "Favorites"],
-          }),
-        ],
-        categories: [
-          { name: DEFAULT_BOOKMARK_CATEGORY },
-          { name: "To Study" },
-          { name: "Favorites" },
-        ],
-      },
-    });
-
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    await manager.createCategory("  Later  ");
-    expect(manager.categories.value).toEqual([
-      { name: DEFAULT_BOOKMARK_CATEGORY },
-      { name: "To Study" },
-      { name: "Favorites" },
-      { name: "Later" },
-    ]);
-
-    await manager.renameCategory("To Study", "Deep Study");
-    expect(manager.categories.value).toEqual([
-      { name: DEFAULT_BOOKMARK_CATEGORY },
-      { name: "Deep Study" },
-      { name: "Favorites" },
-      { name: "Later" },
-    ]);
-    expect(
-      manager.bookmarks.value.every(
-        (b) => !getBookmarkCategories(b.category).includes("To Study")
-      )
-    ).toBe(true);
-    expect(
-      manager.bookmarks.value.filter((b) =>
-        getBookmarkCategories(b.category).includes("Deep Study")
-      ).length
-    ).toBe(3);
-    expect(
-      manager.bookmarks.value.find((b) => b.id === "multi-1")?.category
-    ).toEqual(["Deep Study", "Favorites"]);
-
-    await manager.deleteCategory(DEFAULT_BOOKMARK_CATEGORY);
-    expect(
-      manager.categories.value.some((c) => c.name === DEFAULT_BOOKMARK_CATEGORY)
-    ).toBe(true);
-
-    await manager.deleteCategory("Deep Study");
-    expect(manager.categories.value).toEqual([
-      { name: DEFAULT_BOOKMARK_CATEGORY },
-      { name: "Favorites" },
-      { name: "Later" },
-    ]);
-    // Sole-membership bookmarks are removed; multi-folder keeps remaining.
-    expect(manager.bookmarks.value).toEqual([
-      createBookmark({
-        id: "multi-1",
-        bookId: "LEV",
-        category: "Favorites",
-      }),
-    ]);
-  });
-
-  it("sets bookmark categories, creating missing folders as needed", async () => {
-    getDataMock.mockResolvedValue({
-      success: true,
-      data: {
-        bookmarks: [
-          createBookmark({ id: "move-1", category: DEFAULT_BOOKMARK_CATEGORY }),
-        ],
-        categories: [
-          { name: DEFAULT_BOOKMARK_CATEGORY },
-          { name: "Favorites" },
-        ],
-      },
-    });
-
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    await manager.setBookmarkCategories("move-1", "Favorites");
-    expect(manager.bookmarks.value[0]?.category).toBe("Favorites");
-    expect(manager.expandedCategories.value.has("Favorites")).toBe(true);
-
-    await manager.setBookmarkCategories("move-1", "Favorites");
-    expect(recordDataMock).toHaveBeenCalledTimes(1);
-
-    await manager.setBookmarkCategories("missing", "Favorites");
-    expect(recordDataMock).toHaveBeenCalledTimes(1);
-
-    await manager.setBookmarkCategories("move-1", ["Favorites", "  Later  "]);
-    expect(manager.bookmarks.value[0]?.category).toEqual([
-      "Favorites",
-      "Later",
-    ]);
-    expect(manager.categories.value.some((c) => c.name === "Later")).toBe(true);
-    expect(manager.expandedCategories.value.has("Later")).toBe(true);
-  });
-
-  it("toggles filter and category expansion", () => {
-    const manager = createBookmarksManager(os, login);
-
-    expect(manager.isFilterActive.value).toBe(false);
-    manager.toggleFilter();
-    expect(manager.isFilterActive.value).toBe(true);
-
-    expect(
-      manager.expandedCategories.value.has(DEFAULT_BOOKMARK_CATEGORY)
-    ).toBe(true);
-    manager.toggleCategoryExpanded(DEFAULT_BOOKMARK_CATEGORY);
-    expect(
-      manager.expandedCategories.value.has(DEFAULT_BOOKMARK_CATEGORY)
-    ).toBe(false);
-    manager.toggleCategoryExpanded(DEFAULT_BOOKMARK_CATEGORY);
-    expect(
-      manager.expandedCategories.value.has(DEFAULT_BOOKMARK_CATEGORY)
-    ).toBe(true);
-  });
-
-  it("creates an empty category without assigning any bookmarks", async () => {
-    getDataMock.mockResolvedValue({
-      success: true,
-      data: {
-        bookmarks: [createBookmark({ id: "existing" })],
-        categories: [{ name: DEFAULT_BOOKMARK_CATEGORY }],
-      },
-    });
-
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    const beforeBookmarks = manager.bookmarks.value;
-    await manager.createCategory("Empty Folder");
-
-    expect(manager.categories.value).toEqual([
-      { name: DEFAULT_BOOKMARK_CATEGORY },
-      { name: "Empty Folder" },
-    ]);
-    // Folder is empty — existing bookmarks are untouched.
-    expect(manager.bookmarks.value).toEqual(beforeBookmarks);
-    expect(
-      manager.bookmarks.value.every(
-        (b) => !getBookmarkCategories(b.category).includes("Empty Folder")
-      )
-    ).toBe(true);
-    expect(manager.expandedCategories.value.has("Empty Folder")).toBe(true);
-  });
-
-  it("persists new categories only when the bookmark is saved", async () => {
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    // Modal stages new folder names in local state; nothing is written until Save.
-    // On Save, addBookmark creates missing folders in the same persist as the bookmark.
-    await manager.addBookmark("BSB", "GEN", 1, {
-      category: [DEFAULT_BOOKMARK_CATEGORY, "Study Later"],
-    });
-
-    expect(manager.bookmarks.value).toHaveLength(1);
-    expect(manager.bookmarks.value[0]?.category).toEqual([
-      DEFAULT_BOOKMARK_CATEGORY,
-      "Study Later",
-    ]);
-    expect(manager.categories.value).toEqual([
-      { name: DEFAULT_BOOKMARK_CATEGORY },
-      { name: "Study Later" },
-    ]);
-    // Single persist — no orphan empty folder written first.
-    expect(recordDataMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("setBookmarkCategories creates missing folders in the same write", async () => {
-    getDataMock.mockResolvedValue({
-      success: true,
-      data: {
-        bookmarks: [
-          createBookmark({
-            id: "edit-1",
-            category: DEFAULT_BOOKMARK_CATEGORY,
-          }),
-        ],
-        categories: [{ name: DEFAULT_BOOKMARK_CATEGORY }],
-      },
-    });
-
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    await manager.setBookmarkCategories("edit-1", [
-      DEFAULT_BOOKMARK_CATEGORY,
-      "Favorites",
-    ]);
-    expect(manager.bookmarks.value[0]?.category).toEqual([
-      DEFAULT_BOOKMARK_CATEGORY,
-      "Favorites",
-    ]);
-    expect(manager.categories.value.some((c) => c.name === "Favorites")).toBe(
-      true
-    );
-    expect(recordDataMock).toHaveBeenCalledTimes(1);
-
-    // No-op when the same set is reapplied (order-insensitive).
-    await manager.setBookmarkCategories("edit-1", [
-      "Favorites",
-      DEFAULT_BOOKMARK_CATEGORY,
-    ]);
-    expect(recordDataMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("serializes single membership as a string and multi as an array", () => {
-    expect(serializeBookmarkCategories(["Favorites"])).toBe("Favorites");
-    expect(serializeBookmarkCategories(["A", "B"])).toEqual(["A", "B"]);
-    expect(serializeBookmarkCategories(["A", " A ", "B", ""])).toEqual([
-      "A",
-      "B",
-    ]);
-    expect(serializeBookmarkCategories([])).toBe(DEFAULT_BOOKMARK_CATEGORY);
-    expect(getBookmarkCategories("Favorites")).toEqual(["Favorites"]);
-    expect(getBookmarkCategories(["A", "B"])).toEqual(["A", "B"]);
-
-    const multi = createBookmark({ category: ["A", "B"] });
-    const single = createBookmark({ category: "A" });
-    expect(bookmarkBelongsToCategory(multi, "A")).toBe(true);
-    expect(bookmarkBelongsToCategory(multi, "C")).toBe(false);
-    expect(bookmarkBelongsToCategory(single, "A")).toBe(true);
-    expect(bookmarkBelongsToCategory(single, "B")).toBe(false);
-  });
-
-  it("collapses multi-category membership back to a string when only one remains", async () => {
-    getDataMock.mockResolvedValue({
-      success: true,
-      data: {
-        bookmarks: [
-          createBookmark({
-            id: "collapse-1",
-            category: [DEFAULT_BOOKMARK_CATEGORY, "Favorites"],
-          }),
-        ],
-        categories: [
-          { name: DEFAULT_BOOKMARK_CATEGORY },
-          { name: "Favorites" },
-        ],
-      },
-    });
-
-    const manager = createBookmarksManager(os, login);
-    await flushPromises();
-
-    await manager.setBookmarkCategories("collapse-1", ["Favorites"]);
-    expect(manager.bookmarks.value[0]?.category).toBe("Favorites");
-
-    await manager.deleteCategory("Favorites");
-    expect(manager.bookmarks.value).toEqual([]);
+    expect(manager.isPanelOpen.value).toBe(false);
   });
 });

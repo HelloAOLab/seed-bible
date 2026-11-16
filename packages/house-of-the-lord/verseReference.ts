@@ -7,6 +7,21 @@ export interface VerseCoordinate {
   verse: number;
 }
 
+function uniqueInOrder<T>(lists: Iterable<T[]>): T[] {
+  const pieces: T[] = [];
+  const seen = new Set<T>();
+
+  for (const keys of lists) {
+    for (const key of keys) {
+      if (seen.has(key)) continue;
+      seen.add(key);
+      pieces.push(key);
+    }
+  }
+
+  return pieces;
+}
+
 /**
  * Pieces of a single experience referenced by the given verses, deduplicated and
  * in encounter order (a piece referenced by several selected verses appears once).
@@ -16,19 +31,28 @@ export function getPiecesForExperience<E extends ExperienceKey>(
   verses: VerseCoordinate[]
 ): ExperienceKeyMap[E][] {
   const experienceMap = VERSE_REFERENCE_MAP[experience];
-  const pieces: ExperienceKeyMap[E][] = [];
-  const seen = new Set<ExperienceKeyMap[E]>();
 
-  for (const { bookId, chapter, verse } of verses) {
-    const keys = experienceMap[bookId]?.[chapter]?.[verse] ?? [];
-    for (const key of keys) {
-      if (seen.has(key)) continue;
-      seen.add(key);
-      pieces.push(key);
-    }
-  }
+  return uniqueInOrder(
+    verses.map(
+      ({ bookId, chapter, verse }) =>
+        experienceMap[bookId]?.[chapter]?.[verse] ?? []
+    )
+  );
+}
 
-  return pieces;
+/**
+ * Pieces of a single experience referenced anywhere in the given chapter,
+ * deduplicated and in verse order.
+ */
+export function getPiecesForChapter<E extends ExperienceKey>(
+  experience: E,
+  bookId: string,
+  chapter: number
+): ExperienceKeyMap[E][] {
+  const chapterMap = VERSE_REFERENCE_MAP[experience][bookId]?.[chapter];
+  if (!chapterMap) return [];
+
+  return uniqueInOrder(Object.values(chapterMap));
 }
 
 export function toPieceLabel(key: string): string {

@@ -21,6 +21,7 @@ import type {
   ReadingHistorySummary,
 } from "../../managers/ReadingHistoryManager";
 import { useSocialSectionContext } from "./SocialSectionContext";
+import { getTimelineYearWindow } from "../../managers/TodayReadingHistory";
 import type { BibleTheme } from "../../managers/ThemeManager";
 import type { TodayManager } from "../../managers/TodayManager";
 
@@ -102,14 +103,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = ({
       year >= TIMELINE_EARLIEST_YEAR;
       year--
     ) {
-      const startDate = new Date(nowDate);
-      const endDate = new Date(nowDate);
-      endDate.setFullYear(year);
-      endDate.setHours(23, 59, 59, 999);
-
-      startDate.setFullYear(year - 1);
-      startDate.setHours(0, 0, 0, 0);
-      timespanMap.set(year, { startDate, endDate });
+      timespanMap.set(year, getTimelineYearWindow(year, nowDate));
     }
 
     return timespanMap;

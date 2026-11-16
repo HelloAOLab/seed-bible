@@ -3,13 +3,13 @@ import {
   type StackPieceMeasurementsType,
 } from "./measurements";
 import { StackSpacings, type StackSpacingsType } from "./spacings";
-// import { StackAnimationsDuration } from "bibleVizUtils.infrastructure.config.stacks.animations";
 import { StackOpacities, type StackOpacitiesType } from "./opacities";
-import type { PieceLifecycleConfigProviderPort } from "../../../application/ports/out/PieceLifecycle";
+import type { LayoutConfigProviderPort } from "../../../application/ports/out/LayoutConfigProvider";
+// import { StackAnimationsDuration } from "bibleVizUtils.infrastructure.config.stacks.animations";
 
 const VERSES_PER_BUNDLE = 12;
 
-export class LayoutConfigProvider implements PieceLifecycleConfigProviderPort {
+export class LayoutConfigProvider implements LayoutConfigProviderPort {
   getStackPieceMeasurements(): StackPieceMeasurementsType {
     return StackPieceMeasurements;
   }

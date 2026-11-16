@@ -1,0 +1,150 @@
+/* The shared icon-only button. Its size, colors and backgrounds are custom
+   properties, so a surface that needs it to look different sets those on the
+   button instead of overriding the rules:
+   - `--sb-icon-button-color`: the icon and the tints are built on it (for a
+     colored header or a photo).
+   - `--sb-icon-button-background` / `--sb-icon-button-hover-background`:
+     the circle at rest and on hover (for a solid circle over content).
+   - `--sb-icon-button-icon-size`: the icon, when a surface's icons are a
+     different size.
+   The circle is drawn behind the icon, centered and `--sb-icon-button-size`
+   across, so a surface can make the button itself taller or wider (a bigger
+   tap area) without the circle growing. */
+.sb-icon-button {
+  --sb-icon-button-size: 2rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.25rem;
+  --sb-icon-button-color: var(--sb-font-color);
+  --sb-icon-button-background: transparent;
+  --sb-icon-button-hover-background: color-mix(
+    in srgb,
+    var(--sb-icon-button-color),
+    transparent 88%
+  );
+
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sb-icon-button-size);
+  height: var(--sb-icon-button-size);
+  padding: 0;
+  border: none;
+  border-radius: var(--sb-radius-full);
+  background: none;
+  /* Rests a shade softer than the text, so chrome doesn't compete with what
+     it sits beside, and comes to full color on hover, keyboard focus or when
+     pressed. Still about 5.7:1 against the background, and clearly unlike a
+     disabled button. */
+  color: color-mix(in srgb, var(--sb-icon-button-color), transparent 25%);
+  cursor: pointer;
+  transition: color var(--sb-duration-fast) ease;
+
+  /* Keeps the circle's negative z-index inside the button. */
+  position: relative;
+  isolation: isolate;
+}
+
+.sb-icon-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: var(--sb-icon-button-size);
+  height: var(--sb-icon-button-size);
+  margin: auto;
+  border-radius: var(--sb-radius-full);
+  background: var(--sb-icon-button-background);
+  transition: background-color var(--sb-duration-fast) ease;
+}
+
+.sb-icon-button .material-symbols-outlined {
+  font-size: var(--sb-icon-button-icon-size);
+}
+
+.sb-icon-button-icon {
+  display: inline-flex;
+}
+
+.sb-icon-button-icon > svg {
+  width: var(--sb-icon-button-icon-size);
+  height: var(--sb-icon-button-icon-size);
+}
+
+.sb-icon-button-sm {
+  --sb-icon-button-size: 1.75rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.125rem;
+}
+
+.sb-icon-button-lg {
+  --sb-icon-button-size: 2.5rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.5rem;
+}
+
+.sb-icon-button-tinted {
+  --sb-icon-button-background: color-mix(
+    in srgb,
+    var(--sb-icon-button-color),
+    transparent 91%
+  );
+  --sb-icon-button-hover-background: color-mix(
+    in srgb,
+    var(--sb-icon-button-color),
+    transparent 84%
+  );
+}
+
+/* On: the primary color on a light tint of it, as the app's other on/off
+   buttons show it. The tint matters in the dark theme, whose primary color is
+   as light as its text. */
+.sb-icon-button-pressed {
+  --sb-icon-button-color: var(--sb-primary-color);
+  --sb-icon-button-background: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    transparent 86%
+  );
+  --sb-icon-button-hover-background: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    transparent 78%
+  );
+}
+
+/* A tinted button already stands apart on its circle, and a pressed one is
+   in the primary color, so both show their icon at full color. */
+.sb-icon-button-tinted,
+.sb-icon-button-pressed {
+  color: var(--sb-icon-button-color);
+}
+
+/* Hover only where there's a pointer, so a tap on a phone doesn't leave the
+   tint stuck on. */
+@media (hover: hover) {
+  .sb-icon-button:hover:not(:disabled, [aria-disabled="true"]) {
+    color: var(--sb-icon-button-color);
+  }
+
+  .sb-icon-button:hover:not(:disabled, [aria-disabled="true"])::before {
+    background: var(--sb-icon-button-hover-background);
+  }
+}
+
+/* Keyboard focus gets the hover look on any device, alongside the browser's
+   focus ring. */
+.sb-icon-button:focus-visible {
+  color: var(--sb-icon-button-color);
+}
+
+.sb-icon-button:focus-visible::before {
+  background: var(--sb-icon-button-hover-background);
+}
+
+/* `aria-disabled` is for a button that's unavailable but stays focusable
+   (Discover's filter arrows), so it looks the same as a disabled one. */
+.sb-icon-button:is(:disabled, [aria-disabled="true"]) {
+  opacity: 0.4;
+  cursor: default;
+}

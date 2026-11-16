@@ -1,5 +1,4 @@
-import type { PieceHighlightPort as PieceInteractionPieceHighlightPort } from "../../../application/ports/out/PieceInteraction";
-import type { PieceHighlightPort as EnvironmentPieceHighlightPort } from "../../../application/ports/out/EnvironmentInteraction";
+import type { PieceHighlightAdapterPort } from "../../../application/ports/out/PieceHighlight";
 import type { PieceStateAdapter } from "./PieceStateAdapter";
 import { PIECE_VISIBILITY_STATES } from "../../../domain/models/piece";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
@@ -11,6 +10,7 @@ import type {
   VFXBot,
   VFXBotTags,
   ColorLerpablePieceBot,
+  PieceBot,
 } from "../../models/casualos";
 import type { ColorLerper } from "../casualos/ColorLerper";
 import { HexToRgb } from "../../../domain/functions/colors";
@@ -19,8 +19,7 @@ import type {
   ExperienceKeyMap,
 } from "../../../domain/models/experience";
 import type { LayerConfigProvider } from "../../config/layers/LayerConfigProvider";
-
-const BLINK_DURATION = 1;
+import type { PieceHighlightConfigProvider } from "../../config/pieceHighlight/PieceHighlightConfigProvider";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -30,13 +29,13 @@ interface AdapterParams {
   colorLerper: ColorLerper;
   pieceState: PieceStateAdapter;
   layerProvider: LayerConfigProvider;
+  highlightConfigProvider: PieceHighlightConfigProvider;
 }
 
-export class PieceHighlightAdapter
-  implements PieceInteractionPieceHighlightPort, EnvironmentPieceHighlightPort
-{
+export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
   #focusedBots: ColorLerpablePieceBot[] = [];
   #lastInteractionId: string | null = null;
+  #rotationId: string | null = null;
   #getDimension: AdapterParams["getDimension"];
   #piecesProvider: AdapterParams["piecesProvider"];
   #pieceMapper: AdapterParams["pieceMapper"];
@@ -44,6 +43,7 @@ export class PieceHighlightAdapter
   #colorLerper: AdapterParams["colorLerper"];
   #pieceState: AdapterParams["pieceState"];
   #layerProvider: AdapterParams["layerProvider"];
+  #highlightConfigProvider: AdapterParams["highlightConfigProvider"];
 
   constructor({
     getDimension,
@@ -53,6 +53,7 @@ export class PieceHighlightAdapter
     colorLerper,
     pieceState,
     layerProvider,
+    highlightConfigProvider,
   }: AdapterParams) {
     this.#getDimension = getDimension;
     this.#piecesProvider = piecesProvider;
@@ -61,9 +62,10 @@ export class PieceHighlightAdapter
     this.#colorLerper = colorLerper;
     this.#pieceState = pieceState;
     this.#layerProvider = layerProvider;
+    this.#highlightConfigProvider = highlightConfigProvider;
   }
 
-  highlightPiece<E extends ExperienceKey>(
+  highlight<E extends ExperienceKey>(
     experience: E,
     key: ExperienceKeyMap[E]
   ): void {
@@ -89,6 +91,7 @@ export class PieceHighlightAdapter
     }
 
     this.#focusedBots = [bot];
+    this.#rotationId = interactionId;
 
     let cone: VFXBot<"cone"> | undefined;
     const botPosition = getBotPosition(bot, dimension);
@@ -139,25 +142,44 @@ export class PieceHighlightAdapter
     }
 
     // Camera focus
+    const framing = this.#highlightConfigProvider.getCameraFraming(
+      experience,
+      key
+    );
     os.focusOn(bot, {
       duration: 1,
       easing,
-      rotation: { x: 1.01229, y: 0.5 },
-      zoom: 40,
+      rotation: {
+        x: framing.polar,
+        y: framing.initialAzimuth,
+      },
+      zoom: framing.zoom,
+    }).then(() => {
+      this.#rotateAround({
+        bot,
+        interactionId,
+        isFirstCall: true,
+        experience,
+        key,
+      });
     });
 
     // Color blink: white → cyan → white
     this.#colorLerper
       .lerp({
-        end: HexToRgb({ hexColor: "#8df5f3" }),
-        durationSec: BLINK_DURATION / 2,
+        end: HexToRgb({
+          hexColor: this.#highlightConfigProvider.getBlinkTargetColor(),
+        }),
+        durationSec: this.#highlightConfigProvider.getBlinkDuration() / 2,
         bot,
         tag: "color",
       })
       .then(() => {
         return this.#colorLerper.lerp({
-          end: HexToRgb({ hexColor: "#ffffff" }),
-          durationSec: BLINK_DURATION / 2,
+          end: HexToRgb({
+            hexColor: this.#highlightConfigProvider.getBlinkInitialColor(),
+          }),
+          durationSec: this.#highlightConfigProvider.getBlinkDuration() / 2,
           bot,
           tag: "color",
         });
@@ -173,16 +195,16 @@ export class PieceHighlightAdapter
     // Cone animation
     if (cone) {
       AnimateStrictTag(cone, "formOpacity", {
-        toValue: 0.75,
-        duration: BLINK_DURATION / 2,
+        toValue: this.#highlightConfigProvider.getConeBlinkTargetOpacity(),
+        duration: this.#highlightConfigProvider.getBlinkDuration() / 2,
         easing,
         tagMaskSpace: false,
         ignoreCancellation: true,
       })
         .then(() =>
           AnimateStrictTag(cone, "formOpacity", {
-            toValue: 0,
-            duration: BLINK_DURATION / 2,
+            toValue: this.#highlightConfigProvider.getConeBlinkInitialOpacity(),
+            duration: this.#highlightConfigProvider.getBlinkDuration() / 2,
             easing,
             tagMaskSpace: false,
             ignoreCancellation: true,
@@ -210,5 +232,52 @@ export class PieceHighlightAdapter
     }
     this.#focusedBots = [];
     this.#lastInteractionId = null;
+    this.#rotationId = null;
+  }
+
+  async #rotateAround<E extends ExperienceKey>({
+    bot,
+    interactionId,
+    isFirstCall,
+    experience,
+    key,
+  }: {
+    bot: PieceBot;
+    interactionId: string;
+    isFirstCall: boolean;
+    experience: E;
+    key: ExperienceKeyMap[E];
+  }): Promise<void> {
+    if (this.#rotationId !== interactionId) return;
+
+    const framing = this.#highlightConfigProvider.getCameraFraming(
+      experience,
+      key
+    );
+
+    await os.focusOn(bot, {
+      duration: isFirstCall
+        ? this.#highlightConfigProvider.getCameraOrbitEaseInDuration()
+        : this.#highlightConfigProvider.getCameraOrbitDuration(),
+      easing: isFirstCall
+        ? this.#highlightConfigProvider.getCameraOrbitInitialEasing()
+        : this.#highlightConfigProvider.getCameraOrbitRegularEasing(),
+      rotation: {
+        x: framing.polar,
+        y: isFirstCall
+          ? framing.orbitAzimuth
+          : framing.orbitAzimuth + 2 * Math.PI,
+        normalize: false,
+      },
+      zoom: framing.zoom,
+    });
+
+    this.#rotateAround({
+      bot,
+      interactionId,
+      isFirstCall: false,
+      experience,
+      key,
+    });
   }
 }

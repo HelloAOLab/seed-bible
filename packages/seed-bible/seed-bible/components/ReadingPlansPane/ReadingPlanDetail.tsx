@@ -35,14 +35,16 @@ import {
   readingPreviewText,
 } from "./readingPreview";
 import { HeroImageBanner } from "../HeroImageField/HeroImageField";
+import { ReadingPlanOptionsMenu } from "./ReadingPlanOptionsMenu";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 interface ReadingPlanDetailProps {
   readingPlans: ReadingPlansManager;
   /** Books of the active translation, for resolving reading labels. */
   books: TranslationBook[];
-  /** Modals host for opening a text/link reading. Optional — without it the
-   * open action is simply not offered. */
-  modals?: ModalManager;
+  /** Modals host, for previewing a text or link reading and confirming a delete. */
+  modals: ModalManager;
   /** Navigates the reader to a scripture reading. */
   onOpenScripture?: (
     ref: VerseRef,
@@ -58,6 +60,7 @@ interface ReadingPlanDetailProps {
   onEdit?: () => void;
   /** Called after the plan has been deleted, so the pane can leave this view. */
   onDeleted?: () => void;
+  toast?: (message: string) => void;
 }
 
 function formatShortDate(ms: number): string {
@@ -88,6 +91,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     onPlayReadings,
     onEdit,
     onDeleted,
+    toast,
   } = props;
   const { t } = useI18n();
 
@@ -95,7 +99,6 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
   const [celebrationDay, setCelebrationDay] = useState<number | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [pace, setPace] = useState<string | null>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   // Scripture readings covering several chapters can be opened out to tick off
   // one chapter at a time; keyed by reading id.
   const [expandedReadingId, setExpandedReadingId] = useState<string | null>(
@@ -122,51 +125,22 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     return null;
   }
 
-  const deletePlan = async () => {
-    if (!confirmingDelete) {
-      setConfirmingDelete(true);
-      return;
-    }
-    setConfirmingDelete(false);
-    try {
-      await readingPlans.deleteReadingPlan(plan);
-      onDeleted?.();
-    } catch (error) {
-      console.error("Failed to delete reading plan:", error);
-    }
-  };
-
   /**
-   * Edit and delete for the open plan. Delete is offered whether or not the
-   * plan is the user's to edit — a plan you can't get rid of is a plan you're
-   * stuck with — and asks once before erasing anything.
+   * Share, edit, and delete for the open plan, in the same menu a playlist
+   * row uses. Delete is offered whether or not the plan is the user's to
+   * edit — a plan you can't get rid of is a plan you're stuck with.
    */
   const planActions = (
     <div className="sb-rpd-plan-actions">
-      {canEdit && onEdit ? (
-        <button
-          type="button"
-          className="sb-rp-icon-button"
-          onClick={onEdit}
-          aria-label={t("edit-reading-plan", { defaultValue: "Edit plan" })}
-          title={t("edit-reading-plan", { defaultValue: "Edit plan" })}
-        >
-          <MaterialIcon>edit</MaterialIcon>
-        </button>
-      ) : null}
-      <button
-        type="button"
-        className={`sb-rp-restart${
-          confirmingDelete ? " sb-rp-restart-danger" : ""
-        }`}
-        onClick={() => void deletePlan()}
-      >
-        {confirmingDelete
-          ? t("reading-plan-delete-confirm", {
-              defaultValue: "Delete for good?",
-            })
-          : t("reading-plan-delete", { defaultValue: "Delete" })}
-      </button>
+      <ReadingPlanOptionsMenu
+        readingPlans={readingPlans}
+        plan={plan}
+        fullPlan={plan}
+        onEdit={canEdit && onEdit ? onEdit : undefined}
+        onDeleted={onDeleted}
+        modals={modals}
+        toast={toast}
+      />
     </div>
   );
 
@@ -198,14 +172,16 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     return (
       <div className="sb-rpd">
         <div className="sb-rpd-scroll">
-          <HeroImageBanner
-            url={plan.heroImageUrl}
-            alt={
-              plan.title ??
-              t("untitled-reading-plan", { defaultValue: "Untitled plan" })
-            }
-            className="sb-hero-banner--bleed"
-          />
+          {plan.heroImageUrl ? (
+            <HeroImageBanner
+              url={plan.heroImageUrl}
+              alt={
+                plan.title ??
+                t("untitled-reading-plan", { defaultValue: "Untitled plan" })
+              }
+              className="sb-hero-banner--bleed"
+            />
+          ) : null}
           <div className="sb-rpd-body">
             {plan.description ? (
               <p className="sb-rpd-subtitle" dir="auto">
@@ -265,14 +241,15 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
           </div>
         </div>
         <footer className="sb-rpd-footer">
-          <button
-            type="button"
-            className="sb-rp-button sb-rp-button-primary"
+          <Button
+            variant="primary"
+            size="lg"
             onClick={() => void handleStart()}
-            disabled={starting || plan.sessions.length === 0}
+            disabled={plan.sessions.length === 0}
+            loading={starting}
           >
             {t("reading-plan-start", { defaultValue: "Start plan" })}
-          </button>
+          </Button>
         </footer>
       </div>
     );
@@ -414,13 +391,13 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
               defaultValue: "Great work. Keep the momentum going.",
             })}
           </p>
-          <button
-            type="button"
-            className="sb-rp-button sb-rp-button-primary"
+          <Button
+            variant="primary"
+            size="lg"
             onClick={() => setCelebrationDay(null)}
           >
             {t("reading-plan-back-to-plan", { defaultValue: "Back to plan" })}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -472,14 +449,16 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
   return (
     <div className="sb-rpd">
       <div className="sb-rpd-scroll">
-        <HeroImageBanner
-          url={plan.heroImageUrl}
-          alt={
-            plan.title ??
-            t("untitled-reading-plan", { defaultValue: "Untitled plan" })
-          }
-          className="sb-hero-banner--bleed"
-        />
+        {plan.heroImageUrl ? (
+          <HeroImageBanner
+            url={plan.heroImageUrl}
+            alt={
+              plan.title ??
+              t("untitled-reading-plan", { defaultValue: "Untitled plan" })
+            }
+            className="sb-hero-banner--bleed"
+          />
+        ) : null}
         <header className="sb-rpd-hero-header">
           <p className="sb-rpd-subtitle">
             {selfPaced
@@ -616,9 +595,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
                         reading={reading}
                         sessionProgress={sessionProgressFor(session.id)}
                         expanded={expandedReadingId === reading.id}
-                        canPreview={
-                          !!modals && canPreviewPlaylistItem(reading.item)
-                        }
+                        canPreview={canPreviewPlaylistItem(reading.item)}
                         canNavigate={
                           !!onOpenScripture &&
                           reading.item.type === "bible-verse"
@@ -644,7 +621,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
                         onOpen={() => {
                           if (reading.item.type === "bible-verse") {
                             openScripture(session, reading);
-                          } else if (modals) {
+                          } else {
                             openPlaylistItemPreview(
                               modals,
                               reading.item,
@@ -678,18 +655,17 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
         <footer className="sb-rpd-footer">
           <div className="sb-rpd-footer-actions">
             {onPlayReadings && activeDayReadings.length > 0 ? (
-              <button
-                type="button"
-                className="sb-rp-button sb-rp-button-primary"
+              <Button
+                variant="primary"
+                size="lg"
+                icon="play_arrow"
                 onClick={playActiveDay}
               >
-                <MaterialIcon>play_arrow</MaterialIcon>
                 {t("reading-plan-read-day", { defaultValue: "Read" })}
-              </button>
+              </Button>
             ) : null}
-            <button
-              type="button"
-              className="sb-rp-button sb-rp-button-secondary"
+            <Button
+              size="lg"
               disabled={!activeDayAllDone}
               onClick={() => void completeDay(activeDay, activeIndex + 1)}
             >
@@ -702,7 +678,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
                     defaultValue: "Mark Day {{day}} complete",
                     day: activeIndex + 1,
                   })}
-            </button>
+            </Button>
           </div>
           {!activeDayAllDone ? (
             <p className="sb-rpd-footer-note">
@@ -842,22 +818,16 @@ function ReadingRow(props: ReadingRowProps) {
         </button>
 
         {multiChapter ? (
-          <button
-            type="button"
-            className="sb-rp-icon-button sb-rpd-reading-expand"
+          <IconButton
+            size="sm"
+            className="sb-rpd-reading-expand"
             onClick={onToggleExpanded}
             aria-expanded={expanded}
-            aria-label={t("reading-plan-reading-chapters", {
+            icon={expanded ? "expand_less" : "expand_more"}
+            label={t("reading-plan-reading-chapters", {
               defaultValue: "Chapters",
             })}
-            title={t("reading-plan-reading-chapters", {
-              defaultValue: "Chapters",
-            })}
-          >
-            <MaterialIcon>
-              {expanded ? "expand_less" : "expand_more"}
-            </MaterialIcon>
-          </button>
+          />
         ) : null}
       </div>
 

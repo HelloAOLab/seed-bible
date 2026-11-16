@@ -1,54 +1,53 @@
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import {
   BibleStates,
   type Piece,
   type DropEvent,
 } from "../../domain/models/canvas";
-import type {
-  PieceAdapterPort,
-  PieceDropEventPort,
-  ScripturePieceDropDataRepositoryPort,
-} from "../ports/scripturePieceDrop";
-import type { SequenceStateServicePort } from "../ports/scripturePieceDrag";
-import type { StackParentDataIds } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
-import type {
-  BookDropServicePort,
-  TestamentDropServicePort,
-  SectionDropServicePort,
-  ChapterDropServicePort,
-} from "../ports/in/ScripturePieceDrop";
+import type { ScripturePieceDropServicePort } from "../ports/in/ScripturePieceDrop";
 import { HighlightRequestSources } from "../../domain/models/pieces";
-import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
+import type { LoggerPort } from "../ports/out/Logger";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
+import type { ParentDataIds } from "../../domain/models/canvas";
+import type { ChapterSelectionServicePort } from "../ports/in/ChapterSelection";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+import type { PiecePort } from "../ports/out/Piece";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
-  pieceAdapterPort: PieceAdapterPort;
-  pieceDataRepositoryPort: ScripturePieceDropDataRepositoryPort;
+  pieceAdapterPort: PiecePort;
+  pieceDataRepositoryPort: PieceDataRepositoryPort;
   sequenceStateServicePort: SequenceStateServicePort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
-  chapterSelectionServicePort: ChapterSelectionPort;
-  pieceHighlightServicePort: PieceHighlighterPort;
-  pieceDropEventPort: PieceDropEventPort;
+  chapterSelectionServicePort: ChapterSelectionServicePort;
+  pieceHighlightServicePort: PieceHighlightServicePort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
+  loggerPort: LoggerPort;
 }
 
 // prettier-ignore
-export class ScripturePieceDropService implements BookDropServicePort, TestamentDropServicePort, SectionDropServicePort, ChapterDropServicePort {
+export class ScripturePieceDropService implements ScripturePieceDropServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
   #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
   #chapterSelectionServicePort: ServiceParams["chapterSelectionServicePort"];
   #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
-  #pieceDropEventPort: ServiceParams["pieceDropEventPort"];
-
+  #eventManagerPort: ServiceParams["eventManagerPort"];
+  #loggerPort: ServiceParams['loggerPort']
+  
   constructor({
+    
     pieceAdapterPort,
     pieceDataRepositoryPort,
     sequenceStateServicePort,
     pieceHierarchyServicePort,
     chapterSelectionServicePort,
     pieceHighlightServicePort,
-    pieceDropEventPort,
+    eventManagerPort,
+    loggerPort
   }: ServiceParams) {
     this.#pieceAdapterPort = pieceAdapterPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
@@ -56,7 +55,8 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
     this.#chapterSelectionServicePort = chapterSelectionServicePort;
     this.#pieceHighlightServicePort = pieceHighlightServicePort;
-    this.#pieceDropEventPort = pieceDropEventPort;
+    this.#eventManagerPort = eventManagerPort;
+    this.#loggerPort = loggerPort;
   }
 
   handlePieceDrop(
@@ -73,13 +73,14 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
     const pieceData = this.#pieceDataRepositoryPort.getPieceData(piece);
 
     if (!pieceData) {
-      throw new Error(
+      this.#loggerPort.error(
         "ScripturePieceDropService: pieceData not found at handlePieceDrop."
       );
+      return;
     }
 
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
-      pieceData.parentDataIds as StackParentDataIds
+      pieceData.parentDataIds ?? {}
     );
 
     if (
@@ -108,7 +109,7 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
     ) {
       const { sectionBookData, bookData } =
         this.#pieceHierarchyServicePort.getParentDataChain(
-          pieceData.parentDataIds as StackParentDataIds
+          pieceData.parentDataIds as ParentDataIds
         );
       const actualData = bookData ?? sectionBookData;
       this.#chapterSelectionServicePort
@@ -120,11 +121,6 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
           });
         });
     } else {
-      // setTag( // TODO: Understand the purpose of desiredPositionZ and determine where it belongs to.
-      //   piece,
-      //   "desiredPositionZ",
-      //   newPosition ? newPosition.z : piecePosition.z
-      // );
       if (pieceData.isFocused) {
         this.#pieceHighlightServicePort.tryHighlightPiece({
           piece,
@@ -133,24 +129,6 @@ export class ScripturePieceDropService implements BookDropServicePort, Testament
       }
     }
 
-    this.#pieceDropEventPort.emit("OnStackPieceDrop", { piece });
-
-    // TODO: Wire this event to a service that makes this piece the last interacted of its type
-    // switch (true) {
-    //   case data instanceof StackTestamentData:
-    //     thisBot.vars.lastInteractedStackTestamentData = data;
-    //     break;
-    //   case data instanceof StackSectionData:
-    //     thisBot.vars.lastInteractedStackSectionData = data;
-    //     break;
-    //   case data instanceof StackBookData:
-    //     thisBot.vars.lastInteractedStackBookData = data;
-    //     break;
-    //   default:
-    //     break;
-    // }
-
-    // TODO: Wire this event to a sound service that plays the StackPieceDrop sound
-    //thisBot.PlaySound({ soundName: "StackPieceDrop" });
+    this.#eventManagerPort.emit("OnStackPieceDrop", { data: pieceData });
   }
 }

@@ -1,10 +1,7 @@
 import type { VersesBundleData } from "../../../domain/entities/VersesBundleData";
-import type { VersesBundleDataRepositoryPort as PieceLifecycleRepositoryPort } from "../../../application/ports/pieceLifecycle";
-import type { VersesBundleDataRepositoryPort as VersesBundleInteractionRepositoryPort } from "../../../application/ports/versesBundle";
+import type { VersesBundleDataRepositoryPort } from "../../../application/ports/out/VersesBundleDataRepository";
 
-export class VersesBundleRepository
-  implements PieceLifecycleRepositoryPort, VersesBundleInteractionRepositoryPort
-{
+export class VersesBundleDataRepository implements VersesBundleDataRepositoryPort {
   #dataSet: Set<VersesBundleData> = new Set();
 
   addBundleData(data: VersesBundleData) {

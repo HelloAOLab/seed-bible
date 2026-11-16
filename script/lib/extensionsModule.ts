@@ -11,17 +11,76 @@ export interface ExtensionTranslationFile {
   [key: string]: string;
 }
 
+export type ExtensionSettingTypeFile = "string" | "boolean" | "number";
+export type ExtensionSettingValueFile = string | boolean | number;
+
+export interface ExtensionStringSettingDefinitionFile {
+  type: "string";
+  default?: string;
+  enum?: string[];
+  sensitive?: string;
+}
+
+export interface ExtensionNumberSettingDefinitionFile {
+  type: "number";
+  default?: number;
+  minimum?: number;
+  maximum?: number;
+  multipleOf?: number;
+}
+
+export interface ExtensionBooleanSettingDefinitionFile {
+  type: "boolean";
+  default?: boolean;
+}
+
+export type ExtensionSettingDefinitionFile =
+  | ExtensionStringSettingDefinitionFile
+  | ExtensionNumberSettingDefinitionFile
+  | ExtensionBooleanSettingDefinitionFile;
+
+export interface ExtensionSensitiveProxyDefinitionFile {
+  host: string;
+  requestMapping: Record<string, string>;
+}
+
 export interface ExtensionMetaFile {
   id: string;
   translations: Record<string, ExtensionTranslationFile>;
   dependencies?: string[];
   autoinstall?: boolean;
+  settings?: Record<string, ExtensionSettingDefinitionFile>;
+  sensitive?: Record<string, ExtensionSensitiveProxyDefinitionFile>;
 }
 
-/** An extension package discovered under `packages/`, with its parsed meta. */
+/**
+ * An extension package discovered either under `packages/` or, for local
+ * development of an out-of-tree extension (see `seed-bible-extension-scripts
+ * dev`), in an external directory named by `SEED_BIBLE_EXTRA_EXTENSION_DIRS`.
+ */
 export interface DiscoveredExtension {
-  /** The directory name under `packages/`, used to build import specifiers. */
-  folder: string;
+  /**
+   * Absolute filesystem path to the extension's root directory (the one
+   * containing its `extension.json`). Used for reading and file-watching, not
+   * for import specifiers — see `importBase`.
+   */
+  dir: string;
+  /**
+   * Import-specifier prefix for this extension's code and full translations:
+   * `` `${importBase}/extension.json` `` and `` `${importBase}/${entryFile}` ``.
+   * Bundled extensions use the `@packages/<folder>` alias; external ones use a
+   * Vite `/@fs/<absolute-path>` URL, since the `@packages` alias can't reach
+   * outside `packages/`. Resolving which convention applies is the plugin's
+   * job (see `vite-plugin-extensions.ts`) — this module stays Vite-agnostic.
+   */
+  importBase: string;
+  /**
+   * File name of the code entry under `importBase`. Defaults to `index`, which
+   * the `@packages` alias resolves by trying extensions. A `/@fs/` URL gets no
+   * such resolution, so external extensions pass the real file name (e.g.
+   * `index.ts`).
+   */
+  entryFile?: string;
   meta: ExtensionMetaFile;
 }
 
@@ -113,7 +172,11 @@ export const FALLBACK_LANGUAGE = "en";
  * about 1.8 KB; it was all 77 of them that cost 138 KB.
  *
  * Every other language lives in the per-language modules above, and every key
- * beyond `title`/`description` is behind `loadFullTranslations`.
+ * beyond `title`/`description` is behind `loadFullTranslations`. `settings` (and
+ * the `sensitive` destinations its settings name) is kept inline
+ * unconditionally, alongside `dependencies`/`autoinstall`: unlike translations
+ * it isn't per-locale text, and it's needed up front to know whether to show a
+ * "Configure" action and to build its form.
  */
 export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
   const english = meta.translations?.[FALLBACK_LANGUAGE];
@@ -131,6 +194,8 @@ export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
     ...(meta.autoinstall !== undefined
       ? { autoinstall: meta.autoinstall }
       : {}),
+    ...(meta.settings ? { settings: meta.settings } : {}),
+    ...(meta.sensitive ? { sensitive: meta.sensitive } : {}),
   };
 }
 
@@ -139,22 +204,40 @@ export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
  *
  * Each extension's code and full translations are `() => import(...)` thunks so
  * Vite code-splits them, and `loadListTranslations` does the same per language.
+ *
+ * With `serverBuild`, those thunks reject instead of importing, so none of it
+ * lands in the SSR bundle, which is built as a single file and would otherwise
+ * inline every extension. The server never installs extensions (that starts in
+ * a `useEffect`) or fetches list strings (`fetchesListTranslations` in
+ * `ExtensionManager`); the rejection makes it loud if that ever changes.
  */
 export function generateEntryModuleSource(
   extensions: DiscoveredExtension[],
-  setId: string
+  setId: string,
+  { serverBuild = false }: { serverBuild?: boolean } = {}
 ): string {
+  const unavailable = (message: string) =>
+    `() => Promise.reject(new Error(${toJsLiteral(message)}))`;
+
   const entries = extensions
-    .map(
-      ({ folder, meta }) => `  {
+    .map(({ importBase, entryFile = "index", meta }) => {
+      const loadFullTranslations = serverBuild
+        ? unavailable(
+            `${meta.id}'s translations are not available in the SSR bundle`
+          )
+        : `() => import(${toJsLiteral(`${importBase}/extension.json`)}).then((m) => m.default.translations)`;
+      const load = serverBuild
+        ? unavailable(`${meta.id} is not available in the SSR bundle`)
+        : `() => import(${toJsLiteral(`${importBase}/${entryFile}`)})`;
+      return `  {
     meta: ${toJsLiteral(trimMeta(meta))},
-    loadFullTranslations: () => import("@packages/${folder}/extension.json").then((m) => m.default.translations),
-    import: () => import("@packages/${folder}/index"),
-  },`
-    )
+    loadFullTranslations: ${loadFullTranslations},
+    import: ${load},
+  },`;
+    })
     .join("\n");
 
-  const localeEntries = listExtensionLanguages(extensions)
+  const localeEntries = (serverBuild ? [] : listExtensionLanguages(extensions))
     // English is already inline via `trimMeta`, so there is nothing to fetch
     // for it — which is also the common case.
     .filter((lang) => lang !== FALLBACK_LANGUAGE)

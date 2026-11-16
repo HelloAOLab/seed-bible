@@ -1,4 +1,5 @@
 import { splitPathSegments } from "./ReadingUrlPath";
+import { parseSharedPagePath } from "./SharedPagePath";
 
 /**
  * URL slugs for pages that aren't a reading position. Kept as its own tiny
@@ -6,9 +7,9 @@ import { splitPathSegments } from "./ReadingUrlPath";
  * book/chapter/translation and none of the legacy-redirect concerns a reading
  * path carries.
  */
-export type StaticPageId = "about";
+export type StaticPageId = "about" | "today";
 
-const STATIC_PAGE_IDS: readonly StaticPageId[] = ["about"];
+const STATIC_PAGE_IDS: readonly StaticPageId[] = ["about", "today"];
 
 export interface ParsedStaticPagePath {
   language: string;
@@ -41,4 +42,19 @@ export function buildStaticPagePath(params: {
   page: StaticPageId;
 }): string {
   return `/${encodeURIComponent(params.language)}/${params.page}`;
+}
+
+/**
+ * Whether `pathname` is a page of its own rather than a reading position —
+ * a static page, or a shared playlist or reading plan. The reader must not
+ * write its position over such a URL.
+ */
+export function isNonReadingPagePath(
+  pathname: string,
+  basePath: string
+): boolean {
+  return (
+    parseStaticPagePath(pathname, basePath) !== null ||
+    parseSharedPagePath(pathname, basePath) !== null
+  );
 }

@@ -2,9 +2,11 @@ import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
-import { BookmarksSection } from "@packages/seed-bible/seed-bible/components/TodayPane/BookmarksSection";
+import {
+  BookmarksSection,
+  type BookmarkStripItem,
+} from "@packages/seed-bible/seed-bible/components/TodayPane/BookmarksSection";
 import type { TranslationBooks } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
-import type { Bookmark } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
 import { todayStub } from "../../testUtils/todayStubs";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -16,87 +18,47 @@ function books(entries: { id: string; name: string }[]): TranslationBooks {
   return { books: entries } as unknown as TranslationBooks;
 }
 
-function bookmark(overrides: Partial<Bookmark> = {}): Bookmark {
+function bookmark(
+  overrides: Partial<BookmarkStripItem> = {}
+): BookmarkStripItem {
   return {
     id: "b1",
+    name: "My bookmark",
+    colorId: "orange",
     bookId: "GEN",
     chapterNumber: 3,
     translationId: "T1",
-    category: "Favorites",
     ...overrides,
-  } as unknown as Bookmark;
+  };
 }
-
-class MockResizeObserver {
-  constructor(public cb: () => void) {}
-  observe() {}
-  disconnect() {}
-}
-
-// jsdom does not lay out, so `offsetTop` is driven from here. With `wrapChips`
-// on, every chip after the first reports a lower position — which is how the
-// component detects a strip that has wrapped onto a second line.
-let wrapChips = false;
 
 describe("BookmarksSection", () => {
   let container: HTMLDivElement;
   let onOpenPassage: Mock;
-  let onShowBookmarksList: Mock;
   let getTranslationBooks: Mock;
-  let isMobile: Signal<boolean>;
-  let offsetTopDesc: PropertyDescriptor | undefined;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
     onOpenPassage = vi.fn();
-    onShowBookmarksList = vi.fn();
     getTranslationBooks = vi.fn(async () => books([]));
-    isMobile = signal(false);
-    wrapChips = false;
-
-    (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
-      MockResizeObserver;
-
-    offsetTopDesc = Object.getOwnPropertyDescriptor(
-      HTMLElement.prototype,
-      "offsetTop"
-    );
-    Object.defineProperty(HTMLElement.prototype, "offsetTop", {
-      configurable: true,
-      get(this: HTMLElement) {
-        if (!wrapChips) return 0;
-        const parent = this.parentElement;
-        if (!parent) return 0;
-        const index = Array.prototype.indexOf.call(parent.children, this);
-        return index > 0 ? 20 : 0;
-      },
-    });
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    if (offsetTopDesc) {
-      Object.defineProperty(HTMLElement.prototype, "offsetTop", offsetTopDesc);
-    } else {
-      delete (HTMLElement.prototype as { offsetTop?: number }).offsetTop;
-    }
-    delete (globalThis as unknown as { ResizeObserver?: unknown })
-      .ResizeObserver;
     vi.clearAllMocks();
   });
 
-  function setup(options: { bookmarks?: Signal<Bookmark[]> } = {}) {
-    const bookmarks = options.bookmarks ?? signal<Bookmark[]>([bookmark()]);
+  function setup(options: { bookmarks?: Signal<BookmarkStripItem[]> } = {}) {
+    const bookmarks =
+      options.bookmarks ?? signal<BookmarkStripItem[]>([bookmark()]);
     act(() =>
       render(
         <BookmarksSection
           today={todayStub({ getTranslationBooks })}
           bookmarks={bookmarks}
-          isMobile={isMobile}
           onOpenPassage={onOpenPassage}
-          onShowBookmarksList={onShowBookmarksList}
         />,
         container
       )
@@ -114,20 +76,14 @@ describe("BookmarksSection", () => {
   const heading = () =>
     container.querySelector(".sb-today-titled-section-header > h5")!
       .textContent;
-  const moreButton = () =>
+  const headerButton = () =>
     container.querySelector<HTMLButtonElement>(
       ".sb-today-titled-section-header > button"
     );
-  const categoryLabels = () =>
-    Array.from(
-      container.querySelectorAll(".sb-today-bookmarks-section-label")
-    ).map((el) => el.textContent);
-  const chipTexts = (categoryIndex = 0) => {
-    const strips = container.querySelectorAll(
-      ".sb-today-bookmarks-section-container"
-    );
-    const chips = strips[categoryIndex]!.querySelectorAll(
-      ".sb-today-bookmarks-section-bookmark"
+  /** Where each chip says its bookmark sits, e.g. "Genesis 3". */
+  const chipTexts = () => {
+    const chips = container.querySelectorAll(
+      ".sb-today-bookmarks-section-container .sb-bookmark-label-chapter"
     );
     return Array.from(chips).map((el) => el.textContent);
   };
@@ -143,54 +99,46 @@ describe("BookmarksSection", () => {
     });
   });
 
-  describe("the chip's bookmark glyph", () => {
-    // The glyph is shared with the tab sidebar, which draws it filled and
-    // thinner. The chip's chunky outline only survives because it overrides
-    // both, and nothing else here would notice if it stopped.
-    it("draws a heavier outline than the shared default", () => {
-      setup();
-      const icon = firstChip().querySelector("svg")!;
-      expect(icon.getAttribute("stroke-width")).toBe("3");
-      expect(icon.getAttribute("fill")).toBe("none");
+  describe("each chip", () => {
+    it("names its bookmark", () => {
+      setup({ bookmarks: signal([bookmark({ name: "Reading plan" })]) });
+      expect(
+        firstChip().querySelector(".sb-bookmark-label-name")!.textContent
+      ).toBe("Reading plan");
     });
 
-    it("takes its colour from the chip so the theme reaches it", () => {
-      setup();
-      const icon = firstChip().querySelector("svg")!;
-      expect(icon.getAttribute("stroke")).toBe("currentColor");
+    // The same chapter in two translations is two different places.
+    it("names its bookmark's translation", () => {
+      setup({ bookmarks: signal([bookmark({ translationId: "KJV" })]) });
+      expect(
+        firstChip().querySelector(".sb-bookmark-label-translation")!.textContent
+      ).toBe("KJV");
+    });
+
+    // Through the theme variable, so the color follows light and dark mode.
+    it("fills its glyph with the bookmark's theme color", () => {
+      setup({ bookmarks: signal([bookmark({ colorId: "blue" })]) });
+      const path = firstChip().querySelector("svg path")!;
+      expect(path.getAttribute("fill")).toBe("var(--sb-bookmark-blue-color)");
     });
   });
 
-  describe("categories", () => {
-    it("groups bookmarks by their category, in first-appearance order", () => {
+  describe("the strip", () => {
+    it("renders one chip per bookmark, in order", () => {
       setup({
         bookmarks: signal([
-          bookmark({ id: "b1", category: "Favorites" }),
-          bookmark({ id: "b2", category: "Favorites" }),
-          bookmark({ id: "b3", category: "To Read" }),
+          bookmark({ id: "b1", bookId: "GEN", chapterNumber: 3 }),
+          bookmark({ id: "b2", bookId: "EXO", chapterNumber: 2 }),
+          bookmark({ id: "b3", bookId: "MAT", chapterNumber: 5 }),
         ]),
       });
 
-      expect(categoryLabels()).toEqual(["Favorites:", "To Read:"]);
-      expect(chipTexts(0)).toHaveLength(2);
-      expect(chipTexts(1)).toHaveLength(1);
+      expect(chipTexts()).toEqual(["GEN 3", "EXO 2", "MAT 5"]);
     });
 
-    it("preserves first-appearance order for numeric-looking category names", () => {
-      setup({
-        bookmarks: signal([
-          bookmark({ id: "b1", category: "Favorites" }),
-          bookmark({ id: "b2", category: "2024" }),
-        ]),
-      });
-
-      // A plain object would hoist the integer-like "2024" to the front.
-      expect(categoryLabels()).toEqual(["Favorites:", "2024:"]);
-    });
-
-    it("renders no categories when there are no bookmarks", () => {
+    it("renders no chips when there are no bookmarks", () => {
       setup({ bookmarks: signal([]) });
-      expect(categoryLabels()).toEqual([]);
+      expect(chipTexts()).toEqual([]);
     });
   });
 
@@ -243,12 +191,7 @@ describe("BookmarksSection", () => {
         bookmarks: signal([
           bookmark({ id: "b1", bookId: "GEN", translationId: "T1" }),
           bookmark({ id: "b2", bookId: "EXO", translationId: "T1" }),
-          bookmark({
-            id: "b3",
-            bookId: "MAT",
-            translationId: "T2",
-            category: "To Read",
-          }),
+          bookmark({ id: "b3", bookId: "MAT", translationId: "T2" }),
         ]),
       });
 
@@ -277,52 +220,16 @@ describe("BookmarksSection", () => {
     });
   });
 
-  describe("the view-more button", () => {
-    const twoChips = () =>
-      signal([bookmark({ id: "b1" }), bookmark({ id: "b2" })]);
-
-    it("is absent when no category strip wraps to a new line", () => {
-      setup({ bookmarks: twoChips() });
-      expect(moreButton()).toBeNull();
+  // Five at most, so every bookmark shows and there is nothing for a
+  // "view more" to reveal.
+  it("shows every bookmark without a view-more button", () => {
+    setup({
+      bookmarks: signal(
+        ["b1", "b2", "b3", "b4", "b5"].map((id) => bookmark({ id }))
+      ),
     });
 
-    it("appears, translated, once a strip wraps to a new line", () => {
-      wrapChips = true;
-      setup({ bookmarks: twoChips() });
-
-      expect(moreButton()).not.toBeNull();
-      expect(moreButton()!.textContent).toBe("VIEW MORE");
-    });
-
-    it("reveals the full bookmarks list when clicked", () => {
-      wrapChips = true;
-      setup({ bookmarks: twoChips() });
-
-      act(() => moreButton()!.click());
-
-      expect(onShowBookmarksList).toHaveBeenCalledTimes(1);
-    });
-
-    // On mobile the strips scroll horizontally instead, so there is nothing
-    // hidden for a "view more" to reveal.
-    it("stays hidden on mobile even when a strip wraps", () => {
-      wrapChips = true;
-      isMobile.value = true;
-      setup({ bookmarks: twoChips() });
-
-      expect(moreButton()).toBeNull();
-    });
-
-    it("disappears when the viewport crosses to mobile", () => {
-      wrapChips = true;
-      setup({ bookmarks: twoChips() });
-      expect(moreButton()).not.toBeNull();
-
-      act(() => {
-        isMobile.value = true;
-      });
-
-      expect(moreButton()).toBeNull();
-    });
+    expect(chipTexts()).toHaveLength(5);
+    expect(headerButton()).toBeNull();
   });
 });

@@ -1,4 +1,5 @@
 import { I18nProvider, useI18n } from "../i18n/I18nManager";
+import { CustomIconsProvider } from "../components/CustomizableIcon/CustomizableIcon";
 import { TabsLayout } from "../components/TabsLayout";
 import {
   PaneLayout,
@@ -14,6 +15,7 @@ import { Suspense } from "preact/compat";
 import { useEffect } from "preact/hooks";
 import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu/ContextMenu";
+import type { BibleTheme } from "../managers/ThemeManager";
 import { ModalHost } from "../components/ModalHost/ModalHost";
 import { ToastHost } from "../components/ToastHost/ToastHost";
 import { LoginModal } from "../components/LoginModal/LoginModal";
@@ -28,6 +30,7 @@ import {
   type AppConfig,
 } from "./appConfig";
 import { isWebKit } from "./ssrEnv";
+import { useCustomizationLinkOverrides } from "./customizationLinkOverrides";
 // Foundation stylesheets — must load before any component's co-located CSS.
 // `variables` (the :root tokens) and `base` (html/body reset) come first so
 // every component rule resolves against them.
@@ -40,7 +43,11 @@ import {
 } from "../components/Onboarding/Onboarding";
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
+import { TutorialSkipPrompt } from "../components/TutorialSkipPrompt/TutorialSkipPrompt";
 import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/OfflineDownloadPrompt";
+import { OfflineUpdatePrompt } from "../components/OfflineDownloadPrompt/OfflineUpdatePrompt";
+import { OfflineRecoveryToast } from "../components/OfflineDownloadPrompt/OfflineRecoveryToast";
+import { customFontStylesheet } from "./fontStylesheets";
 
 /**
  * Font `<link>`s, plus the CSS for the active Customization layered on top
@@ -50,9 +57,17 @@ import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/Offli
  * `createTheme`) — that target is never diffed by Preact, so it carries no
  * hydration-mismatch risk the way an in-tree `<style>` would; this one still
  * needs to be in-tree so a shared `?customization=` link's colors are part of
- * the SSR'd HTML. `dangerouslySetInnerHTML` (rather than a plain text child)
- * is what keeps it safe: raw CSS can contain `&` (e.g. the highlight classes'
- * `&.sb-words-of-jesus`), which a plain JSX text child would HTML-escape on
+ * the SSR'd HTML.
+ *
+ * With no Customization active the tags stay empty. Their `body` rule sits
+ * later in the document than `#sb-theme-styles`, so it wins — and the server
+ * can only render the Light default. Filled in, it would paint over the
+ * device's saved or System theme that `index.html`'s pre-hydration script
+ * put in `#sb-theme-styles`, and the page would show Light until the first
+ * post-mount theme change. The empty tags still render so the SSR'd and
+ * client trees keep the same shape. `dangerouslySetInnerHTML` (rather than a plain text child)
+ * is what keeps it safe: raw CSS can contain characters like `&` or quotes
+ * (e.g. in font-family values), which a plain JSX text child would HTML-escape on
  * the server but not on the client, causing a hydration mismatch; Preact also
  * never diffs `dangerouslySetInnerHTML` during hydration, so this stays
  * inert even if the two sides' CSS text does legitimately differ.
@@ -65,12 +80,14 @@ import { OfflineDownloadPrompt } from "../components/OfflineDownloadPrompt/Offli
  * `?customization=` link in play.
  */
 export function ExternalResourceDependencies({
+  activeCustomizationTheme,
   themeCssVariables,
   themeCssClasses,
   googleFontFamilies,
   initialCustomizationLoadPromise,
   initialCustomizationLoadSettled,
 }: {
+  activeCustomizationTheme: ReadonlySignal<BibleTheme | null>;
   themeCssVariables: ReadonlySignal<string>;
   themeCssClasses: ReadonlySignal<string>;
   googleFontFamilies: ReadonlySignal<string[]>;
@@ -81,34 +98,31 @@ export function ExternalResourceDependencies({
     throw initialCustomizationLoadPromise;
   }
 
+  const hasCustomization = activeCustomizationTheme.value !== null;
+
   return (
     <>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Roboto&family=Open+Sans&family=Playfair+Display&family=Cormorant+Garamond&display=swap"
-        rel="stylesheet"
-      />
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
-      />
       {googleFontFamilies.value.length > 0 && (
         // A customization variant can name any Google Font by typing its
         // exact name — this loads whatever isn't already covered by the
-        // static presets above. See CustomizationsManager.buildCustomFontValue
-        // for why the name is already restricted to safe characters.
+        // static presets, which `index.html` links without blocking paint.
         <link
           rel="stylesheet"
-          href={`https://fonts.googleapis.com/css2?${googleFontFamilies.value
-            .map((name) => `family=${name.replace(/ /g, "+")}`)
-            .join("&")}&display=swap`}
+          href={customFontStylesheet(googleFontFamilies.value)!}
         />
       )}
       <style
         dangerouslySetInnerHTML={{
-          __html: `body {\n${themeCssVariables.value}\n}`,
+          __html: hasCustomization
+            ? `body {\n${themeCssVariables.value}\n}`
+            : "",
         }}
       />
-      <style dangerouslySetInnerHTML={{ __html: themeCssClasses.value }} />
+      <style
+        dangerouslySetInnerHTML={{
+          __html: hasCustomization ? themeCssClasses.value : "",
+        }}
+      />
     </>
   );
 }
@@ -194,9 +208,11 @@ function MainBody({
   // size, toolbar customization, disablePanels, theme, etc. Apply the
   // device's real saved config once, right after mount —
   // `SettingsManager`'s own effect() already re-derives `settings` whenever
-  // `login.localConfig` changes, so no change is needed there.
+  // `login.localConfig` changes, so no change is needed there. The device's
+  // color scheme is deferred the same way: the server always renders Light.
   useEffect(() => {
     state.login.hydrateLocalConfig();
+    state.theme.hydrateSystemColorScheme();
   }, []);
 
   // Deferred real read, same reason as the two above: saved tabs and their slot
@@ -211,25 +227,20 @@ function MainBody({
     state.app.hydrateFromStorage();
   }, []);
 
-  // Deferred real read, same reason as the three above: `isOpen` seeds
-  // `false` to match SSR (which always renders Today closed, for crawler
-  // SEO — see `TodayManager`), so the first hydrate pass can't disagree with
-  // it. Apply the URL's real open/closed state, and start the live URL sync,
-  // once right after mount.
-  useEffect(() => {
-    state.today.hydrateAutoOpen();
-  }, []);
-
   if (typeof document !== "undefined") {
     useSignalEffect(() => {
       document.title = state.app.title.value;
     });
   }
 
+  useCustomizationLinkOverrides(state);
+
   return (
     <AppConfigProvider value={appConfig}>
       <I18nProvider i18n={state.i18n}>
-        <MainContent state={state} />
+        <CustomIconsProvider icons={state.customizations.activeIcons}>
+          <MainContent state={state} />
+        </CustomIconsProvider>
       </I18nProvider>
     </AppConfigProvider>
   );
@@ -244,6 +255,7 @@ function MainContent(props: {
   const webkitClass = isWebKit(renderedAsWebKit) ? "is-webkit" : "";
   const appDirection = isRtl ? "rtl" : "ltr";
   const { theme, selector } = state;
+  const isMinimalEmbed = state.app.isMinimalEmbed.value;
   const sidePane =
     state.app.effectivePanes.value.find((pane) => pane.placement === "side") ??
     null;
@@ -255,7 +267,9 @@ function MainContent(props: {
   return (
     <>
       <div
-        className={`sb-app-root ${webkitClass}`}
+        className={`sb-app-root ${webkitClass}${
+          isMinimalEmbed ? " sb-embed-minimal" : ""
+        }`}
         dir={appDirection}
         onClick={(e) => {
           if (!e.defaultPrevented) {
@@ -269,6 +283,7 @@ function MainContent(props: {
         }}
       >
         <ExternalResourceDependencies
+          activeCustomizationTheme={state.customizations.activeResolvedTheme}
           themeCssVariables={theme.themeCssVariables}
           themeCssClasses={theme.themeCssClasses}
           googleFontFamilies={theme.googleFontFamiliesToLoad}
@@ -279,13 +294,14 @@ function MainContent(props: {
             state.customizations.initialCustomizationLoadSettled
           }
         />
-        <Sidebar state={state} />
+        {!isMinimalEmbed && <Sidebar state={state} />}
 
         <div className="sb-content-row">
           <main className="sb-main-content">
             <TabsLayout state={state} />
           </main>
           {sidePane && <SidePane state={state} pane={sidePane} />}
+          <div className="sb-pane-side-ghost-host" />
           {fullscreenPane && (
             <FullscreenPane state={state} pane={fullscreenPane} />
           )}
@@ -363,10 +379,27 @@ function MainContent(props: {
           className={`${webkitClass}`}
         />
 
+        <OfflineUpdatePrompt
+          offline={state.bibleData.offline}
+          toast={state.app.toast}
+          className={`${webkitClass}`}
+        />
+
+        <OfflineRecoveryToast
+          offline={state.bibleData.offline}
+          toast={state.app.toast}
+          className={`${webkitClass}`}
+        />
+
         <Tutorial
           tutorial={state.tutorial}
           className={`${webkitClass}`}
           groupFilter="non-selector"
+        />
+
+        <TutorialSkipPrompt
+          tutorial={state.tutorial}
+          className={`${webkitClass}`}
         />
 
         <LanguageUnavailableModal className={`${webkitClass}`} />

@@ -1,9 +1,12 @@
 /* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
-import { MaterialIcon, PortalComponent } from "seed-bible/components";
+import { Button, MaterialIcon, PortalComponent } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { v4 as uuid } from "uuid";
+
+const EXAMPLE_TOOL_PANE_ID = "example-tool-pane";
+const PORTAL_PANE_ID = "example-portal-pane";
 
 function OpenGridPortalIcon() {
   return <MaterialIcon>view_in_ar</MaterialIcon>;
@@ -19,7 +22,7 @@ export default function initExampleExtension() {
     init: function* (context: SeedBibleState) {
       console.log("Example extension initialized with context:", context);
 
-      context.discover.registerDiscoverProvider({
+      yield context.discover.registerDiscoverProvider({
         id: "example-discover-provider",
         description: "An example discover provider that returns dummy results.",
         title: "Example Discover Provider",
@@ -74,13 +77,121 @@ export default function initExampleExtension() {
         icon: () => <span>TOOL!</span>,
         onSelect: () => {
           console.log("Example tool selected!");
+          // Selecting the tool again closes its pane. The stable id is how it
+          // finds the pane it opened; `closePane` returns false when it isn't
+          // open.
+          if (context.panes.closePane(EXAMPLE_TOOL_PANE_ID)) {
+            return;
+          }
           context.panes.openPane({
+            id: EXAMPLE_TOOL_PANE_ID,
             placement: "side",
             title: "My Example Tool",
             component: () => {
               // You can use the useI18n hook in your tool component to get translated strings
               const { t } = useI18n("example-extension");
-              return <div style={{ padding: 20 }}>{t("my-example-tool")}</div>;
+              // Settings declared in extension.json are read with getValue, which
+              // already falls back to the Customization's default and then the
+              // setting's own default. Reading them while rendering re-renders
+              // this pane as soon as the viewer changes them in Settings.
+              const greeting = context.extensionSettings.getValue(
+                "example-extension",
+                "greeting"
+              );
+              const greetingSize = context.extensionSettings.getValue(
+                "example-extension",
+                "greetingSize"
+              );
+              // `subtitle` declares no default, so it stays undefined until
+              // the viewer (or a Customization) sets one.
+              const subtitle = context.extensionSettings.getValue(
+                "example-extension",
+                "subtitle"
+              );
+              const showBanner =
+                context.extensionSettings.getValue(
+                  "example-extension",
+                  "showBanner"
+                ) === true;
+              // `repeatCount` is a whole number from 1 to 10. A stored value
+              // outside that range is ignored, so this is always 1–10 or the
+              // default once the definition is in place.
+              const repeatCount = context.extensionSettings.getValue(
+                "example-extension",
+                "repeatCount"
+              );
+              const tone = context.extensionSettings.getValue(
+                "example-extension",
+                "tone"
+              );
+              return (
+                <div
+                  style={{
+                    padding: 20,
+                    color: "var(--sb-font-color, #333)",
+                  }}
+                >
+                  {showBanner && (
+                    <div
+                      style={{
+                        marginBottom: 12,
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        background: "var(--sb-primary-color, #e07b4c)",
+                        color: "var(--sb-primary-font-color, #fff)",
+                      }}
+                    >
+                      {t("example-banner")}
+                    </div>
+                  )}
+                  {typeof greeting === "string" && greeting && (
+                    <p
+                      style={{
+                        fontSize:
+                          typeof greetingSize === "number"
+                            ? `${greetingSize}rem`
+                            : undefined,
+                        fontWeight: tone === "bold" ? 700 : undefined,
+                        fontStyle: tone === "plain" ? "normal" : "italic",
+                      }}
+                    >
+                      {typeof repeatCount === "number"
+                        ? greeting.repeat(repeatCount)
+                        : greeting}
+                    </p>
+                  )}
+                  {typeof subtitle === "string" && subtitle && (
+                    <p style={{ opacity: 0.75 }}>{subtitle}</p>
+                  )}
+                  <Button
+                    onClick={async () => {
+                      // Sensitive settings can't be read. Instead the request
+                      // goes through the viewer's proxy for httpbin.org, which
+                      // adds the API key and client ID on the server. If the
+                      // viewer chose another host in Settings, the same path
+                      // is sent there instead.
+                      try {
+                        const response =
+                          await context.extensionSettings.fetchWithSensitiveValues(
+                            "example-extension",
+                            {
+                              url: "https://httpbin.org/post",
+                              method: "POST",
+                              body: { hello: "world" },
+                            }
+                          );
+                        context.app?.toast(
+                          `Example service: ${response.status}`
+                        );
+                      } catch (error) {
+                        context.app?.toast(String(error));
+                      }
+                    }}
+                  >
+                    {t("send-sensitive-request")}
+                  </Button>
+                </div>
+              );
             },
           });
         },
@@ -107,7 +218,7 @@ export default function initExampleExtension() {
             },
             onSelect: () => {
               console.log("Item 1 clicked with context:", context);
-              context.toast("Item 1 clicked!");
+              context.app?.toast("Item 1 clicked!");
             },
           },
           {
@@ -120,7 +231,7 @@ export default function initExampleExtension() {
             },
             onSelect: () => {
               console.log("Item 2 clicked with context:", context);
-              context.toast("Item 2 clicked!");
+              context.app?.toast("Item 2 clicked!");
             },
           },
         ],
@@ -142,7 +253,9 @@ export default function initExampleExtension() {
       // Toolbar tools can open a pane directly via context.panesManager.openPane.
       // Both tools below share the same stable pane id, so opening either one
       // replaces the other's content in place rather than opening a second
-      // pane — only one of these portals is ever open at a time.
+      // pane — only one of these portals is ever open at a time. Selecting a
+      // tool while its own portal is showing closes the pane instead.
+      let shownPortal: "grid" | "map" | null = null;
       yield context.tools.registerToolbarTool({
         id: "open-grid-portal",
         priority: 200,
@@ -153,12 +266,19 @@ export default function initExampleExtension() {
         },
         icon: OpenGridPortalIcon,
         onSelect: (context) => {
+          if (
+            shownPortal === "grid" &&
+            context.panesManager.closePane(PORTAL_PANE_ID)
+          ) {
+            return;
+          }
+          shownPortal = "grid";
           // Generate the portal instance id once, outside the render function,
           // so re-renders (e.g. dragging the pane) reuse the same `inst` and the
           // iframe keeps its document instead of reloading on every move.
           const inst = uuid();
           context.panesManager.openPane({
-            id: "example-portal-pane",
+            id: PORTAL_PANE_ID,
             placement: "floating",
             title: "Grid Portal",
             component: () => (
@@ -183,12 +303,19 @@ export default function initExampleExtension() {
         },
         icon: OpenMapPortalIcon,
         onSelect: (context) => {
+          if (
+            shownPortal === "map" &&
+            context.panesManager.closePane(PORTAL_PANE_ID)
+          ) {
+            return;
+          }
+          shownPortal = "map";
           // Generate the portal instance id once, outside the render function,
           // so re-renders (e.g. dragging the pane) reuse the same `inst` and the
           // iframe keeps its document instead of reloading on every move.
           const inst = uuid();
           context.panesManager.openPane({
-            id: "example-portal-pane",
+            id: PORTAL_PANE_ID,
             placement: "floating",
             title: "Map Portal",
             component: () => (

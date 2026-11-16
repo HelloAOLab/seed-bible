@@ -1,4 +1,4 @@
-import { localizedThemeName } from "@packages/seed-bible/seed-bible/components/SettingsPage/SettingsPage";
+import { localizedThemeName } from "@packages/seed-bible/seed-bible/components/SettingsPage/localizedThemeName";
 import type { I18nHook } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 
 /**

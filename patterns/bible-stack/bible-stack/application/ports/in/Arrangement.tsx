@@ -21,12 +21,29 @@ export interface ArrangementServicePort {
   addCustomArrangement(arrangement: ArrangementInfo): void;
   removeCustomArrangement(arrangement: ArrangementInfo): void;
   getBooksNamesBySectionName: (name: string) => string[] | null;
-  getBookInfoPathById: (params: { id: string }) => {
+  getTestamentInfoPathByName: (
+    name: string,
+    arrangementIndex?: number
+  ) => {
     found: boolean;
     arrangementIndex: number;
-    testamentIndex?: number | undefined;
-    sectionIndex?: number | undefined;
-    bookIndex?: number | undefined;
+    testamentIndex: number | undefined;
+  };
+  getSectionInfoPathByName: (
+    name: string,
+    arrangementIndex?: number
+  ) => {
+    found: boolean;
+    arrangementIndex: number;
+    testamentIndex: number | undefined;
+    sectionIndex: number | undefined;
+  };
+  getBookInfoPathById: (params: { id: string; arrangementIndex?: number }) => {
+    found: boolean;
+    arrangementIndex: number;
+    testamentIndex: number | undefined;
+    sectionIndex: number | undefined;
+    bookIndex: number | undefined;
   };
   getBookByIndices(path: BookPathIndices): BookInfo | undefined;
   getTestamentByIndices(path: TestamentPathIndices): TestamentInfo | undefined;

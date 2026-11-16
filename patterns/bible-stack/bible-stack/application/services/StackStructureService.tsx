@@ -5,17 +5,16 @@ import { StackSectionBookData } from "../../domain/entities/StackSectionBookData
 import { StackBookData } from "../../domain/entities/StackBookData";
 import { StackChapterData } from "../../domain/entities/StackChapterData";
 import { StackBibleData } from "../../domain/entities/StackBibleData";
-import type {
-  PieceAdapterPort,
-  StackStructureEventPort,
-} from "../ports/stackStructure";
-import type { StackPieceDataMap } from "../ports/pieces";
 import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
+import type { PieceDataMap } from "../../domain/models/canvas";
+import type { PiecePort } from "../ports/out/Piece";
 
 interface ServiceParams {
-  pieceAdapterPort: PieceAdapterPort;
+  pieceAdapterPort: PiecePort;
   pieceLifecycleServicePort: PieceLifecycleServicePort;
-  stackStructureEventPort: StackStructureEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
 }
 
 type StrategyContext = {
@@ -27,18 +26,20 @@ type StrategyContext = {
   bookData: StackBookData | undefined;
 };
 
-type CopyStrategy<T extends StackPieceDataMap[keyof StackPieceDataMap]> = (
+type CopyStrategy<T extends PieceDataMap[keyof PieceDataMap]> = (
   params: { data: T } & StrategyContext
 ) => T;
 
-type PieceStrategy<T extends StackPieceDataMap[keyof StackPieceDataMap]> = {
+type PieceStrategy<T extends PieceDataMap[keyof PieceDataMap]> = {
   copy: CopyStrategy<T>;
   replaceInParent: (params: { original: T; copy: T } & StrategyContext) => void;
 };
 
-const copyTestamentStrategy: CopyStrategy<
-  StackPieceDataMap["StackTestament"]
-> = ({ data, pieceLifecycleServicePort, bibleData }) => {
+const copyTestamentStrategy: CopyStrategy<PieceDataMap["StackTestament"]> = ({
+  data,
+  pieceLifecycleServicePort,
+  bibleData,
+}) => {
   return pieceLifecycleServicePort.createTestament({
     arrangementIndex: data.getArrangementIndex(),
     testamentIndex: data.getTestamentIndex(),
@@ -48,7 +49,7 @@ const copyTestamentStrategy: CopyStrategy<
 };
 
 const rawCopySectionStrategy: CopyStrategy<
-  StackPieceDataMap["StackSection" | "StackSectionBook"]
+  PieceDataMap["StackSection" | "StackSectionBook"]
 > = ({ data, pieceLifecycleServicePort, bibleData, testamentData }) => {
   return pieceLifecycleServicePort.createSection({
     arrangementIndex: data.getArrangementIndex(),
@@ -61,19 +62,19 @@ const rawCopySectionStrategy: CopyStrategy<
   });
 };
 
-const copySectionStrategy: CopyStrategy<StackPieceDataMap["StackSection"]> = (
+const copySectionStrategy: CopyStrategy<PieceDataMap["StackSection"]> = (
   params
 ) => {
   return rawCopySectionStrategy(params) as StackSectionData;
 };
 
 const copySectionBookStrategy: CopyStrategy<
-  StackPieceDataMap["StackSectionBook"]
+  PieceDataMap["StackSectionBook"]
 > = (params) => {
   return rawCopySectionStrategy(params) as StackSectionBookData;
 };
 
-const copyBookStrategy: CopyStrategy<StackPieceDataMap["StackBook"]> = ({
+const copyBookStrategy: CopyStrategy<PieceDataMap["StackBook"]> = ({
   data,
   pieceLifecycleServicePort,
   bibleData,
@@ -97,7 +98,7 @@ const copyBookStrategy: CopyStrategy<StackPieceDataMap["StackBook"]> = ({
   });
 };
 
-const copyChapterStrategy: CopyStrategy<StackPieceDataMap["StackChapter"]> = ({
+const copyChapterStrategy: CopyStrategy<PieceDataMap["StackChapter"]> = ({
   data,
   pieceLifecycleServicePort,
   bibleData,
@@ -121,7 +122,7 @@ const copyChapterStrategy: CopyStrategy<StackPieceDataMap["StackChapter"]> = ({
 };
 
 const pieceStrategiesMap: {
-  [T in keyof StackPieceDataMap]: PieceStrategy<StackPieceDataMap[T]>;
+  [T in keyof PieceDataMap]: PieceStrategy<PieceDataMap[T]>;
 } = {
   StackTestament: {
     copy: copyTestamentStrategy,
@@ -155,14 +156,12 @@ const pieceStrategiesMap: {
   },
 };
 
-function runPieceStrategy<K extends keyof StackPieceDataMap>(
+function runPieceStrategy<K extends keyof PieceDataMap>(
   key: K,
-  data: StackPieceDataMap[K],
+  data: PieceDataMap[K],
   context: StrategyContext
-): StackPieceDataMap[K] {
-  const strategy = pieceStrategiesMap[key] as PieceStrategy<
-    StackPieceDataMap[K]
-  >;
+): PieceDataMap[K] {
+  const strategy = pieceStrategiesMap[key] as PieceStrategy<PieceDataMap[K]>;
   const copy = strategy.copy({ data, ...context });
   strategy.replaceInParent({ original: data, copy, ...context });
   return copy;
@@ -171,16 +170,16 @@ function runPieceStrategy<K extends keyof StackPieceDataMap>(
 export class StackStructureService implements PieceDragStackStructureServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceLifecycleServicePort: ServiceParams["pieceLifecycleServicePort"];
-  #stackStructureEventPort: ServiceParams["stackStructureEventPort"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
 
   constructor({
     pieceAdapterPort,
     pieceLifecycleServicePort,
-    stackStructureEventPort,
+    eventManagerPort,
   }: ServiceParams) {
     this.#pieceAdapterPort = pieceAdapterPort;
     this.#pieceLifecycleServicePort = pieceLifecycleServicePort;
-    this.#stackStructureEventPort = stackStructureEventPort;
+    this.#eventManagerPort = eventManagerPort;
   }
 
   pullOutPieceFromParent: (params: {
@@ -217,6 +216,6 @@ export class StackStructureService implements PieceDragStackStructureServicePort
     });
     pieceData.clearAllParentIds();
 
-    this.#stackStructureEventPort.emit("OnStackPiecePulledOut");
+    this.#eventManagerPort.emit("OnStackPiecePulledOut");
   };
 }

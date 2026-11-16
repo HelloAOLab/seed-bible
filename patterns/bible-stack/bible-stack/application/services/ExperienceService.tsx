@@ -1,37 +1,35 @@
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
-import type {
-  EnvironmentAdapterPort,
-  StackManagementService,
-  InteractionRegistryServicePort,
-  ExperienceAdapterPort,
-  ExperienceConfigProviderPort,
-  SequenceStateServicePort,
-  AwaiterPort,
-} from "../ports/experience";
 import type { StackPresenceNavigationServicePort } from "../ports/in/StackPresenceNavigation";
-import type {
-  CameraAdapterPort,
-  BibleLifecycleServicePort,
-  BibleSequenceServicePort,
-} from "../ports/bibleLifecycle";
 import { BibleTypes } from "../../domain/models/canvas";
 import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
 import type { ExperienceServicePort } from "../ports/in/Experience";
+import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
+import type { BibleLifecycleServicePort } from "../ports/in/BibleLifecycle";
+import type { StackManagementServicePort } from "../ports/in/StackManagement";
+import type { EnvironmentPort } from "../ports/out/Environment";
+import type { InteractionRegistryPort } from "../ports/out/InteractionRegistry";
+import type { ExperiencePort } from "../ports/out/Experience";
+import type { CameraPort } from "../ports/out/Camera";
+import type { ExperienceConfigProviderPort } from "../ports/out/ExperienceConfigProvider";
+import type { AwaiterPort } from "../ports/out/Awaiter";
 
 interface ExperienceServiceParams {
-  environmentAdapterPort: EnvironmentAdapterPort;
-  stackManagementServicePort: StackManagementService;
-  pieceHighlightServicePort: PieceHighlighterPort;
-  interactionRegistryServicePort: InteractionRegistryServicePort;
-  experienceAdapterPort: ExperienceAdapterPort;
+  environmentAdapterPort: EnvironmentPort;
+  stackManagementServicePort: StackManagementServicePort;
+  pieceHighlightServicePort: PieceHighlightServicePort;
+  interactionRegistryServicePort: InteractionRegistryPort;
+  experienceAdapterPort: ExperiencePort;
   scripturePiecesStateServicePort: ScripturePiecesStateServicePort;
   experienceConfigProviderPort: ExperienceConfigProviderPort;
   sequenceStateServicePort: SequenceStateServicePort;
-  cameraAdapterPort: CameraAdapterPort;
+  cameraAdapterPort: CameraPort;
   bibleLifecycleServicePort: BibleLifecycleServicePort;
   bibleSequenceServicePort: BibleSequenceServicePort;
   stackPresenceNavigationServicePort: StackPresenceNavigationServicePort;
   awaiterPort: AwaiterPort;
+  pieceActivityServicePort: PieceActivityServicePort;
 }
 
 export class ExperienceService implements ExperienceServicePort {
@@ -49,6 +47,7 @@ export class ExperienceService implements ExperienceServicePort {
   #bibleSequenceServicePort: ExperienceServiceParams["bibleSequenceServicePort"];
   #stackPresenceNavigationServicePort: ExperienceServiceParams["stackPresenceNavigationServicePort"];
   #awaiterPort: ExperienceServiceParams["awaiterPort"];
+  #pieceActivityServicePort: ExperienceServiceParams["pieceActivityServicePort"];
 
   constructor({
     environmentAdapterPort,
@@ -64,6 +63,7 @@ export class ExperienceService implements ExperienceServicePort {
     bibleSequenceServicePort,
     stackPresenceNavigationServicePort,
     awaiterPort,
+    pieceActivityServicePort,
   }: ExperienceServiceParams) {
     this.#environmentAdapterPort = environmentAdapterPort;
     this.#stackManagementServicePort = stackManagementServicePort;
@@ -79,6 +79,7 @@ export class ExperienceService implements ExperienceServicePort {
     this.#stackPresenceNavigationServicePort =
       stackPresenceNavigationServicePort;
     this.#awaiterPort = awaiterPort;
+    this.#pieceActivityServicePort = pieceActivityServicePort;
   }
 
   clearExperience() {
@@ -96,17 +97,18 @@ export class ExperienceService implements ExperienceServicePort {
     await this.#awaiterPort.sleep(
       this.#experienceConfigProviderPort.getInitialBibleCreationDelay()
     );
+    const position =
+      this.#experienceConfigProviderPort.getBibleCreationPosition();
+    const { bibleData } = this.#bibleLifecycleServicePort.createBible({
+      position,
+      type: BibleTypes.Default,
+    });
+    this.#cameraAdapterPort.focusOn(position, "bibleSetup");
 
     this.#sequenceStateServicePort.executeAsSequence(async () => {
-      const position =
-        this.#experienceConfigProviderPort.getBibleCreationPosition();
-      const { bibleData } = this.#bibleLifecycleServicePort.createBible({
-        position,
-        type: BibleTypes.Default,
-      });
-      this.#cameraAdapterPort.focusOn(position, "bibleSetup");
       await this.#bibleSequenceServicePort.crackOpenBible(bibleData);
       await this.#stackPresenceNavigationServicePort.update();
+      this.#pieceActivityServicePort.updateAllNotifications();
     });
   }
 }

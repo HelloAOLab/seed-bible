@@ -1,87 +1,23 @@
 import {
   TODAY_PANE_ID,
-  todayWillAutoOpenForUrl,
+  openTodayPassage,
 } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import {
   createTestSeedBibleState,
   waitFor,
 } from "../testUtils/createTestSeedBibleState";
-
-describe("todayWillAutoOpenForUrl", () => {
-  describe("with no explicit ?today param", () => {
-    it("opens on a bare URL, which is a visitor with nowhere else to be", () => {
-      expect(
-        todayWillAutoOpenForUrl(new URL("http://localhost:3000/"), "/")
-      ).toBe(true);
-    });
-
-    it("stays closed for a canonical reading path", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/en/BSB/genesis/1"),
-          "/"
-        )
-      ).toBe(false);
-    });
-
-    // A static page carries no reading position, so it used to read as
-    // "nowhere in particular" and Today opened over it. Today's pane is
-    // fullscreen, so it displaced the About pane and sent the reader back to
-    // the selected tab's chapter.
-    it("stays closed on a static page such as /en/about", () => {
-      expect(
-        todayWillAutoOpenForUrl(new URL("http://localhost:3000/en/about"), "/")
-      ).toBe(false);
-    });
-
-    it("stays closed for a shared-session invite", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/?sessionId=abc"),
-          "/"
-        )
-      ).toBe(false);
-    });
-  });
-
-  describe("with an explicit ?today param", () => {
-    it("opens on ?today=open even over a reading path", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/en/BSB/genesis/1?today=open"),
-          "/"
-        )
-      ).toBe(true);
-    });
-
-    it("opens on ?today=open even over a static page", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/en/about?today=open"),
-          "/"
-        )
-      ).toBe(true);
-    });
-
-    it("stays closed on ?today=closed even on a bare URL", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/?today=closed"),
-          "/"
-        )
-      ).toBe(false);
-    });
-
-    it("treats any other value as closed rather than guessing", () => {
-      expect(
-        todayWillAutoOpenForUrl(
-          new URL("http://localhost:3000/?today=maybe"),
-          "/"
-        )
-      ).toBe(false);
-    });
-  });
-});
+import { clearReadingHistoryDocs } from "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
+import { act } from "preact/test-utils";
+import { formatV1SessionKey } from "@casual-simulation/aux-common";
+import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
+import { fakeSharedPermissions, ME } from "../testUtils/fakeSharedPermissions";
+import {
+  aabBooks,
+  createDefaultManagerResponseMap,
+  createResponse,
+  makeChapter,
+  makeUrl,
+} from "./testUtils/mockBibleApiData";
 
 describe("Today pane wiring", () => {
   const paneIsOpen = (
@@ -94,19 +30,24 @@ describe("Today pane wiring", () => {
     expect(paneIsOpen(state)).toBe(false);
   });
 
-  it("opens the fullscreen pane when the screen is opened", async () => {
+  it("navigates to the Today page and opens its fullscreen pane", async () => {
+    window.history.replaceState(null, "", "/en/AAB/genesis/1");
     const state = await createTestSeedBibleState();
 
     state.today.open();
     await waitFor(() => paneIsOpen(state));
 
+    expect(window.location.pathname).toBe("/en/today");
     const pane = state.panes.panes.value.find(
       (candidate) => candidate.id === TODAY_PANE_ID
     );
     expect(pane?.placement).toBe("fullscreen");
+    // Today draws its own close button instead of the pane header's.
+    expect(pane?.showHeader).toBe(false);
   });
 
-  it("closes the pane again when the screen is closed", async () => {
+  it("returns to the reader's position when the screen is closed", async () => {
+    window.history.replaceState(null, "", "/en/AAB/genesis/1");
     const state = await createTestSeedBibleState();
 
     state.today.open();
@@ -115,11 +56,45 @@ describe("Today pane wiring", () => {
     state.today.close();
     await waitFor(() => !paneIsOpen(state));
     expect(state.today.isOpen.value).toBe(false);
+    expect(window.location.pathname).toBe("/en/AAB/genesis/1");
   });
 
-  // The pane header's close button removes the pane directly, so the open state
-  // has to follow it or the toolbar toggle would need two clicks to reopen.
-  it("clears the open state when the pane is closed from its header", async () => {
+  it("comes back to Today when Back is pressed after leaving it", async () => {
+    window.history.replaceState(null, "", "/en/AAB/genesis/1");
+    const state = await createTestSeedBibleState();
+
+    state.today.open();
+    await waitFor(() => paneIsOpen(state));
+    state.today.close();
+    await waitFor(() => !paneIsOpen(state));
+
+    window.history.back();
+    await waitFor(() => paneIsOpen(state));
+    expect(window.location.pathname).toBe("/en/today");
+  });
+
+  it("keeps Today in the history when a card opens a passage", async () => {
+    window.history.replaceState(null, "", "/en/AAB/genesis/1");
+    const state = await createTestSeedBibleState();
+
+    state.today.open();
+    await waitFor(() => paneIsOpen(state));
+    openTodayPassage(state, state.today, {
+      bookId: "GEN",
+      chapter: 1,
+      translationId: "AAB",
+    });
+    await waitFor(() => !paneIsOpen(state));
+    expect(window.location.pathname).toBe("/en/AAB/genesis/1");
+
+    window.history.back();
+    await waitFor(() => paneIsOpen(state));
+    expect(window.location.pathname).toBe("/en/today");
+  });
+
+  // Removing the pane directly has to clear the open state too, or the toolbar
+  // toggle would need two clicks to reopen it.
+  it("clears the open state when the pane is closed directly", async () => {
     const state = await createTestSeedBibleState();
 
     state.today.open();
@@ -130,16 +105,29 @@ describe("Today pane wiring", () => {
     expect(paneIsOpen(state)).toBe(false);
   });
 
-  // `todayOpen: "fromUrl"` leaves the `?today` param off, which is what lets
-  // these two reach the boot heuristic at all: an explicit param short-circuits
-  // it before the URL is ever looked at.
-  it("auto-opens over the reader when the boot URL has no reading position", async () => {
+  // `todayOpen: "fromUrl"` leaves the URL as the test set it, so these reach
+  // the redirect the app applies to a page the server never saw (one the
+  // service worker served from its cache).
+  it("moves a boot URL with no reading position to the Today page", async () => {
     window.history.replaceState(null, "", "/");
 
     const state = await createTestSeedBibleState({ todayOpen: "fromUrl" });
 
-    await waitFor(() => paneIsOpen(state));
+    expect(window.location.pathname).toBe("/en/today");
     expect(state.today.isOpen.value).toBe(true);
+    expect(paneIsOpen(state)).toBe(true);
+  });
+
+  it("moves a legacy ?today=open boot URL to the Today page", async () => {
+    window.history.replaceState(null, "", "/en/AAB/exodus/2?today=open");
+
+    const state = await createTestSeedBibleState({ todayOpen: "fromUrl" });
+
+    expect(`${window.location.pathname}${window.location.search}`).toBe(
+      "/en/today"
+    );
+    expect(state.today.isOpen.value).toBe(true);
+    expect(paneIsOpen(state)).toBe(true);
   });
 
   it("stays out of the way when the boot URL already points at a chapter", async () => {
@@ -151,28 +139,28 @@ describe("Today pane wiring", () => {
     expect(paneIsOpen(state)).toBe(false);
   });
 
-  // The fix's core invariant: `isOpen` must stay `false` -- matching what SSR
-  // always renders -- until `hydrateAutoOpen` runs, even on a boot URL that
-  // will end up auto-opening Today. `skipHydrateAutoOpen` holds the fixture
-  // in that pre-hydrate window so this can be asserted directly, rather than
-  // only observing the already-corrected value every other test sees. Fails
-  // on the old construction-time seeding, which computed the real value
-  // immediately with no pre-hydrate window to observe.
-  it("seeds isOpen closed regardless of the URL, until hydrateAutoOpen runs", async () => {
-    window.history.replaceState(null, "", "/");
+  // Open from construction, with nothing deferred to after mount: the server
+  // renders the same URL with Today open, so the client's first render
+  // already agrees with it.
+  it("is open from construction on the Today page", async () => {
+    window.history.replaceState(null, "", "/en/today");
 
-    const state = await createTestSeedBibleState({
-      todayOpen: "fromUrl",
-      skipHydrateAutoOpen: true,
-    });
-
-    expect(state.today.isOpen.value).toBe(false);
-    expect(paneIsOpen(state)).toBe(false);
-
-    state.today.hydrateAutoOpen();
+    const state = await createTestSeedBibleState({ todayOpen: "fromUrl" });
 
     expect(state.today.isOpen.value).toBe(true);
-    await waitFor(() => paneIsOpen(state));
+    expect(paneIsOpen(state)).toBe(true);
+  });
+
+  // Otherwise a reload would bring the old language back.
+  it("moves to the new language's Today page when the UI language changes", async () => {
+    const state = await createTestSeedBibleState({ todayOpen: true });
+    expect(window.location.pathname).toBe("/en/today");
+
+    await state.i18n.changeLanguage("es");
+
+    await waitFor(() => window.location.pathname === "/es/today");
+    expect(paneIsOpen(state)).toBe(true);
+    await state.i18n.changeLanguage("en");
   });
 
   // Reopening must reuse the same component thunk: a fresh one would remount
@@ -195,5 +183,351 @@ describe("Today pane wiring", () => {
     )?.component;
 
     expect(second).toBe(first);
+  });
+
+  it("does not open Today when the page is a compact embed", async () => {
+    const state = await createTestSeedBibleState({ embed: true });
+
+    state.today.open();
+
+    expect(state.today.isOpen.value).toBe(false);
+    expect(paneIsOpen(state)).toBe(false);
+  });
+
+  it("does not auto-open Today on a bare embed URL", async () => {
+    window.history.replaceState(null, "", "/?embed=true");
+
+    const state = await createTestSeedBibleState({
+      todayOpen: "fromUrl",
+      embed: true,
+    });
+
+    expect(state.today.isOpen.value).toBe(false);
+    expect(paneIsOpen(state)).toBe(false);
+  });
+});
+
+describe("Today's Community section", () => {
+  const FRIEND = "f00df00d-0000-4000-8000-00000000f00d";
+  // People the friends lists know about who aren't friends yet.
+  const ASKED_ME = "a5cedace-0000-4000-8000-00000000a5ce";
+  const ASKED_BY_ME = "b0b0b0b0-0000-4000-8000-00000000b0b0";
+
+  /** A reading history document holding one finished chapter. */
+  const historyDocument = (
+    reading: { bookId: string; chapter: number },
+    atSeconds: number
+  ) => {
+    const event = {
+      userId: "",
+      ...reading,
+      start: atSeconds - 60,
+      end: atSeconds,
+    };
+    const events = [{ get: (key: string) => event[key as keyof typeof event] }];
+    return {
+      getArray: () => ({
+        type: { length: events.length, get: (i: number) => events[i] },
+      }),
+    } as unknown as SharedDocument;
+  };
+
+  it("includes friends' reading alongside the user's own, but not people with a request still waiting", async () => {
+    const state = await createTestSeedBibleState();
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const readings: Record<string, { bookId: string; chapter: number }> = {
+      [ME]: { bookId: "JHN", chapter: 3 },
+      [FRIEND]: { bookId: "PSA", chapter: 23 },
+      [ASKED_ME]: { bookId: "GEN", chapter: 1 },
+      [ASKED_BY_ME]: { bookId: "EXO", chapter: 20 },
+    };
+    const server = fakeSharedPermissions(state.os, () =>
+      state.login.userId.peek()
+    );
+    server.friendsWith(FRIEND);
+    server.requestFrom(ASKED_ME);
+    server.requestTo(ASKED_BY_ME);
+    vi.spyOn(state.os, "getSharedDocument").mockImplementation((async (
+      recordName: string
+    ) =>
+      historyDocument(
+        readings[recordName] ?? { bookId: "none", chapter: 0 },
+        nowSeconds
+      )) as never);
+    // Signing in loads saves and settings too; nobody has any here.
+    vi.spyOn(state.os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "Data not found",
+    } as never);
+    // Nor any notes, which the feed reads alongside reading history.
+    vi.spyOn(state.os, "listAllData").mockResolvedValue({
+      success: true,
+      items: [],
+    });
+
+    await act(async () => {
+      state.os.sessionKey.value = formatV1SessionKey(
+        ME,
+        "session-1",
+        "secret-1",
+        Date.now() + 1000 * 60 * 60
+      );
+    });
+    try {
+      // Waits for the requests too: leaving them out only means something
+      // once the app knows about them.
+      await waitFor(
+        () =>
+          state.friends.friendIds.value.includes(FRIEND) &&
+          state.friends.incomingRequests.value.some(
+            (r) => r.userId === ASKED_ME
+          ) &&
+          state.friends.outgoingRequests.value.some(
+            (r) => r.userId === ASKED_BY_ME
+          )
+      );
+
+      const feed = await state.today.getCommunityFeed(
+        { from: nowSeconds - 3600, to: nowSeconds + 3600 },
+        { crossedPaths: true }
+      );
+
+      expect(
+        feed
+          .map((item) =>
+            item.type === "reading" ? `${item.userId}:${item.bookId}` : null
+          )
+          .sort()
+      ).toEqual([`${FRIEND}:PSA`, `${ME}:JHN`].sort());
+    } finally {
+      // Left signed in, the persisted key would sign the next test's state in.
+      state.os.sessionKey.value = null;
+      localStorage.removeItem("sessionKey");
+      vi.restoreAllMocks();
+    }
+  });
+
+  describe("getCommunityFeed", () => {
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const SPAN = { from: nowSeconds - 3600, to: nowSeconds + 3600 };
+
+    const noteRecord = {
+      address: "note-1",
+      data: {
+        id: "note-1",
+        bookId: "COL",
+        chapterNumber: 3,
+        verseNumber: 12,
+        data: {
+          type: "comment",
+          html: "<p>Compassion is listed first.</p>",
+          createdAtMs: nowSeconds * 1000,
+        },
+      },
+    };
+
+    let state: Awaited<ReturnType<typeof createTestSeedBibleState>>;
+    let listAllData: ReturnType<typeof vi.fn>;
+    let getSharedDocument: ReturnType<typeof vi.fn>;
+
+    const feedTypes = async () =>
+      (await state.today.getCommunityFeed(SPAN, { crossedPaths: true })).map(
+        (item) => item.type
+      );
+
+    beforeEach(async () => {
+      clearReadingHistoryDocs();
+      state = await createTestSeedBibleState();
+      fakeSharedPermissions(state.os, () => state.login.userId.peek());
+      vi.spyOn(state.os, "getData").mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "Data not found",
+      } as never);
+      getSharedDocument = vi
+        .spyOn(state.os, "getSharedDocument")
+        .mockImplementation((async () =>
+          historyDocument({ bookId: "JHN", chapter: 3 }, nowSeconds)) as never);
+      listAllData = vi
+        .spyOn(state.os, "listAllData")
+        .mockResolvedValue({ success: true, items: [noteRecord] });
+    });
+
+    afterEach(() => {
+      state.os.sessionKey.value = null;
+      localStorage.removeItem("sessionKey");
+      vi.restoreAllMocks();
+    });
+
+    const signIn = async () => {
+      await act(async () => {
+        state.os.sessionKey.value = formatV1SessionKey(
+          ME,
+          "session-1",
+          "secret-1",
+          Date.now() + 1000 * 60 * 60
+        );
+      });
+      await waitFor(() => state.today.communityMembers.value.includes(ME));
+      // Signing in sweeps the user's own record for other reasons; only the
+      // feed's calls count from here.
+      listAllData.mockClear();
+      getSharedDocument.mockClear();
+    };
+
+    it("shows the user's notes and reading together", async () => {
+      await signIn();
+      expect((await feedTypes()).sort()).toEqual(["note", "reading"]);
+    });
+
+    it("still shows reading when the notes can't be read", async () => {
+      await signIn();
+      listAllData.mockRejectedValue(new Error("records server down"));
+      expect(await feedTypes()).toEqual(["reading"]);
+    });
+
+    it("still shows notes when the reading history can't be read", async () => {
+      await signIn();
+      // Signing in already fetched this year's document for the resume card.
+      clearReadingHistoryDocs();
+      getSharedDocument.mockRejectedValue(new Error("records server down"));
+      expect(await feedTypes()).toEqual(["note"]);
+    });
+
+    it("is empty without asking the server when signed out", async () => {
+      expect(await feedTypes()).toEqual([]);
+      expect(listAllData).not.toHaveBeenCalled();
+      expect(getSharedDocument).not.toHaveBeenCalled();
+    });
+
+    // Notes have no time-range query, so each fetch sweeps the whole record.
+    it("reuses a member's notes when the window changes", async () => {
+      await signIn();
+      await state.today.getCommunityFeed(SPAN, { crossedPaths: true });
+      await state.today.getCommunityFeed(
+        { from: SPAN.from - 86400, to: SPAN.to },
+        { crossedPaths: true }
+      );
+      expect(listAllData).toHaveBeenCalledTimes(1);
+    });
+
+    it("reads notes afresh each time Today opens, to pick up one just written", async () => {
+      await signIn();
+      await feedTypes();
+      state.today.open();
+      await feedTypes();
+      expect(listAllData).toHaveBeenCalledTimes(2);
+    });
+
+    it("asks for notes again after a failed fetch", async () => {
+      await signIn();
+      listAllData.mockRejectedValueOnce(new Error("records server down"));
+      expect(await feedTypes()).toEqual(["reading"]);
+      expect((await feedTypes()).sort()).toEqual(["note", "reading"]);
+    });
+  });
+});
+
+describe("Today's verse of the day", () => {
+  const VERSES_URL = makeUrl("/api/d/verse-of-the-day/verses.json");
+
+  // Points the app at the endpoint the mocked responses are keyed by.
+  beforeEach(() => {
+    window.history.replaceState(null, "", "/?useFreeBibleAPI");
+  });
+
+  /** The dataset with a single entry, so whichever day is asked, it's picked. */
+  const datasetWith = (verse: {
+    book: string;
+    chapter: number;
+    verse: number;
+    endVerse?: number;
+  }) =>
+    createResponse({
+      dataset: { id: "verse-of-the-day" },
+      verses: [{ ...verse, categories: ["hope"] }],
+    });
+
+  it("returns the day's verse with its text in the requested translation", async () => {
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [VERSES_URL]: datasetWith({ book: "GEN", chapter: 1, verse: 2 }),
+      },
+    });
+
+    const verse = await state.today.getVerseOfTheDay("2026-10-30", "AAB");
+
+    expect(verse).toEqual({
+      bookId: "GEN",
+      chapter: 1,
+      verse: 2,
+      translationId: "AAB",
+      translationShortName: "AAB",
+      text: "Verse 2",
+    });
+  });
+
+  // A short name that differs from the id, so reading the id back can't pass.
+  it("names the translation by its short name", async () => {
+    const chapter = makeChapter(aabBooks, "GEN", 1);
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [makeUrl("/api/AAB/GEN/1.json")]: createResponse({
+          ...chapter,
+          translation: { ...chapter.translation, shortName: "AncAB" },
+        }),
+        [VERSES_URL]: datasetWith({ book: "GEN", chapter: 1, verse: 1 }),
+      },
+    });
+
+    const verse = await state.today.getVerseOfTheDay("2026-10-30", "AAB");
+
+    expect(verse?.translationShortName).toBe("AncAB");
+  });
+
+  it("joins the text of every verse in a passage", async () => {
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [VERSES_URL]: datasetWith({
+          book: "GEN",
+          chapter: 1,
+          verse: 1,
+          endVerse: 2,
+        }),
+      },
+    });
+
+    const verse = await state.today.getVerseOfTheDay("2026-10-30", "AAB");
+
+    expect(verse?.endVerse).toBe(2);
+    expect(verse?.text).toBe("Verse 1 Verse 2");
+  });
+
+  it("returns null when the translation doesn't have the verse", async () => {
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [VERSES_URL]: datasetWith({ book: "GEN", chapter: 1, verse: 31 }),
+      },
+    });
+
+    expect(await state.today.getVerseOfTheDay("2026-10-30", "AAB")).toBeNull();
+  });
+
+  it("rejects when the dataset can't be fetched", async () => {
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultManagerResponseMap(),
+        [VERSES_URL]: createResponse({}, 500, "Internal Server Error"),
+      },
+    });
+
+    await expect(
+      state.today.getVerseOfTheDay("2026-10-30", "AAB")
+    ).rejects.toThrow("Status: 500");
   });
 });

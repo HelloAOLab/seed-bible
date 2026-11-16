@@ -65,6 +65,7 @@ import {
   ATTR_SERVICE_VERSION,
 } from "@opentelemetry/semantic-conventions";
 import type { ArtifactStore, BranchArtifacts, BranchPointer } from "./store";
+import type { RenderTiming } from "../standalone/ssrRenderTimings";
 
 /** Name reported as the instrumentation scope on every span and metric. */
 const SCOPE_NAME = "seed-bible/server";
@@ -261,6 +262,19 @@ export function initTelemetry(options: InitTelemetryOptions = {}): Telemetry {
   };
 }
 
+/**
+ * Bucket edges for every duration histogram, in seconds. The SDK default edges
+ * (0, 5, 10, ... 10000) assume milliseconds, so second-valued samples all land
+ * in the first bucket and percentiles collapse to a constant.
+ */
+export const DURATION_BUCKET_BOUNDARIES_SECONDS = [
+  0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10,
+];
+
+const DURATION_ADVICE = {
+  explicitBucketBoundaries: DURATION_BUCKET_BOUNDARIES_SECONDS,
+};
+
 function createInstruments(meter: Meter): Instruments {
   meter
     .createObservableGauge("seedbible.process.memory", {
@@ -278,10 +292,12 @@ function createInstruments(meter: Meter): Instruments {
     httpDuration: meter.createHistogram("http.server.request.duration", {
       description: "Duration of inbound HTTP requests",
       unit: "s",
+      advice: DURATION_ADVICE,
     }),
     renderDuration: meter.createHistogram("seedbible.ssr.render.duration", {
       description: "Duration of the SSR render() call",
       unit: "s",
+      advice: DURATION_ADVICE,
     }),
     renderFailures: meter.createCounter("seedbible.ssr.render.failures", {
       description:
@@ -293,12 +309,14 @@ function createInstruments(meter: Meter): Instruments {
     storeDuration: meter.createHistogram("seedbible.store.operation.duration", {
       description: "Duration of artifact store reads",
       unit: "s",
+      advice: DURATION_ADVICE,
     }),
     assetProxyDuration: meter.createHistogram(
       "seedbible.asset_proxy.duration",
       {
         description: "Duration of upstream fetches made by the asset proxy",
         unit: "s",
+        advice: DURATION_ADVICE,
       }
     ),
   };
@@ -399,6 +417,35 @@ export async function withSpan<T>(
       }
     }
   );
+}
+
+/**
+ * Turns the step timings an SSR render returned into child spans of the
+ * currently active span (call it inside the `ssr.render` span). The render
+ * can't create these spans itself: in production it runs in a worker thread
+ * with no tracer provider and no view of this thread's span context.
+ */
+export function recordRenderTimings(result: unknown): void {
+  const activeTracer = tracer;
+  if (!enabled || !activeTracer) return;
+  if (typeof result !== "object" || result === null) return;
+  const timings = (result as { timings?: unknown }).timings;
+  if (!Array.isArray(timings)) return;
+
+  for (const timing of timings as RenderTiming[]) {
+    const span = activeTracer.startSpan(timing.name, {
+      startTime: timing.startTime,
+    });
+    if (timing.error) {
+      recordError(
+        span,
+        Object.assign(new Error(timing.error.message), {
+          name: timing.error.name ?? "Error",
+        })
+      );
+    }
+    span.end(timing.endTime);
+  }
 }
 
 /** Marks a span as failed and attaches the error. */

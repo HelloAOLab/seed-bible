@@ -4,7 +4,6 @@ import {
   SetStrictTag,
 } from "../../functions/casualos";
 import type { SectionSelectionConfigProvider } from "../../config/sectionSelection/SectionSelectionConfigProvider";
-import type { SectionSelectionAdapterPort } from "../../../application/ports/out/SectionSelection";
 import { StackSectionData } from "../../../domain/entities/StackSectionData";
 import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
 import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
@@ -19,12 +18,13 @@ import type { StackBookMapper } from "../../mappers/StackBookMapper";
 import type { BookSetupAdapter } from "./BookSetupAdapter";
 import type { BookStackLayoutAdapter } from "./BookStackLayoutAdapter";
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
-import type { CameraAdapterPort } from "../../../application/ports/bibleLifecycle";
 import type { BibleDataRepository } from "./BibleDataRepository";
 import type { PieceDataRepository } from "./PieceDataRepository";
 import type { PieceMapper } from "../../mappers/PieceMapper";
 import type { Piece } from "../../../domain/models/canvas";
 import type { PieceBotTags } from "../../models/casualos";
+import type { SectionSelectionPort } from "../../../application/ports/out/SectionSelection";
+import type { CameraAdapter } from "../environment/CameraAdapter";
 
 interface AdapterParams {
   getDimension(): string;
@@ -36,13 +36,13 @@ interface AdapterParams {
   bookSetupAdapter: BookSetupAdapter;
   bookMapper: StackBookMapper;
   bookStackLayoutAdapter: BookStackLayoutAdapter;
-  cameraAdapterPort: CameraAdapterPort;
+  cameraAdapterPort: CameraAdapter;
   bibleDataRepository: BibleDataRepository;
   pieceDataRepository: PieceDataRepository;
   pieceMapper: PieceMapper;
 }
 
-export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
+export class SectionSelectionAdapter implements SectionSelectionPort {
   #getDimension: AdapterParams["getDimension"];
   #selectionConfigProvider: AdapterParams["selectionConfigProvider"];
   #shadowMapper: AdapterParams["shadowMapper"];

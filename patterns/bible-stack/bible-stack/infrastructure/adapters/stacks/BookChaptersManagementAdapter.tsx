@@ -1,4 +1,3 @@
-import type { BookChaptersManagementAdapterPort } from "../../../application/ports/out/BookChaptersManagement";
 import type { BookInfo, ChapterInfo } from "../../../domain/models/arrangement";
 import type { Piece } from "../../../domain/models/canvas";
 import type { StackTransformer } from "../../../domain/models/pieces";
@@ -15,6 +14,7 @@ import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMappe
 import type { StackTransformerMapper } from "../../mappers/StackTransformerMapper";
 import type { ChapterTags } from "../../models/stack";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
+import type { BookChaptersManagementPort } from "../../../application/ports/out/BookChaptersManagement";
 
 interface AdapterParams {
   bookMapper: StackBookMapper;
@@ -27,7 +27,7 @@ interface AdapterParams {
   piecesConfigProvider: PiecesConfigProvider;
 }
 
-export class BookChapterManagementAdapter implements BookChaptersManagementAdapterPort {
+export class BookChaptersManagementAdapter implements BookChaptersManagementPort {
   #bookMapper: AdapterParams["bookMapper"];
   #sectionBookMapper: AdapterParams["sectionBookMapper"];
   #layoutConfigProvider: AdapterParams["layoutConfigProvider"];
@@ -70,7 +70,6 @@ export class BookChapterManagementAdapter implements BookChaptersManagementAdapt
     chapterInfo: ChapterInfo;
     bookInfo: BookInfo;
     isMovable: boolean;
-    index: number;
     biggerChapter: number;
   }) {
     const bookBot =
@@ -118,6 +117,12 @@ export class BookChapterManagementAdapter implements BookChaptersManagementAdapt
           (bookInfo.type === "subset" ? bookInfo.startIndex : 0)
       ),
     };
+    const {
+      selectedColor,
+      expandedScaleZ,
+      highlightedScaleZ,
+      highlightedColor,
+    } = this.#piecesConfigProvider.getInitialVisualState("StackChapter");
     this.#visualStateRegistry.registerState({
       piece: chapter,
       state: {
@@ -137,17 +142,13 @@ export class BookChapterManagementAdapter implements BookChaptersManagementAdapt
           this.#layoutConfigProvider.getStackPieceMeasurement(
             "ChapterFrontSelectedDepth"
           ),
-        selectedColor:
-          this.#piecesConfigProvider.getInitialVisualState("StackChapter")
-            .selectedColor!,
-        expandedScaleZ: 1, // TODO: Where does this value come from?
-        highlightedScaleZ: 1, // TODO: Where does this value come from?
+        selectedColor: selectedColor!,
+        expandedScaleZ: expandedScaleZ!,
+        highlightedScaleZ: highlightedScaleZ!,
         initialColor:
           chapterBot.tags.color ??
           this.#piecesConfigProvider.getInitialConfig("StackChapter").color!,
-        highlightedColor:
-          this.#piecesConfigProvider.getInitialVisualState("StackChapter")
-            .highlightedColor ?? "#ffffff",
+        highlightedColor: highlightedColor ?? "#ffffff",
       },
     });
 

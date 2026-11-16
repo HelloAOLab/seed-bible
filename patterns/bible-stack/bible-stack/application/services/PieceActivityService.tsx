@@ -1,61 +1,76 @@
-import type { UserReadingInstance } from "../../domain/models/reading";
 import {
   BiblePieces,
   type BiblePiece,
   type PieceInfo,
   type Piece,
-  type ActivityIndicator,
+  type ActivityIndicatorType,
+  type ActivityContainerPieceType,
 } from "../../domain/models/canvas";
+import { ActivityIndicatorData } from "../../domain/entities/ActivityIndicatorData";
 import { HighlightStates } from "../../domain/models/highlight";
-import type { LabelDataStorePort } from "../ports/out/PieceActivity";
-import type {
-  DataRegistryPort,
-  UserPresenceServicePort,
-  ActivityIndicatorsAdapterPort,
-  ActivityNotificationAdapterPort,
-  ActivityContainer,
-  AnyShowIndicatorCommand,
-  ActivityContainerType,
-  UserColorStorePort,
-  NotifiableContainer,
-  ReadingInstanceProviderPort,
-} from "../ports/out/PieceActivity";
 import { InfoLabelData } from "../../domain/entities/InfoLabelData";
-import type { LoggerPort } from "../ports/in/Logger";
+import type { LoggerPort } from "../ports/out/Logger";
 import type { PieceActivityServicePort } from "../ports/in/PieceActivity";
 import type { PieceTypeMap } from "../../domain/models/pieces";
 import type { ArrangementServicePort } from "../ports/in/Arrangement";
+import type { ReadingInstance } from "../../domain/models/userPresence";
+import type { BibleStackEvents } from "../../domain/models/events";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type {
+  ActivityContainer,
+  NotifiableContainer,
+  ActivityContainerType,
+} from "../../domain/models/activity";
+import type { UserPresenceServicePort } from "../ports/in/UserPresence";
+import type {
+  AnyShowIndicatorCommand,
+  ActivityIndicatorsPort,
+} from "../ports/out/ActivityIndicators";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
+import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
+import type { ActivityNotificationPort } from "../ports/out/ActivityNotification";
+import type { UserIdentityStorePort } from "../ports/out/UserIdentityStore";
+import type { LabelDataStorePort } from "../ports/out/LabelDataStore";
+import type { IdGeneratorPort } from "../ports/out/IdGenerator";
 
 interface ServiceParams {
-  dataRegistryPort: DataRegistryPort;
+  dataRegistryPort: PieceDataRepositoryPort;
   arrangementServicePort: ArrangementServicePort;
   labelDataStorePort: LabelDataStorePort;
   maxIndicators?: number;
   userPresenceServicePort: UserPresenceServicePort;
-  readingInstanceProviderPort: ReadingInstanceProviderPort;
-  activityIndicatorsAdapterPort: ActivityIndicatorsAdapterPort;
-  activityNotificationAdapterPort: ActivityNotificationAdapterPort;
-  userColorStorePort: UserColorStorePort;
+  // readingInstanceProviderPort: ReadingInstanceProviderPort;
+  activityIndicatorsAdapterPort: ActivityIndicatorsPort;
+  activityIndicatorLifecyclePort: StackPieceLifecyclePort;
+  activityNotificationAdapterPort: ActivityNotificationPort;
+  userIdentityStorePort: UserIdentityStorePort;
+  idGeneratorPort: IdGeneratorPort;
   loggerPort: LoggerPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
 }
 
 type ActivityStrategyType<T extends BiblePiece = BiblePiece> = (
   piece: PieceTypeMap[T],
-  dataRegistryPort: DataRegistryPort
-) => {
-  key: string;
-  typeOfPiece: BiblePiece;
-};
+  dataRegistryPort: PieceDataRepositoryPort,
+  loggerPort: LoggerPort
+) =>
+  | {
+      key: string;
+      typeOfPiece: BiblePiece;
+    }
+  | undefined;
 
 const testamentActivityStrategy: ActivityStrategyType<"StackTestament"> = (
   piece,
-  dataRegistryPort
+  dataRegistryPort,
+  loggerPort
 ) => {
   const data = dataRegistryPort.getPieceData(piece);
   if (!data) {
-    throw new Error(
+    loggerPort.error(
       "PieceActvityService: data not found at testamentActivityStrategy"
     );
+    return undefined;
   }
   const key = data.getPieceInfoProperty("name");
   const typeOfPiece = BiblePieces.StackTestament;
@@ -65,7 +80,7 @@ const testamentActivityStrategy: ActivityStrategyType<"StackTestament"> = (
 
 const sectionActivityStrategy: ActivityStrategyType<
   "StackSection" | "StackSectionShadow"
-> = (piece, dataRegistryPort) => {
+> = (piece, dataRegistryPort, loggerPort) => {
   const data =
     piece.type === "StackSection"
       ? dataRegistryPort.getPieceData(piece)
@@ -75,9 +90,10 @@ const sectionActivityStrategy: ActivityStrategyType<
         });
 
   if (!data) {
-    throw new Error(
+    loggerPort.error(
       "PieceActivityService: data not found at sectionActivityStrategy"
     );
+    return undefined;
   }
   const key = data.getPieceInfoProperty("name");
   const typeOfPiece = BiblePieces.StackSection;
@@ -87,14 +103,16 @@ const sectionActivityStrategy: ActivityStrategyType<
 
 const bookActivityStrategy: ActivityStrategyType<"StackBook"> = (
   piece,
-  dataRegistryPort
+  dataRegistryPort,
+  loggerPort
 ) => {
   const data = dataRegistryPort.getPieceData(piece);
 
   if (!data) {
-    throw new Error(
+    loggerPort.error(
       "PieceActivityService: data not found at bookActivityStrategy"
     );
+    return undefined;
   }
   const key = data.getPieceInfoProperty("bookId");
   const typeOfPiece = BiblePieces.StackBook;
@@ -104,14 +122,16 @@ const bookActivityStrategy: ActivityStrategyType<"StackBook"> = (
 
 const sectionBookActivityStrategy: ActivityStrategyType<"StackSectionBook"> = (
   piece,
-  dataRegistryPort
+  dataRegistryPort,
+  loggerPort
 ) => {
   const data = dataRegistryPort.getPieceData(piece);
 
   if (!data) {
-    throw new Error(
+    loggerPort.error(
       "PieceActivityService: data not found at sectionBookActivityStrategy"
     );
+    return undefined;
   }
   const key = data.getPieceBookInfoProperty("bookId");
   const typeOfPiece = BiblePieces.StackBook;
@@ -121,14 +141,16 @@ const sectionBookActivityStrategy: ActivityStrategyType<"StackSectionBook"> = (
 
 const chapterActivityStrategy: ActivityStrategyType<"StackChapter"> = (
   piece,
-  dataRegistryPort
+  dataRegistryPort,
+  loggerPort
 ) => {
   const data = dataRegistryPort.getPieceData(piece);
 
   if (!data) {
-    throw new Error(
+    loggerPort.error(
       "PieceActivityService: data not found at chapterActivityStrategy"
     );
+    return undefined;
   }
   const key = `${data.getCreationParam("bookId")} ${data.getPieceInfoProperty("number")}`;
   const typeOfPiece = BiblePieces.StackChapter;
@@ -149,13 +171,17 @@ const activityStrategiesMap: {
 
 interface IndicatorsStrategyParams<T extends BiblePiece> {
   piece: Piece<T>;
-  dataRegistryPort: DataRegistryPort;
+  dataRegistryPort: PieceDataRepositoryPort;
   labelDataStorePort: LabelDataStorePort;
+}
+
+interface IndicatorsStrategyErrorMessage {
+  message: string;
 }
 
 type IndicatorsStrategyType<T extends BiblePiece = BiblePiece> = (
   params: IndicatorsStrategyParams<T>
-) => ActivityIndicator[];
+) => ActivityIndicatorData[] | IndicatorsStrategyErrorMessage;
 
 const labelTransformerIndicatorsStrategy: IndicatorsStrategyType<
   "InfoLabelTransformer"
@@ -163,7 +189,7 @@ const labelTransformerIndicatorsStrategy: IndicatorsStrategyType<
   const labelData = labelDataStorePort.getDataByTransformerId(piece.id);
 
   if (!labelData) {
-    throw new Error("PieceActivityService: labelData not found");
+    return { message: "PieceActivityService: labelData not found" };
   }
 
   return labelData.activityIndicators;
@@ -175,7 +201,11 @@ const pieceIndicatorsStrategy: IndicatorsStrategyType<"StackChapter"> = ({
 }) => {
   const pieceData = dataRegistryPort.getPieceData(piece);
 
-  if (!pieceData) return [];
+  if (!pieceData) {
+    return {
+      message: "PieceActivityService: pieceData not found",
+    };
+  }
 
   return pieceData.activityIndicators;
 };
@@ -188,16 +218,18 @@ const indicatorsStrategiesMap: {
 };
 
 export class PieceActivityService implements PieceActivityServicePort {
-  #dataRegistryPort: DataRegistryPort;
+  #dataRegistryPort: PieceDataRepositoryPort;
   #arrangementServicePort: ArrangementServicePort;
   #labelDataStorePort: LabelDataStorePort;
   #maxIndicators: NonNullable<ServiceParams["maxIndicators"]>;
   #userPresenceServicePort: ServiceParams["userPresenceServicePort"];
   #activityIndicatorsAdapterPort: ServiceParams["activityIndicatorsAdapterPort"];
+  #activityIndicatorLifecyclePort: ServiceParams["activityIndicatorLifecyclePort"];
   #activityNotificationAdapterPort: ServiceParams["activityNotificationAdapterPort"];
-  #userColorStorePort: ServiceParams["userColorStorePort"];
-  #readingInstanceProviderPort: ServiceParams["readingInstanceProviderPort"];
+  #userColorStorePort: ServiceParams["userIdentityStorePort"];
+  #idGeneratorPort: ServiceParams["idGeneratorPort"];
   #loggerPort: LoggerPort;
+  #eventManagerPort: ServiceParams["eventManagerPort"];
 
   constructor({
     dataRegistryPort,
@@ -206,10 +238,12 @@ export class PieceActivityService implements PieceActivityServicePort {
     userPresenceServicePort,
     maxIndicators = 4,
     activityIndicatorsAdapterPort,
+    activityIndicatorLifecyclePort,
     activityNotificationAdapterPort,
-    userColorStorePort,
-    readingInstanceProviderPort,
+    userIdentityStorePort,
+    idGeneratorPort,
     loggerPort,
+    eventManagerPort,
   }: ServiceParams) {
     this.#dataRegistryPort = dataRegistryPort;
     this.#arrangementServicePort = arrangementServicePort;
@@ -217,23 +251,45 @@ export class PieceActivityService implements PieceActivityServicePort {
     this.#maxIndicators = maxIndicators;
     this.#userPresenceServicePort = userPresenceServicePort;
     this.#activityIndicatorsAdapterPort = activityIndicatorsAdapterPort;
+    this.#activityIndicatorLifecyclePort = activityIndicatorLifecyclePort;
     this.#activityNotificationAdapterPort = activityNotificationAdapterPort;
-    this.#userColorStorePort = userColorStorePort;
-    this.#readingInstanceProviderPort = readingInstanceProviderPort;
+    this.#userColorStorePort = userIdentityStorePort;
+    this.#idGeneratorPort = idGeneratorPort;
     this.#loggerPort = loggerPort;
+    this.#eventManagerPort = eventManagerPort;
+
+    this.#eventManagerPort.subscribe("OnStackSequenceEnd", () => {
+      this.updateAllIndicators();
+      this.updateAllNotifications();
+    });
+
+    this.#eventManagerPort.subscribe("OnStackSequenceStart", () => {
+      this.hideAllNotifications();
+    });
   }
 
-  getPieceActivity({ piece }: { piece: Piece }) {
-    const readingInstances: UserReadingInstance[] =
-      this.#readingInstanceProviderPort.getOwnReadingInstances();
-    const remoteReadingInstances: UserReadingInstance[] =
-      this.#readingInstanceProviderPort.getRemotesReadingInstances();
-    const allReadingInstances: UserReadingInstance[] = [
+  getPieceActivity({ piece }: { piece: Piece }): ReadingInstance[] {
+    const strategy = activityStrategiesMap[piece.type] as
+      | ActivityStrategyType<BiblePiece>
+      | undefined;
+
+    if (!strategy) {
+      this.#loggerPort.error(
+        `PieceActivityService: strategy not found at getPieceActivity`
+      );
+      return [];
+    }
+
+    const readingInstances: ReadingInstance[] =
+      this.#userPresenceServicePort.getOwnUserPresence();
+    const remoteReadingInstances =
+      this.#userPresenceServicePort.getRemotesUserPresence();
+    const allReadingInstances: ReadingInstance[] = [
       ...readingInstances,
-      ...remoteReadingInstances,
+      ...[...remoteReadingInstances.values()].flat(),
     ];
     const instancePathMap: Map<
-      UserReadingInstance,
+      ReadingInstance,
       [PieceInfo, PieceInfo, PieceInfo, PieceInfo]
     > = new Map();
 
@@ -263,25 +319,27 @@ export class PieceActivityService implements PieceActivityServicePort {
       }
       if (found) {
         const testament = this.#arrangementServicePort.getTestamentByIndices({
-          testamentIndex: testamentIndex as number,
-          arrangementIndex: arrangementIndex as number,
+          testamentIndex: testamentIndex!,
+          arrangementIndex: arrangementIndex!,
         });
         if (!testament) {
-          throw new Error(
+          this.#loggerPort.error(
             "PieceActivityService: testament not found at getPieceActivity"
           );
+          continue;
         }
         const testamentName = testament.name;
         const section = this.#arrangementServicePort.getSectionByIndices({
-          arrangementIndex: arrangementIndex as number,
-          testamentIndex: testamentIndex as number,
-          sectionIndex: sectionIndex as number,
+          arrangementIndex: arrangementIndex!,
+          testamentIndex: testamentIndex!,
+          sectionIndex: sectionIndex!,
         });
 
         if (!section) {
-          throw new Error(
+          this.#loggerPort.error(
             "PieceActivityService: section not found at getPieceActivity"
           );
+          continue;
         }
 
         const sectionName = section.name;
@@ -308,22 +366,16 @@ export class PieceActivityService implements PieceActivityServicePort {
       }
     }
 
-    const strategy = activityStrategiesMap[piece.type] as
-      | ActivityStrategyType<BiblePiece>
-      | undefined;
-
-    if (!strategy) {
-      this.#loggerPort.error(
-        `PieceActivityService: strategy not found at getPieceActivity`
-      );
-      return [];
-    }
-
     // `strategy` was looked up by `piece.type`, so it matches this piece at runtime.
-    const { key, typeOfPiece } = strategy(
+    const result = strategy(
       piece as PieceTypeMap[keyof PieceTypeMap],
-      this.#dataRegistryPort
+      this.#dataRegistryPort,
+      this.#loggerPort
     );
+
+    if (!result) return [];
+
+    const { key, typeOfPiece } = result;
 
     const activity = allReadingInstances.filter((readingInstance) => {
       const instancePath = instancePathMap.get(readingInstance);
@@ -338,10 +390,19 @@ export class PieceActivityService implements PieceActivityServicePort {
       });
     });
 
-    return activity;
+    const dedupedActivity: Map<string, ReadingInstance> = new Map();
+
+    for (const entry of activity) {
+      const existent = dedupedActivity.get(entry.connectionId);
+      if (!existent || (!existent.selected && entry.selected)) {
+        dedupedActivity.set(entry.connectionId, entry);
+      }
+    }
+
+    return [...dedupedActivity.values()];
   }
 
-  getActivityIndicatorsForPiece(piece: Piece): ActivityIndicator[] {
+  getActivityIndicatorsForPiece(piece: Piece): ActivityIndicatorData[] {
     const strategy = indicatorsStrategiesMap[piece.type] as
       | IndicatorsStrategyType<BiblePiece>
       | undefined;
@@ -353,43 +414,43 @@ export class PieceActivityService implements PieceActivityServicePort {
       return [];
     }
 
-    const indicators = strategy({
+    const result = strategy({
       piece,
       dataRegistryPort: this.#dataRegistryPort,
       labelDataStorePort: this.#labelDataStorePort,
     });
 
-    return indicators;
+    if ("message" in result) {
+      this.#loggerPort.error(result.message);
+      return [];
+    }
+
+    return result;
   }
 
   getActivityIndicatorByType(
     piece: Piece,
-    type: ActivityIndicator["indicatorType"]
-  ): Piece | undefined {
+    type: ActivityIndicatorType
+  ): ActivityIndicatorData | undefined {
     const indicators = this.getActivityIndicatorsForPiece(piece);
     return indicators.find((indicator) => indicator.indicatorType === type);
   }
 
   getExtraActivityIndicatorsForPiece(piece: Piece): {
-    extraIndicatorContent: Piece | undefined;
-    extraIndicatorBackground: Piece | undefined;
+    extraIndicatorContent: ActivityIndicatorData | undefined;
   } {
     const extraIndicatorContent = this.getActivityIndicatorByType(
       piece,
       "extraContent"
     );
-    const extraIndicatorBackground = this.getActivityIndicatorByType(
-      piece,
-      "extraBackground"
-    );
 
-    return { extraIndicatorContent, extraIndicatorBackground };
+    return { extraIndicatorContent };
   }
 
   getPieceIndicatorByActivityIndex(
     piece: Piece,
     activityIndex: number
-  ): ActivityIndicator | undefined {
+  ): ActivityIndicatorData | undefined {
     const indicators = this.getActivityIndicatorsForPiece(piece).filter(
       (indicator) => indicator.indicatorType === "regular"
     );
@@ -398,32 +459,27 @@ export class PieceActivityService implements PieceActivityServicePort {
 
   getDataActivityIndicatorByType(
     data: ActivityContainer,
-    type: ActivityIndicator["indicatorType"]
-  ): ActivityIndicator | undefined {
+    type: ActivityIndicatorType
+  ): ActivityIndicatorData | undefined {
     const indicators = data.activityIndicators;
     return indicators.find((indicator) => indicator.indicatorType === type);
   }
 
   getDataExtraActivityIndicators(data: ActivityContainer): {
-    extraIndicatorContent: ActivityIndicator | undefined;
-    extraIndicatorBackground: ActivityIndicator | undefined;
+    extraIndicatorContent: ActivityIndicatorData | undefined;
   } {
     const extraIndicatorContent = this.getDataActivityIndicatorByType(
       data,
       "extraContent"
     );
-    const extraIndicatorBackground = this.getDataActivityIndicatorByType(
-      data,
-      "extraBackground"
-    );
 
-    return { extraIndicatorContent, extraIndicatorBackground };
+    return { extraIndicatorContent };
   }
 
   getDataIndicatorByActivityIndex(
     data: ActivityContainer,
-    activityIndex: ActivityIndicator["index"]
-  ): ActivityIndicator | undefined {
+    activityIndex: number
+  ): ActivityIndicatorData | undefined {
     const indicators = data.activityIndicators.filter(
       (indicator) => indicator.indicatorType === "regular"
     );
@@ -439,137 +495,158 @@ export class PieceActivityService implements PieceActivityServicePort {
     return false;
   }
 
-  updateIndicators: (container: ActivityContainer) => ActivityIndicator[] = (
-    container
-  ) => {
-    const userPresence = this.#userPresenceServicePort.getUserPresence();
-
-    let activityPiece: Piece | undefined;
-    let containerType: ActivityContainerType | undefined = undefined;
+  #getContainerAnchor(container: ActivityContainer): {
+    pieceId: string;
+    type: ActivityContainerPieceType;
+  } {
     if (container instanceof InfoLabelData) {
-      activityPiece = container.owner;
-      containerType = "label";
-    } else if (container.piece) {
-      activityPiece = container.piece;
-      containerType = "piece";
+      return {
+        pieceId: container.transformer.id,
+        type: BiblePieces.InfoLabelTransformer,
+      };
     }
-
-    if (!activityPiece || !containerType) {
-      return [];
+    if (!container.piece) {
+      throw new Error(
+        "PieceActivityService: chapter piece not defined at #getContainerAnchor"
+      );
     }
+    return { pieceId: container.piece.id, type: BiblePieces.StackChapter };
+  }
 
-    const pieceActivity = this.getPieceActivity({
-      piece: activityPiece,
+  #createIndicatorData(
+    container: ActivityContainer,
+    index: number,
+    indicatorType: ActivityIndicatorType
+  ): ActivityIndicatorData {
+    const dataId = this.#idGeneratorPort.getId();
+    const piece =
+      this.#activityIndicatorLifecyclePort.spawnActivityIndicatorDomain(dataId);
+    const backgroundDataId = this.#idGeneratorPort.getId();
+    const background =
+      this.#activityIndicatorLifecyclePort.spawnActivityIndicatorDomain(
+        backgroundDataId
+      );
+    const anchor = this.#getContainerAnchor(container);
+    const data = new ActivityIndicatorData({
+      id: dataId,
+      index,
+      indicatorType,
+      piece,
+      background,
+      containerPieceId: anchor.pieceId,
+      containerDataId: container.id,
+      containerType: anchor.type,
     });
+    container.addActivityIndicator(data);
+    return data;
+  }
 
-    if (pieceActivity.length === 0) {
-      this.tryHideIndicators(container);
-      return [];
-    }
-
-    let currIndicators = container.activityIndicators;
-    const limit = Math.min(pieceActivity.length, this.#maxIndicators);
-    for (const indicator of currIndicators) {
-      if (indicator.indicatorType === "regular" && indicator.index >= limit) {
-        this.#activityIndicatorsAdapterPort.hideIndicator(indicator);
-        container.removeActivityIndicator(indicator.id);
+  updateIndicators: (container: ActivityContainer) => ActivityIndicatorData[] =
+    (container) => {
+      let activityPiece: Piece | undefined;
+      let containerType: ActivityContainerType | undefined = undefined;
+      let shouldShowIndicators = true;
+      if (container instanceof InfoLabelData) {
+        activityPiece = container.owner;
+        containerType = "label";
+      } else if (container.piece) {
+        shouldShowIndicators = container.shouldShowActivityIndicators();
+        activityPiece = container.piece;
+        containerType = "piece";
       }
-    }
 
-    currIndicators = container.activityIndicators;
-
-    if (pieceActivity.length <= this.#maxIndicators) {
-      const { extraIndicatorContent, extraIndicatorBackground } =
-        this.getDataExtraActivityIndicators(container);
-      if (extraIndicatorContent) {
-        this.#activityIndicatorsAdapterPort.hideIndicator(
-          extraIndicatorContent
-        );
-        container.removeActivityIndicator(extraIndicatorContent.id);
+      if (!activityPiece || !containerType) {
+        return [];
       }
-      if (extraIndicatorBackground) {
-        this.#activityIndicatorsAdapterPort.hideIndicator(
-          extraIndicatorBackground
-        );
-        container.removeActivityIndicator(extraIndicatorBackground.id);
-      }
-    }
 
-    const showIndicatorCommands: AnyShowIndicatorCommand[] = [];
-    const ownUserPresence = this.#userPresenceServicePort.getOwnUserPresence();
+      const pieceActivity = this.getPieceActivity({
+        piece: activityPiece,
+      });
 
-    for (
-      let activityIndex = 0;
-      activityIndex < pieceActivity.length;
-      activityIndex++
-    ) {
-      const activity = pieceActivity[activityIndex];
-      if (!activity) {
-        throw new Error(
-          `PieceActivityService: activity not found at activityIndex: ${activityIndex}`
-        );
+      if (pieceActivity.length === 0 || !shouldShowIndicators) {
+        this.tryHideIndicators(container);
+        return [];
       }
-      if (activityIndex >= this.#maxIndicators) {
-        const extraCount = pieceActivity.length - this.#maxIndicators;
-        const { extraIndicatorContent, extraIndicatorBackground } =
+
+      let currIndicators = container.activityIndicators;
+      const limit = Math.min(pieceActivity.length, this.#maxIndicators);
+      for (const indicator of currIndicators) {
+        if (indicator.indicatorType === "regular" && indicator.index >= limit) {
+          this.#activityIndicatorsAdapterPort.hideIndicator(indicator);
+          container.removeActivityIndicator(indicator.id);
+        }
+      }
+
+      currIndicators = container.activityIndicators;
+
+      if (pieceActivity.length <= this.#maxIndicators) {
+        const { extraIndicatorContent } =
           this.getDataExtraActivityIndicators(container);
-        showIndicatorCommands.push({
-          type: "extraContent",
-          extraUsers: extraCount,
-          index: activityIndex,
-          indicator: extraIndicatorContent,
-        });
-        showIndicatorCommands.push({
-          type: "extraBackground",
-          index: activityIndex,
-          indicator: extraIndicatorBackground,
-        });
-        break;
-      } else {
-        const isOwnUserActiveActivity =
-          !!ownUserPresence &&
-          ownUserPresence.readingInstanceId === activity.id;
-
-        const matchingPresence = Array.from(userPresence).find(
-          ([, presenceData]) => {
-            return activity.id === presenceData.readingInstanceId;
-          }
-        );
-        const activityUserId = matchingPresence?.[0];
-
-        const indicator = this.getDataIndicatorByActivityIndex(
-          container,
-          activityIndex
-        );
-
-        const color = this.#userColorStorePort.getUserColor({
-          configId:
-            activityUserId ??
-            this.#userPresenceServicePort.getOwnUserConfigId(),
-        });
-
-        showIndicatorCommands.push({
-          type: "regular",
-          index: activityIndex,
-          indicator,
-          isOwnUserActiveActivity,
-          color: color ?? "#ffffff",
-        });
+        if (extraIndicatorContent) {
+          this.#activityIndicatorsAdapterPort.hideIndicator(
+            extraIndicatorContent
+          );
+          container.removeActivityIndicator(extraIndicatorContent.id);
+        }
       }
-    }
 
-    const indicators = this.#activityIndicatorsAdapterPort.showIndicators({
-      container,
-      command: showIndicatorCommands,
-    });
-    for (const indicator of indicators) {
-      container.addActivityIndicator(indicator);
-    }
+      const showIndicatorCommands: AnyShowIndicatorCommand[] = [];
+      const ownUserId = this.#userPresenceServicePort.getOwnConnectionId();
 
-    this.#activityIndicatorsAdapterPort.updateIndicatorsPosition(container);
+      for (
+        let activityIndex = 0;
+        activityIndex < pieceActivity.length;
+        activityIndex++
+      ) {
+        const activity = pieceActivity[activityIndex]!;
+        if (activityIndex >= this.#maxIndicators) {
+          const extraCount = pieceActivity.length - this.#maxIndicators;
+          const { extraIndicatorContent } =
+            this.getDataExtraActivityIndicators(container);
 
-    return indicators;
-  };
+          const contentIndicator =
+            extraIndicatorContent ??
+            this.#createIndicatorData(container, activityIndex, "extraContent");
+          contentIndicator.index = activityIndex;
+
+          showIndicatorCommands.push({
+            type: "extraContent",
+            extraUsers: extraCount,
+            index: activityIndex,
+            indicator: contentIndicator,
+          });
+          break;
+        } else {
+          const indicator =
+            this.getDataIndicatorByActivityIndex(container, activityIndex) ??
+            this.#createIndicatorData(container, activityIndex, "regular");
+
+          const identity = this.#userColorStorePort.getUserDataByIds({
+            connectionId: activity.connectionId,
+          });
+
+          showIndicatorCommands.push({
+            type: "regular",
+            index: activityIndex,
+            indicator,
+            isSelected: activity.selected,
+            isOwnUser: activity.connectionId === ownUserId,
+            color: identity?.visual.color ?? "#ffffff",
+            icon: identity?.visual.defaultIcon ?? "",
+            pictureUrl: identity?.profile?.pictureUrl,
+          });
+        }
+      }
+
+      this.#activityIndicatorsAdapterPort.showIndicators({
+        container,
+        command: showIndicatorCommands,
+      });
+
+      this.#activityIndicatorsAdapterPort.updateIndicatorsPosition(container);
+
+      return container.activityIndicators;
+    };
 
   updateAllIndicators() {
     const labelsData = this.#labelDataStorePort
@@ -601,19 +678,17 @@ export class PieceActivityService implements PieceActivityServicePort {
   updateNotification(container: NotifiableContainer) {
     if (!container.piece || !container.isActive) return;
 
-    const userPresence = this.#userPresenceServicePort.getUserPresence();
+    const ownUserSelectedInstance =
+      this.#userPresenceServicePort.getOwnUserSelectedInstance();
 
-    const ownUserPresence = this.#userPresenceServicePort.getOwnUserPresence();
+    if (!ownUserSelectedInstance) return;
 
-    if (!ownUserPresence) return;
-
-    const { readingInstanceId: ownUserCurrActivityId } = ownUserPresence;
+    const { id: ownUserSelectedInstanceId } = ownUserSelectedInstance;
 
     const pieceActivity = this.getPieceActivity({
       piece: container.piece,
-    });
+    }).filter((activity) => activity.selected);
     const isPieceSelected = container.getIsSelectedForNotification();
-    const direction = container.getNotificationDirection();
 
     const shouldHide =
       pieceActivity.length === 0 ||
@@ -629,29 +704,22 @@ export class PieceActivityService implements PieceActivityServicePort {
     }
 
     const isOwnUserInPiece =
-      !!ownUserCurrActivityId &&
+      !!ownUserSelectedInstanceId &&
       pieceActivity.some((activity) => {
-        return ownUserCurrActivityId === activity.id;
+        return ownUserSelectedInstanceId === activity.id;
       });
     const activityCount = pieceActivity.length;
 
-    const matchingPresence = Array.from(userPresence).find(
-      ([, presenceData]) => {
-        return pieceActivity[0]?.id === presenceData.readingInstanceId;
-      }
-    );
-    const activityUserId = matchingPresence?.[0];
-    const color = this.#userColorStorePort.getUserColor({
-      configId:
-        activityUserId ?? this.#userPresenceServicePort.getOwnUserConfigId(),
+    const firstUserConnectionId = pieceActivity[0]?.connectionId;
+    const identity = this.#userColorStorePort.getUserDataByIds({
+      connectionId: firstUserConnectionId,
     });
 
     const newNotification =
       this.#activityNotificationAdapterPort.showNotification({
         isOwnUserInPiece,
         activityCount,
-        color: color ?? "#ffffff",
-        direction,
+        color: identity?.visual.color ?? "#ffffff",
         container,
         notification: container.activityNotification,
       });
@@ -671,6 +739,31 @@ export class PieceActivityService implements PieceActivityServicePort {
 
     for (const container of containers) {
       this.updateNotification(container);
+    }
+  }
+
+  hideAllNotifications() {
+    const stackChaptersData =
+      this.#dataRegistryPort.getAllPiecesDataByType("StackChapter");
+
+    const containers: NotifiableContainer[] = [...stackChaptersData];
+
+    for (const container of containers) {
+      this.tryHideNotification(container);
+    }
+  }
+
+  updateAllNotificationsDirection() {
+    const stackChaptersData =
+      this.#dataRegistryPort.getAllPiecesDataByType("StackChapter");
+
+    const containers: NotifiableContainer[] = [...stackChaptersData];
+
+    for (const container of containers) {
+      if (!container.activityNotification) continue;
+      this.#activityNotificationAdapterPort.updateNotificationDirection(
+        container
+      );
     }
   }
 }

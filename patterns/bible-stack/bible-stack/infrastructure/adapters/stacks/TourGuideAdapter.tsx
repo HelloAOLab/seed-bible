@@ -1,25 +1,25 @@
 import type { StackSectionData } from "../../../domain/entities/StackSectionData";
-import type { TourGuieAdapterPort } from "../../../application/ports/tourGuide";
-import type { CameraAdapterPort } from "../../../application/ports/bibleLifecycle";
-import type { PieceHighlighterPort } from "../../../application/ports/in/PieceHighlight";
 import type { AudioAdapter } from "../audio/AudioAdapter";
-import type { LoggerPort } from "../../../application/ports/in/Logger";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
 import type { SectionBot } from "../../models/stack";
 import type { TourGuideConfigProvider } from "../../config/tourGuide/TourGuideConfigProvider";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 import type { WorldPosition } from "../../../domain/models/spatial";
 import { MakePortalFree, MakePortalRestrict } from "../../functions/casualos";
+import type { PieceHighlightServicePort } from "../../../application/ports/in/PieceHighlight";
+import type { TourGuidePort } from "../../../application/ports/out/TourGuide";
+import type { CameraAdapter } from "../environment/CameraAdapter";
+import type { LoggerAdapter } from "../environment/LoggerAdapter";
 
 interface AdapterParams {
   getDimension: () => string;
   sectionMapper: StackSectionMapper;
   visualStateRegistry: VisualStateRegistry;
-  cameraAdapterPort: CameraAdapterPort;
-  pieceHighlighterPort: PieceHighlighterPort;
+  cameraAdapterPort: CameraAdapter;
+  pieceHighlighterPort: PieceHighlightServicePort;
   audioAdapter: AudioAdapter;
   tourGuideConfigProvider: TourGuideConfigProvider;
-  loggerPort: LoggerPort;
+  loggerPort: LoggerAdapter;
 }
 
 /**
@@ -29,7 +29,7 @@ interface AdapterParams {
  * architecture port of the legacy `TryMakeTourGuideOnSection` /
  * `StopCurrentTourGuide` bot scripts.
  */
-export class TourGuideAdapter implements TourGuieAdapterPort {
+export class TourGuideAdapter implements TourGuidePort {
   #getDimension: AdapterParams["getDimension"];
   #sectionMapper: AdapterParams["sectionMapper"];
   #visualStateRegistry: AdapterParams["visualStateRegistry"];
@@ -105,6 +105,7 @@ export class TourGuideAdapter implements TourGuieAdapterPort {
     MakePortalFree();
 
     const books = sectionData.getReversedActiveBooks();
+    console.log(`[Debug] TourGuideAdapter.startTourGuideSequence`, { books });
     if (books.length === 0) return;
 
     const delay = this.#tourGuideConfigProvider.getDelayBetweenBookHighlight();

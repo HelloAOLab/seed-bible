@@ -29,11 +29,12 @@ This project requires **pnpm v10+**. Do not use npm or yarn.
 pnpm dev               # Run the SSR dev server (Express + Vite, HMR)
 pnpm test              # Run Vitest test suite
 pnpm test:watch        # Vitest in watch mode
-pnpm lint              # ESLint (includes i18n translation key validation) + stylelint (duplicate selectors/declarations)
+pnpm lint              # ESLint (includes i18n translation key validation) + stylelint (duplicate selectors/declarations, fixed colors paired with theme colors, raw values that have a design token)
 pnpm lint:fix          # Auto-fix linting issues
 pnpm check:ts          # TypeScript type check — client + patterns (non-emit)
 pnpm build             # Production build (client + SSR + server bundles)
 pnpm pattern pack <name>  # Package a patterns/<name> portal into .aux
+pnpm build:native      # Static web build for the Capacitor iOS/Android apps (mobile/)
 pnpm format            # Prettier formatting
 ```
 
@@ -41,7 +42,6 @@ pnpm format            # Prettier formatting
 
 ```bash
 pnpm vitest run FreeUseBibleAPI.test.ts
->>>>>>> develop
 ```
 
 ## Architecture
@@ -56,7 +56,7 @@ This is a **monorepo** (pnpm workspaces) containing a Preact-based Bible reader.
 - `LoginManager` — Email-code auth, sessions, and user profile
 - `BibleDataManager` — Bible content and translation loading
 - `BibleReadingManager` — Reading position and navigation
-- `HighlightsManager`, `BookmarksManager`, `AnnotationsManager` — Annotations, persisted via CasualOS records
+- `HighlightsManager`, `SavesManager`, `AnnotationsManager` — Annotations, persisted via CasualOS records
 - `SessionsManager` — Shared/multiplayer sessions (Yjs shared documents)
 - `ThemeManager` — Dark/light mode and color schemes
 - `ExtensionManager` — Extension lifecycle
@@ -72,6 +72,8 @@ This is a **monorepo** (pnpm workspaces) containing a Preact-based Bible reader.
 
 Separate packages that `export default` a function which, when called, calls `registerExtension({ id, init })`; the `init(context)` generator receives the `SeedBibleState` and yields cleanup functions. `ExtensionManager` invokes the default export on every install attempt (not just once at module load), which is what allows an extension to be uninstalled and reinstalled within the same session. `seed-bible-refresh-example-extension` is the reference template.
 
+Built-in extensions never depend on each other: no `dependencies` in `extension.json` or `registerExtension`, and no imports from another extension's package. Code two extensions share goes in a shared package — a `packages/<name>/` with no `extension.json` (e.g. `bible-locations`, `transcription`, `seed-bible-utils`) — and the bundler splits it into a chunk loaded with whichever extension needs it first. `test/unit/script/extensionBoundaries.test.ts` enforces this; see `docs/developer-guide.md` §8.2.4.
+
 ### Tests (`test/`)
 
 Unit tests in `test/unit/` mirror the package structure; integration tests live in `test/integration/`. Test real-world behavior, not implementation details:
@@ -83,6 +85,10 @@ Unit tests in `test/unit/` mirror the package structure; integration tests live 
 - Keep tests independent: no shared mutable fixtures, no dependence on run order.
 - Avoid fixed-duration sleeps for async work (a debounce, a fetch) — poll a condition with a timeout instead, as the `waitForCondition` helpers in several manager tests already do. A zero-delay flush of the microtask queue is fine; a hardcoded "wait 250ms and hope" is not.
 - Regression tests must fail on the pre-fix code — revert the fix locally, confirm red, then restore it. A regression test that passes either way isn't testing anything.
+
+### Native apps (`mobile/`)
+
+The iOS and Android apps are a Capacitor wrapper in `mobile/` (its own pnpm workspace package). They ship a static copy of the web app built by `vite build --mode native`, which has no SSR, no service worker, and `index.html`'s server placeholders filled at build time by `script/lib/nativeShell.ts`. Inside the apps the page's origin is `https://localhost` / `capacitor://localhost`, so any link meant for someone else (share links, invites, links saved into notes) must go through `toShareableUrl` (`app/publicLinks.ts`), which swaps in `https://seedbible.org`. See `mobile/README.md`.
 
 ### Build System
 
@@ -108,4 +114,8 @@ The app deploys as a **web app, not a pattern**: `pnpm build` makes client + SSR
 
 **Formatting**: Prettier with 2-space indent, double quotes, trailing commas (es5). Enforced by a Husky + pretty-quick pre-commit hook.
 
-**Theming**: `managers/ThemeManager.tsx` (`LIGHT_THEME`/`DARK_THEME`) duplicates many of the same `--sb-*` CSS variables as `app/main.css`'s `:root` block, and `ThemeManager`'s values silently win (it's injected `body`-scoped, which beats an inherited `:root` value). When editing a `--sb-*` value in `main.css`, grep `ThemeManager.tsx` for it and update both, or the CSS change won't render.
+**Theming**: `managers/ThemeManager.tsx` (`LIGHT_THEME`/`DARK_THEME`) duplicates many of the same `--sb-*` CSS variables as `app/styles/base.inline.css`'s `:root` block, and `ThemeManager`'s values silently win (it's injected `body`-scoped, which beats an inherited `:root` value). When editing a `--sb-*` value in `base.inline.css`, grep `ThemeManager.tsx` for it and update both, or the CSS change won't render.
+
+**Design tokens**: Shared scales (corners, stacking layers, animation speeds, font sizes, shadows, and any added later) are `--sb-*` tokens defined in `app/styles/base.inline.css`; the comment beside each family says what its steps are for. Use a token instead of a raw value, picking the nearest step rather than inventing one, and add a step or a family there when nothing fits. Some values stay raw on purpose (icon sizes, reader text, hairlines, em values, z-indexes that only order things inside one component); give those a `stylelint-disable-next-line` comment with the reason, since stylelint's `seed-bible/use-design-tokens` warns on a raw value that equals a token. Every token also goes in `app/styles/sharedTokens.ts`, because sandboxed extension frames only get that copy; a unit test checks the two match. A new family needs a line in `script/stylelint/useDesignTokensRule.mjs` too, saying which properties it covers, before the lint can flag raw values for it. A token built on a theme variable (like the shadows on `--sb-shadow-color`) must be declared on `body`, where ThemeManager sets the theme, not `:root`, or it locks in the light value.
+
+**Shared components**: Reusable controls are built once in `components/` and are meant for extensions as well as the app, so an extension's interface looks and behaves like Seed Bible's own. Before hand-building a control, check `components/index.tsx` for one that already does the job. A new shared component is exported from `components/index.tsx`, the public `seed-bible/components` entry extensions import from; is styled only with `--sb-*` tokens and theme variables; and takes a `className` for placement. A surface that needs it to look different sets the custom properties the component exposes where it has them, rather than overriding its rules. A component that calls `useI18n()` needs an `I18nProvider` above it, so code that renders its own root with `render(..., container)` wraps that root in `<I18nProvider i18n={context.i18n}>`, which `seed-bible/i18n` exports.

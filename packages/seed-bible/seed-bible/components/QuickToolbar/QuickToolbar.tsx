@@ -1,6 +1,7 @@
 import "./QuickToolbar.inline.css";
 import "./QuickToolbar.css";
-import { type ToolsManager } from "../../managers/BibleToolsManager";
+import type { ToolsManager } from "../../managers/BibleToolsManager";
+import { IconButton } from "../IconButton/IconButton";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
@@ -12,6 +13,9 @@ import type { AnnotationsManager } from "../../managers/AnnotationsManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { AppState } from "../../managers/SeedBibleStateManager";
+import type { EmbedThemeChoice } from "../../managers/EmbedMode";
+import type { SettingsManager } from "../../managers";
+import type { ReadingPlansManager } from "../../managers/ReadingPlansManager";
 
 interface QuickToolbarProps {
   toolsManager: ToolsManager;
@@ -19,6 +23,7 @@ interface QuickToolbarProps {
   playlists: PlaylistManager;
   annotations: AnnotationsManager;
   features: FeaturesManager;
+  settings: SettingsManager;
   /** Extra class for layout differences (e.g. desktop vs mobile header). */
   className?: string;
   /** Shared session for the current reader surface, if any. Used by Share. */
@@ -26,17 +31,25 @@ interface QuickToolbarProps {
   toast?: (message: string) => void;
   modals?: ModalManager;
   app?: AppState;
+  /** Theme presets the share sheet's Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /** Active customization locator, kept on the embed URL. */
+  customizationLocator?: { readonly value: string | null };
+  readingPlans: ReadingPlansManager;
+  /** Limits the toolbar to the tools this returns true for. */
+  toolFilter?: (toolId: string) => boolean;
 }
 
 /**
  * Compact toolbar shown at the top of the reader, beside the chapter
- * bookmark button. Renders whatever tools extensions have registered via
+ * save and bookmark buttons. Renders whatever tools extensions have registered via
  * `toolsManager.registerQuickTool`, mirroring the other reader toolbars
  * (icon buttons, optional getItems() context menus). Renders nothing when
  * no quick tool is currently visible.
  */
 export function QuickToolbar(props: QuickToolbarProps) {
-  const { toolsManager, readingState, playlists } = props;
+  const { toolsManager, readingState, playlists, readingPlans, settings } =
+    props;
   const { t } = useI18n();
   const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
 
@@ -50,8 +63,14 @@ export function QuickToolbar(props: QuickToolbarProps) {
     toast: props.toast,
     modals: props.modals,
     app: props.app,
+    embedThemes: props.embedThemes,
+    customizationLocator: props.customizationLocator,
+    settings,
+    readingPlans,
   });
-  const visibleTools = tools.filter((tool) => tool.visible.value);
+  const visibleTools = tools.filter(
+    (tool) => (props.toolFilter?.(tool.id) ?? true) && tool.visible.value
+  );
 
   if (visibleTools.length === 0) {
     return null;
@@ -67,35 +86,42 @@ export function QuickToolbar(props: QuickToolbarProps) {
         const menuItems =
           tool.getItems?.().filter((item) => item.visible.value) ?? [];
         const hasMenuItems = menuItems.length > 0;
+        const onSelect = () => {
+          if (hasMenuItems) {
+            setSelectedToolId((prev) => (prev === tool.id ? null : tool.id));
+            return;
+          }
+
+          setSelectedToolId(null);
+          tool.onSelect();
+        };
         return (
           <div
             key={tool.id}
             className={`sb-quick-toolbar-item${tool.className ? ` ${tool.className}` : ""}`}
           >
-            <button
-              type="button"
-              disabled={tool.disabled.value}
-              onClick={() => {
-                if (hasMenuItems) {
-                  setSelectedToolId((prev) =>
-                    prev === tool.id ? null : tool.id
-                  );
-                  return;
-                }
-
-                setSelectedToolId(null);
-                tool.onSelect();
-              }}
-              className="sb-quick-toolbar-button"
-              aria-label={title}
-              aria-pressed={
-                hasMenuItems ? selectedToolId === tool.id : undefined
-              }
-              title={title}
-            >
-              <ToolIcon />
-              <span className="sr-only">{title}</span>
-            </button>
+            {tool.display === "card" ? (
+              <button
+                type="button"
+                disabled={tool.disabled.value}
+                onClick={onSelect}
+                className="sb-quick-toolbar-card"
+                aria-label={title}
+                title={title}
+              >
+                <ToolIcon />
+                <span className="sr-only">{title}</span>
+              </button>
+            ) : (
+              <IconButton
+                icon={<ToolIcon />}
+                label={title}
+                pressed={hasMenuItems ? selectedToolId === tool.id : undefined}
+                disabled={tool.disabled.value}
+                onClick={onSelect}
+                className="sb-quick-toolbar-button"
+              />
+            )}
             {hasMenuItems && selectedToolId === tool.id && (
               <div
                 className="sb-tool-context-menu"

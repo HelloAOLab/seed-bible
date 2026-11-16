@@ -1,3 +1,8 @@
+import {
+  pickVerseOfTheDay,
+  type PickVerseOfTheDayOptions,
+} from "./verseOfTheDay";
+
 export interface AvailableTranslations {
   /**
    * The list of translations.
@@ -811,7 +816,7 @@ export interface CommentaryBooks {
   books: CommentaryBook[];
 }
 
-interface CommentaryBook {
+export interface CommentaryBook {
   /**
    * The ID of the book.
    * Matches the ID of the corresponding book in the Bible (GEN, EXO, etc.).
@@ -917,7 +922,7 @@ export interface CommentaryBookChapter {
   chapter: CommentaryChapterData;
 }
 
-interface CommentaryChapterData {
+export interface CommentaryChapterData {
   /**
    * The number of the chapter.
    */
@@ -977,7 +982,7 @@ interface VerseRef {
   endVerse?: number;
 }
 
-interface CommentaryProfile {
+export interface CommentaryProfile {
   /**
    * The ID of the profile.
    */
@@ -1121,7 +1126,7 @@ export interface DatasetBooks {
   books: DatasetBook[];
 }
 
-interface DatasetBook {
+export interface DatasetBook {
   /**
    * The ID of the book.
    * Matches the ID of the corresponding book in the Bible (GEN, EXO, etc.).
@@ -1208,7 +1213,7 @@ export interface DatasetBookChapter {
   chapter: DatasetChapterData;
 }
 
-interface DatasetChapterData {
+export interface DatasetChapterData {
   /**
    * The number of the chapter.
    */
@@ -1220,7 +1225,7 @@ interface DatasetChapterData {
   content: DatasetVerse[];
 }
 
-interface DatasetVerse {
+export interface DatasetVerse {
   /**
    * The number of the verse.
    */
@@ -1234,7 +1239,7 @@ interface DatasetVerse {
   references: DatasetReference[];
 }
 
-interface DatasetReference {
+export interface DatasetReference {
   /**
    * The ID of the book that is being referenced.
    */
@@ -1260,6 +1265,97 @@ interface DatasetReference {
    * The relevence score for the reference.
    */
   score?: number;
+}
+
+/**
+ * Every verse in a dataset whose verses have categories, such as
+ * "verse-of-the-day". Maps to the `/api/d/:datasetId/verses.json` endpoint.
+ */
+export interface DatasetVerses {
+  /**
+   * The dataset information for the verses.
+   */
+  dataset: Dataset;
+
+  /**
+   * Every verse (or short passage) in the dataset, with its categories, in canonical order.
+   */
+  verses: DatasetCategorizedVerse[];
+
+  /**
+   * The holidays that have their own verses. On a holiday, the verse of the
+   * day is one of the verses in the holiday's category, and those verses
+   * aren't used on other days. Omitted if the dataset has no holidays.
+   */
+  holidays?: DatasetVersesHoliday[];
+}
+
+export interface DatasetCategorizedVerse {
+  /**
+   * The USFM ID of the book. e.g. "JHN"
+   */
+  book: string;
+
+  /**
+   * The chapter number.
+   */
+  chapter: number;
+
+  /**
+   * The verse number. If `endVerse` is present, then this is the verse that the passage starts at.
+   */
+  verse: number;
+
+  /**
+   * The verse that the passage ends at. Omitted if the entry is a single verse.
+   */
+  endVerse?: number;
+
+  /**
+   * The IDs of the categories that the verse belongs to, most relevant first.
+   */
+  categories: string[];
+
+  /**
+   * The first year that the verse can be the verse of the day. Omitted if the verse has always been in the list.
+   */
+  addedIn?: number;
+
+  /**
+   * The first year that the verse can no longer be the verse of the day. Omitted if the verse hasn't been removed.
+   */
+  removedIn?: number;
+}
+
+/**
+ * A holiday that has its own verses. It either falls on the same `month` and
+ * `day` every year, or lists its `dates`.
+ */
+export interface DatasetVersesHoliday {
+  /**
+   * The ID of the holiday's category, such as "christmas".
+   */
+  id: string;
+
+  /**
+   * The English name of the holiday, such as "Christmas".
+   */
+  name: string;
+
+  /**
+   * The month of a holiday that falls on the same date every year (1 for January).
+   */
+  month?: number;
+
+  /**
+   * The day of the month of a holiday that falls on the same date every year.
+   */
+  day?: number;
+
+  /**
+   * The dates (`YYYY-MM-DD`) of a holiday whose date changes every year, such as Resurrection Sunday.
+   */
+  dates?: string[];
 }
 
 export const FREE_USE_BIBLE_API_ENDPOINT = "https://bible.helloao.org/";
@@ -1301,8 +1397,36 @@ export interface ApiRequestOptions {
   refresh?: boolean;
 }
 
-/** Per-URL bookkeeping for an in-flight request shared by multiple callers. */
-interface PendingRequestSubscription {
+/** A cache of in-flight or settled promises keyed by string. */
+export interface PromiseCache<V> {
+  get(key: string): Promise<V> | undefined;
+  set(key: string, promise: Promise<V>): void;
+  delete(key: string): void;
+}
+
+/**
+ * Optional process-wide cache of request promises keyed by full URL, shared
+ * between `FreeUseBibleAPI` instances. Only the SSR host supplies one (see
+ * `standalone/ssrApiResponseCache.ts`): each render builds a fresh API
+ * instance, so without it every render refetches the same chapter.
+ */
+export type ApiResponseCache = PromiseCache<unknown>;
+
+/**
+ * Hard ceiling on a fetch that lives in a shared cache. Subscribers with no
+ * `signal` can never cancel a request, so without this a request that never
+ * answers would stay cached (and be adopted by every later render) until the
+ * socket's own much longer timeout. Just above the SSR chapter deadline (5 s),
+ * after which no render is still waiting for the result.
+ */
+const SHARED_FETCH_TIMEOUT_MS = 6000;
+
+/**
+ * Bookkeeping for one in-flight request, shared by every caller of it —
+ * across API instances when a shared cache is in use. Looked up by the
+ * request's own promise so it travels with the promise through the cache.
+ */
+interface PendingRequest {
   /** Owns the actual `fetch()` call — never a caller's own signal. */
   controller: AbortController;
   /**
@@ -1313,12 +1437,16 @@ interface PendingRequestSubscription {
    * done so, at which point the real request is safe to cancel too.
    */
   subscriberCount: number;
+  settled: boolean;
+  /** Drops the request from whichever caches still point at it. */
+  evict: () => void;
 }
+
+const pendingRequests = new WeakMap<Promise<unknown>, PendingRequest>();
 
 export class FreeUseBibleAPI {
   endpoint: string;
   private _responseCache = new Map<string, Promise<unknown>>();
-  private _requestSubscriptions = new Map<string, PendingRequestSubscription>();
   /**
    * Successfully resolved responses, keyed the same as `_responseCache`. Kept
    * separate from that cache of promises because a promise can't be read back
@@ -1327,8 +1455,11 @@ export class FreeUseBibleAPI {
    */
   private _resolvedResponses = new Map<string, unknown>();
 
-  constructor(endpoint: string) {
+  private _sharedCache?: ApiResponseCache;
+
+  constructor(endpoint: string, sharedCache?: ApiResponseCache) {
     this.endpoint = endpoint;
+    this._sharedCache = sharedCache;
   }
 
   /**
@@ -1550,6 +1681,162 @@ export class FreeUseBibleAPI {
     return this._getJson<AudioTimings>(link, endpoint, options);
   }
 
+  /** Gets the commentaries the API offers. */
+  async getAvailableCommentaries(
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<AvailableCommentaries> {
+    return this._getJson<AvailableCommentaries>(
+      "api/available_commentaries.json",
+      endpoint,
+      options
+    );
+  }
+
+  async getCommentaryBooks(
+    commentary: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<CommentaryBooks> {
+    return this._getJson<CommentaryBooks>(
+      `api/c/${encodeURIComponent(commentary)}/books.json`,
+      endpoint,
+      options
+    );
+  }
+
+  async getCommentaryBookChapter(
+    commentary: string,
+    book: string,
+    chapter: number | string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<CommentaryBookChapter> {
+    return this._getJson<CommentaryBookChapter>(
+      `api/c/${encodeURIComponent(commentary)}/${encodeURIComponent(
+        book
+      )}/${encodeURIComponent(String(chapter))}.json`,
+      endpoint,
+      options
+    );
+  }
+
+  /** The commentary's articles about people, places and topics. */
+  async getCommentaryProfiles(
+    commentary: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<CommentaryProfiles> {
+    return this._getJson<CommentaryProfiles>(
+      `api/c/${encodeURIComponent(commentary)}/profiles.json`,
+      endpoint,
+      options
+    );
+  }
+
+  async getCommentaryProfile(
+    commentary: string,
+    profile: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<CommentaryProfileContent> {
+    return this._getJson<CommentaryProfileContent>(
+      `api/c/${encodeURIComponent(commentary)}/profiles/${encodeURIComponent(
+        profile
+      )}.json`,
+      endpoint,
+      options
+    );
+  }
+
+  /** Gets the datasets (such as cross-references) the API offers. */
+  async getAvailableDatasets(
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<AvailableDatasets> {
+    return this._getJson<AvailableDatasets>(
+      "api/available_datasets.json",
+      endpoint,
+      options
+    );
+  }
+
+  async getDatasetBooks(
+    dataset: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<DatasetBooks> {
+    return this._getJson<DatasetBooks>(
+      `api/d/${encodeURIComponent(dataset)}/books.json`,
+      endpoint,
+      options
+    );
+  }
+
+  async getDatasetBookChapter(
+    dataset: string,
+    book: string,
+    chapter: number | string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<DatasetBookChapter> {
+    return this._getJson<DatasetBookChapter>(
+      `api/d/${encodeURIComponent(dataset)}/${encodeURIComponent(
+        book
+      )}/${encodeURIComponent(String(chapter))}.json`,
+      endpoint,
+      options
+    );
+  }
+
+  /**
+   * Gets every verse in a dataset whose verses have categories, such as
+   * "verse-of-the-day".
+   */
+  async getDatasetVerses(
+    dataset: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<DatasetVerses> {
+    const encodedDataset = encodeURIComponent(dataset);
+    return this._getJson<DatasetVerses>(
+      `api/d/${encodedDataset}/verses.json`,
+      endpoint,
+      options
+    );
+  }
+
+  /**
+   * Gets the verse of the day for a date from the "verse-of-the-day" dataset.
+   * The same date always gives the same verse. See {@link pickVerseOfTheDay}
+   * for how the verse is picked.
+   *
+   * @param date A `YYYY-MM-DD` string, or a `Date` (its local calendar date is
+   * used). Defaults to today.
+   * @param options A `seed` gives a different (but equally valid) order, and a
+   * `category` only picks from that category. The dataset's own holidays are
+   * used unless other `holidays` are given.
+   * @returns The verse's reference and categories, or null if the dataset has
+   * no verses to pick from.
+   */
+  async getVerseOfTheDay(
+    date: Date | string = new Date(),
+    options: PickVerseOfTheDayOptions & { dataset?: string } = {},
+    endpoint?: string,
+    requestOptions?: ApiRequestOptions
+  ): Promise<DatasetCategorizedVerse | null> {
+    const { dataset = "verse-of-the-day", ...pickOptions } = options;
+    const verses = await this.getDatasetVerses(
+      dataset,
+      endpoint,
+      requestOptions
+    );
+    return pickVerseOfTheDay(verses.verses, date, {
+      holidays: verses.holidays,
+      ...pickOptions,
+    });
+  }
+
   private _getJson<T>(
     path: string,
     endpoint?: string,
@@ -1559,10 +1846,29 @@ export class FreeUseBibleAPI {
     if (options?.refresh) {
       this._responseCache.delete(url);
       this._resolvedResponses.delete(url);
+      this._sharedCache?.delete(url);
     }
     const existing = this._responseCache.get(url) as Promise<T> | undefined;
     if (existing) {
       return this._subscribeToRequest(url, existing, options?.signal);
+    }
+
+    const shared = this._sharedCache?.get(url) as Promise<T> | undefined;
+    if (shared) {
+      // Adopt another render's request. Cached locally too so this instance
+      // keeps answering from it if the shared entry is evicted mid-render.
+      this._responseCache.set(url, shared);
+      shared.then(
+        (json) => {
+          this._resolvedResponses.set(url, json);
+        },
+        () => {
+          if (this._responseCache.get(url) === shared) {
+            this._responseCache.delete(url);
+          }
+        }
+      );
+      return this._subscribeToRequest(url, shared, options?.signal);
     }
 
     // Own controller for the real fetch — deliberately never a caller's own
@@ -1571,7 +1877,13 @@ export class FreeUseBibleAPI {
     // aborted once every subscriber has walked away (see
     // `_subscribeToRequest`).
     const controller = new AbortController();
-    this._requestSubscriptions.set(url, { controller, subscriberCount: 0 });
+    let timedOut = false;
+    const timer = this._sharedCache
+      ? setTimeout(() => {
+          timedOut = true;
+          controller.abort();
+        }, SHARED_FETCH_TIMEOUT_MS)
+      : undefined;
 
     const request: Promise<T> = fetch(url, { signal: controller.signal })
       .then(async (response) => {
@@ -1585,14 +1897,37 @@ export class FreeUseBibleAPI {
         return json;
       })
       .catch((error) => {
-        this._responseCache.delete(url);
-        throw error;
+        // Failures (including timeouts and aborts) must never be served to
+        // later renders. A timeout is rethrown as a plain error so callers
+        // don't mistake it for their own cancellation (an AbortError).
+        pending.evict();
+        throw timedOut
+          ? new Error(
+              `Request to ${url} timed out after ${SHARED_FETCH_TIMEOUT_MS} ms`
+            )
+          : error;
       })
       .finally(() => {
-        this._requestSubscriptions.delete(url);
+        clearTimeout(timer);
+        pending.settled = true;
       });
 
+    const pending: PendingRequest = {
+      controller,
+      subscriberCount: 0,
+      settled: false,
+      evict: () => {
+        if (this._responseCache.get(url) === request) {
+          this._responseCache.delete(url);
+        }
+        if (this._sharedCache?.get(url) === request) {
+          this._sharedCache.delete(url);
+        }
+      },
+    };
+    pendingRequests.set(request, pending);
     this._responseCache.set(url, request);
+    this._sharedCache?.set(url, request);
     return this._subscribeToRequest(url, request, options?.signal);
   }
 
@@ -1601,16 +1936,17 @@ export class FreeUseBibleAPI {
    * no `signal` (or one requesting an already-settled response) just gets
    * the shared promise directly. A caller with a `signal` gets a wrapper
    * promise that rejects the moment *its own* signal aborts — without
-   * affecting any other subscriber — and, only once every subscriber has
-   * done the same, aborts the real underlying request.
+   * affecting any other subscriber, in this instance or another — and, only
+   * once every subscriber has done the same, aborts the real underlying
+   * request. That holds whether or not the request is still in a cache.
    */
   private _subscribeToRequest<T>(
     url: string,
     sharedPromise: Promise<T>,
     signal?: AbortSignal
   ): Promise<T> {
-    const subscription = this._requestSubscriptions.get(url);
-    if (!subscription) {
+    const subscription = pendingRequests.get(sharedPromise);
+    if (!subscription || subscription.settled) {
       // Already settled — nothing left to subscribe to or cancel.
       return sharedPromise;
     }
@@ -1633,15 +1969,13 @@ export class FreeUseBibleAPI {
         if (subscription.subscriberCount <= 0) {
           // Reaching zero means every caller that *could* walk away has, so
           // nobody is waiting on this request any more and it is safe to
-          // cancel. Drop it from both maps first, synchronously: the rejection
-          // — and the cache eviction that rides on it — only land a microtask
-          // later, and a caller arriving in between would otherwise be handed
-          // this doomed promise and inherit an abort it never asked for.
+          // cancel. Evict first, synchronously: the rejection — and the
+          // cache eviction that rides on it — only land a microtask later,
+          // and a caller arriving in between would otherwise be handed this
+          // doomed promise and inherit an abort it never asked for.
           // Reachable by navigating back to a chapter whose request was just
-          // superseded. Both deletes are idempotent with the ones in
-          // `_getJson`.
-          this._requestSubscriptions.delete(url);
-          this._responseCache.delete(url);
+          // superseded.
+          subscription.evict();
           subscription.controller.abort();
         }
         reject(this._abortError());

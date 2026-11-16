@@ -1,9 +1,23 @@
-import { signal, effect, type Signal } from "@preact/signals";
+import {
+  signal,
+  effect,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import { safeLocalStorage } from "../app/ssrEnv";
 import {
   FreeUseBibleAPI,
   type ApiRequestOptions,
   type AudioTimings,
+  type Commentary,
+  type CommentaryBookChapter,
+  type CommentaryBooks,
+  type CommentaryProfile,
+  type CommentaryProfileContent,
+  type Dataset,
+  type DatasetBookChapter,
+  type DatasetBooks,
+  type PromiseCache,
   type Translation,
   type TranslationBook,
   type TranslationBookChapter,
@@ -29,11 +43,7 @@ import {
  * many HTTP requests within a single long-running server process, since
  * `localStorage` (the client's cross-page-load cache) doesn't exist there.
  */
-export interface TranslationsCache {
-  get(endpoint: string): Promise<Translation[]> | undefined;
-  set(endpoint: string, promise: Promise<Translation[]>): void;
-  delete(endpoint: string): void;
-}
+export type TranslationsCache = PromiseCache<Translation[]>;
 
 /** How a set of translations should be folded into the known-translations list. */
 export interface MergeTranslationsOptions {
@@ -67,6 +77,14 @@ export interface BibleDataManager {
    * default translation) must check this instead of the list's length.
    */
   catalogLoaded: Signal<boolean>;
+  /**
+   * Where the default endpoint's catalog download stands, for UI that has to
+   * say "still loading" or "couldn't load" while the translation list holds
+   * only what the reader has merged in. Stays `"loaded"` once it has been
+   * fetched or restored: a later refresh failing doesn't make the list
+   * incomplete again.
+   */
+  catalogStatus: ReadonlySignal<CatalogStatus>;
   translationBooks: Signal<Map<string, TranslationBooks>>;
   api: FreeUseBibleAPI;
 
@@ -92,6 +110,18 @@ export interface BibleDataManager {
     options?: { refresh?: boolean }
   ) => Promise<Translation[]>;
   getTranslationBooks: (translationId: string) => Promise<TranslationBooks>;
+
+  /**
+   * Every translation the app can offer right now, for callers that just want
+   * a list to pick from (such as extensions).
+   *
+   * This is the full catalog, fetched like `getTranslations()` unless it is
+   * already known this session (`catalogLoaded`). When that fetch fails, or
+   * the device is offline, it answers from what is already known instead:
+   * every downloaded translation, plus whatever else the app has seen.
+   * Rejects only when nothing at all is known.
+   */
+  getTranslationCatalog: () => Promise<Translation[]>;
 
   /**
    * Returns the already-downloaded book catalog for a translation, or null when
@@ -144,6 +174,43 @@ export interface BibleDataManager {
     link: string,
     options?: ApiRequestOptions
   ) => Promise<AudioTimings>;
+
+  /**
+   * Commentaries and datasets (such as cross-references) from the default
+   * endpoint. Unlike translations they can't be downloaded, so these always
+   * need a connection, except for responses already fetched this session.
+   */
+  getCommentaries: (options?: ApiRequestOptions) => Promise<Commentary[]>;
+  getCommentaryBooks: (
+    commentaryId: string,
+    options?: ApiRequestOptions
+  ) => Promise<CommentaryBooks>;
+  getCommentaryBookChapter: (
+    commentaryId: string,
+    book: string,
+    chapter: number,
+    options?: ApiRequestOptions
+  ) => Promise<CommentaryBookChapter>;
+  getCommentaryProfiles: (
+    commentaryId: string,
+    options?: ApiRequestOptions
+  ) => Promise<CommentaryProfile[]>;
+  getCommentaryProfile: (
+    commentaryId: string,
+    profileId: string,
+    options?: ApiRequestOptions
+  ) => Promise<CommentaryProfileContent>;
+  getDatasets: (options?: ApiRequestOptions) => Promise<Dataset[]>;
+  getDatasetBooks: (
+    datasetId: string,
+    options?: ApiRequestOptions
+  ) => Promise<DatasetBooks>;
+  getDatasetBookChapter: (
+    datasetId: string,
+    book: string,
+    chapter: number,
+    options?: ApiRequestOptions
+  ) => Promise<DatasetBookChapter>;
 
   /**
    * Gets the API endpoint associated with a given translation. If the translation is not associated with a specific endpoint, it returns the default endpoint.
@@ -869,6 +936,29 @@ export const BOOK_SLUGS: Record<BookId, string> = {
   LAO: "lao",
 };
 
+/** Canonical Protestant + Apocrypha order, from {@link BOOK_SLUGS}' insertion order. */
+const CANONICAL_BOOK_ORDER = new Map(
+  (Object.keys(BOOK_SLUGS) as BookId[]).map((id, index) => [id, index])
+);
+
+/** A book's place in canonical order; a book it doesn't know sorts last. */
+export function canonicalBookIndex(bookId: string): number {
+  return CANONICAL_BOOK_ORDER.get(bookId as BookId) ?? Number.MAX_SAFE_INTEGER;
+}
+
+/**
+ * A translation's short code (`VDV` for `arb_vdv`), or its id until its books
+ * have loaded.
+ */
+export function translationShortName(
+  translationBooks: ReadonlyMap<string, TranslationBooks>,
+  translationId: string
+): string {
+  return (
+    translationBooks.get(translationId)?.translation.shortName ?? translationId
+  );
+}
+
 /**
  * Gets the canonical URL slug for a book (e.g. "GEN" -> "genesis"), used to
  * build path-based routes and the canonical URL. Falls back to a lowercased
@@ -947,6 +1037,8 @@ export function findClosestBookId(input: string): BookId | null {
   return bestIsAmbiguous ? null : bestId;
 }
 
+export type CatalogStatus = "idle" | "loading" | "loaded" | "failed";
+
 export interface CreateBibleDataManagerOptions {
   /**
    * Where downloaded translations are stored. Defaults to IndexedDB; tests pass
@@ -970,6 +1062,7 @@ export function createBibleDataManager(
   const endpoints = signal<string[]>([defaultEndpoint]);
   const availableTranslations = signal<Translation[]>([]);
   const catalogLoaded = signal<boolean>(false);
+  const catalogStatus = signal<CatalogStatus>("idle");
   const translationBooks = signal<Map<string, TranslationBooks>>(new Map());
   const translationEndpoints = signal<Map<string, string>>(new Map());
 
@@ -1024,12 +1117,17 @@ export function createBibleDataManager(
     translationEndpoints.value = nextTranslationEndpoints;
   };
 
+  // Translation IDs a custom (non-default) source has supplied this session.
+  const customSourceIds = new Set<string>();
+
   const getTranslations = async (
     endpoint?: string,
     options?: { refresh?: boolean }
   ): Promise<Translation[]> => {
     const normalizedEndpoint = normalizeEndpoint(endpoint ?? defaultEndpoint);
     ensureEndpointTracked(normalizedEndpoint);
+
+    const isDefaultCatalog = normalizedEndpoint === defaultEndpoint;
 
     if (options?.refresh) {
       translationsCache?.delete(normalizedEndpoint);
@@ -1055,8 +1153,36 @@ export function createBibleDataManager(
       });
     }
 
-    const result = await resultPromise;
-    mergeTranslations(normalizedEndpoint, result);
+    if (isDefaultCatalog && catalogStatus.peek() !== "loaded") {
+      catalogStatus.value = "loading";
+    }
+
+    let result: Translation[];
+    try {
+      result = await resultPromise;
+    } catch (err) {
+      if (isDefaultCatalog && catalogStatus.peek() !== "loaded") {
+        catalogStatus.value = "failed";
+      }
+      throw err;
+    }
+
+    if (isDefaultCatalog) {
+      // The default catalog can land after a custom source was added (the
+      // selector loads it in the background), and it must not take back a
+      // translation ID that source claimed, or that translation's books and
+      // chapters would start loading from the default server.
+      mergeTranslations(
+        normalizedEndpoint,
+        result.filter((translation) => !customSourceIds.has(translation.id))
+      );
+      catalogStatus.value = "loaded";
+    } else {
+      for (const translation of result) {
+        customSourceIds.add(translation.id);
+      }
+      mergeTranslations(normalizedEndpoint, result);
+    }
     catalogLoaded.value = true;
     return result;
   };
@@ -1076,15 +1202,63 @@ export function createBibleDataManager(
     mergeTranslations,
   });
 
-  const getTranslationBooks = async (
+  const getTranslationCatalog = async (): Promise<Translation[]> => {
+    // Downloads join `availableTranslations` only once the offline store has
+    // been read, and they are the whole fallback for a first visit made
+    // offline, so wait for that before trusting the list.
+    await offline.ready;
+    // Once the full catalog is known, answer from it: fetching again would
+    // re-merge it, which rewrites the saved copy and re-renders every
+    // translation picker, on every call.
+    if (catalogLoaded.peek()) {
+      return availableTranslations.peek();
+    }
+    const known = availableTranslations.peek();
+    if (offline.isOnline.peek() || known.length === 0) {
+      try {
+        await getTranslations();
+      } catch (error) {
+        if (availableTranslations.peek().length === 0) {
+          throw error;
+        }
+      }
+    }
+    return availableTranslations.peek();
+  };
+
+  // Lookups under way, by translation. A screen of rows can ask for the same
+  // list all at once (one per save or highlight); they share one lookup
+  // instead of each reading storage and setting up its own request.
+  const pendingTranslationBooks = new Map<string, Promise<TranslationBooks>>();
+
+  const getTranslationBooks = (
     translationId: string,
     options?: ApiRequestOptions
   ): Promise<TranslationBooks> => {
     const existing = translationBooks.value.get(translationId);
     if (existing) {
-      return existing;
+      return Promise.resolve(existing);
     }
+    // A caller that can cancel, or wants a refresh, gets its own lookup, so
+    // it can't cancel or reshape anyone else's.
+    if (options?.signal || options?.refresh) {
+      return loadTranslationBooks(translationId, options);
+    }
+    const pending = pendingTranslationBooks.get(translationId);
+    if (pending) {
+      return pending;
+    }
+    const lookup = loadTranslationBooks(translationId).finally(() => {
+      pendingTranslationBooks.delete(translationId);
+    });
+    pendingTranslationBooks.set(translationId, lookup);
+    return lookup;
+  };
 
+  const loadTranslationBooks = async (
+    translationId: string,
+    options?: ApiRequestOptions
+  ): Promise<TranslationBooks> => {
     const cacheBooks = (
       endpoint: string,
       books: TranslationBooks,
@@ -1222,6 +1396,62 @@ export function createBibleDataManager(
     return await api.getAudioTimings(link, endpoint, options);
   };
 
+  const getCommentaries = async (options?: ApiRequestOptions) =>
+    (await api.getAvailableCommentaries(defaultEndpoint, options)).commentaries;
+
+  const getCommentaryBooks = (
+    commentaryId: string,
+    options?: ApiRequestOptions
+  ) => api.getCommentaryBooks(commentaryId, defaultEndpoint, options);
+
+  const getCommentaryBookChapter = (
+    commentaryId: string,
+    book: string,
+    chapter: number,
+    options?: ApiRequestOptions
+  ) =>
+    api.getCommentaryBookChapter(
+      commentaryId,
+      book,
+      chapter,
+      defaultEndpoint,
+      options
+    );
+
+  const getCommentaryProfiles = async (
+    commentaryId: string,
+    options?: ApiRequestOptions
+  ) =>
+    (await api.getCommentaryProfiles(commentaryId, defaultEndpoint, options))
+      .profiles;
+
+  const getCommentaryProfile = (
+    commentaryId: string,
+    profileId: string,
+    options?: ApiRequestOptions
+  ) =>
+    api.getCommentaryProfile(commentaryId, profileId, defaultEndpoint, options);
+
+  const getDatasets = async (options?: ApiRequestOptions) =>
+    (await api.getAvailableDatasets(defaultEndpoint, options)).datasets;
+
+  const getDatasetBooks = (datasetId: string, options?: ApiRequestOptions) =>
+    api.getDatasetBooks(datasetId, defaultEndpoint, options);
+
+  const getDatasetBookChapter = (
+    datasetId: string,
+    book: string,
+    chapter: number,
+    options?: ApiRequestOptions
+  ) =>
+    api.getDatasetBookChapter(
+      datasetId,
+      book,
+      chapter,
+      defaultEndpoint,
+      options
+    );
+
   const buildTranslationId = (translationId: string) => {
     const endpoint = getTranslationEndpointInfo(translationId);
     if (endpoint.isDefault) {
@@ -1281,6 +1511,7 @@ export function createBibleDataManager(
         // persistence effect above), so restoring it means the catalog is
         // already known, not just this session's active translation.
         catalogLoaded.value = true;
+        catalogStatus.value = "loaded";
       }
     } catch {
       // Ignore a malformed cache; the live catalog fetch is authoritative.
@@ -1302,17 +1533,27 @@ export function createBibleDataManager(
     endpoints,
     availableTranslations,
     catalogLoaded,
+    catalogStatus,
     translationBooks,
     api,
     offline,
     getTranslations,
     getTranslationBooks,
+    getTranslationCatalog,
     getCachedTranslationBooks,
     getTranslationBookChapter,
     getCachedTranslationBookChapter,
     getNextChapter,
     getPreviousChapter,
     getAudioTimings,
+    getCommentaries,
+    getCommentaryBooks,
+    getCommentaryBookChapter,
+    getCommentaryProfiles,
+    getCommentaryProfile,
+    getDatasets,
+    getDatasetBooks,
+    getDatasetBookChapter,
     getTranslationEndpointInfo,
     buildTranslationId,
     hydrateCachedCatalog,

@@ -1,5 +1,6 @@
 import { BibleTypes } from "../../../domain/models/canvas";
 import type { BibleType } from "../../../domain/models/canvas";
+import type { TestamentHighlightSequenceConfigKey } from "../../../application/ports/out/SequenceConfigProvider";
 
 export const CrackOpenBibleAnimationDurations: Record<BibleType, number> = {
   [BibleTypes.Default]: 2,
@@ -17,6 +18,6 @@ export const CrackOpenBibleHighlightConfig = {
   initialDelay: 500,
   staggerDelay: 100,
   unhighlightDelay: 4000,
-} as const;
+} as const satisfies Record<TestamentHighlightSequenceConfigKey, number>;
 export type CrackOpenBibleHighlightConfigType =
   typeof CrackOpenBibleHighlightConfig;

@@ -1,9 +1,5 @@
-import type {
-  Piece,
-  PieceUnion,
-  ActivityIndicator,
-  SectionShadow,
-} from "../models/canvas";
+import type { Piece, PieceUnion, SectionShadow } from "../models/canvas";
+import type { ActivityIndicatorData } from "./ActivityIndicatorData";
 import type { LabelPosition } from "../models/label";
 import type { StackLabelableBiblePiece } from "../models/pieceLifecycle";
 
@@ -17,7 +13,7 @@ interface InfoLabelDataProps {
   tail: Piece<"InfoLabelTail">;
   label: Piece<"InfoLabelText">;
   date?: Piece<"InfoLabelDate">;
-  activityIndicators?: Map<ActivityIndicator["id"], ActivityIndicator>;
+  activityIndicators?: ActivityIndicatorData[];
   owner: Piece<StackLabelableBiblePiece> | SectionShadow;
   positioning: LabelPosition;
 }
@@ -38,7 +34,7 @@ export class InfoLabelData {
     transformer,
     tail,
     label,
-    activityIndicators = new Map(),
+    activityIndicators = [],
     date,
     owner,
     positioning,
@@ -81,23 +77,25 @@ export class InfoLabelData {
     return this.#label;
   }
   get activityIndicators() {
-    return [...this.#activityIndicators.values()];
+    return [...this.#activityIndicators];
   }
   clearActivityIndicators() {
-    if (this.#activityIndicators.size > 0) {
-      const indicators = [...this.#activityIndicators.values()];
-      this.#activityIndicators.clear();
+    if (this.#activityIndicators.length > 0) {
+      const indicators = [...this.#activityIndicators];
+      this.#activityIndicators = [];
       return indicators;
     }
     return undefined;
   }
-  addActivityIndicator(indicator: ActivityIndicator) {
-    if (!this.#activityIndicators.has(indicator.id)) {
-      this.#activityIndicators.set(indicator.id, indicator);
+  addActivityIndicator(indicator: ActivityIndicatorData) {
+    if (!this.#activityIndicators.some((data) => data.id === indicator.id)) {
+      this.#activityIndicators.push(indicator);
     }
   }
-  removeActivityIndicator(indicatorId: ActivityIndicator["id"]) {
-    this.#activityIndicators.delete(indicatorId);
+  removeActivityIndicator(indicatorId: ActivityIndicatorData["id"]) {
+    this.#activityIndicators = this.#activityIndicators.filter(
+      (data) => data.id !== indicatorId
+    );
   }
   get date() {
     return this.#date;

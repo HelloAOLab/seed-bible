@@ -221,4 +221,82 @@ describe("filterTranslationGroups", () => {
 
     expect(JSON.stringify(groups)).toBe(snapshot);
   });
+
+  describe("priorityLanguages", () => {
+    // Four single-letter-coded languages so alphabetical order is obvious:
+    // "aaa" < "bbb" < "ccc" < "zzz".
+    const AAA = translation({
+      id: "aaa_1",
+      language: "aaa",
+      languageEnglishName: "Aaa",
+      languageName: "Aaa",
+    });
+    const BBB = translation({
+      id: "bbb_1",
+      language: "bbb",
+      languageEnglishName: "Bbb",
+      languageName: "Bbb",
+    });
+    const CCC = translation({
+      id: "ccc_1",
+      language: "ccc",
+      languageEnglishName: "Ccc",
+      languageName: "Ccc",
+    });
+    const ZZZ = translation({
+      id: "zzz_1",
+      language: "zzz",
+      languageEnglishName: "Zzz",
+      languageName: "Zzz",
+    });
+    const priorityGroups = groupTranslationsByLanguage([AAA, BBB, CCC, ZZZ]);
+
+    it("sorts a priority language to the top before the limit is applied, not after", () => {
+      // Plain alphabetical order pushes "zzz" off a limit of 3.
+      const withoutPriority = filterTranslationGroups({
+        groups: priorityGroups,
+        query: "",
+        viewMode: "all",
+        limit: 3,
+      });
+      expect(
+        withoutPriority.groups.map((group) => group.language)
+      ).not.toContain("zzz");
+
+      // A caller-supplied priority language must lead even though the list
+      // is capped at 3 — only possible if the sort runs before the slice,
+      // not after (sorting an already-cut page can't recover an entry that
+      // didn't make the cut).
+      const withPriority = filterTranslationGroups({
+        groups: priorityGroups,
+        query: "",
+        viewMode: "all",
+        limit: 3,
+        priorityLanguages: ["zzz"],
+      });
+      expect(withPriority.groups.map((group) => group.language)).toEqual([
+        "zzz",
+        "aaa",
+        "bbb",
+      ]);
+    });
+
+    it("still lets the selected translation's language outrank a priority language", () => {
+      const result = filterTranslationGroups({
+        groups: priorityGroups,
+        query: "",
+        viewMode: "all",
+        limit: 4,
+        selectedTranslation: CCC,
+        priorityLanguages: ["zzz"],
+      });
+
+      expect(result.groups.map((group) => group.language)).toEqual([
+        "ccc",
+        "zzz",
+        "aaa",
+        "bbb",
+      ]);
+    });
+  });
 });

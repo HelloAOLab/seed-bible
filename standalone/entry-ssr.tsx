@@ -2,7 +2,10 @@ import { renderToStringAsync } from "preact-render-to-string";
 import { Main } from "../packages/seed-bible/seed-bible/app/main";
 import type { AppConfig } from "../packages/seed-bible/seed-bible/app/appConfig";
 import { DEFAULT_APP_CONFIG } from "../packages/seed-bible/seed-bible/app/appConfig";
-import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import {
+  createSeedBibleState,
+  type SeedBibleState,
+} from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   findClosestBookId,
   getBookId,
@@ -19,12 +22,26 @@ import {
   splitPathSegments,
   stripBasePath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
-import { getPreferredSupportedLanguage } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import {
+  getPreferredSupportedLanguage,
+  getUrlLanguage,
+} from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import { getTodayPageRedirect } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import {
   composeThemeStyleText,
   THEME_PRESET_STYLE_TEXT,
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import { ssrApiResponseCache } from "./ssrApiResponseCache";
 import { ssrTranslationsCache } from "./ssrTranslationsCache";
+import {
+  createRenderTimer,
+  type RenderTimer,
+  type RenderTiming,
+} from "./ssrRenderTimings";
+import {
+  buildSharedPagePath,
+  type SharedPageKind,
+} from "@packages/seed-bible/seed-bible/managers/SharedPagePath";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -52,6 +69,12 @@ export interface RenderOptions {
    * - `<!--SEED_JSON-->` where the JSON-serialized API response snapshot
    *   should be injected, so the client can seed its own API cache with data
    *   the server already fetched instead of re-fetching it.
+   * - `<!--CUSTOMIZATION_JSON-->` where the JSON-serialized
+   *   `?customization=...` load result should be injected, so the client can
+   *   skip re-fetching a customization record the server already resolved.
+   * - `<!--PLAYLIST_PAGE_JSON-->` and `<!--READING_PLAN_PAGE_JSON-->` where
+   *   the JSON-serialized load results for a shared playlist or reading plan
+   *   page should be injected, likewise.
    * - `<!--THEME_STYLE_TAG-->` where the active theme's composed CSS text
    *   should be injected, inside a `<style id="sb-theme-styles">` tag.
    * - `<!--THEME_PRESETS_JSON-->` where the built-in theme presets' composed
@@ -125,6 +148,62 @@ function replacePlaceholder(
 ): string {
   return source.split(placeholder).join(value);
 }
+
+/** Matches one `<meta ...>` tag; `[^>]*` spans newlines since some of these tags (see index.html) have their attributes on separate lines. */
+const META_TAG_RE = /<meta\b[^>]*>/gi;
+
+/** Whether a `<meta>` tag's `property` attribute is one of the `og:image` family. */
+function isOgImageMetaTag(tag: string): boolean {
+  return /\bproperty\s*=\s*"og:image(?::type|:width|:height|:alt)?"/i.test(tag);
+}
+
+/**
+ * Removes index.html's default `og:image`/`:type`/`:width`/`:height`/`:alt`
+ * meta tags. Called only when a customization's own logo is about to replace
+ * them (see the meta block in `render()`) — a crawler can't be relied on to
+ * prefer the *last* of two conflicting `og:image` tags (many just take the
+ * first, or treat multiple as a gallery), so the default has to be removed
+ * rather than merely followed by an override. See `stripDefaultFaviconLinks`
+ * below for the same problem, one level down the page, for the tab icon.
+ */
+export function stripDefaultOgImageMeta(html: string): string {
+  return html.replace(META_TAG_RE, (tag) => (isOgImageMetaTag(tag) ? "" : tag));
+}
+
+/** Matches one `<link ...>` tag. */
+const LINK_TAG_RE = /<link\b[^>]*>/gi;
+
+/** Whether a `<link>` tag's `rel` attribute is the favicon or the apple-touch-icon. */
+function isFaviconLinkTag(tag: string): boolean {
+  return /\brel\s*=\s*"(?:icon|apple-touch-icon)"/i.test(tag);
+}
+
+/**
+ * Removes index.html's default `<link rel="icon">`/
+ * `<link rel="apple-touch-icon">` tags. Called only when a customization's
+ * own logo is about to replace them (see the meta block in `render()`).
+ * Browsers do not reliably prefer the *last* declared icon link when there
+ * are two of the same `rel` — some use whichever they fetch or parse first,
+ * or pick by `type`/`sizes` rather than document order — so, exactly like
+ * `stripDefaultOgImageMeta` above, the default has to be removed rather than
+ * merely followed by a second tag. That also means the client never has two
+ * to choose from either: `useCustomizationLinkOverrides`
+ * (`app/customizationLinkOverrides.ts`) finds the one tag by its `rel` and
+ * changes its `href` in place, the same invariant this function establishes
+ * for the initial SSR response.
+ */
+export function stripDefaultFaviconLinks(html: string): string {
+  return html.replace(LINK_TAG_RE, (tag) => (isFaviconLinkTag(tag) ? "" : tag));
+}
+
+/** Query params that only ever described a reading position. */
+const READING_POSITION_PARAMS = [
+  "book",
+  "chapter",
+  "translation",
+  "translationId",
+  "lang",
+];
 
 /**
  * Detects a URL that isn't already the canonical
@@ -239,18 +318,95 @@ export function legacyReadingUrlRedirect(
   });
 
   const remainingParams = new URLSearchParams(url.search);
-  for (const key of [
-    "book",
-    "chapter",
-    "translation",
-    "translationId",
-    "lang",
-  ]) {
+  for (const key of READING_POSITION_PARAMS) {
     remainingParams.delete(key);
   }
   const query = remainingParams.toString();
 
   return `${basePath}${readingPath}${query ? `?${query}` : ""}`;
+}
+
+/**
+ * Sends an old-style playlist or reading plan link to that content's own
+ * path, as a 301 (the target depends only on the URL):
+ *
+ * - A share link (`?playlist={locator}` or `?readingPlan={locator}`, on
+ *   whatever chapter the sharer's page happened to be) goes to its page,
+ *   `/{lang}/playlist/{locator}` or `/{lang}/reading-plan/{locator}`.
+ * - A playlist playback URL (`?playlist=…&playlistStep={n}`, 0-based) goes
+ *   to its playing path, `/{lang}/playlist/{locator}/-/{n + 1}`. The title
+ *   slug isn't known without fetching the playlist, so a placeholder stands
+ *   in; the app writes the real one as soon as playback starts.
+ *
+ * The language is the one the link names (its path segment or `?lang=`),
+ * else the translation's own, else `DEFAULT_UI_LANGUAGE`. The title slug is
+ * left off, since adding it would mean fetching the record before
+ * responding; the page's canonical URL carries it instead. Unrelated query
+ * params are kept, and the ones that only placed the reader are dropped.
+ */
+export function sharedPageQueryRedirect(
+  path: string,
+  basePath: string
+): string | null {
+  const url = new URL(path, "http://ssr.local");
+
+  const playlistLocator = url.searchParams.get("playlist");
+  const readingPlanLocator = url.searchParams.get("readingPlan");
+  const target: {
+    kind: SharedPageKind;
+    param: string;
+    locator: string;
+  } | null = playlistLocator
+    ? { kind: "playlist", param: "playlist", locator: playlistLocator }
+    : readingPlanLocator
+      ? {
+          kind: "readingPlan",
+          param: "readingPlan",
+          locator: readingPlanLocator,
+        }
+      : null;
+  if (!target) {
+    return null;
+  }
+  // Only a playlist has steps to play.
+  const stepParam =
+    target.kind === "playlist" ? url.searchParams.get("playlistStep") : null;
+  const stepIndex = stepParam === null ? null : Number(stepParam);
+  const step =
+    stepIndex === null
+      ? null
+      : Number.isInteger(stepIndex) && stepIndex >= 0
+        ? stepIndex + 1
+        : 1;
+
+  const parsed = parseReadingPath(url.pathname, basePath);
+  const translationId =
+    parsed?.translationId ??
+    url.searchParams.get("translationId") ??
+    url.searchParams.get("translation");
+  const language =
+    parsed?.language?.toLowerCase() ??
+    url.searchParams.get("lang") ??
+    (translationId ? uiLocaleForDefaultTranslation(translationId) : null) ??
+    DEFAULT_UI_LANGUAGE;
+
+  const remainingParams = new URLSearchParams(url.search);
+  remainingParams.delete(target.param);
+  if (target.kind === "playlist") {
+    remainingParams.delete("playlistStep");
+  }
+  for (const key of READING_POSITION_PARAMS) {
+    remainingParams.delete(key);
+  }
+  const query = remainingParams.toString();
+
+  return `${basePath}${buildSharedPagePath({
+    kind: target.kind,
+    language,
+    locator: target.locator,
+    title: null,
+    step,
+  })}${query ? `?${query}` : ""}`;
 }
 
 /**
@@ -386,18 +542,35 @@ export function acceptLanguageRedirect(
   }
 
   const remainingParams = new URLSearchParams(url.search);
-  for (const key of [
-    "book",
-    "chapter",
-    "translation",
-    "translationId",
-    "lang",
-  ]) {
+  for (const key of READING_POSITION_PARAMS) {
     remainingParams.delete(key);
   }
   const query = remainingParams.toString();
 
   return `${basePath}${readingPath}${query ? `?${query}` : ""}`;
+}
+
+/**
+ * Redirects a URL that should show the Today screen — a bare "/", or any URL
+ * carrying the legacy `?today=open` — to the Today page, "/{lang}/today", so
+ * the server renders Today itself rather than the reader for the client to
+ * cover a moment later. The language comes from the URL when it names one,
+ * else from `Accept-Language`, which is why the answer is a 302 that varies
+ * on it. See `shouldRedirectToTodayPage` for the URLs that stay put.
+ */
+export function todayPageRedirect(
+  path: string,
+  basePath: string,
+  acceptedLanguages: string[]
+): string | null {
+  const url = new URL(path, "http://ssr.local");
+  return getTodayPageRedirect(
+    url,
+    basePath,
+    getUrlLanguage(url, basePath) ??
+      getPreferredSupportedLanguage(acceptedLanguages) ??
+      DEFAULT_UI_LANGUAGE
+  );
 }
 
 /**
@@ -412,11 +585,21 @@ export function acceptLanguageRedirect(
 export async function render(
   options: RenderOptions
 ): Promise<
-  | { html: string; notFound?: true }
+  | { html: string; notFound?: true; timings?: RenderTiming[] }
   | { redirectTo: string; redirectStatus?: number; vary?: string }
   | string
 > {
   const { config: injectedConfig } = options;
+
+  // Before the reading-path redirects: the target isn't a reading path, and
+  // correcting the chapter first would only add a second hop.
+  const sharedPageRedirectTo = sharedPageQueryRedirect(
+    options.path,
+    injectedConfig.basePath
+  );
+  if (sharedPageRedirectTo) {
+    return { redirectTo: sharedPageRedirectTo };
+  }
 
   const redirectTo = legacyReadingUrlRedirect(
     options.path,
@@ -434,6 +617,21 @@ export async function render(
   if (languageRedirectTo) {
     return {
       redirectTo: languageRedirectTo,
+      redirectStatus: 302,
+      vary: "Accept-Language",
+    };
+  }
+
+  // After the reading-path redirects, which fold a legacy `?book=` (or a
+  // path missing its language) into a full reading path first.
+  const todayRedirectTo = todayPageRedirect(
+    options.path,
+    injectedConfig.basePath,
+    injectedConfig.acceptedLanguages
+  );
+  if (todayRedirectTo) {
+    return {
+      redirectTo: todayRedirectTo,
       redirectStatus: 302,
       vary: "Accept-Language",
     };
@@ -474,8 +672,32 @@ export async function render(
     config,
     initialHref: href,
     translationsCache: ssrTranslationsCache,
+    apiResponseCache: ssrApiResponseCache,
   });
+  const timer = createRenderTimer();
+  try {
+    const result = await renderState(
+      state,
+      options,
+      config,
+      href,
+      notFound,
+      timer
+    );
+    return { ...result, timings: timer.timings };
+  } finally {
+    state.dispose();
+  }
+}
 
+async function renderState(
+  state: SeedBibleState,
+  options: RenderOptions,
+  config: AppConfig,
+  href: string,
+  notFound: boolean,
+  timer: RenderTimer
+): Promise<{ html: string; notFound?: true }> {
   // Block until the detected language's translations are loaded so the
   // server-rendered HTML (and og:locale meta below) is in the right language
   // rather than the bundled "en" fallback. Also block on the initial tab's
@@ -495,28 +717,49 @@ export async function render(
   // it here, before any suspending render is attempted, keeps that race from
   // being reachable at all.
   await Promise.all([
-    state.i18n.ready,
-    state.app.selectedTab.value?.readingState.chapterDataPromise,
-  ]);
-
-  const [appHtml] = await Promise.all([
-    renderToStringAsync(
-      <Main initialState={state} config={config} initialHref={href} />
+    timer.wait("ssr.wait.i18n", state.i18n.ready),
+    timer.wait(
+      "ssr.wait.chapter",
+      state.app.selectedTab.value?.readingState.chapterDataPromise
+    ),
+    // So the title, meta and modal describe a shared playlist, reading
+    // plan or friend link's content. Awaited here with the chapter, not suspended on
+    // during the render, for the reason above.
+    timer.wait(
+      "ssr.wait.playlistPage",
+      state.playlists.initialPlaylistPageLoadPromise
+    ),
+    timer.wait(
+      "ssr.wait.readingPlanPage",
+      state.readingPlans.initialReadingPlanPageLoadPromise
+    ),
+    timer.wait(
+      "ssr.wait.friendLinkPreview",
+      state.friendLinkPreview.initialLoadPromise
     ),
   ]);
+  // A reload mid-playlist names only its step, not the chapter; the reader
+  // moves there once the playlist has loaded, so wait for that too before
+  // rendering.
+  await timer.wait(
+    "ssr.wait.playlistPlayback",
+    state.playlists.initialPlaybackPromise
+  );
+
+  const appHtml = await timer.step("ssr.renderToString", () =>
+    renderToStringAsync(
+      <Main initialState={state} config={config} initialHref={href} />
+    )
+  );
+
+  // Read once — used both in the meta block below and to decide whether
+  // `options.html`'s default `og:image` tags need stripping first (see
+  // `stripDefaultOgImageMeta`).
+  const customizationLogoUrl = state.app.customizationLogoUrl.value;
+  const socialImage = state.app.socialImage.value;
 
   const metaHtml = await renderToStringAsync(
     <>
-      <meta
-        name="theme-color"
-        content="#FFFFFF"
-        media="(prefers-color-scheme: light)"
-      />
-      <meta
-        name="theme-color"
-        content="#000000"
-        media="(prefers-color-scheme: dark)"
-      />
       <meta name="description" content={state.app.description.value} />
       <meta httpEquiv="content-language" content={state.i18n.language.value} />
       <meta property="og:locale" content={state.i18n.language.value} />
@@ -527,14 +770,47 @@ export async function render(
       <meta property="og:title" content={state.app.socialTitle.value} />
       <meta property="og:description" content={state.app.description.value} />
       <meta property="og:url" content={state.app.canonicalUrl.value} />
+      {state.app.noIndex.value && <meta name="robots" content="noindex" />}
       <meta property="og:site_name" content={state.app.siteName.value} />
+      {/* Only emitted for a shared playlist with a cover image, or when a
+          customization with an uploaded logo is active (see
+          `state.app.socialImage`). `stripDefaultOgImageMeta` has already
+          removed index.html's own
+          `og:image`/`:type`/`:width`/`:height`/`:alt` from `baseHtml` below in
+          that case, so there is exactly one set of these tags either way —
+          unlike the favicon `<link>`, a crawler can't be relied on to prefer
+          the *last* of two conflicting `og:image` tags (many just take the
+          first, or treat multiple as a gallery), so an override here has to
+          replace the default rather than merely follow it. No explicit
+          `:type`/`:width`/`:height`: those described the default JPG's fixed
+          1200x630 crop and would misdescribe an arbitrary uploaded image. */}
+      {socialImage && (
+        <>
+          <meta property="og:image" content={socialImage.url} />
+          <meta property="og:image:alt" content={socialImage.alt} />
+        </>
+      )}
       {/* `twitter:*` really is `name=`, unlike `og:*`. No `twitter:image`: it
-          would fall back to `og:image`, which is root-relative in index.html
-          and so unresolvable by most scrapers either way. */}
+          would fall back to `og:image`, which is root-relative in
+          index.html's default (unresolvable by most scrapers either way) but
+          always a proper absolute URL when a customization's logo replaces
+          it above. */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={state.app.socialTitle.value} />
       <meta name="twitter:description" content={state.app.description.value} />
       <link rel="canonical" href={state.app.canonicalUrl.value} />
+      {/* Only emitted when a customization with an uploaded logo is active.
+          `stripDefaultFaviconLinks` has already removed index.html's own
+          `<link rel="icon">`/`<link rel="apple-touch-icon">` from `baseHtml`
+          below in that case, so there is exactly one tag of each `rel`
+          either way — see that function for why an override can't just be
+          appended after the default. */}
+      {customizationLogoUrl && (
+        <>
+          <link rel="icon" href={customizationLogoUrl} />
+          <link rel="apple-touch-icon" href={customizationLogoUrl} />
+        </>
+      )}
       <title>{state.app.title.value}</title>
     </>
   );
@@ -560,6 +836,7 @@ export async function render(
   const clientConfig: AppConfig = {
     ...config,
     renderedForPath: options.path,
+    renderedLanguage: state.i18n.language.peek(),
     // This bundle's own build identity, not the requested branch — see
     // AppConfig.renderedByCommit.
     renderedByCommit: __GIT_COMMIT__,
@@ -577,6 +854,24 @@ export async function render(
       )
     )
   );
+  // Null whenever there was no `?customization=` link, or its load hadn't
+  // actually completed by now (the SSR-only timeout backstop fired first) —
+  // see `getInitialCustomizationSeed`. Either way `JSON.stringify(null)` is a
+  // harmless "nothing to seed" the client's `readInjectedCustomizationSeed`
+  // already treats as absent.
+  const customizationSeedJson = escapeForScript(
+    JSON.stringify(state.customizations.getInitialCustomizationSeed())
+  );
+
+  const playlistPageSeedJson = escapeForScript(
+    JSON.stringify(state.playlists.getPlaylistPageSeed())
+  );
+  const readingPlanPageSeedJson = escapeForScript(
+    JSON.stringify(state.readingPlans.getReadingPlanPageSeed())
+  );
+  const friendLinkSeedJson = escapeForScript(
+    JSON.stringify(state.friendLinkPreview.getSeed())
+  );
 
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
@@ -588,15 +883,33 @@ export async function render(
     ["<!-- THEME_PRESETS_JSON -->", themePresetsJson],
     ["<!-- CONFIG_JSON -->", configJson],
     ["<!-- SEED_JSON -->", seedJson],
+    ["<!-- CUSTOMIZATION_JSON -->", customizationSeedJson],
+    ["<!-- PLAYLIST_PAGE_JSON -->", playlistPageSeedJson],
+    ["<!-- READING_PLAN_PAGE_JSON -->", readingPlanPageSeedJson],
+    ["<!-- FRIEND_LINK_JSON -->", friendLinkSeedJson],
     ["<!-- APP_HTML -->", appHtml],
   ];
+
+  const withSocialImage = socialImage
+    ? stripDefaultOgImageMeta(options.html)
+    : options.html;
+  const baseHtml = customizationLogoUrl
+    ? stripDefaultFaviconLinks(withSocialImage)
+    : withSocialImage;
+
+  // A shared playlist or reading plan link whose record doesn't exist is a
+  // 404 like an unknown book is. One whose load merely failed or timed out is
+  // not.
+  const sharedPageNotFound =
+    state.playlists.playlistPageNotFound.value ||
+    state.readingPlans.readingPlanPageNotFound.value;
 
   return {
     html: substitutions.reduce(
       (html, [placeholder, value]) =>
         replacePlaceholder(html, placeholder, value),
-      options.html
+      baseHtml
     ),
-    ...(notFound ? { notFound: true as const } : {}),
+    ...(notFound || sharedPageNotFound ? { notFound: true as const } : {}),
   };
 }

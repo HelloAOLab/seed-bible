@@ -1,0 +1,39 @@
+.sb-shared-page-modal-hero {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--sb-radius-md);
+  margin-bottom: 0.75rem;
+}
+
+.sb-shared-page-modal-author {
+  margin: 0 0 0.5rem;
+  font-size: var(--sb-font-size-14);
+  opacity: 0.8;
+}
+
+.sb-shared-page-modal-description {
+  margin: 0 0 0.5rem;
+  white-space: pre-line;
+}
+
+.sb-shared-page-modal-count {
+  margin: 0;
+  font-size: var(--sb-font-size-13);
+  opacity: 0.7;
+}
+
+.sb-shared-page-modal-status {
+  margin: 0.5rem 0 0;
+  font-size: var(--sb-font-size-14);
+  font-weight: 600;
+}
+
+.sb-shared-page-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

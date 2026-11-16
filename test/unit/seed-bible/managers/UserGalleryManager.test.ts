@@ -2,6 +2,7 @@ import { signal } from "@preact/signals";
 import type { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import {
   GalleryPhotoSchema,
+  LIST_LAG_GRACE_MS,
   MAX_RECENT_GALLERY_PHOTOS,
   USER_GALLERY_CACHE_PREFIX,
   USER_GALLERY_MARKER,
@@ -19,12 +20,18 @@ async function flush(): Promise<void> {
 
 type GalleryOs = Pick<
   CasualOSManager,
-  "recordFile" | "recordData" | "listAllDataByMarker"
+  | "recordFile"
+  | "recordData"
+  | "eraseData"
+  | "eraseFile"
+  | "listAllDataByMarker"
 >;
 
 type GalleryOsMock = {
   recordFile: ReturnType<typeof vi.fn>;
   recordData: ReturnType<typeof vi.fn>;
+  eraseData: ReturnType<typeof vi.fn>;
+  eraseFile: ReturnType<typeof vi.fn>;
   listAllDataByMarker: ReturnType<typeof vi.fn>;
 };
 
@@ -39,6 +46,10 @@ function makeOs(
         url: "https://example.com/photo.jpg",
       }),
     recordData: overrides.recordData ?? vi.fn().mockResolvedValue(undefined),
+    eraseData:
+      overrides.eraseData ?? vi.fn().mockResolvedValue({ success: true }),
+    eraseFile:
+      overrides.eraseFile ?? vi.fn().mockResolvedValue({ success: true }),
     listAllDataByMarker:
       overrides.listAllDataByMarker ??
       vi.fn().mockResolvedValue({ success: true, items: [] }),
@@ -84,7 +95,8 @@ describe("savePhotoToGallery", () => {
     });
     expect(os.recordData).toHaveBeenCalledTimes(1);
     const saved = os.recordData.mock.calls[0]![2];
-    expect(saved.createdAtMs).toBeGreaterThan(existing.createdAtMs);
+    expect(saved.createdAtMs).toBe(existing.createdAtMs);
+    expect(saved.lastUsedAtMs).toBeGreaterThan(existing.createdAtMs);
   });
 });
 
@@ -253,7 +265,7 @@ describe("createUserGalleryManager", () => {
     ).rejects.toThrow("Cannot save a photo while signed out.");
   });
 
-  it("rememberPhoto adds a used cover URL and moves it to the front on reuse", async () => {
+  it("rememberPhoto adds a used cover URL and, on reuse, moves it to the front without changing its upload date", async () => {
     const recordData = vi.fn().mockResolvedValue(undefined);
     const gallery = createUserGalleryManager(makeOs({ recordData }), {
       userId: signal("user-1"),
@@ -265,6 +277,8 @@ describe("createUserGalleryManager", () => {
       vi.setSystemTime(1_000);
       const first = await gallery.rememberPhoto("https://example.com/used.jpg");
       expect(first?.url).toBe("https://example.com/used.jpg");
+      expect(first?.createdAtMs).toBe(1_000);
+      expect(first?.lastUsedAtMs).toBe(1_000);
       expect(gallery.photos.value[0]).toEqual(first);
 
       const older = {
@@ -281,7 +295,8 @@ describe("createUserGalleryManager", () => {
 
       expect(reused?.id).toBe(first?.id);
       expect(gallery.photos.value[0]?.id).toBe(first?.id);
-      expect(gallery.photos.value[0]?.createdAtMs).toBe(2_000);
+      expect(gallery.photos.value[0]?.createdAtMs).toBe(1_000);
+      expect(gallery.photos.value[0]?.lastUsedAtMs).toBe(2_000);
     } finally {
       vi.useRealTimers();
     }
@@ -332,7 +347,7 @@ describe("createUserGalleryManager", () => {
     ).toEqual([]);
   });
 
-  it("caps Recent uploads at the most recent photos", async () => {
+  it("keeps every upload, newest first, beyond the number the picker shows", async () => {
     let n = 0;
     const recordFile = vi.fn().mockImplementation(async () => {
       n += 1;
@@ -350,15 +365,13 @@ describe("createUserGalleryManager", () => {
       await gallery.savePhoto(file);
     }
 
-    expect(gallery.photos.value).toHaveLength(MAX_RECENT_GALLERY_PHOTOS);
+    expect(gallery.photos.value).toHaveLength(MAX_RECENT_GALLERY_PHOTOS + 2);
     expect(gallery.photos.value[0]?.url).toBe(
       `https://example.com/photo-${MAX_RECENT_GALLERY_PHOTOS + 2}.jpg`
     );
-    expect(
-      gallery.photos.value.some(
-        (photo) => photo.url === "https://example.com/photo-1.jpg"
-      )
-    ).toBe(false);
+    expect(gallery.photos.value.at(-1)?.url).toBe(
+      "https://example.com/photo-1.jpg"
+    );
   });
 
   it("loads listed photos whose timestamps were stored as strings", async () => {
@@ -432,6 +445,181 @@ describe("createUserGalleryManager", () => {
     expect(gallery.photos.value[0]?.url).toBe("https://example.com/photo.jpg");
     errorSpy.mockRestore();
   });
+
+  it("drops a cached photo the server no longer lists", async () => {
+    // Old enough that the listing would have caught up with it long ago, so
+    // its absence from the list means it was deleted, not that it is new.
+    const stale = {
+      id: "photo_stale",
+      url: "https://example.com/stale.jpg",
+      createdAtMs: Date.now() - LIST_LAG_GRACE_MS - 1,
+    };
+    localStorage.setItem(
+      `${USER_GALLERY_CACHE_PREFIX}user-1`,
+      JSON.stringify([stale])
+    );
+    const gallery = createUserGalleryManager(makeOs(), {
+      userId: signal("user-1"),
+    });
+    await flush();
+
+    expect(gallery.photos.value).toEqual([]);
+    expect(
+      JSON.parse(
+        localStorage.getItem(`${USER_GALLERY_CACHE_PREFIX}user-1`) ?? "[]"
+      )
+    ).toEqual([]);
+  });
+
+  it("keeps a photo uploaded long ago but reused moments ago when the server list lags behind", async () => {
+    const reused = {
+      id: "photo_reused",
+      url: "https://example.com/reused.jpg",
+      createdAtMs: Date.now() - LIST_LAG_GRACE_MS - 1,
+      lastUsedAtMs: Date.now(),
+    };
+    localStorage.setItem(
+      `${USER_GALLERY_CACHE_PREFIX}user-1`,
+      JSON.stringify([reused])
+    );
+    const gallery = createUserGalleryManager(makeOs(), {
+      userId: signal("user-1"),
+    });
+    await flush();
+
+    expect(gallery.photos.value).toEqual([reused]);
+  });
+
+  it("reports loading only while the gallery list is in flight", async () => {
+    let resolveList: (value: { success: true; items: [] }) => void;
+    const listAllDataByMarker = vi.fn(
+      () =>
+        new Promise<{ success: true; items: [] }>((resolve) => {
+          resolveList = resolve;
+        })
+    );
+    const gallery = createUserGalleryManager(makeOs({ listAllDataByMarker }), {
+      userId: signal("user-1"),
+    });
+
+    expect(gallery.isLoading.value).toBe(true);
+
+    resolveList!({ success: true, items: [] });
+    await flush();
+
+    expect(gallery.isLoading.value).toBe(false);
+  });
+
+  describe("deletePhoto", () => {
+    const photo = {
+      id: "photo_1",
+      url: "https://example.com/saved.jpg",
+      createdAtMs: 50,
+    };
+    const listing = () =>
+      vi.fn().mockResolvedValue({ success: true, items: [{ data: photo }] });
+
+    it("erases the file and the gallery record and drops the photo locally", async () => {
+      const eraseData = vi.fn().mockResolvedValue({ success: true });
+      const eraseFile = vi.fn().mockResolvedValue({ success: true });
+      const gallery = createUserGalleryManager(
+        makeOs({ listAllDataByMarker: listing(), eraseData, eraseFile }),
+        { userId: signal("user-1") }
+      );
+      await flush();
+      expect(gallery.photos.value).toEqual([photo]);
+
+      await gallery.deletePhoto(photo);
+
+      expect(eraseFile).toHaveBeenCalledWith("user-1", photo.url);
+      expect(eraseData).toHaveBeenCalledWith("user-1", photo.id);
+      expect(gallery.photos.value).toEqual([]);
+      expect(
+        JSON.parse(
+          localStorage.getItem(`${USER_GALLERY_CACHE_PREFIX}user-1`) ?? "[]"
+        )
+      ).toEqual([]);
+    });
+
+    it("keeps the photo when its gallery record cannot be erased", async () => {
+      const eraseData = vi
+        .fn()
+        .mockResolvedValue({ success: false, errorCode: "not_authorized" });
+      const gallery = createUserGalleryManager(
+        makeOs({ listAllDataByMarker: listing(), eraseData }),
+        { userId: signal("user-1") }
+      );
+      await flush();
+
+      await expect(gallery.deletePhoto(photo)).rejects.toThrow(
+        "Failed to delete photo: not_authorized"
+      );
+      expect(gallery.photos.value).toEqual([photo]);
+    });
+
+    it("still removes the entry when the file is not one that can be erased", async () => {
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      const eraseData = vi.fn().mockResolvedValue({ success: true });
+      const eraseFile = vi
+        .fn()
+        .mockResolvedValue({ success: false, errorCode: "file_not_found" });
+      const gallery = createUserGalleryManager(
+        makeOs({ listAllDataByMarker: listing(), eraseData, eraseFile }),
+        { userId: signal("user-1") }
+      );
+      await flush();
+
+      await gallery.deletePhoto(photo);
+
+      expect(eraseData).toHaveBeenCalledWith("user-1", photo.id);
+      expect(gallery.photos.value).toEqual([]);
+      errorSpy.mockRestore();
+    });
+
+    it("treats an entry that is already gone as deleted", async () => {
+      const eraseData = vi
+        .fn()
+        .mockResolvedValue({ success: false, errorCode: "data_not_found" });
+      const gallery = createUserGalleryManager(
+        makeOs({ listAllDataByMarker: listing(), eraseData }),
+        { userId: signal("user-1") }
+      );
+      await flush();
+
+      await gallery.deletePhoto(photo);
+
+      expect(gallery.photos.value).toEqual([]);
+    });
+
+    it("stops before touching the record when the file erase gets no answer", async () => {
+      const eraseData = vi.fn().mockResolvedValue({ success: true });
+      const eraseFile = vi.fn().mockRejectedValue(new Error("offline"));
+      const gallery = createUserGalleryManager(
+        makeOs({ listAllDataByMarker: listing(), eraseData, eraseFile }),
+        { userId: signal("user-1") }
+      );
+      await flush();
+
+      await expect(gallery.deletePhoto(photo)).rejects.toThrow("offline");
+      expect(eraseData).not.toHaveBeenCalled();
+      expect(gallery.photos.value).toEqual([photo]);
+    });
+
+    it("throws when signed out", async () => {
+      const eraseData = vi.fn();
+      const gallery = createUserGalleryManager(makeOs({ eraseData }), {
+        userId: signal(null),
+      });
+      await flush();
+
+      await expect(gallery.deletePhoto(photo)).rejects.toThrow(
+        "Cannot delete a photo while signed out."
+      );
+      expect(eraseData).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe("mergeGalleryPhotos", () => {
@@ -470,6 +658,49 @@ describe("mergeGalleryPhotos", () => {
         createdAtMs: 2,
       },
     ]);
+  });
+
+  it("prefers the copy used most recently, not the one uploaded most recently", () => {
+    const reused = {
+      id: "reused",
+      url: "https://example.com/a.jpg",
+      createdAtMs: 1,
+      lastUsedAtMs: 10,
+    };
+    const olderRecord = {
+      id: "older-record",
+      url: "https://example.com/a.jpg",
+      createdAtMs: 5,
+    };
+
+    expect(mergeGalleryPhotos([reused], [olderRecord])).toEqual([reused]);
+    expect(mergeGalleryPhotos([olderRecord], [reused])).toEqual([reused]);
+  });
+
+  it("sorts by last use, falling back to the upload date for older records", () => {
+    const reusedLately = {
+      id: "reused-lately",
+      url: "https://example.com/a.jpg",
+      createdAtMs: 1,
+      lastUsedAtMs: 200,
+    };
+    const olderRecord = {
+      id: "older-record",
+      url: "https://example.com/b.jpg",
+      createdAtMs: 100,
+    };
+    const usedEarlier = {
+      id: "used-earlier",
+      url: "https://example.com/c.jpg",
+      createdAtMs: 50,
+      lastUsedAtMs: 60,
+    };
+
+    expect(
+      mergeGalleryPhotos([usedEarlier, olderRecord, reusedLately]).map(
+        (photo) => photo.id
+      )
+    ).toEqual(["reused-lately", "older-record", "used-earlier"]);
   });
 });
 

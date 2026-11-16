@@ -1,20 +1,5 @@
-import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
 import type { StackBibleData } from "../../domain/entities/StackBibleData";
-import type {
-  BibleSequenceEventPort,
-  BibleSequenceAdapterPort,
-  BibleSequenceServiceConfigProviderPort,
-  LabelDataRepositoryPort,
-  StackPieceLifecycleAdapterPort,
-  PieceAdapterPort,
-  BookChaptersManagementServicePort,
-  RenderOrderAdapterPort,
-  ScripturePiecesStateServicePort,
-} from "../ports/bibleLifecycle";
-import type { PieceDataRepositoryPort } from "../ports/pieces";
-import type { AwaiterPort } from "../ports/experience";
-import type { PieceLabelServicePort } from "../ports/pieces";
 import {
   HighlightRequestSources,
   UnhighlightRequestSources,
@@ -30,20 +15,36 @@ import type { StackPresenceNavigationPacing } from "../../domain/models/userPres
 import type { InfoLabelData } from "../../domain/entities/InfoLabelData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
 import type { StackBookData } from "../../domain/entities/StackBookData";
+import type { LoggerPort } from "../ports/out/Logger";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
+import type { PieceHighlightServicePort } from "../ports/in/PieceHighlight";
+import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
+import type { BookChaptersManagementServicePort } from "../ports/in/BookChaptersManagement";
+import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
+import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
+import type { BibleSequencePort } from "../ports/out/BibleSequence";
+import type { SequenceConfigProviderPort } from "../ports/out/SequenceConfigProvider";
+import type { LabelDataStorePort } from "../ports/out/LabelDataStore";
+import type { PiecePort } from "../ports/out/Piece";
+import type { StackPieceLifecyclePort } from "../ports/out/StackPieceLifecycle";
+import type { RenderOrderPort } from "../ports/out/RenderOrder";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
+import type { AwaiterPort } from "../ports/out/Awaiter";
 
-interface BibleSequenceServiceParams {
-  eventPort: BibleSequenceEventPort;
-  bibleSequenceAdapterPort: BibleSequenceAdapterPort;
+interface ServiceParams {
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
+  bibleSequenceAdapterPort: BibleSequencePort;
   scripturePiecesStateServicePort: ScripturePiecesStateServicePort;
   awaiterPort: AwaiterPort;
-  configProviderPort: BibleSequenceServiceConfigProviderPort;
-  pieceHighlightServicePort: PieceHighlighterPort;
-  pieceLabelServicePort: PieceLabelServicePort;
-  labelDataRepositoryPort: LabelDataRepositoryPort;
-  pieceAdapterPort: PieceAdapterPort;
-  stackPieceLifecycleAdapterPort: StackPieceLifecycleAdapterPort;
+  configProviderPort: SequenceConfigProviderPort;
+  pieceHighlightServicePort: PieceHighlightServicePort;
+  pieceLabelServicePort: PieceLabelServicePort<StackLabelableBiblePiece>;
+  labelDataRepositoryPort: LabelDataStorePort;
+  pieceAdapterPort: PiecePort;
+  stackPieceLifecycleAdapterPort: StackPieceLifecyclePort;
   bookChaptersManagementServicePort: BookChaptersManagementServicePort;
-  renderOrderAdapterPort: RenderOrderAdapterPort;
+  renderOrderAdapterPort: RenderOrderPort;
   pieceDataRepositoryPort: Pick<
     PieceDataRepositoryPort,
     | "getAllTestaments"
@@ -52,25 +53,27 @@ interface BibleSequenceServiceParams {
     | "getAllBooks"
     | "getAllChapters"
   >;
+  loggerPort: LoggerPort;
 }
 
 export class BibleSequenceService implements BibleSequenceServicePort {
-  #eventPort: BibleSequenceServiceParams["eventPort"];
-  #bibleSequenceAdapterPort: BibleSequenceServiceParams["bibleSequenceAdapterPort"];
-  #scripturePiecesStateServicePort: BibleSequenceServiceParams["scripturePiecesStateServicePort"];
-  #awaiterPort: BibleSequenceServiceParams["awaiterPort"];
-  #configProviderPort: BibleSequenceServiceParams["configProviderPort"];
-  #pieceHighlightServicePort: BibleSequenceServiceParams["pieceHighlightServicePort"];
-  #pieceLabelServicePort: BibleSequenceServiceParams["pieceLabelServicePort"];
-  #labelDataRepositoryPort: BibleSequenceServiceParams["labelDataRepositoryPort"];
-  #pieceAdapterPort: BibleSequenceServiceParams["pieceAdapterPort"];
-  #stackPieceLifecycleAdapterPort: BibleSequenceServiceParams["stackPieceLifecycleAdapterPort"];
-  #bookChaptersManagementServicePort: BibleSequenceServiceParams["bookChaptersManagementServicePort"];
-  #renderOrderAdapterPort: BibleSequenceServiceParams["renderOrderAdapterPort"];
-  #pieceDataRepositoryPort: BibleSequenceServiceParams["pieceDataRepositoryPort"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
+  #bibleSequenceAdapterPort: ServiceParams["bibleSequenceAdapterPort"];
+  #scripturePiecesStateServicePort: ServiceParams["scripturePiecesStateServicePort"];
+  #awaiterPort: ServiceParams["awaiterPort"];
+  #configProviderPort: ServiceParams["configProviderPort"];
+  #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
+  #pieceLabelServicePort: ServiceParams["pieceLabelServicePort"];
+  #labelDataRepositoryPort: ServiceParams["labelDataRepositoryPort"];
+  #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
+  #stackPieceLifecycleAdapterPort: ServiceParams["stackPieceLifecycleAdapterPort"];
+  #bookChaptersManagementServicePort: ServiceParams["bookChaptersManagementServicePort"];
+  #renderOrderAdapterPort: ServiceParams["renderOrderAdapterPort"];
+  #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
-    eventPort,
+    eventManagerPort,
     bibleSequenceAdapterPort,
     scripturePiecesStateServicePort,
     awaiterPort,
@@ -83,8 +86,9 @@ export class BibleSequenceService implements BibleSequenceServicePort {
     bookChaptersManagementServicePort,
     renderOrderAdapterPort,
     pieceDataRepositoryPort,
-  }: BibleSequenceServiceParams) {
-    this.#eventPort = eventPort;
+    loggerPort,
+  }: ServiceParams) {
+    this.#eventManagerPort = eventManagerPort;
     this.#bibleSequenceAdapterPort = bibleSequenceAdapterPort;
     this.#scripturePiecesStateServicePort = scripturePiecesStateServicePort;
     this.#awaiterPort = awaiterPort;
@@ -97,6 +101,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
     this.#bookChaptersManagementServicePort = bookChaptersManagementServicePort;
     this.#renderOrderAdapterPort = renderOrderAdapterPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
+    this.#loggerPort = loggerPort;
   }
 
   async resetBible({
@@ -106,20 +111,24 @@ export class BibleSequenceService implements BibleSequenceServicePort {
     bibleData: StackBibleData;
     pacing?: StackPresenceNavigationPacing;
   }): Promise<void> {
-    this.#eventPort.emit("OnBibleResetSequenceStart", { bibleData });
-    // TODO: Wire this event to the interaction registry to make this bible the last interacted
-    // TODO: Wire this event to some sound service to call an quivalent to this -> thisBot.PlaySound({ soundName: "ResetBible" });
+    this.#eventManagerPort.emit("OnBibleResetSequenceStart", { bibleData });
 
-    await this.closeBible({
-      bibleData,
-      pacing,
-    });
-    await this.openBible({
-      bibleData,
-      pacing,
-    });
-
-    this.#eventPort.emit("OnBibleResetSequenceEnd", { bibleData });
+    try {
+      await this.closeBible({
+        bibleData,
+        pacing,
+      });
+      await this.openBible({
+        bibleData,
+        pacing,
+      });
+      this.#eventManagerPort.emit("OnBibleResetSequenceEnd", { bibleData });
+    } catch (error) {
+      this.#loggerPort.error(
+        "BibleSequenceService: Failed to display reset sequence at resetBible.",
+        { error }
+      );
+    }
   }
 
   async closeBible({
@@ -129,7 +138,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
     bibleData: StackBibleData;
     pacing?: StackPresenceNavigationPacing;
   }): Promise<void> {
-    this.#eventPort.emit("OnBibleCloseSequenceStart", { bibleData });
+    this.#eventManagerPort.emit("OnBibleCloseSequenceStart", { bibleData });
 
     const { testamentsData, sectionsData, booksData } =
       bibleData.getActiveHierarchy();
@@ -269,7 +278,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
       }
     }
     bibleData.changeState("Closed");
-    this.#eventPort.emit("OnBibleCloseSequenceEnd", { bibleData });
+    this.#eventManagerPort.emit("OnBibleCloseSequenceEnd", { bibleData });
   }
 
   async openBible({
@@ -279,7 +288,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
     bibleData: StackBibleData;
     pacing?: StackPresenceNavigationPacing;
   }): Promise<void> {
-    this.#eventPort.emit("OnBibleOpenSequenceStart", { bibleData });
+    this.#eventManagerPort.emit("OnBibleOpenSequenceStart", { bibleData });
 
     const lowerCover = bibleData.getStaticPiece("lowerCover");
     const upperCover = bibleData.getStaticPiece("upperCover");
@@ -404,13 +413,13 @@ export class BibleSequenceService implements BibleSequenceServicePort {
       this.#pieceAdapterPort.makeInteractable(sectionData.piece);
     }
 
-    this.#eventPort.emit("OnBibleOpenSequenceEnd", { bibleData });
+    this.#eventManagerPort.emit("OnBibleOpenSequenceEnd", { bibleData });
 
     return;
   }
 
   async crackOpenBible(bibleData: StackBibleData) {
-    this.#eventPort.emit("OnBibleCrackOpenSequenceStart");
+    this.#eventManagerPort.emit("OnBibleCrackOpenSequenceStart");
     bibleData.changeState("Open");
     bibleData.childrenData.forEach((testamentData) =>
       testamentData.attachToBible()
@@ -429,7 +438,7 @@ export class BibleSequenceService implements BibleSequenceServicePort {
       }
     });
 
-    this.#eventPort.emit("OnBibleCrackOpenSequenceEnd");
+    this.#eventManagerPort.emit("OnBibleCrackOpenSequenceEnd");
 
     if (bibleData.bibleType !== BibleTypes.Default) return;
 
@@ -457,36 +466,5 @@ export class BibleSequenceService implements BibleSequenceServicePort {
         )
       );
     }
-  }
-
-  async float(): Promise<void> {
-    // TODO: Should we translate/implement this?
-    // const dimension = os.getCurrentDimension();
-    // const animationDuration = 6;
-    // animateTag(thisBot, dimension + "Z", null);
-    // const initialPositionZ = thisBot.tags.initialPositionZ;
-    // while (thisBot.masks.isInAwaitAnimation) {
-    //   try {
-    //     await animateTag(thisBot, dimension + "Z", {
-    //       toValue: initialPositionZ + 0.5,
-    //       duration: animationDuration / 4,
-    //       easing: { type: "sinusoidal", mode: "out" },
-    //     }).then(async () => {
-    //       await animateTag(thisBot, dimension + "Z", {
-    //         toValue: initialPositionZ - 0.5,
-    //         duration: animationDuration / 2,
-    //         easing: { type: "sinusoidal", mode: "inout" },
-    //       }).then(async () => {
-    //         await animateTag(thisBot, dimension + "Z", {
-    //           toValue: initialPositionZ,
-    //           duration: animationDuration / 4,
-    //           easing: { type: "sinusoidal", mode: "in" },
-    //         });
-    //       });
-    //     });
-    //   } catch (error) {
-    //     console.error(error);
-    //   }
-    // }
   }
 }

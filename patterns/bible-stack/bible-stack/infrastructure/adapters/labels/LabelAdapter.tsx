@@ -24,7 +24,6 @@ import type {
   InfoLabelTransformerTags,
 } from "../../models/stack";
 import type { BibleStackObjectPoolerMap } from "../../models/objectPooler";
-import type { LabelAdapterPort } from "../../../application/ports/out/PieceLabel";
 import type { ObjectPooler } from "../environment/ObjectPooler";
 import type { InfoLabelTransformerMapper } from "../../mappers/InfoLabelTransformerMapper";
 import type { InfoLabelTailMapper } from "../../mappers/InfoLabelTailMapper";
@@ -32,6 +31,7 @@ import type { Piece } from "../../../domain/models/canvas";
 import type { InfoLabelDateMapper } from "../../mappers/InfoLabelDateMapper";
 import type { LabelsConfigProvider } from "../../config/labels/LabelsConfigProvider";
 import type { VisualStateRegistry } from "../stacks/VisualStateRegistry";
+import type { LabelPort } from "../../../application/ports/out/Label";
 
 interface DimensionProviderPort {
   getDimension(): string;
@@ -55,7 +55,7 @@ interface ServiceParams {
   visualStateRegistry: VisualStateRegistry;
 }
 
-export class LabelAdapter implements LabelAdapterPort {
+export class LabelAdapter implements LabelPort {
   #objectPooler: ServiceParams["objectPooler"];
   #labelConfigProviderPort: ServiceParams["labelConfigProviderPort"];
   #dimensionProviderPort: DimensionProviderPort;
@@ -88,7 +88,7 @@ export class LabelAdapter implements LabelAdapterPort {
     this.#visualStateRegistry = visualStateRegistry;
   }
 
-  spawnLabel: LabelAdapterPort["spawnLabel"] = ({
+  spawnLabel: LabelPort["spawnLabel"] = ({
     piece,
     label,
     date,
@@ -379,7 +379,7 @@ export class LabelAdapter implements LabelAdapterPort {
     });
   }
 
-  despawnLabel: LabelAdapterPort["despawnLabel"] = (data) => {
+  despawnLabel: LabelPort["despawnLabel"] = (data) => {
     const transformer = this.#infoLabelTransformerMapperPort.toInfrastructure(
       data.transformer
     );

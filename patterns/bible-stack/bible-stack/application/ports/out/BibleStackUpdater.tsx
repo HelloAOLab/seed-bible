@@ -3,7 +3,7 @@ import type { StackTestamentData } from "../../../domain/entities/StackTestament
 import type { CrossPosition } from "../../../domain/models/canvas";
 import type { StackCover, StackCrossLine } from "../../../domain/models/pieces";
 
-export interface UpdateCommand {
+export interface BibleStackUpdateCommand {
   pacing: StackUpdatePacing;
   lowerCover: StackCover;
   upperCover: StackCover;
@@ -19,6 +19,6 @@ export type UpdateReturnValue = Promise<{
   targetCrossPosition: CrossPosition;
 }>;
 
-export interface BibleStackUpdaterAdapterPort {
-  update(command: UpdateCommand): UpdateReturnValue;
+export interface BibleStackUpdaterPort {
+  update(params: BibleStackUpdateCommand): UpdateReturnValue;
 }

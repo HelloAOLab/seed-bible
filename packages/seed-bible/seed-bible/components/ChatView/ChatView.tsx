@@ -2,23 +2,36 @@ import "./ChatView.css";
 import { effect, useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
 import {
+  chatHasAI,
   chatHasOtherPeople,
   type ChatParticipant,
   type ChatMessage,
   type ChatSession,
   type ParsedChatTextMessage,
+  type TranslationSuggestion,
 } from "../../managers/ChatsManager";
+import {
+  hasCurrentAiLimitsAcknowledgment,
+  readAiLimitsAcknowledgment,
+  saveAiLimitsAcknowledgment,
+} from "../../managers/AiLimitsAcknowledgment";
+import {
+  readableTranslationRequest,
+  switchReaderToTranslation,
+} from "../../managers/translationSearch";
 import {
   getUserAnimalVisual,
   type ConnectionSessionUserVisual,
 } from "../../managers/SessionsManager";
 import { Avatar } from "../Avatar/Avatar";
 import { formatRelativeTime, translateTitle } from "../../app/utils";
-import { AskIcon } from "../icons";
+import { AskIcon, MaterialIcon } from "../icons";
 import { VerseReferenceLink } from "../../app/verseReferenceLink";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { VerseRef } from "../../managers/BibleDataManager";
 import { useEffect, useRef, useState } from "preact/hooks";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 interface ChatViewProps {
   chat: ChatSession;
@@ -136,7 +149,16 @@ function getJoinEvents(
     .map((participant) => ({ participant, timeMs: participant.joinTimeMs }));
 }
 
-const ENTRY_KIND_PRIORITY = { message: 0, tool: 1, join: 2 } as const;
+const ENTRY_KIND_PRIORITY = {
+  message: 0,
+  tool: 1,
+  join: 2,
+} as const;
+
+type TimelineEntry =
+  | { kind: "message"; timeMs: number; message: ParsedChatTextMessage }
+  | { kind: "tool"; timeMs: number; message: ToolCallChatMessage }
+  | { kind: "join"; timeMs: number; participant: ChatParticipant };
 
 /**
  * Interleaves messages, tool-call events, and participant join events into a
@@ -155,28 +177,23 @@ function buildTimeline(
     return [];
   }
 
-  type Entry =
-    | { kind: "message"; timeMs: number; message: ParsedChatTextMessage }
-    | { kind: "tool"; timeMs: number; message: ToolCallChatMessage }
-    | { kind: "join"; timeMs: number; participant: ChatParticipant };
-
-  const entries: Entry[] = [
+  const entries: TimelineEntry[] = [
     ...messages.map(
-      (message): Entry => ({
+      (message): TimelineEntry => ({
         kind: "message",
         timeMs: message.timeMs,
         message,
       })
     ),
     ...toolCallMessages.map(
-      (message): Entry => ({
+      (message): TimelineEntry => ({
         kind: "tool",
         timeMs: message.timeMs,
         message,
       })
     ),
     ...getJoinEvents(messages, participants).map(
-      (event): Entry => ({
+      (event): TimelineEntry => ({
         kind: "join",
         timeMs: event.timeMs,
         participant: event.participant,
@@ -184,13 +201,13 @@ function buildTimeline(
     ),
   ];
 
-  // Stable sort by time; at equal times, messages come before tool calls, which come before joins.
+  // Stable sort by time; at equal times, messages come before tool calls,
+  // which come before joins.
   entries.sort(
     (a, b) =>
       a.timeMs - b.timeMs ||
       ENTRY_KIND_PRIORITY[a.kind] - ENTRY_KIND_PRIORITY[b.kind]
   );
-
   const groups: ChatTimelineGroup[] = [];
   for (const entry of entries) {
     const lastGroup = groups[groups.length - 1];
@@ -615,6 +632,63 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
   );
 }
 
+const AI_LIMITS_TITLE_ID = "sb-ai-limits-title";
+const AI_LIMITS_CONFIRM_ID = "sb-ai-limits-confirm";
+
+function AiLimitsNotice({ onAcknowledge }: { onAcknowledge: () => void }) {
+  const { t } = useI18n();
+  return (
+    <section className="sb-chat-ai-limits" aria-labelledby={AI_LIMITS_TITLE_ID}>
+      <h2 id={AI_LIMITS_TITLE_ID} className="sb-chat-ai-limits-title">
+        {t("ai-limits-title", { defaultValue: "Before you chat with AI" })}
+      </h2>
+      <p className="sb-chat-ai-limits-intro">
+        {t("ai-limits-intro", {
+          defaultValue:
+            "AI can be a helpful starting point, but keep its limits in mind:",
+        })}
+      </p>
+      <ul className="sb-chat-ai-limits-list">
+        <li>
+          {t("ai-limits-mistakes", {
+            defaultValue:
+              "It makes mistakes, and can sound confident when it's wrong.",
+          })}
+        </li>
+        <li>
+          {t("ai-limits-agreeable", {
+            defaultValue:
+              "It tends to tell you what you want to hear, and leans toward popular answers.",
+          })}
+        </li>
+        <li>
+          {t("ai-limits-scripture", {
+            defaultValue:
+              "It isn't a reliable source. Check what it says against Scripture.",
+          })}
+        </li>
+        <li>
+          {t("ai-limits-study", {
+            defaultValue:
+              "Study the Bible for yourself, and don't let AI do your thinking for you.",
+          })}
+        </li>
+      </ul>
+      <Button
+        id={AI_LIMITS_CONFIRM_ID}
+        variant="primary"
+        className="sb-chat-ai-limits-confirm"
+        onClick={onAcknowledge}
+      >
+        {t("ai-limits-confirm", {
+          defaultValue:
+            "I understand that AI can make mistakes and isn't a substitute for studying the Bible myself.",
+        })}
+      </Button>
+    </section>
+  );
+}
+
 export function ChatView(props: ChatViewProps) {
   const { chat, state } = props;
   const { t } = useI18n();
@@ -627,6 +701,9 @@ export function ChatView(props: ChatViewProps) {
     toolCallMessages,
     chat.totalParticipants.value
   );
+  const suggestion = chat.translationSuggestion.value;
+  const suggestionPending = useSignal(false);
+  const suggestionError = useSignal<string | null>(null);
   const localDraft = useSignal("");
   // Prefer the session draft so typed text survives ChatView unmounting when
   // the user clicks a verse (that closes the floating panel).
@@ -643,10 +720,19 @@ export function ChatView(props: ChatViewProps) {
   // as a "you can type here" hint. Hidden the moment the field is focused
   // or has text, and reappears on blur if the field is empty again.
   const isInputFocused = useSignal(false);
+  const acknowledgedAiLimitsNow = useSignal(false);
+  const login = state.login;
+  const needsAiLimitsAcknowledgment =
+    chatHasAI(chat) &&
+    !acknowledgedAiLimitsNow.value &&
+    !hasCurrentAiLimitsAcknowledgment(
+      login ? readAiLimitsAcknowledgment(login) : null
+    );
   const showMobileInputHint =
     state.app.isMobile.value &&
     !isInputFocused.value &&
-    draft.value.length === 0;
+    draft.value.length === 0 &&
+    !needsAiLimitsAcknowledgment;
 
   const activeParticipants = chat.participants.value.filter(
     (participant) => participant.isActive
@@ -682,8 +768,17 @@ export function ChatView(props: ChatViewProps) {
   ];
   const totalMentionCount =
     (showEveryoneSuggestion ? 1 : 0) + allMentionSuggestions.length;
-  const isMentionPickerOpen = mentionContext !== null;
+  const isMentionPickerOpen =
+    mentionContext !== null && !needsAiLimitsAcknowledgment;
   const mentionActiveIndex = useSignal(0);
+
+  const suggestionKey = suggestion
+    ? `${suggestion.id}\0${suggestion.unavailable ?? ""}`
+    : "";
+
+  useEffect(() => {
+    suggestionError.value = null;
+  }, [suggestionKey]);
 
   useEffect(() => {
     mentionActiveIndex.value = 0;
@@ -733,12 +828,13 @@ export function ChatView(props: ChatViewProps) {
   useEffect(() => {
     // Don't autofocus on mobile — focusing opens the soft keyboard.
     // The blinking hint caret (`showMobileInputHint` above) stands in for
-    // the real caret until the user taps in.
-    if (state.app.isMobile.value) {
+    // the real caret until the user taps in. Also wait until the AI-limits
+    // acknowledgment is out of the way, then focus so they can type.
+    if (state.app.isMobile.value || needsAiLimitsAcknowledgment) {
       return;
     }
     inputRef.current?.focus();
-  }, []);
+  }, [needsAiLimitsAcknowledgment]);
 
   // Verse-toolbar Ask AI (and similar) stash text on `chats.composerDraft`.
   // Merge it into the local draft once, then clear the signal so a later
@@ -862,10 +958,20 @@ export function ChatView(props: ChatViewProps) {
     cursorPosition.value = target.selectionStart ?? target.value.length;
   };
 
+  const acknowledgeAiLimits = () => {
+    if (acknowledgedAiLimitsNow.value) {
+      return;
+    }
+    acknowledgedAiLimitsNow.value = true;
+    if (login) {
+      void saveAiLimitsAcknowledgment(login);
+    }
+  };
+
   const handleSubmit = async (event: Event) => {
     event.preventDefault();
     const text = draft.value.trim();
-    if (!text || isSubmitting.value) {
+    if (!text || isSubmitting.value || needsAiLimitsAcknowledgment) {
       return;
     }
 
@@ -903,6 +1009,10 @@ export function ChatView(props: ChatViewProps) {
   };
 
   const handleComposeKeyDown = (event: KeyboardEvent) => {
+    if (needsAiLimitsAcknowledgment) {
+      return;
+    }
+
     if (isMentionPickerOpen) {
       if (event.key === "ArrowDown") {
         event.preventDefault();
@@ -960,28 +1070,159 @@ export function ChatView(props: ChatViewProps) {
     }
   };
 
-  const canSubmit = draft.value.trim().length > 0 && !isSubmitting.value;
+  const recordSuggestionOutcome = (text: string) => {
+    const self = chat.participants.value.find(
+      (participant) => participant.isSelf
+    );
+    chat.appendMessage({ type: "text", text }, self ? [self.id] : []);
+  };
+
+  const dismissSuggestion = () => {
+    if (suggestionPending.value) {
+      return;
+    }
+    chat.translationSuggestion.value = null;
+    suggestionError.value = null;
+    recordSuggestionOutcome(
+      t("chat-translation-suggestion-dismissed", {
+        defaultValue: "User dismissed the suggestion",
+      })
+    );
+  };
+
+  const acceptSuggestion = async (current: TranslationSuggestion) => {
+    if (suggestionPending.value) {
+      return;
+    }
+    suggestionError.value = null;
+    const readingState = state.app.selectedTab.value?.readingState;
+    if (!readingState) {
+      suggestionError.value = t("chat-switch-translation-failed", {
+        defaultValue: "Couldn't switch translation.",
+      });
+      return;
+    }
+    suggestionPending.value = true;
+    try {
+      const switched = await switchReaderToTranslation({
+        readingState,
+        getTranslationBooks: (translationId) =>
+          state.bibleData.getTranslationBooks(translationId),
+        translationId: current.id,
+      });
+      if (!switched) {
+        suggestionError.value = t("chat-switch-translation-failed", {
+          defaultValue: "Couldn't switch translation.",
+        });
+        return;
+      }
+      chat.translationSuggestion.value = null;
+      recordSuggestionOutcome(
+        t("chat-translation-switched", {
+          defaultValue: "User switched to {{shortName}}",
+          shortName: current.shortName,
+        })
+      );
+    } catch {
+      suggestionError.value = t("chat-switch-translation-failed", {
+        defaultValue: "Couldn't switch translation.",
+      });
+    } finally {
+      suggestionPending.value = false;
+    }
+  };
+
+  const canSubmit =
+    draft.value.trim().length > 0 &&
+    !isSubmitting.value &&
+    !needsAiLimitsAcknowledgment;
 
   const othersPresent = activeParticipants.filter((p) => !p.isSelf);
 
+  const requestedName = suggestion
+    ? readableTranslationRequest(suggestion.unavailable ?? "")
+    : null;
+  const suggestionText = suggestion
+    ? requestedName
+      ? t("chat-translation-closest-match", {
+          defaultValue:
+            "{{requested}} isn't available. Closest match: {{match}}.",
+          requested: requestedName,
+          match: suggestion.shortName,
+        })
+      : t("chat-suggest-translation", {
+          defaultValue: "Switch to {{label}}?",
+          label: suggestion.label,
+        })
+    : "";
+
   return (
     <div className="sb-chat-view">
+      {suggestion ? (
+        <div
+          className="sb-chat-view-translation-banner"
+          role="region"
+          aria-label={suggestionText}
+        >
+          <p className="sb-chat-view-translation-banner-text">
+            {suggestionText}
+          </p>
+          {suggestionError.value ? (
+            <p className="sb-chat-view-error" role="alert">
+              {suggestionError.value}
+            </p>
+          ) : null}
+          <div className="sb-chat-view-translation-banner-actions">
+            <Button
+              variant="primary"
+              size="sm"
+              shape="pill"
+              className="sb-chat-view-translation-banner-switch"
+              disabled={suggestionPending.value}
+              onClick={() => {
+                void acceptSuggestion(suggestion);
+              }}
+            >
+              {t("chat-suggest-switch", { defaultValue: "Switch" })}
+            </Button>
+            <Button
+              size="sm"
+              shape="pill"
+              className="sb-chat-view-translation-banner-dismiss"
+              disabled={suggestionPending.value}
+              onClick={() => {
+                dismissSuggestion();
+              }}
+            >
+              {t("chat-suggest-dismiss", { defaultValue: "Dismiss" })}
+            </Button>
+          </div>
+        </div>
+      ) : null}
       <div
-        className="sb-chat-view-messages"
+        className={
+          needsAiLimitsAcknowledgment && timelineGroups.length === 0
+            ? "sb-chat-view-messages sb-chat-view-messages--ai-limits"
+            : "sb-chat-view-messages"
+        }
         ref={messagesRef}
         role="log"
         aria-live="polite"
       >
         {timelineGroups.length === 0 ? (
-          <div className="sb-chat-view-empty">
-            <AskIcon className="sb-chat-view-empty-icon" />
-            <p className="sb-chat-view-empty-title">
-              {t("start-conversation", {
-                defaultValue: "Start a conversation",
-              })}
-            </p>
-            <PresencePrompt others={othersPresent} />
-          </div>
+          needsAiLimitsAcknowledgment ? (
+            <AiLimitsNotice onAcknowledge={acknowledgeAiLimits} />
+          ) : (
+            <div className="sb-chat-view-empty">
+              <AskIcon className="sb-chat-view-empty-icon" />
+              <p className="sb-chat-view-empty-title">
+                {t("start-conversation", {
+                  defaultValue: "Start a conversation",
+                })}
+              </p>
+              <PresencePrompt others={othersPresent} />
+            </div>
+          )
         ) : (
           timelineGroups.map((group) => {
             if (group.type === "join") {
@@ -1204,6 +1445,10 @@ export function ChatView(props: ChatViewProps) {
           </div>
         )}
 
+        {needsAiLimitsAcknowledgment && timelineGroups.length > 0 ? (
+          <AiLimitsNotice onAcknowledge={acknowledgeAiLimits} />
+        ) : null}
+
         <form className="sb-chat-view-compose" onSubmit={handleSubmit}>
           <div
             className={
@@ -1220,6 +1465,7 @@ export function ChatView(props: ChatViewProps) {
               ref={inputRef}
               className="sb-chat-view-input"
               rows={1}
+              disabled={needsAiLimitsAcknowledgment}
               placeholder={t("type-a-message", {
                 defaultValue: "Type a message...",
               })}
@@ -1252,17 +1498,15 @@ export function ChatView(props: ChatViewProps) {
               })}
             />
           </div>
-          <button
+          <IconButton
             type="submit"
+            size="lg"
+            look="tinted"
             className="sb-chat-view-send"
             disabled={!canSubmit}
-            aria-label={t("send-message", { defaultValue: "Send message" })}
-            title={t("send-message", { defaultValue: "Send message" })}
-          >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              send
-            </span>
-          </button>
+            icon={<MaterialIcon className="rtl-mirror">send</MaterialIcon>}
+            label={t("send-message", { defaultValue: "Send message" })}
+          />
         </form>
       </div>
 

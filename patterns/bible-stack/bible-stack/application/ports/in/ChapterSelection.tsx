@@ -18,7 +18,7 @@ export interface AltSelectionParams extends BaseSelectionParams {
 
 export type TrySelectChapterParams = DirectSelectionParams | AltSelectionParams;
 
-export interface ChapterSelectionPort {
+export interface ChapterSelectionServicePort {
   deselectChapter(params: DirectSelectionParams): Promise<void>;
   trySelectChapter(params: TrySelectChapterParams): Promise<void>;
 }

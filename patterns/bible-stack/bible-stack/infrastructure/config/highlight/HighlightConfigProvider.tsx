@@ -1,9 +1,9 @@
-import type {
-  HighlightConfigProviderPort,
-  HighlightDelay,
-} from "../../../application/ports/pieces";
 import type { HighlightPacing } from "../../../domain/models/pieces";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
+import type {
+  HighlightDelay,
+  HighlightConfigProviderPort,
+} from "../../../application/ports/out/HighlightConfigProvider";
 
 const delaysMap: Record<HighlightDelay, number> = {
   UserFocusUnhighlightDelay: 2000,

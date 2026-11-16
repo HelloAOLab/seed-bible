@@ -1,21 +1,21 @@
 import type { ChapterBot } from "../../models/stack";
 import type { ChapterInteractionServicePort } from "../../../application/ports/in/ChapterInteraction";
-import type { ChapterDragServicePort } from "../../../application/ports/in/ScripturePieceDrag";
-import type { ChapterDraggingServicePort } from "../../../application/ports/in/ScripturePieceDragging";
-import type { ChapterDropServicePort } from "../../../application/ports/in/ScripturePieceDrop";
-import type { ChapterSelectionReleaseServicePort } from "../../../application/ports/in/ScripturePieceSelectionRelease";
 import type { DraggingEvent, DropEvent } from "../../models/casualos";
 import type { PieceMapper } from "../../mappers/PieceMapper";
 import type { RelocationEventMapper } from "../../mappers/RelocationEventMapper";
+import type { ScripturePieceDragServicePort } from "../../../application/ports/in/ScripturePieceDrag";
+import type { ScripturePieceDraggingServicePort } from "../../../application/ports/in/ScripturePieceDragging";
+import type { ScripturePieceDropServicePort } from "../../../application/ports/in/ScripturePieceDrop";
+import type { ScripturePieceSelectionReleaseServicePort } from "../../../application/ports/in/ScripturePieceSelectionRelease";
 
 interface ControllerParams {
   chapterInteractionServicePort: ChapterInteractionServicePort;
   pieceMapperPort: PieceMapper;
-  dragServicePort: ChapterDragServicePort;
-  draggingServicePort: ChapterDraggingServicePort;
+  dragServicePort: ScripturePieceDragServicePort;
+  draggingServicePort: ScripturePieceDraggingServicePort;
   relocationEventMapper: RelocationEventMapper;
-  selectionReleaseServicePort: ChapterSelectionReleaseServicePort;
-  dropServicePort: ChapterDropServicePort;
+  selectionReleaseServicePort: ScripturePieceSelectionReleaseServicePort;
+  dropServicePort: ScripturePieceDropServicePort;
 }
 
 export class ChapterInteractionController {

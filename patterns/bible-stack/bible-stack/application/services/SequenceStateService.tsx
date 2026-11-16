@@ -1,29 +1,34 @@
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
-import type { SequenceEventPort } from "../ports/sequence";
+import type { LoggerPort } from "../ports/out/Logger";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
 
 interface ServiceParams {
-  sequenceEventPort: SequenceEventPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
+  loggerPort: LoggerPort;
 }
 
 export class SequenceStateService implements SequenceStateServicePort {
   #isThereAnOngoingSequence: boolean = false;
-  #sequenceEventPort: ServiceParams["sequenceEventPort"];
+  #eventManagerPort: ServiceParams["eventManagerPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
-  constructor({ sequenceEventPort }: ServiceParams) {
-    this.#sequenceEventPort = sequenceEventPort;
+  constructor({ eventManagerPort, loggerPort }: ServiceParams) {
+    this.#eventManagerPort = eventManagerPort;
+    this.#loggerPort = loggerPort;
   }
 
   startSequence() {
-    if (!this.#isThereAnOngoingSequence) {
-      this.#isThereAnOngoingSequence = true;
-      this.#sequenceEventPort.emit("OnStackSequenceStart");
-    }
+    if (this.#isThereAnOngoingSequence) return;
+
+    this.#isThereAnOngoingSequence = true;
+    this.#eventManagerPort.emit("OnStackSequenceStart");
   }
   endSequence() {
-    if (this.#isThereAnOngoingSequence) {
-      this.#isThereAnOngoingSequence = false;
-      this.#sequenceEventPort.emit("OnStackSequenceEnd");
-    }
+    if (!this.#isThereAnOngoingSequence) return;
+
+    this.#isThereAnOngoingSequence = false;
+    this.#eventManagerPort.emit("OnStackSequenceEnd");
   }
   isThereAnOngoingSequence() {
     return this.#isThereAnOngoingSequence;
@@ -35,6 +40,11 @@ export class SequenceStateService implements SequenceStateServicePort {
     this.startSequence();
     try {
       await task();
+    } catch (error) {
+      this.#loggerPort.error(
+        "SequenceStateService: Error while executing the task",
+        { error }
+      );
     } finally {
       this.endSequence();
     }

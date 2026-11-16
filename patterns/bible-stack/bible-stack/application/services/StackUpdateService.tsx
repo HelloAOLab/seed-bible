@@ -1,28 +1,25 @@
 import type { StackUpdatePacing } from "../../domain/models/stacks";
-import type {
-  InteractabilityBlockerPort,
-  InteractabilityUnlockerPort,
-} from "../ports/in/PieceInteractability";
-import type { BibleStackUpdaterPort } from "../ports/in/BibleStackUpdater";
-import type {
-  BibleDataRepositoryPort,
-  PieceDataRepositoryPort,
-} from "../ports/out/StackUpdate";
-import type { TestamentStackUpdaterPort } from "../ports/in/TestamentStackUpdater";
-import type { SectionStackUpdaterPort } from "../ports/in/SectionStackUpdates";
-import type { BookStackUpdaterPort } from "../ports/in/BookStackUpdates";
+import type { PieceInteractabilityServicePort } from "../ports/in/PieceInteractability";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { StackAncestorType } from "../../domain/models/canvas";
+import type { LoggerPort } from "../ports/out/Logger";
+import type { BibleStackUpdaterServicePort } from "../ports/in/BibleStackUpdater";
+import type { TestamentStackUpdaterServicePort } from "../ports/in/TestamentStackUpdater";
+import type { BookStackUpdaterServicePort } from "../ports/in/BookStackUpdater";
+import type { SectionStackUpdaterServicePort } from "../ports/in/SectionStackUpdater";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
-  pieceInteractabilityPort: InteractabilityBlockerPort &
-    InteractabilityUnlockerPort;
-  bibleStackUpdaterPort: BibleStackUpdaterPort;
-  testamentStackUpdaterPort: TestamentStackUpdaterPort;
+  pieceInteractabilityPort: PieceInteractabilityServicePort &
+    PieceInteractabilityServicePort;
+  bibleStackUpdaterPort: BibleStackUpdaterServicePort;
+  testamentStackUpdaterPort: TestamentStackUpdaterServicePort;
   bibleDataRepositoryPort: BibleDataRepositoryPort;
   pieceDataRepositoryPort: PieceDataRepositoryPort;
-  sectiontackUpdaterPort: SectionStackUpdaterPort;
-  bookStackUpdaterPort: BookStackUpdaterPort;
+  sectionStackUpdaterPort: SectionStackUpdaterServicePort;
+  bookStackUpdaterPort: BookStackUpdaterServicePort;
+  loggerPort: LoggerPort;
 }
 
 export class StackUpdateService implements StackUpdateServicePort {
@@ -33,8 +30,9 @@ export class StackUpdateService implements StackUpdateServicePort {
   #testamentStackUpdaterPort: ServiceParams["testamentStackUpdaterPort"];
   #bibleDataRepositoryPort: ServiceParams["bibleDataRepositoryPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
-  #sectiontackUpdaterPort: ServiceParams["sectiontackUpdaterPort"];
+  #sectionStackUpdaterPort: ServiceParams["sectionStackUpdaterPort"];
   #bookStackUpdaterPort: ServiceParams["bookStackUpdaterPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     pieceInteractabilityPort,
@@ -42,16 +40,18 @@ export class StackUpdateService implements StackUpdateServicePort {
     bibleDataRepositoryPort,
     pieceDataRepositoryPort,
     testamentStackUpdaterPort,
-    sectiontackUpdaterPort,
+    sectionStackUpdaterPort,
     bookStackUpdaterPort,
+    loggerPort,
   }: ServiceParams) {
     this.#pieceInteractabilityPort = pieceInteractabilityPort;
     this.#bibleStackUpdaterPort = bibleStackUpdaterPort;
     this.#bibleDataRepositoryPort = bibleDataRepositoryPort;
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#testamentStackUpdaterPort = testamentStackUpdaterPort;
-    this.#sectiontackUpdaterPort = sectiontackUpdaterPort;
+    this.#sectionStackUpdaterPort = sectionStackUpdaterPort;
     this.#bookStackUpdaterPort = bookStackUpdaterPort;
+    this.#loggerPort = loggerPort;
   }
 
   async updateAllStacks(pacing: StackUpdatePacing): Promise<void> {
@@ -81,7 +81,7 @@ export class StackUpdateService implements StackUpdateServicePort {
       updates.push(
         ...this.#pieceDataRepositoryPort
           .getStandaloneSections()
-          .map((data) => this.#sectiontackUpdaterPort.update({ data, pacing }))
+          .map((data) => this.#sectionStackUpdaterPort.update({ data, pacing }))
       );
       updates.push(
         ...this.#pieceDataRepositoryPort
@@ -95,6 +95,13 @@ export class StackUpdateService implements StackUpdateServicePort {
       );
 
       await Promise.all(updates);
+    } catch (error) {
+      this.#loggerPort.error(
+        "StackUpdateService: Error while updating stacks at updateAllStacks",
+        {
+          error,
+        }
+      );
     } finally {
       this.#pieceInteractabilityPort.unlockAll();
       this.#isUpdating = false;
@@ -102,7 +109,7 @@ export class StackUpdateService implements StackUpdateServicePort {
 
     if (this.#isUpdateQueued) {
       this.#isUpdateQueued = false;
-      this.updateAllStacks(pacing);
+      await this.updateAllStacks(pacing);
     }
   }
 
@@ -135,7 +142,7 @@ export class StackUpdateService implements StackUpdateServicePort {
           type: "StackSection",
           id,
         });
-        if (data) await this.#sectiontackUpdaterPort.update({ data, pacing });
+        if (data) await this.#sectionStackUpdaterPort.update({ data, pacing });
         return;
       }
       case "StackSectionBook": {

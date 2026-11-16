@@ -4,7 +4,7 @@ import { forwardRef } from "preact/compat";
 import { useI18n } from "../../i18n/I18nManager";
 import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
+import { DiscoverSection } from "../Discover/DiscoverSection";
 import {
   ScriptureItemInput,
   type ScriptureItemInputHandle,
@@ -14,6 +14,7 @@ import {
   type TextItemInputHandle,
 } from "../TextItemInput/TextItemInput";
 import { LinkItemInput, type LinkItemInputHandle } from "../LinkItemInput";
+import { Button } from "../Button/Button";
 
 interface PlaylistItemInputProps {
   books: TranslationBook[];
@@ -53,7 +54,10 @@ const MODE_BY_TYPE: Record<PlaylistItemData["type"], AddMode> = {
 
 /** Imperative handle so a parent can check for / commit an in-progress draft. */
 export interface PlaylistItemInputHandle {
-  /** Whether the currently-mounted mode has an in-progress, un-added draft. */
+  /**
+   * Whether the currently-mounted mode has unsaved input: an un-added draft
+   * when adding, or changes to the item when editing one.
+   */
   isDirty: () => boolean;
   /** Submits the currently-mounted mode's input, same as clicking "Add".
    * Returns whether it actually added an item. */
@@ -136,6 +140,17 @@ export const PlaylistItemInput = forwardRef<
           books={books}
           onAdd={submit}
           initialValue={editScriptureText}
+          initialNote={
+            editItem?.type === "bible-verse" ? editItem.note : undefined
+          }
+          initialNoteTitle={
+            editItem?.type === "bible-verse" ? editItem.noteTitle : undefined
+          }
+          translationId={
+            editItem?.type === "bible-verse"
+              ? editItem.translationId
+              : undefined
+          }
           submitLabel={submitLabel}
         />
       ) : mode === "text" ? (
@@ -155,13 +170,12 @@ export const PlaylistItemInput = forwardRef<
       )}
 
       {isEditing ? (
-        <button
-          type="button"
-          className="sb-reading-plans-back sb-playlist-cancel-edit"
+        <Button
+          className="sb-playlist-cancel-edit"
           onClick={() => onCancelEdit?.()}
         >
           {t("cancel", { defaultValue: "Cancel" })}
-        </button>
+        </Button>
       ) : null}
     </DiscoverSection>
   );

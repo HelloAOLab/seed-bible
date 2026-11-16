@@ -1,28 +1,61 @@
-import { useEffect } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { Annotation } from "../../managers/AnnotationsManager";
 import { annotationVerseNumbers } from "../../managers/AnnotationsManager";
 import type { StoredHighlight } from "../../managers/HighlightsManager";
-import type { Bookmark } from "../../managers/BookmarksManager";
+import {
+  compareSaves,
+  formatSaveVerse,
+  type Save,
+} from "../../managers/SavesManager";
+import { translationShortName } from "../../managers/BibleDataManager";
 import type { Playlist } from "../../managers/PlaylistManager";
 import type { TodayPassageTarget } from "../../managers/TodayManager";
+import {
+  formatReadingPlanId,
+  getReadingCalendar,
+  latestReadingPlanProgress,
+  summarizeCalendar,
+  type ReadingPlanMetadata,
+  type ReadingPlansManager,
+} from "../../managers/ReadingPlansManager";
 import {
   CONTENT_FILTERS,
   annotationPlainText,
   highlightKey,
   type ContentFilter,
 } from "../../managers/YourContentManager";
-import { AnnotationPreview } from "../DiscoverPane/AnnotationsSection";
-import { PlaylistRow } from "../DiscoverPane/PlaylistRow";
-import { openBookmarkCategoryModal } from "../Tabs/Tabs";
+import {
+  AnnotationPreview,
+  openDeleteAnnotationConfirm,
+} from "../Discover/AnnotationsSection";
+import { PlaylistRow } from "../Discover/PlaylistRow";
+import { HeroImageThumb } from "../HeroImageField/HeroImageField";
+import type { Bookmark } from "../../managers/BookmarksManager";
+import { openSaveModalForLocation } from "../Tabs/Tabs";
+import {
+  BookmarkGlyph,
+  confirmDeleteBookmark,
+  openEditBookmarkModal,
+  useBookmarkLocationText,
+} from "../Bookmarks/Bookmarks";
 import {
   ContextMenuItem,
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
+import { SearchBar } from "../SearchBar/SearchBar";
+import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
+import { Spinner } from "../Spinner/Spinner";
+import { ReadingPlanOptionsMenu } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
 import { useI18n } from "../../i18n";
+import { useScrollEdgeFade } from "../useScrollEdgeFade";
+import { useHorizontalScroll } from "../useHorizontalScroll";
+import { UserImagesGrid } from "./UserImages";
+import { CustomizationCard } from "../CustomizationEditPane/CustomizationCard";
 import "./YourContentPane.css";
+import { Button } from "../Button/Button";
 
 export const YOUR_CONTENT_PANE_ID = "your-content-pane";
 
@@ -39,6 +72,20 @@ export interface YourContentScreenProps {
   onEditPlaylist: (playlist: Playlist) => void;
   /** Opens an annotation in the editor and leaves this screen. */
   onEditAnnotation: (annotation: Annotation) => void;
+  /** Opens a new, empty playlist in the editor and leaves this screen. */
+  onCreatePlaylist: () => void;
+  /**
+   * Opens a reading plan in the plans pane and leaves this screen. A draft
+   * has nothing to read yet, so the caller is expected to open it where the
+   * author left off — the editor — rather than the detail view.
+   */
+  onOpenReadingPlan: (plan: ReadingPlanMetadata) => void;
+  /** Opens a reading plan in the plan editor and leaves this screen. */
+  onEditReadingPlan: (plan: ReadingPlanMetadata) => void;
+  /** Opens a customization in its editor and leaves this screen. */
+  onEditCustomization: (customizationId: string) => void;
+  /** Creates a new customization, opens it in the editor and leaves this screen. */
+  onCreateCustomization: () => void;
 }
 
 /** Pane header title. A component so it can call `useI18n`. */
@@ -68,7 +115,7 @@ function formatReference(
 }
 
 /**
- * Expands a stored verse target into its numbers. Highlights and bookmarks
+ * Expands a stored verse target into its numbers. Highlights and saves
  * record a target the same way — one verse, or an inclusive `[start, end]`.
  */
 function verseNumbersOf(
@@ -104,6 +151,28 @@ function formatDate(
     day: "2-digit",
     ...(form === "long" ? { year: "numeric" } : {}),
   });
+}
+
+/**
+ * A translation's short name ("VDV" for "arb_vdv"), the way the reader's
+ * header gets it: from the translation's book list, which this loads if no
+ * tab has (a save made in another translation, say). The id stands in until
+ * then, or if it won't load.
+ */
+function useTranslationShortName(
+  state: SeedBibleState,
+  translationId: string
+): string {
+  const { bibleData } = state;
+  const books = bibleData.translationBooks.value.get(translationId);
+
+  useEffect(() => {
+    if (!books) {
+      void bibleData.getTranslationBooks(translationId).catch(() => {});
+    }
+  }, [bibleData, translationId, books]);
+
+  return translationShortName(bibleData.translationBooks.value, translationId);
 }
 
 /**
@@ -180,7 +249,8 @@ function AnnotationCard(props: {
   annotation: Annotation;
   onOpenPassage: (target: TodayPassageTarget) => void;
   onEdit: () => void;
-  onDelete: () => void;
+  /** Erases the annotation, once the user has confirmed. */
+  onDelete: () => Promise<void>;
 }) {
   const { state, annotation } = props;
   const { t, language } = useI18n();
@@ -192,6 +262,12 @@ function AnnotationCard(props: {
     annotation.bookId,
     annotation.chapterNumber,
     verses[0]
+  );
+  const reference = formatReference(
+    bookNames,
+    annotation.bookId,
+    annotation.chapterNumber,
+    verses
   );
 
   const open = () =>
@@ -210,18 +286,36 @@ function AnnotationCard(props: {
         <ContextMenuWithButton
           icon="more_horiz"
           buttonClassName="sb-content-kebab"
-          aria-label={t("more-options", { defaultValue: "More options" })}
+          label={t("more-options", { defaultValue: "More options" })}
         >
           <ContextMenuItem onClick={props.onEdit}>
-            <MaterialIcon>edit</MaterialIcon>
-            {t("edit", { defaultValue: "Edit" })}
+            <MaterialIcon
+              className="sb-context-menu-item-icon"
+              aria-hidden="true"
+            >
+              edit
+            </MaterialIcon>
+            <span>{t("edit", { defaultValue: "Edit" })}</span>
           </ContextMenuItem>
           <ContextMenuItem
-            className="sb-content-menu-delete"
-            onClick={props.onDelete}
+            onClick={() =>
+              openDeleteAnnotationConfirm(
+                state.modals,
+                state.annotations,
+                annotation,
+                reference,
+                state.app.toast,
+                props.onDelete
+              )
+            }
           >
-            <MaterialIcon>delete</MaterialIcon>
-            {t("delete", { defaultValue: "Delete" })}
+            <MaterialIcon
+              className="sb-context-menu-item-icon"
+              aria-hidden="true"
+            >
+              delete
+            </MaterialIcon>
+            <span>{t("delete", { defaultValue: "Delete" })}</span>
           </ContextMenuItem>
         </ContextMenuWithButton>
       </div>
@@ -230,14 +324,7 @@ function AnnotationCard(props: {
         {verseText ? (
           <span className="sb-content-quote-text">{verseText}</span>
         ) : null}
-        <span className="sb-content-quote-ref">
-          {formatReference(
-            bookNames,
-            annotation.bookId,
-            annotation.chapterNumber,
-            verses
-          )}
-        </span>
+        <span className="sb-content-quote-ref">{reference}</span>
       </button>
 
       <div className="sb-content-annotation-body">
@@ -247,16 +334,27 @@ function AnnotationCard(props: {
   );
 }
 
+/** The dot between a card's details, as on the sidebar's tab rows. */
+function MetaSeparator() {
+  return (
+    <span className="sb-content-meta-sep" aria-hidden="true">
+      •
+    </span>
+  );
+}
+
 function HighlightRow(props: {
   state: SeedBibleState;
   stored: StoredHighlight;
   onOpenPassage: (target: TodayPassageTarget) => void;
-  onClear: () => void;
+  /** Erases the highlight, once the user has confirmed. */
+  onClear: () => Promise<void>;
 }) {
   const { state, stored } = props;
   const { t } = useI18n();
   const bookNames = state.today.bookNames.value;
   const verses = verseNumbersOf(stored.highlight.verse);
+  const translation = useTranslationShortName(state, stored.translationId);
   const verseText = useVerseText(
     state,
     stored.translationId,
@@ -270,6 +368,33 @@ function HighlightRow(props: {
   const color =
     stored.highlight.customColor ??
     `var(--sb-highlight-${stored.highlight.colorId}-color, var(--sb-primary-color))`;
+  const reference = formatReference(
+    bookNames,
+    stored.bookId,
+    stored.chapterNumber,
+    verses
+  );
+
+  const confirmDelete = () =>
+    openConfirmDeleteModal(state.modals, {
+      id: `delete-highlight-confirm-${highlightKey(stored)}`,
+      title: {
+        key: "delete-highlight-confirm-title",
+        defaultValue: "Delete highlight?",
+      },
+      message: (t) =>
+        t("delete-highlight-confirm-message", {
+          reference,
+          defaultValue:
+            "Delete the highlight on {{reference}}? This can't be undone.",
+        }),
+      onConfirm: props.onClear,
+      failedMessage: (t) =>
+        t("delete-highlight-failed", {
+          defaultValue: "Couldn't delete the highlight.",
+        }),
+      toast: state.app.toast,
+    });
 
   return (
     // The menu is a sibling of the quote, as on the annotation card above: a
@@ -291,53 +416,175 @@ function HighlightRow(props: {
         {verseText ? (
           <span className="sb-content-highlight-text">{verseText}</span>
         ) : null}
-        <span className="sb-content-highlight-ref">
-          {formatReference(
-            bookNames,
-            stored.bookId,
-            stored.chapterNumber,
-            verses
-          )}
+        <span className="sb-content-highlight-meta">
+          <span className="sb-content-highlight-ref">{reference}</span>
+          <MetaSeparator />
+          <span className="sb-content-highlight-translation">
+            {translation}
+          </span>
         </span>
       </button>
       <ContextMenuWithButton
         icon="more_horiz"
         buttonClassName="sb-content-kebab"
-        aria-label={t("more-options", { defaultValue: "More options" })}
+        label={t("more-options", { defaultValue: "More options" })}
       >
-        <ContextMenuItem
-          className="sb-content-menu-delete"
-          onClick={props.onClear}
-        >
-          <MaterialIcon>delete</MaterialIcon>
-          {t("clear-highlight", { defaultValue: "Clear highlight" })}
+        <ContextMenuItem onClick={confirmDelete}>
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
+            delete
+          </MaterialIcon>
+          <span>{t("delete", { defaultValue: "Delete" })}</span>
         </ContextMenuItem>
       </ContextMenuWithButton>
     </div>
   );
 }
 
-function BookmarkPill(props: {
+function SavePill(props: {
   state: SeedBibleState;
-  bookmark: Bookmark;
+  save: Save;
   onOpenPassage: (target: TodayPassageTarget) => void;
 }) {
-  const { state, bookmark } = props;
+  const { state, save } = props;
   const { t, language } = useI18n();
   const bookNames = state.today.bookNames.value;
-  const verse = verseNumbersOf(bookmark.verse)[0];
-  const book = bookNames.get(bookmark.bookId) ?? bookmark.bookId;
+  const verse = verseNumbersOf(save.verse)[0];
+  const book = bookNames.get(save.bookId) ?? save.bookId;
+  const translation = useTranslationShortName(state, save.translationId);
+  // The whole range, so two saves that start on the same verse don't look
+  // like duplicates.
+  const name = `${book} ${save.chapterNumber}${formatSaveVerse(save.verse)}`;
+  // "My Saves, Sermon prep, and Advent", joined the way the language does.
+  const folders = new Intl.ListFormat(language, { type: "conjunction" }).format(
+    save.categories
+  );
+
+  // The edit modal is where a save is taken out of just some of its folders,
+  // so Delete here removes it from all of them, after asking. Naming the
+  // folders matters most for a save that's in several.
+  const confirmDelete = () =>
+    openConfirmDeleteModal(state.modals, {
+      id: `delete-save-confirm-${save.id}`,
+      title: { key: "delete-save-confirm-title", defaultValue: "Delete save?" },
+      message: (t) =>
+        save.categories.length > 1
+          ? t("delete-save-confirm-message-folders", {
+              reference: name,
+              folders,
+              defaultValue:
+                "Delete save for {{reference}} from {{folders}}? This can't be undone.",
+            })
+          : t("delete-save-confirm-message", {
+              reference: name,
+              defaultValue:
+                "Delete save for {{reference}}? This can't be undone.",
+            }),
+      onConfirm: () => state.saves.removeSave(save.id),
+      failedMessage: (t) =>
+        t("delete-save-failed", { defaultValue: "Couldn't delete the save." }),
+      toast: state.app.toast,
+    });
 
   const location = {
-    translationId: bookmark.translationId,
-    bookId: bookmark.bookId,
-    chapterNumber: bookmark.chapterNumber,
-    ...(bookmark.verse !== undefined ? { verse: bookmark.verse } : {}),
+    translationId: save.translationId,
+    bookId: save.bookId,
+    chapterNumber: save.chapterNumber,
+    ...(save.verse !== undefined ? { verse: save.verse } : {}),
   };
 
   return (
     // The pill and its menu are siblings inside the surface, because a
     // <button> cannot nest inside another one.
+    <div className="sb-content-save-row">
+      <button
+        type="button"
+        className="sb-content-save"
+        onClick={() =>
+          props.onOpenPassage({
+            bookId: save.bookId,
+            chapter: save.chapterNumber,
+            verse,
+            translationId: save.translationId,
+          })
+        }
+      >
+        <span className="sb-content-save-name">{name}</span>
+        <span className="sb-content-save-meta">
+          <span className="sb-content-save-translation">{translation}</span>
+          <MetaSeparator />
+          <span className="sb-content-save-date">
+            {formatDate(save.createdAt, language, "short")}
+          </span>
+          {/* Only for a save filed in several folders, which is what it's
+              there to point out; the names are on hover and for screen
+              readers. */}
+          {save.categories.length > 1 ? (
+            <>
+              <MetaSeparator />
+              <span
+                className="sb-content-save-folders"
+                title={folders}
+                aria-label={t("save-folders", {
+                  folders,
+                  defaultValue: "In {{folders}}",
+                })}
+              >
+                <MaterialIcon aria-hidden="true">folder</MaterialIcon>
+                <span
+                  className="sb-content-save-folder-count"
+                  aria-hidden="true"
+                >
+                  {save.categories.length}
+                </span>
+              </span>
+            </>
+          ) : null}
+        </span>
+      </button>
+      <ContextMenuWithButton
+        buttonClassName="sb-content-save-menu"
+        label={t("save-options", { defaultValue: "Save options" })}
+      >
+        <ContextMenuItem
+          onClick={() => openSaveModalForLocation(state, location)}
+        >
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
+            edit
+          </MaterialIcon>
+          <span>{t("edit", { defaultValue: "Edit" })}</span>
+        </ContextMenuItem>
+        <ContextMenuItem onClick={confirmDelete}>
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
+            delete
+          </MaterialIcon>
+          <span>{t("delete", { defaultValue: "Delete" })}</span>
+        </ContextMenuItem>
+      </ContextMenuWithButton>
+    </div>
+  );
+}
+
+function BookmarkRow(props: {
+  state: SeedBibleState;
+  bookmark: Bookmark;
+  /** "John 3", named in the bookmark's own translation. */
+  chapterText: string;
+  onOpenPassage: (target: TodayPassageTarget) => void;
+}) {
+  const { state, bookmark } = props;
+  const { t } = useI18n();
+  const translation = useTranslationShortName(state, bookmark.translationId);
+
+  return (
     <div className="sb-content-bookmark-row">
       <button
         type="button"
@@ -346,71 +593,184 @@ function BookmarkPill(props: {
           props.onOpenPassage({
             bookId: bookmark.bookId,
             chapter: bookmark.chapterNumber,
-            verse,
             translationId: bookmark.translationId,
           })
         }
       >
-        <span className="sb-content-bookmark-name">
-          {`${book} ${bookmark.chapterNumber}${verse ? `:${verse}` : ""}`}
-        </span>
-        <span
-          className={`sb-content-bookmark-kind${
-            verse ? " sb-content-bookmark-kind-verse" : ""
-          }`}
-        >
-          {verse
-            ? t("verse", { defaultValue: "Verse" })
-            : t("chapter", { defaultValue: "Chapter" })}
-        </span>
-        <span className="sb-content-bookmark-date">
-          {formatDate(bookmark.createdAt, language, "short")}
+        <BookmarkGlyph colorId={bookmark.colorId} size={16} />
+        {/* The save card's name and details styles, not BookmarkLabel's, so
+            the two kinds of card read alike on this screen. */}
+        <span className="sb-content-bookmark-text">
+          <span className="sb-content-bookmark-name">{bookmark.name}</span>
+          <span className="sb-content-bookmark-meta">
+            <span className="sb-content-bookmark-chapter" dir="auto">
+              {props.chapterText}
+            </span>
+            <MetaSeparator />
+            <span className="sb-content-bookmark-translation">
+              {translation}
+            </span>
+          </span>
         </span>
       </button>
       <ContextMenuWithButton
-        buttonClassName="sb-content-bookmark-menu"
-        aria-label={t("bookmark-options", { defaultValue: "Bookmark options" })}
-        title={t("bookmark-options", { defaultValue: "Bookmark options" })}
+        buttonClassName="sb-content-save-menu"
+        label={t("bookmark-options-named", {
+          defaultValue: "Options for {{name}}",
+          name: bookmark.name,
+        })}
       >
-        <ContextMenuItem
-          onClick={() =>
-            openBookmarkCategoryModal(state, location, {
-              mode: "edit",
-              bookmarkId: bookmark.id,
-            })
-          }
-        >
-          {t("edit-bookmark", { defaultValue: "Edit bookmark" })}
+        <ContextMenuItem onClick={() => openEditBookmarkModal(state, bookmark)}>
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
+            edit
+          </MaterialIcon>
+          <span>{t("edit", { defaultValue: "Edit" })}</span>
         </ContextMenuItem>
-        <ContextMenuItem
-          onClick={() => {
-            // Removes the bookmark outright, not from one folder: this list is
-            // flat, so there is no folder to remove it from. That is what the
-            // edit modal's own "Remove from all folders" does.
-            void state.bookmarks.removeBookmark(bookmark.id);
-          }}
-        >
-          {t("remove-bookmark", { defaultValue: "Remove bookmark" })}
+        <ContextMenuItem onClick={() => confirmDeleteBookmark(state, bookmark)}>
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
+            delete
+          </MaterialIcon>
+          <span>{t("delete", { defaultValue: "Delete" })}</span>
         </ContextMenuItem>
       </ContextMenuWithButton>
     </div>
   );
 }
 
+function ReadingPlanRow(props: {
+  state: SeedBibleState;
+  plan: ReadingPlanMetadata;
+  onOpen: () => void;
+  onEdit: () => void;
+}) {
+  const { state, plan } = props;
+  const { t } = useI18n();
+  const status = readingPlanStatusLabel(state.readingPlans, plan, t);
+  const title =
+    plan.title ?? t("untitled-reading-plan", { defaultValue: "Untitled plan" });
+  const full =
+    state.readingPlans.fullReadingPlans.value.find(
+      (p) => p.recordName === plan.recordName && p.address === plan.address
+    ) ?? null;
+
+  return (
+    // Laid out as a Discover row, like the playlists beside it, so a plan
+    // reads the same way a playlist does on this screen.
+    <li
+      className="sb-discover-item sb-discover-item--row sb-content-plan"
+      dir="auto"
+      onClick={props.onOpen}
+    >
+      <HeroImageThumb url={plan.heroImageUrl} />
+      <div className="sb-discover-item-main">
+        <span className="sb-discover-item-title">{title}</span>
+        {status ? (
+          <span className="sb-content-plan-status">{status}</span>
+        ) : null}
+      </div>
+      <ReadingPlanOptionsMenu
+        readingPlans={state.readingPlans}
+        plan={plan}
+        // A draft isn't finished, so there's nothing to share yet.
+        fullPlan={plan.status === "draft" ? null : full}
+        onEdit={props.onEdit}
+        modals={state.modals}
+        toast={state.app.toast}
+        buttonClassName="sb-discover-item-menu"
+      />
+    </li>
+  );
+}
+
+/**
+ * Where the user is with a plan, in a few words: "Draft" for one still being
+ * written, "Not started" for one never begun, "Day 3 of 10" (or "2/5
+ * sessions" for a self-paced read) while it is under way, and "Completed"
+ * once every day is done.
+ *
+ * Progress is worked out from the full plan, which loads a moment after the
+ * list. Until it has, a started plan has no status rather than a wrong one.
+ */
+function readingPlanStatusLabel(
+  readingPlans: ReadingPlansManager,
+  plan: ReadingPlanMetadata,
+  t: ReturnType<typeof useI18n>["t"]
+): string | null {
+  if (plan.status === "draft") {
+    return t("reading-plan-draft", { defaultValue: "Draft" });
+  }
+  const planId = formatReadingPlanId(plan.recordName, plan.address);
+  const progress = latestReadingPlanProgress(
+    readingPlans.userReadingPlanProgresses.value,
+    planId
+  );
+  if (!progress) {
+    return t("reading-plan-not-started", { defaultValue: "Not started" });
+  }
+  const full = readingPlans.fullReadingPlans.value.find(
+    (p) => p.recordName === plan.recordName && p.address === plan.address
+  );
+  if (!full) {
+    return null;
+  }
+  const nowMs = Date.now();
+  const summary = summarizeCalendar(
+    getReadingCalendar(full, progress, nowMs),
+    nowMs,
+    progress.timeZone
+  );
+  if (summary.totalDays > 0 && summary.doneDays === summary.totalDays) {
+    return t("reading-plan-completed", { defaultValue: "Completed" });
+  }
+  if (progress.selfPaced) {
+    return t("reading-plan-progress-sessions", {
+      defaultValue: "{{done}}/{{total}} sessions",
+      done: summary.doneDays,
+      total: summary.totalDays,
+    });
+  }
+  return t("plan-day-of", {
+    defaultValue: "Day {{day}} of {{total}}",
+    day: summary.nextDayNumber ?? summary.doneDays + 1,
+    total: summary.totalDays,
+  });
+}
+
 /* ------------------------------------------------------------------ screen */
 
 /**
  * The "Your content" screen (issue #1553): everything the reader has made —
- * annotations, highlights, bookmarks and playlists — in one place, filtered
- * by a search box and a row of chips.
+ * annotations, highlights, saves, bookmarks, playlists, reading plans, branding
+ * customizations and uploaded images — in one place, filtered by a search box and a row of chips.
  *
  * "All" shows the first few of each section with a "See all" that switches
  * the chips to that one section in full.
  */
 export function YourContentPane(props: YourContentScreenProps) {
   const { state, onOpenPassage } = props;
-  const { yourContent, bookmarks, playlists, annotations } = state;
+  const {
+    yourContent,
+    saves,
+    bookmarks,
+    playlists,
+    annotations,
+    readingPlans,
+    gallery,
+    customizations,
+  } = state;
   const { t } = useI18n();
+  const userId = state.login.userId.value;
+  // The filter chips scroll horizontally with the vertical wheel, and fade at
+  // an edge only while chips are hidden past it.
+  const chipsRef = useRef<HTMLDivElement | null>(null);
+  useHorizontalScroll(chipsRef);
+  useScrollEdgeFade(chipsRef);
 
   // Every open refreshes, so a verse highlighted or annotated in the reader
   // since the last visit shows up. It's quiet when content is already
@@ -418,6 +778,32 @@ export function YourContentPane(props: YourContentScreenProps) {
   useEffect(() => {
     void yourContent.load({ force: true });
   }, []);
+
+  // Bookmarks load on sign-in by themselves; asking again here retries one
+  // that failed then. Tracked so the Bookmarks chip can tell "none yet" from
+  // "still loading" and "couldn't load" — the list is empty in all three.
+  const bookmarksLoad = useSignal<"loading" | "loaded" | "failed">("loading");
+  const loadBookmarks = () => {
+    bookmarksLoad.value = "loading";
+    bookmarks.ensureLoaded().then(
+      (loaded) => {
+        bookmarksLoad.value = loaded ? "loaded" : "failed";
+      },
+      () => {
+        bookmarksLoad.value = "failed";
+      }
+    );
+  };
+
+  // Uploaded images, customizations and bookmarks each have their own store,
+  // not what `load` reads.
+  useEffect(() => {
+    if (userId) {
+      void gallery.syncPhotos();
+      void customizations.load();
+      loadBookmarks();
+    }
+  }, [userId]);
 
   // Highlights carry no words of their own, so searching them means reading
   // their chapters back. Kicked off on the first search rather than on open:
@@ -441,6 +827,10 @@ export function YourContentPane(props: YourContentScreenProps) {
     fields.some((field) => field?.toLowerCase().includes(needle));
 
   const bookNames = state.today.bookNames.value;
+  // A bookmark is named in its own translation, as in the sidebar and on
+  // Today, rather than in the reader's like the rest of this screen: the same
+  // bookmark should read the same wherever it shows.
+  const bookmarkLocationText = useBookmarkLocationText(state);
 
   /**
    * What a reference is searchable by: the reference exactly as its own row
@@ -482,14 +872,41 @@ export function YourContentPane(props: YourContentScreenProps) {
       verseTextByHighlight.get(highlightKey(h))
     )
   );
-  const visibleBookmarks = bookmarks.bookmarks.value.filter((b) =>
-    matches(
-      ...referenceFields(b.bookId, b.chapterNumber, verseNumbersOf(b.verse))
+  // In Bible order. The list arrives in the order the saves were made.
+  const visibleSaves = saves.saves.value
+    .filter((b) =>
+      matches(
+        ...referenceFields(b.bookId, b.chapterNumber, verseNumbersOf(b.verse))
+      )
     )
-  );
+    .sort(compareSaves);
+  // Most recently moved first, as in the sidebar and on Today. The chapter
+  // text is worked out once here and handed to the card, since each lookup
+  // of a translation not yet loaded also starts a request for it.
+  const visibleBookmarks = bookmarks.bookmarks.value
+    .map((bookmark) => ({
+      bookmark,
+      chapterText: bookmarkLocationText(bookmark),
+    }))
+    .filter(({ bookmark, chapterText }) =>
+      matches(bookmark.name, chapterText, bookmark.bookId)
+    );
   const visiblePlaylists = playlists.userPlaylists.value.filter((p) =>
     matches(p.title, p.description)
   );
+  // Newest first, like annotations. The list arrives in record order, which
+  // is no order a reader would recognise.
+  const visibleReadingPlans = readingPlans.userReadingPlans.value
+    .filter((p) => matches(p.title, p.description))
+    .sort((a, b) => b.createdAtMs - a.createdAtMs);
+  const visibleCustomizations = userId
+    ? customizations.customizations.value.filter((c) => matches(c.name))
+    : [];
+  // An image has no words to search, so any search hides them all.
+  const visibleImages =
+    userId && needle.length === 0
+      ? [...gallery.photos.value].sort((a, b) => b.createdAtMs - a.createdAtMs)
+      : [];
 
   const showing = (section: ContentFilter) =>
     filter === "all" || filter === section;
@@ -511,18 +928,30 @@ export function YourContentPane(props: YourContentScreenProps) {
         return t("annotations", { defaultValue: "Annotations" });
       case "highlights":
         return t("highlights", { defaultValue: "Highlights" });
+      case "saves":
+        return t("saves", { defaultValue: "Saves" });
       case "bookmarks":
         return t("bookmarks", { defaultValue: "Bookmarks" });
       case "playlists":
         return t("playlists", { defaultValue: "Playlists" });
+      case "reading-plans":
+        return t("reading-plans", { defaultValue: "Reading plans" });
+      case "branding":
+        return t("branding", { defaultValue: "Branding" });
+      case "images":
+        return t("images", { defaultValue: "Images" });
     }
   };
 
   const sectionCounts: Record<Exclude<ContentFilter, "all">, number> = {
     annotations: visibleAnnotations.length,
     highlights: visibleHighlights.length,
+    saves: visibleSaves.length,
     bookmarks: visibleBookmarks.length,
     playlists: visiblePlaylists.length,
+    "reading-plans": visibleReadingPlans.length,
+    branding: visibleCustomizations.length,
+    images: visibleImages.length,
   };
 
   /**
@@ -533,9 +962,20 @@ export function YourContentPane(props: YourContentScreenProps) {
   const stillSearching =
     needle.length > 0 && yourContent.isReadingHighlightVerseText.value;
 
+  // Only the Bookmarks chip waits on bookmarks: under "all" they are one
+  // section among many, and simply appear when they arrive.
+  const onBookmarksChip = filter === "bookmarks" && !!userId;
+  const bookmarksPending = onBookmarksChip && bookmarksLoad.value === "loading";
+  const bookmarksFailed =
+    onBookmarksChip &&
+    bookmarksLoad.value === "failed" &&
+    sectionCounts.bookmarks === 0;
+
   const nothingToShow =
     status === "ready" &&
     !stillSearching &&
+    !bookmarksPending &&
+    !bookmarksFailed &&
     (filter === "all"
       ? Object.values(sectionCounts).every((count) => count === 0)
       : sectionCounts[filter] === 0);
@@ -555,18 +995,36 @@ export function YourContentPane(props: YourContentScreenProps) {
         return t("your-content-empty-highlights", {
           defaultValue: "Verses you highlight will show up here.",
         });
+      case "saves":
+        return t("your-content-empty-saves", {
+          defaultValue: "Passages you save will show up here.",
+        });
       case "bookmarks":
-        return t("your-content-empty-bookmarks", {
-          defaultValue: "Passages you bookmark will show up here.",
+        return t("bookmarks-empty", {
+          defaultValue:
+            "No bookmarks yet. Use the bookmark button above a chapter to place one.",
         });
       case "playlists":
         return t("your-content-empty-playlists", {
           defaultValue: "Playlists you create will show up here.",
         });
+      case "reading-plans":
+        return t("your-content-empty-reading-plans", {
+          defaultValue: "Reading plans you create will show up here.",
+        });
+      case "branding":
+        return t("your-content-empty-branding", {
+          defaultValue: "Custom Branding you create will show up here.",
+        });
+      case "images":
+        return t("your-images-empty", {
+          defaultValue:
+            "Images you upload as covers for playlists and reading plans will show up here.",
+        });
       case "all":
         return t("your-content-empty", {
           defaultValue:
-            "Notes, highlights, bookmarks and playlists you make will show up here.",
+            "Notes, highlights, bookmarks, saves, playlists and reading plans you make will show up here.",
         });
     }
   };
@@ -574,44 +1032,77 @@ export function YourContentPane(props: YourContentScreenProps) {
   return (
     <div className="sb-content-screen">
       <div className="sb-content-inner">
-        <div className="sb-content-search">
-          <MaterialIcon aria-hidden="true">search</MaterialIcon>
-          <input
-            type="search"
-            value={rawQuery}
-            placeholder={t("search-placeholder", { defaultValue: "Search..." })}
-            aria-label={t("search-your-content", {
-              defaultValue: "Search your content",
-            })}
-            onInput={(event) => {
-              yourContent.query.value = (
-                event.currentTarget as HTMLInputElement
-              ).value;
-            }}
-          />
+        <SearchBar
+          className="sb-content-search"
+          value={rawQuery}
+          onInput={(value) => {
+            yourContent.query.value = value;
+          }}
+          placeholder={t("search-placeholder", { defaultValue: "Search..." })}
+          aria-label={t("search-your-content", {
+            defaultValue: "Search your content",
+          })}
+        />
+
+        <div className="sb-content-toolbar">
+          {/* Outside the chip strip so it stays put while the chips scroll. */}
+          <ContextMenuWithButton
+            buttonClassName="sb-content-create"
+            trigger={(menu) => (
+              <Button
+                {...menu}
+                variant="primary"
+                size="sm"
+                shape="pill"
+                icon="add"
+              >
+                {t("create-playlist", { defaultValue: "Create" })}
+              </Button>
+            )}
+          >
+            <ContextMenuItem onClick={props.onCreatePlaylist}>
+              <MaterialIcon className="sb-context-menu-item-icon">
+                queue_music
+              </MaterialIcon>
+              {t("create-playlist-menu-item", { defaultValue: "Playlist" })}
+            </ContextMenuItem>
+            {userId ? (
+              <ContextMenuItem onClick={props.onCreateCustomization}>
+                <MaterialIcon className="sb-context-menu-item-icon">
+                  palette
+                </MaterialIcon>
+                {t("create-custom-branding-menu-item", {
+                  defaultValue: "Custom Branding",
+                })}
+              </ContextMenuItem>
+            ) : null}
+          </ContextMenuWithButton>
+
+          <span className="sb-content-toolbar-divider" aria-hidden="true" />
+
+          <div className="sb-content-chips" role="tablist" ref={chipsRef}>
+            {CONTENT_FILTERS.map((value) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={filter === value}
+                className={`sb-content-chip${
+                  filter === value ? " sb-content-chip-active" : ""
+                }`}
+                onClick={() => {
+                  yourContent.filter.value = value;
+                }}
+              >
+                {chipLabel(value)}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="sb-content-chips" role="tablist">
-          {CONTENT_FILTERS.map((value) => (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              aria-selected={filter === value}
-              className={`sb-content-chip${
-                filter === value ? " sb-content-chip-active" : ""
-              }`}
-              onClick={() => {
-                yourContent.filter.value = value;
-              }}
-            >
-              {chipLabel(value)}
-            </button>
-          ))}
-        </div>
-
-        {status === "loading" || stillSearching ? (
-          <p className="sb-content-status">
+        {status === "loading" || stillSearching || bookmarksPending ? (
+          <p className="sb-content-status sb-content-status--loading">
+            <Spinner />
             {t("loading-your-content", {
               defaultValue: "Gathering your content…",
             })}
@@ -625,13 +1116,30 @@ export function YourContentPane(props: YourContentScreenProps) {
                 defaultValue: "Your content couldn't be loaded.",
               })}
             </p>
-            <button
-              type="button"
+            <Button
+              shape="pill"
               className="sb-content-retry"
               onClick={() => void yourContent.load({ force: true })}
             >
               {t("try-again", { defaultValue: "Try again" })}
-            </button>
+            </Button>
+          </div>
+        ) : null}
+
+        {bookmarksFailed ? (
+          <div className="sb-content-status">
+            <p>
+              {t("bookmarks-load-failed", {
+                defaultValue: "Couldn't load your bookmarks. Please try again.",
+              })}
+            </p>
+            <Button
+              shape="pill"
+              className="sb-content-retry"
+              onClick={loadBookmarks}
+            >
+              {t("try-again", { defaultValue: "Try again" })}
+            </Button>
           </div>
         ) : null}
 
@@ -655,18 +1163,20 @@ export function YourContentPane(props: YourContentScreenProps) {
                     annotation={annotation}
                     onOpenPassage={onOpenPassage}
                     onEdit={() => props.onEditAnnotation(annotation)}
-                    onDelete={() => {
+                    onDelete={async () => {
                       // Drop it from the list straight away — waiting on the
                       // server would leave a deleted note on screen. If the
                       // delete then fails, put it back rather than showing a
                       // note as gone that is still there.
                       yourContent.removeAnnotation(annotation.id);
-                      void annotations
-                        .deleteAnnotationAndRefresh(annotation)
-                        .catch((error) => {
-                          console.error("Error deleting annotation:", error);
-                          yourContent.restoreAnnotation(annotation);
-                        });
+                      try {
+                        await annotations.deleteAnnotationAndRefresh(
+                          annotation
+                        );
+                      } catch (error) {
+                        yourContent.restoreAnnotation(annotation);
+                        throw error;
+                      }
                     }}
                   />
                 ))}
@@ -685,23 +1195,23 @@ export function YourContentPane(props: YourContentScreenProps) {
                 .slice(0, limit(visibleHighlights))
                 .map((stored, index) => (
                   <HighlightRow
-                    onClear={() => {
+                    onClear={async () => {
                       // Same optimistic pattern as deleting an annotation
                       // above: drop it now so a cleared highlight does not sit
                       // on screen waiting for the server, and put it back if
                       // the call fails.
                       yourContent.removeHighlight(stored);
-                      void state.highlights
-                        .unhighlightVerse(
+                      try {
+                        await state.highlights.unhighlightVerse(
                           stored.translationId,
                           stored.bookId,
                           stored.chapterNumber,
                           stored.highlight.verse
-                        )
-                        .catch((error) => {
-                          console.error("Error clearing highlight:", error);
-                          yourContent.restoreHighlight(stored);
-                        });
+                        );
+                      } catch (error) {
+                        yourContent.restoreHighlight(stored);
+                        throw error;
+                      }
                     }}
                     key={`${stored.translationId}/${stored.bookId}/${stored.chapterNumber}/${index}`}
                     state={state}
@@ -720,11 +1230,33 @@ export function YourContentPane(props: YourContentScreenProps) {
               onSeeAll={seeAll("bookmarks", visibleBookmarks)}
             />
             <div className="sb-content-bookmarks">
-              {visibleBookmarks.slice(0, limit(visibleBookmarks)).map((b) => (
-                <BookmarkPill
+              {visibleBookmarks
+                .slice(0, limit(visibleBookmarks))
+                .map(({ bookmark, chapterText }) => (
+                  <BookmarkRow
+                    key={bookmark.id}
+                    state={state}
+                    bookmark={bookmark}
+                    chapterText={chapterText}
+                    onOpenPassage={onOpenPassage}
+                  />
+                ))}
+            </div>
+          </section>
+        ) : null}
+
+        {showing("saves") && visibleSaves.length > 0 ? (
+          <section className="sb-content-section">
+            <SectionHeader
+              title={t("saves", { defaultValue: "Saves" })}
+              onSeeAll={seeAll("saves", visibleSaves)}
+            />
+            <div className="sb-content-saves">
+              {visibleSaves.slice(0, limit(visibleSaves)).map((b) => (
+                <SavePill
                   key={b.id}
                   state={state}
-                  bookmark={b}
+                  save={b}
                   onOpenPassage={onOpenPassage}
                 />
               ))}
@@ -751,6 +1283,62 @@ export function YourContentPane(props: YourContentScreenProps) {
                 />
               ))}
             </ul>
+          </section>
+        ) : null}
+
+        {showing("reading-plans") && visibleReadingPlans.length > 0 ? (
+          <section className="sb-content-section">
+            <SectionHeader
+              title={t("reading-plans", { defaultValue: "Reading plans" })}
+              onSeeAll={seeAll("reading-plans", visibleReadingPlans)}
+            />
+            <ul className="sb-discover-list">
+              {visibleReadingPlans
+                .slice(0, limit(visibleReadingPlans))
+                .map((plan) => (
+                  <ReadingPlanRow
+                    key={formatReadingPlanId(plan.recordName, plan.address)}
+                    state={state}
+                    plan={plan}
+                    onOpen={() => props.onOpenReadingPlan(plan)}
+                    onEdit={() => props.onEditReadingPlan(plan)}
+                  />
+                ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {showing("branding") && visibleCustomizations.length > 0 ? (
+          <section className="sb-content-section">
+            <SectionHeader
+              title={t("branding", { defaultValue: "Branding" })}
+              onSeeAll={seeAll("branding", visibleCustomizations)}
+            />
+            <ul className="sb-cz-card-list">
+              {visibleCustomizations
+                .slice(0, limit(visibleCustomizations))
+                .map((customization) => (
+                  <CustomizationCard
+                    key={customization.id}
+                    state={state}
+                    customization={customization}
+                    onOpen={() => props.onEditCustomization(customization.id)}
+                  />
+                ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {showing("images") && visibleImages.length > 0 ? (
+          <section className="sb-content-section">
+            <SectionHeader
+              title={t("images", { defaultValue: "Images" })}
+              onSeeAll={seeAll("images", visibleImages)}
+            />
+            <UserImagesGrid
+              state={state}
+              photos={visibleImages.slice(0, limit(visibleImages))}
+            />
           </section>
         ) : null}
       </div>

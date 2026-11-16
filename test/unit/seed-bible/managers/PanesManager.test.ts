@@ -213,6 +213,113 @@ describe("createPanes", () => {
     });
   });
 
+  describe("openPane with exclusive", () => {
+    it("closes every other pane, fullscreen included, when an exclusive side pane opens", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        placement: "fullscreen",
+        title: "Fullscreen",
+        component: componentReturning("Fullscreen"),
+      });
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+      const exclusive = panes.openPane({
+        placement: "side",
+        title: "Exclusive",
+        component: componentReturning("Exclusive"),
+        exclusive: true,
+      });
+
+      expect(panes.panes.value.map((pane) => pane.id)).toEqual([exclusive.id]);
+      expect(panes.selectedPaneId.value).toBe(exclusive.id);
+      expect(exclusive.placement).toBe("side");
+    });
+
+    it("closes other panes when an existing pane is reused by id with exclusive", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        id: "editor",
+        placement: "side",
+        title: "Editor",
+        component: componentReturning("Editor"),
+      });
+      // Resized so the check below shows the pane was reused, not recreated
+      // at the default width.
+      panes.resizePane("editor", 100, 0, 1);
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+
+      const reused = panes.openPane({
+        id: "editor",
+        placement: "side",
+        title: "Editor Updated",
+        component: componentReturning("Editor Updated"),
+        exclusive: true,
+      });
+
+      expect(panes.panes.value.map((pane) => pane.id)).toEqual(["editor"]);
+      expect(reused.title).toBe("Editor Updated");
+      expect(reused.width).toBe(580);
+    });
+
+    it("tells each closed pane it was displaced", () => {
+      const panes = createPanes();
+      const onFullscreenClose = vi.fn();
+      const onFloatingClose = vi.fn();
+
+      panes.openPane({
+        placement: "fullscreen",
+        title: "Fullscreen",
+        component: componentReturning("Fullscreen"),
+        onClose: onFullscreenClose,
+      });
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+        onClose: onFloatingClose,
+      });
+      panes.openPane({
+        placement: "side",
+        title: "Exclusive",
+        component: componentReturning("Exclusive"),
+        exclusive: true,
+      });
+
+      expect(onFullscreenClose).toHaveBeenCalledExactlyOnceWith("displaced");
+      expect(onFloatingClose).toHaveBeenCalledExactlyOnceWith("displaced");
+    });
+
+    it("applies only to the open it was passed to, not to later opens", () => {
+      const panes = createPanes();
+
+      const exclusive = panes.openPane({
+        placement: "side",
+        title: "Exclusive",
+        component: componentReturning("Exclusive"),
+        exclusive: true,
+      });
+      const floating = panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+
+      expect(panes.panes.value.map((pane) => pane.id)).toEqual([
+        exclusive.id,
+        floating.id,
+      ]);
+    });
+  });
+
   describe("openPane on a mobile viewport", () => {
     it("closes other panes when any pane is opened, since panes display fullscreen", () => {
       const isMobile = signal(true);
@@ -1076,6 +1183,35 @@ describe("createPanes", () => {
       // No fullscreen pane to close, so the signal is left untouched (same
       // reference) — navigation must not thrash panes state on every change.
       expect(panes.panes.value).toBe(before);
+    });
+  });
+
+  describe("header visibility", () => {
+    it("defaults showHeader to true if omitted", () => {
+      const panes = createPanes();
+
+      const pane = panes.openPane({
+        placement: "fullscreen",
+        title: "Today",
+        component: componentReturning("Today"),
+      });
+
+      expect(pane.showHeader).toBe(true);
+      expect(panes.panes.value[0]?.showHeader).toBe(true);
+    });
+
+    it("successfully sets showHeader", () => {
+      const panes = createPanes();
+
+      const pane = panes.openPane({
+        placement: "fullscreen",
+        title: "Today",
+        component: componentReturning("Today"),
+        showHeader: false,
+      });
+
+      expect(pane.showHeader).toBe(false);
+      expect(panes.panes.value[0]?.showHeader).toBe(false);
     });
   });
 });

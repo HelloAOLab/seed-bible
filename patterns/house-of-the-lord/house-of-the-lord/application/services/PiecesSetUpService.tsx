@@ -30,4 +30,8 @@ export class PiecesSetUpService implements PiecesSetUpPort {
     this.#piecesRenderOrderPort.setOrder(experience);
     this.#hitboxSpawnerPort.spawnPiecesHitbox(experience);
   }
+
+  clearPieces(experience: ExperienceKey): void {
+    this.#hitboxSpawnerPort.despawnPiecesHitbox(experience);
+  }
 }

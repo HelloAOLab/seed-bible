@@ -4,7 +4,6 @@ import {
   GetBotScales,
   SetStrictTag,
 } from "../../functions/casualos";
-import type { TestamentSelectionAdapterPort } from "../../../application/ports/out/TestamentSelection";
 import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
 import type { StackTestamentMapper } from "../../mappers/StackTestamentMapper";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
@@ -20,15 +19,14 @@ import type { PieceBotTags } from "../../models/casualos";
 import type { Piece } from "../../../domain/models/canvas";
 import { StackSectionData } from "../../../domain/entities/StackSectionData";
 import type { StackBibleData } from "../../../domain/entities/StackBibleData";
-import type {
-  CameraAdapterPort,
-  RenderOrderAdapterPort,
-} from "../../../application/ports/bibleLifecycle";
 import type { BibleDataRepository } from "./BibleDataRepository";
 import type { PieceDataRepository } from "./PieceDataRepository";
 import type { PieceMapper } from "../../mappers/PieceMapper";
 import type { PieceAdapter } from "./PieceAdapter";
 import type { PiecesConfigProvider } from "../../config/pieces/PiecesConfigProvider";
+import type { TestamentSelectionPort } from "../../../application/ports/out/TestamentSelection";
+import type { CameraAdapter } from "../environment/CameraAdapter";
+import type { RenderOrderAdapter } from "../environment/RenderOrderAdapter";
 
 interface AdapterParams {
   getDimension(): string;
@@ -39,8 +37,8 @@ interface AdapterParams {
   visualStateRegistry: VisualStateRegistry;
   selectionConfigProvider: TestamentSelectionConfigProvider;
   sectionInfoMapper: SectionInfoMapper;
-  cameraAdapterPort: CameraAdapterPort;
-  renderOrderAdapterPort: RenderOrderAdapterPort;
+  cameraAdapterPort: CameraAdapter;
+  renderOrderAdapterPort: RenderOrderAdapter;
   bibleDataRepository: BibleDataRepository;
   pieceDataRepository: PieceDataRepository;
   pieceMapper: PieceMapper;
@@ -55,7 +53,7 @@ interface SectionLayout {
   desiredPositionZ: number;
 }
 
-export class TestamentSelectionAdapter implements TestamentSelectionAdapterPort {
+export class TestamentSelectionAdapter implements TestamentSelectionPort {
   #getDimension: AdapterParams["getDimension"];
   #testamentMapper: AdapterParams["testamentMapper"];
   #sectionMapper: AdapterParams["sectionMapper"];

@@ -6,6 +6,9 @@ import {
   formatBytes,
   type OfflineTranslationsManager,
 } from "../../managers/OfflineTranslationsManager";
+import { downloadTranslationWithToast } from "./downloadTranslationWithToast";
+import { useOverlayDismiss } from "../useOverlayDismiss";
+import { Button } from "../Button/Button";
 
 /**
  * Offers to save the translation the reader is currently in for offline use.
@@ -43,6 +46,10 @@ export function OfflineDownloadPrompt({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [translation]);
 
+  const overlayDismiss = useOverlayDismiss(() =>
+    offline.dismissDownloadPrompt()
+  );
+
   if (!translation) {
     return null;
   }
@@ -51,34 +58,13 @@ export function OfflineDownloadPrompt({
 
   const save = async () => {
     offline.dismissDownloadPrompt();
-
-    const succeeded = await offline.downloadTranslation(translation.id);
-    if (succeeded) {
-      toast(
-        t("translation-downloaded", {
-          name: translation.shortName,
-          defaultValue: "{{name}} is now available offline",
-        })
-      );
-      return;
-    }
-
-    // A cancelled download reports no error, and there's nothing to tell the
-    // user about a download they stopped themselves.
-    if (offline.errors.value.get(translation.id)) {
-      toast(
-        t("translation-download-failed", {
-          name: translation.shortName,
-          defaultValue: "Couldn't download {{name}}.",
-        })
-      );
-    }
+    await downloadTranslationWithToast(offline, translation, toast, t);
   };
 
   return (
     <div
       className={`sb-offline-prompt-overlay ${className}`}
-      onClick={() => offline.dismissDownloadPrompt()}
+      {...overlayDismiss}
     >
       <div
         className="sb-offline-prompt"
@@ -117,21 +103,25 @@ export function OfflineDownloadPrompt({
               })}
         </p>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="lg"
+          shape="pill"
           className="sb-offline-prompt-btn sb-offline-prompt-btn-primary"
           onClick={() => void save()}
         >
           {t("offlinePrompt.save", { defaultValue: "Save offline" })}
-        </button>
+        </Button>
 
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="lg"
+          shape="pill"
           className="sb-offline-prompt-btn sb-offline-prompt-btn-secondary"
           onClick={() => offline.dismissDownloadPrompt()}
         >
           {t("offlinePrompt.notNow", { defaultValue: "Not now" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

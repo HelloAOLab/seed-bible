@@ -1,14 +1,14 @@
-import type {
-  ParentDataChain,
-  PieceHierarchyPieceDataRepositoryPort,
-  PieceHierarchyStackDataRepositoryPort,
-  StackParentDataIds,
-} from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
+import type {
+  ParentDataIds,
+  ParentDataChain,
+} from "../../domain/models/canvas";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
+import type { BibleDataRepositoryPort } from "../ports/out/BibleDataRepository";
 
 interface ServiceParams {
-  pieceDataRepositoryPort: PieceHierarchyPieceDataRepositoryPort;
-  bibleDataRepositoryPort: PieceHierarchyStackDataRepositoryPort;
+  pieceDataRepositoryPort: PieceDataRepositoryPort;
+  bibleDataRepositoryPort: BibleDataRepositoryPort;
 }
 
 export class PieceHierarchyService implements PieceHierarchyServicePort {
@@ -23,7 +23,7 @@ export class PieceHierarchyService implements PieceHierarchyServicePort {
     this.#bibleDataRepositoryPort = bibleDataRepositoryPort;
   }
 
-  getParentDataChain: (parentDataIds: StackParentDataIds) => ParentDataChain = (
+  getParentDataChain: (parentDataIds: ParentDataIds) => ParentDataChain = (
     parentDataIds
   ) => {
     return {

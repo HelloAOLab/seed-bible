@@ -2,7 +2,7 @@ import type { StackTestamentData } from "../../../domain/entities/StackTestament
 import type { PieceSelectionSource } from "../../../domain/models/canvas";
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
 
-export interface TestamentSelectionPort {
+export interface TestamentSelectionServicePort {
   select: (params: {
     data: StackTestamentData;
     pacing?: StackUpdatePacing;

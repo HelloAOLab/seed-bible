@@ -1,6 +1,6 @@
 import type { PortalCameraType } from "@casual-simulation/aux-common";
-import type { ExperienceConfigProviderPort } from "../../../application/ports/experience";
 import type { WorldPosition } from "../../../domain/models/spatial";
+import type { ExperienceConfigProviderPort } from "../../../application/ports/out/ExperienceConfigProvider";
 
 const TARGET_PORTAL_CAMERA_TYPE: PortalCameraType = "orthographic";
 const TARGET_PORTAL_ZOOMABLE_MIN = 5;

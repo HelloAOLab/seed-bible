@@ -45,6 +45,8 @@ export default defineConfig([
     "tsc-silent.config.cjs",
     "jest.config.cjs",
     "babel.config.cjs",
+    // Templates rendered into scaffolded projects, not authored source.
+    "packages/create-seed-bible-extension/templates/**",
   ]),
   {
     files: ["**/*.{js,mjs,cjs,ts,tsx,jsx}"],

@@ -4,11 +4,19 @@
   padding: 6px 10px;
   margin-bottom: 10px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   cursor: pointer;
+}
+
+/* The native option popup ignores the select's transparent background and
+   renders white, so options need an explicit theme background to keep the
+   inherited font color readable in dark mode. */
+.sb-playlist-add-mode-select option {
+  background: var(--sb-background);
+  color: var(--sb-font-color);
 }
 
 .sb-playlist-add-mode-select:hover {
@@ -17,7 +25,7 @@
 
 .sb-playlist-item-input {
   border: 1px solid var(--sb-divider-color);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   padding: 8px;
 }
 

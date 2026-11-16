@@ -5,7 +5,7 @@ import type {
   BookInfo,
 } from "../../../domain/models/arrangement";
 
-export interface ScripturePort {
+export interface ScriptureServicePort {
   mapSubsetToCompleteBook({
     book,
     chapter,
@@ -20,7 +20,7 @@ export interface ScripturePort {
     chapter: number;
     subsets: readonly SubsetBookInfo[];
   }): SubsetBookChapter;
-  getBiggerChapter: (arrangementIndex?: number | undefined) => number;
+  getBiggerChapter: () => number;
   getSectionChapterCount: (section: readonly BookInfo[]) => number;
   getBookChapterCount(bookId: string): number;
 }

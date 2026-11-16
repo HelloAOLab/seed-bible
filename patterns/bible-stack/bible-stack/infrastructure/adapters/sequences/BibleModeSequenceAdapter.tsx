@@ -1,4 +1,3 @@
-import type { BibleModeSequenceAdapterPort } from "../../../application/ports/out/BibleMode";
 import { HexToRgb } from "../../../domain/functions/colors";
 import type { RGB } from "../../../domain/models/commonTypes";
 import type { StackCrossLine } from "../../../domain/models/pieces";
@@ -6,6 +5,7 @@ import type { PiecesConfigProvider } from "../../config/pieces/PiecesConfigProvi
 import type { SequenceConfigProvider } from "../../config/sequences/SequenceConfigProvider";
 import type { StackCrossLineMapper } from "../../mappers/StackCrossLineMapper";
 import type { ColorLerper } from "../environment/ColorLerper";
+import type { BibleModeSequencePort } from "../../../application/ports/out/BibleModeSequence";
 
 interface AdapterParams {
   sequenceConfigProvider: SequenceConfigProvider;
@@ -14,7 +14,7 @@ interface AdapterParams {
   piecesConfigProvider: PiecesConfigProvider;
 }
 
-export class BibleModeSequenceAdapter implements BibleModeSequenceAdapterPort {
+export class BibleModeSequenceAdapter implements BibleModeSequencePort {
   #sequenceConfigProvider: AdapterParams["sequenceConfigProvider"];
   #crossLineMapper: AdapterParams["crossLineMapper"];
   #colorLerper: AdapterParams["colorLerper"];

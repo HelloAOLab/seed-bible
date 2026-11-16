@@ -1,17 +1,19 @@
 import type { Piece } from "../../domain/models/canvas";
-import type { VersesBundleDataRepositoryPort } from "../ports/versesBundle";
-import type { VersesBundleAdapterPort } from "../ports/versesBundle";
 import type { VersesBundleInteractionServicePort } from "../ports/in/VersesBundleInteraction";
 import type { VersesBundleSelectionServicePort } from "../ports/in/VersesBundleSelection";
-import type { PaintPort } from "../ports/in/Paint";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+import type { LoggerPort } from "../ports/out/Logger";
+import type { PaintServicePort } from "../ports/in/Paint";
+import type { VersesBundlePort } from "../ports/out/VersesBundle";
+import type { VersesBundleDataRepositoryPort } from "../ports/out/VersesBundleDataRepository";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
   versesBundleDataRepositoryPort: VersesBundleDataRepositoryPort;
   versesBundleSelectionServicePort: VersesBundleSelectionServicePort;
-  versesBundleAdapterPort: VersesBundleAdapterPort;
-  paintPort: PaintPort;
+  versesBundleAdapterPort: VersesBundlePort;
+  paintPort: PaintServicePort;
+  loggerPort: LoggerPort;
 }
 
 export class VersesBundleInteractionService implements VersesBundleInteractionServicePort {
@@ -20,6 +22,7 @@ export class VersesBundleInteractionService implements VersesBundleInteractionSe
   #versesBundleSelectionServicePort: ServiceParams["versesBundleSelectionServicePort"];
   #versesBundleAdapterPort: ServiceParams["versesBundleAdapterPort"];
   #paintPort: ServiceParams["paintPort"];
+  #loggerPort: ServiceParams["loggerPort"];
 
   constructor({
     sequenceStateServicePort,
@@ -27,12 +30,14 @@ export class VersesBundleInteractionService implements VersesBundleInteractionSe
     versesBundleSelectionServicePort,
     versesBundleAdapterPort,
     paintPort,
+    loggerPort,
   }: ServiceParams) {
     this.#sequenceStateServicePort = sequenceStateServicePort;
     this.#versesBundleDataRepositoryPort = versesBundleDataRepositoryPort;
     this.#versesBundleSelectionServicePort = versesBundleSelectionServicePort;
     this.#versesBundleAdapterPort = versesBundleAdapterPort;
     this.#paintPort = paintPort;
+    this.#loggerPort = loggerPort;
   }
 
   handleBundleSelection(bundle: Piece<"VersesBundle">): void {
@@ -42,9 +47,10 @@ export class VersesBundleInteractionService implements VersesBundleInteractionSe
       this.#versesBundleDataRepositoryPort.getBundleData(bundle);
 
     if (!bundleData) {
-      throw new Error(
-        `VersesBundleInteractionService: bundleData not found at handleBundleSelection`
+      this.#loggerPort.error(
+        "VersesBundleInteractionService: bundleData not found at handleBundleSelection"
       );
+      return;
     }
 
     if (this.#paintPort.isActive) {
@@ -65,9 +71,10 @@ export class VersesBundleInteractionService implements VersesBundleInteractionSe
       this.#versesBundleDataRepositoryPort.getBundleData(bundle);
 
     if (!bundleData) {
-      throw new Error(
-        `VersesBundleInteractionService: bundleData not found at handleBundleFocusBegin`
+      this.#loggerPort.error(
+        "VersesBundleInteractionService: bundleData not found at handleBundleFocusBegin"
       );
+      return;
     }
 
     if (bundleData.isSelected || bundleData.isBeingDragged) return;
@@ -82,9 +89,10 @@ export class VersesBundleInteractionService implements VersesBundleInteractionSe
       this.#versesBundleDataRepositoryPort.getBundleData(bundle);
 
     if (!bundleData) {
-      throw new Error(
-        `VersesBundleInteractionService: bundleData not found at handleBundleFocusBegin`
+      this.#loggerPort.error(
+        "VersesBundleInteractionService: bundleData not found at handleBundleFocusEnd"
       );
+      return;
     }
 
     if (bundleData.isSelected || bundleData.isBeingDragged) return;

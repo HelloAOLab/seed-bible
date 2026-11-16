@@ -8,3 +8,7 @@
     display: none;
   }
 }
+
+.sb-embed-minimal .sb-tabs-sidebar {
+  display: none;
+}

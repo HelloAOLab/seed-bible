@@ -13,6 +13,7 @@ import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createBibleReadingExtensionManager } from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
 import { createPlaylistManager } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import { readingPlanDayPlaylist } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
@@ -137,6 +138,7 @@ function setup() {
   const tabs = {
     tabs: signal([tab]),
     selectedTabId: signal("tab-1"),
+    leaveStaticPage: () => commitToUrl(),
   } as any;
   const discover = {
     view: signal(null),
@@ -164,13 +166,17 @@ function setup() {
   );
 
   // What TabsManager does in the real app: each navigation writes the reading
-  // state's query params (including the playlist extension's `playlist` /
-  // `playlistStep`) back into the URL.
+  // state's query params back into the URL, at the path an extension asks
+  // for when one does (a saved playlist playing at
+  // `/{lang}/playlist/{locator}/{title}/{step}`).
   const commitToUrl = () => {
-    navigation.updateQueryParams(
-      readingState.getUrlQueryParams(navigation.currentUrl.peek()),
-      false
-    );
+    const query = readingState.getUrlQueryParams(navigation.currentUrl.peek());
+    const pathOverride = readingState.getUrlPathOverride();
+    if (pathOverride) {
+      navigation.updatePathAndQueryParams(pathOverride, query, false);
+    } else {
+      navigation.updateQueryParams(query, false);
+    }
   };
   const disposeNav = readingState.onNavigate(() => commitToUrl());
   commitToUrl();
@@ -197,17 +203,18 @@ function rangeItem(bookId: string, chapter: number, endChapter: number) {
   return { type: "bible-verse" as const, ref: { bookId, chapter, endChapter } };
 }
 
+/** A plan day's queue, built the way the reading plans pane builds it. */
 function planPlaylist(id: string, items: any[]) {
-  return {
-    id,
-    recordName: "record-1",
-    authorUserId: "author-1",
-    title: "My Plan",
-    description: null,
-    items,
-    createdAtMs: 1,
-    updatedAtMs: 1,
-  } as any;
+  return readingPlanDayPlaylist(
+    {
+      address: id,
+      title: "My Plan",
+      description: null,
+      heroImageUrl: null,
+      authorUserId: "author-1",
+    },
+    items
+  );
 }
 
 function position(readingState: any) {

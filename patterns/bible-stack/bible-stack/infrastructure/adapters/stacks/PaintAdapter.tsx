@@ -1,15 +1,15 @@
-import type { PaintAdapterPort } from "../../../application/ports/out/Paint";
 import type { PaintablePieceData } from "../../../domain/models/pieces";
 import { SetStrictTag } from "../../functions/casualos";
 import type { PieceMapper } from "../../mappers/PieceMapper";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
+import type { PaintPort } from "../../../application/ports/out/Paint";
 
 interface AdapterParams {
   pieceMapper: PieceMapper;
   visualStateRegistry: VisualStateRegistry;
 }
 
-export class PaintAdapter implements PaintAdapterPort {
+export class PaintAdapter implements PaintPort {
   #pieceMapper: AdapterParams["pieceMapper"];
   #visualStateRegistry: AdapterParams["visualStateRegistry"];
 

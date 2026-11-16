@@ -7,8 +7,6 @@ import type { BookInfoMapper } from "../../mappers/BookInfoMapper";
 import type { BookStackLayoutAdapter } from "./BookStackLayoutAdapter";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
-
-import type { LoggerPort } from "../../../application/ports/in/Logger";
 import type { BookSetupConfigProvider } from "../../config/bookSetup/BookSetupConfigProvider";
 import type { LayoutConfigurations } from "../../config/bookSetup/layouts";
 import type { HexString } from "../../../domain/models/commonTypes";
@@ -17,6 +15,7 @@ import {
   HexToRgb,
 } from "../../../domain/functions/colors";
 import type { PiecesConfigProvider } from "../../config/pieces/PiecesConfigProvider";
+import type { LoggerAdapter } from "../environment/LoggerAdapter";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -27,7 +26,7 @@ interface AdapterParams {
   visualStateRegistry: VisualStateRegistry;
   layoutConfigProvider: LayoutConfigProvider;
   bookSetupConfigProvider: BookSetupConfigProvider;
-  loggerPort: LoggerPort;
+  loggerPort: LoggerAdapter;
   piecesConfigProvider: PiecesConfigProvider;
 }
 

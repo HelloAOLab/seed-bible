@@ -1,9 +1,5 @@
-import {
-  AskIcon,
-  MaterialIcon,
-  SeedBibleIcon,
-  StopIcon,
-} from "../components/icons";
+import { AskIcon, MaterialIcon, SeedBibleIcon } from "../components/icons";
+import { CustomizableIcon } from "../components/CustomizableIcon/CustomizableIcon";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
@@ -11,10 +7,10 @@ import {
   DEFAULT_BOOK_ID,
   resolveTranslationUiLanguage,
   uiLocaleForDefaultTranslation,
-  hasAnyDiscoverResults,
   type BibleReadingState,
   type BibleSelectedVerse,
   type ReadingPosition,
+  getDiscoverPanelContent,
 } from "../managers/BibleReadingManager";
 import {
   buildReadingPath,
@@ -25,7 +21,7 @@ import { extractContentText } from "../managers/ChapterText";
 import type { NavigationManager } from "../managers/NavigationManager";
 import type { BibleDataManager, BookId } from "../managers/BibleDataManager";
 import { readInjectedConfig, type BrandingConfig } from "../app/appConfig";
-import type { PanePlacement, PanesManager } from "../managers/PanesManager";
+import type { PanesManager } from "../managers/PanesManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
   formatVerseSelection,
@@ -36,12 +32,14 @@ import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ChatsManager } from "./ChatsManager";
 import type { ModalManager } from "./ModalManager";
+import type { EmbedThemeChoice } from "./EmbedMode";
 import type { AppState } from "./SeedBibleStateManager";
 import type {
   ReadingPlan,
   ReadingPlansManager,
 } from "../managers/ReadingPlansManager";
 import {
+  forgetReadingPlansPaneOpener,
   ReadingPlansPane,
   ReadingPlansPaneActions,
   ReadingPlansPaneIcon,
@@ -59,12 +57,13 @@ import type { CasualOSManager } from "./OsManager";
 import type { LoginManager } from "./LoginManager";
 import type { UserGalleryManager } from "./UserGalleryManager";
 import { i18n, useI18n } from "../i18n";
-import {
-  FEATURE_KEY_READING_PLANS,
-  type FeaturesManager,
-} from "./FeaturesManager";
+import type { FeaturesManager } from "./FeaturesManager";
+import type { FriendsManager } from "./FriendsManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
+import type { SettingsManager } from "./SettingsManager";
+import type { ScriptureChapterLoader } from "../components/PlaylistItemInlinePreview/PlaylistItemInlinePreview";
+import { toShareableUrl } from "../app/publicLinks";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -98,6 +97,12 @@ export interface BibleTool<TContext> {
   title: TranslatableTitle;
   /** Icon renderer for the given tool context. */
   icon: BibleToolIcon<TContext>;
+  /**
+   * Whether this tool stays available in a partner-site embed
+   * (`?embed=minimal` or `?embed=true`). Defaults to false, so a tool is
+   * hidden there unless it opts in.
+   */
+  showInEmbedded?: boolean;
 }
 
 /**
@@ -117,7 +122,7 @@ export interface ManagedBibleToolItem<TContext> extends Omit<
   /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<TContext>;
   /** Optional action callback for item activation. */
-  onSelect?: (context: TContext) => void;
+  onSelect?: (context: TContext) => void | Promise<void>;
   /** Nested menu items are not supported for context menu entries. */
   getItems?: never;
 }
@@ -149,7 +154,7 @@ export interface ResolvedBibleToolItem extends Omit<
   /** Visibility state signal resolved for current context. */
   visible: ReadonlySignal<boolean>;
   /** Invoked when the user activates the menu item. */
-  onSelect: () => void;
+  onSelect: () => void | Promise<void>;
 }
 
 /** Window metrics provided to tools when available. */
@@ -188,6 +193,11 @@ export interface BibleToolContext {
   openSidebar: () => void;
   /** Opens the search interface. */
   openSearch: () => void;
+  /**
+   * Opens search, or closes it if it's already showing, as the toolbar's
+   * Search button does. Surfaces without it fall back to `openSearch`.
+   */
+  toggleSearch?: () => void;
   /** Opens the chat / cross-references floating panel. */
   openChat?: () => void;
   /** Opens the discover panel */
@@ -206,6 +216,9 @@ export interface BibleToolContext {
   /** Annotations manager, for creating/editing notes on selected verses. */
   annotations?: AnnotationsManager;
 
+  /** The signed-in user's friends, for the Reading Plans pane. */
+  friends?: FriendsManager;
+
   /** Features manager */
   features: FeaturesManager;
 
@@ -217,6 +230,13 @@ export interface BibleToolContext {
    * shared-session actions (create/share the live session) should guard on it.
    */
   app?: AppState;
+
+  /** Theme presets the share sheet's Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 
   /**
    * Navigation manager, for tools that build their own links. Only
@@ -302,7 +322,9 @@ export interface BibleReaderVerseToolbarTool extends ResolvedBibleTool {
   /** Visibility state signal resolved for current context. */
   visible: ReadonlySignal<boolean>;
   /** Invoked when the user activates the tool. */
-  onSelect: () => void;
+  onSelect: () => void | Promise<void>;
+  /** True when the action needs the selected verses to remain active. */
+  preserveSelection?: boolean;
   /** Optional context-menu items for this tool. */
   getItems?: () => ResolvedBibleToolItem[];
 }
@@ -316,8 +338,10 @@ export interface ManagedBibleVerseToolbarTool extends BibleTool<BibleToolContext
   isDisabled?: ToolPredicate<BibleToolContext>;
   /** Optional visibility predicate (boolean or signal). */
   isVisible?: ToolPredicate<BibleToolContext>;
+  /** True when the action needs the selected verses to remain active. */
+  preserveSelection?: boolean;
   /** Optional action callback for tool activation. Mutually exclusive with getItems(). */
-  onSelect?: (context: BibleToolContext) => void;
+  onSelect?: (context: BibleToolContext) => void | Promise<void>;
   /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
   getItems?: (context: BibleToolContext) => ManagedBibleVerseToolbarToolItem[];
 }
@@ -400,7 +424,7 @@ export type ManagedBibleBelowReaderToolbarToolItem =
 
 /**
  * Runtime context for the quick toolbar surface — the compact row of
- * actions shown at the top of the reader, beside the chapter bookmark
+ * actions shown at the top of the reader, beside the chapter save
  * button. Intentionally lean: quick tools are header-level chapter actions
  * and only need the active reading state (plus whichever manager a specific
  * tool's visibility/action depends on).
@@ -418,6 +442,9 @@ export interface QuickToolContext {
   annotations: AnnotationsManager;
 
   features: FeaturesManager;
+
+  settings: SettingsManager;
+  readingPlans: ReadingPlansManager;
 
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
@@ -443,12 +470,25 @@ export interface QuickToolContext {
    * toolbar tool.
    */
   app?: AppState;
+
+  /** Theme presets the share sheet's Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 }
 
 /** Fully resolved quick toolbar tool ready for rendering. */
 export interface BibleQuickToolbarTool extends ResolvedBibleTool {
   /** Optional class name for custom styling. */
   className?: string;
+  /**
+   * `"icon"` (the default) draws the tool as a round icon button. `"card"`
+   * draws a plain button sized to its icon, for a tool whose icon is wider
+   * than a glyph, like the "Now playing" card with the playlist title.
+   */
+  display?: "icon" | "card";
   /** Disabled signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility signal resolved for current context. */
@@ -466,6 +506,12 @@ export type ManagedBibleQuickToolbarToolItem =
 export interface ManagedBibleQuickToolbarTool extends BibleTool<QuickToolContext> {
   /** Optional class name for custom styling. */
   className?: string;
+  /**
+   * `"icon"` (the default) draws the tool as a round icon button. `"card"`
+   * draws a plain button sized to its icon, for a tool whose icon is wider
+   * than a glyph, like the "Now playing" card with the playlist title.
+   */
+  display?: "icon" | "card";
 
   /** Optional disabled predicate (boolean or signal). */
   isDisabled?: ToolPredicate<QuickToolContext>;
@@ -492,7 +538,7 @@ function validateToolActions(
   }
 }
 
-function resolveToolItems<TContext>(
+function resolveToolItems<TContext extends object>(
   getItems:
     | ((context: TContext) => ManagedBibleToolItem<TContext>[])
     | undefined,
@@ -519,7 +565,11 @@ function resolveToolItems<TContext>(
         title: item.title,
         icon: () => item.icon(context),
         disabled: resolveToolPredicate(item.isDisabled, context, false),
-        visible: resolveToolPredicate(item.isVisible, context, true),
+        visible: resolveToolVisibility(
+          item.showInEmbedded,
+          item.isVisible,
+          context
+        ),
         onSelect: () => item.onSelect?.(context),
       };
     });
@@ -541,6 +591,38 @@ function resolveToolPredicate<TContext>(
   }
 
   return result;
+}
+
+/**
+ * Whether the tool context is a compact partner-site embed. Contexts that
+ * don't carry app state are treated as the full app, so a surface that never
+ * forwards `app` keeps its current tools.
+ */
+function contextIsEmbedded(context: object): boolean {
+  const app = (
+    context as {
+      app?: { isMinimalEmbed?: { readonly value: boolean } };
+    }
+  ).app;
+  return app?.isMinimalEmbed?.value === true;
+}
+
+/**
+ * Visibility for a tool, with the embed allow-list applied.
+ *
+ * `showInEmbedded` defaults to false: in an embed the tool is hidden unless
+ * it opts in. Outside an embed the predicate is unchanged.
+ */
+function resolveToolVisibility<TContext extends object>(
+  showInEmbedded: boolean | undefined,
+  predicate: ToolPredicate<TContext> | undefined,
+  context: TContext
+): ReadonlySignal<boolean> {
+  const base = resolveToolPredicate(predicate, context, true);
+  if (showInEmbedded) {
+    return base;
+  }
+  return computed(() => !contextIsEmbedded(context) && base.value);
 }
 
 /**
@@ -657,7 +739,11 @@ function ChevronLeftIcon() {
 }
 
 function OpenSelectorIcon() {
-  return <SeedBibleIcon size={28} className="sb-open-selector-icon" />;
+  return (
+    <CustomizableIcon id="books" size={28} className="sb-open-selector-icon">
+      <SeedBibleIcon size={28} animated className="sb-open-selector-icon" />
+    </CustomizableIcon>
+  );
 }
 
 function ChevronRightIcon() {
@@ -676,8 +762,12 @@ function CopyVerseIcon() {
   return <MaterialIcon>content_copy</MaterialIcon>;
 }
 
-function ShareVerseIcon() {
-  return <MaterialIcon>share</MaterialIcon>;
+function ShareIcon() {
+  return (
+    <CustomizableIcon id="share">
+      <MaterialIcon>share</MaterialIcon>
+    </CustomizableIcon>
+  );
 }
 
 function ClearSelectionIcon() {
@@ -754,12 +844,6 @@ function openAskAiForSelectedVerses(
   chat.addParticipant(providerId);
   context.chats.selectChat(chat.id);
   context.openChat?.();
-  // Clearing the selection unmounts the mobile verse sheet under the finger.
-  // Defer so a retargeted pointerdown after that unmount cannot land "outside"
-  // the chat panel and dismiss the panel we just opened.
-  queueMicrotask(() => {
-    context.readingState.clearSelectedVerses();
-  });
 }
 
 function OpenInSelectorIcon() {
@@ -821,26 +905,36 @@ function NowPlayingIcon({
     t("untitled-playlist", { defaultValue: "Untitled playlist" });
   return (
     <span className="sb-now-playing-icon">
-      <h4 className="sb-now-playing-icon-title">{title}</h4>
+      <h4 className="sb-now-playing-icon-title" dir="auto">
+        {title}
+      </h4>
       {currentItem && (
-        <span>{playlistItemLabel(currentItem, t, resolveBookName)}</span>
+        <span dir="auto">
+          {playlistItemLabel(currentItem, t, resolveBookName)}
+        </span>
       )}
     </span>
   );
 }
+
+/**
+ * The quick tool showing the playing playlist and its current step. The phone
+ * reader shows it beside its back arrow rather than with the other tools.
+ */
+export const CURRENT_PLAYLIST_TOOL_ID = "current-playlist";
 
 function getDefaultQuickToolbarTools(
   branding?: BrandingConfig
 ): ManagedBibleQuickToolbarTool[] {
   const tools: ManagedBibleQuickToolbarTool[] = [
     {
-      id: "current-playlist",
+      id: CURRENT_PLAYLIST_TOOL_ID,
       priority: 0,
       title: {
         key: "current-playlist",
         defaultValue: "Current Playlist",
       },
-      className: "sb-quick-toolbar-current-playlist",
+      display: "card",
       icon: (c) => (
         <NowPlayingIcon playlists={c.playlists} readingState={c.readingState} />
       ),
@@ -858,33 +952,25 @@ function getDefaultQuickToolbarTools(
         key: "discover-content-panel",
         defaultValue: "Discover content",
       },
-      icon: (c) => (
-        <MaterialIcon
-          className={
-            c.readingState.discoverContentPanelInline.value
-              ? "sb-quick-tool-icon-active"
-              : undefined
-          }
-        >
-          explore
-        </MaterialIcon>
-      ),
-      isVisible: (c) => {
-        if (c.app?.isMobile?.value) {
-          return false;
-        }
-        if (hasAnyDiscoverResults(c.readingState)) {
-          return true;
-        }
-        const bookId = c.readingState.bookId.value;
-        const chapterNumber = c.readingState.chapterNumber.value;
-        if (!bookId || !chapterNumber) {
-          return false;
-        }
+      icon: (c) => {
+        const className = c.readingState.discoverContentPanelInline.value
+          ? "sb-quick-tool-icon-active"
+          : undefined;
         return (
-          c.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
-            .length > 0
+          <CustomizableIcon id="discover" className={className}>
+            <MaterialIcon className={className}>explore</MaterialIcon>
+          </CustomizableIcon>
         );
+      },
+      isVisible: (c) => {
+        if (
+          c.app?.isMobile?.value ||
+          c.app?.isDiscoverOpen?.value ||
+          !c.settings.settings.value.discoveredContent.showContent
+        ) {
+          return false;
+        }
+        return getDiscoverPanelContent(c.readingState, c.annotations).hasAny;
       },
       onSelect: (c) => {
         c.readingState.discoverContentPanelInline.value =
@@ -895,7 +981,7 @@ function getDefaultQuickToolbarTools(
       id: "share",
       priority: 100,
       title: { key: "share", defaultValue: "Share" },
-      icon: () => <MaterialIcon>share</MaterialIcon>,
+      icon: ShareIcon,
       // Header-level so Share stays visible instead of sitting in the bottom
       // toolbar (desktop) or More menu (mobile). Hidden on the
       // mobile-navigation-bar surface, which is reserved for the audio play
@@ -925,7 +1011,10 @@ function getDefaultQuickToolbarTools(
  * record, so play history can't offer to resume it (see `isRecordedPlaylist`).
  */
 export function readingPlanDayPlaylist(
-  plan: Pick<ReadingPlan, "address" | "title" | "description" | "heroImageUrl">,
+  plan: Pick<
+    ReadingPlan,
+    "address" | "title" | "description" | "heroImageUrl" | "authorUserId"
+  >,
   items: PlaylistItemData[]
 ): SimplePlaylist {
   return {
@@ -933,6 +1022,8 @@ export function readingPlanDayPlaylist(
     title: plan.title,
     description: plan.description,
     heroImageUrl: plan.heroImageUrl,
+    // So the player can say who made the plan.
+    authorUserId: plan.authorUserId,
     items,
   };
 }
@@ -941,8 +1032,12 @@ export interface OpenReadingPlansPaneOptions {
   readingPlans: ReadingPlansManager;
   readingState: BibleReadingState;
   panesManager: PanesManager;
-  modals?: ModalManager;
+  modals: ModalManager;
   playlists?: PlaylistManager;
+  /** Loads chapter text for the plan editor's inline scripture previews. */
+  bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
+  /** Lets the pane list plans from the user's friends. */
+  friends?: FriendsManager;
   /**
    * Passed straight through to the pane: the plan editor uses them to record
    * and reuse a plan's hero image. Optional there too, so a caller without
@@ -951,19 +1046,22 @@ export interface OpenReadingPlansPaneOptions {
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
   login?: Pick<LoginManager, "userId">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
+  toast?: (message: string) => void;
   /**
-   * Where the pane opens. Defaults to "side" — docked beside the reader, which
-   * is what the toolbar's Plans tool wants. The Profile screen passes
-   * "fullscreen" so tapping "All plans" replaces it rather than opening a
-   * panel behind it.
+   * Returns to the screen that opened the pane, from the plans list or from a
+   * plan that screen opened directly. Without it the list has no back button,
+   * which is right for a shared plan link: there's no screen to go back to.
    */
-  placement?: PanePlacement;
+  onBack?: () => void;
 }
 
+export const READING_PLANS_PANE_ID = "reading-plans-pane";
+
 /**
- * Opens the reading plans pane. Shared by the reader toolbar's Plans tool and
- * the Profile screen's plans card so the two land on the same pane, with the
- * same chrome and the same scripture/playback wiring.
+ * Opens the reading plans pane. Shared by shared plan links and the Profile and
+ * Your content screens so they all land on the same pane, with the same chrome
+ * and the same scripture/playback wiring. It docks beside the reader, like the
+ * playlist editor, so a plan being built can take verses picked in the reader.
  */
 export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
   const {
@@ -972,27 +1070,48 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
     panesManager,
     modals,
     playlists,
+    bibleData,
+    friends,
     os,
     login,
     gallery,
+    toast,
   } = options;
 
+  // Scripture without a pinned translation previews in the one being read.
+  const loadChapter: ScriptureChapterLoader | undefined = bibleData
+    ? (translationId, bookId, chapter) =>
+        bibleData.getTranslationBookChapter(
+          translationId ?? readingState.translationId.peek(),
+          bookId,
+          chapter
+        )
+    : undefined;
+
+  forgetReadingPlansPaneOpener();
   panesManager.openPane({
-    id: "reading-plans-pane",
-    placement: options.placement ?? "side",
+    id: READING_PLANS_PANE_ID,
+    placement: "side",
 
     // The pane's own header carries the plans chrome: a back button when
-    // the user has drilled into a plan or the create wizard, the plan's
-    // name as the title, and the new-plan button.
+    // the user has drilled into a plan or the create wizard (or came from
+    // another screen), the plan's name as the title, and the new-plan button.
     title: () => <ReadingPlansPaneTitle readingPlans={readingPlans} />,
     icon: () => <ReadingPlansPaneIcon />,
-    leading: () => <ReadingPlansPaneLeading readingPlans={readingPlans} />,
+    leading: () => (
+      <ReadingPlansPaneLeading
+        readingPlans={readingPlans}
+        onBack={options.onBack}
+      />
+    ),
     header: () => <ReadingPlansPaneActions readingPlans={readingPlans} />,
     component: () => (
       <ReadingPlansPane
         readingPlans={readingPlans}
+        friends={friends}
         books={readingState.translationBooks.value?.books ?? []}
         modals={modals}
+        loadChapter={loadChapter}
         os={os}
         login={login}
         gallery={gallery}
@@ -1016,9 +1135,11 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
             startIndex,
             // Reading plans reuse the playlist player but keep their own
             // progress records — don't also write playlist play history.
-            { history: false }
+            { history: false, openItem: true }
           );
         }}
+        toast={toast}
+        onBack={options.onBack}
       />
     ),
   });
@@ -1029,20 +1150,9 @@ function getDefaultToolbarTools(
 ): ManagedBibleToolbarTool[] {
   const tools: ManagedBibleToolbarTool[] = [
     {
-      id: "stop-playing",
-      priority: -1,
-      hideLabel: true,
-      title: { key: "stop", defaultValue: "Stop" },
-      icon: () => <StopIcon />,
-      isVisible: (context) => !!context.playlists?.playing?.value,
-      onSelect: (context) => {
-        context.playlists?.stopPlaying();
-      },
-      isControllable: false,
-    },
-    {
       id: "previous-chapter",
       priority: 0,
+      showInEmbedded: true,
       hideLabel: true,
       title: { key: "previous-chapter", defaultValue: "Previous Chapter" },
       icon: (context) =>
@@ -1101,6 +1211,7 @@ function getDefaultToolbarTools(
     {
       id: "open-selector",
       priority: 100,
+      showInEmbedded: true,
       title: { key: "books", defaultValue: "Books" },
       icon: OpenSelectorIcon,
       onSelect: (context) => {
@@ -1120,16 +1231,28 @@ function getDefaultToolbarTools(
       id: "open-search",
       priority: 110,
       title: { key: "search", defaultValue: "Search" },
-      icon: () => <MaterialIcon>search</MaterialIcon>,
+      icon: () => (
+        <CustomizableIcon id="search">
+          <MaterialIcon>search</MaterialIcon>
+        </CustomizableIcon>
+      ),
       onSelect: (context) => {
-        context.openSearch();
+        if (context.toggleSearch) {
+          context.toggleSearch();
+        } else {
+          context.openSearch();
+        }
       },
     },
     {
       id: "open-chat",
       priority: 120,
       title: { key: "chat", defaultValue: "Chat" },
-      icon: () => <MaterialIcon>chat_bubble_outline</MaterialIcon>,
+      icon: () => (
+        <CustomizableIcon id="chat">
+          <MaterialIcon>chat_bubble_outline</MaterialIcon>
+        </CustomizableIcon>
+      ),
       isVisible: (context) => {
         // Hide when there are no providers and no chats
         return (
@@ -1142,34 +1265,14 @@ function getDefaultToolbarTools(
       },
     },
     {
-      id: "open-plans",
-      priority: 115,
-      title: { key: "plans", defaultValue: "Plans" },
-      icon: () => <MaterialIcon>menu_book</MaterialIcon>,
-      isVisible: (context) =>
-        !!context.readingPlans &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS).value,
-      onSelect: (context) => {
-        if (!context.readingPlans) {
-          return;
-        }
-        openReadingPlansPane({
-          readingPlans: context.readingPlans,
-          readingState: context.readingState,
-          panesManager: context.panesManager,
-          modals: context.modals,
-          playlists: context.playlists,
-          os: context.os,
-          login: context.login,
-          gallery: context.gallery,
-        });
-      },
-    },
-    {
       id: "open-discover",
       priority: 120,
       title: { key: "discover", defaultValue: "Discover" },
-      icon: () => <MaterialIcon>explore</MaterialIcon>,
+      icon: () => (
+        <CustomizableIcon id="discover">
+          <MaterialIcon>explore</MaterialIcon>
+        </CustomizableIcon>
+      ),
       isVisible: (context) => !!context.openDiscover,
       onSelect: (context) => {
         if (!context.openDiscover) {
@@ -1181,6 +1284,7 @@ function getDefaultToolbarTools(
     {
       id: "next-chapter",
       priority: 1000,
+      showInEmbedded: true,
       hideLabel: true,
       title: { key: "next-chapter", defaultValue: "Next Chapter" },
       icon: (context) =>
@@ -1216,7 +1320,7 @@ function getDefaultToolbarTools(
           <NextItemIcon />
         ),
       isDisabled: (context) =>
-        !context.playlists?.playing?.value?.hasNext.value,
+        !context.playlists?.playing?.value?.canPressNext.value,
       isVisible: (context) => !!context.playlists?.playing?.value,
       onSelect: (context) => {
         context.playlists?.playing.value?.next();
@@ -1260,8 +1364,6 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
             ),
           ],
         };
-
-        context.readingState.clearSelectedVerses();
       },
     },
     {
@@ -1274,7 +1376,6 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       // how "Add to Playlist" follows `editingPlaylist`.
       isVisible: (context) =>
         !!context.readingPlans?.editingReadingPlan.value &&
-        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS) &&
         context.readingState.selectedVerses.value.length > 0,
       onSelect: async (context) => {
         const readingPlans = context.readingPlans;
@@ -1321,12 +1422,12 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
             session: draft.selectedSessionIndex + 1,
           })
         );
-        context.readingState.clearSelectedVerses();
       },
     },
     {
       id: "annotate-verse",
       priority: 150,
+      preserveSelection: true,
       title: { key: "note", defaultValue: "Note" },
       icon: () => <MaterialIcon>note_add</MaterialIcon>,
       isVisible: (context) =>
@@ -1376,28 +1477,29 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
     {
       id: "copy-verse",
       priority: 200,
+      showInEmbedded: true,
       title: { key: "copy-verse", defaultValue: "Copy" },
       icon: CopyVerseIcon,
       isVisible: (context) =>
         context.readingState.selectedVerses.value.length > 0,
       onSelect: async (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
-
         const verseTexts = formatSelectedVerses(context.readingState);
-
         try {
-          navigator.clipboard.writeText(verseTexts);
+          await navigator.clipboard.writeText(verseTexts);
           context.toast(i18n.t("copied", { defaultValue: "Copied" }));
         } catch (err) {
           console.error("Failed to copy verse:", err);
+          throw err;
         }
       },
     },
     {
       id: "share-verse",
       priority: 300,
+      showInEmbedded: true,
       title: { key: "share-verse", defaultValue: "Share" },
-      icon: ShareVerseIcon,
+      icon: ShareIcon,
       isVisible: (context) =>
         context.readingState.selectedVerses.value.length > 0,
       onSelect: (context) => {
@@ -1542,7 +1644,7 @@ export function getShareUrl(readingState: BibleReadingState) {
       }
     }
   }
-  return url;
+  return toShareableUrl(url);
 }
 
 /**
@@ -1555,6 +1657,12 @@ type ShareSheetContext = {
   app?: AppState;
   toast?: (message: string) => void;
   sharedSession?: BibleReadingSession | null;
+  /** Theme presets the Embed picker offers besides System. */
+  embedThemes?: { readonly value: readonly EmbedThemeChoice[] };
+  /**
+   * `recordName.id` of the customization on screen, kept on the embed URL.
+   */
+  customizationLocator?: { readonly value: string | null };
 };
 
 /**
@@ -1578,10 +1686,15 @@ export function openShareModal(
 
   const modalId = modals.openModal({
     title: { key: "share-sheet-title", defaultValue: "Share" },
+    mobileSheet: true,
     content: () => (
       <ShareModal
         app={app}
+        modals={modals}
         session={context.sharedSession ?? null}
+        shareUrl={shareUrl}
+        themes={context.embedThemes}
+        customizationLocator={context.customizationLocator}
         onClose={() => modals.closeModal(modalId)}
         onShareLink={() => {
           navigator.clipboard.writeText(shareUrl.toString());
@@ -1729,7 +1842,11 @@ export function createBibleToolsManager(
       title: tool.title,
       icon: () => tool.icon(context),
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
-      visible: resolveToolPredicate(tool.isVisible, context, true),
+      visible: resolveToolVisibility(
+        tool.showInEmbedded,
+        tool.isVisible,
+        context
+      ),
       href: resolveToolHref(tool.getHref, context),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
@@ -1771,8 +1888,13 @@ export function createBibleToolsManager(
       priority: resolveToolPriority(tool.priority, context),
       title: tool.title,
       icon: () => tool.icon(context),
+      preserveSelection: tool.preserveSelection,
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
-      visible: resolveToolPredicate(tool.isVisible, context, true),
+      visible: resolveToolVisibility(
+        tool.showInEmbedded,
+        tool.isVisible,
+        context
+      ),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
     }));
@@ -1808,7 +1930,11 @@ export function createBibleToolsManager(
       title: tool.title,
       icon: () => tool.icon(context),
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
-      visible: resolveToolPredicate(tool.isVisible, context, true),
+      visible: resolveToolVisibility(
+        tool.showInEmbedded,
+        tool.isVisible,
+        context
+      ),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
     }));
@@ -1843,7 +1969,11 @@ export function createBibleToolsManager(
       title: tool.title,
       icon: () => tool.icon(context),
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
-      visible: resolveToolPredicate(tool.isVisible, context, true),
+      visible: resolveToolVisibility(
+        tool.showInEmbedded,
+        tool.isVisible,
+        context
+      ),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
     }));
@@ -1872,10 +2002,15 @@ export function createBibleToolsManager(
       title: tool.title,
       icon: () => tool.icon(context),
       disabled: resolveToolPredicate(tool.isDisabled, context, false),
-      visible: resolveToolPredicate(tool.isVisible, context, true),
+      visible: resolveToolVisibility(
+        tool.showInEmbedded,
+        tool.isVisible,
+        context
+      ),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
       className: tool.className,
+      display: tool.display,
     }));
 
     return sortBy(tools, [(tool) => tool.priority]);

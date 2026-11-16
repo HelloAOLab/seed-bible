@@ -1,5 +1,5 @@
 import type { Piece } from "../../../domain/models/canvas";
 
-export interface LabelInteractionPort {
+export interface LabelInteractionServicePort {
   handleLabelSelected(transformer: Piece<"InfoLabelTransformer">): void;
 }

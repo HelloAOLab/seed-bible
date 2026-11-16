@@ -2,9 +2,12 @@
   flex: 1;
 }
 
+/* Dims the page behind the panel like a modal's backdrop
+   (`.sb-footnote-modal-overlay`); the overlay's background transition fades
+   it in and out. */
 .sb-selector-overlay.open {
   pointer-events: all;
-  /* background: rgba(0, 0, 0, 0.3); */
+  background: rgba(0, 0, 0, 0.45);
 }
 
 @media (max-width: 480px) {
@@ -18,20 +21,32 @@
   }
 }
 
+/* The selector takes the reader toolbar's colors. Its rules are written
+   against --sb-font-color / --sb-background, so the panel re-points those, and
+   the chapter buttons switch back to the page colors captured here on the
+   overlay, before the panel overrides them. */
+.sb-selector-overlay {
+  --sb-selector-page-font-color: var(--sb-font-color);
+  --sb-selector-page-background: var(--sb-background);
+}
+
 .sb-selector-panel {
+  --sb-font-color: var(--sb-reader-toolbar-font-color);
+  --sb-background: var(--sb-reader-toolbar-background);
+
   position: absolute;
   overflow: auto;
   padding: 1.125rem 1.25rem 1.25rem;
-  background: var(--sb-book-selector-background);
-  color: var(--sb-book-selector-font-color);
-  border-radius: 1rem;
+  background: var(--sb-reader-toolbar-background);
+  color: var(--sb-reader-toolbar-font-color);
+  border-radius: var(--sb-radius-xl);
   border: 1px solid var(--sb-divider-color);
 
   width: 100%;
   height: 100dvh;
   bottom: 0;
 
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--sb-shadow-modal);
   opacity: 0;
   transform: translateY(50%);
   transition: all 0.5s;
@@ -44,6 +59,32 @@
 .sb-selector-overlay.open .sb-selector-panel {
   opacity: 1;
   transform: translateY(0);
+}
+
+.sb-selector-panel .sb-bible-reader-mobile-header-title {
+  color: var(--sb-reader-toolbar-font-color);
+}
+
+/* Keep these overrides in this file, directly after the rules above, for the
+   same reason as the docked-pane override in PaneLayout.css: same selectors,
+   and cross-file order follows Vite's import traversal, not intent. */
+@media (max-width: 480px) {
+  .sb-selector-panel {
+    width: 100%;
+    height: 100dvh;
+    bottom: 0;
+    padding: 1rem 0 0.625rem;
+    border-radius: 0;
+    border: none;
+    transition: none;
+    transform: none;
+  }
+
+  /* Override the desktop translateY animation — on mobile the selector
+   * behaves like a tab swap (instant), not a sheet that slides up. */
+  .sb-selector-overlay.open .sb-selector-panel {
+    transform: none;
+  }
 }
 
 @media only screen and (min-width: 481px) {
@@ -79,7 +120,7 @@
 
 .sb-selector-close-button {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.25rem 0.5rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
@@ -95,8 +136,8 @@
 }
 
 .sb-selector-pane-picker-label {
-  font-size: 0.8125rem;
-  color: var(--sb-book-selector-font-color);
+  font-size: var(--sb-font-size-13);
+  color: var(--sb-reader-toolbar-font-color);
   opacity: 0.85;
 }
 
@@ -108,11 +149,11 @@
 
 .sb-selector-pane-chip {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   padding: 0.25rem 0.625rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -132,7 +173,7 @@
 .sb-selector-translation-select {
   min-width: 6rem;
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.375rem 0.5rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
@@ -141,7 +182,7 @@
 .sb-selector-search-input {
   flex: 1;
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.375rem 0.625rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
@@ -149,7 +190,7 @@
 
 .sb-selector-all-books {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.375rem 0.625rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
@@ -203,12 +244,12 @@
   font-weight: 400;
   cursor: pointer;
 
-  color: var(--sb-book-selector-font-color);
+  color: var(--sb-reader-toolbar-font-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  transition: all 0.3s;
+  transition: all var(--sb-duration-slow);
 }
 
 .sb-selector-book-button:hover {
@@ -232,7 +273,7 @@
 }
 
 .sb-selector-book-button > .material-symbols-outlined {
-  transition: all 0.3s;
+  transition: all var(--sb-duration-slow);
 }
 
 .sb-selector-book-button.expanded > .material-symbols-outlined {
@@ -248,7 +289,7 @@
   gap: 0.8125rem 0.625rem;
   padding: 0.125rem 0.25rem 0.5rem 0.25rem;
 
-  background-color: var(--sb-book-selector-background);
+  background-color: var(--sb-reader-toolbar-background);
 }
 
 .sb-selector-chapter-grid-inline {
@@ -258,7 +299,7 @@
 
 .sb-selector-chapter-button {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   background: var(--sb-secondary-color);
   width: 100%;
   cursor: pointer;
@@ -302,17 +343,16 @@
     border-right: none;
     padding-right: 0;
   }
-
-  .sb-pane-shell:not(.sb-pane-shell-detached) {
-    margin: 0;
-    border-radius: 0;
-    box-shadow: none;
-  }
 }
 
+/* Fills the panel below the header row: the panel's top padding (1.125rem),
+   the row's book search (2.75rem plus 0.375rem margins), the row's bottom
+   padding (0.9375rem) and the panel's borders. Any taller and the panel
+   itself overflows, so opening a book low in a column scrolls the whole panel
+   up. */
 .books-container {
   width: 100%;
-  height: calc(80dvh - 4.6875rem);
+  height: calc(80dvh - 5.5625rem - 2px);
   position: absolute;
   left: 0;
   padding: 0px 0.625rem;
@@ -323,12 +363,17 @@
 .testament-title {
   font-family: system-ui, sans-serif;
   font-weight: 700;
-  font-size: 1.125rem;
+  font-size: var(--sb-font-size-18);
   line-height: 1.1;
   padding-left: 0.75rem;
   padding-bottom: 0.5rem;
   display: block;
   color: var(--sb-font-color);
+}
+.testament-title--with-action {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
 }
 
 .books-item {
@@ -392,11 +437,11 @@
   -moz-appearance: none;
 
   padding: 0.5rem 2rem 0.5rem 0.875rem;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   height: 2.5rem;
 
-  border: 1px solid var(--sb-divider-color);
-  border-radius: 0.625rem;
+  border: none;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%)
     url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
     no-repeat right 10px center;
@@ -405,9 +450,6 @@
   cursor: pointer;
   outline: none;
   outline-width: 0px;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
   margin-right: 0;
   font-family: system-ui, sans-serif;
   color: var(--sb-font-color);
@@ -421,72 +463,33 @@
 }
 
 .dropdown-option {
-  background: var(--sb-book-selector-background);
+  background: var(--sb-reader-toolbar-background);
   color: var(--sb-font-color);
   padding: 0.5rem 0.75rem;
   cursor: pointer;
 }
 
-.searchbar {
-  border-radius: 0.625rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-  border: 1px solid var(--sb-divider-color);
-  padding: 0.375rem 0.75rem;
+/* The book search shares its row with the translation picker and the
+   testament dropdown. The wrapper also carries the tour's spotlight. */
+.sb-selector-book-search {
   width: 80%;
-  height: 2.5rem;
-  overflow: hidden;
-  color: var(--sb-font-color);
+  margin: 0.375rem 0;
 }
 
-.search-icon {
-  margin-right: 0.5rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-  font-size: 1.25rem;
-}
-
-.searchbar input {
-  border: none;
-  outline: none;
-  font-size: 0.875rem;
-  font-family: system-ui, sans-serif;
-  background: transparent;
-  color: var(--sb-font-color);
-}
-
-.searchbar input::placeholder {
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-}
-
-/* Desktop only (mobile search is left untouched): give the book/translation
-   search field a clearly defined boundary and breathing room so it's obvious
-   where the input begins and ends. */
-@media only screen and (min-width: 481px) {
-  .searchbar {
-    height: 2.75rem;
-    padding: 0.5rem 0.875rem;
-    margin: 0.375rem 0;
-    border: 1.5px solid
-      color-mix(in srgb, var(--sb-font-color), transparent 80%);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    transition:
-      border-color 0.15s ease,
-      box-shadow 0.15s ease;
-  }
-
-  .searchbar:focus-within {
-    border-color: var(--sb-primary-color);
-    box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--sb-primary-color), transparent 82%);
-  }
+/* The translation list's search sits in its compact header row. */
+.sb-selector-translation-search {
+  width: 100%;
+  min-height: 1.875rem;
+  height: 1.875rem;
 }
 
 .share-btn {
   border: none;
-  font-size: 1.125rem;
+  font-size: var(--sb-font-size-18);
   height: 1.5rem;
   width: 1.5rem;
   background: transparent;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.1875rem;
   color: var(--sb-font-color);
   cursor: pointer;
@@ -496,11 +499,46 @@
   background-color: rgba(1, 87, 155, 0.3);
 }
 
+.sb-translation-downloaded-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 0.3125rem 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--sb-radius-md);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  color: var(--sb-font-color);
+  font-family: system-ui, sans-serif;
+  font-size: var(--sb-font-size-14);
+}
+
+.sb-translation-downloaded-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.sb-translation-downloaded-filter-label .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-translation-downloaded-filter-show-all {
+  border: none;
+  background: transparent;
+  padding: 0.25rem 0.5rem;
+  color: var(--sb-primary-color);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .custom-translation-header {
   height: fit-content;
   width: 100%;
   padding: 0px 0.625rem;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   margin-top: 0.3125rem;
   font-weight: normal;
   color: var(--sb-font-color);
@@ -526,11 +564,11 @@
 .custom-tr-in {
   width: 100%;
   height: 2.5rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   padding-right: 5rem;
   border: none;
   padding-left: 0.3125rem;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   background-color: var(--sb-background);
   color: var(--sb-font-color);
   outline: none;
@@ -541,9 +579,9 @@
   right: 0.3125rem;
   width: 4.375rem;
   height: 1.875rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   background-color: var(--sb-primary-color);
-  color: var(--sb-font-color);
+  color: var(--sb-primary-font-color);
   border: none;
 }
 
@@ -556,14 +594,13 @@
 
 .sidebar-translation-selector {
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-  border: 1px solid var(--sb-divider-color);
   padding: 0 0.5rem 0 0.875rem;
   height: 2.5rem;
   min-width: 8.125rem;
   width: auto;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   color: var(--sb-font-color);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   cursor: pointer;
   display: flex;
@@ -572,7 +609,7 @@
 }
 
 .sidebar-selected-title {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: system-ui, sans-serif;
@@ -585,8 +622,8 @@
   background-color: var(--sb-secondary-color);
   color: var(--sb-font-color);
   padding: 0.625rem;
-  border-radius: 0.3125rem;
-  font-size: 0.875rem;
+  border-radius: var(--sb-radius-sm);
+  font-size: var(--sb-font-size-14);
   grid-column: 1 / -1;
   border: none;
   font-family: system-ui, sans-serif;
@@ -600,16 +637,15 @@
   cursor: pointer;
   width: 2.5rem;
   aspect-ratio: 1 / 1;
-  background-color: color-mix(
-    in srgb,
-    var(--sb-secondary-color) 50%,
-    transparent
-  );
-  border-radius: 0.3125rem;
+  /* Full strength and opaque: the section behind it is a shade of the reader
+     toolbar color, which a half-strength or see-through tint blends into (or,
+     on phones where the section is see-through, gets tinted by). */
+  background-color: var(--sb-secondary-color);
+  border-radius: var(--sb-radius-sm);
   color: var(--sb-font-color);
-  transition: all 0.3s;
+  transition: all var(--sb-duration-slow);
   position: relative;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .chapter-btn:hover {
@@ -632,6 +668,9 @@
 }
 
 .show-sidebar-chapter {
+  --sb-font-color: var(--sb-selector-page-font-color);
+  --sb-background: var(--sb-selector-page-background);
+
   display: grid;
   grid-template-columns: repeat(auto-fit, 2.5rem);
   justify-content: space-between;
@@ -640,9 +679,15 @@
   gap: 0.625rem;
   row-gap: 0.8125rem;
   flex-wrap: wrap;
-  background-color: var(--sb-background);
+  /* A light shade of the panel itself, so the section sits well on any
+     reader toolbar color. */
+  background-color: color-mix(
+    in srgb,
+    var(--sb-reader-toolbar-font-color) 5%,
+    var(--sb-reader-toolbar-background)
+  );
   padding: 0.5rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
 }
 
 .sidebar {
@@ -652,10 +697,10 @@
   padding: 0.625rem;
   transition: all 0.5s;
   scrollbar-width: none;
-  border-top-left-radius: 0.625rem;
-  border-bottom-left-radius: 0.625rem;
-  border-top-right-radius: 0.625rem;
-  border-bottom-right-radius: 0.625rem;
+  border-top-left-radius: var(--sb-radius-md);
+  border-bottom-left-radius: var(--sb-radius-md);
+  border-top-right-radius: var(--sb-radius-md);
+  border-bottom-right-radius: var(--sb-radius-md);
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
@@ -669,16 +714,16 @@
   justify-content: space-between;
   align-items: center;
   padding: 0px 0px 0.9375rem 0px;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   gap: 0.625rem;
 }
 
 .sidebar-select {
   width: 100%;
   height: fit-content;
-  font-size: 1.25rem;
+  font-size: var(--sb-font-size-20);
   font-weight: bold;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   outline: 0px;
   animation: fadeInAnimation2 ease 1s;
   animation-iteration-count: 1;
@@ -691,20 +736,45 @@
   scroll-behavior: smooth;
   overflow-y: auto;
   scrollbar-width: none;
-  transition: all 0.3s;
+  transition: all var(--sb-duration-slow);
   height: calc(80dvh - 3.125rem);
+}
+
+.sb-selector-status {
+  width: 100%;
+  margin: 0;
+  padding: 1.5rem 1rem;
+  box-sizing: border-box;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  font-size: var(--sb-font-size-15);
+  text-align: center;
+}
+
+.sb-selector-status p {
+  margin: 0;
+}
+
+.sb-selector-status--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.sb-selector-retry {
+  margin-top: 0.75rem;
 }
 
 .sidebar-itm {
   height: 2.75rem;
   width: 12.5rem;
   max-width: 100%;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   cursor: pointer;
   transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
-  font-size: 0.9375rem;
+    background-color var(--sb-duration-base) ease,
+    color var(--sb-duration-base) ease;
+  font-size: var(--sb-font-size-15);
   font-weight: 500;
   padding: 0.625rem 0.75rem;
   font-family: system-ui, sans-serif;
@@ -716,7 +786,7 @@
 .sidebar-itm .material-symbols-outlined {
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
   font-size: 1.375rem;
-  transition: transform 0.2s ease;
+  transition: transform var(--sb-duration-base) ease;
 }
 
 .sidebar-ghost-itm {
@@ -742,7 +812,7 @@
 
 .sidebar-selected-itm {
   color: var(--sb-primary-color);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   border-bottom-color: transparent;
   background-color: color-mix(
     in srgb,
@@ -790,7 +860,7 @@
 
 .upside-down {
   transform: rotate(180deg);
-  transition: transform 0.3s;
+  transition: transform var(--sb-duration-slow);
 }
 
 .modal-overlay {
@@ -801,8 +871,8 @@
 
 .modal {
   width: 23.4375rem;
-  background: var(--sb-book-selector-background);
-  border-radius: 0.5rem;
+  background: var(--sb-reader-toolbar-background);
+  border-radius: var(--sb-radius-md);
   box-shadow: 0 10px 20px var(--sb-detached-pane-toolbar-background);
   padding: 0.625rem 0.625rem 2.8125rem 0.625rem;
   z-index: 2;
@@ -815,20 +885,84 @@
   left: 11.5625rem;
   top: 6.25rem;
   width: 12.5rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- local stacking inside the Books panel */
   z-index: 1000;
   padding: 0.3125rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
 }
 
 .translationInfoModal {
   position: absolute;
   width: fit-content;
   max-width: 21.875rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- local stacking inside the Books panel */
   z-index: 1000;
   padding: 0.3125rem;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   word-wrap: break-word;
   overflow-wrap: break-word;
+}
+.apocrypha-info-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.sb-apocrypha-info-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.4);
+}
+/* Rendered beside .sb-selector-panel, not inside it, so it needs the same
+   switch to the reader toolbar colors. */
+.sb-apocrypha-info-overlay {
+  --sb-font-color: var(--sb-reader-toolbar-font-color);
+  --sb-background: var(--sb-reader-toolbar-background);
+
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 1rem 0.8rem 1rem 0.8rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- local stacking inside the Books panel */
+  z-index: 1000;
+  width: min(85vw, 35rem);
+  max-height: 80vh;
+  box-sizing: border-box;
+  background: var(--sb-reader-toolbar-background);
+  color: var(--sb-reader-toolbar-font-color);
+  border-radius: var(--sb-radius-md);
+  overflow-y: auto;
+}
+
+.sb-apocrypha-info {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sb-apocrypha-info-content {
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.sb-apocrypha-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: auto;
+  min-height: 0;
+  margin-bottom: 1rem;
+}
+
+.sb-apocrypha-info-title {
+  margin: 0;
+  line-height: 1.2;
 }
 
 /* ─── Offline translation downloads ──────────────────────────────────────── */
@@ -838,7 +972,7 @@
   height: 1.5rem;
   width: 1.5rem;
   background: transparent;
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.1875rem;
   color: var(--sb-font-color);
   cursor: pointer;
@@ -903,7 +1037,7 @@
   /* Ring thickness. Kept thin so three digits ("100") still fit inside. */
   inset: 0.125rem;
   border-radius: 50%;
-  background: var(--sb-book-selector-background);
+  background: var(--sb-reader-toolbar-background);
 }
 
 /*
@@ -949,20 +1083,20 @@
   height: fit-content;
   z-index: 1001;
   padding: 0.9375rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   color: var(--sb-font-color);
   font-family: "Satoshi", system-ui, sans-serif;
 }
 
 .sb-offline-delete-title {
   margin: 0 0 0.5rem 0;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
 }
 
 .sb-offline-delete-message {
   margin: 0 0 1rem 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.5;
 }
 
@@ -973,42 +1107,11 @@
   gap: 0.5rem;
 }
 
-.sb-offline-delete-cancel,
-.sb-offline-delete-confirm {
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.sb-offline-delete-cancel {
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-}
-
-.sb-offline-delete-cancel:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  color: var(--sb-font-color);
-}
-
-.sb-offline-delete-confirm {
-  background: #ef4444;
-  color: #ffffff;
-}
-
-.sb-offline-delete-confirm:hover {
-  background: #dc2626;
-}
-
 .filters-icon {
   height: 1.875rem;
   width: 1.875rem;
   background: var(--sb-background);
-  border-radius: 0.3125rem;
+  border-radius: var(--sb-radius-sm);
   padding: 0.125rem;
   cursor: pointer;
 }
@@ -1019,18 +1122,18 @@
 .footer {
   padding: 0.625rem;
   text-align: center;
-  color: #ff5722;
+  color: var(--sb-primary-color);
   font-weight: 500;
   cursor: pointer;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--sb-divider-color);
   position: absolute;
   width: 100%;
   left: 0;
   bottom: 0;
   height: fit-content;
-  background-color: var(--sb-book-selector-background);
-  border-bottom-right-radius: 0.625rem;
-  border-bottom-left-radius: 0.625rem;
+  background-color: var(--sb-reader-toolbar-background);
+  border-bottom-right-radius: var(--sb-radius-md);
+  border-bottom-left-radius: var(--sb-radius-md);
 }
 
 @media only screen and (max-width: 1200px) {
@@ -1049,7 +1152,7 @@
     left: calc(66.66% - 0.3125rem);
   }
 
-  .searchbar {
+  .sb-selector-book-search {
     width: 60%;
   }
 }
@@ -1058,10 +1161,6 @@
   .dropdown {
     /* display: none; */
     width: 62%;
-  }
-
-  .searchbar {
-    width: 80%;
   }
 
   .sidebar-translation-selector {
@@ -1073,7 +1172,7 @@
   }
 
   .sidebar-selected-title {
-    font-size: 1rem;
+    font-size: var(--sb-font-size-16);
     font-weight: bold;
   }
 
@@ -1139,7 +1238,7 @@
 
   .sidebar-itm {
     width: 100%;
-    font-size: 1rem;
+    font-size: var(--sb-font-size-16);
   }
 
   .chapter-btn {
@@ -1171,7 +1270,7 @@
   }
 
   .sidebar-select {
-    font-size: 1.125rem;
+    font-size: var(--sb-font-size-18);
     padding-left: 0px;
   }
 
@@ -1214,13 +1313,13 @@
         var(--sb-detached-pane-toolbar-background) 15%,
         transparent
       );
-    border-radius: 0.3125rem;
+    border-radius: var(--sb-radius-sm);
   }
 
   .translationInfoModal {
     width: 15.625rem;
     height: fit-content;
-    border-radius: 0.3125rem;
+    border-radius: var(--sb-radius-sm);
     box-shadow: 0 5px 10px
       color-mix(
         in srgb,
@@ -1239,7 +1338,7 @@
     left: 50%;
     width: calc(100% - 2.5rem);
     height: fit-content;
-    border-radius: 0.5rem;
+    border-radius: var(--sb-radius-md);
     box-shadow: 0 5px 10px
       color-mix(
         in srgb,
@@ -1251,80 +1350,6 @@
   .footer {
     bottom: -2.8125rem;
   }
-
-  .sb-select-modal-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 999;
-    background: rgba(0, 0, 0, 0.4);
-  }
-
-  .sb-select-modal {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: fit-content;
-    background: var(--sb-book-selector-background);
-    border-top-left-radius: 0.625rem;
-    border-top-right-radius: 0.625rem;
-    box-shadow: 0 -5px 10px
-      color-mix(
-        in srgb,
-        var(--sb-detached-pane-toolbar-background) 15%,
-        transparent
-      );
-    padding: 1.25rem 0.625rem;
-  }
-
-  .sb-select-modal-content {
-    padding: 0.625rem 1.5rem 1.875rem 1.5rem;
-    /* height: 100%; */
-    overflow-y: auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .sb-select-modal-title-icon {
-    display: flex;
-    font-size: 1.375rem;
-    color: var(--sb-primary-color);
-    /* padding: 10px; */
-    border-radius: 0.3125rem;
-    background: var(--sb-tertiary-color);
-    width: 2.8125rem;
-    height: 2.8125rem;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .sb-select-modal-title {
-    font-size: 1.5rem;
-    font-weight: 500;
-    color: var(--sb-font-color);
-    margin-left: 0.625rem;
-    text-align: center;
-  }
-
-  .sb-select-modal-actions {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 0.625rem;
-  }
-
-  .sb-select-modal-action-btn {
-    border: none;
-    padding: 0.625rem;
-    border-radius: 0.3125rem;
-    width: 40%;
-    justify-content: center;
-    gap: 0.625rem;
-    font-weight: 500;
-  }
 }
 
 /* BibleSelector's testament columns stack full-width on mobile. Migrated from
@@ -1334,4 +1359,10 @@
     width: 100%;
     color: var(--sb-font-color);
   }
+}
+
+/* The phone Books header's Tabs button: its icon is drawn at 20px. */
+.sb-icon-button.sb-selector-mobile-tabs {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.25rem;
 }

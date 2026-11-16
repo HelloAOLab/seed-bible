@@ -3,8 +3,10 @@ import {
   effect,
   signal,
   untracked,
+  type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
+import { debounce } from "es-toolkit";
 import type { BibleDataManager, BookId } from "./BibleDataManager";
 import {
   DEFAULT_UI_LANGUAGE,
@@ -12,7 +14,8 @@ import {
   parseReadingPath,
   stripBasePath,
 } from "./ReadingUrlPath";
-import { parseStaticPagePath } from "./StaticPagePath";
+import { isNonReadingPagePath } from "./StaticPagePath";
+import { parsePlaylistPagePath } from "./SharedPagePath";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { createChatsManager, type ChatSession } from "./ChatsManager";
 import {
@@ -23,7 +26,9 @@ import {
   resolveChapterInBook,
   uiLocaleForDefaultTranslation,
   type BibleReadingState,
+  type VerseDecoration,
   type InitialBibleReadingOptions,
+  type ReadingNavigationOptions,
   type TranslationWithLanguage,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
@@ -128,6 +133,13 @@ function getInitialFirstTabBookId(url: URL, basePath: string): string {
 // the selector; read here to restore it once the profile loads.
 export const PROFILE_TRANSLATION_ID = "translationId";
 
+/**
+ * How long the reader must stop scrolling before the offset is written to the
+ * current history entry. A scroll gesture fires continuously and browsers rate
+ * limit `replaceState`, so this debounces down to one write per gesture.
+ */
+const SCROLL_STAMP_DEBOUNCE_MS = 200;
+
 function getInitialTranslationId(
   url: URL,
   basePath: string,
@@ -222,7 +234,7 @@ function getInitialHighlightedVerses(url: URL): number[] {
  * "/en/AAB/john/3") is the modern form; the legacy `?translation=&book=&chapter=`
  * query params are still honored for links made before the path scheme.
  */
-function readInitialReadingParams(
+export function readInitialReadingParams(
   url: URL,
   basePath: string
 ): QueryReadingParams {
@@ -238,6 +250,7 @@ function readInitialReadingParams(
     bookId: parsed.bookId ?? parsed.rawBookSegment,
     chapter: parsed.chapter,
     specified: true,
+    languageOnly: false,
   };
 }
 
@@ -327,6 +340,15 @@ function createSharedChatOrNull(
 export interface TabsManager {
   defaultTranslation: TranslationWithLanguage;
 
+  /**
+   * The translation a reader would be on with nothing else to go by, for code
+   * that needs one while no tab is open: the profile's saved translation, then
+   * the active Customization's default, then the branding default, then the
+   * default for the current UI language. A deep link's translation only ever
+   * applies to the tab it opened, so it isn't considered.
+   */
+  preferredTranslationId: () => string;
+
   /** Ordered tab list used by the tabs UI. */
   tabs: Signal<ReaderTab[]>;
 
@@ -357,6 +379,38 @@ export interface TabsManager {
   ) => ReaderTab;
 
   /**
+   * Creates a reading state that belongs to no tab, for showing a second
+   * passage beside a tab's own (a playing playlist's compare step). It shows
+   * the user's highlights and notes like any tab, but nothing about it is
+   * saved or put in the URL. Whoever creates it disposes it.
+   */
+  createDetachedReadingState: (
+    initialReadingOptions?: InitialBibleReadingOptions
+  ) => BibleReadingState;
+
+  /**
+   * Shows `readingState` inside `tab`, beside the tab's own (a compare step's
+   * second passage), so the user can work in either. Selecting verses in one
+   * clears the other's selection, so only one is ever selected. Returns a
+   * function that ends this.
+   */
+  attachReadingState: (
+    tab: ReaderTab,
+    readingState: BibleReadingState
+  ) => () => void;
+
+  /**
+   * The reading state in `tab` the user is working in: the one shown beside
+   * the tab's own when they last selected verses or opened a footnote or note
+   * there, else the tab's own. What the verse toolbar, the note editor and
+   * Discover act on; chapter navigation stays with the tab's own.
+   */
+  activeReadingState: (tab: ReaderTab) => BibleReadingState;
+
+  /** Marks one of `tab`'s reading states as the one the user is working in. */
+  focusReadingState: (tab: ReaderTab, readingState: BibleReadingState) => void;
+
+  /**
    * Removes a tab by ID.
    *
    * If the tab is associated with a shared session, the session is disposed.
@@ -372,9 +426,9 @@ export interface TabsManager {
    * while sitting on a static page like "/en/about" — the escape hatch the
    * tab-focus effect itself uses internally, exposed for anything else that
    * needs to explicitly leave a static page (e.g. an About-page pane
-   * closing).
+   * closing). Replaces the current history entry unless `push`.
    */
-  leaveStaticPage: () => void;
+  leaveStaticPage: (options?: { push?: boolean }) => void;
 
   /**
    * Applies the tabs saved in `localStorage` by a previous visit, reconciled
@@ -434,7 +488,18 @@ export function createTabs(
   getAnnotationsManager?: () => AnnotationsManager | undefined,
   branding?: BrandingConfig,
   /** Passed through to `createBibleReadingState` — see its parameter of the same name. */
-  settingsManager?: SettingsManager
+  settingsManager?: SettingsManager,
+  /**
+   * The active Customization's chosen default translation (`CustomizationsManager.
+   * activeCustomization.value?.defaultTranslationId`), if any — the same override
+   * `branding?.defaultTranslationId` provides for a whole deployment, but scoped to
+   * whichever Customization is currently active and, unlike branding, only known
+   * asynchronously (a `?customization=...` link resolves over the network, and an
+   * editor draft can change at any time). Passed as a signal, not a plain value,
+   * so the effect below can apply it the moment it becomes available rather than
+   * only at tab-creation time, when it is essentially always still unset.
+   */
+  activeCustomizationDefaultTranslationId?: ReadonlySignal<string | undefined>
 ): TabsManager {
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
@@ -445,12 +510,14 @@ export function createTabs(
   // translationId path segment (even for the app's own default), so re-parsing
   // the *current* URL later can no longer tell "the visitor's own link named a
   // translation" apart from "the app defaulted it." Used by the profile-restore
-  // effect to avoid overriding an explicit deep link.
+  // effect to avoid overriding an explicit deep link. A non-empty `?lang=`
+  // counts too: it asks for that language's Bible (see `readQueryReadingParams`).
   const hadExplicitInitialUrlTranslation =
     parseReadingPath(navigation.initialUrl.pathname, navigation.basePath) !==
       null ||
     navigation.initialUrl.searchParams.has("translationId") ||
-    navigation.initialUrl.searchParams.has("translation");
+    navigation.initialUrl.searchParams.has("translation") ||
+    !!navigation.initialUrl.searchParams.get("lang");
   selfHealNonCanonicalPath(navigation);
 
   // Every startup read below comes from `initialUrl` — the frozen snapshot of the
@@ -586,10 +653,17 @@ export function createTabs(
     // the live `currentUrl`: by the time this runs the reader has echoed its own
     // position into the address bar in canonical form, which would make "the
     // visitor linked here" indistinguishable from "the app wrote this itself".
-    const query = readInitialReadingParams(
-      navigation.initialUrl,
-      navigation.basePath
-    );
+    const query: QueryReadingParams = navigation.initialUrl.searchParams.has(
+      "sessionId"
+    )
+      ? {
+          translationId: null,
+          bookId: null,
+          chapter: null,
+          specified: false,
+          languageOnly: false,
+        }
+      : readInitialReadingParams(navigation.initialUrl, navigation.basePath);
     const { tabs: descriptors, selectedTabId: restoredSelectedTabId } =
       reconcileStoredTabs(storedState, query, defaultTranslation.id);
 
@@ -679,6 +753,18 @@ export function createTabs(
       // infer from the language change alone.
       void i18nManager.changeLanguage(requestedLanguage);
     }
+    // A playlist's page or playing path names no chapter, so reading one here
+    // would send the reader to the default Genesis 1. While playing, the
+    // playlist moves the reader to the step itself; racing it with this aborts
+    // that load and strands the reader on Genesis 1.
+    if (
+      parsePlaylistPagePath(
+        navigation.currentUrl.value.pathname,
+        navigation.basePath
+      )
+    ) {
+      return;
+    }
     const readingState = selectedTab.readingState;
 
     const books = readingState.translationBooks.value?.books ?? [];
@@ -713,12 +799,16 @@ export function createTabs(
     });
     // This navigation originates from the URL, so pass `updateUrl: false` to
     // keep the reading state from pushing the URL we just read back onto the
-    // history stack.
+    // history stack. Restore the scroll this history entry remembered, if any
+    // — that's what makes Back land where the reader was, not at the heading.
     await readingState.selectTranslationAndChapter(
       requestedTranslation,
       requestedBookId,
       nextChapter,
-      { updateUrl: false }
+      {
+        updateUrl: false,
+        scrollPosition: navigation.getCurrentScrollPosition(),
+      }
     );
   };
 
@@ -751,7 +841,7 @@ export function createTabs(
    * position signals, so one navigation produces exactly one history entry.
    */
   const commitSelectedTabToUrl = (
-    options: { replace?: boolean; leaveStaticPage?: boolean } = {}
+    options: ReadingNavigationOptions & { leaveStaticPage?: boolean } = {}
   ) => {
     // Read all signals untracked: `getUrlQueryParams` touches bookId/chapter/
     // translation/extension signals, and this runs inside a signals effect. If
@@ -759,6 +849,13 @@ export function createTabs(
     // change and re-commit, defeating the prescriptive (one-write-per-nav)
     // design.
     untracked(() => {
+      const tab = selectedTab.peek();
+      // An extension that owns this tab's address (a playing playlist's
+      // `/{lang}/playlist/{locator}/{title}/{step}`) always gets it written,
+      // including over its own page's path: that path is the page the tab
+      // is showing.
+      const pathOverride = tab?.readingState.getUrlPathOverride() ?? null;
+
       // Never overwrite a static page's own URL (e.g. "/en/about") with the
       // reading position. This runs unconditionally on mount and on every
       // UI-language change (see the effects below); without this guard, the
@@ -771,8 +868,9 @@ export function createTabs(
       // this guard and take the user back to the reader — see the tab-focus
       // effect below, the only caller that ever passes it.
       if (
+        !pathOverride &&
         !options.leaveStaticPage &&
-        parseStaticPagePath(
+        isNonReadingPagePath(
           navigation.currentUrl.peek().pathname,
           navigation.basePath
         )
@@ -780,7 +878,17 @@ export function createTabs(
         return;
       }
 
-      const tab = selectedTab.peek();
+      if (
+        !options.replace &&
+        typeof options.departingScrollPosition === "number"
+      ) {
+        // Stamp the chapter we're leaving onto the current entry *before*
+        // pushing the destination, so Back can restore this offset.
+        navigation.stampCurrentState({
+          scrollPosition: options.departingScrollPosition,
+        });
+      }
+
       const nextQueryParams: Record<string, string | null> =
         tab?.readingState.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};
 
@@ -824,7 +932,9 @@ export function createTabs(
         ? dataManager.buildTranslationId(rawTranslationId)
         : null;
 
-      if (bookId && chapter && translationId) {
+      if (pathOverride) {
+        writeUrl(queryUpdate, options.replace, pathOverride);
+      } else if (bookId && chapter && translationId) {
         const pathname = buildReadingPath({
           language: i18nManager.language.peek(),
           translationId,
@@ -877,6 +987,38 @@ export function createTabs(
   effect(() => {
     void i18nManager.language.value;
     commitSelectedTabToUrl({ replace: true });
+  });
+
+  // Keep the current history entry's offset up to date while the reader
+  // scrolls, so Forward lands where they were just as Back does. A push stamps
+  // the entry it leaves (`departingScrollPosition`), but Back/Forward never
+  // re-stamps the entry it leaves: without this, going back and then forward
+  // again would return to the zero that entry was pushed with.
+  const stampScrollPosition = debounce((offset: number) => {
+    // A static page's entry is not showing this reading position, so it must
+    // not collect the reader's offset.
+    if (
+      isNonReadingPagePath(
+        navigation.currentUrl.peek().pathname,
+        navigation.basePath
+      )
+    ) {
+      return;
+    }
+    navigation.stampCurrentState({ scrollPosition: offset });
+  }, SCROLL_STAMP_DEBOUNCE_MS);
+
+  effect(() => {
+    const tab = selectedTab.value;
+    if (!tab) {
+      // Closing the last tab leaves nothing selected. Drop any stamp still
+      // waiting, or it lands the closed tab's offset on whatever entry is
+      // current when it fires.
+      stampScrollPosition.cancel();
+      return;
+    }
+
+    stampScrollPosition(tab.readingState.scrollPosition.value);
   });
 
   // Resolves once `readingState` is no longer in the middle of an operation
@@ -1048,6 +1190,59 @@ export function createTabs(
     });
   });
 
+  // Applies the active Customization's chosen default translation to the
+  // selected tab once it becomes known — a share link resolves it over the
+  // network, and an editor draft can set/change it at any time. Lower
+  // priority than a signed-in reader's own saved translation (the profile
+  // effect above always wins when present) and never fights an explicit
+  // deep link, matching how `branding?.defaultTranslationId` only ever
+  // stands in for Seed Bible's own per-language default.
+  // `appliedCustomizationDefaultTranslationId` guards against re-applying the
+  // same id after an unrelated draft edit (e.g. renaming the customization)
+  // changes `activeCustomization`'s identity without actually changing this
+  // field — which would otherwise clobber a translation the previewer picked
+  // manually in the meantime.
+  let appliedCustomizationDefaultTranslationId: string | null = null;
+  effect(() => {
+    const targetTranslationId = activeCustomizationDefaultTranslationId?.value;
+    if (!targetTranslationId) {
+      // No active customization default (deactivated, or cleared) — clear
+      // the guard too, so reactivating the same customization (or another
+      // with the same default) re-applies it instead of being mistaken for
+      // an unrelated identity churn of the still-active one.
+      appliedCustomizationDefaultTranslationId = null;
+      return;
+    }
+
+    untracked(() => {
+      if (hadExplicitInitialUrlTranslation) {
+        return;
+      }
+      if (appliedCustomizationDefaultTranslationId === targetTranslationId) {
+        return;
+      }
+
+      const savedTranslationId = getProfileConfigValue(
+        login.profile.value,
+        PROFILE_TRANSLATION_ID
+      );
+      if (typeof savedTranslationId === "string" && savedTranslationId) {
+        return;
+      }
+
+      const readingState = selectedTab.peek()?.readingState;
+      if (!readingState) {
+        return;
+      }
+      appliedCustomizationDefaultTranslationId = targetTranslationId;
+      if (readingState.translationId.peek() === targetTranslationId) {
+        return;
+      }
+
+      void applySavedTranslation(readingState, targetTranslationId);
+    });
+  });
+
   // Mirrors the selected tab's *verse selection* into `?verse` so it can be
   // shared/restored. This is selection state, not a navigation — consumers that
   // watch the URL for "the reader moved" must ignore this param (see the
@@ -1087,7 +1282,10 @@ export function createTabs(
     tabOptions?: { slotOnly?: boolean }
   ) => {
     const currentTabs = tabs.value;
-    const nextNumber = currentTabs.length + 1;
+    let nextNumber = currentTabs.length + 1;
+    while (currentTabs.some((tab) => tab.id === `tab-${nextNumber}`)) {
+      nextNumber++;
+    }
     const sharedSession = isBibleReadingSession(source) ? source : null;
     const sharedChat = createSharedChatOrNull(chatsManager, sharedSession);
     const readingState = !isBibleReadingSession(source) ? source : null;
@@ -1149,19 +1347,208 @@ export function createTabs(
    * needs to explicitly leave a static page (e.g. an About-page pane
    * closing).
    */
-  const leaveStaticPage = () => {
-    commitSelectedTabToUrl({ replace: true, leaveStaticPage: true });
+  const leaveStaticPage = (options: { push?: boolean } = {}) => {
+    commitSelectedTabToUrl({
+      replace: !options.push,
+      leaveStaticPage: true,
+    });
+  };
+
+  const createDetachedReadingState = (
+    initialReadingOptions?: InitialBibleReadingOptions
+  ): BibleReadingState =>
+    createBibleReadingState(
+      dataManager,
+      highlightsManager,
+      i18nManager,
+      initialReadingOptions,
+      // So its notes and other discovered content show for its passage.
+      discoverManager,
+      undefined,
+      getAnnotationsManager
+    );
+
+  const { attachReadingState, activeReadingState, focusReadingState } =
+    createAttachedReadingStates();
+
+  const preferredTranslationId = (): string => {
+    const savedTranslationId = getProfileConfigValue(
+      login.profile.peek(),
+      PROFILE_TRANSLATION_ID
+    );
+    if (typeof savedTranslationId === "string" && savedTranslationId) {
+      return savedTranslationId;
+    }
+    return (
+      activeCustomizationDefaultTranslationId?.peek() ||
+      branding?.defaultTranslationId ||
+      getDefaultTranslationForLanguage(i18nManager.language.peek()).id
+    );
   };
 
   return {
     defaultTranslation,
+    preferredTranslationId,
     tabs,
     selectedTabId,
     addTab,
+    createDetachedReadingState,
+    attachReadingState,
+    activeReadingState,
+    focusReadingState,
     removeTab,
     selectTab,
     leaveStaticPage,
     hydrateStoredTabs,
     isRestoringProfileTranslation: () => restoringProfileTranslation,
   };
+}
+
+/**
+ * Tracks reading states shown inside a tab beside its own (a compare step's
+ * second passage) and which of a tab's reading states the user is working in.
+ * The {@link TabsManager} methods of the same names.
+ */
+/**
+ * Copies `from`'s shareable decorations (those `include` lets through) into
+ * `to`, keeping them there as they change, and taking one out of `to` once
+ * it's gone from `from`. Decorations kept to this device (`localOnly`) stay
+ * where they are.
+ */
+function copyDecorations(
+  from: BibleReadingState,
+  to: BibleReadingState,
+  include: (decoration: VerseDecoration) => boolean
+): () => void {
+  // Copied from `from` as of the last pass.
+  const copied = new Set<string>();
+  const sameDecoration = (x: VerseDecoration, y: VerseDecoration) =>
+    JSON.stringify(x) === JSON.stringify(y);
+  return effect(() => {
+    const source = from.decorations.value.filter(
+      (d) => !d.localOnly && include(d)
+    );
+    untracked(() => {
+      const target = new Map(to.decorations.peek().map((d) => [d.id, d]));
+      for (const decoration of source) {
+        copied.add(decoration.id);
+        const existing = target.get(decoration.id);
+        if (existing && sameDecoration(existing, decoration)) {
+          continue;
+        }
+        const { id, bookId, chapterNumber, verses, ...input } = decoration;
+        to.decorateVerses(bookId, chapterNumber, verses, input, id);
+      }
+      const present = new Set(source.map((d) => d.id));
+      for (const id of [...copied]) {
+        if (!present.has(id)) {
+          copied.delete(id);
+          if (target.has(id)) {
+            to.removeDecoration(id);
+          }
+        }
+      }
+    });
+  });
+}
+
+/**
+ * Shares a reader shown beside a tab's own (a compare step's second passage)
+ * through the tab's shared session, which publishes only the tab's own
+ * decorations: everything decorated beside goes into the tab's own to be
+ * published, and what comes in for the chapter beside is copied out to it.
+ * Each reader draws only those for the chapter it shows.
+ */
+export function shareDecorationsWithTab(
+  own: BibleReadingState,
+  beside: BibleReadingState
+): () => void {
+  const stopOut = copyDecorations(beside, own, () => true);
+  const stopIn = copyDecorations(
+    own,
+    beside,
+    (d) =>
+      d.bookId === beside.bookId.value &&
+      d.chapterNumber === beside.chapterNumber.value
+  );
+  return () => {
+    stopOut();
+    stopIn();
+  };
+}
+
+export function createAttachedReadingStates(): Pick<
+  TabsManager,
+  "attachReadingState" | "activeReadingState" | "focusReadingState"
+> {
+  /** Reading states shown inside a tab beside its own, by tab id. */
+  const attachedReadingStates = signal<
+    ReadonlyMap<
+      string,
+      { readingState: BibleReadingState; active: Signal<boolean> }
+    >
+  >(new Map());
+
+  const attachReadingState = (
+    tab: ReaderTab,
+    readingState: BibleReadingState
+  ): (() => void) => {
+    const active = signal(false);
+    attachedReadingStates.value = new Map(attachedReadingStates.peek()).set(
+      tab.id,
+      { readingState, active }
+    );
+    const stopAttached = effect(() => {
+      if (readingState.selectedVerses.value.length > 0) {
+        untracked(() => {
+          active.value = true;
+          if (tab.readingState.selectedVerses.peek().length > 0) {
+            tab.readingState.clearSelectedVerses();
+          }
+        });
+      }
+    });
+    // A shared session publishes its tab's decorations, so the other reader's
+    // go out through it and peers' come back in to it.
+    const stopMirror = tab.sharedSession
+      ? shareDecorationsWithTab(tab.readingState, readingState)
+      : () => {};
+    const stopOwn = effect(() => {
+      if (tab.readingState.selectedVerses.value.length > 0) {
+        untracked(() => {
+          active.value = false;
+          if (readingState.selectedVerses.peek().length > 0) {
+            readingState.clearSelectedVerses();
+          }
+        });
+      }
+    });
+    return () => {
+      stopAttached();
+      stopOwn();
+      stopMirror();
+      const next = new Map(attachedReadingStates.peek());
+      if (next.get(tab.id)?.readingState === readingState) {
+        next.delete(tab.id);
+        attachedReadingStates.value = next;
+      }
+    };
+  };
+
+  const activeReadingState = (tab: ReaderTab): BibleReadingState => {
+    const attached = attachedReadingStates.value.get(tab.id);
+    return attached?.active.value ? attached.readingState : tab.readingState;
+  };
+
+  const focusReadingState = (
+    tab: ReaderTab,
+    readingState: BibleReadingState
+  ): void => {
+    const attached = attachedReadingStates.peek().get(tab.id);
+    if (attached) {
+      attached.active.value = attached.readingState === readingState;
+    }
+  };
+
+  return { attachReadingState, activeReadingState, focusReadingState };
 }

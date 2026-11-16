@@ -1,4 +1,12 @@
-import { batch, computed, effect, signal, untracked } from "@preact/signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  untracked,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import { PlaylistItem, type PlaylistItemData } from "./PlaylistManager";
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
@@ -14,6 +22,23 @@ import { CasualOSManager } from "./OsManager";
 import { v4 as uuid } from "uuid";
 import { captureEvent } from "./Utils";
 import { savePhotoToGallery } from "./UserGalleryManager";
+import type { NavigationManager } from "./NavigationManager";
+import type { TabsManager } from "./TabsManager";
+import { buildSharedPagePath, parseRecordLocator } from "./SharedPagePath";
+import {
+  createSharedPageLoader,
+  type SharedPage,
+  type SharedPageSeed,
+} from "./SharedPageLoader";
+import { DEFAULT_UI_LANGUAGE } from "./ReadingUrlPath";
+import {
+  createFriendContentFreshness,
+  isFriendContentStale,
+  SkippedFriendRead,
+  type FriendReadLimiter,
+} from "./friendContentFreshness";
+import { createLinkPreviewLoader } from "./linkPreview";
+import { toShareableUrl } from "../app/publicLinks";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -126,6 +151,41 @@ export const ReadingPlanSchema = ReadingPlanMetadataSchema.extend({
 });
 export type ReadingPlan = z.infer<typeof ReadingPlanSchema>;
 
+export function getReadingPlanLocator(plan: {
+  recordName: string;
+  address: string;
+}): string {
+  return `${plan.recordName}.${plan.address}`;
+}
+
+/**
+ * Builds a shareable reading-plan URL: the plan's own
+ * `/{lang}/reading-plan/{locator}/{title}` page, which shows the plan before
+ * the reader starts it.
+ */
+export function buildReadingPlanShareUrl(params: {
+  plan: Pick<ReadingPlan, "recordName" | "address" | "title">;
+  currentUrl: URL;
+  basePath: string;
+  language: string;
+}): string {
+  const { plan, currentUrl, basePath, language } = params;
+  return new URL(
+    `${basePath}${buildSharedPagePath({
+      kind: "readingPlan",
+      language,
+      locator: getReadingPlanLocator(plan),
+      title: plan.title,
+    })}`,
+    currentUrl
+  ).toString();
+}
+
+/** A shared `/{lang}/reading-plan/...` page's plan and its author. */
+export type ReadingPlanPage = SharedPage<ReadingPlan>;
+/** A completed reading-plan-page load, embedded by SSR — see `SharedPageSeed`. */
+export type ReadingPlanPageSeed = SharedPageSeed<ReadingPlan>;
+
 // ---------------------------------------------------------------------------
 // Progress
 //
@@ -191,6 +251,22 @@ export function formatReadingPlanId(
   return `rp_${recordName}_${address}`;
 }
 
+/**
+ * The most recent progress the user has for a plan, or null when they have
+ * never started it. A plan restarted from the Completed list has more than one
+ * progress record; the newest is the one they are reading with.
+ */
+export function latestReadingPlanProgress(
+  progresses: readonly ReadingPlanProgress[],
+  planId: string
+): ReadingPlanProgress | null {
+  return (
+    [...progresses]
+      .filter((p) => p.planId === planId)
+      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
+  );
+}
+
 /** Session/reading totals for analytics, counted as the plan currently stands. */
 function readingPlanCounts(plan: ReadingPlan): {
   totalSessions: number;
@@ -203,6 +279,29 @@ function readingPlanCounts(plan: ReadingPlan): {
       0
     ),
   };
+}
+
+/**
+ * Inverse of {@link formatReadingPlanId}. A plan's `address` is always
+ * `plan_${uuid()}` (see `startEditingReadingPlan`) and so always contains an
+ * underscore itself, while `recordName` is a CasualOS user id and never does
+ * — so splitting on the FIRST underscore after the `rp_` prefix, rather than
+ * a naive `split("_")`, is what correctly separates the two. Returns null for
+ * anything not shaped like a planId this function produces, rather than
+ * guessing.
+ */
+export function parseReadingPlanId(
+  planId: string
+): { recordName: string; address: string } | null {
+  if (!planId.startsWith("rp_")) {
+    return null;
+  }
+  const rest = planId.slice(3);
+  const sep = rest.indexOf("_");
+  if (sep === -1) {
+    return null;
+  }
+  return { recordName: rest.slice(0, sep), address: rest.slice(sep + 1) };
 }
 
 /**
@@ -1395,9 +1494,65 @@ function captureProgressCompletionEvents(
   }
 }
 
+export interface PlanMatch {
+  planKey: string;
+  planTitle: string | null;
+  progress: ReadingPlanProgress;
+  /** Sessions in this plan whose readings cover the current passage. */
+  sessions: ReadingPlanSession[];
+  /** True when this chapter is recorded as read everywhere it appears. */
+  allComplete: boolean;
+}
+
+/**
+ * Where the signed-in reader is in the plan a reading plan page shows, from
+ * their most recent progress on it.
+ */
+export interface ReadingPlanPageProgress {
+  progress: ReadingPlanProgress;
+  /** Counted in sessions when self-paced (no schedule), else in days. */
+  unit: "day" | "session";
+  /** The 1-based day or session to resume at; null once every one is done. */
+  resumeAt: number | null;
+}
+
+/**
+ * Average reading time, in whole minutes, of a plan's sessions that have
+ * something to read. Null when none do.
+ */
+export function averageSessionMinutes(
+  plan: Pick<ReadingPlan, "sessions">,
+  resolveBook?: (bookId: string) => BookLength | null | undefined
+): number | null {
+  const sessions = plan.sessions.filter((s) => s.readings.length > 0);
+  if (sessions.length === 0) {
+    return null;
+  }
+  const total = sessions.reduce(
+    (sum, session) =>
+      sum + estimateReadingMinutes(session.readings, resolveBook),
+    0
+  );
+  return Math.max(1, Math.round(total / sessions.length));
+}
+
 export function createReadingPlansManager(
   os: CasualOSManager,
-  login: LoginManager
+  login: LoginManager,
+  tabs: Pick<TabsManager, "tabs" | "selectedTabId">,
+  navigation: Pick<NavigationManager, "currentUrl" | "initialUrl" | "basePath">,
+  options: {
+    /** UI language for the links this hands out. */
+    language?: ReadonlySignal<string>;
+    /** A prior SSR render's reading-plan-page load, so it isn't re-fetched. */
+    initialReadingPlanPageSeed?: ReadingPlanPageSeed;
+    /**
+     * Limits how many friends' reads run at once. Shared with the other
+     * managers that read friends' content, so one limit covers them all.
+     * Omitted means a limit of this manager's own.
+     */
+    friendReads?: FriendReadLimiter;
+  } = {}
 ) {
   const userReadingPlanProgresses = signal<ReadingPlanProgress[]>([]);
   const userReadingPlans = signal<ReadingPlanMetadata[]>([]);
@@ -1457,6 +1612,76 @@ export function createReadingPlansManager(
     return parsed.data;
   };
 
+  /**
+   * Loads a plan from a `recordName.address` share locator and selects it.
+   * Returns null when the locator is malformed.
+   */
+  const loadByLocator = async (
+    locator: string
+  ): Promise<ReadingPlan | null> => {
+    const parsed = parseRecordLocator(locator);
+    if (!parsed) {
+      console.error("Invalid reading plan locator:", locator);
+      return null;
+    }
+    const plan = await getReadingPlan(parsed.recordName, parsed.address);
+    selectedReadingPlan.value = plan;
+    return plan;
+  };
+
+  /** Gets a shareable URL for the given plan. */
+  const getReadingPlanShareUrl = (plan: ReadingPlan): string =>
+    toShareableUrl(
+      buildReadingPlanShareUrl({
+        plan,
+        currentUrl: navigation.currentUrl.peek(),
+        basePath: navigation.basePath,
+        language: options.language?.peek() ?? DEFAULT_UI_LANGUAGE,
+      })
+    ).toString();
+
+  const readingPlanPageLoader = createSharedPageLoader({
+    os,
+    navigation,
+    kind: "readingPlan",
+    schema: ReadingPlanSchema,
+    authorUserId: (plan) => plan.authorUserId,
+    initialSeed: options.initialReadingPlanPageSeed,
+  });
+
+  /**
+   * The signed-in reader's place in the reading plan page's plan, or null
+   * when they haven't started it (or aren't signed in, or their progress is
+   * still loading).
+   */
+  const readingPlanPageProgress = computed<ReadingPlanPageProgress | null>(
+    () => {
+      const page = readingPlanPageLoader.page.value;
+      if (!page) {
+        return null;
+      }
+      const plan = page.item;
+      const progress = latestReadingPlanProgress(
+        userReadingPlanProgresses.value,
+        formatReadingPlanId(plan.recordName, plan.address)
+      );
+      if (!progress) {
+        return null;
+      }
+      const nowMs = Date.now();
+      const summary = summarizeCalendar(
+        getReadingCalendar(plan, progress, nowMs),
+        nowMs,
+        progress.timeZone
+      );
+      return {
+        progress,
+        unit: progress.selfPaced === true ? "session" : "day",
+        resumeAt: summary.nextDayNumber,
+      };
+    }
+  );
+
   // A plan lives in two records: the plan itself and a `_metadata` companion
   // the list reads so it can render without loading every plan's contents.
   // They are written one after the other rather than together, so a failure
@@ -1480,10 +1705,14 @@ export function createReadingPlansManager(
     });
   };
 
-  const loadReadingProgress = async (recordName: string) => {
+  const loadReadingProgress = async (
+    recordName: string,
+    onPage?: () => void
+  ) => {
     const result = await os.listAllDataByMarker(
       recordName,
-      "publicRead:readingPlanProgress"
+      "publicRead:readingPlanProgress",
+      onPage
     );
     const readings = result.items
       .map((record) => ReadingPlanProgressSchema.safeParse(record.data))
@@ -1579,6 +1808,295 @@ export function createReadingPlansManager(
     } catch (error) {
       console.error("Failed to load full reading plans:", error);
     }
+  };
+
+  // Cached reading-plan progress for an explicitly-named account, keyed by
+  // userId. Only ever populated via `getUserReadingPlanProgresses` (never for
+  // the signed-in user's own `userReadingPlanProgresses` above), so there's
+  // no risk of one account's data leaking into another's view on a sign-in
+  // switch — unlike `AnnotationsManager`/`HighlightsManager`, this cache
+  // never needs an `explicit`-flag/sweep pair to protect it. Mirrors
+  // `PlaylistManager`'s `getUserPlaylists` cache.
+  type UserReadingPlanProgressesEntry = {
+    data: Signal<ReadingPlanProgress[]>;
+    settled: boolean;
+    load: Promise<void> | null;
+    /** When the last successful read finished. */
+    loadedAtMs: number | null;
+    /** The last read failed, so coming back to it reads again right away. */
+    loadFailed: boolean;
+  };
+  const friendFreshness = createFriendContentFreshness(options.friendReads);
+  const userReadingPlanProgressEntries = new Map<
+    string,
+    UserReadingPlanProgressesEntry
+  >();
+  const userReadingPlanProgressViews = new Map<
+    string,
+    ReadonlySignal<ReadingPlanProgress[]>
+  >();
+
+  const getOrCreateUserReadingPlanProgressesEntry = (
+    userId: string
+  ): UserReadingPlanProgressesEntry => {
+    let entry = userReadingPlanProgressEntries.get(userId);
+    if (!entry) {
+      const created: UserReadingPlanProgressesEntry = {
+        data: friendFreshness.trackedSignal<ReadingPlanProgress[]>([], () =>
+          refreshUserReadingPlanProgresses(userId, created)
+        ),
+        settled: false,
+        load: null,
+        loadedAtMs: null,
+        loadFailed: false,
+      };
+      entry = created;
+      userReadingPlanProgressEntries.set(userId, entry);
+    }
+    return entry;
+  };
+
+  const loadUserReadingPlanProgresses = async (
+    userId: string,
+    entry: UserReadingPlanProgressesEntry
+  ): Promise<void> => {
+    try {
+      const loaded = await friendFreshness.read(entry.data, (progress) =>
+        loadReadingProgress(userId, progress)
+      );
+      // A load that settled the entry while this request was in the air
+      // holds newer progress than this response does.
+      if (entry.settled) {
+        return;
+      }
+      entry.data.value = loaded;
+      entry.loadedAtMs = Date.now();
+      entry.loadFailed = false;
+      entry.settled = true;
+    } catch (error) {
+      if (!(error instanceof SkippedFriendRead)) {
+        console.error(
+          `Failed to load reading plan progress for ${userId}:`,
+          error
+        );
+      }
+      if (!entry.settled) {
+        entry.loadFailed = true;
+        // A failed re-read keeps the progress already shown.
+        if (entry.loadedAtMs === null) {
+          entry.data.value = [];
+        }
+        entry.settled = true;
+      }
+    }
+  };
+
+  /**
+   * Reads a friend's reading plan progress again when it's back on screen or
+   * the app regains focus (see `createFriendContentFreshness`), keeping what's
+   * already shown until the new list arrives. A read that failed is tried
+   * again then too, however recent it was.
+   */
+  const refreshUserReadingPlanProgresses = (
+    userId: string,
+    entry: UserReadingPlanProgressesEntry
+  ): void => {
+    if (
+      entry.load ||
+      !(entry.loadFailed || isFriendContentStale(entry.loadedAtMs))
+    ) {
+      return;
+    }
+    entry.settled = false;
+    void ensureUserReadingPlanProgressesLoaded(userId, entry);
+  };
+
+  const ensureUserReadingPlanProgressesLoaded = (
+    userId: string,
+    entry: UserReadingPlanProgressesEntry
+  ): Promise<void> | null => {
+    if (entry.settled) {
+      return entry.load;
+    }
+    if (!entry.load) {
+      entry.load = loadUserReadingPlanProgresses(userId, entry).finally(() => {
+        entry.load = null;
+      });
+    }
+    return entry.load;
+  };
+
+  /**
+   * Reactive view of one account's reading-plan progress, pinned to the
+   * account passed in rather than whoever is signed in — this is how a
+   * friend's "what they're currently reading" is discovered. Progress
+   * is stored world-readable (`publicRead:readingPlanProgress`), so this
+   * works for any account and does not require being signed in. Each entry's
+   * `planId` can be resolved to actual plan content via `parseReadingPlanId`
+   * + `getReadingPlanByLocator`, regardless of who authored that plan. Loads
+   * lazily on first access, keyed by account.
+   */
+  const getUserReadingPlanProgresses = (
+    userId: string
+  ): ReadonlySignal<ReadingPlanProgress[]> => {
+    let view = userReadingPlanProgressViews.get(userId);
+    if (!view) {
+      view = computed(() => {
+        const entry = getOrCreateUserReadingPlanProgressesEntry(userId);
+        void ensureUserReadingPlanProgressesLoaded(userId, entry);
+        return entry.data.value;
+      });
+      userReadingPlanProgressViews.set(userId, view);
+    }
+
+    // Kick the load eagerly so callers see fresh data as soon as possible,
+    // without subscribing this call site to anything (the view itself is
+    // what a caller should read to react to it arriving).
+    void ensureUserReadingPlanProgressesLoaded(
+      userId,
+      getOrCreateUserReadingPlanProgressesEntry(userId)
+    );
+
+    return view;
+  };
+
+  // Cached plan content keyed by locator (`recordName`+`address`), not by
+  // account — a plan lives once regardless of how many friends are reading
+  // it, so this naturally dedups when two friends are on the same
+  // plan. Resolves to null on failure (deleted plan, bad locator) instead of
+  // throwing, so one bad reference is skipped in a feed rather than breaking
+  // it, and is read again once it's back on screen in case the failure was
+  // only a dropped connection.
+  type ReadingPlanLocatorEntry = {
+    data: Signal<ReadingPlan | null>;
+    settled: boolean;
+    load: Promise<void> | null;
+    loadFailed: boolean;
+  };
+  const readingPlanLocatorEntries = new Map<string, ReadingPlanLocatorEntry>();
+  const readingPlanLocatorViews = new Map<
+    string,
+    ReadonlySignal<ReadingPlan | null>
+  >();
+
+  const getOrCreateReadingPlanLocatorEntry = (
+    recordName: string,
+    address: string
+  ): ReadingPlanLocatorEntry => {
+    const planId = formatReadingPlanId(recordName, address);
+    let entry = readingPlanLocatorEntries.get(planId);
+    if (!entry) {
+      const created: ReadingPlanLocatorEntry = {
+        data: friendFreshness.trackedSignal<ReadingPlan | null>(null, () =>
+          retryReadingPlanByLocator(recordName, address, created)
+        ),
+        settled: false,
+        load: null,
+        loadFailed: false,
+      };
+      entry = created;
+      readingPlanLocatorEntries.set(planId, entry);
+    }
+    return entry;
+  };
+
+  const loadReadingPlanByLocator = async (
+    recordName: string,
+    address: string,
+    entry: ReadingPlanLocatorEntry
+  ): Promise<void> => {
+    try {
+      const plan = await friendFreshness.read(entry.data, () =>
+        getReadingPlan(recordName, address)
+      );
+      if (entry.settled) {
+        return;
+      }
+      entry.data.value = plan;
+      entry.settled = true;
+    } catch (error) {
+      if (!(error instanceof SkippedFriendRead)) {
+        console.error(
+          `Failed to load reading plan ${recordName}/${address}:`,
+          error
+        );
+      }
+      if (!entry.settled) {
+        entry.data.value = null;
+        entry.loadFailed = true;
+        entry.settled = true;
+      }
+    }
+  };
+
+  /**
+   * Reads a plan that failed to load again when it's back on screen or the
+   * app regains focus. A plan that loaded isn't read again: a friend's
+   * progress changes far more often than the plan it follows.
+   */
+  const retryReadingPlanByLocator = (
+    recordName: string,
+    address: string,
+    entry: ReadingPlanLocatorEntry
+  ): void => {
+    if (entry.load || !entry.loadFailed) {
+      return;
+    }
+    entry.settled = false;
+    entry.loadFailed = false;
+    void ensureReadingPlanByLocatorLoaded(recordName, address, entry);
+  };
+
+  const ensureReadingPlanByLocatorLoaded = (
+    recordName: string,
+    address: string,
+    entry: ReadingPlanLocatorEntry
+  ): Promise<void> | null => {
+    if (entry.settled) {
+      return entry.load;
+    }
+    if (!entry.load) {
+      entry.load = loadReadingPlanByLocator(recordName, address, entry).finally(
+        () => {
+          entry.load = null;
+        }
+      );
+    }
+    return entry.load;
+  };
+
+  /**
+   * Reactive view of a single plan's content, addressed directly by
+   * `{recordName, address}` rather than by an already-loaded metadata object
+   * — this is how a friend's progress (which only carries the opaque
+   * `planId`, parsed via `parseReadingPlanId`) is turned into an actual plan
+   * to render, whether that plan was authored by the friend
+   * themselves or by a third party. Resolves to `null` (never throws) for a
+   * plan that can't be loaded, so a bad reference degrades to "skip this row"
+   * rather than breaking the whole feed.
+   */
+  const getReadingPlanByLocator = (
+    recordName: string,
+    address: string
+  ): ReadonlySignal<ReadingPlan | null> => {
+    const planId = formatReadingPlanId(recordName, address);
+    let view = readingPlanLocatorViews.get(planId);
+    if (!view) {
+      view = computed(() => {
+        const entry = getOrCreateReadingPlanLocatorEntry(recordName, address);
+        void ensureReadingPlanByLocatorLoaded(recordName, address, entry);
+        return entry.data.value;
+      });
+      readingPlanLocatorViews.set(planId, view);
+    }
+
+    void ensureReadingPlanByLocatorLoaded(
+      recordName,
+      address,
+      getOrCreateReadingPlanLocatorEntry(recordName, address)
+    );
+
+    return view;
   };
 
   /**
@@ -1785,44 +2303,6 @@ export function createReadingPlansManager(
    * that happen to share the session (and aren't reachable from the reader at
    * all) are left alone. No-op when the progress isn't found.
    */
-  const setPassageCompleteForProgress = async (
-    progressId: string,
-    session: ReadingPlanSession,
-    bookId: string,
-    chapter: number,
-    complete: boolean
-  ) => {
-    const current = userReadingPlanProgresses.value.find(
-      (p) => p.id === progressId
-    );
-    if (!current) {
-      return;
-    }
-    const nowMs = Date.now();
-    let updated = current;
-    for (const reading of session.readings) {
-      const item = reading.item;
-      if (item.type !== "bible-verse" || item.ref.bookId !== bookId) {
-        continue;
-      }
-      if (!readingChapters(reading).includes(chapter)) {
-        continue;
-      }
-      updated = markReadingChapterCompleteInProgress(
-        updated,
-        session,
-        reading.id,
-        chapter,
-        nowMs,
-        complete
-      );
-    }
-    if (updated === current) {
-      return;
-    }
-    await applyProgressUpdate(updated);
-  };
-
   /**
    * Starts a plan for the signed-in user: creates a fresh progress, persists it,
    * and adds it to the list. Always creates a new record (a user may have more
@@ -1871,6 +2351,9 @@ export function createReadingPlansManager(
   // -------------------------------------------------------------------------
 
   const editingReadingPlan = signal<ReadingPlanDraft | null>(null);
+  const linkPreviews = createLinkPreviewLoader((url) =>
+    os.getLinkPreview(url, options.language?.peek())
+  );
   // Set while a draft save is in flight or scheduled, so the wizard can show
   // that the user's work is being kept without them having to press anything.
   const editingReadingPlanSaving = signal(false);
@@ -1985,12 +2468,51 @@ export function createReadingPlansManager(
   };
 
   /**
+   * Fetches a preview for a link reading in the draft and swaps it in when it
+   * arrives.
+   */
+  const requestReadingPreview = (reading: PlanReading) => {
+    linkPreviews.request(reading.item, (_original, previewed) => {
+      const draft = editingReadingPlan.peek();
+      // Checked up front, not left to the map below: `mutateDraft` would still
+      // bump `updatedAtMs` and schedule an autosave for a reading that's gone.
+      const stillThere = draft?.plan.sessions.some((session) =>
+        session.readings.some((r) => r.id === reading.id)
+      );
+      if (!stillThere) {
+        return;
+      }
+      mutateDraft((plan) => ({
+        ...plan,
+        sessions: plan.sessions.map((session) => ({
+          ...session,
+          readings: session.readings.map((r) =>
+            r.id === reading.id ? { ...r, item: previewed } : r
+          ),
+        })),
+      }));
+    });
+  };
+
+  /**
+   * Fetches previews for a reopened plan's links that don't have one — saved
+   * before previews existed, or whose preview missed the save cutoff — so the
+   * next save stores them.
+   */
+  const requestMissingReadingPreviews = (plan: ReadingPlan) => {
+    for (const session of plan.sessions) {
+      session.readings.forEach(requestReadingPreview);
+    }
+  };
+
+  /**
    * Opens a fresh draft with one empty session and the everyday cadence
    * pre-selected. Nothing is written yet — the first actual edit persists it,
    * so opening the wizard and immediately backing out leaves no empty plan
    * behind in the user's account.
    */
   const startEditingReadingPlan = () => {
+    linkPreviews.cancel();
     const userId = login.userId.value ?? "";
     const now = Date.now();
     editingReadingPlan.value = {
@@ -2008,6 +2530,7 @@ export function createReadingPlansManager(
 
   /** Reopens a saved draft so the author can carry on where they left off. */
   const resumeEditingReadingPlan = (plan: ReadingPlan) => {
+    linkPreviews.cancel();
     editingReadingPlan.value = {
       plan:
         plan.sessions.length > 0
@@ -2018,6 +2541,7 @@ export function createReadingPlansManager(
       isNew: true,
     };
     editingReadingPlanSaveError.value = false;
+    requestMissingReadingPreviews(plan);
   };
 
   /**
@@ -2028,6 +2552,7 @@ export function createReadingPlansManager(
    * out of the reader's list mid-edit.
    */
   const editExistingReadingPlan = (plan: ReadingPlan) => {
+    linkPreviews.cancel();
     editingReadingPlan.value = {
       plan:
         plan.sessions.length > 0
@@ -2038,6 +2563,7 @@ export function createReadingPlansManager(
       isNew: false,
     };
     editingReadingPlanSaveError.value = false;
+    requestMissingReadingPreviews(plan);
   };
 
   /**
@@ -2048,6 +2574,7 @@ export function createReadingPlansManager(
    * anything else) the author never saved.
    */
   const cancelEditingReadingPlan = () => {
+    linkPreviews.cancel();
     const draft = editingReadingPlan.peek();
     if (draft?.isNew && (draft.persisted || draftSaveTimer !== null)) {
       void flushDraftSave().then(() => {
@@ -2081,6 +2608,88 @@ export function createReadingPlansManager(
       throw new Error("Cannot upload a cover image while signed out.");
     }
     return (await savePhotoToGallery(os, userId, file)).url;
+  };
+
+  /**
+   * Takes a cover image off every plan of the user's that shows it, for when
+   * the image is being deleted from their gallery — the covers would otherwise
+   * point at a file that no longer exists. A plan whose contents are not
+   * cached at the listed version is fetched first, since the cover lives in
+   * the plan record as well as its metadata. The plans that save are updated
+   * locally even if another fails, and a failure is then re-thrown so the
+   * caller knows the image is still in use somewhere.
+   */
+  const clearHeroImage = async (url: string): Promise<void> => {
+    const affected = userReadingPlans.value.filter(
+      (meta) => meta.heroImageUrl === url
+    );
+    const results = await Promise.allSettled(
+      affected.map(async (meta) => {
+        const cached = fullReadingPlans
+          .peek()
+          .find(
+            (p) =>
+              p.recordName === meta.recordName && p.address === meta.address
+          );
+        const plan =
+          cached && cached.updatedAtMs >= meta.updatedAtMs
+            ? cached
+            : await getReadingPlan(meta.recordName, meta.address);
+        const next: ReadingPlan = {
+          ...plan,
+          heroImageUrl: null,
+          updatedAtMs: Date.now(),
+        };
+        await saveReadingPlan(next);
+        return next;
+      })
+    );
+    const updated = results.flatMap((result) =>
+      result.status === "fulfilled" ? [result.value] : []
+    );
+    if (updated.length > 0) {
+      const byId = new Map(
+        updated.map((p) => [formatReadingPlanId(p.recordName, p.address), p])
+      );
+      const replacement = (p: { recordName: string; address: string }) =>
+        byId.get(formatReadingPlanId(p.recordName, p.address));
+      batch(() => {
+        // Cached at the new version too, so the metadata change below does
+        // not send the full-plan sync back to the server for these.
+        const cachedIds = new Set(
+          fullReadingPlans.value.map((p) =>
+            formatReadingPlanId(p.recordName, p.address)
+          )
+        );
+        fullReadingPlans.value = [
+          ...fullReadingPlans.value.map((p) => replacement(p) ?? p),
+          ...updated.filter(
+            (p) => !cachedIds.has(formatReadingPlanId(p.recordName, p.address))
+          ),
+        ];
+        userReadingPlans.value = userReadingPlans.value.map((meta) => {
+          const next = replacement(meta);
+          return next ? omit(next, ["sessions"]) : meta;
+        });
+      });
+    }
+    // The draft being edited loses the cover too, or saving the edit would put
+    // the dead URL straight back.
+    if (editingReadingPlan.peek()?.plan.heroImageUrl === url) {
+      mutateDraft((plan) => ({ ...plan, heroImageUrl: null }));
+    }
+    const failed = results.find(
+      (result): result is PromiseRejectedResult => result.status === "rejected"
+    );
+    if (failed) {
+      console.error(
+        "Failed to remove a reading plan cover image:",
+        failed.reason
+      );
+      throw new Error(
+        "Failed to remove the cover image from every reading plan"
+      );
+    }
   };
 
   /** Points new readings at a session of the draft. */
@@ -2189,6 +2798,40 @@ export function createReadingPlansManager(
           : session
       ),
     }));
+    requestReadingPreview(reading);
+  };
+
+  /**
+   * Replaces a reading's item in place, keeping its id (and so its place in the
+   * session and any progress recorded against it).
+   */
+  const updateReadingInEditingPlan = (
+    sessionIndex: number,
+    readingId: string,
+    item: PlaylistItemData
+  ) => {
+    const draft = editingReadingPlan.peek();
+    const exists = draft?.plan.sessions[sessionIndex]?.readings.some(
+      (r) => r.id === readingId
+    );
+    if (!exists) {
+      return;
+    }
+    const reading: PlanReading = { id: readingId, item };
+    mutateDraft((plan) => ({
+      ...plan,
+      sessions: plan.sessions.map((session, i) =>
+        i === sessionIndex
+          ? {
+              ...session,
+              readings: session.readings.map((r) =>
+                r.id === readingId ? reading : r
+              ),
+            }
+          : session
+      ),
+    }));
+    requestReadingPreview(reading);
   };
 
   /** Removes a reading from a session of the draft. */
@@ -2215,6 +2858,8 @@ export function createReadingPlansManager(
    * no draft or it has no readings.
    */
   const finishEditingReadingPlan = async (): Promise<ReadingPlan | null> => {
+    await linkPreviews.settle();
+    linkPreviews.cancel();
     const draft = editingReadingPlan.peek();
     if (!draft || draftReadingCount(draft) === 0) {
       return null;
@@ -2325,6 +2970,7 @@ export function createReadingPlansManager(
    * and leaving the plan alone.
    */
   const discardEditingReadingPlan = async () => {
+    linkPreviews.cancel();
     const draft = editingReadingPlan.peek();
     if (draftSaveTimer !== null) {
       clearTimeout(draftSaveTimer);
@@ -2360,9 +3006,10 @@ export function createReadingPlansManager(
   return {
     fullReadingPlans,
     setSessionCompleteForProgress,
-    setPassageCompleteForProgress,
     userReadingPlanProgresses,
     userReadingPlans,
+    getUserReadingPlanProgresses,
+    getReadingPlanByLocator,
     selectedReadingPlan,
     selectReadingPlan,
     saveReadingPlan,
@@ -2386,13 +3033,25 @@ export function createReadingPlansManager(
     discardEditingReadingPlan,
     updateEditingReadingPlan,
     uploadHeroImage,
+    clearHeroImage,
     selectEditingPlanSession,
     setEditingPlanCadenceOptions,
     addSessionToEditingPlan,
     removeSessionFromEditingPlan,
     addReadingToEditingPlan,
     removeReadingFromEditingPlan,
+    updateReadingInEditingPlan,
     finishEditingReadingPlan,
+    loadByLocator,
+    getReadingPlanShareUrl,
+    readingPlanPage: readingPlanPageLoader.page,
+    readingPlanPageNotFound: readingPlanPageLoader.notFound,
+    readingPlanPageProgress,
+    readingPlanPageLoadFailed: readingPlanPageLoader.loadFailed,
+    readingPlanPageRetrying: readingPlanPageLoader.retrying,
+    retryReadingPlanPage: readingPlanPageLoader.retry,
+    initialReadingPlanPageLoadPromise: readingPlanPageLoader.initialLoadPromise,
+    getReadingPlanPageSeed: readingPlanPageLoader.getSeed,
   };
 }
 

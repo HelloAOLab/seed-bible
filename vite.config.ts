@@ -1,5 +1,5 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from "vite";
+import { defineConfig, searchForWorkspaceRoot } from "vite";
 import preact from "@preact/preset-vite";
 import path from "path";
 import { execSync } from "child_process";
@@ -13,9 +13,20 @@ import {
   type PrecacheManifestEntry,
   type ViteManifestChunk,
 } from "./script/lib/precacheManifest";
-import { extensionsPlugin } from "./script/lib/vite-plugin-extensions";
+import {
+  extensionsPlugin,
+  parseExtraExtensionDirs,
+} from "./script/lib/vite-plugin-extensions";
 import { htmlMetaAssetsPlugin } from "./script/lib/vite-plugin-html-meta-assets";
 import { inlineCriticalCssPlugin } from "./script/lib/vite-plugin-inline-critical-css";
+import { nativeShellPlugin } from "./script/lib/vite-plugin-native-shell";
+
+// Directories outside `packages/` that hold an out-of-tree extension under
+// active development (see `seed-bible-extension-scripts dev`). Empty by
+// default — every normal dev/build run is unaffected. When set, the dev
+// server's filesystem allowlist needs to include them too, since Vite checks
+// the *realpath* of any `/@fs/`-served file against `server.fs.allow`.
+const extraExtensionDirs = parseExtraExtensionDirs();
 
 // Each branch+version deployment gets its OWN copy of its hashed assets, so the
 // asset URL is namespaced by branch and build id: assets for a build live at
@@ -61,6 +72,15 @@ function withTrailingSlash(url: string): string {
 }
 
 const clientOutDir = "standalone/dist/client";
+
+// `vite build --mode native` builds the web bundle the Capacitor apps in
+// `mobile/` ship on the device. That page is loaded from the app's own local
+// server, so its assets must stay same-origin (never the CDN `base`), it skips
+// the service worker (the app files are already on disk, and iOS's WKWebView
+// can't run one from the app's custom scheme anyway), and its index.html has
+// no host server to fill it in, so the build does that instead.
+const NATIVE_MODE = "native";
+const nativeOutDir = "standalone/dist/native";
 
 /**
  * Reads this build's Vite client manifest, which is written before the service
@@ -122,12 +142,12 @@ function resolveGitCommit(): string {
 }
 const gitCommit = resolveGitCommit();
 
-export default defineConfig(({ isSsrBuild }) => ({
+export default defineConfig(({ isSsrBuild, mode }) => ({
   // SSR builds must not treat index.html as an input; only the client build
   // is an HTML/SPA build.
   appType: "custom",
   publicDir: false,
-  base: assetBaseUrl,
+  base: mode === NATIVE_MODE ? "/" : assetBaseUrl,
 
   define: {
     __APP_VERSION__: JSON.stringify(appVersion),
@@ -146,16 +166,17 @@ export default defineConfig(({ isSsrBuild }) => ({
     extensionsPlugin(),
     htmlMetaAssetsPlugin(),
     ...inlineCriticalCssPlugin(),
+    ...(mode === NATIVE_MODE ? nativeShellPlugin() : []),
     // Only the root build ships a service worker (see `isRootBuild` above).
-    ...(isRootBuild
+    ...(isRootBuild && mode !== NATIVE_MODE
       ? [
           VitePWA({
             registerType: "autoUpdate",
             // A hand-written worker (`standalone/sw.ts`) rather than a
             // generated one: the offline behaviour this deployment needs —
-            // StaleWhileRevalidate HTML keyed to a single shared shell entry
-            // (so a controlled navigation loads instantly with no network
-            // round-trip, refreshed in the background for next time), and
+            // per-URL HTML pages (a saved copy, or a content-free shell for
+            // people with a downloaded translation; network first for
+            // everyone else), and
             // asset caching scoped to this build's own chunks — can't be
             // expressed in `generateSW`'s declarative config.
             strategies: "injectManifest",
@@ -204,8 +225,12 @@ export default defineConfig(({ isSsrBuild }) => ({
               ],
               start_url: "/",
               display: "standalone",
-              background_color: "#FFFFFF",
-              theme_color: "#FFFFFF",
+              // Splash/default only. Keep in sync with LIGHT_THEME
+              // `background` in ThemeManager. The installed app's live
+              // status bar is driven by <meta name="theme-color">, which
+              // ThemeManager updates to the active theme.
+              background_color: "#f8fafc",
+              theme_color: "#f8fafc",
               icons: [
                 {
                   src: "https://favicon.ao.bot/pwa/pwa-192x192.png",
@@ -278,10 +303,16 @@ export default defineConfig(({ isSsrBuild }) => ({
           }),
         ]
       : []),
-    analyzer({
-      analyzerMode: "static",
-      openAnalyzer: false,
-    }),
+    // The report would otherwise be written into the native output and
+    // shipped inside the app.
+    ...(mode === NATIVE_MODE
+      ? []
+      : [
+          analyzer({
+            analyzerMode: "static",
+            openAnalyzer: false,
+          }),
+        ]),
   ],
 
   // Bundle all dependencies into the SSR output instead of leaving them as
@@ -309,17 +340,29 @@ export default defineConfig(({ isSsrBuild }) => ({
         outDir: "standalone/dist/server",
         emptyOutDir: true,
         sourcemap: true,
+        rolldownOptions: {
+          output: {
+            // Deploy uploads only `entry-ssr.js` (as `server.mjs`), and the S3
+            // host stages that one file in a temp dir. Any `import()` split
+            // into a sibling `assets/*.js` chunk (e.g. the UI locale files or
+            // the policy bundles) would be missing there, so inline them all.
+            // This makes the bundle several times larger, which is accepted
+            // over uploading and staging ~200 chunk files per build.
+            codeSplitting: false,
+          },
+        },
       }
     : {
         // Client build: hashed assets + a manifest mapping the entry to its
         // emitted files. The SSR entry reads the manifest to emit the correct
         // <script>/<link> tags (prefixed with the CDN host).
-        outDir: clientOutDir,
+        outDir: mode === NATIVE_MODE ? nativeOutDir : clientOutDir,
         emptyOutDir: true,
         // Also read back by `readCoreAssetFiles()` to work out which emitted
         // files the service worker should precache.
         manifest: true,
-        sourcemap: true,
+        // Maps would more than double the size of the native app download.
+        sourcemap: mode !== NATIVE_MODE,
         rolldownOptions: {
           // `@casual-simulation/aux-common` ships no `sideEffects` field, so
           // every module in it is assumed to have import-time side effects and
@@ -379,6 +422,43 @@ export default defineConfig(({ isSsrBuild }) => ({
       // instance. preact/compat ships useSyncExternalStore natively.
       "use-sync-external-store/shim/index.js": "preact/compat",
       "use-sync-external-store/shim": "preact/compat",
+      // Keeps every in-repo consumer of the "seed-bible" package specifier
+      // (the app, every `*-extension` package) resolving straight to source,
+      // matching the `@packages/seed-bible/seed-bible/*` alias below —
+      // otherwise this would follow `packages/seed-bible/package.json`'s
+      // `exports` (there for external, published consumption) to its built
+      // `dist/`, which needs a build step to stay in sync and would silently
+      // serve stale code after editing a manager/component. The more specific
+      // subpaths must come before the bare `seed-bible` entry: Vite's alias
+      // matching (`@rollup/plugin-alias`) treats a `find` string as matching
+      // itself *or* anything starting with `${find}/`, so a bare "seed-bible"
+      // listed first would also swallow "seed-bible/managers" etc. Mirrored
+      // in `tsconfig.json`'s `paths` for type resolution.
+      "seed-bible/managers": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/managers/index.tsx"
+      ),
+      "seed-bible/components": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/components/index.tsx"
+      ),
+      "seed-bible/i18n": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/i18n/index.tsx"
+      ),
+      // Before `seed-bible/extensions`, which would otherwise match it as a prefix.
+      "seed-bible/extensions/testing": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/extensions/testing.tsx"
+      ),
+      "seed-bible/extensions": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/extensions/index.tsx"
+      ),
+      "seed-bible": path.resolve(
+        __dirname,
+        "packages/seed-bible/seed-bible/app/api.tsx"
+      ),
       "@packages": path.resolve(__dirname, "packages"),
       // ...moduleAliases,
     },
@@ -439,5 +519,19 @@ export default defineConfig(({ isSsrBuild }) => ({
 
   server: {
     middlewareMode: true,
+    // Only set an explicit allowlist when there's actually an external
+    // extension directory to add — an explicit `fs.allow` replaces Vite's
+    // default rather than merging with it, so the default workspace root is
+    // included by hand here to avoid narrowing access for the common case.
+    ...(extraExtensionDirs.length > 0
+      ? {
+          fs: {
+            allow: [
+              searchForWorkspaceRoot(process.cwd()),
+              ...extraExtensionDirs,
+            ],
+          },
+        }
+      : {}),
   },
 }));

@@ -7,7 +7,7 @@
 .sb-profile-screen {
   --sb-profile-padding: 16px;
   --sb-profile-gap: 12px;
-  --sb-profile-card-radius: 16px;
+  --sb-profile-card-radius: var(--sb-radius-xl);
   --sb-profile-tile-size: 44px;
 
   /* Card fill, one step off the page background. */
@@ -16,11 +16,7 @@
     var(--sb-font-color),
     transparent 95%
   );
-  --sb-profile-border: color-mix(
-    in srgb,
-    var(--sb-font-color),
-    transparent 88%
-  );
+  --sb-profile-border: var(--sb-divider-color);
   /* Secondary text: dates, counts, row subtitles. */
   --sb-profile-muted: color-mix(in srgb, var(--sb-font-color), transparent 42%);
   --sb-profile-accent: var(--sb-primary-color);
@@ -51,6 +47,15 @@
   font-family: var(--sb-font-family);
 }
 
+/* The reader toolbar floats over the bottom of the pane, so leave room to
+   scroll "Log out" clear of it. On phones the pane already stops above it
+   (see PaneLayout.css). */
+@media (min-width: 481px) {
+  .sb-profile-screen {
+    padding-bottom: var(--sb-reader-bottom-inset, 6rem);
+  }
+}
+
 /* Wide viewports: the design is a phone layout, so cap it and centre. */
 .sb-profile-content {
   display: flex;
@@ -76,7 +81,7 @@
   gap: 12px;
   margin: 8px 35px 12px;
   padding: 24px;
-  border-radius: 24px;
+  border-radius: var(--sb-radius-2xl);
   background: var(--sb-profile-surface);
 }
 
@@ -123,7 +128,7 @@
 
 .sb-profile-name {
   margin: 0;
-  font-size: 1.375rem;
+  font-size: var(--sb-font-size-22);
   font-weight: 700;
   line-height: 1.2;
   text-align: center;
@@ -132,7 +137,8 @@
 
 /* -------------------------------------------------------------- plans card */
 
-.sb-profile-plans {
+.sb-profile-plans,
+.sb-profile-playlist-history {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -145,6 +151,10 @@
   text-align: start;
   font-family: inherit;
   color: inherit;
+  cursor: default;
+}
+
+.sb-profile-plans {
   cursor: pointer;
 }
 
@@ -157,7 +167,7 @@
 .sb-profile-plans-title {
   flex: 1;
   min-width: 0;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
 }
 
@@ -167,7 +177,7 @@
   gap: 4px;
   flex-shrink: 0;
   color: var(--sb-profile-accent);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
@@ -175,9 +185,48 @@
   font-size: 18px;
 }
 
+button.sb-profile-plans-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Continue is the lower half of the history card, so it stays part of that
+   card rather than reading as a second bordered control. */
+.sb-profile-playlist-continue {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: start;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-profile-playlist-continue-foot {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.sb-profile-playlist-continue-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--sb-profile-accent);
+  font-size: var(--sb-font-size-14);
+  font-weight: 700;
+}
+
 .sb-profile-progress {
   height: 6px;
-  border-radius: 3px;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-primary-color), transparent 80%);
   overflow: hidden;
 }
@@ -199,7 +248,7 @@
   min-width: 0;
   overflow: hidden;
   color: var(--sb-profile-muted);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -210,7 +259,7 @@
   gap: 4px;
   flex-shrink: 0;
   color: var(--sb-profile-accent);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -249,7 +298,7 @@
   flex-shrink: 0;
   width: var(--sb-profile-tile-size);
   height: var(--sb-profile-tile-size);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-profile-accent-tint);
   color: var(--sb-profile-accent);
 }
@@ -265,7 +314,7 @@
 
 .sb-profile-row-title {
   display: block;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
   line-height: 1.3;
 }
@@ -273,7 +322,7 @@
 .sb-profile-row-subtitle {
   display: block;
   color: var(--sb-profile-muted);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.4;
 }
 
@@ -284,82 +333,23 @@
 
 /* ------------------------------------------------------------------ logout */
 
-/*
- * Matches the account settings page's own sign-out button
- * (`.sb-account-signout-button`) so the two entry points to the same action
- * read as the same control. `--sb-profile-danger` is the #db1c1c that button
- * hardcodes. Only the top margin differs: the settings page separates it with
- * a rule above, which this card does not have.
- */
 .sb-profile-logout {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
   width: 100%;
   margin-top: 20px;
-  padding: 0.75rem 1rem;
-  border: 2px solid var(--sb-profile-danger);
-  border-radius: 0.375rem;
-  background: transparent;
-  color: var(--sb-profile-danger);
-  font-family: inherit;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.sb-profile-logout:hover {
-  background: color-mix(in srgb, var(--sb-profile-danger), transparent 92%);
-}
-
-/* Signed out: the identity card invites sign-in instead. */
-.sb-profile-signin {
-  padding: 13px 24px;
-  border: none;
-  border-radius: 999px;
-  background: var(--sb-profile-accent);
-  color: var(--sb-primary-font-color);
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .sb-profile-signin-hint {
   margin: 0;
   color: var(--sb-profile-muted);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   text-align: center;
 }
 
-/*
- * Logical inset: top-right under LTR, top-left under RTL, without a separate
- * rule for each direction.
- */
-.sb-profile-card-edit {
+/* Two classes, to outrank IconButton's own position. */
+.sb-icon-button.sb-profile-card-edit {
   position: absolute;
   top: 10px;
   inset-inline-end: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--sb-profile-muted);
-  cursor: pointer;
-}
-
-.sb-profile-card-edit:hover {
-  background: var(--sb-profile-border);
-  color: var(--sb-font-color);
-}
-
-.sb-profile-card-edit .material-symbols-outlined {
-  font-size: 20px;
 }
 
 .sb-profile-avatar-button {
@@ -380,17 +370,19 @@
   gap: 4px 10px;
   margin: 0;
   color: var(--sb-profile-muted);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   text-align: center;
   overflow-wrap: anywhere;
 }
 
+.sb-profile-email,
 .sb-profile-location {
   display: inline-flex;
   align-items: center;
   gap: 2px;
 }
 
+.sb-profile-email .material-symbols-outlined,
 .sb-profile-location .material-symbols-outlined {
   font-size: 16px;
 }
@@ -408,22 +400,11 @@
 
 .sb-profile-description {
   color: var(--sb-profile-muted);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   text-align: center;
 }
 
 /* ------------------------------------------------------------ edit profile */
-
-.sb-profile-pane-back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border: none;
-  background: none;
-  color: inherit;
-  cursor: pointer;
-}
 
 .sb-profile-field {
   display: flex;
@@ -432,7 +413,7 @@
 }
 
 .sb-profile-field-label {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 600;
 }
 
@@ -445,12 +426,12 @@
   width: 100%;
   padding: 12px 14px;
   border: 1px solid var(--sb-profile-border);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-reader-background);
   box-sizing: border-box;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
 }
 
 .sb-profile-field-textarea {
@@ -461,18 +442,4 @@
 .sb-profile-save {
   width: 100%;
   margin-top: 8px;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  background: var(--sb-profile-accent);
-  color: var(--sb-primary-font-color);
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-profile-save:disabled {
-  cursor: default;
-  opacity: 0.6;
 }

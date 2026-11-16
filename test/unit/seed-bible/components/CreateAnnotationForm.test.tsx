@@ -45,16 +45,22 @@ let fakeEditor:
     }
   | undefined;
 let latestOnEmptyChange: ((isEmpty: boolean) => void) | null = null;
+let latestOnModEnter: (() => void) | undefined;
+let latestAutofocus: unknown;
 
 vi.mock(
   "@packages/seed-bible/seed-bible/components/TipTapEditor/TipTapEditor",
   () => ({
     default: (props: {
       initialContent?: string;
+      autofocus?: unknown;
       onEditor: (editor: NonNullable<typeof fakeEditor>) => void;
       onEmptyChange: (isEmpty: boolean) => void;
+      onModEnter?: () => void;
     }) => {
       latestOnEmptyChange = props.onEmptyChange;
+      latestOnModEnter = props.onModEnter;
+      latestAutofocus = props.autofocus;
       if (!fakeEditor) {
         fakeEditor = {
           isEmpty: !props.initialContent,
@@ -80,6 +86,11 @@ function typeIntoEditor() {
  */
 async function flushLazyLoad() {
   await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+async function flushSave() {
+  await Promise.resolve();
+  await Promise.resolve();
 }
 
 function createAnnotation(overrides: Partial<Annotation> = {}): Annotation {
@@ -126,7 +137,8 @@ function createChapterData(
 }
 
 function createMockTabsManager(
-  chapterData: TranslationBookChapter | null = null
+  chapterData: TranslationBookChapter | null = null,
+  translationBooks: { books: { id: string; name: string }[] } | null = null
 ): TabsManager {
   return {
     tabs: signal(
@@ -134,7 +146,10 @@ function createMockTabsManager(
         ? [
             {
               id: "tab-1",
-              readingState: { chapterData: signal(chapterData) },
+              readingState: {
+                chapterData: signal(chapterData),
+                translationBooks: signal(translationBooks),
+              },
             },
           ]
         : []
@@ -151,6 +166,8 @@ describe("CreateAnnotationForm", () => {
     document.body.appendChild(container);
     fakeEditor = undefined;
     latestOnEmptyChange = null;
+    latestOnModEnter = undefined;
+    latestAutofocus = undefined;
   });
 
   afterEach(() => {
@@ -165,7 +182,12 @@ describe("CreateAnnotationForm", () => {
 
     await act(async () => {
       render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={vi.fn()}
+        />,
         container
       );
       await flushLazyLoad();
@@ -174,13 +196,124 @@ describe("CreateAnnotationForm", () => {
     expect(container.innerHTML).toBe("");
   });
 
+  describe("header", () => {
+    async function renderForm(
+      editing: Annotation,
+      tabs = createMockTabsManager(
+        createChapterData({ chapterNumber: editing.chapterNumber })
+      ),
+      onClose: () => void = vi.fn()
+    ) {
+      const mock = createMockAnnotationsManager(editing);
+      await act(async () => {
+        render(
+          <CreateAnnotationForm
+            annotations={mock.annotations}
+            tabs={tabs}
+            toast={vi.fn()}
+            onClose={onClose}
+          />,
+          container
+        );
+        await flushLazyLoad();
+      });
+      return mock;
+    }
+
+    function headerTitle() {
+      return container.querySelector(
+        ".sb-discover-panel-header .sb-discover-title"
+      )?.textContent;
+    }
+
+    it("shows 'Annotate {book} {chapter}' when no verses are selected", async () => {
+      await renderForm(createAnnotation({ chapterNumber: 3 }));
+
+      expect(headerTitle()).toBe("Annotate Genesis 3");
+    });
+
+    it("shows 'Annotate {book} {chapter}:{verse}' when a single verse is selected", async () => {
+      await renderForm(createAnnotation({ chapterNumber: 3, verseNumber: 5 }));
+
+      expect(headerTitle()).toBe("Annotate Genesis 3:5");
+    });
+
+    it("shows 'Annotate {book} {chapter}:{verse}-{endVerse}' when a range is selected", async () => {
+      await renderForm(
+        createAnnotation({
+          chapterNumber: 3,
+          verseNumber: 3,
+          endVerseNumber: 5,
+        })
+      );
+
+      expect(headerTitle()).toBe("Annotate Genesis 3:3-5");
+    });
+
+    it("shows a range plus a non-contiguous verse when the selection has a gap", async () => {
+      await renderForm(
+        createAnnotation({
+          chapterNumber: 3,
+          verseNumber: 3,
+          endVerseNumber: 7,
+          verseNumbers: [3, 4, 5, 7],
+        })
+      );
+
+      expect(headerTitle()).toBe("Annotate Genesis 3:3-5,7");
+    });
+
+    it("names the book from the translation's book list while the chapter is still downloading", async () => {
+      // The reader has moved on to John 5, but its loaded chapter is still
+      // the Genesis 1 it just left.
+      await renderForm(
+        createAnnotation({ bookId: "JHN", chapterNumber: 5 }),
+        createMockTabsManager(createChapterData(), {
+          books: [{ id: "JHN", name: "John" }],
+        })
+      );
+
+      expect(headerTitle()).toBe("Annotate John 5");
+    });
+
+    it("goes back from the back button", async () => {
+      const { cancelEditingAnnotation } = await renderForm(createAnnotation());
+
+      act(() => {
+        container
+          .querySelector(".sb-discover-panel-header .sb-icon-button")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(cancelEditingAnnotation).toHaveBeenCalledTimes(1);
+    });
+
+    it("closes the pane from the close button", async () => {
+      const onClose = vi.fn();
+      await renderForm(createAnnotation(), undefined, onClose);
+
+      act(() => {
+        container
+          .querySelector(".sb-discover-panel-header-close")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("disables Save while the editor is empty, and enables it once typed", async () => {
     const { annotations } = createMockAnnotationsManager(createAnnotation());
     const tabs = createMockTabsManager();
 
     await act(async () => {
       render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={vi.fn()}
+        />,
         container
       );
       await flushLazyLoad();
@@ -201,10 +334,16 @@ describe("CreateAnnotationForm", () => {
     const { annotations, saveEditingAnnotation } =
       createMockAnnotationsManager(createAnnotation());
     const tabs = createMockTabsManager();
+    const toast = vi.fn();
 
     await act(async () => {
       render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={toast}
+        />,
         container
       );
       await flushLazyLoad();
@@ -219,14 +358,14 @@ describe("CreateAnnotationForm", () => {
     ) as HTMLButtonElement;
     await act(async () => {
       saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      await Promise.resolve();
-      await Promise.resolve();
+      await flushSave();
     });
 
     expect(saveEditingAnnotation).toHaveBeenCalledTimes(1);
     expect(annotations.editingAnnotation.value?.data.html).toBe(
       "<p>Great verse</p>"
     );
+    expect(toast).toHaveBeenCalledWith("Annotation saved");
   });
 
   it("Cancel calls cancelEditingAnnotation", async () => {
@@ -236,7 +375,12 @@ describe("CreateAnnotationForm", () => {
 
     await act(async () => {
       render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={vi.fn()}
+        />,
         container
       );
       await flushLazyLoad();
@@ -260,7 +404,12 @@ describe("CreateAnnotationForm", () => {
 
     await act(async () => {
       render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={vi.fn()}
+        />,
         container
       );
       await flushLazyLoad();
@@ -282,7 +431,12 @@ describe("CreateAnnotationForm", () => {
 
     await act(async () => {
       render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={vi.fn()}
+        />,
         container
       );
       await flushLazyLoad();
@@ -302,12 +456,230 @@ describe("CreateAnnotationForm", () => {
 
     await act(async () => {
       render(
-        <CreateAnnotationForm annotations={annotations} tabs={tabs} />,
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={vi.fn()}
+        />,
         container
       );
       await flushLazyLoad();
     });
 
     expect(container.querySelector(".sb-annotation-verse-quote")).toBeNull();
+  });
+
+  it("Cmd/Ctrl+Enter saves the annotation the same way the Save button does", async () => {
+    const { annotations, saveEditingAnnotation } =
+      createMockAnnotationsManager(createAnnotation());
+    const tabs = createMockTabsManager();
+    const toast = vi.fn();
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={toast}
+        />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    act(() => {
+      typeIntoEditor();
+    });
+
+    expect(latestOnModEnter).toBeTypeOf("function");
+    await act(async () => {
+      latestOnModEnter?.();
+      await flushSave();
+    });
+
+    expect(saveEditingAnnotation).toHaveBeenCalledTimes(1);
+    expect(annotations.editingAnnotation.value?.data.html).toBe(
+      "<p>Great verse</p>"
+    );
+    expect(toast).toHaveBeenCalledWith("Annotation saved");
+  });
+
+  it("Cmd/Ctrl+Enter does not save while the editor is empty", async () => {
+    const { annotations, saveEditingAnnotation } =
+      createMockAnnotationsManager(createAnnotation());
+    const tabs = createMockTabsManager();
+    const toast = vi.fn();
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={toast}
+        />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    await act(async () => {
+      latestOnModEnter?.();
+      await flushSave();
+    });
+
+    expect(saveEditingAnnotation).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it("Cmd/Ctrl+Enter saves only once when invoked twice before the first save settles", async () => {
+    const { annotations, saveEditingAnnotation } =
+      createMockAnnotationsManager(createAnnotation());
+    const tabs = createMockTabsManager();
+    const toast = vi.fn();
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={toast}
+        />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    act(() => {
+      typeIntoEditor();
+    });
+
+    await act(async () => {
+      // Two Mod+Enter events in the same turn — second lands during the
+      // await sanitize(...) window, before React can re-render from setSaving.
+      latestOnModEnter?.();
+      latestOnModEnter?.();
+      await flushSave();
+    });
+
+    expect(saveEditingAnnotation).toHaveBeenCalledTimes(1);
+    expect(toast).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows an error and does not toast when save fails", async () => {
+    const { annotations, saveEditingAnnotation } =
+      createMockAnnotationsManager(createAnnotation());
+    saveEditingAnnotation.mockRejectedValue(new Error("nope"));
+    const tabs = createMockTabsManager();
+    const toast = vi.fn();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={toast}
+        />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    act(() => {
+      typeIntoEditor();
+    });
+
+    const saveButton = container.querySelector(
+      ".sb-settings-save-button"
+    ) as HTMLButtonElement;
+    await act(async () => {
+      saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await flushSave();
+    });
+
+    expect(toast).not.toHaveBeenCalled();
+    expect(container.querySelector(".sb-playlist-add-error")?.textContent).toBe(
+      "Couldn't save the annotation."
+    );
+    expect(saveButton.disabled).toBe(false);
+    expect(saveButton.textContent).toBe("Save");
+  });
+
+  it("labels the Save button with the platform save shortcut", async () => {
+    const { annotations } = createMockAnnotationsManager(createAnnotation());
+    const tabs = createMockTabsManager();
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={vi.fn()}
+        />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    const saveButton = container.querySelector(
+      ".sb-settings-save-button"
+    ) as HTMLButtonElement;
+    const isMac = /Mac/.test(navigator.platform);
+    expect(saveButton.getAttribute("aria-keyshortcuts")).toBe(
+      isMac ? "Meta+Enter" : "Control+Enter"
+    );
+    expect(saveButton.title).toBe(
+      isMac ? "Save (⌘Enter)" : "Save (Ctrl+Enter)"
+    );
+  });
+
+  it("autofocuses the editor when creating a new annotation", async () => {
+    const { annotations } = createMockAnnotationsManager(createAnnotation());
+    const tabs = createMockTabsManager();
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={vi.fn()}
+        />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    expect(latestAutofocus).toBe("end");
+  });
+
+  it("autofocuses the editor when editing an existing annotation", async () => {
+    const { annotations } = createMockAnnotationsManager(
+      createAnnotation({
+        data: { type: "comment", html: "<p>Already written</p>" },
+      })
+    );
+    const tabs = createMockTabsManager();
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={vi.fn()}
+        />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    expect(latestAutofocus).toBe("end");
   });
 });

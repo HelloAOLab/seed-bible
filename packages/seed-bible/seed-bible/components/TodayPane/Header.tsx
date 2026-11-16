@@ -3,6 +3,7 @@ import { useI18n } from "../../i18n";
 import { useMemo } from "preact/hooks";
 import { useTimeContext } from "./TimeContext";
 import { trimmedOrNull } from "../../managers/Utils";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 /**
  * Stands in for the name while the greeting is translated, so the finished
@@ -15,7 +16,7 @@ import { trimmedOrNull } from "../../managers/Utils";
  */
 const NAME_PLACEHOLDER = "\uE000";
 
-export const Header = (props: { login: LoginManager }) => {
+export const Header = (props: { login: LoginManager; onClose: () => void }) => {
   const username = trimmedOrNull(props.login.profile.value?.name);
   const { t, language } = useI18n();
   // `TimeProvider` re-renders this subtree every ten seconds so the date and
@@ -79,6 +80,13 @@ export const Header = (props: { login: LoginManager }) => {
         {afterName === undefined ? null : <span>{username}</span>}
         {afterName}
       </h1>
+      {/* Today's pane has no header bar, so this is the way out. */}
+      <CloseButton
+        className="sb-today-close-button"
+        size="lg"
+        look="tinted"
+        onClose={props.onClose}
+      />
     </div>
   );
 };

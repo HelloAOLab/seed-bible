@@ -11,6 +11,7 @@ import {
   type InitialBibleReadingOptions,
   type VerseDecoration,
   type VerseDecorationInput,
+  type VisibleVerseRange,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
 import type { BibleReadingExtensionManager } from "../managers/BibleReadingExtensionManager";
@@ -24,6 +25,7 @@ import type {
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
 import type { AnnotationsManager } from "./AnnotationsManager";
+import { toShareableUrl } from "../app/publicLinks";
 
 export interface ConnectionSessionUserVisual {
   defaultIcon: string;
@@ -78,6 +80,50 @@ interface SessionData {
   scrollToVerse: number | null;
 }
 
+export type SessionGroupPosition = Readonly<SessionData>;
+
+/** A host asking one participant to come back to where the group is reading. */
+export interface ComeBackRequest {
+  /** Fresh per request, so asking the same person again reads as new. */
+  id: string;
+  fromConnectionId: string;
+  fromUserId: string | null;
+  sentAtMs: number;
+}
+
+/** How long after asking someone to come back a host can ask them again. */
+export const COME_BACK_REQUEST_COOLDOWN_MS = 30_000;
+
+/**
+ * How long after the group moves that someone still on a chapter it just left
+ * counts as with the group. Their reader has to load the new chapter and
+ * broadcast it back before their position catches up, and without this every
+ * follower would flash as away on each page turn.
+ */
+export const GROUP_MOVE_GRACE_MS = 5_000;
+
+function parseComeBackRequest(value: unknown): ComeBackRequest | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.id !== "string" ||
+    typeof record.fromConnectionId !== "string" ||
+    typeof record.sentAtMs !== "number" ||
+    !Number.isFinite(record.sentAtMs)
+  ) {
+    return null;
+  }
+  return {
+    id: record.id,
+    fromConnectionId: record.fromConnectionId,
+    fromUserId:
+      typeof record.fromUserId === "string" ? record.fromUserId : null,
+    sentAtMs: record.sentAtMs,
+  };
+}
+
 /**
  * Where a new session should begin reading.
  *
@@ -93,6 +139,61 @@ export type SessionStartPosition = Pick<
   InitialBibleReadingOptions,
   "initialTranslationId" | "initialBookId" | "initialChapterNumber"
 >;
+export type VerseSelectionEffectVisibility = "hosts-only" | "everyone" | "none";
+
+/**
+ * Whose viewing-area bars a shared session draws beside the chapter.
+ *
+ * "auto" is the default: everyone while fewer than
+ * `VIEWING_AREA_HOSTS_ONLY_MIN_USERS` people are connected, and only hosts
+ * from that many on. A host can set "everyone" or "hosts-only" instead.
+ */
+export type ViewingAreaVisibility = "auto" | "everyone" | "hosts-only";
+
+/**
+ * A person's own choice of whose bars they see. "default" follows the
+ * session. "hosts-only" hides other people's bars on this screen, including
+ * when the session is set to everyone. "everyone" cannot widen a session
+ * the host has set to hosts only.
+ */
+export type ViewingAreaPreference = "default" | "everyone" | "hosts-only";
+
+/**
+ * Connected people at which "auto" switches from everyone's bars to hosts
+ * only. Past this the gutter starts to crowd.
+ */
+export const VIEWING_AREA_HOSTS_ONLY_MIN_USERS = 4;
+
+/**
+ * Whose bars to draw. Hosts only from either the session or this person
+ * hides other bars. A personal "everyone" applies on automatic and when the
+ * session is showing everyone, and does not widen a hosts-only session.
+ * "auto" with no personal choice follows `connectedUserCount`. Hosts-only
+ * falls back to everyone when no host is connected, so the margin is not
+ * left blank.
+ */
+export function resolveViewingAreaVisibility(
+  sessionVisibility: ViewingAreaVisibility | null | undefined,
+  connectedUserCount: number,
+  preference: ViewingAreaPreference | null | undefined = "default",
+  hostConnected = true
+): "everyone" | "hosts-only" {
+  let mode: "everyone" | "hosts-only";
+  if (sessionVisibility === "hosts-only" || preference === "hosts-only") {
+    mode = "hosts-only";
+  } else if (sessionVisibility === "everyone" || preference === "everyone") {
+    mode = "everyone";
+  } else {
+    mode =
+      connectedUserCount >= VIEWING_AREA_HOSTS_ONLY_MIN_USERS
+        ? "hosts-only"
+        : "everyone";
+  }
+  if (mode === "hosts-only" && !hostConnected) {
+    return "everyone";
+  }
+  return mode;
+}
 
 export interface SessionOptions {
   allowedNavigators: string[] | null;
@@ -130,6 +231,13 @@ export interface SessionOptions {
    * so a leaving host can hand the session off instead of ending it.
    */
   coHostUserIds: string[];
+  verseSelectionEffectVisibility: VerseSelectionEffectVisibility;
+  /**
+   * Whose viewing-area bars are drawn beside the chapter. See
+   * `ViewingAreaVisibility`. Each person can still choose hosts only for
+   * their own screen. They cannot widen a hosts-only session.
+   */
+  viewingAreaVisibility: ViewingAreaVisibility;
 }
 
 /**
@@ -146,6 +254,21 @@ export function isSessionHost(
   return (
     options.hostUserId === sessionId ||
     (options.coHostUserIds ?? []).includes(sessionId)
+  );
+}
+
+/**
+ * True when this connected user is the host or a co-host. Checks both ids
+ * because a signed-in host is stored by user id and an anonymous one by
+ * connection id.
+ */
+export function isConnectedUserHost(
+  options: SessionOptions,
+  user: { userId?: string | null; connectionId?: string | null }
+): boolean {
+  return (
+    isSessionHost(options, user.userId ?? null) ||
+    isSessionHost(options, user.connectionId ?? null)
   );
 }
 
@@ -231,6 +354,36 @@ function sharedUserProfileEntriesMatch(
 export interface ParticipantReadingPosition {
   bookId: string;
   chapterNumber: number;
+  /**
+   * The lowest and highest verse numbers on screen in that participant's
+   * reader, when they have reported them. Absent for a participant whose
+   * reader hasn't measured a range yet (and for entries written before this
+   * existed), so callers must treat the position as chapter-only.
+   */
+  firstVerse?: number;
+  lastVerse?: number;
+  /**
+   * What else that participant has on screen, by area (see
+   * `BibleReadingState.visibleAreas`): the first and last unit of each.
+   * Absent when there's nothing else, and in entries from older clients.
+   */
+  areas?: Record<string, { first: number; last: number }>;
+}
+
+function parseAreas(
+  value: unknown
+): Record<string, { first: number; last: number }> | null {
+  if (!value || typeof value !== "object") return null;
+  const areas: Record<string, { first: number; last: number }> = {};
+  for (const [key, range] of Object.entries(value)) {
+    if (!range || typeof range !== "object") continue;
+    const first = toPositiveIntOrNull((range as Record<string, unknown>).first);
+    const last = toPositiveIntOrNull((range as Record<string, unknown>).last);
+    if (first !== null && last !== null && last >= first) {
+      areas[key] = { first, last };
+    }
+  }
+  return Object.keys(areas).length > 0 ? areas : null;
 }
 
 function parseParticipantReadingPosition(
@@ -241,7 +394,86 @@ function parseParticipantReadingPosition(
   const bookId = toStringOrNull(record.bookId);
   const chapterNumber = toPositiveIntOrNull(record.chapterNumber);
   if (!bookId || chapterNumber === null) return null;
-  return { bookId, chapterNumber };
+  const firstVerse = toPositiveIntOrNull(record.firstVerse);
+  const lastVerse = toPositiveIntOrNull(record.lastVerse);
+  // A half-written range says nothing, so both ends have to be there and in
+  // order before it is reported.
+  const areas = parseAreas(record.areas);
+  const withAreas = areas ? { areas } : {};
+  if (firstVerse === null || lastVerse === null || lastVerse < firstVerse) {
+    return { bookId, chapterNumber, ...withAreas };
+  }
+  return { bookId, chapterNumber, firstVerse, lastVerse, ...withAreas };
+}
+
+/** The longest answer to a question step the session keeps, in characters. */
+export const MAX_QUESTION_ANSWER_LENGTH = 4000;
+
+/**
+ * One participant's answer to a playlist's question step, as kept in the
+ * session's `question_answers` map. Who wrote it is copied in when it's
+ * written, so it still reads right after they leave.
+ */
+export interface SessionQuestionAnswer {
+  /** Which question, as the caller names it (see `questionAnswerStepKey`). */
+  stepKey: string;
+  /** The author's user id, or their connection id when signed out. */
+  authorId: string;
+  text: string;
+  updatedAtMs: number;
+  name: string;
+  pictureUrl: string | null;
+  visual: ConnectionSessionUserVisual;
+}
+
+/**
+ * Names a playlist's question step for its answers: everyone in a session
+ * plays the same queue, so its place there (with the playlist, in case the
+ * session plays another) means the same question for all of them.
+ */
+export function questionAnswerStepKey(
+  playlistId: string | null | undefined,
+  index: number
+): string {
+  return `${playlistId ?? "queue"}#${index}`;
+}
+
+function parseQuestionAnswer(value: unknown): SessionQuestionAnswer | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const stepKey = toStringOrNull(record.stepKey);
+  const authorId = toStringOrNull(record.authorId);
+  const text =
+    typeof record.text === "string"
+      ? record.text.slice(0, MAX_QUESTION_ANSWER_LENGTH)
+      : null;
+  const name = toStringOrNull(record.name);
+  const visual = record.visual as Record<string, unknown> | undefined;
+  const color = toStringOrNull(visual?.color);
+  const defaultIcon = toStringOrNull(visual?.defaultIcon);
+  if (!stepKey || !authorId || !text?.trim() || !name || !color) return null;
+  if (!defaultIcon) return null;
+  const pictureUrl = toStringOrNull(record.pictureUrl);
+  return {
+    stepKey,
+    authorId,
+    text,
+    updatedAtMs:
+      typeof record.updatedAtMs === "number" ? record.updatedAtMs : 0,
+    name,
+    // Shown as an <img>, so only a web address is taken from a peer.
+    pictureUrl:
+      pictureUrl && /^https?:\/\//.test(pictureUrl) ? pictureUrl : null,
+    visual: {
+      color,
+      defaultIcon,
+      colorName: toStringOrNull(visual?.colorName) ?? "",
+    },
+  };
+}
+
+function questionAnswerKey(stepKey: string, authorId: string): string {
+  return `${stepKey}|${authorId}`;
 }
 
 /**
@@ -257,6 +489,17 @@ function parseParticipantReadingPosition(
  */
 const PUBLISH_DEBOUNCE_MS = 150;
 
+/**
+ * How long to wait after the visible verse range settles before publishing it.
+ *
+ * Longer than the navigation debounce because scrolling changes the range
+ * continuously: a flick through a chapter would otherwise write an entry for
+ * every verse it passed into a document that never shrinks. Half a second
+ * turns a scroll gesture into one write of where the reader stopped, which is
+ * all a presence marker needs.
+ */
+const RANGE_PUBLISH_DEBOUNCE_MS = 500;
+
 const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   allowedNavigators: null,
   allowedDecorators: null,
@@ -265,7 +508,15 @@ const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   endedAt: null,
   shareTranslation: false,
   coHostUserIds: [],
+  verseSelectionEffectVisibility: "hosts-only",
+  viewingAreaVisibility: "auto",
 };
+
+function parseViewingAreaVisibility(value: unknown): ViewingAreaVisibility {
+  return value === "auto" || value === "everyone" || value === "hosts-only"
+    ? value
+    : DEFAULT_SESSION_OPTIONS.viewingAreaVisibility;
+}
 
 function getSessionDataSnapshot(
   readingState: Pick<
@@ -305,6 +556,9 @@ function getSessionOptionsFromMap(
   optionsMap: SharedMap<SessionOptionValue>
 ): SessionOptions {
   const rawDuration = optionsMap.get("highlightDurationSeconds");
+  const rawVerseSelectionEffectVisibility = optionsMap.get(
+    "verseSelectionEffectVisibility"
+  );
   const rawEndedAt = optionsMap.get("endedAt");
   const rawShareTranslation = optionsMap.get("shareTranslation");
   return {
@@ -319,6 +573,15 @@ function getSessionOptionsFromMap(
         : rawDuration === null
           ? null
           : DEFAULT_SESSION_OPTIONS.highlightDurationSeconds,
+    verseSelectionEffectVisibility:
+      rawVerseSelectionEffectVisibility === "hosts-only" ||
+      rawVerseSelectionEffectVisibility === "everyone" ||
+      rawVerseSelectionEffectVisibility === "none"
+        ? rawVerseSelectionEffectVisibility
+        : DEFAULT_SESSION_OPTIONS.verseSelectionEffectVisibility,
+    viewingAreaVisibility: parseViewingAreaVisibility(
+      optionsMap.get("viewingAreaVisibility")
+    ),
     endedAt:
       typeof rawEndedAt === "number" && Number.isFinite(rawEndedAt)
         ? rawEndedAt
@@ -355,6 +618,9 @@ function sessionOptionsMatch(
     stringArraysMatch(left.allowedDecorators, right.allowedDecorators) &&
     left.hostUserId === right.hostUserId &&
     left.highlightDurationSeconds === right.highlightDurationSeconds &&
+    left.verseSelectionEffectVisibility ===
+      right.verseSelectionEffectVisibility &&
+    left.viewingAreaVisibility === right.viewingAreaVisibility &&
     left.endedAt === right.endedAt &&
     left.shareTranslation === right.shareTranslation &&
     stringArraysMatch(left.coHostUserIds, right.coHostUserIds)
@@ -561,6 +827,20 @@ export function getConnectedUserVisualKey(user: {
   return user.userId ?? user.connectionId ?? "anonymous";
 }
 
+/**
+ * Distinct people in a session. One person with the session open in two
+ * tabs counts once. A signed-out guest has no user id, so each of their
+ * connections still counts as its own person.
+ */
+export function countSessionPeople(
+  users: readonly {
+    userId?: string | null;
+    connectionId?: string | null;
+  }[]
+): number {
+  return new Set(users.map((user) => getConnectedUserVisualKey(user))).size;
+}
+
 export interface BibleReadingSession {
   id: string;
   document: SharedDocument;
@@ -570,6 +850,7 @@ export interface BibleReadingSession {
   allUsers: ReadonlySignal<ConnectedSessionUser[]>;
   connectedUsers: ReadonlySignal<ConnectedSessionUser[]>;
   currentUser: ReadonlySignal<ConnectedSessionUser | null>;
+  getDecorationOwner: (decorationId: string) => string | undefined;
 
   /**
    * Each still-connected participant's own reading position, keyed by
@@ -580,6 +861,76 @@ export interface BibleReadingSession {
   participantPositions: ReadonlySignal<
     ReadonlyMap<string, ParticipantReadingPosition>
   >;
+
+  /**
+   * Everyone's answers to the playlist's question steps, oldest first. Kept
+   * for as long as the session is, so someone joining late sees them too.
+   */
+  questionAnswers: ReadonlySignal<readonly SessionQuestionAnswer[]>;
+
+  /**
+   * Shares this participant's answer to a question step, replacing the one
+   * they shared before. Blank text takes their answer back.
+   */
+  setQuestionAnswer: (stepKey: string, text: string) => void;
+
+  /**
+   * Where the group is: the session-wide position that navigators publish
+   * and everyone else follows. Null book/chapter until one has been set.
+   */
+  groupPosition: ReadonlySignal<SessionGroupPosition>;
+
+  /**
+   * True when this reader isn't allowed to move the group and is on a
+   * different chapter from it — they navigated off on their own. Stays false
+   * while a move to the group's position is still loading, so it doesn't
+   * flicker on every chapter the hosts turn to.
+   */
+  isAwayFromGroup: ReadonlySignal<boolean>;
+
+  /** Moves this reader back to the group's current position. */
+  rejoinGroup: () => Promise<void>;
+
+  /**
+   * The connectionIds of everyone, this reader included, who isn't allowed
+   * to move the group and is reading a different chapter from it. Someone
+   * still on a chapter the group only just left isn't counted while their
+   * reader catches up (see `GROUP_MOVE_GRACE_MS`), and someone whose position
+   * isn't known yet isn't guessed away.
+   */
+  participantsAwayFromGroup: ReadonlySignal<ReadonlySet<string>>;
+
+  /**
+   * The latest request to come back sent to each participant, keyed by the
+   * connectionId asked. Kept after it's answered, so hosts can tell when they
+   * last asked someone (see `COME_BACK_REQUEST_COOLDOWN_MS`).
+   */
+  comeBackRequests: ReadonlySignal<ReadonlyMap<string, ComeBackRequest>>;
+
+  /**
+   * How long until hosts may ask `connectionId` to come back again. Timed
+   * from when this device first saw the latest request rather than from its
+   * `sentAtMs`, which comes from the sender's clock and may run ahead or
+   * behind ours. A request already waiting when this reader joined is
+   * treated as long past.
+   */
+  comeBackCooldownRemainingMs: (connectionId: string) => number;
+
+  /**
+   * A host's request for this reader to come back, while it's still waiting
+   * for an answer: they're away from the group and haven't dismissed it or
+   * rejoined. Requests from anyone who isn't a host are ignored.
+   */
+  incomingComeBackRequest: ReadonlySignal<ComeBackRequest | null>;
+
+  /**
+   * Asks the participant on `connectionId` to come back to the group. Does
+   * nothing unless this reader is a host or co-host.
+   */
+  askToComeBack: (connectionId: string) => void;
+
+  /** Answers the incoming request with "not now". */
+  dismissComeBackRequest: () => void;
 
   /**
    * Whether this client's own connection to the shared document is
@@ -604,6 +955,12 @@ export interface BibleReadingSession {
    * undone locally.
    */
   removeSharedDecoration: (decorationId: string) => void;
+
+  /**
+   * The connectionId of the participant who added a decoration, or null when
+   * the decoration isn't part of this session.
+   */
+  decorationOwner: (decorationId: string) => string | null;
   dispose: () => void;
 
   localSessionId: ReadonlySignal<string>;
@@ -637,7 +994,7 @@ export function getSessionUrl(session: BibleReadingSession): URL {
   if (pattern) {
     url.searchParams.set("pattern", pattern);
   }
-  return url;
+  return toShareableUrl(url);
 }
 
 function createSessionId(): string {
@@ -666,20 +1023,24 @@ async function createBibleReadingSession(
   startPosition?: SessionStartPosition,
   getAnnotationsManager?: () => AnnotationsManager | undefined
 ): Promise<BibleReadingSession> {
+  const document = await os.getSharedDocument(null, id, "session_data");
+  const stateMap =
+    document.getMap<SessionData[keyof SessionData]>("reading_state");
+
+  const effectiveStartPosition = toStringOrNull(stateMap.get("bookId"))
+    ? undefined
+    : startPosition;
   const readingState = createBibleReadingState(
     dataManager,
     highlightsManager,
     i18nManager,
     // `isShared` last: a caller's start position must not be able to turn a
     // session's reading state back into an unshared one.
-    { ...startPosition, isShared: true },
+    { ...effectiveStartPosition, isShared: true },
     undefined,
     readingExtensionManager,
     getAnnotationsManager
   );
-  const document = await os.getSharedDocument(null, id, "session_data");
-  const stateMap =
-    document.getMap<SessionData[keyof SessionData]>("reading_state");
   const optionsMap = document.getMap<SessionOptionValue>("options");
   const decorationsMap = document.getMap<SessionDecorationValue>("decorations");
   // Enabled reading extensions and their custom data, keyed by extension id.
@@ -700,6 +1061,16 @@ async function createBibleReadingSession(
   // in for this.
   const readingPositionsMap =
     document.getMap<ParticipantReadingPosition>("reading_positions");
+  // Answers to playlist question steps, keyed by question and author. Unlike
+  // positions they outlive their author's connection, so a late joiner reads
+  // the whole discussion.
+  const questionAnswersMap =
+    document.getMap<SessionQuestionAnswer>("question_answers");
+  const questionAnswers = signal<readonly SessionQuestionAnswer[]>([]);
+  // Keyed by the connection being asked, so asking someone again replaces the
+  // previous request instead of piling them up.
+  const comeBackRequestsMap =
+    document.getMap<ComeBackRequest>("come_back_requests");
   const options = signal<SessionOptions>(DEFAULT_SESSION_OPTIONS);
   const allUsers = signal<ConnectedSessionUser[]>([]);
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
@@ -741,6 +1112,12 @@ async function createBibleReadingSession(
       if (optionsMap.get("coHostUserIds") === undefined) {
         optionsMap.set("coHostUserIds", defaultOptions.coHostUserIds);
       }
+      if (optionsMap.get("viewingAreaVisibility") === undefined) {
+        optionsMap.set(
+          "viewingAreaVisibility",
+          defaultOptions.viewingAreaVisibility
+        );
+      }
     });
   }
 
@@ -754,10 +1131,71 @@ async function createBibleReadingSession(
   let pendingRemoteSync: SessionData | null = null;
   /** Non-null while `queueRemoteSync`'s drain loop is running. */
   let remoteSyncDrain: Promise<void> | null = null;
+  const isRemoteSyncRunning = signal(false);
+  const groupPosition = signal<SessionGroupPosition>(
+    getSessionDataFromMap(stateMap)
+  );
+  // Chapters ("JHN:3") the group has moved off within the last
+  // `GROUP_MOVE_GRACE_MS`. Every move restarts the window, so a host turning
+  // several pages in a row doesn't strand followers who are a page behind.
+  const recentlyLeftGroupChapters = signal<ReadonlySet<string>>(new Set());
+  let groupMoveGraceTimer: ReturnType<typeof setTimeout> | null = null;
+  const refreshGroupPosition = () => {
+    const next = getSessionDataFromMap(stateMap);
+    const previous = groupPosition.peek();
+    if (sessionDataMatches(next, previous)) {
+      return;
+    }
+    batch(() => {
+      if (
+        previous.bookId &&
+        previous.chapterNumber &&
+        (previous.bookId !== next.bookId ||
+          previous.chapterNumber !== next.chapterNumber)
+      ) {
+        recentlyLeftGroupChapters.value = new Set([
+          ...recentlyLeftGroupChapters.peek(),
+          `${previous.bookId}:${previous.chapterNumber}`,
+        ]);
+        if (groupMoveGraceTimer !== null) {
+          clearTimeout(groupMoveGraceTimer);
+        }
+        groupMoveGraceTimer = setTimeout(() => {
+          groupMoveGraceTimer = null;
+          recentlyLeftGroupChapters.value = new Set();
+        }, GROUP_MOVE_GRACE_MS);
+      }
+      groupPosition.value = next;
+    });
+  };
   /** Armed while a local navigation is waiting to be published to peers. */
   let publishTimer: ReturnType<typeof setTimeout> | null = null;
   /** Armed while our own reading position is waiting to be broadcast. */
   let positionBroadcastTimer: ReturnType<typeof setTimeout> | null = null;
+  // The chapter the last broadcast actually went out for, so a chapter change
+  // can be told apart from a scroll within the same chapter and given the
+  // shorter window. Updated when the broadcast fires, not when a change is
+  // noticed.
+  let publishedBookId: string | null = null;
+  let publishedChapter = 0;
+  let publishedTabVisible = true;
+  /**
+   * Set while a change waiting to go out was (or followed) one that peers
+   * should see promptly: a navigation, or the tab going into or out of the
+   * background. A scroll on its own waits the longer window.
+   */
+  let pendingIsPrompt = false;
+  // Whether this tab is in the foreground. Somebody whose tab is hidden isn't
+  // looking at any verses, so their range is withheld while it is and peers
+  // drop their bar. The chapter-only entry is kept, so they stay a participant
+  // at their chapter rather than vanishing from the session.
+  const browserDocument =
+    typeof globalThis.document !== "undefined" ? globalThis.document : null;
+  const tabVisible = signal(browserDocument?.visibilityState !== "hidden");
+  const syncTabVisibility = () => {
+    tabVisible.value = browserDocument?.visibilityState !== "hidden";
+  };
+  browserDocument?.addEventListener("visibilitychange", syncTabVisibility);
   let remoteClientsVersion = 0;
   let applyingRemoteDecorations = false;
   let applyingRemoteExtensions = false;
@@ -1056,6 +1494,7 @@ async function createBibleReadingSession(
   const queueRemoteSync = (sessionData: SessionData): Promise<void> => {
     pendingRemoteSync = sessionData;
     if (!remoteSyncDrain) {
+      isRemoteSyncRunning.value = true;
       remoteSyncDrain = (async () => {
         try {
           while (pendingRemoteSync) {
@@ -1065,6 +1504,7 @@ async function createBibleReadingSession(
           }
         } finally {
           remoteSyncDrain = null;
+          isRemoteSyncRunning.value = false;
         }
       })();
     }
@@ -1082,17 +1522,28 @@ async function createBibleReadingSession(
   // Written after the initial sync above on purpose. Seeded any earlier, that
   // sync would read our own position back out of the map and re-navigate the
   // reader to the chapter it is already on, pushing a history entry for it.
-  if (startPosition?.initialBookId && !toStringOrNull(stateMap.get("bookId"))) {
+  if (
+    effectiveStartPosition?.initialBookId &&
+    !toStringOrNull(stateMap.get("bookId"))
+  ) {
     document.transact(() => {
-      stateMap.set("translationId", startPosition.initialTranslationId ?? null);
-      stateMap.set("bookId", startPosition.initialBookId ?? null);
-      stateMap.set("chapterNumber", startPosition.initialChapterNumber ?? null);
+      stateMap.set(
+        "translationId",
+        effectiveStartPosition.initialTranslationId ?? null
+      );
+      stateMap.set("bookId", effectiveStartPosition.initialBookId ?? null);
+      stateMap.set(
+        "chapterNumber",
+        effectiveStartPosition.initialChapterNumber ?? null
+      );
     });
   }
 
+  refreshGroupPosition();
   syncDecorationsFromSession();
 
   const mapSubscription = stateMap.changes.subscribe(() => {
+    refreshGroupPosition();
     const nextSessionData = getSessionDataFromMap(stateMap);
 
     if (
@@ -1159,19 +1610,49 @@ async function createBibleReadingSession(
     if (!bookId || chapterNumber <= 0) {
       return;
     }
+    const range = tabVisible.value
+      ? readingState.visibleVerseRange.value
+      : null;
+    const visibleAreas = tabVisible.value
+      ? readingState.visibleAreas.value
+      : new Map<string, VisibleVerseRange>();
+    const areas =
+      visibleAreas.size > 0
+        ? {
+            areas: Object.fromEntries(
+              Array.from(visibleAreas, ([key, area]) => [
+                key,
+                { first: area.first, last: area.last },
+              ])
+            ),
+          }
+        : {};
+    const next: ParticipantReadingPosition = range
+      ? {
+          bookId,
+          chapterNumber,
+          firstVerse: range.first,
+          lastVerse: range.last,
+          ...areas,
+        }
+      : { bookId, chapterNumber, ...areas };
     const currentEntry = parseParticipantReadingPosition(
       readingPositionsMap.get(localConnectionId)
     );
     if (
       currentEntry &&
-      currentEntry.bookId === bookId &&
-      currentEntry.chapterNumber === chapterNumber
+      currentEntry.bookId === next.bookId &&
+      currentEntry.chapterNumber === next.chapterNumber &&
+      currentEntry.firstVerse === next.firstVerse &&
+      currentEntry.lastVerse === next.lastVerse &&
+      JSON.stringify(currentEntry.areas ?? {}) ===
+        JSON.stringify(next.areas ?? {})
     ) {
       return;
     }
     try {
       document.transact(() => {
-        readingPositionsMap.set(localConnectionId, { bookId, chapterNumber });
+        readingPositionsMap.set(localConnectionId, next);
       });
     } catch {
       // Best-effort — peers keep the last position we managed to publish.
@@ -1180,20 +1661,47 @@ async function createBibleReadingSession(
 
   // Deliberately not gated on `userCanNavigate` the way `stopSync` is: this
   // says where we are, which a participant who may not move the session is
-  // still entitled to report. Debounced on the same window so skimming
-  // chapters leaves one entry rather than one per chapter in a document that
-  // never shrinks. `scrollToVerse` is deliberately not read — presence is
-  // chapter-grained, and tracking it would rewrite the entry on every scroll.
+  // still entitled to report. Debounced so skimming chapters leaves one entry
+  // rather than one per chapter in a document that never shrinks.
+  //
+  // A scroll gets the longer window: the visible verse range changes far more
+  // often than the chapter does, and peers only need where the reader came to
+  // rest. A navigation, or the tab being hidden or shown, gets the short one.
   const stopBroadcastLocalPosition = effect(() => {
-    void readingState.bookId.value;
-    void readingState.chapterNumber.value;
+    const bookId = readingState.bookId.value;
+    const chapterNumber = readingState.chapterNumber.value;
+    const visible = tabVisible.value;
+    void readingState.visibleVerseRange.value;
+    void readingState.visibleAreas.value;
+
+    // A navigation is always chased by range changes — the old chapter's
+    // verses leave the screen and the new one's are measured — so whether this
+    // particular run was the navigation is the wrong question to ask. What
+    // matters is whether anything still waiting to go out was one. Asking per
+    // run, those follow-ups re-armed the timer on the scroll window and a
+    // chapter change reached peers at the scroll cadence instead of the
+    // navigation one.
+    if (
+      publishedBookId !== bookId ||
+      publishedChapter !== chapterNumber ||
+      publishedTabVisible !== visible
+    ) {
+      pendingIsPrompt = true;
+    }
     if (positionBroadcastTimer !== null) {
       clearTimeout(positionBroadcastTimer);
     }
-    positionBroadcastTimer = setTimeout(() => {
-      positionBroadcastTimer = null;
-      broadcastLocalPosition();
-    }, PUBLISH_DEBOUNCE_MS);
+    positionBroadcastTimer = setTimeout(
+      () => {
+        positionBroadcastTimer = null;
+        pendingIsPrompt = false;
+        publishedBookId = readingState.bookId.peek();
+        publishedChapter = readingState.chapterNumber.peek();
+        publishedTabVisible = tabVisible.peek();
+        broadcastLocalPosition();
+      },
+      pendingIsPrompt ? PUBLISH_DEBOUNCE_MS : RANGE_PUBLISH_DEBOUNCE_MS
+    );
   });
 
   const readingPositionsSubscription = readingPositionsMap.changes.subscribe(
@@ -1201,6 +1709,51 @@ async function createBibleReadingSession(
       syncParticipantPositions();
     }
   );
+
+  const syncQuestionAnswers = () => {
+    const answers: SessionQuestionAnswer[] = [];
+    questionAnswersMap.forEach((value, key) => {
+      const answer = parseQuestionAnswer(value);
+      // An entry only counts under its own key, so nobody can write one in
+      // someone else's name.
+      if (
+        answer &&
+        key === questionAnswerKey(answer.stepKey, answer.authorId)
+      ) {
+        answers.push(answer);
+      }
+    });
+    answers.sort((a, b) => a.updatedAtMs - b.updatedAtMs);
+    questionAnswers.value = answers;
+  };
+  syncQuestionAnswers();
+  const questionAnswersSubscription = questionAnswersMap.changes.subscribe(
+    () => {
+      syncQuestionAnswers();
+    }
+  );
+
+  const setQuestionAnswer = (stepKey: string, text: string) => {
+    const authorId = localSessionId.peek();
+    const key = questionAnswerKey(stepKey, authorId);
+    const trimmed = text.trim();
+    if (!trimmed) {
+      questionAnswersMap.delete(key);
+      return;
+    }
+    const self = currentUser.peek();
+    const visual = self?.visual ?? getUserAnimalVisual(authorId);
+    const answer: SessionQuestionAnswer = {
+      stepKey,
+      authorId,
+      text: trimmed.slice(0, MAX_QUESTION_ANSWER_LENGTH),
+      updatedAtMs: Date.now(),
+      name: self?.profile?.name ?? `User ${authorId.slice(0, 8)}`,
+      pictureUrl: self?.profile?.pictureUrl ?? null,
+      visual,
+    };
+    questionAnswersMap.set(key, answer);
+  };
 
   const subscribeToRemoteClients = () =>
     document.remoteClients.subscribe((event) => {
@@ -1336,6 +1889,7 @@ async function createBibleReadingSession(
         stateMap.set("scrollToVerse", nextSessionData.scrollToVerse);
       }
     });
+    refreshGroupPosition();
   };
 
   const schedulePublish = () => {
@@ -1378,25 +1932,54 @@ async function createBibleReadingSession(
     if (applyingRemoteDecorations) {
       return;
     }
+    const canDecorate = userCanDecorate(localSessionId.value);
 
-    if (!userCanDecorate(localSessionId.value)) {
-      return;
+    const isVerseSelectionFlare = (decoration: VerseDecoration) =>
+      decoration.className?.split(/\s+/).includes("sb-verse-number-flare") ??
+      false;
+
+    const sharedDecorationEntries = getSharedDecorationEntries();
+    // Temporary verse-selection flares are allowed even when the participant
+    // cannot create highlights. Other decorations remain permission-restricted.
+    if (!canDecorate) {
+      const hasLocalFlare = currentDecorations.some(isVerseSelectionFlare);
+
+      const hasSharedLocalFlare = Array.from(
+        sharedDecorationEntries.values()
+      ).some(
+        (entry) =>
+          entry.connectionId === localConnectionId &&
+          isVerseSelectionFlare(entry.decoration)
+      );
+
+      if (!hasLocalFlare && !hasSharedLocalFlare) {
+        return;
+      }
     }
 
     const localDecorations = currentDecorations.filter((decoration) => {
+      if (!canDecorate && !isVerseSelectionFlare(decoration)) {
+        return false;
+      }
+      // Never published, so peers neither see nor own it.
+      if (decoration.localOnly) {
+        return false;
+      }
       const owner = decorationOwners.get(decoration.id);
       if (!owner) {
         decorationOwners.set(decoration.id, localConnectionId);
         return true;
       }
-
       return owner === localConnectionId;
     });
 
-    const sharedDecorationEntries = getSharedDecorationEntries();
     const localSharedDecorations = Array.from(
       sharedDecorationEntries.values()
-    ).filter((entry) => entry.connectionId === localConnectionId);
+    ).filter(
+      (entry) =>
+        entry.connectionId === localConnectionId &&
+        (canDecorate || isVerseSelectionFlare(entry.decoration))
+    );
     const localDecorationIds = new Set(
       localDecorations.map((decoration) => decoration.id)
     );
@@ -1559,6 +2142,14 @@ async function createBibleReadingSession(
         typeof newOptions.highlightDurationSeconds === "undefined"
           ? currentOptions.highlightDurationSeconds
           : newOptions.highlightDurationSeconds,
+      verseSelectionEffectVisibility:
+        typeof newOptions.verseSelectionEffectVisibility === "undefined"
+          ? currentOptions.verseSelectionEffectVisibility
+          : newOptions.verseSelectionEffectVisibility,
+      viewingAreaVisibility:
+        typeof newOptions.viewingAreaVisibility === "undefined"
+          ? currentOptions.viewingAreaVisibility
+          : newOptions.viewingAreaVisibility,
       endedAt:
         typeof newOptions.endedAt === "undefined"
           ? currentOptions.endedAt
@@ -1607,6 +2198,24 @@ async function createBibleReadingSession(
         optionsMap.set(
           "highlightDurationSeconds",
           nextOptions.highlightDurationSeconds
+        );
+      }
+      if (
+        currentOptions.verseSelectionEffectVisibility !==
+        nextOptions.verseSelectionEffectVisibility
+      ) {
+        optionsMap.set(
+          "verseSelectionEffectVisibility",
+          nextOptions.verseSelectionEffectVisibility
+        );
+      }
+      if (
+        currentOptions.viewingAreaVisibility !==
+        nextOptions.viewingAreaVisibility
+      ) {
+        optionsMap.set(
+          "viewingAreaVisibility",
+          nextOptions.viewingAreaVisibility
         );
       }
 
@@ -1671,6 +2280,9 @@ async function createBibleReadingSession(
     extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
     readingPositionsSubscription.unsubscribe();
+    questionAnswersSubscription.unsubscribe();
+    comeBackRequestsSubscription.unsubscribe();
+    stopSettlingComeBackRequests();
     remoteClientsSubscription.unsubscribe();
     statusUpdatedSubscription.unsubscribe();
     stopSync();
@@ -1684,17 +2296,181 @@ async function createBibleReadingSession(
       clearTimeout(positionBroadcastTimer);
       positionBroadcastTimer = null;
     }
+    if (groupMoveGraceTimer !== null) {
+      clearTimeout(groupMoveGraceTimer);
+      groupMoveGraceTimer = null;
+    }
+    browserDocument?.removeEventListener("visibilitychange", syncTabVisibility);
     // Drop our identity and position entries so peers' lookups for this
     // connection no longer resolve once we're gone.
     try {
       document.transact(() => {
         userProfilesMap.delete(localConnectionId);
         readingPositionsMap.delete(localConnectionId);
+        comeBackRequestsMap.delete(localConnectionId);
       });
     } catch {
       // Best-effort — the entry will simply linger in the CRDT.
     }
     document.unsubscribe();
+  };
+
+  // Off the group's chapter right now, including mid-way through a load
+  // toward it — unlike `isAwayFromGroup`, which hides that window.
+  const isOffGroupChapter = computed(() => {
+    const group = groupPosition.value;
+    if (!group.bookId || !group.chapterNumber) {
+      return false;
+    }
+    return (
+      readingState.bookId.value !== group.bookId ||
+      readingState.chapterNumber.value !== group.chapterNumber
+    );
+  });
+
+  const isAwayFromGroup = computed(
+    () =>
+      !userCanNavigate(localSessionId.value) &&
+      !isRemoteSyncRunning.value &&
+      isOffGroupChapter.value
+  );
+
+  const participantsAwayFromGroup = computed(() => {
+    const away = new Set<string>();
+    const group = groupPosition.value;
+    if (!group.bookId || !group.chapterNumber) {
+      return away;
+    }
+    const recentlyLeft = recentlyLeftGroupChapters.value;
+    for (const user of connectedUsers.value) {
+      if (user.isSelf) {
+        if (isAwayFromGroup.value) {
+          away.add(user.connectionId);
+        }
+        continue;
+      }
+      if (
+        userCanNavigate(user.connectionId) ||
+        (user.userId !== null && userCanNavigate(user.userId))
+      ) {
+        continue;
+      }
+      const position = participantPositions.value.get(user.connectionId);
+      if (
+        !position ||
+        (position.bookId === group.bookId &&
+          position.chapterNumber === group.chapterNumber) ||
+        recentlyLeft.has(`${position.bookId}:${position.chapterNumber}`)
+      ) {
+        continue;
+      }
+      away.add(user.connectionId);
+    }
+    return away;
+  });
+
+  const comeBackRequests = signal<ReadonlyMap<string, ComeBackRequest>>(
+    new Map()
+  );
+  // When this device first saw each request, by request id, on our own clock.
+  const comeBackRequestSeenAtMs = new Map<string, number>();
+  const syncComeBackRequests = (seenAtMs: number) => {
+    const next = new Map<string, ComeBackRequest>();
+    comeBackRequestsMap.forEach((value, connectionId) => {
+      const request = parseComeBackRequest(value);
+      if (request) {
+        next.set(connectionId, request);
+        if (!comeBackRequestSeenAtMs.has(request.id)) {
+          comeBackRequestSeenAtMs.set(request.id, seenAtMs);
+        }
+      }
+    });
+    comeBackRequests.value = next;
+  };
+  // Whatever is already there was sent before we joined, and how long before
+  // can't be told without trusting the sender's clock.
+  syncComeBackRequests(Number.NEGATIVE_INFINITY);
+  const comeBackRequestsSubscription = comeBackRequestsMap.changes.subscribe(
+    () => syncComeBackRequests(Date.now())
+  );
+
+  const comeBackCooldownRemainingMs = (connectionId: string) => {
+    const request = comeBackRequests.value.get(connectionId);
+    if (!request) {
+      return 0;
+    }
+    const seenAtMs =
+      comeBackRequestSeenAtMs.get(request.id) ?? Number.NEGATIVE_INFINITY;
+    return Math.max(0, COME_BACK_REQUEST_COOLDOWN_MS - (Date.now() - seenAtMs));
+  };
+
+  // The id of the last request to this connection that has been answered, or
+  // that arrived when there was nothing to answer. Seeded with whatever was
+  // already addressed here, which was sent before this reader joined.
+  const handledComeBackRequestId = signal<string | null>(
+    comeBackRequests.peek().get(localConnectionId)?.id ?? null
+  );
+
+  const isFromHost = (request: ComeBackRequest) =>
+    isSessionHost(options.value, request.fromUserId) ||
+    isSessionHost(options.value, request.fromConnectionId);
+
+  // A request that reaches a reader who is already with the group has nothing
+  // to ask, so it's settled then — not left to pop up the next time they
+  // wander off.
+  const stopSettlingComeBackRequests = effect(() => {
+    const request = comeBackRequests.value.get(localConnectionId);
+    if (
+      request &&
+      request.id !== handledComeBackRequestId.peek() &&
+      !isOffGroupChapter.value
+    ) {
+      handledComeBackRequestId.value = request.id;
+    }
+  });
+
+  const incomingComeBackRequest = computed(() => {
+    const request = comeBackRequests.value.get(localConnectionId);
+    if (
+      !request ||
+      request.id === handledComeBackRequestId.value ||
+      !isAwayFromGroup.value ||
+      !isFromHost(request)
+    ) {
+      return null;
+    }
+    return request;
+  });
+
+  const dismissComeBackRequest = () => {
+    const request = comeBackRequests.peek().get(localConnectionId);
+    if (request) {
+      handledComeBackRequestId.value = request.id;
+    }
+  };
+
+  const askToComeBack = (connectionId: string) => {
+    const isLocalHost =
+      isSessionHost(options.value, localSessionId.value) ||
+      isSessionHost(options.value, localConnectionId);
+    if (!isLocalHost || connectionId === localConnectionId) {
+      return;
+    }
+    const request: ComeBackRequest = {
+      id: uuid(),
+      fromConnectionId: localConnectionId,
+      fromUserId: loginManager.userId.value ?? null,
+      sentAtMs: Date.now(),
+    };
+    comeBackRequestSeenAtMs.set(request.id, request.sentAtMs);
+    comeBackRequestsMap.set(connectionId, request);
+  };
+
+  // A plain `queueRemoteSync`, so a rejoin and a host's move arriving at the
+  // same moment coalesce into one load toward the newest position.
+  const rejoinGroup = () => {
+    dismissComeBackRequest();
+    return queueRemoteSync(getSessionDataFromMap(stateMap));
   };
 
   const isHost = (user: ConnectedSessionUser | null): boolean => {
@@ -1716,13 +2492,28 @@ async function createBibleReadingSession(
     connectedUsers,
     currentUser,
     participantPositions,
+    questionAnswers,
+    setQuestionAnswer,
+    groupPosition,
+    isAwayFromGroup,
+    participantsAwayFromGroup,
+    rejoinGroup,
+    comeBackRequests,
+    comeBackCooldownRemainingMs,
+    incomingComeBackRequest,
+    askToComeBack,
+    dismissComeBackRequest,
     isSynced,
     removeSharedDecoration,
+    decorationOwner: (decorationId) =>
+      decorationOwners.get(decorationId) ?? null,
     dispose,
     isHost,
     localSessionId,
     userCanNavigate,
     userCanDecorate,
+    getDecorationOwner: (decorationId: string) =>
+      decorationOwners.get(decorationId),
   };
 }
 
@@ -1737,7 +2528,17 @@ export interface SessionsManager {
   createSession: (
     startPosition?: SessionStartPosition
   ) => Promise<BibleReadingSession>;
-  joinSession: (id: string) => Promise<BibleReadingSession>;
+  /**
+   * Joins an existing session.
+   *
+   * @param startPosition Where the session should open if nobody has
+   * published a position into it yet. Ignored once the session has one, so a
+   * late joiner follows the group rather than pulling it back.
+   */
+  joinSession: (
+    id: string,
+    startPosition?: SessionStartPosition
+  ) => Promise<BibleReadingSession>;
 }
 
 export function createSessionsManager(
@@ -1768,7 +2569,10 @@ export function createSessionsManager(
     );
   };
 
-  const joinSession = async (id: string) => {
+  const joinSession = async (
+    id: string,
+    startPosition?: SessionStartPosition
+  ) => {
     return await createBibleReadingSession(
       os,
       dataManager,
@@ -1778,7 +2582,7 @@ export function createSessionsManager(
       readingExtensionManager,
       id,
       undefined,
-      undefined,
+      startPosition,
       getAnnotationsManager
     );
   };

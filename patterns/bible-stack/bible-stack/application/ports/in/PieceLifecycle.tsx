@@ -5,6 +5,8 @@ import type { StackSectionData } from "../../../domain/entities/StackSectionData
 import type { StackTestamentData } from "../../../domain/entities/StackTestamentData";
 import type { ChapterInfo } from "../../../domain/models/arrangement";
 import type { Piece } from "../../../domain/models/canvas";
+import type { VersesBundleData } from "../../../domain/entities/VersesBundleData";
+import type { VerseData } from "../../../domain/entities/VerseData";
 
 export interface PieceLifecycleServicePort {
   createTestament: (params: {
@@ -51,5 +53,30 @@ export interface PieceLifecycleServicePort {
     chapterInfo: ChapterInfo;
     bookId: string;
   }): StackChapterData;
+  createVerseBundle(params: {
+    start: number;
+    count: number;
+    bookId: string;
+    chapter: number;
+  }): VersesBundleData;
+  createVerse(params: {
+    start: number;
+    count: number;
+    bookId: string;
+    chapter: number;
+    verseIndex: number;
+  }): VerseData;
   clearPiece: (piece: Piece) => Promise<void>;
+  deleteTestament(testament: StackTestamentData): void;
+  deleteTestaments(testaments: StackTestamentData[]): void;
+  deleteSection(section: StackSectionData): void;
+  deleteSections(sections: StackSectionData[]): void;
+  deleteSectionBook(sectionBook: StackSectionBookData): void;
+  deleteSectionBooks(sectionBooks: StackSectionBookData[]): void;
+  deleteBook(book: StackBookData): void;
+  deleteBooks(books: StackBookData[]): void;
+  deleteChapter(chapter: StackChapterData): void;
+  deleteChapters(chapters: StackChapterData[]): void;
+  deleteVersesBundle(bundle: VersesBundleData): void;
+  deleteVerse(verse: VerseData): void;
 }

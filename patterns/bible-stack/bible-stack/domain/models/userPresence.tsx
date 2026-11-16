@@ -18,23 +18,35 @@ export const userProfileSchema = z.object({
 });
 
 export type UserProfile = z.infer<typeof userProfileSchema>;
-export interface UserPresenceData {
+export interface ReadingInstance {
   bookId: string;
   chapter: number;
-  readingInstanceId: string;
+  id: string;
+  selected: boolean;
+  translation: string;
+  connectionId: string;
 }
 
-export type UserPresence = Map<string, UserPresenceData>;
+export type UserPresence = Map<string, ReadingInstance[]>;
 
 export interface UserIds {
-  configId?: string;
-  authId?: string;
+  connectionId?: string;
+  userId?: string;
 }
 
 export interface UserData extends UserIds {
   color: HexString;
 }
 
+export interface ConnectionSessionUserVisual {
+  defaultIcon: string;
+  color: string;
+  colorName: string;
+}
+
 export interface ConnectedUserData extends UserIds {
   profile: UserProfile | undefined;
+  visual: ConnectionSessionUserVisual;
 }
+
+export type UserIdentityMap = Map<string, ConnectedUserData>;

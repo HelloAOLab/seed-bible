@@ -1,0 +1,18 @@
+{
+  "name": "@seed-bible/find-the-verse-extension",
+  "version": "1.0.0",
+  "description": "A guessing game where players find a secret verse by location.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./ext_FindTheVerse/init.tsx"
+    }
+  },
+  "keywords": [],
+  "dependencies": {
+    "seed-bible": "workspace:*"
+  },
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.1"
+}

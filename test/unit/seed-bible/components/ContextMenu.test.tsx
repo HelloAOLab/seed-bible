@@ -132,7 +132,7 @@ describe("ContextMenu", () => {
   it("shows menu when ContextMenuWithButton button is clicked", () => {
     act(() => {
       render(
-        <ContextMenuWithButton aria-label="More actions">
+        <ContextMenuWithButton label="More actions">
           <ContextMenuItem>Delete</ContextMenuItem>
         </ContextMenuWithButton>,
         container
@@ -160,10 +160,10 @@ describe("ContextMenu", () => {
     act(() => {
       render(
         <div>
-          <ContextMenuWithButton buttonClassName="left-trigger">
+          <ContextMenuWithButton buttonClassName="left-trigger" label="Left">
             <ContextMenuItem>Left action</ContextMenuItem>
           </ContextMenuWithButton>
-          <ContextMenuWithButton buttonClassName="right-trigger">
+          <ContextMenuWithButton buttonClassName="right-trigger" label="Right">
             <ContextMenuItem>Right action</ContextMenuItem>
           </ContextMenuWithButton>
         </div>,
@@ -227,6 +227,8 @@ describe("ContextMenu", () => {
     // coordinates, so its left edge lines up with the anchor's left edge.
     expect(leftMenu?.style.left).toBe("10px");
     expect(leftMenu?.style.right).toBe("");
+    // It opens below the anchor, so it grows out of its top-left corner.
+    expect(leftMenu?.style.transformOrigin).toBe("left top");
 
     act(() => {
       rightButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -241,5 +243,77 @@ describe("ContextMenu", () => {
     // 10px from the viewport's right edge.
     expect(rightMenu?.style.right).toBe("10px");
     expect(rightMenu?.style.left).toBe("");
+    expect(rightMenu?.style.transformOrigin).toBe("right top");
+  });
+
+  it("names its ⋮ button for screen readers and the tooltip", () => {
+    act(() => {
+      render(
+        <ContextMenuWithButton label="Bookmark options">
+          <ContextMenuItem>Delete</ContextMenuItem>
+        </ContextMenuWithButton>,
+        container
+      );
+    });
+
+    const button = container.querySelector("button")!;
+    expect(button.getAttribute("aria-label")).toBe("Bookmark options");
+    expect(button.getAttribute("title")).toBe("Bookmark options");
+    expect(button.getAttribute("aria-haspopup")).toBe("menu");
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("puts focus back on its button when Escape closes the menu", () => {
+    act(() => {
+      render(
+        <ContextMenuWithButton label="More actions">
+          <ContextMenuItem>Delete</ContextMenuItem>
+        </ContextMenuWithButton>,
+        container
+      );
+    });
+    const button = container.querySelector("button")!;
+    act(() => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    const menu = document.body.querySelector<HTMLElement>('[role="menu"]')!;
+    menu.querySelector<HTMLElement>('[role="menuitem"]')!.focus();
+
+    act(() => {
+      menu.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    expect(document.body.querySelector('[role="menu"]')).toBeNull();
+    expect(document.activeElement).toBe(button);
+  });
+
+  it("opens from a button the caller draws, such as a Create pill", () => {
+    act(() => {
+      render(
+        <ContextMenuWithButton
+          trigger={({ buttonRef, ...menu }) => (
+            <button {...menu} ref={buttonRef} type="button">
+              Create
+            </button>
+          )}
+        >
+          <ContextMenuItem>Playlist</ContextMenuItem>
+        </ContextMenuWithButton>,
+        container
+      );
+    });
+    const button = container.querySelector("button")!;
+    expect(button.textContent).toBe("Create");
+
+    act(() => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(button.getAttribute("aria-expanded")).toBe("true");
+    expect(document.body.querySelector('[role="menu"]')?.textContent).toContain(
+      "Playlist"
+    );
   });
 });

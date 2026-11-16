@@ -1,18 +1,23 @@
-import type { Piece } from "./canvas";
 import type { StackBibleData } from "../entities/StackBibleData";
-import type { AnyStackData } from "../../application/ports/pieces";
 import type { StackTestamentData } from "../entities/StackTestamentData";
 import type { StackSectionBookData } from "../entities/StackSectionBookData";
 import type { StackBookData } from "../entities/StackBookData";
 import type { StackSectionData } from "../entities/StackSectionData";
+import type { UserPresence } from "./userPresence";
+import type { StackChapterData } from "../entities/StackChapterData";
+import type { AnyStackData } from "./canvas";
 
 export interface BibleStackEvents {
   OnStackSequenceStart: void;
   OnStackSequenceEnd: void;
   OnBibleDelete: { bibleId: StackBibleData["id"] };
-  OnTestamentDelete: { piece: Piece<"StackTestament"> };
+  OnTestamentDelete: { dataId: StackTestamentData["id"] };
+  OnSectionDelete: { dataId: StackSectionData["id"] };
+  OnSectionBookDelete: { dataId: StackSectionBookData["id"] };
+  OnBookDelete: { dataId: StackBookData["id"] };
+  OnChapterDelete: { dataId: StackChapterData["id"] };
   OnStackPiecePulledOut: void;
-  OnStackPieceDrop: { piece: Piece };
+  OnStackPieceDrop: { data: AnyStackData };
   OnBibleCreationBegin: { hasABibleEverBeenCreated: boolean };
   OnBibleCreated: { bibleData: StackBibleData };
   OnBibleOpenSequenceBegin: void;
@@ -38,6 +43,9 @@ export interface BibleStackEvents {
   OnLabelDateFormatChange: void;
   OnArrangementIndexChanged: { newIndex: number };
   OnCustomArrangementsChanged: void;
+  OnUserPresenceUpdated: { userPresence: UserPresence };
+  OnBibleAttemptToggleMode: { data: StackBibleData };
+  OnSectionDeselected: { data: StackSectionData };
 }
 
 export type BibleStackEvent = keyof BibleStackEvents;

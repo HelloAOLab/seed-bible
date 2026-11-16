@@ -2,8 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { ESLintUtils, type TSESLint } from "@typescript-eslint/utils";
 import { getTranslationUsageStats } from "../getTranslationUsageStats";
-import { ExtensionMetaSchema } from "../lib/extension";
-import * as z from "zod/v4";
+import { ExtensionMetaSchema, formatSchemaIssues } from "../lib/extension";
 
 type TranslationObject = Record<string, unknown>;
 
@@ -98,7 +97,7 @@ function getExtensionEnglishKeys(
     const parseResult = ExtensionMetaSchema.safeParse(extensionConfig);
 
     if (!parseResult.success) {
-      console.warn(z.treeifyError(parseResult.error));
+      console.warn(formatSchemaIssues(parseResult.error));
       continue;
     }
 
@@ -113,6 +112,33 @@ function getExtensionEnglishKeys(
 
     const englishKeys = flattenTranslationKeys(englishTranslations);
     extensionEnglishKeys.set(id, englishKeys);
+  }
+
+  // A shared package (no `extension.json`) loads its own strings from a
+  // `translations.json`, under its folder name as the namespace.
+  for (const pkg of fs.existsSync(packagesDir)
+    ? fs.readdirSync(packagesDir, { withFileTypes: true })
+    : []) {
+    const translationsPath = path.join(
+      packagesDir,
+      pkg.name,
+      "translations.json"
+    );
+    if (
+      pkg.isDirectory() &&
+      !fs.existsSync(path.join(packagesDir, pkg.name, "extension.json")) &&
+      fs.existsSync(translationsPath)
+    ) {
+      const translations = parseJsonFile(translationsPath) as {
+        en?: Record<string, unknown>;
+      };
+      if (translations.en) {
+        extensionEnglishKeys.set(
+          pkg.name,
+          flattenTranslationKeys(translations.en)
+        );
+      }
+    }
   }
 
   return extensionEnglishKeys;

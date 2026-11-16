@@ -1,5 +1,4 @@
 import type { Piece } from "../../../domain/models/canvas";
-import type { VersesBundleAdapterPort } from "../../../application/ports/versesBundle";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
 import { AnimateStrictTag, SetStrictTag } from "../../functions/casualos";
 import type { VersesBundleMapper } from "../../mappers/VersesBundleMapper";
@@ -7,6 +6,7 @@ import type { VersesBundleTags } from "../../models/stack";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 import type { VersesBundleData } from "../../../domain/entities/VersesBundleData";
 import type { VersesAdapter } from "./VersesAdapter";
+import type { VersesBundlePort } from "../../../application/ports/out/VersesBundle";
 
 interface AdapterParams {
   mapper: VersesBundleMapper;
@@ -14,7 +14,7 @@ interface AdapterParams {
   versesAdapter: VersesAdapter;
 }
 
-export class VersesBundleAdapter implements VersesBundleAdapterPort {
+export class VersesBundleAdapter implements VersesBundlePort {
   #mapper: AdapterParams["mapper"];
   #visualStateRegistry: AdapterParams["visualStateRegistry"];
   #versesAdapter: AdapterParams["versesAdapter"];

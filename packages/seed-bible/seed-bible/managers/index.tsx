@@ -1,12 +1,21 @@
 export * from "./SeedBibleStateManager";
+export {
+  BOOK_SLUGS,
+  parseVerseReference,
+  type BookId,
+} from "./BibleDataManager";
 export * from "./AnnotationsManager";
+export * from "./AudioPlaybackManager";
 export * from "./BibleReadingManager";
 export * from "./BibleReadingExtensionManager";
 export * from "./BibleSelectorManager";
 export * from "./BibleToolsManager";
-export * from "./BookmarksManager";
+export { scriptureStepVerses } from "./PlaylistManager";
+export * from "./SavesManager";
 export * from "./ChapterText";
+export * from "./DiscoverManager";
 export * from "./ExtensionManager";
+export * from "./FriendsManager";
 export * from "./FreeUseBibleAPI";
 export * from "./InvitationsManager";
 export * from "./LoginManager";
@@ -23,7 +32,9 @@ export * from "./SettingsManager";
 export * from "./SidebarManager";
 export * from "./TabsManager";
 export * from "./TabsLayoutManager";
+export * from "./TextToSpeechManager";
 export * from "./ThemeManager";
 export * from "./translationGrouping";
+export * from "./translationSearch";
 export * from "./TutorialManager";
 export * from "./UserGalleryManager";

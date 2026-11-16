@@ -1,0 +1,122 @@
+#!/usr/bin/env node
+import { Command } from "commander";
+import { runCheck } from "./commands/check.js";
+import { runTest } from "./commands/test.js";
+import { runBuild } from "./commands/build.js";
+import { runDev } from "./commands/dev.js";
+import { runLint } from "./commands/lint.js";
+import { runPublish } from "./commands/publish.js";
+import { runPackage } from "./commands/package.js";
+
+const program = new Command();
+
+program
+  .name("seed-bible-extension-scripts")
+  .description(
+    "Check, test, build, and run a Seed Bible extension scaffolded by create-seed-bible-extension."
+  );
+
+program
+  .command("check")
+  .description(
+    "Type-check the extension with its own tsconfig.json, and check extension.json's permissions against what the code uses."
+  )
+  .action(async () => {
+    process.exitCode = await runCheck();
+  });
+
+program
+  .command("lint")
+  .description("Lint the extension with its own eslint.config.mts.")
+  .option("--fix", "automatically fix problems where possible")
+  .action(async (opts: { fix?: boolean }) => {
+    process.exitCode = await runLint({ fix: Boolean(opts.fix) });
+  });
+
+program
+  .command("test")
+  .description("Run the extension's test suite with Vitest.")
+  .allowUnknownOption(true)
+  .action(async (_opts, command: Command) => {
+    process.exitCode = await runTest(command.args);
+  });
+
+program
+  .command("build")
+  .description(
+    "Build the extension: for a sandboxed extension, the single-file bundle Seed Bible loads from a URL; otherwise a monorepo-ready package."
+  )
+  .option(
+    "--standalone",
+    "require the single-file bundle (an error unless the extension is written with seed-bible/extensions)"
+  )
+  .action(async (opts: { standalone?: boolean }) => {
+    process.exitCode = await runBuild({ standalone: Boolean(opts.standalone) });
+  });
+
+program
+  .command("package")
+  .description(
+    "Build the extension into dist/site/: static files to upload to GitHub Pages, Cloudflare Pages or Workers, or any static host, with an install page."
+  )
+  .option(
+    "--app-url <url>",
+    "the Seed Bible the install page links to (default https://seedbible.org/)"
+  )
+  .action(async (opts: { appUrl?: string }) => {
+    process.exitCode = await runPackage({ appUrl: opts.appUrl });
+  });
+
+program
+  .command("publish")
+  .description(
+    "Build the extension standalone and publish it as a hosted, discoverable ExtensionSet (see context.extensions.discoverExtensionSet)."
+  )
+  .option(
+    "--dry-run",
+    "build and print the ExtensionSet manifest without uploading anything"
+  )
+  .action(async (opts: { dryRun?: boolean }) => {
+    process.exitCode = await runPublish({ dryRun: Boolean(opts.dryRun) });
+  });
+
+program
+  .command("dev")
+  .description(
+    "Run a real Seed Bible dev server that offers to install this extension. A sandboxed extension is rebuilt as you save; reload to run it."
+  )
+  .option(
+    "--repo <path>",
+    "path to an existing seed-bible checkout to use instead of the managed cache"
+  )
+  .option(
+    "--seed-bible-version <version>",
+    'seed-bible release range (e.g. 1.13) or branch (e.g. develop) to run, instead of the one the "seed-bible" dependency implies'
+  )
+  .option("--port <port>", "port to run the seed-bible dev server on")
+  .option(
+    "--extension-port <port>",
+    "port to serve a sandboxed extension's bundle on (default 5174)"
+  )
+  .action(
+    async (opts: {
+      repo?: string;
+      seedBibleVersion?: string;
+      port?: string;
+      extensionPort?: string;
+    }) => {
+      process.exitCode = await runDev({
+        repoPath: opts.repo,
+        seedBibleVersion: opts.seedBibleVersion,
+        port: opts.port ? Number(opts.port) : undefined,
+        extensionPort: opts.extensionPort
+          ? Number(opts.extensionPort)
+          : undefined,
+      });
+    }
+  );
+
+program.parseAsync(process.argv).catch((err: unknown) => {
+  console.error(err);
+  process.exitCode = 1;
+});

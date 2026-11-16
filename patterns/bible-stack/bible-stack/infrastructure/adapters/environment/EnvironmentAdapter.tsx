@@ -1,7 +1,7 @@
 import type { PortalCameraType } from "@casual-simulation/aux-common";
-import type { EnvironmentAdapterPort } from "../../../application/ports/experience";
+import type { EnvironmentPort } from "../../../application/ports/out/Environment";
 
-export class EnvironmentAdapter implements EnvironmentAdapterPort {
+export class EnvironmentAdapter implements EnvironmentPort {
   resetZoomMin() {
     gridPortalBot.tags.portalZoomableMin = null;
   }

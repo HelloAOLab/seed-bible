@@ -26,8 +26,8 @@ describe("stripHash", () => {
   });
 
   it("handles hashes containing hyphens/underscores", () => {
-    expect(stripHash("locations-extension-1EVP_A0l.js")).toBe(
-      "locations-extension.js"
+    expect(stripHash("theographic-extension-1EVP_A0l.js")).toBe(
+      "theographic-extension.js"
     );
     expect(stripHash("en-BCa6xvG-.js")).toBe("en.js");
   });

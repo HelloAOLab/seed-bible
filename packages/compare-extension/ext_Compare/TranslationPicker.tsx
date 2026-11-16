@@ -5,8 +5,10 @@ import {
   groupTranslationsByLanguage,
 } from "seed-bible/managers";
 import {
+  Button,
   FiltersIcon,
   MaterialIcon,
+  SearchBar,
   TranslationList,
   TranslationViewModeMenu,
 } from "seed-bible/components";
@@ -161,24 +163,15 @@ export function TranslationPicker(props: {
       />
 
       <div className="sb-compare-picker-search-row">
-        <div className="searchbar flex-align-center sb-compare-search">
-          <span className="material-symbols-outlined search-icon">search</span>
-          <input
-            type="search"
-            className="flex-1"
-            value={query}
-            dir="auto"
-            placeholder={t("search-translations", {
-              defaultValue: "Search translations",
-            })}
-            aria-label={t("search-translations", {
-              defaultValue: "Search translations",
-            })}
-            onInput={(event: Event) => {
-              setQuery((event.currentTarget as HTMLInputElement).value);
-            }}
-          />
-        </div>
+        <SearchBar
+          className="sb-compare-search"
+          dir="auto"
+          value={query}
+          onInput={setQuery}
+          placeholder={t("search-translations", {
+            defaultValue: "Search translations",
+          })}
+        />
         <button
           type="button"
           className="sb-compare-filters-button"
@@ -235,16 +228,18 @@ export function TranslationPicker(props: {
         onLoadMore={() => setLimit((current) => current + PAGE_SIZE)}
       />
 
-      <button
-        type="button"
+      <Button
         className="sb-compare-picker-done"
+        variant="primary"
+        size="lg"
+        shape="pill"
+        icon="check"
         onClick={() => {
           state.view.value = state.addReturnTo.value;
         }}
       >
-        <MaterialIcon>check</MaterialIcon>
         {t("done", { defaultValue: "Done" })}
-      </button>
+      </Button>
     </div>
   );
 }

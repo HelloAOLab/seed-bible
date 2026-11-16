@@ -3,7 +3,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  z-index: 1100;
+  z-index: var(--sb-layer-prompt);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,8 +16,8 @@
   width: min(26.25rem, 100%);
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  border-radius: 1.25rem;
-  box-shadow: 0 20px 48px #00000040;
+  border-radius: var(--sb-radius-2xl);
+  box-shadow: var(--sb-shadow-modal);
   padding: 2.25rem 2rem 2rem;
   box-sizing: border-box;
   display: flex;
@@ -88,45 +88,5 @@
 }
 
 .sb-onboarding-btn {
-  appearance: none;
-  border: 1px solid transparent;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  font-family: var(--sb-font-family);
-  font-size: 1em;
-  font-weight: 600;
-  cursor: pointer;
   min-width: 7.5rem;
-  transition:
-    filter 0.15s ease,
-    background 0.15s ease;
-}
-
-.sb-onboarding-btn:hover {
-  filter: brightness(0.96);
-}
-
-.sb-onboarding-btn-primary {
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-}
-
-.sb-onboarding-btn-secondary {
-  background: var(--sb-reader-background);
-  color: var(--sb-font-color);
-  border-color: var(--sb-secondary-color);
-}
-
-/* For an opt-out that should stay reachable without competing with the real
-   choice above it. */
-.sb-onboarding-btn-tertiary {
-  background: transparent;
-  color: var(--sb-font-color);
-  font-weight: 500;
-  opacity: 0.75;
-  text-decoration: underline;
-}
-
-.sb-onboarding-btn-tertiary:hover {
-  opacity: 1;
 }

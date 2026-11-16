@@ -16,6 +16,7 @@ import { handleVerticalListKeyNav } from "../../app/keyboardNav";
 import type { ChatsManager } from "../../managers/ChatsManager";
 import { useState } from "preact/hooks";
 import type { FeaturesManager } from "../../managers/FeaturesManager";
+import type { AppState } from "../../managers/SeedBibleStateManager";
 
 interface BelowReaderToolbarProps {
   toolsManager: ToolsManager;
@@ -32,6 +33,8 @@ interface BelowReaderToolbarProps {
   openSearch: () => void;
   toast: (message: string) => void;
   openChat: () => void;
+  /** App state, so embed mode can hide tools that have not opted in. */
+  app?: AppState;
 }
 
 export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
@@ -50,6 +53,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     openChat,
     chats,
     features,
+    app,
   } = props;
   const tools = toolsManager.getBelowReaderTools({
     readingState,
@@ -65,6 +69,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     openChat,
     chats,
     features,
+    app,
   });
 
   if (tools.length === 0) {

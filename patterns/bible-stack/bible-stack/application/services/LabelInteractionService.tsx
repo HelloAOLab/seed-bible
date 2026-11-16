@@ -1,0 +1,102 @@
+import type { Piece } from "../../domain/models/canvas";
+import type { BookInteractionServicePort } from "../ports/in/BookInteraction";
+import type { ChapterInteractionServicePort } from "../ports/in/ChapterInteraction";
+import type { SectionInteractionServicePort } from "../ports/in/SectionInteraction";
+import type { TestamentInteractionServicePort } from "../ports/in/TestamentInteraction";
+import type { LoggerPort } from "../ports/out/Logger";
+import type { LabelInteractionServicePort } from "../ports/in/LabelInteraction";
+import type { SectionShadowInteractionServicePort } from "../ports/in/SectionShadowInteraction";
+import type { LabelDataStorePort } from "../ports/out/LabelDataStore";
+
+interface ServiceParams {
+  labelDataRepositoryPort: LabelDataStorePort;
+  testamentInteractionServicePort: TestamentInteractionServicePort;
+  sectionInteractionServicePort: SectionInteractionServicePort;
+  sectionShadowInteractionPort: SectionShadowInteractionServicePort;
+  bookInteractionServicePort: BookInteractionServicePort;
+  chapterInteractionServicePort: ChapterInteractionServicePort;
+  loggerPort: LoggerPort;
+}
+
+export class LabelInteractionService implements LabelInteractionServicePort {
+  #labelDataRepositoryPort: ServiceParams["labelDataRepositoryPort"];
+  #sectionInteractionServicePort: ServiceParams["sectionInteractionServicePort"];
+  #sectionShadowInteractionPort: ServiceParams["sectionShadowInteractionPort"];
+  #bookInteractionServicePort: ServiceParams["bookInteractionServicePort"];
+  #testamentInteractionServicePort: ServiceParams["testamentInteractionServicePort"];
+  #chapterInteractionServicePort: ServiceParams["chapterInteractionServicePort"];
+  #loggerPort: ServiceParams["loggerPort"];
+
+  constructor({
+    labelDataRepositoryPort,
+    sectionInteractionServicePort,
+    sectionShadowInteractionPort,
+    bookInteractionServicePort,
+    testamentInteractionServicePort,
+    chapterInteractionServicePort,
+    loggerPort,
+  }: ServiceParams) {
+    this.#labelDataRepositoryPort = labelDataRepositoryPort;
+    this.#sectionInteractionServicePort = sectionInteractionServicePort;
+    this.#sectionShadowInteractionPort = sectionShadowInteractionPort;
+    this.#bookInteractionServicePort = bookInteractionServicePort;
+    this.#testamentInteractionServicePort = testamentInteractionServicePort;
+    this.#chapterInteractionServicePort = chapterInteractionServicePort;
+    this.#loggerPort = loggerPort;
+  }
+
+  handleLabelSelected(transformer: Piece<"InfoLabelTransformer">) {
+    const data = this.#labelDataRepositoryPort.getDataByTransformerId(
+      transformer.id
+    );
+
+    if (!data) {
+      this.#loggerPort.error(
+        "LabelInteractionService: data not found at handleLabelSelected."
+      );
+      return;
+    }
+
+    const owner = data.owner;
+
+    switch (owner.type) {
+      case "StackTestament":
+        {
+          this.#testamentInteractionServicePort.handleTestamentSelection({
+            testament: owner,
+            interaction: "Coarse",
+          });
+        }
+        break;
+      case "StackSection":
+        {
+          this.#sectionInteractionServicePort.handleSectionSelection({
+            section: owner,
+            interaction: "Coarse",
+          });
+        }
+        break;
+      case "StackSectionShadow":
+        {
+          this.#sectionShadowInteractionPort.handleSectionShadowSelected(owner);
+        }
+        break;
+      case "StackBook":
+      case "StackSectionBook":
+        {
+          this.#bookInteractionServicePort.handleBookSelection({
+            book: owner,
+            interaction: "Coarse",
+          });
+        }
+        break;
+      case "StackChapter":
+        {
+          this.#chapterInteractionServicePort.handleChapterSelection({
+            chapter: owner,
+          });
+        }
+        break;
+    }
+  }
+}

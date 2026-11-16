@@ -1,23 +1,21 @@
 import type { BookBot } from "../../models/stack";
-import type {
-  SelectionReleaseServicePort,
-  DraggingServicePort,
-} from "../../../application/ports/books";
 import type { BookInteractionServicePort } from "../../../application/ports/in/BookInteraction";
-import type { BookDragServicePort } from "../../../application/ports/in/ScripturePieceDrag";
-import type { BookDropServicePort } from "../../../application/ports/in/ScripturePieceDrop";
 import type { DraggingEvent, DropEvent } from "../../models/casualos";
 import type { BotListenerParametersMap } from "../../models/casualos";
 import type { RelocationEventMapper } from "../../mappers/RelocationEventMapper";
 import type { PieceMapper } from "../../mappers/PieceMapper";
+import type { ScripturePieceDragServicePort } from "../../../application/ports/in/ScripturePieceDrag";
+import type { ScripturePieceDropServicePort } from "../../../application/ports/in/ScripturePieceDrop";
+import type { ScripturePieceDraggingServicePort } from "../../../application/ports/in/ScripturePieceDragging";
+import type { ScripturePieceSelectionReleaseServicePort } from "../../../application/ports/in/ScripturePieceSelectionRelease";
 
 interface ControllerParams {
   bookInteractionServicePort: BookInteractionServicePort;
-  dragServicePort: BookDragServicePort;
-  draggingServicePort: DraggingServicePort;
+  dragServicePort: ScripturePieceDragServicePort;
+  draggingServicePort: ScripturePieceDraggingServicePort;
   relocationEventMapper: RelocationEventMapper;
-  selectionReleaseServicePort: SelectionReleaseServicePort;
-  dropServicePort: BookDropServicePort;
+  selectionReleaseServicePort: ScripturePieceSelectionReleaseServicePort;
+  dropServicePort: ScripturePieceDropServicePort;
   pieceMapperPort: PieceMapper;
 }
 

@@ -88,6 +88,8 @@ export interface ChapterTags extends StackDraggablePieceBotTags<"StackChapter"> 
   scaleX: number;
   scaleY: number;
   scaleZ: number;
+  labelFontAddress?: string;
+  labelFontSize?: number;
 }
 
 export interface ChapterMasks {
@@ -166,8 +168,7 @@ export type BibleShadowBot = TypedBot<BibleShadowTags>;
 
 export interface ActivityIndicatorTags extends PieceBotTags<"ActivityIndicator"> {
   color: HexString;
-  ownerBotId?: PieceBot["id"];
-  ownerDataId?: ActivityContainer["id"];
+  dataId: string;
   scaleX: number;
   scaleY: number;
   scaleZ: number;
@@ -176,12 +177,14 @@ export interface ActivityIndicatorTags extends PieceBotTags<"ActivityIndicator">
   label?: string;
   labelOpacity?: number;
   formRenderOrder?: number;
-  // indicatorType?: ActivityIndicator["indicatorType"];
-  // index?: number;
-  // targetOpacity: number;
+  labelPadding?: number;
+  labelAlignment?: "center";
+  labelFontAddress?: string;
+  labelColor?: string;
+  labelWordWrapMode?: "none";
+  labelFontSize?: number;
   // isActivityIndicator: boolean;
   // isActivityIndicatorPrefab?: boolean;
-  // initialPosition?: Vector3;
 }
 
 export type ActivityIndicatorBot = TypedBot<ActivityIndicatorTags>;
@@ -196,7 +199,10 @@ export interface ActivityNotificationTags extends PieceBotTags<"ActivityNotifica
   offset?: number;
   scaleX: number;
   scaleY: number;
-  isActivityNotificationPrefab: boolean;
+  form: "circle";
+  orientationMode: "billboard";
+  labelFontSize?: number;
+  labelFontAddress?: string;
 }
 
 export type ActivityNotificationBot = TypedBot<ActivityNotificationTags>;
@@ -249,26 +255,19 @@ export interface InfoLabelTailTags extends PieceBotTags<"InfoLabelTail"> {
 
 export type InfoLabelTailBot = TypedBot<InfoLabelTailTags>;
 
-// TODO: Locate indicatorType at the indicatorBot's visual state
 // eslint-disable-next-line
-export interface RegularActivityIndicatorTags extends ActivityIndicatorTags {
-  // indicatorType: "regular";
-}
+export interface RegularActivityIndicatorTags extends ActivityIndicatorTags {}
 
-export interface ExtraBackgroundActivityIndicatorTags extends ActivityIndicatorTags {
-  // indicatorType: "extraBackground";
-  color: "#000000";
-}
+export type BackgroundActivityIndicatorTags = ActivityIndicatorTags;
 
 export interface ExtraContentActivityIndicatorTags extends ActivityIndicatorTags {
-  // indicatorType: "extraContent";
   color: "#ffffff";
   label: string;
   labelOpacity: number;
 }
 
-export type ExtraBackgroundActivityIndicatorBot =
-  TypedBot<ExtraBackgroundActivityIndicatorTags>;
+export type BackgroundActivityIndicatorBot =
+  TypedBot<BackgroundActivityIndicatorTags>;
 
 export interface InfoLabelTextTags extends PieceBotTags<"InfoLabelText"> {
   ownerBotId?: string;
@@ -287,7 +286,8 @@ export interface InfoLabelTextTags extends PieceBotTags<"InfoLabelText"> {
   form: Form;
   formRenderOrder: number;
   scale: 1;
-
+  labelFontAddress?: string;
+  labelFontSize?: number;
   // labelPaddingX: "0.4",
   // labelPaddingY: "0.4",
 }
@@ -313,4 +313,23 @@ export interface BotTypeMap {
   [BiblePieces.InfoLabelText]: InfoLabelTextBot;
   [BiblePieces.InfoLabelTail]: InfoLabelTailBot;
   [BiblePieces.InfoLabelDate]: InfoLabelDateBot;
+}
+
+/** Selected-book grid layout produced by the SelectedBookLayoutService. */
+export interface SelectedBookLayout {
+  columns?: number;
+  rows?: number;
+  height?: number;
+}
+
+/**
+ * Result the (future) section render loop consumes from a per-book layout pass —
+ * the same shape the legacy `HandleBookDataInStack` returned.
+ */
+export interface BookVisualUpdateResult {
+  absBookDesiredPosition: { x: number; y: number } | undefined;
+  halfInitialBookScales: { x: number; y: number } | undefined;
+  selectedBookHeight: number | undefined;
+  marginToAdd: number;
+  computedAnimations: Array<Promise<void>>;
 }

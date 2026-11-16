@@ -1,5 +1,4 @@
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
-import type { LoggerPort } from "../../../application/ports/in/Logger";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
 import type { StackBookData } from "../../../domain/entities/StackBookData";
@@ -12,6 +11,7 @@ import { SelectionStates } from "../../../domain/models/selection";
 import { type SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
 import type { ColorLerper } from "../environment/ColorLerper";
 import { HexToRgb } from "../../../domain/functions/colors";
+import type { LoggerAdapter } from "../environment/LoggerAdapter";
 
 type BookEntity = StackBookData | StackSectionBookData;
 
@@ -20,7 +20,7 @@ interface AdapterParams {
   visualStateRegistry: VisualStateRegistry;
   getBotScales: (bot: PieceBot) => Scales;
   setStrictTag: typeof SetStrictTag;
-  loggerPort: LoggerPort;
+  loggerPort: LoggerAdapter;
   colorLerper: ColorLerper;
 }
 
@@ -135,7 +135,6 @@ export class BookShapeAdapter {
       piece,
       property: "initialColor",
     });
-    // TODO(history-mode): the legacy chose the colour via history-mode/GetHistoryColor.
     const baseColor = data.paintColor ?? initialColor;
 
     data.changeShape(shape);
@@ -331,7 +330,6 @@ export class BookShapeAdapter {
       piece,
       property: "initialColor",
     });
-    // TODO(history-mode): the legacy chose the colour via history-mode/GetHistoryColor.
     const baseColor = data.paintColor ?? initialColor;
 
     data.changeShape(shape);

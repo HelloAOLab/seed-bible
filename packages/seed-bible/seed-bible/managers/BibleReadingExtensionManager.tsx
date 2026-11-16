@@ -98,6 +98,13 @@ export type GetUrlQueryParamsHook<TData = unknown> = (ctx: {
   queryParams: Record<string, string | null>;
 }) => Record<string, string | null>;
 
+export type GetUrlPathHook<TData = unknown> = (ctx: {
+  readingState: BibleReadingState;
+  data: Signal<TData>;
+  /** The path chosen so far: null for the reading position's own path. */
+  pathname: string | null;
+}) => string | null;
+
 export type TransformLabelHook<TData = unknown> = (ctx: {
   readingState: BibleReadingState;
   data: Signal<TData>;
@@ -142,6 +149,14 @@ export interface ReadingExtensionInstance<TData = unknown> {
    * @returns An object representing the query parameters.
    */
   transformQueryParams?: GetUrlQueryParamsHook<TData>;
+
+  /**
+   * Replaces the path this reading state is written to the URL at (without
+   * the deployment prefix), e.g. a playing playlist's own
+   * `/{lang}/playlist/...` path. Return `pathname` unchanged to leave it
+   * alone; null means the reading position's own path.
+   */
+  transformUrlPath?: GetUrlPathHook<TData>;
 
   /** Overrides the reading state's display title. Runs in priority order. */
   transformTitle?: TransformLabelHook<TData>;

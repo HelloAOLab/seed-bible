@@ -1,5 +1,4 @@
 import type { Piece } from "../../../domain/models/canvas";
-import type { VersesBundleSelectionAdapterPort } from "../../../application/ports/out/VersesBundleSelection";
 import type { VersesBundleConfigProvider } from "../../config/versesBundleSelection/VersesBundleConfigProvider";
 import {
   AnimateStrictTag,
@@ -11,6 +10,7 @@ import type { VerseMapper } from "../../mappers/VerseMapper";
 import type { VersesBundleMapper } from "../../mappers/VersesBundleMapper";
 import type { VerseBotTags, VersesBundleBot } from "../../models/stack";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
+import type { VersesBundleSelectionPort } from "../../../application/ports/out/VersesBundleSelection";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -20,7 +20,7 @@ interface AdapterParams {
   visualStateRegistry: VisualStateRegistry;
 }
 
-export class VersesBundleSelectionAdapter implements VersesBundleSelectionAdapterPort {
+export class VersesBundleSelectionAdapter implements VersesBundleSelectionPort {
   #getDimension: AdapterParams["getDimension"];
   #versesBundleConfigProvider: AdapterParams["versesBundleConfigProvider"];
   #versesBundleMapper: AdapterParams["versesBundleMapper"];

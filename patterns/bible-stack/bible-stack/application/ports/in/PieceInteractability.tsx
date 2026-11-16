@@ -1,7 +1,4 @@
-export interface InteractabilityBlockerPort {
+export interface PieceInteractabilityServicePort {
   blockAll(): void;
-}
-
-export interface InteractabilityUnlockerPort {
   unlockAll(): void;
 }

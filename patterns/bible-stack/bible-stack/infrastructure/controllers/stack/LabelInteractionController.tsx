@@ -1,10 +1,10 @@
-import type { LabelInteractionPort } from "../../../application/ports/in/LabelInteraction";
 import type { LabelDataStore } from "../../adapters/labels/LabelDataStore";
 import type { InfoLabelTailBot, InfoLabelTextBot } from "../../models/stack";
+import type { LabelInteractionServicePort } from "../../../application/ports/in/LabelInteraction";
 
 interface ControllerParams {
   labelDataStore: LabelDataStore;
-  labelInteractionServicePort: LabelInteractionPort;
+  labelInteractionServicePort: LabelInteractionServicePort;
 }
 
 export class LabelInteractionController {

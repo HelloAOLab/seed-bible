@@ -1,5 +1,6 @@
 import { createContext } from "preact";
 import { useContext } from "preact/hooks";
+import type { BibleTheme } from "../managers";
 /**
  * Runtime deployment configuration injected by the host server into the page
  * (as a `<script type="application/json" id="app-config">` element) and
@@ -18,6 +19,8 @@ export interface BrandingConfig {
   websiteUrl: string;
   disabledToolbarTools?: string[];
   defaultTranslationId?: string;
+  whiteLabelThemes?: BibleTheme[];
+  disabledSettings?: string[];
 }
 
 // Injected from Vite
@@ -52,6 +55,15 @@ export interface AppConfig {
   branding?: BrandingConfig;
 
   /**
+   * Origin to put in links meant for other people (share links, invites,
+   * links saved into notes), e.g. "https://seedbible.org". Absent on the
+   * website, whose own origin already works for everyone. Set by the native
+   * app build, whose own origin (`https://localhost`, `capacitor://localhost`)
+   * only exists on that device. See `app/publicLinks.ts`.
+   */
+  publicOrigin?: string;
+
+  /**
    * The exact request path (including deployment prefix and query string)
    * the SSR `render()` call that produced this HTML was invoked with — i.e.
    * `RenderOptions.path` in `entry-ssr.tsx`. The client's hydration gate
@@ -66,6 +78,15 @@ export interface AppConfig {
    * about having a real render behind it.
    */
   renderedForPath?: string;
+
+  /**
+   * The UI language the server rendered this page in. On a bare `/` the
+   * server picks it from `Accept-Language` while the client picks it from
+   * `navigator.languages`, so the gate compares the two. Absent on pages from
+   * a server that predates this field, which means "can't tell" and is never
+   * treated as a mismatch.
+   */
+  renderedLanguage?: string;
 
   /**
    * The commit whose SSR bundle actually produced this HTML — that bundle's

@@ -1,6 +1,9 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { ProfilePictureModalContent } from "@packages/seed-bible/seed-bible/components/ProfilePictureModal/ProfilePictureModal";
+import { openProfilePictureModal } from "@packages/seed-bible/seed-bible/components/ProfilePictureModal/openProfilePictureModal";
+import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -141,5 +144,20 @@ describe("ProfilePictureModalContent", () => {
 
     expect(container.querySelector(".sb-photo-choice-list")).not.toBeNull();
     expect(container.querySelector(".sb-photo-crop")).toBeNull();
+  });
+});
+
+describe("openProfilePictureModal", () => {
+  it("opens the picture editor in a bottom sheet on phones", () => {
+    const modals = createModalManager();
+
+    openProfilePictureModal({
+      modals,
+      login: {} as LoginManager,
+      t: (key, options) => (options?.defaultValue as string) ?? key,
+    });
+
+    expect(modals.modals.value).toHaveLength(1);
+    expect(modals.modals.value[0]!.mobileSheet).toBe(true);
   });
 });

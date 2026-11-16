@@ -1,16 +1,25 @@
+import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import type { ReadingPlanProgress } from "../../managers/ReadingPlansManager";
 import {
   formatReadingPlanId,
   getReadingCalendar,
+  latestReadingPlanProgress,
   summarizeCalendar,
 } from "../../managers/ReadingPlansManager";
-import { FEATURE_KEY_READING_PLANS } from "../../managers/FeaturesManager";
+import type { PlaylistPlayHistory } from "../../managers/PlaylistManager";
+import {
+  isPlaylistPlayHistoryComplete,
+  playlistPlayHistoryPercent,
+} from "../../managers/PlaylistManager";
 import { getSelfDisplayName } from "../Tabs/Tabs";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { MaterialIcon } from "../icons";
+import { Spinner } from "../Spinner/Spinner";
 import { useI18n } from "../../i18n";
+import { friendsRowSubtitle } from "../FriendsPane/FriendsPane";
 import "./ProfilePane.css";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 export const PROFILE_PANE_ID = "profile-screen-pane";
 
@@ -22,8 +31,18 @@ export interface ProfileScreenProps {
   onEditPicture: () => void;
   /** Opens the reading plans pane. */
   onOpenReadingPlans: () => void;
+  /** Opens the playlist history screen. */
+  onOpenPlaylistHistory: () => void;
+  /**
+   * Resumes or replays the featured playlist. Resolves once playback has
+   * started (the profile can close); rejects when the playlist cannot be
+   * opened, leaving this screen up.
+   */
+  onContinuePlaylist: (entry: PlaylistPlayHistory) => void | Promise<void>;
   /** Opens the "Your content" screen. */
   onOpenYourContent: () => void;
+  /** Opens the Friends screen. */
+  onOpenFriends: () => void;
 }
 
 /** Pane header title. A component so it can call `useI18n`. */
@@ -44,18 +63,6 @@ export function getInitials(displayName: string): string {
     .slice(0, 2)
     .map((word) => Array.from(word)[0] ?? "")
     .join("");
-}
-
-/** The most recent progress the user has for a given plan id, if any. */
-function latestProgress(
-  progresses: ReadingPlanProgress[],
-  planId: string
-): ReadingPlanProgress | null {
-  return (
-    progresses
-      .filter((p) => p.planId === planId)
-      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
-  );
 }
 
 /** What the reading-plans card shows, once a plan in progress has been found. */
@@ -88,7 +95,7 @@ function findActivePlan(state: SeedBibleState): ActivePlanSummary | null {
   for (const meta of metas) {
     if (meta.status === "draft") continue;
     const planId = formatReadingPlanId(meta.recordName, meta.address);
-    const progress = latestProgress(progresses, planId);
+    const progress = latestReadingPlanProgress(progresses, planId);
     const full = fullById.get(planId);
     if (!progress || !full) continue;
 
@@ -122,15 +129,12 @@ function findActivePlan(state: SeedBibleState): ActivePlanSummary | null {
 export function ProfileBackButton(props: { onBack: () => void }) {
   const { t } = useI18n();
   return (
-    <button
-      type="button"
+    <IconButton
       className="sb-profile-pane-back"
+      icon="arrow_back"
+      label={t("back", { defaultValue: "Back" })}
       onClick={props.onBack}
-      aria-label={t("back", { defaultValue: "Back" })}
-      title={t("back", { defaultValue: "Back" })}
-    >
-      <MaterialIcon>arrow_back</MaterialIcon>
-    </button>
+    />
   );
 }
 
@@ -174,7 +178,7 @@ export function ProfileAvatarButton(props: {
 
 /**
  * Email address and, when the user has set one, their location — the line of
- * small print between the avatar and the name.
+ * small print at the bottom of the profile card.
  */
 export function ProfileContactLine(props: { state: SeedBibleState }) {
   const { login } = props.state;
@@ -187,7 +191,12 @@ export function ProfileContactLine(props: { state: SeedBibleState }) {
 
   return (
     <p className="sb-profile-contact">
-      {email ? <span className="sb-profile-email">{email}</span> : null}
+      {email ? (
+        <span className="sb-profile-email">
+          <MaterialIcon aria-hidden="true">mail</MaterialIcon>
+          {email}
+        </span>
+      ) : null}
       {location ? (
         <span className="sb-profile-location">
           <MaterialIcon aria-hidden="true">location_on</MaterialIcon>
@@ -198,11 +207,11 @@ export function ProfileContactLine(props: { state: SeedBibleState }) {
   );
 }
 
-/** A tappable card: icon tile, title, subtitle, and a trailing arrow. */
+/** A tappable card: icon tile, title, optional subtitle, and a trailing arrow. */
 function ProfileRow(props: {
   icon: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   onClick: () => void;
 }) {
   return (
@@ -212,12 +221,129 @@ function ProfileRow(props: {
       </span>
       <span className="sb-profile-row-text">
         <span className="sb-profile-row-title">{props.title}</span>
-        <span className="sb-profile-row-subtitle">{props.subtitle}</span>
+        {props.subtitle ? (
+          <span className="sb-profile-row-subtitle">{props.subtitle}</span>
+        ) : null}
       </span>
       <span className="sb-profile-row-arrow" aria-hidden="true">
         <MaterialIcon>arrow_forward</MaterialIcon>
       </span>
     </button>
+  );
+}
+
+/**
+ * The most recently started playlist session. History is stored newest-first;
+ * sorting again keeps a stale or partial list honest.
+ */
+function latestPlaylistHistory(
+  history: PlaylistPlayHistory[]
+): PlaylistPlayHistory | null {
+  return [...history].sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null;
+}
+
+/**
+ * Playlist history, in the same card as reading plans. The latest session
+ * shows its name and completion, with "Continue latest playlist" so the
+ * action says what it resumes. View all opens the full list.
+ */
+function PlaylistHistoryCard(props: {
+  state: SeedBibleState;
+  onViewAll: () => void;
+  onContinue: (entry: PlaylistPlayHistory) => void | Promise<void>;
+}) {
+  const { t } = useI18n();
+  const opening = useSignal(false);
+  const latest = latestPlaylistHistory(
+    props.state.playlists.userPlaylistHistory.value
+  );
+  const percent = latest
+    ? Math.round(playlistPlayHistoryPercent(latest) * 100)
+    : 0;
+  const complete = latest != null && isPlaylistPlayHistoryComplete(latest);
+  const title =
+    latest?.playlistTitle ??
+    t("untitled-playlist", { defaultValue: "Untitled playlist" });
+
+  return (
+    <div className="sb-profile-playlist-history">
+      <span className="sb-profile-plans-head">
+        <span className="sb-profile-tile" aria-hidden="true">
+          <MaterialIcon>playlist_play</MaterialIcon>
+        </span>
+        <span className="sb-profile-plans-title">
+          {t("my-playlist-history", { defaultValue: "My playlist history" })}
+        </span>
+        <button
+          type="button"
+          className="sb-profile-plans-link"
+          onClick={props.onViewAll}
+        >
+          {t("view-all", { defaultValue: "View all" })}
+          <MaterialIcon>arrow_forward</MaterialIcon>
+        </button>
+      </span>
+
+      {latest ? (
+        <button
+          type="button"
+          className="sb-profile-playlist-continue"
+          aria-busy={opening.value}
+          onClick={() => {
+            if (opening.peek()) {
+              return;
+            }
+            opening.value = true;
+            void Promise.resolve(props.onContinue(latest)).then(
+              () => {
+                opening.value = false;
+              },
+              () => {
+                opening.value = false;
+              }
+            );
+          }}
+        >
+          <span
+            className="sb-profile-progress"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percent}
+            aria-label={t("playlist-history-percent", {
+              percent,
+              defaultValue: "{{percent}}% complete",
+            })}
+          >
+            <span
+              className="sb-profile-progress-fill"
+              style={{ width: `${percent}%` }}
+            />
+          </span>
+          <span className="sb-profile-plans-foot sb-profile-playlist-continue-foot">
+            <span className="sb-profile-playlist-continue-label">
+              {opening.value ? <Spinner size="0.875rem" /> : null}
+              {complete
+                ? t("replay-latest-playlist", {
+                    defaultValue: "Replay latest playlist",
+                  })
+                : t("continue-latest-playlist", {
+                    defaultValue: "Continue latest playlist",
+                  })}
+            </span>
+            <span className="sb-profile-plans-name">{title}</span>
+          </span>
+        </button>
+      ) : (
+        <span className="sb-profile-plans-foot">
+          <span className="sb-profile-plans-name">
+            {t("playlist-history-empty", {
+              defaultValue: "Playlists you listen to will show up here.",
+            })}
+          </span>
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -294,26 +420,39 @@ function ReadingPlansCard(props: {
 
 /**
  * The Profile screen (issue #1555): who you are, what you're reading, and the
- * way in to your own content. Opened as a fullscreen pane from the mobile
- * "You" tab and the desktop sidebar avatar.
+ * way in to your own content and your friends. Opened as a fullscreen pane
+ * from the mobile "You" tab and the desktop sidebar avatar.
  *
- * Circles, friends and profile subscriptions appear in the Figma frame but are
+ * Circles and profile subscriptions appear in the Figma frame but are
  * deliberately not built here — #1552 holds them back until their designs are
- * settled, and neither has a backend yet.
+ * settled. Friends has no design yet either; its row follows "Your content".
  */
 export function ProfilePane(props: ProfileScreenProps) {
-  const { state, onEditProfile, onEditPicture, onOpenReadingPlans } = props;
-  const { login, features } = state;
+  const {
+    state,
+    onEditProfile,
+    onEditPicture,
+    onOpenReadingPlans,
+    onOpenPlaylistHistory,
+    onContinuePlaylist,
+  } = props;
+  const { login } = state;
   const { t } = useI18n();
-
   const userId = login.userId.value;
   const profile = login.profile.value;
   const displayName = getSelfDisplayName(state, t);
   const description = profile?.description ?? null;
-  const plansEnabled = features.isFeatureEnabled(
-    FEATURE_KEY_READING_PLANS
-  ).value;
+  const handleSignIn = async () => {
+    try {
+      const user = await login.login();
 
+      if (user && state.isProfileOpen.peek()) {
+        state.restoreProfileReturnTarget();
+      }
+    } catch (error) {
+      console.error("Sign-in failed:", error);
+    }
+  };
   if (!userId) {
     return (
       <div className="sb-profile-screen">
@@ -328,13 +467,15 @@ export function ProfilePane(props: ProfileScreenProps) {
                   "Sign in to keep your highlights, notes and plans on every device.",
               })}
             </p>
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="lg"
+              shape="pill"
               className="sb-profile-signin"
-              onClick={() => void login.login()}
+              onClick={() => void handleSignIn()}
             >
               {t("log-in", { defaultValue: "Log in" })}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -350,19 +491,14 @@ export function ProfilePane(props: ProfileScreenProps) {
            * labelled button, so the card stays about the person. The inset is
            * logical, which puts the pencil top-left under an RTL language.
            */}
-          <button
-            type="button"
+          <IconButton
             className="sb-profile-card-edit"
+            icon="edit"
+            label={t("edit-profile", { defaultValue: "Edit profile" })}
             onClick={onEditProfile}
-            aria-label={t("edit-profile", { defaultValue: "Edit profile" })}
-            title={t("edit-profile", { defaultValue: "Edit profile" })}
-          >
-            <MaterialIcon>edit</MaterialIcon>
-          </button>
+          />
 
           <ProfileAvatarButton state={state} onEdit={onEditPicture} />
-
-          <ProfileContactLine state={state} />
 
           {/* The name is the second way in to the edit screen. */}
           <button
@@ -382,10 +518,18 @@ export function ProfilePane(props: ProfileScreenProps) {
               {description}
             </ExpandableText>
           ) : null}
+
+          <ProfileContactLine state={state} />
         </div>
 
-        {plansEnabled ? (
-          <ReadingPlansCard state={state} onOpen={onOpenReadingPlans} />
+        <ReadingPlansCard state={state} onOpen={onOpenReadingPlans} />
+
+        {state.playlists.userPlaylistHistory.value.length > 0 ? (
+          <PlaylistHistoryCard
+            state={state}
+            onViewAll={onOpenPlaylistHistory}
+            onContinue={onContinuePlaylist}
+          />
         ) : null}
 
         <ProfileRow
@@ -397,14 +541,22 @@ export function ProfilePane(props: ProfileScreenProps) {
           onClick={props.onOpenYourContent}
         />
 
-        <button
-          type="button"
+        <ProfileRow
+          icon="group"
+          title={t("friends", { defaultValue: "Friends" })}
+          subtitle={friendsRowSubtitle(state.friends, t)}
+          onClick={props.onOpenFriends}
+        />
+
+        <Button
+          tone="danger"
+          size="lg"
+          icon="logout"
           className="sb-profile-logout"
           onClick={() => void login.logout()}
         >
-          <span className="material-symbols-outlined">logout</span>
           {t("sign-out", { defaultValue: "Sign out" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

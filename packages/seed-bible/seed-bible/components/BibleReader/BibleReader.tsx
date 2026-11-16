@@ -1,22 +1,33 @@
 import "./BibleReader.inline.css";
+import "./BibleReader.css";
 import {
+  type Translation,
   type TranslationBookChapter,
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
 import {
   Fragment,
+  type ComponentChild,
   type ComponentChildren,
   type JSX,
   type RefObject,
 } from "preact";
 import {
   Suspense,
+  useCallback,
   useEffect,
   useRef,
   useLayoutEffect,
   useState,
 } from "preact/compat";
-import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
+import {
+  computed,
+  effect,
+  signal,
+  useComputed,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import {
   adjacentInlineRect,
   buildRibbonPath,
@@ -29,33 +40,99 @@ import type {
   BibleReadingState,
   BibleSelectedVerse,
   VerseDecoration,
+  VerseDecorationInput,
+  VisibleVerseRange,
 } from "../../managers/BibleReadingManager";
 import type {
   ChapterHighlight,
   ChapterHighlights,
 } from "../../managers/HighlightsManager";
 import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
+import { CURRENT_PLAYLIST_TOOL_ID } from "../../managers/BibleToolsManager";
 import type { TabSlot } from "../../managers/TabsLayoutManager";
+import type { VerseSelectionEffects } from "../../managers/SettingsManager";
+import { getReadableWordsOfJesusColor } from "../../managers/CustomizationsManager";
 import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   annotationVerseNumbers,
+  visibleChapterAnnotations,
   type Annotation,
   type AnnotationsManager,
 } from "../../managers/AnnotationsManager";
-import type { BibleReadingSession } from "../../managers/SessionsManager";
+import type { FriendsManager } from "../../managers/FriendsManager";
+import {
+  countSessionPeople,
+  isConnectedUserHost,
+  getConnectedUserVisualKey,
+  resolveViewingAreaVisibility,
+  type BibleReadingSession,
+  type ParticipantReadingPosition,
+  type ConnectionSessionUserVisual,
+} from "../../managers/SessionsManager";
+import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
 import { useI18n } from "../../i18n/I18nManager";
+import { useOverlayDismiss } from "../useOverlayDismiss";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
-import { openBookmarkCategoryModal } from "../Tabs/Tabs";
+import { Spinner } from "../Spinner/Spinner";
+import {
+  SaveStarIcon,
+  openSaveModalForLocation,
+  saveChapterLabel,
+} from "../Tabs/Tabs";
+import {
+  BookmarkStackIcon,
+  bookmarkButtonLabel,
+  openBookmarkModal,
+} from "../Bookmarks/Bookmarks";
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
-import { DiscoverContentPanel } from "../DiscoverContentPanel/DiscoverContentPanel";
+import { DiscoverContentPanel } from "../Discover/DiscoverContentPanel";
+import {
+  ReturnToStepButton,
+  ScriptureNotePopover,
+} from "../ScriptureNote/ScriptureNote";
+import {
+  PlaylistStepPage,
+  playlistStepPageTitle,
+} from "../PlaylistStepPage/PlaylistStepPage";
+import { PlaylistCompareStep } from "../PlaylistCompareStep/PlaylistCompareStep";
+import { passageChapter } from "../PlaylistCompareStep/passageChapter";
+import { passageLabel, playlistItemLabel } from "../playlistItemLabel";
+import {
+  hasScriptureNote,
+  type PlaylistItemData,
+  type VerseRef as PlaylistVerseRef,
+} from "../../managers/PlaylistManager";
+import { findOfflineTranslationFallbacks } from "../../managers/offlineTranslationFallback";
+import { SearchableSelect } from "../SearchableSelect/SearchableSelect";
+import { urlWithoutEmbedParam } from "../../managers/EmbedMode";
+import { OffscreenHighlightCueLayer } from "./OffscreenHighlightCueLayer";
+import { durationMs } from "../../app/styles/sharedTokens";
+import {
+  collectHighlightCueMarks,
+  decorationHighlightsByVerse,
+  hasContentTargeting,
+  type HighlightCueAuthor,
+} from "./offscreenHighlightCues";
+import {
+  findScrollContainer,
+  measureReaderViewport,
+  type ReaderViewport,
+} from "./readerViewport";
+import {
+  isPlaylistEditorTab,
+  PlaylistReaderHint,
+} from "../PlaylistEditor/PlaylistEditorWorkspace";
+import { CloseButton } from "../CloseButton/CloseButton";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
-interface ReaderBookmarkButtonProps {
+interface ReaderChapterActionProps {
   state: SeedBibleState;
   translationId: string | null;
   bookId: string | null;
@@ -63,73 +140,141 @@ interface ReaderBookmarkButtonProps {
 }
 
 /**
- * Toggle for the chapter currently shown in the reader. Sits in the top-right
- * of the chapter content area: filled + orange when the chapter is saved,
- * outlined when not. Opens the category picker to save into an existing or
- * new folder; when already bookmarked, removes the chapter-level bookmark.
+ * Files the chapter currently shown in the reader. Sits in the top-right
+ * action cluster and opens the same folder picker a verse selection does, so
+ * one press archives the whole chapter into an existing or new folder.
+ *
+ * The star fills once a chapter-level save exists, and pressing a filled star
+ * edits that save's folders rather than filing a second copy. Either way it is
+ * not a toggle — removing a save is done from the saves panel.
  */
-function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
+function ReaderSaveButton(props: ReaderChapterActionProps) {
   const { state, translationId, bookId, chapterNumber } = props;
   const { t } = useI18n();
-  const canBookmark = !!(translationId && bookId && chapterNumber);
-  const isBookmarked =
-    canBookmark &&
-    state.bookmarks.isLocationBookmarked(translationId, bookId, chapterNumber);
+  const canSave = !!(translationId && bookId && chapterNumber);
+  const isSaved =
+    canSave &&
+    state.saves.isLocationSaved(translationId, bookId, chapterNumber);
 
   return (
-    <button
-      type="button"
-      className={`sb-bible-reader-bookmark-button${
-        isBookmarked ? " sb-bible-reader-bookmark-button-active" : ""
+    <IconButton
+      className={`sb-bible-reader-save-button${
+        isSaved ? " sb-bible-reader-save-button-saved" : ""
       }`}
+      icon={<SaveStarIcon isSaved={isSaved} />}
+      label={saveChapterLabel(t, isSaved)}
       onClick={() => {
-        if (!canBookmark || !translationId || !bookId || !chapterNumber) {
+        if (!canSave || !translationId || !bookId || !chapterNumber) {
           return;
         }
-        if (isBookmarked) {
-          void state.bookmarks.removeBookmarkForLocation(
-            translationId,
-            bookId,
-            chapterNumber
-          );
-          return;
-        }
-        openBookmarkCategoryModal(state, {
+        openSaveModalForLocation(state, {
           translationId,
           bookId,
           chapterNumber,
         });
       }}
-      disabled={!canBookmark}
-      aria-pressed={isBookmarked}
-      aria-label={
-        isBookmarked
-          ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
-          : t("add-bookmark", { defaultValue: "Bookmark chapter" })
-      }
-      title={
-        isBookmarked
-          ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
-          : t("add-bookmark", { defaultValue: "Bookmark chapter" })
-      }
+      disabled={!canSave}
+    />
+  );
+}
+
+/**
+ * Offers downloaded translations the reader can switch to after a chapter
+ * load fails. One match is a switch button; two or more are chosen from the
+ * same searchable picker Settings uses for language. The message above this
+ * stays generic. These controls are what name the translations.
+ */
+function OfflineFallbackSwitch(props: {
+  translations: Translation[];
+  onSwitch: (translation: Translation) => void;
+}) {
+  const { translations, onSwitch } = props;
+  const { t } = useI18n();
+  const [selectedId, setSelectedId] = useState(translations[0]?.id ?? "");
+  const selected =
+    translations.find((item) => item.id === selectedId) ?? translations[0];
+  if (!selected) {
+    return null;
+  }
+
+  return translations.length === 1 ? (
+    <Button
+      variant="secondary"
+      className="sb-reader-error-switch"
+      onClick={() => onSwitch(selected)}
     >
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill={isBookmarked ? "currentColor" : "none"}
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
+      {t("chapter-unavailable-offline-switch-action", {
+        defaultValue: "Switch to {{name}}",
+        name: selected.name,
+      })}
+    </Button>
+  ) : (
+    <div className="sb-reader-error-offline-pick">
+      <label
+        className="sb-reader-error-offline-label"
+        htmlFor="sb-reader-error-offline-select"
       >
-        <path
-          d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
-    </button>
+        {t("chapter-unavailable-offline-switch-choose", {
+          defaultValue: "Choose a saved translation",
+        })}
+      </label>
+      <SearchableSelect
+        id="sb-reader-error-offline-select"
+        value={selected.id}
+        options={translations.map((item) => ({
+          id: item.id,
+          label: item.name,
+        }))}
+        onChange={setSelectedId}
+        searchPlaceholder={t("search", { defaultValue: "Search" })}
+        emptyLabel={t("chapter-unavailable-offline-switch-empty", {
+          defaultValue: "No matching translations",
+        })}
+      />
+      <Button
+        variant="secondary"
+        className="sb-reader-error-switch"
+        onClick={() => onSwitch(selected)}
+      >
+        {t("chapter-unavailable-offline-switch-confirm", {
+          defaultValue: "Switch",
+        })}
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * Opens the bookmark modal for the chapter in the reader. The icon shows what
+ * is already here: an outline for nothing, the bookmark's own color for one,
+ * and a fan of colors for several — only bookmarks in this translation count.
+ */
+function ReaderBookmarkButton(props: ReaderChapterActionProps) {
+  const { state, translationId, bookId, chapterNumber } = props;
+  const { t } = useI18n();
+  const canBookmark = !!(translationId && bookId && chapterNumber);
+  const bookmarksHere = state.bookmarks.getBookmarksForLocation(
+    translationId,
+    bookId,
+    chapterNumber
+  );
+  const label = bookmarkButtonLabel(t, bookmarksHere);
+
+  return (
+    <IconButton
+      className={`sb-bible-reader-bookmark-button${
+        bookmarksHere.length > 0 ? " sb-bible-reader-bookmark-button-set" : ""
+      }`}
+      icon={<BookmarkStackIcon bookmarks={bookmarksHere} />}
+      label={label}
+      onClick={() => {
+        if (!translationId || !bookId || !chapterNumber) {
+          return;
+        }
+        void openBookmarkModal(state, { translationId, bookId, chapterNumber });
+      }}
+      disabled={!canBookmark}
+    />
   );
 }
 
@@ -154,7 +299,12 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
   const { t } = useI18n();
   const chapterAnnotations =
     bookId && chapterNumber
-      ? state.annotations.getAnnotationsForChapter(bookId, chapterNumber).value
+      ? visibleChapterAnnotations(
+          state.annotations,
+          state.friends.friendIds.value,
+          bookId,
+          chapterNumber
+        )
       : [];
   const noteCount = chapterAnnotations.length;
 
@@ -187,6 +337,9 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
         if (firstAnnotatedVerse === null || !bookId || !chapterNumber) {
           state.app.openDiscover();
           return;
+        }
+        if (!state.settings.settings.value.discoveredContent.showContent) {
+          state.discover.view.value = "discover";
         }
         state.discover.scrollToVerse.value = {
           bookId,
@@ -226,8 +379,41 @@ function getPoemIndentLevel(part: ChapterVerse["content"][0]) {
 
   return null;
 }
+// Move a footnote before an immediately preceding line break so the marker
+// stays attached to the text it belongs to instead of starting on the next line.
+function reorderFootnoteBeforeLineBreak(
+  content: ChapterVerse["content"]
+): ChapterVerse["content"] {
+  let reorderedContent: ChapterVerse["content"] | undefined;
 
-function isFootnotePart(part: ChapterVerse["content"][0]) {
+  for (let index = 0; index < content.length - 1; index += 1) {
+    const currentPart = content[index]!;
+    const nextPart = content[index + 1]!;
+
+    if (isLineBreakPart(currentPart) && isFootnotePart(nextPart)) {
+      reorderedContent ??= [...content];
+
+      reorderedContent[index] = nextPart;
+      reorderedContent[index + 1] = currentPart;
+
+      index += 1;
+    }
+  }
+
+  return reorderedContent ?? content;
+}
+function isLineBreakPart(
+  part: ChapterVerse["content"][0] | undefined
+): boolean {
+  return (
+    !!part &&
+    typeof part === "object" &&
+    "lineBreak" in part &&
+    part.lineBreak === true
+  );
+}
+
+function isFootnotePart(part: ChapterVerse["content"][0] | undefined) {
   return (
     !!part &&
     typeof part === "object" &&
@@ -262,6 +448,87 @@ function getInlineText(part: ChapterVerse["content"][0]): string {
 function getVersePlainText(content: ChapterVerse["content"]): string {
   return content.map((part) => getInlineText(part)).join("");
 }
+/** Keep in sync with the `sb-verse-number-flare` animation duration. */
+const VERSE_FLARE_DURATION_MS = 8000;
+/** Keep in sync with the `sb-verse-number-flare-ending` animation duration. */
+const VERSE_FLARE_ENDING_MS = 600;
+
+/** A verse-selection flare this reader started and may need to end early. */
+interface BroadcastVerseFlare {
+  decorationId: string;
+  bookId: string;
+  chapterNumber: number;
+  verseNumber: number;
+  color: string;
+}
+
+function verseFlareDecoration(
+  color: string,
+  ending: boolean
+): VerseDecorationInput {
+  return {
+    className: ending
+      ? "sb-verse-number-flare sb-verse-number-flare-ending"
+      : "sb-verse-number-flare",
+    style: {
+      "--sb-selection-flare-color": color,
+    } as JSX.CSSProperties,
+    removeAfterMs: ending ? VERSE_FLARE_ENDING_MS : VERSE_FLARE_DURATION_MS,
+  };
+}
+
+function broadcastSelectedVerse(
+  session: BibleReadingSession,
+  bookId: string,
+  chapterNumber: number,
+  verseNumber: number
+): BroadcastVerseFlare | null {
+  const user = session.currentUser.value;
+  if (!user) return null;
+  const options = session.options.value;
+  const visibility = options.verseSelectionEffectVisibility ?? "hosts-only";
+  if (visibility === "none") return null;
+  if (visibility === "hosts-only" && !isConnectedUserHost(options, user)) {
+    return null;
+  }
+  const connectionId = user.connectionId ?? user.userId ?? "anonymous";
+
+  // Generate a unique ID for each selection so repeated clicks
+  // are recognized as new decorations and restart the flare animation.
+  const decorationId = `selected-verse-flare-${connectionId}-${Date.now()}`;
+  session.readingState.decorateVerses(
+    bookId,
+    chapterNumber,
+    [verseNumber],
+    verseFlareDecoration(user.visual.color, false),
+    decorationId
+  );
+
+  return {
+    decorationId,
+    bookId,
+    chapterNumber,
+    verseNumber,
+    color: user.visual.color,
+  };
+}
+
+/**
+ * Swaps a still-running flare for a short fade-out. Re-decorating under the
+ * same id replaces it (and its removal timer) for every session peer.
+ */
+function endVerseFlare(
+  session: BibleReadingSession,
+  flare: BroadcastVerseFlare
+) {
+  session.readingState.decorateVerses(
+    flare.bookId,
+    flare.chapterNumber,
+    [flare.verseNumber],
+    verseFlareDecoration(flare.color, true),
+    flare.decorationId
+  );
+}
 
 /**
  * A highlight resolved for one verse, plus where it came from. `broadcast` is
@@ -271,17 +538,6 @@ function getVersePlainText(content: ChapterVerse["content"]): string {
 interface ResolvedHighlight {
   highlight: ChapterHighlight;
   broadcast: boolean;
-}
-
-function hasContentTargeting(decoration: VerseDecoration): boolean {
-  const hasTargetContent =
-    typeof decoration.targetContent === "string" &&
-    decoration.targetContent.trim().length > 0;
-  const hasIndexRange =
-    typeof decoration.startIndex === "number" ||
-    typeof decoration.endIndex === "number";
-
-  return hasTargetContent || hasIndexRange;
 }
 
 function toContentDecorationRanges(
@@ -384,11 +640,7 @@ function splitVerseIntoSegments(
   for (const part of content) {
     const isFootnote = isFootnotePart(part);
     const indentLevel = getPoemIndentLevel(part);
-    const isLineBreak =
-      part &&
-      typeof part === "object" &&
-      "lineBreak" in part &&
-      part.lineBreak === true;
+    const isLineBreak = isLineBreakPart(part);
 
     if (isFootnote) {
       if (inPoetry) {
@@ -442,7 +694,8 @@ function renderInlineContent(
   showFootnotes: boolean,
   showRedLettering: boolean,
   contentRanges: ContentDecorationRange[] = [],
-  partStartIndex = 0
+  partStartIndex = 0,
+  isBeforeFootnote = false
 ) {
   const splitTextByDecorations = (text: string) => {
     const partEndIndex = partStartIndex + text.length;
@@ -530,7 +783,8 @@ function renderInlineContent(
   };
 
   if (typeof part === "string") {
-    const segments = splitTextByDecorations(part);
+    const text = isBeforeFootnote ? part.trimEnd() : part;
+    const segments = splitTextByDecorations(text);
     return (
       <span key={index}>
         {segments.map((segment, segmentIndex) => (
@@ -555,8 +809,8 @@ function renderInlineContent(
     if (part.wordsOfJesus && showRedLettering) {
       className += " sb-words-of-jesus";
     }
-
-    const segments = splitTextByDecorations(part.text);
+    const text = isBeforeFootnote ? part.text.trimEnd() : part.text;
+    const segments = splitTextByDecorations(text);
     return (
       <span key={index} className={className.trim()}>
         {segments.map((segment, segmentIndex) => (
@@ -579,27 +833,29 @@ function renderInlineContent(
     return <strong key={index}>{part.heading}</strong>;
   }
 
-  if ("lineBreak" in part && part.lineBreak === true) {
+  if (isLineBreakPart(part)) {
     return <br key={index} />;
   }
 
   if ("noteId" in part && typeof part.noteId === "number") {
     if (!showFootnotes) {
-      return <span> </span>;
+      return <span key={index}> </span>;
     }
     return (
-      <button
-        key={index}
-        className="sb-inline-footnote-button"
-        aria-label={`Open footnote ${part.noteId}`}
-        title={`Open footnote ${part.noteId}`}
-        onClick={(event: MouseEvent) => {
-          event.stopPropagation();
-          onOpenFootnote(part.noteId);
-        }}
-      >
-        <span className="material-symbols-outlined">info</span>
-      </button>
+      <span key={index} className="sb-inline-footnote">
+        {"\u00A0"}
+        <button
+          className="sb-inline-footnote-button"
+          aria-label={`Open footnote ${part.noteId}`}
+          title={`Open footnote ${part.noteId}`}
+          onClick={(event: MouseEvent) => {
+            event.stopPropagation();
+            onOpenFootnote(part.noteId);
+          }}
+        >
+          <span className="material-symbols-outlined">info</span>
+        </button>
+      </span>
     );
   }
 
@@ -635,7 +891,11 @@ function renderChapterContent(
     verse: BibleSelectedVerse,
     verseNumber: number,
     event: MouseEvent
-  ) => void
+  ) => void,
+  sharedSession?: BibleReadingSession | null,
+  verseSelectionEffects: VerseSelectionEffects = "default",
+  prefersReducedMotionValue?: boolean,
+  hideHighlights = false
 ) {
   if (!chapterData) {
     return null;
@@ -651,31 +911,80 @@ function renderChapterContent(
         decoration.verses.includes(verseNumber)
     );
   };
-
-  // Decorations asking to be drawn as highlights (`decoration.highlight`),
-  // flattened to one entry per verse. Content-targeted decorations are skipped:
-  // the ribbon layer works per verse-run and can't paint a text fragment.
-  // Later decorations win, matching how their CSS is layered below.
-  const decorationHighlights = new Map<number, ChapterHighlight>();
-  for (const decoration of decorations) {
-    if (!decoration.highlight || hasContentTargeting(decoration)) {
-      continue;
-    }
+  const getVerseFlare = (
+    verseNumber: number
+  ): { color: string; ending: boolean } | undefined => {
     if (
-      (decoration.translationId &&
-        decoration.translationId !== chapterData.translation.id) ||
-      decoration.bookId !== chapterData.book.id ||
-      decoration.chapterNumber !== chapterData.chapter.number
+      !shouldShowVerseSelectionEffects(
+        verseSelectionEffects,
+        prefersReducedMotionValue
+      )
     ) {
-      continue;
+      return undefined;
     }
-    for (const verseNumber of decoration.verses) {
-      decorationHighlights.set(verseNumber, {
-        ...decoration.highlight,
-        verse: verseNumber,
-      });
+
+    const session = sharedSession;
+    const currentUser = session?.currentUser?.value;
+
+    if (!session || !currentUser) {
+      return undefined;
     }
-  }
+
+    const currentConnectionId =
+      currentUser.connectionId ?? currentUser.userId ?? "anonymous";
+
+    const visibility =
+      session.options.value.verseSelectionEffectVisibility ?? "hosts-only";
+
+    if (visibility === "none") {
+      return undefined;
+    }
+
+    const flare = getVerseDecorations(verseNumber).find((decoration) => {
+      if (!decoration.className?.includes("sb-verse-number-flare")) {
+        return false;
+      }
+      const owner = session.getDecorationOwner(decoration.id);
+
+      if (!owner) {
+        return false;
+      }
+
+      // Hosts-only: accept flares from the primary host or a co-host.
+      if (visibility === "hosts-only") {
+        const ownerUser = session.connectedUsers.value.find(
+          (user) => user.connectionId === owner
+        );
+
+        if (
+          !ownerUser ||
+          !isConnectedUserHost(session.options.value, ownerUser)
+        ) {
+          return false;
+        }
+      }
+
+      return owner !== currentConnectionId;
+    });
+
+    const color = flare?.style?.["--sb-selection-flare-color"];
+
+    return typeof color === "string"
+      ? {
+          color,
+          ending:
+            flare?.className
+              ?.split(/\s+/)
+              .includes("sb-verse-number-flare-ending") ?? false,
+        }
+      : undefined;
+  };
+
+  const decorationHighlights = decorationHighlightsByVerse(decorations, {
+    translationId: chapterData.translation.id,
+    bookId: chapterData.book.id,
+    chapterNumber: chapterData.chapter.number,
+  });
 
   // `showHighlights` hides the reader's *saved* highlights. Decoration
   // highlights are a live signal from a session peer or an extension, so they
@@ -686,6 +995,13 @@ function renderChapterContent(
   // reader's own highlight rather than replacing it, so the outline is what
   // says "this isn't yours, and yours is still underneath".
   const getVerseHighlight = (verseNumber: number): ResolvedHighlight | null => {
+    // Embeds (including the share-sheet preview of one) must not paint
+    // highlights. A signed-in viewer's own highlights would show there, and
+    // a visitor of the embed does not have them.
+    if (hideHighlights) {
+      return null;
+    }
+
     const decorated = decorationHighlights.get(verseNumber);
     if (decorated) {
       return { highlight: decorated, broadcast: true };
@@ -732,11 +1048,20 @@ function renderChapterContent(
     // text inherits when it's absent. Requiring both meant a highlight with
     // only a custom colour silently rendered as its preset instead.
     if (highlight.customColor) {
+      const wordsOfJesusColor = getReadableWordsOfJesusColor(
+        highlight.customColor
+      );
+      const style: JSX.CSSProperties = {};
+      if (highlight.customFontColor) {
+        style.color = highlight.customFontColor;
+      }
+      if (wordsOfJesusColor) {
+        style["--sb-highlight-custom-words-of-jesus-font-color"] =
+          wordsOfJesusColor;
+      }
       return {
-        className: "sb-highlight",
-        style: highlight.customFontColor
-          ? ({ color: highlight.customFontColor } as JSX.CSSProperties)
-          : undefined,
+        className: "sb-highlight sb-highlight-custom",
+        style: Object.keys(style).length > 0 ? style : undefined,
         fill: highlight.customColor,
         broadcast,
       };
@@ -758,7 +1083,16 @@ function renderChapterContent(
 
   const getDecorationPresentation = (verseDecorations: VerseDecoration[]) => {
     const matchingDecorations = verseDecorations.filter((decoration) => {
-      return !hasContentTargeting(decoration);
+      if (hasContentTargeting(decoration)) {
+        return false;
+      }
+
+      // Verse-selection flares are handled by the verse number,
+      // not by the wrapper around the entire verse.
+      if (decoration.className?.includes("sb-verse-number-flare")) {
+        return false;
+      }
+      return true;
     });
 
     return matchingDecorations.reduce(
@@ -811,20 +1145,34 @@ function renderChapterContent(
   // An annotated number/icon is clickable, jumping straight to its note.
   const renderVerseNumberOrIcon = (
     verseNumber: number,
-    verse: BibleSelectedVerse
+    verse: BibleSelectedVerse,
+    flare?: { color: string; ending: boolean }
   ) => {
     const hasAnnotation = getVerseAnnotations(verseNumber).length > 0;
+
+    const flareClass = flare
+      ? flare.ending
+        ? "sb-verse-number-flare sb-verse-number-flare-ending"
+        : "sb-verse-number-flare"
+      : "";
+    const flareStyle = flare
+      ? ({ "--sb-selection-flare-color": flare.color } as JSX.CSSProperties)
+      : undefined;
+
     const handleAnnotationClick = (event: MouseEvent) =>
       onAnnotationVerseClick(verse, verseNumber, event);
 
     if (scriptureElements.showVerseNumbers) {
       return (
         <sup
-          className={
-            hasAnnotation
-              ? "sb-verse-number sb-verse-number-annotated"
-              : "sb-verse-number"
-          }
+          className={[
+            "sb-verse-number",
+            hasAnnotation ? "sb-verse-number-annotated" : "",
+            flareClass,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          style={flareStyle}
           onClick={hasAnnotation ? handleAnnotationClick : undefined}
           role={hasAnnotation ? "button" : undefined}
           tabIndex={hasAnnotation ? 0 : undefined}
@@ -833,12 +1181,17 @@ function renderChapterContent(
         </sup>
       );
     }
+
     if (!hasAnnotation) {
       return null;
     }
+
     return (
       <sup
-        className="sb-verse-number sb-verse-annotation-icon"
+        className={["sb-verse-number", "sb-verse-annotation-icon", flareClass]
+          .filter(Boolean)
+          .join(" ")}
+        style={flareStyle}
         onClick={handleAnnotationClick}
         role="button"
         tabIndex={0}
@@ -858,13 +1211,15 @@ function renderChapterContent(
       verse: value,
       translationId: chapterData.translation.id,
     };
+    const verseFlare = getVerseFlare(value.number);
     const isSelected = selectedVerses.some(
       (v) =>
         v.verse.number === value.number &&
         v.bookId === chapterData.book.id &&
         v.chapterNumber === chapterData.chapter.number
     );
-    const segments = splitVerseIntoSegments(value.content);
+    const content = reorderFootnoteBeforeLineBreak(value.content);
+    const segments = splitVerseIntoSegments(content);
     const hasPoetry = segments.some((s) => s.type === "poetry");
     const verseDecorations = getVerseDecorations(value.number);
     const decorationPresentation = getDecorationPresentation(verseDecorations);
@@ -944,7 +1299,7 @@ function renderChapterContent(
                   style={verseDecoratorStyle}
                 >
                   {segIndex === 0 &&
-                    renderVerseNumberOrIcon(value.number, verse)}
+                    renderVerseNumberOrIcon(value.number, verse, verseFlare)}
                   {segment.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -954,7 +1309,8 @@ function renderChapterContent(
                       scriptureElements.showFootnotes,
                       scriptureElements.showRedLettering,
                       contentRanges,
-                      getPartTextStartIndex(part)
+                      getPartTextStartIndex(part),
+                      isFootnotePart(segment.parts[partIndex + 1])
                     )
                   )}
                 </span>
@@ -977,7 +1333,7 @@ function renderChapterContent(
                 >
                   {segIndex === 0 &&
                     lineIndex === 0 &&
-                    renderVerseNumberOrIcon(value.number, verse)}
+                    renderVerseNumberOrIcon(value.number, verse, verseFlare)}
                   {line.parts.map((part, partIndex) =>
                     renderInlineContent(
                       part,
@@ -987,7 +1343,8 @@ function renderChapterContent(
                       scriptureElements.showFootnotes,
                       scriptureElements.showRedLettering,
                       contentRanges,
-                      getPartTextStartIndex(part)
+                      getPartTextStartIndex(part),
+                      isFootnotePart(line.parts[partIndex + 1])
                     )
                   )}
                 </span>
@@ -1013,8 +1370,8 @@ function renderChapterContent(
         tabIndex={0}
       >
         <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
-          {renderVerseNumberOrIcon(value.number, verse)}
-          {value.content.map((part, index) =>
+          {renderVerseNumberOrIcon(value.number, verse, verseFlare)}
+          {content.map((part, index) =>
             renderInlineContent(
               part,
               index,
@@ -1023,7 +1380,8 @@ function renderChapterContent(
               scriptureElements.showFootnotes,
               scriptureElements.showRedLettering,
               contentRanges,
-              getPartTextStartIndex(part)
+              getPartTextStartIndex(part),
+              isFootnotePart(content[index + 1])
             )
           )}
         </span>
@@ -1101,7 +1459,10 @@ function renderChapterContent(
               (noteId) => onOpenFootnote(noteId, null),
               scriptureElements.showHeadings,
               scriptureElements.showFootnotes,
-              scriptureElements.showRedLettering
+              scriptureElements.showRedLettering,
+              [],
+              0,
+              isFootnotePart(entry.content[index + 1])
             )
           )}
         </p>
@@ -1265,7 +1626,8 @@ interface Ribbon {
   enter: boolean;
   exiting: boolean;
 }
-const RIBBON_FADE_MS = 250;
+/** How long the ribbon fade runs (the CSS uses the same token). */
+const RIBBON_FADE_MS = durationMs("--sb-duration-slow");
 
 /**
  * How long the chapter the reader has left stays on screen, dimmed, before the
@@ -1306,14 +1668,495 @@ const CHAPTER_SKELETON_PARAGRAPHS = [
   ["95%", "96%", "98%", "89%", "68%"],
 ] as const;
 
+/** A note marker in the mobile gutter, placed against a measured line box. */
+interface NoteMarker {
+  verseNumber: number;
+  /** Offset from the top of the chapter content box, in px. */
+  top: number;
+  /** Height of the verse's first line box, so the icon centres on it. */
+  height: number;
+}
+
+/**
+ * One other participant's place in this chapter, ready to draw: the verses
+ * they can see plus what identifies them. Built in the reader from the shared
+ * session and measured into a bar by ChapterContent (#1692).
+ */
+export interface ParticipantPresence {
+  connectionId: string;
+  displayName: string;
+  imageUrl: string | null;
+  visual: ConnectionSessionUserVisual;
+  firstVerse: number;
+  lastVerse: number;
+}
+
+/** A presence bar, placed against measured line boxes. */
+interface PresenceMarker {
+  connectionId: string;
+  displayName: string;
+  imageUrl: string | null;
+  visual: ConnectionSessionUserVisual;
+  /** Offset from the top of the chapter content box, in px. */
+  top: number;
+  height: number;
+  /**
+   * Which column of the gutter this bar sits in. People reading the same
+   * verses would otherwise be drawn on top of each other, hiding everyone but
+   * whoever was painted last, so bars whose spans overlap are dealt out into
+   * side-by-side lanes. Zero whenever nobody overlaps. A lane at or beyond
+   * `PRESENCE_MAX_LANES` has no room in the gutter and draws no bar.
+   */
+  lane: number;
+}
+
+/**
+ * Deals presence bars into lanes so people reading the same verses stand
+ * beside each other instead of hiding one another. Taking them top-down and
+ * putting each in the first lane whose previous occupant has already ended
+ * uses no more lanes than there are people genuinely overlapping at once, so
+ * a session spread through a chapter keeps everyone on the centre line. Ties
+ * break on connection id to keep a lane from changing hands between two bars
+ * that start on the same line. Sorts `markers` in place.
+ */
+function assignPresenceLanes(markers: PresenceMarker[]): void {
+  markers.sort(
+    (a, b) => a.top - b.top || a.connectionId.localeCompare(b.connectionId)
+  );
+  const laneBottoms: number[] = [];
+  for (const marker of markers) {
+    const bottom = marker.top + marker.height;
+    const free = laneBottoms.findIndex((end) => marker.top >= end);
+    const lane = free === -1 ? laneBottoms.length : free;
+    laneBottoms[lane] = Math.max(laneBottoms[lane] ?? 0, bottom);
+    marker.lane = lane;
+  }
+}
+
+/**
+ * What a set of placed bars looks like, so the measure -> setState ->
+ * re-render -> measure cycle can settle instead of looping.
+ */
+function presenceSignature(markers: PresenceMarker[]): string {
+  return markers
+    .map(
+      (m) =>
+        `${m.connectionId}:${Math.round(m.top)}:${Math.round(m.height)}:${m.lane}:${m.imageUrl ?? ""}`
+    )
+    .join("|");
+}
+
+/**
+ * How many bars fit side by side in the presence gutter. The gutter is a fixed
+ * width so the text never shifts as people come and go, which leaves a fourth
+ * person on the same verses nowhere to draw a bar: they keep their place in
+ * the avatar stack and only the bar is left out.
+ */
+const PRESENCE_MAX_LANES = 3;
+/**
+ * Where each lane sits relative to the gutter's centre line, in bar widths
+ * with gaps. Lane zero is centred so a lone bar lines up under its avatar, and
+ * later lanes fill in on either side of it.
+ */
+const PRESENCE_LANE_OFFSETS = [0, 1, -1] as const;
+/** Avatars a stack shows before collapsing the rest into a "+N" chip. */
+const PRESENCE_MAX_STACK_AVATARS = 3;
+/**
+ * Pixel geometry of the gutter's avatars and arrows. The stacks and arrows
+ * are placed in JavaScript against measured verse positions, so these are
+ * mirrored by the matching `--sb-presence-*` variables in the stylesheet.
+ */
+const PRESENCE_AVATAR_PX = 20;
+/** Vertical distance between one avatar of a stack and the next. */
+const PRESENCE_STACK_STEP_PX = 12;
+/** Room kept above a pinned stack for the "continues above" arrow. */
+const PRESENCE_PIN_INSET_PX = 14;
+const PRESENCE_ARROW_PX = 6;
+const PRESENCE_EDGE_INSET_PX = 4;
+
+/**
+ * One or more avatars drawn together at a point in the gutter. Avatars that
+ * would land on top of one another (their owners' verses start on the same
+ * line, or several bars are pinned at the top of the screen at once) are
+ * collapsed into a single stack, the way the mobile participants list does.
+ */
+interface PresenceAvatarStack {
+  key: string;
+  /** Offset from the top of the chapter content box, in px. */
+  top: number;
+  /**
+   * Held at the top of the screen because its owners' verses start above it.
+   * A pinned stack is re-placed on every scroll frame, so it must not glide.
+   */
+  pinned: boolean;
+  markers: PresenceMarker[];
+}
+
+interface PresenceArrow {
+  key: string;
+  direction: "up" | "down";
+  top: number;
+  lane: number;
+  color: string;
+}
+
+/** Height of a stack of `count` avatars, counting its "+N" chip. */
+function presenceStackHeight(count: number): number {
+  const shown = Math.min(count, PRESENCE_MAX_STACK_AVATARS);
+  const rows = shown + (count > shown ? 1 : 0);
+  return PRESENCE_AVATAR_PX + (rows - 1) * PRESENCE_STACK_STEP_PX;
+}
+
+/**
+ * Which side of the screen a bar lies wholly beyond, or null while any of it
+ * is on screen.
+ */
+function presenceOffscreenSide(
+  marker: PresenceMarker,
+  viewport: ReaderViewport | null
+): "above" | "below" | null {
+  if (!viewport) return null;
+  if (marker.top + marker.height <= viewport.top) return "above";
+  if (marker.top >= viewport.bottom) return "below";
+  return null;
+}
+
+/**
+ * Anchors each participant's avatar to the top of their bar, then holds it at
+ * the top of the screen once that has scrolled out of view, so the avatar
+ * follows the reader down the page for as long as its owner's verses do. It
+ * lets go at the bottom of the bar rather than leaving the verses it belongs
+ * to. Avatars that end up overlapping are merged into one stack.
+ *
+ * Someone whose verses are entirely off the screen would otherwise have no
+ * avatar in view at all, so theirs is held at the edge they are beyond (#1961)
+ * — just inside the top for someone behind the reader, just inside the bottom
+ * for someone ahead — beside an arrow pointing their way.
+ */
+function stackPresenceAvatars(
+  markers: PresenceMarker[],
+  viewport: ReaderViewport | null
+): PresenceAvatarStack[] {
+  const anchored = markers.map((marker) => {
+    const lowest = marker.top + marker.height - PRESENCE_AVATAR_PX;
+    const side = presenceOffscreenSide(marker, viewport);
+    let top = marker.top;
+    let pinned = false;
+    if (viewport) {
+      const pinTop = viewport.top + PRESENCE_PIN_INSET_PX;
+      if (side === "above") {
+        top = pinTop;
+        pinned = true;
+      } else if (side === "below") {
+        top = viewport.bottom - PRESENCE_PIN_INSET_PX - PRESENCE_AVATAR_PX;
+        pinned = true;
+      } else if (pinTop > marker.top && pinTop <= lowest) {
+        top = pinTop;
+        pinned = true;
+      } else if (pinTop > lowest && lowest > marker.top) {
+        top = lowest;
+      }
+    }
+    return { marker, top, pinned, below: side === "below" };
+  });
+  anchored.sort(
+    (a, b) =>
+      a.top - b.top ||
+      a.marker.connectionId.localeCompare(b.marker.connectionId)
+  );
+
+  const stacks: PresenceAvatarStack[] = [];
+  // Bottom edge of the stack being built, below which the next avatar is on
+  // its own again.
+  let reach = -Infinity;
+  // Index of the stack holding the people below the screen, if any.
+  let belowIndex = -1;
+  for (const entry of anchored) {
+    const current = stacks[stacks.length - 1];
+    if (current && entry.top < reach) {
+      current.markers.push(entry.marker);
+      if (entry.below) belowIndex = stacks.length - 1;
+      reach = current.top + presenceStackHeight(current.markers.length);
+      continue;
+    }
+    stacks.push({
+      key: "",
+      top: entry.top,
+      pinned: entry.pinned,
+      markers: [entry.marker],
+    });
+    if (entry.below) belowIndex = stacks.length - 1;
+    reach = entry.top + PRESENCE_AVATAR_PX;
+  }
+
+  // A stack grows downward, which at the bottom edge would run it over the
+  // arrow and off the screen, so the one held there is lifted by its own
+  // height instead. Anything still lower (a bar starting in the last few
+  // pixels of the screen) joins it, and so does any stack the lift runs into.
+  const edge = stacks[belowIndex];
+  if (viewport && edge) {
+    const floor = viewport.bottom - PRESENCE_PIN_INSET_PX;
+    for (const later of stacks.splice(belowIndex + 1)) {
+      edge.markers.push(...later.markers);
+    }
+    edge.pinned = true;
+    edge.top = Math.min(
+      edge.top,
+      floor - presenceStackHeight(edge.markers.length)
+    );
+    for (
+      let previous = stacks[stacks.length - 2];
+      previous;
+      previous = stacks[stacks.length - 2]
+    ) {
+      if (
+        previous.top + presenceStackHeight(previous.markers.length) <=
+        edge.top
+      ) {
+        break;
+      }
+      stacks.splice(stacks.length - 2, 1);
+      edge.markers.unshift(...previous.markers);
+      edge.top = Math.min(
+        previous.top,
+        floor - presenceStackHeight(edge.markers.length)
+      );
+    }
+  }
+
+  for (const stack of stacks) {
+    stack.key = stack.markers.map((m) => m.connectionId).join("+");
+  }
+  return stacks;
+}
+
+/**
+ * A small arrow at the top or bottom edge of the screen for every bar that
+ * carries on past it, so the reader can tell that a participant sees more than
+ * the part of their bar on this screen. Only bars with a lane to draw in get
+ * one, since there is nothing on screen for the arrow to continue.
+ *
+ * People entirely off the screen get one arrow per edge instead, on the
+ * centre line beside the avatars held there, in the colour of whoever is
+ * nearest. It is left out where a bar on the centre line already has an arrow
+ * at that edge, since the two would be drawn on the same spot.
+ */
+function placePresenceArrows(
+  markers: PresenceMarker[],
+  viewport: ReaderViewport | null
+): PresenceArrow[] {
+  if (!viewport) return [];
+  const arrows: PresenceArrow[] = [];
+  let nearestAbove: PresenceMarker | null = null;
+  let nearestBelow: PresenceMarker | null = null;
+  for (const marker of markers) {
+    const side = presenceOffscreenSide(marker, viewport);
+    if (side === "above") {
+      if (
+        !nearestAbove ||
+        marker.top + marker.height > nearestAbove.top + nearestAbove.height
+      ) {
+        nearestAbove = marker;
+      }
+      continue;
+    }
+    if (side === "below") {
+      if (!nearestBelow || marker.top < nearestBelow.top) {
+        nearestBelow = marker;
+      }
+      continue;
+    }
+    if (marker.lane >= PRESENCE_MAX_LANES) continue;
+    const bottom = marker.top + marker.height;
+    if (marker.top < viewport.top && bottom > viewport.top) {
+      arrows.push({
+        key: `${marker.connectionId}:up:${marker.lane}`,
+        direction: "up",
+        top: viewport.top + PRESENCE_EDGE_INSET_PX,
+        lane: marker.lane,
+        color: marker.visual.color,
+      });
+    }
+    if (bottom > viewport.bottom && marker.top < viewport.bottom) {
+      arrows.push({
+        key: `${marker.connectionId}:down:${marker.lane}`,
+        direction: "down",
+        top: viewport.bottom - PRESENCE_EDGE_INSET_PX - PRESENCE_ARROW_PX,
+        lane: marker.lane,
+        color: marker.visual.color,
+      });
+    }
+  }
+  const centreArrow = (direction: PresenceArrow["direction"]) =>
+    arrows.some((arrow) => arrow.direction === direction && arrow.lane === 0);
+  // Keyed like the arrow a centre-line bar has while it runs off that edge, so
+  // when the last of that person's verses leaves the screen the arrow stays
+  // put instead of fading out and back in. An arrow in a side lane has a
+  // different key, so it fades out while this one fades in on the centre
+  // line rather than sliding across.
+  if (nearestAbove && !centreArrow("up")) {
+    arrows.push({
+      key: `${nearestAbove.connectionId}:up:0`,
+      direction: "up",
+      top: viewport.top + PRESENCE_EDGE_INSET_PX,
+      lane: 0,
+      color: nearestAbove.visual.color,
+    });
+  }
+  if (nearestBelow && !centreArrow("down")) {
+    arrows.push({
+      key: `${nearestBelow.connectionId}:down:0`,
+      direction: "down",
+      top: viewport.bottom - PRESENCE_EDGE_INSET_PX - PRESENCE_ARROW_PX,
+      lane: 0,
+      color: nearestBelow.visual.color,
+    });
+  }
+  return arrows;
+}
+
+/**
+ * The gutter down the start edge of the chapter showing where the other
+ * participants are (#1692): a bar per person spanning the verses they can
+ * see, their avatar at the top of it (held on screen as the reader scrolls
+ * past), and arrows where a bar runs off the screen. Someone reading well
+ * ahead of or behind the reader has their avatar held at that edge of the
+ * screen with an arrow pointing their way (#1961).
+ *
+ * Its own component so that following the scroll only re-renders the gutter.
+ * The viewport is re-measured on every scroll frame, and doing that in
+ * ChapterContent would re-render the whole chapter's text each time.
+ */
+function PresenceGutter({
+  markers,
+  chapterKey,
+  contentRef,
+}: {
+  markers: PresenceMarker[];
+  chapterKey: string;
+  contentRef: RefObject<HTMLDivElement>;
+}) {
+  const [viewport, setViewport] = useState<ReaderViewport | null>(null);
+  const scrollerRef = useRef<HTMLElement | null>(null);
+
+  const measure = () => {
+    const content = contentRef.current;
+    if (!content) return;
+    const next = measureReaderViewport(content, scrollerRef.current);
+    setViewport((prev) =>
+      prev && prev.top === next.top && prev.bottom === next.bottom ? prev : next
+    );
+  };
+  const measureRef = useRef(measure);
+  measureRef.current = measure;
+
+  // Declared before the per-render measurement below so the scroller is known
+  // by the time the first viewport is read, instead of a page-sized guess that
+  // the next frame has to correct.
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    scrollerRef.current = findScrollContainer(content);
+    const target: EventTarget = scrollerRef.current ?? window;
+    let frame: number | null = null;
+    const schedule = () => {
+      if (frame !== null) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        measureRef.current();
+      });
+    };
+    target.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      target.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
+  }, [contentRef]);
+
+  // After every render: the markers only change once the content has been
+  // laid out, and the viewport has to be read against that same layout.
+  useLayoutEffect(() => {
+    measureRef.current();
+  });
+
+  const stacks = stackPresenceAvatars(markers, viewport);
+  const arrows = placePresenceArrows(markers, viewport);
+
+  return (
+    <div className="sb-presence-gutter" aria-hidden="true">
+      {markers
+        .filter((marker) => marker.lane < PRESENCE_MAX_LANES)
+        .map((marker) => (
+          <div
+            // Keyed by chapter as well as owner so a navigation gives every
+            // bar a fresh element. A bar glides between positions within a
+            // chapter (see the transition in the stylesheet), and the whole
+            // page's text is replaced on a navigation — a bar left to travel
+            // from its old verses to its new ones would be gliding across
+            // scripture it was never measured against.
+            key={`${chapterKey}:${marker.connectionId}`}
+            className="sb-presence-marker"
+            style={{
+              top: `${marker.top}px`,
+              height: `${marker.height}px`,
+              background: marker.visual.color,
+              "--sb-presence-lane-offset": PRESENCE_LANE_OFFSETS[marker.lane],
+            }}
+          />
+        ))}
+      {arrows.map((arrow) => (
+        <span
+          key={`${chapterKey}:${arrow.key}`}
+          className={`sb-presence-arrow sb-presence-arrow-${arrow.direction}`}
+          style={{
+            top: `${arrow.top}px`,
+            "--sb-presence-lane-offset": PRESENCE_LANE_OFFSETS[arrow.lane],
+            "--sb-presence-arrow-color": arrow.color,
+          }}
+        />
+      ))}
+      {stacks.map((stack) => {
+        const shown = stack.markers.slice(0, PRESENCE_MAX_STACK_AVATARS);
+        const overflow = stack.markers.length - shown.length;
+        return (
+          <div
+            key={`${chapterKey}:${stack.key}`}
+            className={`sb-presence-avatars${
+              stack.pinned ? " sb-presence-avatars-pinned" : ""
+            }`}
+            style={{ top: `${stack.top}px` }}
+          >
+            {shown.map((marker) => (
+              <span key={marker.connectionId} className="sb-presence-avatar">
+                <Avatar
+                  imageUrl={marker.imageUrl}
+                  visual={marker.visual}
+                  title={marker.displayName}
+                />
+              </span>
+            ))}
+            {overflow > 0 && (
+              <span className="sb-presence-avatars-more">+{overflow}</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 interface ChapterContentProps {
-  chapterData: Signal<TranslationBookChapter | null>;
+  chapterData: ReadonlySignal<TranslationBookChapter | null>;
   chapterDataPromise: Promise<void>;
   initialChapterLoadSettled: ReadonlySignal<boolean>;
   selectedVerses: Signal<BibleSelectedVerse[]>;
   highlights: ReadonlySignal<ChapterHighlights>;
   decorations: ReadonlySignal<VerseDecoration[]>;
   annotations?: AnnotationsManager;
+  /** Whose notes besides the user's own get verse markers. */
+  friends?: FriendsManager;
   selectVerse: (
     verse: BibleSelectedVerse,
     selectionX: number,
@@ -1333,6 +2176,215 @@ interface ChapterContentProps {
    * the chapter they navigated to arrives.
    */
   isStale?: boolean;
+  /**
+   * Mobile has no Discover panel to read notes alongside the text, so the
+   * note markers move out into a gutter beside the scripture there (#1691).
+   */
+  isMobile?: boolean;
+  /**
+   * Other participants reading this same chapter in a shared session, drawn as
+   * bars beside the text. Undefined outside a session, which closes the gutter
+   * altogether; inside one the gutter stays open even while the list is empty,
+   * so the text never shifts as people arrive in and leave the chapter.
+   */
+  presence?: ParticipantPresence[];
+  /**
+   * Called as the reader scrolls with the span of verses on screen, or null
+   * when none are. Drives the presence this client publishes.
+   */
+  onVisibleVersesChange?: (range: VisibleVerseRange | null) => void;
+  sharedSession?: BibleReadingSession | null;
+  onHostVerseClick: (verse: BibleSelectedVerse) => void;
+  verseSelectionEffects: VerseSelectionEffects;
+  prefersReducedMotionValue?: boolean;
+  /**
+   * Who made each highlight, so the off-screen bubbles can show their avatar
+   * and leave out the reader's own.
+   */
+  highlightAuthors?: {
+    isOwn: (decorationId: string) => boolean;
+    of: (decorationId: string) => HighlightCueAuthor | null;
+  };
+  /**
+   * Skip every verse highlight, saved and broadcast. Used by the compact
+   * embed so the page does not show highlights the visitor does not have.
+   */
+  hideHighlights?: boolean;
+}
+
+/**
+ * The blocks of a presence area, in reading order: each child of an element
+ * marked `data-presence-units` (a note's paragraphs, say), and each element
+ * marked `data-presence-unit` as one whole (a question's hidden answer, a
+ * video). Every participant renders a step the same way, so a block's place
+ * in this list names the same text for all of them; a block inside one that
+ * counts as a whole is part of it, so an answer only one person has revealed
+ * doesn't shift everyone else's count.
+ */
+function presenceUnits(area: HTMLElement): HTMLElement[] {
+  return Array.from(
+    area.querySelectorAll<HTMLElement>(
+      "[data-presence-units] > *, [data-presence-unit]"
+    )
+  ).filter((el) => {
+    const whole = el.parentElement?.closest("[data-presence-unit]");
+    return !whole || !area.contains(whole);
+  });
+}
+
+/**
+ * Content other than a chapter's verses (a playing playlist's note,
+ * question or video) with the same presence gutter a chapter has in a shared
+ * session (#1692): it reports which of its blocks are on screen, numbered from
+ * 1 (see `presenceUnits`), and draws a bar beside the blocks each other
+ * participant on the same area can see. Outside a session (`presence`
+ * undefined) it's just its children, with no gutter.
+ */
+export function PresenceArea(props: {
+  areaKey: string;
+  presence: ParticipantPresence[] | undefined;
+  onVisibleChange: (range: VisibleVerseRange | null) => void;
+  children: ComponentChildren;
+}) {
+  const { areaKey, presence, onVisibleChange } = props;
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [markers, setMarkers] = useState<PresenceMarker[]>([]);
+  const signatureRef = useRef("");
+  const inSession = presence !== undefined;
+
+  const measure = () => {
+    const area = contentRef.current;
+    if (!area) return;
+    const units = presenceUnits(area);
+    const box = area.getBoundingClientRect();
+    const next: PresenceMarker[] = [];
+    for (const participant of presence ?? []) {
+      // Blocks past this reader's last (an answer they've revealed shows
+      // more of it) end at this reader's last block.
+      const first = units[participant.firstVerse - 1];
+      const last = units[Math.min(participant.lastVerse, units.length) - 1];
+      if (!first || !last) continue;
+      const top = first.getBoundingClientRect().top - box.top;
+      const bottom = last.getBoundingClientRect().bottom - box.top;
+      if (bottom <= top) continue;
+      next.push({
+        connectionId: participant.connectionId,
+        displayName: participant.displayName,
+        imageUrl: participant.imageUrl,
+        visual: participant.visual,
+        top,
+        height: bottom - top,
+        lane: 0,
+      });
+    }
+    assignPresenceLanes(next);
+    const signature = presenceSignature(next);
+    if (signature === signatureRef.current) return;
+    signatureRef.current = signature;
+    setMarkers(next);
+  };
+  const measureRef = useRef(measure);
+  measureRef.current = measure;
+  useLayoutEffect(() => {
+    measureRef.current();
+  });
+
+  // The blocks are re-found whenever they change (a note's text arrives
+  // after it's sanitized, and revealing an answer adds to it), and the bars
+  // re-measured against them. Which are on screen is watched where the
+  // browser can say.
+  useEffect(() => {
+    const area = contentRef.current;
+    if (!area || !inSession) {
+      return;
+    }
+    let units: HTMLElement[] = [];
+    const visible = new Set<HTMLElement>();
+    const report = () => {
+      let first = Infinity;
+      let last = -Infinity;
+      units.forEach((unit, index) => {
+        if (!visible.has(unit)) return;
+        first = Math.min(first, index + 1);
+        last = Math.max(last, index + 1);
+      });
+      onVisibleChange(first === Infinity ? null : { first, last });
+    };
+    const intersections =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+              const el = entry.target as HTMLElement;
+              if (entry.isIntersecting && el.isConnected) {
+                visible.add(el);
+              } else {
+                visible.delete(el);
+              }
+            }
+            report();
+          });
+    const sync = () => {
+      units = presenceUnits(area);
+      if (intersections) {
+        intersections.disconnect();
+        visible.clear();
+        for (const unit of units) {
+          intersections.observe(unit);
+        }
+      }
+      measureRef.current();
+    };
+    const mutations =
+      typeof MutationObserver === "undefined"
+        ? null
+        : new MutationObserver(sync);
+    mutations?.observe(area, { childList: true, subtree: true });
+    const resizes =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => measureRef.current());
+    resizes?.observe(area);
+    sync();
+    return () => {
+      mutations?.disconnect();
+      intersections?.disconnect();
+      resizes?.disconnect();
+      onVisibleChange(null);
+    };
+  }, [inSession, onVisibleChange]);
+
+  return (
+    <div
+      ref={contentRef}
+      className={`sb-presence-area${inSession ? " sb-presence-area-open" : ""}`}
+    >
+      {props.children}
+      {inSession ? (
+        <PresenceGutter
+          markers={markers}
+          chapterKey={areaKey}
+          contentRef={contentRef}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * One of a compare step's passages: a chapter cut down to `passage`, drawn as
+ * the reader draws any chapter so its highlights and notes show.
+ */
+function PassageContent(
+  props: ChapterContentProps & { passage: PlaylistVerseRef }
+) {
+  const { passage, chapterData, ...rest } = props;
+  // The page is rebuilt for each step, so `passage` is fixed for its life.
+  const passageData = useComputed(() => {
+    const chapter = chapterData.value;
+    return chapter ? passageChapter(chapter, passage) : null;
+  });
+  return <ChapterContent {...rest} chapterData={passageData} />;
 }
 
 function ChapterContent(props: ChapterContentProps) {
@@ -1344,21 +2396,34 @@ function ChapterContent(props: ChapterContentProps) {
     highlights,
     decorations,
     annotations,
+    friends,
     selectVerse,
     selectFootnote,
     selectVersesFromTextSelection,
     justConvertedSelectionRef,
     scriptureElements,
     onAnnotationVerseClick,
+    isMobile = false,
+    presence,
+    onVisibleVersesChange,
+    sharedSession,
+    onHostVerseClick,
+    verseSelectionEffects,
+    prefersReducedMotionValue,
+    highlightAuthors,
+    hideHighlights = false,
   } = props;
 
+  const { t } = useI18n();
   const currentChapter = chapterData.value;
   const chapterAnnotations =
     currentChapter && annotations
-      ? annotations.getAnnotationsForChapter(
+      ? visibleChapterAnnotations(
+          annotations,
+          friends?.friendIds.value ?? [],
           currentChapter.book.id,
           currentChapter.chapter.number
-        ).value
+        )
       : [];
 
   const contentRef = useRef<HTMLDivElement>(null);
@@ -1566,14 +2631,230 @@ function ChapterContent(props: ChapterContentProps) {
     setRibbons(result);
   };
 
+  const chapterKey = currentChapter
+    ? `${currentChapter.translation.id}:${currentChapter.book.id}:${currentChapter.chapter.number}`
+    : "";
+
+  // What this reader can see, reported as it scrolls. An IntersectionObserver
+  // rather than a scroll listener: it only wakes when a verse crosses the edge
+  // of the viewport, so a scroll doesn't measure every verse on every frame.
+  // Re-armed per chapter, because the verse elements are replaced wholesale.
+  //
+  // Which verses are on screen is tracked per element rather than per verse
+  // number, and the observed set is re-synced after every render (through
+  // `syncVersesRef`, called from the layout effect below). Highlighting a
+  // verse re-parents its span into a run wrapper, so Preact swaps the element
+  // out: the detached one reports that it left the screen while its
+  // replacement is not observed at all. Keyed by number that dropped every
+  // highlighted verse from the range, so a reader looking at verses 1-19 with
+  // 1-10 highlighted told its peers it was on 11-19.
+  const syncVersesRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    const content = contentRef.current;
+    if (
+      !content ||
+      !onVisibleVersesChange ||
+      typeof IntersectionObserver === "undefined"
+    ) {
+      return;
+    }
+
+    const visible = new Map<Element, number>();
+    const observed = new Set<Element>();
+    const report = () => {
+      let first = Infinity;
+      let last = -Infinity;
+      for (const verseNumber of visible.values()) {
+        if (verseNumber < first) first = verseNumber;
+        if (verseNumber > last) last = verseNumber;
+      }
+      onVisibleVersesChange(first === Infinity ? null : { first, last });
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        const el = entry.target as HTMLElement;
+        const verseNumber = Number(el.dataset.verseNumber ?? NaN);
+        if (
+          entry.isIntersecting &&
+          el.isConnected &&
+          Number.isFinite(verseNumber)
+        ) {
+          visible.set(el, verseNumber);
+        } else {
+          visible.delete(el);
+        }
+      }
+      report();
+    });
+
+    const sync = () => {
+      let dropped = false;
+      for (const el of observed) {
+        if (el.isConnected) continue;
+        observer.unobserve(el);
+        observed.delete(el);
+        dropped = visible.delete(el) || dropped;
+      }
+      for (const el of content.querySelectorAll<HTMLElement>(
+        ".sb-verse[data-verse-number]"
+      )) {
+        if (observed.has(el)) continue;
+        observed.add(el);
+        observer.observe(el);
+      }
+      // Every newly observed element gets an entry from the observer, which
+      // reports on their behalf. A verse that only went away does not.
+      if (dropped) report();
+    };
+    syncVersesRef.current = sync;
+    sync();
+
+    return () => {
+      syncVersesRef.current = () => {};
+      observer.disconnect();
+      onVisibleVersesChange(null);
+    };
+  }, [chapterKey, onVisibleVersesChange]);
+
+  const [presenceMarkers, setPresenceMarkers] = useState<PresenceMarker[]>([]);
+  // Signature of the last markers written to state, so the measure -> setState
+  // -> re-render -> measure cycle settles instead of looping.
+  const presenceSignatureRef = useRef("");
+
+  // A participant's bar spans from the top of the first verse they can see to
+  // the bottom of the last, measured from the live line boxes so it follows
+  // the text however it wraps.
+  const measurePresence = () => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    const next: PresenceMarker[] = [];
+    if (presence && presence.length > 0) {
+      const box = content.getBoundingClientRect();
+      for (const participant of presence) {
+        const firstEl = content.querySelector<HTMLElement>(
+          `.sb-verse[data-verse-number="${participant.firstVerse}"]`
+        );
+        const lastEl = content.querySelector<HTMLElement>(
+          `.sb-verse[data-verse-number="${participant.lastVerse}"]`
+        );
+        const firstRects = firstEl?.getClientRects();
+        const lastRects = lastEl?.getClientRects();
+        const firstRect = firstRects?.[0];
+        const lastRect = lastRects?.[lastRects.length - 1];
+        if (!firstRect || !lastRect) continue;
+        const top = firstRect.top - box.top;
+        const bottom = lastRect.bottom - box.top;
+        if (bottom <= top) continue;
+        next.push({
+          connectionId: participant.connectionId,
+          displayName: participant.displayName,
+          imageUrl: participant.imageUrl,
+          visual: participant.visual,
+          top,
+          height: bottom - top,
+          lane: 0,
+        });
+      }
+    }
+
+    assignPresenceLanes(next);
+    const signature = presenceSignature(next);
+    if (signature === presenceSignatureRef.current) return;
+    presenceSignatureRef.current = signature;
+    setPresenceMarkers(next);
+  };
+
+  // The verse each note starts at, deduplicated: two notes on the same verse
+  // get one marker, and a note spanning 3-6 marks verse 3 only.
+  const noteVerseNumbers = Array.from(
+    new Set(
+      chapterAnnotations
+        .map((annotation) => {
+          const verses = annotationVerseNumbers(annotation);
+          return verses.length > 0 ? Math.min(...verses) : null;
+        })
+        .filter((verseNumber): verseNumber is number => verseNumber !== null)
+    )
+  ).sort((a, b) => a - b);
+  // Open on every mobile chapter, notes or not: the gutter's indent narrows
+  // the text, so opening it only where there are notes would reflow the page
+  // each time the reader flips between an annotated chapter and a bare one.
+  const showNoteGutter = isMobile;
+
+  const [noteMarkers, setNoteMarkers] = useState<NoteMarker[]>([]);
+  // Signature of the last markers written to state, so the measure -> setState
+  // -> re-render -> measure cycle settles instead of looping.
+  const noteMarkerSignatureRef = useRef("");
+
+  // Where each note marker sits vertically. Markers live in a gutter beside
+  // the text rather than in the flow, so their position has to be measured:
+  // it is the verse's *first* visual line box, which is the line carrying
+  // the verse number.
+  const measureNoteMarkers = () => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    const next: NoteMarker[] = [];
+    if (showNoteGutter) {
+      const box = content.getBoundingClientRect();
+      for (const verseNumber of noteVerseNumbers) {
+        const verseEl = content.querySelector<HTMLElement>(
+          `.sb-verse[data-verse-number="${verseNumber}"]`
+        );
+        if (!verseEl) continue;
+        // A verse containing poetry is block-level (so is each of its lines),
+        // which makes its own client rect the whole multi-line column —
+        // centring on that drops the marker halfway down the verse.
+        // `collectLineRects` walks past the block lines and reports one rect
+        // per *visual* line, so [0] is the line carrying the verse number
+        // whether the verse is prose or poetry.
+        const line = collectLineRects(verseEl, box.left, box.top)[0];
+        if (!line) continue;
+        next.push({
+          verseNumber,
+          top: line.top,
+          height: line.bottom - line.top,
+        });
+      }
+    }
+
+    const signature = next
+      .map(
+        (m) => `${m.verseNumber}:${Math.round(m.top)}:${Math.round(m.height)}`
+      )
+      .join("|");
+    if (signature === noteMarkerSignatureRef.current) return;
+    noteMarkerSignatureRef.current = signature;
+    setNoteMarkers(next);
+  };
+
+  // The measurements re-run after every render, and the ResizeObserver below
+  // reaches them through this ref instead of closing over them. Registered
+  // once at mount, that callback kept the very first render's `presence` —
+  // the empty list a reader has before any peer position arrives — so every
+  // reflow measured "nobody here", wiped the markers, and closed the gutter,
+  // which moved the text out from under the highlight ribbons that had just
+  // been measured against it.
+  const remeasureRef = useRef<() => void>(() => {});
+
   useLayoutEffect(() => {
+    remeasureRef.current = () => {
+      measureRibbons();
+      measurePresence();
+      measureNoteMarkers();
+    };
     measureRibbons();
+    measurePresence();
+    measureNoteMarkers();
+    syncVersesRef.current();
   });
 
   useLayoutEffect(() => {
     const content = contentRef.current;
     if (!content || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => measureRibbons());
+    const observer = new ResizeObserver(() => remeasureRef.current());
     observer.observe(content);
     return () => observer.disconnect();
   }, []);
@@ -1607,11 +2888,27 @@ function ChapterContent(props: ChapterContentProps) {
     .map((d) => d.containerClassName)
     .join(" ");
 
+  // verse number -> full ChapterVerse, so a gutter marker can select its verse
+  // the same way tapping the verse itself does.
+  const verseByNumber = new Map<number, ChapterVerse>();
+  for (const entry of chapterData.value.chapter.content) {
+    if (
+      entry &&
+      typeof entry === "object" &&
+      entry.type === "verse" &&
+      typeof entry.number === "number"
+    ) {
+      verseByNumber.set(entry.number, entry as ChapterVerse);
+    }
+  }
+
   return (
     <div
       ref={contentRef}
       className={`sb-chapter-content${
         props.isStale ? " sb-chapter-content-stale" : ""
+      }${presence !== undefined ? " sb-chapter-content-presence" : ""}${
+        showNoteGutter ? " sb-chapter-content-note-gutter" : ""
       } ${containerClasses}`}
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
@@ -1640,6 +2937,58 @@ function ChapterContent(props: ChapterContentProps) {
           />
         ))}
       </svg>
+      {showNoteGutter && (
+        <div className="sb-note-gutter" aria-hidden={noteMarkers.length === 0}>
+          {noteMarkers.map((marker) => (
+            <button
+              key={marker.verseNumber}
+              type="button"
+              className="sb-note-gutter-marker"
+              style={{ top: `${marker.top}px`, height: `${marker.height}px` }}
+              aria-label={t("notes-for-verse", {
+                verse: marker.verseNumber,
+                defaultValue: "Notes for verse {{verse}}",
+              })}
+              onClick={(event: MouseEvent) => {
+                const value = verseByNumber.get(marker.verseNumber);
+                if (!value || !chapterData.value) return;
+                onAnnotationVerseClick(
+                  {
+                    bookId: chapterData.value.book.id,
+                    chapterNumber: chapterData.value.chapter.number,
+                    verse: value,
+                    translationId: chapterData.value.translation.id,
+                  },
+                  marker.verseNumber,
+                  event
+                );
+              }}
+            >
+              <span className="material-symbols-outlined">sticky_note_2</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {presence !== undefined && (
+        <PresenceGutter
+          markers={presenceMarkers}
+          chapterKey={chapterKey}
+          contentRef={contentRef}
+        />
+      )}
+      {!hideHighlights && (
+        <OffscreenHighlightCueLayer
+          contentRef={contentRef}
+          marks={collectHighlightCueMarks({
+            decorations: decorations.value,
+            translationId: chapterData.value.translation.id,
+            bookId: chapterData.value.book.id,
+            chapterNumber: chapterData.value.chapter.number,
+            isOwnDecoration: highlightAuthors?.isOwn,
+            decorationAuthor: highlightAuthors?.of,
+          })}
+        />
+      )}
       {renderChapterContent(
         chapterData.value,
         (verse, event) => {
@@ -1649,7 +2998,18 @@ function ChapterContent(props: ChapterContentProps) {
             justConvertedSelectionRef.current = false;
             return;
           }
+          const wasSelected = selectedVerses.value.some(
+            (selectedVerse) =>
+              selectedVerse.bookId === verse.bookId &&
+              selectedVerse.chapterNumber === verse.chapterNumber &&
+              selectedVerse.verse === verse.verse
+          );
           selectVerse(verse, event.clientX, event.clientY);
+          // only trigger the flare when the verse is newly selected,
+          // not when clicking an already selected verse to unselect it.
+          if (!wasSelected) {
+            onHostVerseClick(verse);
+          }
         },
         selectedVerses.value,
         (noteId) => selectFootnote(noteId),
@@ -1657,11 +3017,61 @@ function ChapterContent(props: ChapterContentProps) {
         decorations.value,
         chapterAnnotations,
         scriptureElements,
-        onAnnotationVerseClick
+        onAnnotationVerseClick,
+        sharedSession,
+        verseSelectionEffects,
+        prefersReducedMotionValue,
+        hideHighlights
       )}
     </div>
   );
 }
+
+/**
+ * A translation's metadata, from the reader's own book list when that's the
+ * one asked for, otherwise from the first catalog that has it. The book list
+ * alone isn't enough: it's missing when a translation never opened fails
+ * offline, and it belongs to the translation on screen, not one a failed
+ * switch was headed for.
+ */
+function resolveTranslation(
+  translationId: string,
+  fromBookList: Translation | null,
+  ...catalogs: Array<readonly Translation[] | null | undefined>
+): Translation | null {
+  if (fromBookList?.id === translationId) {
+    return fromBookList;
+  }
+  for (const catalog of catalogs) {
+    const entry = catalog?.find((candidate) => candidate.id === translationId);
+    if (entry) {
+      return entry;
+    }
+  }
+  return null;
+}
+
+// Respect the user's explicit preference; otherwise, follow the OS setting.
+function shouldShowVerseSelectionEffects(
+  preference: VerseSelectionEffects,
+  prefersReducedMotionValue: boolean | undefined
+): boolean {
+  if (preference === "enabled") return true;
+  if (preference === "disabled") return false;
+
+  return !prefersReducedMotionValue;
+}
+// Cache the OS reduced-motion preference instead of querying matchMedia
+// repeatedly for every verse and decoration.
+const reducedMotionQuery =
+  typeof window !== "undefined" && typeof window.matchMedia === "function"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)")
+    : null;
+// Keep the preference reactive so changes to the OS setting can update the UI.
+const prefersReducedMotion = signal(reducedMotionQuery?.matches ?? false);
+reducedMotionQuery?.addEventListener("change", (event) => {
+  prefersReducedMotion.value = event.matches;
+});
 
 export function BibleReader(props: BibleReaderProps) {
   const {
@@ -1686,11 +3096,18 @@ export function BibleReader(props: BibleReaderProps) {
     loading,
     isChapterContentStale,
     error,
+    failedTranslationId,
     selectVerse,
-    clearSelectedVerses,
     selectedFootnote,
     selectFootnote,
   } = readingState;
+  // Set below, once a compare step's second passage (which can have a
+  // footnote open too) is known.
+  const closeFootnoteRef = useRef(() => selectFootnote(null));
+  const footnoteOverlayDismiss = useOverlayDismiss(() =>
+    closeFootnoteRef.current()
+  );
+  const readerRootRef = useRef<HTMLDivElement>(null);
 
   if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
     throw readingState.chapterDataPromise;
@@ -1732,8 +3149,143 @@ export function BibleReader(props: BibleReaderProps) {
   const translationWebsite = computed(
     () => translation.value?.website.trim() ?? ""
   );
+  const prefersReducedMotionValue = prefersReducedMotion.value || undefined;
 
-  const isMobile = state?.app.isMobile.value ?? false;
+  const isMinimalEmbed = state?.app.isMinimalEmbed?.value ?? false;
+  const isCompactReader =
+    state?.app.isCompactReader?.value ?? state?.app.isMobile.value ?? false;
+
+  // Where the other people in this session are (#1692). Only participants
+  // reading the same chapter can be placed against verses on this page, and
+  // this reader is never its own marker. Outside a session no gutter is drawn
+  // at all (the list is withheld from ChapterContent below).
+  //
+  // Built in the render body rather than in a `useComputed`: the session
+  // arrives as a prop, and a memoised computed that returns early on a null one
+  // subscribes to no signal at all, which leaves it permanently un-dirtied. A
+  // reader that first rendered outside a session and was then handed one (a
+  // session tab replacing a plain tab in the same slot reuses the component)
+  // would keep answering "nobody" for the rest of its life. Reading the signals
+  // here subscribes this component to them directly, which survives that prop
+  // change.
+  /** The other participants `rangeOf` places, each with that range. */
+  const participantsWhere = (
+    rangeOf: (
+      position: ParticipantReadingPosition
+    ) => { first: number; last: number } | null
+  ): ParticipantPresence[] => {
+    const found: ParticipantPresence[] = [];
+    if (!sharedSession) return found;
+    const positions = sharedSession.participantPositions.value;
+    const sessionOptions = sharedSession.options.value;
+    const connectedUsers = sharedSession.connectedUsers.value;
+    const viewingAreas = resolveViewingAreaVisibility(
+      sessionOptions.viewingAreaVisibility,
+      countSessionPeople(connectedUsers),
+      state?.settings?.settings.value.viewingAreaIndicators,
+      connectedUsers.some((user) => isConnectedUserHost(sessionOptions, user))
+    );
+    for (const user of connectedUsers) {
+      if (user.isSelf) continue;
+      if (
+        viewingAreas === "hosts-only" &&
+        !isConnectedUserHost(sessionOptions, user)
+      ) {
+        continue;
+      }
+      const position = positions.get(user.connectionId);
+      const range = position ? rangeOf(position) : null;
+      if (!range) continue;
+      found.push({
+        connectionId: user.connectionId,
+        displayName: getUserDisplayName(user),
+        imageUrl: user.profile?.pictureUrl ?? null,
+        visual: user.visual,
+        firstVerse: range.first,
+        lastVerse: range.last,
+      });
+    }
+    return found;
+  };
+  const presenceBookId = bookId.value;
+  const presenceChapterNumber = chapterNumber.value;
+  const presence: ParticipantPresence[] =
+    presenceBookId && presenceChapterNumber > 0
+      ? participantsWhere((position) =>
+          position.bookId === presenceBookId &&
+          position.chapterNumber === presenceChapterNumber &&
+          position.firstVerse !== undefined &&
+          position.lastVerse !== undefined
+            ? { first: position.firstVerse, last: position.lastVerse }
+            : null
+        )
+      : [];
+  /**
+   * The other participants looking at `area` (see `visibleAreas`), or
+   * undefined outside a session, where no gutter is drawn.
+   */
+  const areaPresence = (area: string): ParticipantPresence[] | undefined =>
+    sharedSession
+      ? participantsWhere((position) => position.areas?.[area] ?? null)
+      : undefined;
+
+  // Stable identity so the observer in ChapterContent isn't torn down and
+  // rebuilt on every render of the reader.
+  const reportVisibleVerses = useCallback(
+    (range: VisibleVerseRange | null) => {
+      const current = readingState.visibleVerseRange.peek();
+      if (current?.first === range?.first && current?.last === range?.last) {
+        return;
+      }
+      readingState.visibleVerseRange.value = range;
+    },
+    [readingState]
+  );
+
+  // One reporter per area, kept for the reading state's life, so the
+  // observers that call them aren't torn down on every render.
+  const areaReportersRef = useRef<{
+    readingState: BibleReadingState;
+    byArea: Map<string, (range: VisibleVerseRange | null) => void>;
+  } | null>(null);
+  const reportVisibleArea = (area: string) => {
+    if (areaReportersRef.current?.readingState !== readingState) {
+      areaReportersRef.current = { readingState, byArea: new Map() };
+    }
+    const { byArea } = areaReportersRef.current;
+    let reporter = byArea.get(area);
+    if (!reporter) {
+      reporter = (range) => {
+        const current = readingState.visibleAreas.peek();
+        const existing = current.get(area);
+        if (
+          existing?.first === range?.first &&
+          existing?.last === range?.last
+        ) {
+          return;
+        }
+        const next = new Map(current);
+        if (range) {
+          next.set(area, range);
+        } else {
+          next.delete(area);
+        }
+        readingState.visibleAreas.value = next;
+      };
+      byArea.set(area, reporter);
+    }
+    return reporter;
+  };
+  /** Wraps a playing step's content in the presence gutter for `area`. */
+  const withAreaPresence = (area: string) => (content: ComponentChild) => (
+    <PresenceArea
+      areaKey={area}
+      presence={areaPresence(area)}
+      onVisibleChange={reportVisibleArea(area)}
+    >
+      {content}
+    </PresenceArea>
+  );
 
   // Clicking an annotated verse number jumps straight to its note: on
   // mobile, it also selects the verse (like clicking its text does) and
@@ -1741,26 +3293,48 @@ export function BibleReader(props: BibleReaderProps) {
   // where that toolbar isn't used, it leaves the verse selection alone and
   // just forces the compact discover panel beside the scripture text and
   // scrolls/highlights the note there.
-  const handleAnnotationVerseClick = (
-    verse: BibleSelectedVerse,
-    verseNumber: number,
-    event: MouseEvent
-  ) => {
-    // The <sup> sits inside the verse's own clickable <span>; stop the tap
-    // here so selectVerse (a toggle) doesn't run twice and immediately undo
-    // itself.
-    event.stopPropagation();
+  /**
+   * A tap on a verse's note marker in `target`: the tab's own passage, or in
+   * a compare step the one shown beside it.
+   */
+  const annotationVerseClickIn =
+    (target: BibleReadingState) =>
+    (verse: BibleSelectedVerse, verseNumber: number, event: MouseEvent) => {
+      // The <sup> sits inside the verse's own clickable <span>; stop the tap
+      // here so selectVerse (a toggle) doesn't run twice and immediately undo
+      // itself.
+      event.stopPropagation();
+      if (!state) {
+        return;
+      }
+      if (currentSlot.tab) {
+        state.tabs.focusReadingState(currentSlot.tab, target);
+      }
+
+      if (isCompactReader) {
+        target.selectVerse(verse, event.clientX, event.clientY);
+        if (target === readingState) {
+          handleHostVerseClick(verse);
+        }
+        target.pendingAnnotationScrollVerse.value = verseNumber;
+        return;
+      }
+
+      showVerseNotes(verse, verseNumber);
+    };
+
+  /** Opens Discover's notes at `verse`, which is in the passage in focus. */
+  const showVerseNotes = (verse: BibleSelectedVerse, verseNumber: number) => {
     if (!state) {
       return;
     }
 
-    if (isMobile) {
-      selectVerse(verse, event.clientX, event.clientY);
-      readingState.pendingAnnotationScrollVerse.value = verseNumber;
-      return;
+    if (state.settings.settings.value.discoveredContent.showContent) {
+      readingState.discoverContentPanelInline.value = true;
+    } else {
+      state.discover.view.value = "discover";
     }
 
-    readingState.discoverContentPanelInline.value = true;
     // AnnotationsSection's shared effect reacts to this target either way —
     // scrolling to and highlighting the note's group — whether it's mounted
     // in this tab's compact panel or the toolbar-toggled Discover pane.
@@ -1770,12 +3344,13 @@ export function BibleReader(props: BibleReaderProps) {
       verseNumber,
     };
   };
+  const handleAnnotationVerseClick = annotationVerseClickIn(readingState);
 
   // Reader glyph size is its own knob, independent of the UI-scale (`rem`)
-  // system. Anchoring `.sb-font-size-*` here (rather than on the chrome root)
-  // keeps `.sb-chapter-content { font-size: 1em }` and reader-`em` spacing
+  // system. Anchoring `.sb-reader-font-size-*` here (rather than on the chrome
+  // root) keeps `.sb-chapter-content { font-size: 1em }` and reader-`em` spacing
   // tied to the reader setting, while chrome inherits the UI scale from `html`.
-  const readerFontSizeClass = `sb-font-size-${(
+  const readerFontSizeClass = `sb-reader-font-size-${(
     state?.settings?.settings.value.fontSize ?? "M"
   ).toLowerCase()}`;
 
@@ -1806,7 +3381,42 @@ export function BibleReader(props: BibleReaderProps) {
     isContentStale && (chapterData.value === null || isWaitLong);
   const dimStaleChapter = isContentStale && !showChapterSkeleton;
 
-  const { t } = useI18n();
+  const { t, language, isRtl } = useI18n();
+
+  // Outside a session a decoration comes from an extension or a link, which
+  // nobody in particular made. In a session every decoration has an owner,
+  // and one not yet recorded was just added on this device.
+  const decorationAuthorUser = (decorationId: string) => {
+    const owner = sharedSession?.decorationOwner(decorationId) ?? null;
+    if (!owner) return null;
+    return (
+      sharedSession?.allUsers.value.find(
+        (user) => user.connectionId === owner
+      ) ?? null
+    );
+  };
+  const highlightAuthors = {
+    isOwn: (decorationId: string): boolean => {
+      if (!sharedSession) return false;
+      const owner = sharedSession.decorationOwner(decorationId);
+      return (
+        owner === null ||
+        owner === state?.os.connectionId ||
+        decorationAuthorUser(decorationId)?.isSelf === true
+      );
+    },
+    of: (decorationId: string): HighlightCueAuthor | null => {
+      const user = decorationAuthorUser(decorationId);
+      if (!user) return null;
+      return {
+        key: getConnectedUserVisualKey(user),
+        displayName: getUserDisplayName(user),
+        imageUrl: user.profile?.pictureUrl ?? null,
+        visual: user.visual,
+      };
+    },
+  };
+
   const scriptureElements: ScriptureElementsBehavior =
     props.scriptureElements ??
       state?.settings?.settings.value.scriptureElements ?? {
@@ -1822,8 +3432,11 @@ export function BibleReader(props: BibleReaderProps) {
     void selectorState.setOpen(true, currentSlot);
   };
   const openTranslationSelector = async () => {
-    await selectorState.setOpen(true, currentSlot);
+    // Set after `setOpen` starts but before its load finishes, so the list is
+    // on screen straight away instead of after the books arrive.
+    const opening = selectorState.setOpen(true, currentSlot);
     selectorState.selectingTranslation.value = true;
+    await opening;
   };
 
   // The translation chip, in both the desktop and the mobile header: the short
@@ -1845,12 +3458,16 @@ export function BibleReader(props: BibleReaderProps) {
   // touches — exactly as if the user had clicked each of them — which opens
   // the verse toolbar. No-op for a collapsed/empty selection, so plain taps
   // keep their single-verse toggle behaviour.
-  const selectVersesFromTextSelection = () => {
+  /**
+   * Turns a text selection in `target`'s passage into a verse selection: the
+   * tab's own, or in a compare step the one shown beside it.
+   */
+  const selectVersesFromTextSelectionIn = (target: BibleReadingState) => {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
       return;
     }
-    const data = chapterData.value;
+    const data = target.chapterData.value;
     if (!data) return;
 
     const range = selection.getRangeAt(0);
@@ -1890,28 +3507,98 @@ export function BibleReader(props: BibleReaderProps) {
     justConvertedSelectionRef.current = true;
 
     // Mirror clicking each covered verse: deselect everything, then reselect.
-    clearSelectedVerses();
+    target.clearSelectedVerses();
+
+    let firstSelectedVerse: BibleSelectedVerse | null = null;
     for (const el of verseEls) {
       const verseValue = verseByNumber.get(Number(el.dataset.verseNumber));
       if (!verseValue) continue;
-      selectVerse(
-        {
-          bookId: data.book.id,
-          chapterNumber: data.chapter.number,
-          verse: verseValue,
-          translationId: data.translation.id,
-        },
-        anchorX,
-        anchorY
-      );
+      const verse: BibleSelectedVerse = {
+        bookId: data.book.id,
+        chapterNumber: data.chapter.number,
+        verse: verseValue,
+        translationId: data.translation.id,
+      };
+      firstSelectedVerse ??= verse;
+      target.selectVerse(verse, anchorX, anchorY);
+    }
+    // Broadcast only the first verse in the drag selection.
+    if (firstSelectedVerse) {
+      handleHostVerseClick(firstSelectedVerse);
     }
   };
+  const selectVersesFromTextSelection = () =>
+    selectVersesFromTextSelectionIn(readingState);
+  // Flares this reader started, so they can fade out early once their verse
+  // is deselected rather than lingering for the full duration.
+  const activeVerseFlaresRef = useRef(new Map<string, BroadcastVerseFlare>());
+  const handleHostVerseClick = useCallback(
+    (verse: BibleSelectedVerse) => {
+      if (!sharedSession) return;
 
+      const flare = broadcastSelectedVerse(
+        sharedSession,
+        verse.bookId,
+        verse.chapterNumber,
+        verse.verse.number
+      );
+      if (flare) {
+        activeVerseFlaresRef.current.set(flare.decorationId, flare);
+      }
+    },
+    [sharedSession]
+  );
+
+  useEffect(() => {
+    if (!sharedSession) return;
+    const activeFlares = activeVerseFlaresRef.current;
+
+    return effect(() => {
+      // Either passage of a compare step, which a flare can come from.
+      const selected = [
+        ...selectedVerses.value,
+        ...(state?.playlists.playing.value?.compareReadingState.value
+          ?.selectedVerses.value ?? []),
+      ];
+      if (activeFlares.size === 0) return;
+
+      const liveDecorationIds = new Set(
+        sharedSession.readingState.decorations.peek().map(({ id }) => id)
+      );
+
+      for (const [id, flare] of activeFlares) {
+        if (!liveDecorationIds.has(id)) {
+          activeFlares.delete(id);
+          continue;
+        }
+
+        const stillSelected = selected.some(
+          (verse) =>
+            verse.bookId === flare.bookId &&
+            verse.chapterNumber === flare.chapterNumber &&
+            verse.verse.number === flare.verseNumber
+        );
+        if (!stillSelected) {
+          activeFlares.delete(id);
+          endVerseFlare(sharedSession, flare);
+        }
+      }
+    });
+  }, [sharedSession, selectedVerses, state]);
+
+  // Only the current panel's title opens the selector; the side panels are
+  // non-interactive previews for the swipe transition.
   const renderMobileChapterTitle = (
     bookName: string,
-    chapter: number | string
+    chapter: number | string,
+    interactive = false
   ) => (
-    <h2 className="sb-bible-reader-mobile-content-title">
+    <h2
+      className={`sb-bible-reader-mobile-content-title${
+        interactive ? " sb-bible-reader-mobile-content-title-tappable" : ""
+      }`}
+      {...(interactive ? flingSafeTapHandlers(openBookSelector) : {})}
+    >
       <span className="sb-bible-reader-book">{bookName}</span>
       <span className="sb-bible-reader-chapter">{chapter}</span>
     </h2>
@@ -1926,7 +3613,9 @@ export function BibleReader(props: BibleReaderProps) {
   const renderChapterSkeleton = () => (
     <SkeletonContainer
       label={t("loading-chapter", { defaultValue: "Loading chapter…" })}
-      className="sb-chapter-content sb-chapter-skeleton"
+      className={`sb-chapter-content sb-chapter-skeleton${
+        isCompactReader ? " sb-chapter-content-note-gutter" : ""
+      }`}
     >
       <Skeleton shape="block" width="42%" />
       {CHAPTER_SKELETON_PARAGRAPHS.map((widths, paragraph) => (
@@ -1942,261 +3631,739 @@ export function BibleReader(props: BibleReaderProps) {
   // Keep the failure state on screen while a retry is in flight — `retryLoad()`
   // clears `error` as it starts, so without this the panel would flash back to
   // the (still empty) chapter body before the new request settles.
-  const [retrying, setRetrying] = useState(false);
+  //
+  // Holds the translation being retried rather than a flag: `error` (and with
+  // it `failedTranslationId`) is cleared for the length of the retry, and the
+  // panel still has to say which translation failed.
+  const [retryingTranslationId, setRetryingTranslationId] = useState<
+    string | null
+  >(null);
+  const retrying = retryingTranslationId !== null;
+  const offline = state?.bibleData?.offline;
   const retryChapterLoad = async () => {
     if (retrying) return;
-    setRetrying(true);
+    const attemptedTranslationId =
+      failedTranslationId.peek() ?? translationId.peek();
+    setRetryingTranslationId(attemptedTranslationId);
     try {
       await readingState.retryLoad();
     } finally {
-      setRetrying(false);
+      setRetryingTranslationId(null);
+    }
+    // A recovery only if the reader ended up on the translation that failed:
+    // retrying a failed switch lands there, but a reader who moved somewhere
+    // else mid-retry is looking at a chapter that never failed to load.
+    if (
+      !offline ||
+      error.peek() ||
+      translationId.peek() !== attemptedTranslationId
+    ) {
+      return;
+    }
+    const recoveredTranslation = resolveTranslation(
+      attemptedTranslationId,
+      translation.peek(),
+      availableTranslations.peek()?.translations,
+      state?.bibleData?.availableTranslations?.peek()
+    );
+    if (recoveredTranslation) {
+      offline.offerRecoveryPrompt(recoveredTranslation);
     }
   };
   const showLoadError = (!!error.value && !loading.value) || retrying;
 
-  const renderMainContent = () => (
-    <>
-      {isMobile &&
-        renderMobileChapterTitle(
-          currentBookName.value ?? bookId.value ?? "",
-          chapterNumber.value ?? ""
+  const failedId =
+    retryingTranslationId ?? failedTranslationId.value ?? translationId.value;
+  // The app-wide catalog too: the reader's own copy is only filled in by some
+  // load paths, and a switch picked from the selector's list may be the first
+  // this reader has heard of that translation.
+  const failedTranslation = resolveTranslation(
+    failedId,
+    translation.value,
+    availableTranslations.value?.translations,
+    state?.bibleData?.availableTranslations?.value
+  );
+  const failedTranslationNotSaved =
+    !!offline?.supported &&
+    !!failedTranslation &&
+    !offline.isDownloaded(failedTranslation.id);
+  const hasOtherSavedTranslation =
+    !!offline?.supported &&
+    [...offline.downloaded.value.keys()].some(
+      (savedId) => savedId !== failedId
+    );
+
+  const offlineRecords = state?.bibleData?.offline?.records.value;
+  // The signal, not `getCachedTranslationBooks`: that helper reads untracked,
+  // so a catalog that arrives after this panel is on screen would never
+  // update the offer. Downloaded copies carry their own book list too; the
+  // cache wins when both exist, because that is the catalog a switch would use.
+  const cachedTranslationBooks = state?.bibleData?.translationBooks?.value;
+  const requestedTranslationLanguage =
+    translation.value?.language ||
+    availableTranslations.value?.translations.find(
+      (item) => item.id === translationId.value
+    )?.language ||
+    (translationId.value
+      ? offlineRecords?.get(translationId.value)?.translation.language
+      : undefined);
+  const offlineFallbackTranslations =
+    showLoadError && offlineRecords
+      ? findOfflineTranslationFallbacks({
+          currentTranslationId: translationId.value,
+          currentTranslationLanguage: requestedTranslationLanguage,
+          uiLanguage: language,
+          downloaded: Array.from(offlineRecords.values()),
+          bookId: bookId.value,
+          chapterNumber: chapterNumber.value ?? 1,
+          booksFor: (id) =>
+            cachedTranslationBooks?.get(id)?.books ??
+            offlineRecords.get(id)?.books ??
+            null,
+        })
+      : [];
+
+  const switchToOfflineTranslation = (nextTranslation: Translation) => {
+    const book = bookId.value;
+    const chapter = chapterNumber.value ?? 1;
+    if (!book) {
+      void readingState.selectTranslation(nextTranslation.id);
+      return;
+    }
+    void readingState.selectTranslationAndChapter(
+      nextTranslation.id,
+      book,
+      chapter
+    );
+  };
+
+  // A playing playlist's note, question or video step fills the reader in
+  // place of the chapter, unless a link in it has taken the reader to a
+  // passage for now.
+  const playbackHere =
+    state &&
+    currentSlot.tab != null &&
+    state.playlists.playing.value?.tab?.id === currentSlot.tab.id
+      ? state.playlists.playing.value
+      : null;
+  const playingStep = playbackHere?.currentItem.value ?? null;
+  const pageStep =
+    playingStep && playingStep.type !== "bible-verse" ? playingStep : null;
+  const stepPage =
+    pageStep && !playbackHere?.awayFromStep.value ? pageStep : null;
+  // A compare step shows its two passages side by side instead, once its
+  // second passage has somewhere to load.
+  const compareStep =
+    playingStep?.type === "bible-verse" && playingStep.compare
+      ? playingStep
+      : null;
+  const compareReadingState = playbackHere?.compareReadingState.value ?? null;
+  const comparePage =
+    compareStep && compareReadingState && !playbackHere?.awayFromStep.value
+      ? compareStep
+      : null;
+  // Everyone in a session plays the same queue, so a step's position in it
+  // names the same page for all of them.
+  const stepArea = `step-${playbackHere?.currentIndex.value ?? -1}`;
+  const resolveBookName = (id: string): string => {
+    const book = translationBooks.value?.books.find((b) => b.id === id);
+    return book?.name ?? book?.commonName ?? id;
+  };
+  const comparePageTitle = comparePage
+    ? playlistItemLabel(comparePage, t, resolveBookName)
+    : null;
+
+  const renderComparePage = (
+    item: Extract<PlaylistItemData, { type: "bible-verse" }>,
+    second: BibleReadingState
+  ) => {
+    const compare = item.compare!;
+    // Using either passage points the verse toolbar, the note editor and
+    // Discover at it (see `TabsManager.activeReadingState`).
+    const focus = (target: BibleReadingState) => {
+      if (currentSlot.tab && state) {
+        state.tabs.focusReadingState(currentSlot.tab, target);
+      }
+    };
+    const shared = {
+      annotations: state?.annotations,
+      friends: state?.friends,
+      scriptureElements,
+      isMobile: isCompactReader,
+      hideHighlights: isMinimalEmbed,
+      verseSelectionEffects:
+        state?.settings.settings.value.verseSelectionEffects ?? "default",
+      prefersReducedMotionValue,
+      highlightAuthors,
+    };
+    return (
+      <PlaylistCompareStep
+        key={playbackHere?.currentIndex.value}
+        title={isCompactReader ? comparePageTitle : null}
+        passages={[
+          {
+            label: passageLabel(item.ref, resolveBookName),
+            content: (
+              <Suspense fallback={null}>
+                <PassageContent
+                  {...shared}
+                  passage={item.ref}
+                  chapterData={chapterData}
+                  chapterDataPromise={readingState.chapterDataPromise}
+                  initialChapterLoadSettled={
+                    readingState.initialChapterLoadSettled
+                  }
+                  selectedVerses={selectedVerses}
+                  highlights={highlights}
+                  decorations={decorations}
+                  selectVerse={(verse, x, y) => {
+                    focus(readingState);
+                    selectVerse(verse, x, y);
+                  }}
+                  selectFootnote={(noteId) => {
+                    focus(readingState);
+                    selectFootnote(noteId);
+                  }}
+                  selectVersesFromTextSelection={selectVersesFromTextSelection}
+                  justConvertedSelectionRef={justConvertedSelectionRef}
+                  onAnnotationVerseClick={handleAnnotationVerseClick}
+                  sharedSession={sharedSession}
+                  onHostVerseClick={handleHostVerseClick}
+                  // The tab's own chapter, so its presence is the chapter's.
+                  presence={sharedSession ? presence : undefined}
+                  onVisibleVersesChange={reportVisibleVerses}
+                />
+              </Suspense>
+            ),
+          },
+          {
+            label: passageLabel(compare.ref, resolveBookName),
+            // Works as the first does: selecting verses here points the verse
+            // toolbar, the note editor and Discover at this passage (see
+            // `TabsManager.activeReadingState`).
+            content: (
+              <Suspense fallback={null}>
+                <PassageContent
+                  {...shared}
+                  passage={compare.ref}
+                  chapterData={second.chapterData}
+                  chapterDataPromise={second.chapterDataPromise}
+                  initialChapterLoadSettled={second.initialChapterLoadSettled}
+                  selectedVerses={second.selectedVerses}
+                  highlights={second.highlights}
+                  decorations={second.decorations}
+                  selectVerse={(verse, x, y) => {
+                    focus(second);
+                    second.selectVerse(verse, x, y);
+                  }}
+                  selectFootnote={(noteId) => {
+                    focus(second);
+                    second.selectFootnote(noteId);
+                  }}
+                  selectVersesFromTextSelection={() =>
+                    selectVersesFromTextSelectionIn(second)
+                  }
+                  justConvertedSelectionRef={justConvertedSelectionRef}
+                  onAnnotationVerseClick={annotationVerseClickIn(second)}
+                  // The session's verse flares show and go out from here as
+                  // from the first: they reach this passage the way its
+                  // highlights do (see `shareDecorationsWithTab`).
+                  sharedSession={sharedSession}
+                  onHostVerseClick={handleHostVerseClick}
+                  presence={areaPresence(`${stepArea}-second`)}
+                  onVisibleVersesChange={reportVisibleArea(
+                    `${stepArea}-second`
+                  )}
+                />
+              </Suspense>
+            ),
+          },
+        ]}
+        note={
+          hasScriptureNote(item)
+            ? {
+                title: item.noteTitle?.trim() || null,
+                html: item.note?.trim() ? item.note : null,
+              }
+            : null
+        }
+        onReferenceClick={(ref) => void playbackHere?.visitReference(ref)}
+        onStepClick={(index) => void playbackHere?.jumpTo(index)}
+        wrapNote={withAreaPresence(`${stepArea}-note`)}
+      />
+    );
+  };
+
+  // The footnote open in the tab's own passage, or in a compare step's second.
+  const openFootnote =
+    selectedFootnote.value ??
+    compareReadingState?.selectedFootnote.value ??
+    null;
+  const closeFootnote = () => {
+    selectFootnote(null);
+    compareReadingState?.selectFootnote(null);
+  };
+  closeFootnoteRef.current = closeFootnote;
+
+  const renderMainContent = () =>
+    comparePage && compareReadingState ? (
+      <>
+        {renderComparePage(comparePage, compareReadingState)}
+        {mobileChrome?.belowContent}
+      </>
+    ) : stepPage ? (
+      <>
+        <PlaylistStepPage
+          key={playbackHere?.currentIndex.value}
+          item={stepPage}
+          showTitle={isCompactReader}
+          onReferenceClick={(ref) => void playbackHere?.visitReference(ref)}
+          onStepClick={(index) => void playbackHere?.jumpTo(index)}
+          wrapBody={withAreaPresence(stepArea)}
+        />
+        {mobileChrome?.belowContent}
+      </>
+    ) : (
+      <>
+        {(pageStep || (compareStep && playbackHere?.awayFromStep.value)) &&
+        playbackHere ? (
+          <ReturnToStepButton playing={playbackHere} />
+        ) : null}
+        {isCompactReader &&
+          renderMobileChapterTitle(
+            currentBookName.value ?? bookId.value ?? "",
+            chapterNumber.value ?? "",
+            true
+          )}
+
+        {bookNotFound.value && (
+          <div className="sb-reader-not-found">
+            <span
+              className="material-symbols-outlined sb-reader-not-found-icon"
+              aria-hidden="true"
+            >
+              search_off
+            </span>
+            <p className="sb-reader-not-found-title">
+              {t("book-not-found-title", { defaultValue: "Book not found" })}
+            </p>
+            <p className="sb-reader-not-found-body">
+              {t("book-not-found-message", {
+                defaultValue:
+                  "We couldn't find that book in {{translationName}}.",
+                translationName:
+                  translation.value?.name ?? translationId.value ?? "",
+              })}
+            </p>
+            {translationBooks.value?.books[0] && (
+              <Button
+                variant="primary"
+                size="lg"
+                className="sb-reader-not-found-action"
+                onClick={() => {
+                  const firstBook = translationBooks.value!.books[0]!;
+                  void readingState.selectChapter(
+                    firstBook.id,
+                    firstBook.firstChapterNumber ?? 1
+                  );
+                }}
+              >
+                {t("book-not-found-action", {
+                  defaultValue: "Go to {{bookName}} {{chapterNumber}}",
+                  bookName: translationBooks.value.books[0].name,
+                  chapterNumber:
+                    translationBooks.value.books[0].firstChapterNumber ?? 1,
+                })}
+              </Button>
+            )}
+          </div>
         )}
 
-      {bookNotFound.value && (
-        <div className="sb-reader-not-found">
-          <span
-            className="material-symbols-outlined sb-reader-not-found-icon"
-            aria-hidden="true"
-          >
-            search_off
-          </span>
-          <p className="sb-reader-not-found-title">
-            {t("book-not-found-title", { defaultValue: "Book not found" })}
-          </p>
-          <p className="sb-reader-not-found-body">
-            {t("book-not-found-message", {
-              defaultValue:
-                "We couldn't find that book in {{translationName}}.",
-              translationName:
-                translation.value?.name ?? translationId.value ?? "",
-            })}
-          </p>
-          {translationBooks.value?.books[0] && (
-            <button
-              type="button"
-              className="sb-reader-not-found-action"
-              onClick={() => {
-                const firstBook = translationBooks.value!.books[0]!;
-                void readingState.selectChapter(
-                  firstBook.id,
-                  firstBook.firstChapterNumber ?? 1
-                );
-              }}
+        {showLoadError && (
+          <div className="sb-reader-error" role="alert">
+            <span
+              className="material-symbols-outlined sb-reader-error-icon"
+              aria-hidden="true"
             >
-              {t("book-not-found-action", {
-                defaultValue: "Go to {{bookName}} {{chapterNumber}}",
-                bookName: translationBooks.value.books[0].name,
-                chapterNumber:
-                  translationBooks.value.books[0].firstChapterNumber ?? 1,
+              cloud_off
+            </span>
+            <h2 className="sb-reader-error-title">
+              {t("chapter-unavailable", {
+                defaultValue: "Chapter unavailable",
               })}
-            </button>
-          )}
-        </div>
-      )}
-
-      {showLoadError && (
-        <div className="sb-reader-error" role="alert">
-          <span
-            className="material-symbols-outlined sb-reader-error-icon"
-            aria-hidden="true"
-          >
-            cloud_off
-          </span>
-          <h2 className="sb-reader-error-title">
-            {t("chapter-unavailable", { defaultValue: "Chapter unavailable" })}
-          </h2>
-          <p className="sb-reader-error-message">
-            {t("chapter-unavailable-description", {
-              defaultValue:
-                "We were unable to load the data for this chapter. Please check your internet connection and try again.",
-            })}
-          </p>
-          <button
-            type="button"
-            className="sb-reader-error-retry"
-            onClick={() => void retryChapterLoad()}
-            disabled={retrying}
-            aria-busy={retrying}
-          >
-            {retrying && (
-              <span
-                className="material-symbols-outlined sb-reader-error-retry-spinner"
-                aria-hidden="true"
-              >
-                progress_activity
-              </span>
-            )}
-            {t("reload", { defaultValue: "Reload" })}
-          </button>
-        </div>
-      )}
-
-      {!showLoadError &&
-        !bookNotFound.value &&
-        (showChapterSkeleton ? (
-          renderChapterSkeleton()
-        ) : (
-          <Suspense
-            fallback={
-              <p>
-                {t("no-chapter-content-found", {
-                  defaultValue: "No chapter content found.",
+            </h2>
+            <p className="sb-reader-error-message">
+              {t("chapter-unavailable-description", {
+                defaultValue:
+                  "We were unable to load the data for this chapter. Please check your internet connection and try again.",
+              })}
+            </p>
+            {offlineFallbackTranslations.length > 0 && (
+              <p className="sb-reader-error-offline">
+                {t("chapter-unavailable-offline-switch", {
+                  count: offlineFallbackTranslations.length,
+                  bookName: currentBookName.value ?? bookId.value ?? "",
+                  chapterNumber: chapterNumber.value ?? 1,
+                  defaultValue_one:
+                    "You have a translation saved on your device that contains {{bookName}} {{chapterNumber}}.",
+                  defaultValue_other:
+                    "You have {{count}} translations saved on your device that contain {{bookName}} {{chapterNumber}}.",
                 })}
               </p>
-            }
-          >
-            <ChapterContent
-              isStale={dimStaleChapter}
-              chapterData={chapterData}
-              chapterDataPromise={readingState.chapterDataPromise}
-              initialChapterLoadSettled={readingState.initialChapterLoadSettled}
-              selectedVerses={selectedVerses}
-              selectVersesFromTextSelection={selectVersesFromTextSelection}
-              justConvertedSelectionRef={justConvertedSelectionRef}
-              highlights={highlights}
-              decorations={decorations}
-              annotations={state?.annotations}
-              selectVerse={selectVerse}
-              selectFootnote={selectFootnote}
-              scriptureElements={scriptureElements}
-              onAnnotationVerseClick={handleAnnotationVerseClick}
-            />
-          </Suspense>
-        ))}
-
-      {!availableTranslations.value && !showLoadError && (
-        <p>
-          {t("no-translations-available", {
-            defaultValue: "No translations available.",
-          })}
-        </p>
-      )}
-
-      {!showLoadError && translationLicenseNotice.value.length > 0 && (
-        <>
-          <p className="sb-translation-license-notice">
-            {translationLicenseNotice.value}
-          </p>
-          {translationWebsite.value.length > 0 && (
-            <p className="sb-translation-website">
-              <a
-                href={translationWebsite.value}
-                target="_blank"
-                rel="noopener noreferrer"
+            )}
+            <div className="sb-reader-error-actions">
+              <Button
+                variant="primary"
+                className="sb-reader-error-retry"
+                onClick={() => void retryChapterLoad()}
+                loading={retrying}
               >
-                {translationWebsite.value}
-              </a>
-            </p>
-          )}
-        </>
-      )}
+                {t("reload", { defaultValue: "Reload" })}
+              </Button>
+              {offlineFallbackTranslations.length > 0 && (
+                <OfflineFallbackSwitch
+                  translations={offlineFallbackTranslations}
+                  onSwitch={switchToOfflineTranslation}
+                />
+              )}
+            </div>
 
-      {/* Undefined on desktop, where the caller renders this itself below the
+            {failedTranslationNotSaved && !offline.isOnline.value && (
+              <p className="sb-reader-error-hint">
+                {t("chapter-unavailable-download-offline-hint", {
+                  abbreviation: failedTranslation.shortName,
+                  defaultValue:
+                    "Once you're back online, download {{abbreviation}} so this doesn't happen again.",
+                })}
+              </p>
+            )}
+
+            {hasOtherSavedTranslation &&
+              offlineFallbackTranslations.length === 0 && (
+                <div className="sb-reader-error-alternatives">
+                  <p className="sb-reader-error-hint">
+                    {t("chapter-unavailable-switch-heading", {
+                      defaultValue:
+                        "Or keep reading in a translation saved on this device:",
+                    })}
+                  </p>
+                  <Button
+                    variant="secondary"
+                    icon="translate"
+                    className="sb-reader-error-action"
+                    onClick={() =>
+                      void selectorState.openDownloadedTranslations(currentSlot)
+                    }
+                  >
+                    {t("chapter-unavailable-choose-saved", {
+                      defaultValue: "Choose a saved translation",
+                    })}
+                  </Button>
+                </div>
+              )}
+          </div>
+        )}
+
+        {!showLoadError &&
+          !bookNotFound.value &&
+          (showChapterSkeleton ? (
+            renderChapterSkeleton()
+          ) : (
+            <Suspense
+              fallback={
+                <p>
+                  {t("no-chapter-content-found", {
+                    defaultValue: "No chapter content found.",
+                  })}
+                </p>
+              }
+            >
+              <ChapterContent
+                isStale={dimStaleChapter}
+                chapterData={chapterData}
+                chapterDataPromise={readingState.chapterDataPromise}
+                initialChapterLoadSettled={
+                  readingState.initialChapterLoadSettled
+                }
+                selectedVerses={selectedVerses}
+                selectVersesFromTextSelection={selectVersesFromTextSelection}
+                justConvertedSelectionRef={justConvertedSelectionRef}
+                highlights={highlights}
+                decorations={decorations}
+                annotations={state?.annotations}
+                hideHighlights={isMinimalEmbed}
+                friends={state?.friends}
+                selectVerse={selectVerse}
+                selectFootnote={selectFootnote}
+                scriptureElements={scriptureElements}
+                onAnnotationVerseClick={handleAnnotationVerseClick}
+                isMobile={isCompactReader}
+                presence={sharedSession ? presence : undefined}
+                onVisibleVersesChange={reportVisibleVerses}
+                sharedSession={sharedSession}
+                onHostVerseClick={handleHostVerseClick}
+                verseSelectionEffects={
+                  state?.settings.settings.value.verseSelectionEffects ??
+                  "default"
+                }
+                prefersReducedMotionValue={prefersReducedMotionValue}
+                highlightAuthors={highlightAuthors}
+              />
+            </Suspense>
+          ))}
+
+        {!availableTranslations.value && !showLoadError && (
+          <p>
+            {t("no-translations-available", {
+              defaultValue: "No translations available.",
+            })}
+          </p>
+        )}
+
+        {!showLoadError && translationLicenseNotice.value.length > 0 && (
+          <>
+            <p className="sb-translation-license-notice">
+              {translationLicenseNotice.value}
+            </p>
+            {translationWebsite.value.length > 0 && (
+              <p className="sb-translation-website">
+                <a
+                  href={translationWebsite.value}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {translationWebsite.value}
+                </a>
+              </p>
+            )}
+          </>
+        )}
+
+        {/* Undefined on desktop, where the caller renders this itself below the
           reader — the desktop pane is its own scroll container. */}
-      {mobileChrome?.belowContent}
-    </>
-  );
+        {mobileChrome?.belowContent}
+      </>
+    );
 
   // const extraContent = discoverPanel ? (
   //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
   // ) : null;
-  const extraContent = state ? (
-    <DiscoverContentPanel tab={currentSlot.tab} state={state} />
-  ) : null;
+  const extraContent =
+    state &&
+    !isMinimalEmbed &&
+    !state.app.isDiscoverOpen.value &&
+    state.settings.settings.value.discoveredContent.showContent ? (
+      <DiscoverContentPanel
+        variant="compact"
+        tab={currentSlot.tab}
+        state={state}
+      />
+    ) : null;
+
+  // Playback opens on the selected tab only. Other slots in a split view
+  // must not show this loader.
+  const playlistOpeningHere =
+    !!state &&
+    state.playlists.openingPlayback.value &&
+    state.playlists.view.value !== "play_playlist" &&
+    currentSlot.tab != null &&
+    state.tabs.selectedTabId.value === currentSlot.tab.id;
+
+  const editingPlaylistHere =
+    !!state && isPlaylistEditorTab(state, currentSlot.tab);
+  // Desktop shows a playing passage's note beside it, in the reader playback is
+  // bound to; mobile shows it in a sheet above the floating nav instead.
+  const playingHere =
+    state && !isCompactReader ? state.playlists.playing.value : null;
+  const scriptureNotePlaying =
+    playingHere &&
+    currentSlot.tab != null &&
+    playingHere.tab?.id === currentSlot.tab.id
+      ? playingHere
+      : null;
 
   return (
     <div
+      ref={readerRootRef}
       className={`sb-bible-reader ${readerFontSizeClass}${
-        isMobile ? " sb-bible-reader-mobile" : ""
+        isCompactReader ? " sb-bible-reader-mobile" : ""
       }`}
       dir={translation.value?.textDirection ?? "auto"}
     >
-      {isMobile && state ? (
-        <>
+      {scriptureNotePlaying ? (
+        <ScriptureNotePopover
+          playing={scriptureNotePlaying}
+          readerRef={readerRootRef}
+          resolveBookName={(id) => {
+            const book = translationBooks.value?.books.find((b) => b.id === id);
+            return book?.name ?? book?.commonName ?? id;
+          }}
+        />
+      ) : null}
+      {playlistOpeningHere && !isCompactReader ? (
+        <Spinner
+          className="sb-playlist-opening-spinner"
+          size="1rem"
+          label={t("opening-playlist", { defaultValue: "Opening playlist" })}
+        />
+      ) : null}
+      {isCompactReader && state ? (
+        <Fragment key="mobile">
           <div
             className={`sb-bible-reader-mobile-header${
-              mobileChrome?.isScrolled
+              !isMinimalEmbed && mobileChrome?.isScrolled
                 ? " sb-bible-reader-mobile-header-hidden"
                 : ""
             }`}
           >
-            <div className="sb-bible-reader-mobile-header-text">
-              <h1 className="sb-bible-reader-mobile-header-title">
-                <span
-                  className="sb-bible-reader-mobile-header-book"
-                  onClick={openBookSelector}
-                >
-                  {currentBookName.value ?? bookId.value ?? ""}{" "}
-                  {chapterNumber.value}
-                </span>
-                <button
-                  type="button"
-                  className="sb-bible-reader-mobile-header-translation"
-                  aria-label={changeTranslationLabel}
-                  onClick={(e: MouseEvent) => {
-                    e.stopPropagation();
-                    void openTranslationSelector();
-                  }}
-                >
-                  {translationLabel}
-                </button>
-              </h1>
-            </div>
-            <ChapterNotesButton
-              state={state}
-              bookId={bookId.value}
-              chapterNumber={chapterNumber.value}
-            />
-            <div className="sb-bible-reader-mobile-header-actions">
-              {!state.playlists.playing.value && (
-                <ReaderBookmarkButton
-                  state={state}
-                  translationId={translationId.value}
-                  bookId={bookId.value}
-                  chapterNumber={chapterNumber.value}
-                />
-              )}
+            {!isMinimalEmbed && state.playlists.playing.value ? (
+              <IconButton
+                className="sb-bible-reader-mobile-header-back"
+                icon={isRtl ? "arrow_forward" : "arrow_back"}
+                label={t("playlist-show-steps", {
+                  defaultValue: "Back to the playlist",
+                })}
+                onClick={() => (state.playlists.view.value = "play_playlist")}
+              />
+            ) : null}
+            {!isMinimalEmbed && (
               <QuickToolbar
                 toolsManager={state.tools}
                 readingState={readingState}
                 playlists={state.playlists}
                 annotations={state.annotations}
                 features={state.features}
+                settings={state.settings}
                 sharedSession={sharedSession ?? null}
                 toast={state.app.toast}
                 modals={state.modals}
                 app={state.app}
-                className="sb-quick-toolbar-mobile-header"
+                readingPlans={state.readingPlans}
+                className="sb-quick-toolbar-mobile-header-leading"
+                toolFilter={(id) => id === CURRENT_PLAYLIST_TOOL_ID}
               />
-              {/*
-               * No account avatar here: "You" is a bottom-bar tab again
-               * (#1554), and two avatars on one screen made it unclear which
-               * one was the way to your profile.
-               */}
-              {sharedSession ? (
-                <MobileSessionParticipants
-                  state={state}
-                  session={sharedSession}
-                />
-              ) : null}
+            )}
+            <div className="sb-bible-reader-mobile-header-text">
+              <h1 className="sb-bible-reader-mobile-header-title">
+                {!isMinimalEmbed && (
+                  <span
+                    className="sb-bible-reader-mobile-header-book"
+                    onClick={openBookSelector}
+                  >
+                    {currentBookName.value ?? bookId.value ?? ""}{" "}
+                    {chapterNumber.value}
+                  </span>
+                )}
+              </h1>
+            </div>
+            {playlistOpeningHere ? (
+              <Spinner
+                size="1rem"
+                label={t("opening-playlist", {
+                  defaultValue: "Opening playlist",
+                })}
+              />
+            ) : null}
+            {!isMinimalEmbed && (
+              <ChapterNotesButton
+                state={state}
+                bookId={bookId.value}
+                chapterNumber={chapterNumber.value}
+              />
+            )}
+            <div className="sb-bible-reader-mobile-header-actions">
+              {isMinimalEmbed ? (
+                <>
+                  <IconButton
+                    look="tinted"
+                    className="sb-bible-reader-mobile-header-open-tab"
+                    icon="open_in_new"
+                    label={t("open-in-new-tab", {
+                      defaultValue: "Open in New Tab",
+                    })}
+                    onClick={() => {
+                      window.open(
+                        urlWithoutEmbedParam(state.navigation.currentUrl.value)
+                          .href,
+                        "_blank",
+                        "noopener,noreferrer"
+                      );
+                    }}
+                  />
+                  <IconButton
+                    className="sb-bible-reader-mobile-header-settings"
+                    icon={<InfoSettingsIcon />}
+                    label={t("settings", { defaultValue: "Settings" })}
+                    onClick={() => mobileChrome?.onOpenMobileSettings()}
+                  />
+                </>
+              ) : (
+                <>
+                  {!state.playlists.playing.value && (
+                    <>
+                      <ReaderSaveButton
+                        state={state}
+                        translationId={translationId.value}
+                        bookId={bookId.value}
+                        chapterNumber={chapterNumber.value}
+                      />
+                      <ReaderBookmarkButton
+                        state={state}
+                        translationId={translationId.value}
+                        bookId={bookId.value}
+                        chapterNumber={chapterNumber.value}
+                      />
+                    </>
+                  )}
+                  <QuickToolbar
+                    toolsManager={state.tools}
+                    readingState={readingState}
+                    playlists={state.playlists}
+                    annotations={state.annotations}
+                    features={state.features}
+                    settings={state.settings}
+                    sharedSession={sharedSession ?? null}
+                    toast={state.app.toast}
+                    modals={state.modals}
+                    app={state.app}
+                    embedThemes={state.theme?.themes}
+                    customizationLocator={
+                      state.customizations?.activeCustomizationLocator
+                    }
+                    readingPlans={state.readingPlans}
+                    className="sb-quick-toolbar-mobile-header"
+                    toolFilter={(id) => id !== CURRENT_PLAYLIST_TOOL_ID}
+                  />
+                  {/*
+                   * No account avatar here: "You" is a bottom-bar tab again
+                   * (#1554), and two avatars on one screen made it unclear which
+                   * one was the way to your profile.
+                   */}
+                  {sharedSession ? (
+                    <MobileSessionParticipants
+                      state={state}
+                      session={sharedSession}
+                    />
+                  ) : null}
+                  <IconButton
+                    className="sb-bible-reader-mobile-header-settings"
+                    icon={<InfoSettingsIcon />}
+                    label={t("settings", { defaultValue: "Settings" })}
+                    onClick={() => mobileChrome?.onOpenMobileSettings()}
+                  />
+                </>
+              )}
+              {/* At the end of the row: the right on LTR, the left on RTL. */}
               <button
                 type="button"
-                className="sb-bible-reader-mobile-header-settings"
-                onClick={() => mobileChrome?.onOpenMobileSettings()}
-                aria-label={t("settings", { defaultValue: "Settings" })}
-                title={t("settings", { defaultValue: "Settings" })}
+                className="sb-bible-reader-mobile-header-translation"
+                aria-label={changeTranslationLabel}
+                onClick={(e: MouseEvent) => {
+                  e.stopPropagation();
+                  void openTranslationSelector();
+                }}
               >
-                <InfoSettingsIcon />
+                {translationLabel}
               </button>
             </div>
           </div>
@@ -2218,7 +4385,7 @@ export function BibleReader(props: BibleReaderProps) {
                     mobileChrome.prevChapterPreview.book.name,
                     mobileChrome.prevChapterPreview.chapter.number
                   )}
-                <div className="sb-chapter-content">
+                <div className="sb-chapter-content sb-chapter-content-note-gutter">
                   {renderStaticChapterContent(
                     mobileChrome?.prevChapterPreview ?? null,
                     scriptureElements
@@ -2241,7 +4408,7 @@ export function BibleReader(props: BibleReaderProps) {
                     mobileChrome.nextChapterPreview.book.name,
                     mobileChrome.nextChapterPreview.chapter.number
                   )}
-                <div className="sb-chapter-content">
+                <div className="sb-chapter-content sb-chapter-content-note-gutter">
                   {renderStaticChapterContent(
                     mobileChrome?.nextChapterPreview ?? null,
                     scriptureElements
@@ -2258,59 +4425,96 @@ export function BibleReader(props: BibleReaderProps) {
               onOpenAllSettings={() => mobileChrome.onOpenAllSettings()}
             />
           )}
-        </>
+        </Fragment>
       ) : (
-        <>
+        <Fragment key="desktop">
           <div className="sb-bible-reader-header">
             <div className="sb-bible-reader-heading">
-              <h2
-                {...flingSafeTapHandlers(openBookSelector)}
-                className="sb-bible-reader-title"
-              >
-                <span className="sb-bible-reader-book">
-                  {currentBookName.value ?? bookId.value ?? "Select a book"}
-                </span>
-                <span className="sb-bible-reader-title-sep" aria-hidden="true">
-                  {" "}
-                </span>
-                <span className="sb-bible-reader-chapter">
-                  {chapterNumber.value}
-                </span>
-              </h2>
-              <button
-                type="button"
-                className="sb-bible-reader-translation"
-                aria-label={changeTranslationLabel}
-                onClick={() => {
-                  void openTranslationSelector();
-                }}
-              >
-                {translationLabel}
-              </button>
+              {stepPage || comparePageTitle ? (
+                <h2
+                  className="sb-bible-reader-title sb-playlist-step-page-heading"
+                  dir="auto"
+                >
+                  {stepPage
+                    ? playlistStepPageTitle(stepPage)
+                    : comparePageTitle}
+                </h2>
+              ) : (
+                <>
+                  <h2
+                    {...flingSafeTapHandlers(openBookSelector)}
+                    className="sb-bible-reader-title"
+                  >
+                    <span className="sb-bible-reader-book">
+                      {currentBookName.value ?? bookId.value ?? "Select a book"}
+                    </span>
+                    <span
+                      className="sb-bible-reader-title-sep"
+                      aria-hidden="true"
+                    >
+                      {" "}
+                    </span>
+                    <span className="sb-bible-reader-chapter">
+                      {chapterNumber.value}
+                    </span>
+                  </h2>
+                  <button
+                    type="button"
+                    className="sb-bible-reader-translation"
+                    aria-label={changeTranslationLabel}
+                    onClick={() => {
+                      void openTranslationSelector();
+                    }}
+                  >
+                    {translationLabel}
+                  </button>
+                </>
+              )}
             </div>
-            {state && (
-              <div className="sb-bible-reader-actions">
-                <QuickToolbar
-                  toolsManager={state.tools}
-                  readingState={readingState}
-                  playlists={state.playlists}
-                  annotations={state.annotations}
-                  features={state.features}
-                  sharedSession={sharedSession ?? null}
-                  toast={state.app.toast}
-                  modals={state.modals}
-                  app={state.app}
-                  className="sb-quick-toolbar-reader"
-                />
-                {!state.playlists.playing.value && (
-                  <ReaderBookmarkButton
-                    state={state}
-                    translationId={translationId.value}
-                    bookId={bookId.value}
-                    chapterNumber={chapterNumber.value}
+            {editingPlaylistHere ? (
+              <PlaylistReaderHint />
+            ) : (
+              state && (
+                <div className="sb-bible-reader-actions">
+                  {/* Chapter actions lead, extension quick tools follow — the
+                    same order as the mobile header cluster below, so Save
+                    doesn't swap sides with Share between breakpoints. */}
+                  {!state.playlists.playing.value && (
+                    <>
+                      <ReaderSaveButton
+                        state={state}
+                        translationId={translationId.value}
+                        bookId={bookId.value}
+                        chapterNumber={chapterNumber.value}
+                      />
+                      <ReaderBookmarkButton
+                        state={state}
+                        translationId={translationId.value}
+                        bookId={bookId.value}
+                        chapterNumber={chapterNumber.value}
+                      />
+                    </>
+                  )}
+                  <QuickToolbar
+                    toolsManager={state.tools}
+                    readingState={readingState}
+                    playlists={state.playlists}
+                    annotations={state.annotations}
+                    features={state.features}
+                    settings={state.settings}
+                    sharedSession={sharedSession ?? null}
+                    readingPlans={state.readingPlans}
+                    toast={state.app.toast}
+                    modals={state.modals}
+                    app={state.app}
+                    embedThemes={state.theme?.themes}
+                    customizationLocator={
+                      state.customizations?.activeCustomizationLocator
+                    }
+                    className="sb-quick-toolbar-reader"
                   />
-                )}
-              </div>
+                </div>
+              )
             )}
           </div>
           <div
@@ -2325,16 +4529,11 @@ export function BibleReader(props: BibleReaderProps) {
             </div>
             {extraContent}
           </div>
-        </>
+        </Fragment>
       )}
 
-      {scriptureElements.showFootnotes && selectedFootnote.value !== null && (
-        <div
-          className="sb-footnote-modal-overlay"
-          onClick={() => {
-            selectFootnote(null);
-          }}
-        >
+      {scriptureElements.showFootnotes && openFootnote && (
+        <div className="sb-footnote-modal-overlay" {...footnoteOverlayDismiss}>
           <div
             className="sb-footnote-modal"
             onClick={(event: MouseEvent) => {
@@ -2343,31 +4542,27 @@ export function BibleReader(props: BibleReaderProps) {
           >
             <div className="sb-footnote-modal-header">
               <h3 className="sb-footnote-modal-title">
-                {selectedFootnote.value.chapter.book.name}{" "}
-                {selectedFootnote.value.chapter.chapter.number}
-                {selectedFootnote.value.verse
-                  ? ":" + selectedFootnote.value.verse.number
-                  : ""}
+                {openFootnote.chapter.book.name}{" "}
+                {openFootnote.chapter.chapter.number}
+                {openFootnote.verse ? ":" + openFootnote.verse.number : ""}
               </h3>
-              <button
+              <CloseButton
                 className="sb-footnote-modal-close"
-                aria-label={t("close-footnote", {
+                label={t("close-footnote", {
                   defaultValue: "Close footnote",
                 })}
-                onClick={() => {
-                  selectFootnote(null);
+                onClose={() => {
+                  closeFootnote();
                 }}
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
+              />
             </div>
 
             <div className="sb-footnote-modal-content">
               <VerseReferenceText
-                text={selectedFootnote.value.note.text}
+                text={openFootnote.note.text}
                 books={translationBooks.value?.books}
                 onReferenceClick={(ref) => {
-                  selectFootnote(null);
+                  closeFootnote();
                   void state?.app.openVerseReference(ref);
                 }}
               />

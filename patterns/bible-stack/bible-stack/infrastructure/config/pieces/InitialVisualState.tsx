@@ -20,6 +20,8 @@ export const INITIAL_VISUAL_STATE_MAP: {
   [BiblePieces.StackChapter]: {
     selectedColor: "#f8c471",
     highlightedColor: "#ffffff",
+    expandedScaleZ: 0.25,
+    highlightedScaleZ: 0.35,
   },
   [BiblePieces.StackSectionShadow]: {},
   [BiblePieces.VersesBundle]: {

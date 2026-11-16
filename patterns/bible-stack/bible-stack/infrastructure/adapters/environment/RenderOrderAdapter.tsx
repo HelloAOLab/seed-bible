@@ -4,6 +4,7 @@ import {
 } from "../../functions/casualos";
 import type { Piece } from "../../../domain/models/canvas";
 import type { PieceBot, PieceBotTags } from "../../models/casualos";
+import type { RenderOrderPort } from "../../../application/ports/out/RenderOrder";
 
 interface DimensionProviderPort {
   getCurrentDimension(): string;
@@ -18,7 +19,7 @@ interface RenderOrderAdapterParams {
   pieceMapperPort: PieceMapperPort;
 }
 
-export class RenderOrderAdapter {
+export class RenderOrderAdapter implements RenderOrderPort {
   #dimensionProviderPort: DimensionProviderPort;
   #pieceMapperPort: PieceMapperPort;
 

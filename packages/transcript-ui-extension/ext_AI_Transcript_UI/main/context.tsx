@@ -1,7 +1,7 @@
 import { createContext } from "preact";
 import { useContext } from "preact/hooks";
 import type { ComponentChildren } from "preact";
-import type { TranscriptionManager } from "@seed-bible/ai-transcript-extension/transcriptionManager";
+import type { TranscriptionManager } from "@seed-bible/transcription/transcriptionManager";
 import { type SeedBibleState } from "seed-bible";
 
 const ManagerContext = createContext<{

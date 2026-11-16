@@ -30,8 +30,6 @@ import { ExperienceAdapter } from "../adapters/experience/ExperienceAdapter";
 import { BibleSequenceAdapter } from "../adapters/sequences/BibleSequenceAdapter";
 import { BibleDataRepository } from "../adapters/stacks/BibleDataRepository";
 import { PieceDataRepository } from "../adapters/stacks/PieceDataRepository";
-import { VersesBundleRepository } from "../adapters/stacks/VersesBundleDataRepository";
-import { VerseRepository } from "../adapters/stacks/VerseDataRepository";
 import { VisualStateRegistry } from "../adapters/stacks/VisualStateRegistry";
 import { InteractionRegistry } from "../adapters/stacks/InteractionRegistry";
 import { BibleSetupAdapter } from "../adapters/stacks/BibleSetupAdapter";
@@ -113,12 +111,16 @@ import { BooksStaticInfoRepository } from "../adapters/arrangement/BooksStaticIn
 import { BookNamesProvider } from "../adapters/arrangement/BookNamesProvider";
 import { ScriptureConfigProvider } from "../config/scripture/ScriptureConfigProvider";
 import { ArrangementConfigProvider } from "../config/arrangement/ArrangementConfigProvider";
-import { SetStrictTag, GetBotScales } from "../functions/casualos";
+import {
+  SetStrictTag,
+  GetBotScales,
+  SendEmbedMessage,
+} from "../functions/casualos";
 import { PieceHierarchyService } from "../../application/services/PieceHierarchyService";
 import { ViewportService } from "../../application/services/ViewportService";
 import { TourGuideService } from "../../application/services/TourGuideService";
 import { SequenceStateService } from "../../application/services/SequenceStateService";
-import { ExplodedViewService } from "../../application/services/ExplodedVIewService";
+import { ExplodedViewService } from "../../application/services/ExplodedViewService";
 import { TestamentSelectionService } from "../../application/services/TestamentSelectionService";
 import { ScripturePiecesStateService } from "../../application/services/ScripturePiecesStateService";
 import { PieceInteractabilityService } from "../../application/services/PieceInteractabilityService";
@@ -151,7 +153,6 @@ import { ChapterInteractionService } from "../../application/services/ChapterInt
 import { VersesBundleInteractionService } from "../../application/services/VersesBundleInteractionService";
 import { StackPresenceNavigationService } from "../../application/services/StackPresenceNavigationService";
 import { ExperienceService } from "../../application/services/ExperienceService";
-import { BaseEventManager } from "../../application/services/BaseEventManager";
 import type { BibleStackEvents } from "../../domain/models/events";
 import { PieceActivityService } from "../../application/services/PieceActivityService";
 import { ArrangementService } from "../../application/services/ArrangementService";
@@ -159,7 +160,6 @@ import { ArrangementMapper } from "../mappers/ArrangementMapper";
 import { UserPresenceService } from "../../application/services/UserPresenceService";
 import { ActivityIndicatorsAdapter } from "../adapters/pieceActivity/ActivityIndicatorsAdapter";
 import { ActivityIndicatorsConfigProvider } from "../config/activityIndicators/ActivityIndicatorsConfigProvider";
-import { ActivityIndicatorBotsRepository } from "../config/activityIndicators/ActivityIndicatorBotsRepository";
 import { ActivityNotificationAdapter } from "../adapters/pieceActivity/ActivityNotificationAdapter";
 import { PieceLabelService } from "../../application/services/PieceLabelService";
 import { LabelAdapter } from "../adapters/labels/LabelAdapter";
@@ -182,26 +182,39 @@ import { VerseInteractionController } from "../controllers/stack/VerseInteractio
 import { VersesBundleInteractionController } from "../controllers/stack/VersesBundleInteractionController";
 import { RelocationEventMapper } from "../mappers/RelocationEventMapper";
 import { BotStateController } from "../controllers/stack/BotStateController";
+import { PieceActivityController } from "../controllers/stack/PieceActivityController";
 import { CrossLineInteractionController } from "../controllers/stack/CrossLineInteractionController";
 import { createPieceStateMap } from "../controllers/stack/pieceStateMap";
 import { createBotStateChangeStrategyFactory } from "../controllers/stack/botStateChangeStrategy";
 import { makeLabelPropertiesStrategies } from "../config/labels/makeLabelPropertiesStrategies";
 import { PieceStateService } from "../../application/services/PieceStateService";
-import type { BotListenerParametersMap } from "../models/casualos";
+import type { BotListenerParametersMap, Message } from "../models/casualos";
 import { ObjectPoolerConfigProvider } from "../config/objectPool/ObjectPoolConfigProvider";
 import { PaintService } from "../../application/services/PaintService";
 import { PaintAdapter } from "../adapters/stacks/PaintAdapter";
-import { BookChapterManagementAdapter } from "../adapters/stacks/BookChaptersManagementAdapter";
 import { TestamentSelectionConfigProvider } from "../config/testamentSelection/TestamentSelectionConfigProvider";
 import { VersesBundleSelectionAdapter } from "../adapters/stacks/VersesBundleSelectionAdapter";
 import { VersesBundleConfigProvider } from "../config/versesBundleSelection/VersesBundleConfigProvider";
 import { BibleModeService } from "../../application/services/BibleModeService";
 import { BibleModeSequenceAdapter } from "../adapters/sequences/BibleModeSequenceAdapter";
 import { LabelInteractionController } from "../controllers/stack/LabelInteractionController";
-import { LabelInteractionService } from "../../application/services/InteractionLabelService";
+import { LabelInteractionService } from "../../application/services/LabelInteractionService";
 import { SectionShadowInteractionService } from "../../application/services/SectionShadowInteractionService";
-import type { BibleStackInfrastructureEvents } from "../models/events";
+import {
+  MESSAGE_TO_EVENT_MAP,
+  type BibleStackInfrastructureEvents,
+} from "../models/events";
 import { UpperCoverOpacityAdapter } from "../adapters/stacks/UpperCoverOpacityAdapter";
+import { ChapterNavigationService } from "../../application/services/ChapterNavigationService";
+import { ReaderNavigationAdapter } from "../adapters/seed-bible/ReaderNavigationAdapter";
+import { UserIdentityStore } from "../adapters/userPresence/UserIdentityStore";
+import { UserPresenceController } from "../controllers/seed-bible/ReadingStateController";
+import { UserIdentityController } from "../controllers/seed-bible/UserIdentityController";
+import { EventManager } from "../utils/EventManager";
+import type { AnyStackData } from "../../domain/models/canvas";
+import { VerseDataRepository } from "../adapters/stacks/VerseDataRepository";
+import { VersesBundleDataRepository } from "../adapters/stacks/VersesBundleDataRepository";
+import { BookChaptersManagementAdapter } from "../adapters/stacks/BookChaptersManagementAdapter";
 
 let initialized = false;
 
@@ -217,6 +230,14 @@ export const bootstrapExtension = () => {
     );
   }
   const getDimension = () => DIMENSION;
+
+  let CONNECTION_ID = configBot.tags.connectionId;
+  if (!CONNECTION_ID) {
+    console.error(
+      "bible-stack pattern bootstrap: CONNECTION_ID not defined at bootstrapExtension"
+    );
+    CONNECTION_ID = uuid();
+  }
 
   // 1. Instantiating mappers
 
@@ -249,7 +270,7 @@ export const bootstrapExtension = () => {
   const activityIndicatorMapper = new ActivityIndicatorMapper();
   const activityNotificationMapper = new ActivityNotificationMapper();
 
-  // // 2. Instantiating config providers
+  // 2. Instantiating config providers
 
   const layoutConfigProvider = new LayoutConfigProvider();
   const bookInteractionConfigProvider = new BookInteractionConfigProvider();
@@ -275,12 +296,12 @@ export const bootstrapExtension = () => {
     new TestamentSelectionConfigProvider();
   const versesBundleConfigProvider = new VersesBundleConfigProvider();
 
-  // // 3. Instantiating adapters
+  // 3. Instantiating adapters
 
   const scripturePiecesStateService = new ScripturePiecesStateService();
 
   const infrastructureEventManager =
-    new BaseEventManager<BibleStackInfrastructureEvents>();
+    new EventManager<BibleStackInfrastructureEvents>();
   const listenTagEventBus = new ListenTagEventManager();
 
   function makeListeners<K extends BiblePiece>(
@@ -373,7 +394,7 @@ export const bootstrapExtension = () => {
       [BiblePieces.ActivityIndicator]: makePoolData(
         BiblePieces.ActivityIndicator,
         activityIndicatorPrefab,
-        8
+        16
       ),
       [BiblePieces.ActivityNotification]: makePoolData(
         BiblePieces.ActivityNotification,
@@ -408,8 +429,8 @@ export const bootstrapExtension = () => {
   });
   const bibleDataRepository = new BibleDataRepository();
   const pieceDataRepository = new PieceDataRepository();
-  const versesBundleRepository = new VersesBundleRepository();
-  const verseRepository = new VerseRepository();
+  const versesBundleRepository = new VersesBundleDataRepository();
+  const verseRepository = new VerseDataRepository();
   const interactionRegistry = new InteractionRegistry();
 
   // The scripture arrangement and per-book static info are bundled inside the
@@ -469,6 +490,7 @@ export const bootstrapExtension = () => {
     coverMapperPort: stackCoverMapper,
     crossLineMapperPort: stackCrossLineMapper,
     stackShadowMapperPort: stackShadowMapper,
+    activityIndicatorMapperPort: activityIndicatorMapper,
   });
 
   const bibleSetupAdapter = new BibleSetupAdapter({
@@ -573,6 +595,7 @@ export const bootstrapExtension = () => {
     visualStatePort: visualStateRegistry,
     animationConfigProviderPort: highlightConfigProvider,
     pieceDataRepositoryPort: pieceDataRepository,
+    colorLerper,
   });
   const pieceUnhighlightSchedulerAdapter =
     new PieceUnhighlightSchedulerAdapter();
@@ -655,16 +678,15 @@ export const bootstrapExtension = () => {
   const audioAdapter = new AudioAdapter({
     audioConfigProvider: audioConfigProvider,
   });
-  const activityIndicatorBotsRepository = new ActivityIndicatorBotsRepository();
   const activityIndicatorsAdapter = new ActivityIndicatorsAdapter({
     objectPooler: objectPooler,
     configProviderPort: activityIndicatorsConfigProvider,
-    botsRepositoryPort: activityIndicatorBotsRepository,
     activityIndicatorMapperPort: activityIndicatorMapper,
     labelTextMapperPort: infoLabelTextMapper,
     dimensionProviderPort: {
       getDimension: getDimension,
     },
+    visualStateRegistryPort: visualStateRegistry,
   });
   const activityNotificationAdapter = new ActivityNotificationAdapter({
     objectPooler,
@@ -697,7 +719,7 @@ export const bootstrapExtension = () => {
     pieceMapper,
     visualStateRegistry,
   });
-  const bookChapterManagementAdapter = new BookChapterManagementAdapter({
+  const bookChapterManagementAdapter = new BookChaptersManagementAdapter({
     bookMapper: stackBookMapper,
     sectionBookMapper: stackSectionBookMapper,
     layoutConfigProvider,
@@ -724,6 +746,7 @@ export const bootstrapExtension = () => {
     bibleDataRepository,
     coverMapper: stackCoverMapper,
   });
+  const readerNavigationAdapter = new ReaderNavigationAdapter();
 
   // 4. Instantiating services
 
@@ -732,23 +755,21 @@ export const bootstrapExtension = () => {
     verseDataRepository: verseRepository,
     versesBundleDataRepository: versesBundleRepository,
     paintAdapterPort: paintAdapter,
+    loggerPort: loggerAdapter,
   });
-  const bibleStackEventManager = new BaseEventManager<BibleStackEvents>();
+  const bibleStackEventManager = new EventManager<BibleStackEvents>();
   const labelDateService = new LabelDateService({
-    eventPort: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
   });
   const userPresenceService = new UserPresenceService({
-    userPresenceProviderPort: {
-      getSelectedReadingInstance: () => undefined,
-      getRemotesPresence: () => new Map(),
-      getCurrUserId: () => authBot?.id ?? configBot.id,
-    },
+    eventManagerPort: bibleStackEventManager,
+    connectionId: CONNECTION_ID,
   });
   const arrangementService = new ArrangementService({
     arrangementConfigProviderPort: {
       getStaticArrangements: () => [arrangementDomain],
     },
-    eventManager: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
     arrangementIndex: 0,
     customArrangementStorePort: {
       //eslint-disable-next-line
@@ -758,21 +779,23 @@ export const bootstrapExtension = () => {
       getArrangements: () => [],
     },
   });
+  const userIdentityStore = new UserIdentityStore({
+    eventBus: infrastructureEventManager,
+  });
   const pieceActivityService = new PieceActivityService({
     dataRegistryPort: pieceDataRepository,
     arrangementServicePort: arrangementService,
     labelDataStorePort: labelDataStore,
     userPresenceServicePort: userPresenceService,
     activityIndicatorsAdapterPort: activityIndicatorsAdapter,
+    activityIndicatorLifecyclePort: stackPieceLifecycleAdapter,
     activityNotificationAdapterPort: activityNotificationAdapter,
-    userColorStorePort: {
-      getUserColor: () => undefined,
-    },
-    readingInstanceProviderPort: {
-      getOwnReadingInstances: () => [],
-      getRemotesReadingInstances: () => [],
+    userIdentityStorePort: userIdentityStore,
+    idGeneratorPort: {
+      getId: () => uuid(),
     },
     loggerPort: loggerAdapter,
+    eventManagerPort: bibleStackEventManager,
   });
   const pieceLabelService = new PieceLabelService({
     labelAdapterPort: labelAdapter,
@@ -793,6 +816,8 @@ export const bootstrapExtension = () => {
       labelDateService,
       scripturePiecesStateService,
     }),
+
+    loggerPort: loggerAdapter,
   });
 
   const pieceHierarchyService = new PieceHierarchyService({
@@ -804,7 +829,8 @@ export const bootstrapExtension = () => {
     pieceDataRepositoryPort: pieceDataRepository,
   });
   const sequenceStateService = new SequenceStateService({
-    sequenceEventPort: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
+    loggerPort: loggerAdapter,
   });
 
   const pieceInteractabilityService = new PieceInteractabilityService({
@@ -812,6 +838,7 @@ export const bootstrapExtension = () => {
     pieceDataRepositoryPort: pieceDataRepository,
     pieceAdapterPort: pieceAdapter,
     scripturePiecesStateServicePort: scripturePiecesStateService,
+    loggerPort: loggerAdapter,
   });
 
   const chapterSelectionService = new ChapterSelectionService({
@@ -825,6 +852,7 @@ export const bootstrapExtension = () => {
     pieceLifecycleAdapterPort: stackPieceLifecycleAdapter,
     paintAdapter: paintAdapter,
     selectionAdapterPort: versesBundleSelectionAdapter,
+    loggerPort: loggerAdapter,
   });
   const versesInteractionService = new VersesInteractionService({
     sequenceStateServicePort: sequenceStateService,
@@ -847,6 +875,7 @@ export const bootstrapExtension = () => {
       pieceDataRepositoryPort: pieceDataRepository,
       sequenceStateServicePort: sequenceStateService,
       pieceHierarchyServicePort: pieceHierarchyService,
+      loggerPort: loggerAdapter,
     });
 
   const scriptureService = new ScriptureService(
@@ -868,10 +897,11 @@ export const bootstrapExtension = () => {
     pieceDataRepositoryPort: pieceDataRepository,
     pieceHierarchyServicePort: pieceHierarchyService,
     sequenceStateServicePort: sequenceStateService,
-    eventPort: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
     activityNotificationAdapterPort: activityNotificationAdapter,
     pieceActivityServicePort: pieceActivityService,
     pieceLabelServicePort: pieceLabelService,
+    loggerPort: loggerAdapter,
   });
   const tourGuideConfigProvider = new TourGuideConfigProvider();
   const tourGuideAdapter = new TourGuideAdapter({
@@ -885,14 +915,14 @@ export const bootstrapExtension = () => {
     loggerPort: loggerAdapter,
   });
   const tourGuideService = new TourGuideService({
-    tourGuieAdapterPort: tourGuideAdapter,
+    tourGuideAdapterPort: tourGuideAdapter,
   });
   const pieceLifecycleService = new PieceLifecycleService({
     pieceDataRepositoryPort: pieceDataRepository,
     stackPieceLifecycleAdapterPort: stackPieceLifecycleAdapter,
     versesBundleDataRepositoryPort: versesBundleRepository,
     verseDataRepositoryPort: verseRepository,
-    pieceLifecycleEventPort: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
     pieceLabelServicePort: pieceLabelService,
     scriptureServicePort: scriptureService,
     arrangementServicePort: arrangementService,
@@ -904,7 +934,7 @@ export const bootstrapExtension = () => {
   });
   const stackStructureService = new StackStructureService({
     pieceAdapterPort: pieceAdapter,
-    stackStructureEventPort: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
     pieceLifecycleServicePort: pieceLifecycleService,
   });
   const scripturePieceDragService = new ScripturePieceDragService({
@@ -914,6 +944,7 @@ export const bootstrapExtension = () => {
     pieceHierarchyServicePort: pieceHierarchyService,
     pieceHighlightServicePort: pieceHighlightService,
     stackStructureServicePort: stackStructureService,
+    loggerPort: loggerAdapter,
   });
   const scripturePieceDropService = new ScripturePieceDropService({
     pieceAdapterPort: pieceAdapter,
@@ -922,7 +953,8 @@ export const bootstrapExtension = () => {
     pieceHierarchyServicePort: pieceHierarchyService,
     chapterSelectionServicePort: chapterSelectionService,
     pieceHighlightServicePort: pieceHighlightService,
-    pieceDropEventPort: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
+    loggerPort: loggerAdapter,
   });
 
   // Stack updater services (leaf -> composite).
@@ -955,8 +987,9 @@ export const bootstrapExtension = () => {
     bibleDataRepositoryPort: bibleDataRepository,
     pieceDataRepositoryPort: pieceDataRepository,
     testamentStackUpdaterPort: testamentStackUpdaterService,
-    sectiontackUpdaterPort: sectionStackUpdaterService,
+    sectionStackUpdaterPort: sectionStackUpdaterService,
     bookStackUpdaterPort: bookStackUpdaterService,
+    loggerPort: loggerAdapter,
   });
 
   const testamentSelectionAdapter = new TestamentSelectionAdapter({
@@ -978,7 +1011,7 @@ export const bootstrapExtension = () => {
   });
   const testamentSelectionService = new TestamentSelectionService({
     testamentSelectionAdapterPort: testamentSelectionAdapter,
-    testamentSelectionEventPort: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
     pieceHighlighterPort: pieceHighlightService,
     sectionSpawnerPort: stackPieceLifecycleAdapter,
     stackUpdateServicePort: stackUpdateService,
@@ -990,6 +1023,7 @@ export const bootstrapExtension = () => {
         labelsConfigProvider.getShowAnimationDuration(pacing),
     },
     pieceAdapterPort: pieceAdapter,
+    loggerPort: loggerAdapter,
   });
 
   const bookSelectionService = new BookSelectionService({
@@ -997,19 +1031,20 @@ export const bootstrapExtension = () => {
     stackUpdateServicePort: stackUpdateService,
     pieceHighlighterPort: pieceHighlightService,
     loggerPort: loggerAdapter,
-    bookSelectionEventPort: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
   });
   const bibleLifecycleService = new BibleLifecycleService({
     pieceLifecycleServicePort: pieceLifecycleService,
     bibleDataRepositoryPort: bibleDataRepository,
     stackPieceLifecycleAdapterPort: stackPieceLifecycleAdapter,
     bibleSetupAdapterPort: bibleSetupAdapter,
-    bibleLifecycleEventPort: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
     pieceLifecycleAdapterPort: stackPieceLifecycleAdapter,
     idGeneratorPort: {
       getId: () => uuid(),
     },
     arrangementServicePort: arrangementService,
+    loggerPort: loggerAdapter,
   });
   const stackManagementService = new StackManagementService({
     bibleLifecycleServicePort: bibleLifecycleService,
@@ -1018,6 +1053,7 @@ export const bootstrapExtension = () => {
     pieceDataRepositoryPort: pieceDataRepository,
   });
   const bibleSequenceService = new BibleSequenceService({
+    loggerPort: loggerAdapter,
     bibleSequenceAdapterPort: bibleSequenceAdapter,
     scripturePiecesStateServicePort: scripturePiecesStateService,
     configProviderPort: sequenceConfigProvider,
@@ -1026,13 +1062,19 @@ export const bootstrapExtension = () => {
     pieceAdapterPort: pieceAdapter,
     bookChaptersManagementServicePort: bookChaptersManagementService,
     pieceDataRepositoryPort: pieceDataRepository,
-    eventPort: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
     awaiterPort: {
       sleep: (ms) => os.sleep(ms),
     },
     pieceLabelServicePort: pieceLabelService,
     labelDataRepositoryPort: labelDataStore,
     renderOrderAdapterPort: renderOrderAdapter,
+  });
+  const chapterNavigationService = new ChapterNavigationService({
+    readerNavigationPort: readerNavigationAdapter,
+    pieceDataRepositoryPort: pieceDataRepository,
+    loggerPort: loggerAdapter,
+    arrangementPort: arrangementService,
   });
 
   // Interaction services.
@@ -1044,19 +1086,16 @@ export const bootstrapExtension = () => {
     testamentSelectionServicePort: testamentSelectionService,
     pieceHighlightServicePort: pieceHighlightService,
     paintPort: paintService,
+    loggerPort: loggerAdapter,
   });
   const chapterInteractionService = new ChapterInteractionService({
     chapterDataRepositoryPort: pieceDataRepository,
     pieceHierarchyServicePort: pieceHierarchyService,
     chapterSelectionServicePort: chapterSelectionService,
     pieceHighlighterPort: pieceHighlightService,
-    userPresenceServicePort: {
-      updateUserPresence: () => {},
-    },
-    chapterNavigationServicePort: {
-      openChapter: () => {},
-    },
+    chapterNavigationServicePort: chapterNavigationService,
     paintPort: paintService,
+    loggerPort: loggerAdapter,
   });
   const versesBundleInteractionService = new VersesBundleInteractionService({
     sequenceStateServicePort: sequenceStateService,
@@ -1064,13 +1103,15 @@ export const bootstrapExtension = () => {
     versesBundleSelectionServicePort: versesBundleSelectionService,
     versesBundleAdapterPort: versesBundleAdapter,
     paintPort: paintService,
+    loggerPort: loggerAdapter,
   });
 
   const explodedViewService = new ExplodedViewService({
     pieceHierarchyServicePort: pieceHierarchyService,
     stackUpdateServicePort: stackUpdateService,
     pieceActivityServicePort: pieceActivityService,
-    bibleStackEventPort: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
+    loggerPort: loggerAdapter,
   });
 
   const sectionSelectionService = new SectionSelectionService({
@@ -1082,10 +1123,11 @@ export const bootstrapExtension = () => {
     sectionSelectionAdapterPort: sectionSelectionAdapter,
     explodedViewServicePort: explodedViewService,
     bookSpawnerPort: stackPieceLifecycleAdapter,
-    sectionSelectionEventPort: bibleStackEventManager,
+    eventManagerPort: bibleStackEventManager,
     pieceLabelServicePort: pieceLabelService,
     tourGuideServicePort: tourGuideService,
     pieceHierarchyServicePort: pieceHierarchyService,
+    loggerPort: loggerAdapter,
   });
 
   const stackPresenceNavigationService = new StackPresenceNavigationService({
@@ -1094,6 +1136,7 @@ export const bootstrapExtension = () => {
     pieceAdapterPort: pieceAdapter,
     pieceDataRepositoryPort: pieceDataRepository,
     sequenceStateServicePort: sequenceStateService,
+    eventManagerPort: bibleStackEventManager,
     chapterSelectionServicePort: chapterSelectionService,
     pieceHierarchyServicePort: pieceHierarchyService,
     bibleSequenceServicePort: bibleSequenceService,
@@ -1101,9 +1144,7 @@ export const bootstrapExtension = () => {
     testamentSelectionServicePort: testamentSelectionService,
     sectionSelectionServicePort: sectionSelectionService,
     explodedViewServicePort: explodedViewService,
-    presenceProviderPort: {
-      getActiveTab: () => undefined,
-    },
+    userPresencePort: userPresenceService,
     scriptureServicePort: scriptureService,
     awaiterPort: {
       sleep: (ms) => os.sleep(ms),
@@ -1120,6 +1161,7 @@ export const bootstrapExtension = () => {
     sectionSelectionServicePort: sectionSelectionService,
     sequenceStateServicePort: sequenceStateService,
     paintPort: paintService,
+    loggerPort: loggerAdapter,
   });
 
   const bookInteractionService = new BookInteractionService({
@@ -1133,6 +1175,7 @@ export const bootstrapExtension = () => {
     bookInteractionConfigProviderPort: bookInteractionConfigProvider,
     pieceAdapterPort: pieceAdapter,
     paintPort: paintService,
+    loggerPort: loggerAdapter,
   });
 
   const experienceService = new ExperienceService({
@@ -1151,6 +1194,7 @@ export const bootstrapExtension = () => {
     awaiterPort: {
       sleep: (ms) => os.sleep(ms),
     },
+    pieceActivityServicePort: pieceActivityService,
   });
   const pieceStateService = new PieceStateService({
     labelPositionUpdaterPort: pieceLabelService,
@@ -1158,6 +1202,7 @@ export const bootstrapExtension = () => {
     bookChaptersManagementServicePort: bookChaptersManagementService,
     activityIndicatorsAdapterPort: activityIndicatorsAdapter,
     activityNotificationAdapterPort: activityNotificationAdapter,
+    loggerPort: loggerAdapter,
   });
   const bibleModeService = new BibleModeService({
     sequenceStateServicePort: sequenceStateService,
@@ -1167,12 +1212,15 @@ export const bootstrapExtension = () => {
     pieceDataRepository: pieceDataRepository,
     sectionSelectionServicePort: sectionSelectionService,
     testamentSelectionServicePort: testamentSelectionService,
+    eventManagerPort: bibleStackEventManager,
+    loggerPort: loggerAdapter,
   });
   const sectionShadowInteractionService = new SectionShadowInteractionService({
     pieceDataRepositoryPort: pieceDataRepository,
     sectionSelectionServicePort: sectionSelectionService,
     sequenceStateServicePort: sequenceStateService,
     tourGuideServicePort: tourGuideService,
+    loggerPort: loggerAdapter,
   });
   const labelInteractionService = new LabelInteractionService({
     labelDataRepositoryPort: labelDataStore,
@@ -1181,6 +1229,7 @@ export const bootstrapExtension = () => {
     bookInteractionServicePort: bookInteractionService,
     testamentInteractionServicePort: testamentInteractionService,
     chapterInteractionServicePort: chapterInteractionService,
+    loggerPort: loggerAdapter,
   });
 
   // 5. Instantiating controllers
@@ -1194,6 +1243,7 @@ export const bootstrapExtension = () => {
     viewportPort: viewportService,
     renderOrderAdapter,
     upperCoverOpacityAdapter,
+    pieceActivityService,
   });
   const canvasInteractionController = new CanvasInteractionController({
     spatialNavigationPort: spatialNavigationService,
@@ -1202,6 +1252,7 @@ export const bootstrapExtension = () => {
     bibleDataRepositoryPort: bibleDataRepository,
     bibleSequenceServicePort: bibleSequenceService,
     sequenceStateServicePort: sequenceStateService,
+    loggerPort: loggerAdapter,
   });
   const coverInteractionController = new CoverInteractionController({
     coverInteractionServicePort: coverInteractionService,
@@ -1252,6 +1303,15 @@ export const bootstrapExtension = () => {
       versesBundleInteractionServicePort: versesBundleInteractionService,
       pieceMapperPort: pieceMapper,
     });
+  const readingInstanceController = new UserPresenceController({
+    userPresenceService,
+  });
+  const userIdentityController = new UserIdentityController({
+    userIdentityStore,
+  });
+  const pieceActivityController = new PieceActivityController({
+    pieceActivityService,
+  });
 
   const pieceStateMap = createPieceStateMap(DIMENSION);
 
@@ -1284,6 +1344,23 @@ export const bootstrapExtension = () => {
     labelInteractionServicePort: labelInteractionService,
   });
 
+  const registryStrategy: {
+    [K in AnyStackData["type"]]: (
+      data: Extract<AnyStackData, { type: K }>
+    ) => void;
+  } = {
+    StackTestament: (data) =>
+      interactionRegistry.handleTestamentInteracted(data),
+    StackSection: (data) => interactionRegistry.handleSectionInteracted(data),
+    StackSectionBook: (data) => interactionRegistry.handleBookInteracted(data),
+    StackBook: (data) => interactionRegistry.handleBookInteracted(data),
+    StackChapter: (data) => interactionRegistry.handleChapterInteracted(data),
+  };
+
+  const handlePieceInteracted = (data: AnyStackData) => {
+    (registryStrategy[data.type] as (data: AnyStackData) => void)(data);
+  };
+
   // 6. Event wiring
 
   os.addBotListener(
@@ -1296,10 +1373,6 @@ export const bootstrapExtension = () => {
     }
   );
 
-  bibleStackEventManager.subscribe("OnStackSectionExploded", (payload) =>
-    stackPresenceNavigationService.handleSectionExploded(payload)
-  );
-
   bibleStackEventManager.subscribe("OnSectionBeginSelect", () =>
     audioAdapter.playSound("SectionOpen")
   );
@@ -1308,13 +1381,18 @@ export const bootstrapExtension = () => {
     audioAdapter.playSound("BookSelect")
   );
 
-  bibleStackEventManager.subscribe("OnBibleResetSequenceStart", () =>
-    audioAdapter.playSound("ResetBible")
+  bibleStackEventManager.subscribe(
+    "OnBibleResetSequenceStart",
+    ({ bibleData }) => {
+      audioAdapter.playSound("ResetBible");
+      interactionRegistry.handleBibleInteracted(bibleData);
+    }
   );
 
-  bibleStackEventManager.subscribe("OnStackPieceDrop", () =>
-    audioAdapter.playSound("StackPieceDrop")
-  );
+  bibleStackEventManager.subscribe("OnStackPieceDrop", ({ data }) => {
+    audioAdapter.playSound("StackPieceDrop");
+    handlePieceInteracted(data);
+  });
 
   bibleStackEventManager.subscribe("OnStackPiecePulledOut", () =>
     audioAdapter.playSound("StackPiecePulledOut")
@@ -1579,6 +1657,40 @@ export const bootstrapExtension = () => {
     canvasInteractionController.handleOnGridUp()
   );
 
+  os.addBotListener(
+    entrypointBot,
+    "onEmbedMessage",
+    ({ message }: { message: Message }) => {
+      if (!message?.type) return;
+
+      const eventName = MESSAGE_TO_EVENT_MAP[message.type];
+      if (!eventName) return;
+
+      infrastructureEventManager.emit(
+        eventName,
+        message as BibleStackInfrastructureEvents[typeof eventName]
+      );
+    }
+  );
+
+  infrastructureEventManager.subscribe(
+    "OnUserPresenceChangedMessage",
+    (message) => {
+      readingInstanceController.handleUserPresenceChanged(message.presence);
+    }
+  );
+
+  infrastructureEventManager.subscribe(
+    "OnUserIdentityChangedMessage",
+    (payload) => {
+      userIdentityController.handleUserIdentityChanged(payload.identity);
+    }
+  );
+
+  infrastructureEventManager.subscribe("OnUserIdentityChanged", () => {
+    pieceActivityController.handleIdentityChanged();
+  });
+
   infrastructureEventManager.subscribe("OnPieceBotReleased", ({ pieceBot }) => {
     switch (pieceBot.tags.type) {
       case BiblePieces.StackTransformer:
@@ -1604,12 +1716,58 @@ export const bootstrapExtension = () => {
     }
   });
 
-  // TODO: Add an onBotChanged event listener to the configBot to listen to camera rotation changes.
-  // call to an environment or camera controller to update all the activity notifications.
+  bibleStackEventManager.subscribe("OnBibleDelete", ({ bibleId }) => {
+    interactionRegistry.handleBibleDeleted(bibleId);
+  });
+
+  bibleStackEventManager.subscribe("OnBibleCreated", ({ bibleData }) => {
+    interactionRegistry.handleBibleInteracted(bibleData);
+  });
+
+  bibleStackEventManager.subscribe("OnBibleAttemptToggleMode", ({ data }) => {
+    interactionRegistry.handleBibleInteracted(data);
+  });
+
+  bibleStackEventManager.subscribe("OnBookBeginSelect", ({ data }) => {
+    interactionRegistry.handleBookInteracted(data);
+  });
+
+  bibleStackEventManager.subscribe("OnBookBeginDeselect", ({ data }) => {
+    interactionRegistry.handleBookInteracted(data);
+  });
+
+  bibleStackEventManager.subscribe(
+    "OnScripturePieceHighlighted",
+    ({ pieceData }) => {
+      handlePieceInteracted(pieceData);
+    }
+  );
+
+  bibleStackEventManager.subscribe("OnTestamentDelete", ({ dataId }) => {
+    interactionRegistry.handleTestamentDeleted(dataId);
+  });
+
+  bibleStackEventManager.subscribe("OnSectionDelete", ({ dataId }) => {
+    interactionRegistry.handleSectionDeleted(dataId);
+  });
+
+  bibleStackEventManager.subscribe("OnSectionBookDelete", ({ dataId }) => {
+    interactionRegistry.handleBookDeleted(dataId);
+  });
+
+  bibleStackEventManager.subscribe("OnBookDelete", ({ dataId }) => {
+    interactionRegistry.handleBookDeleted(dataId);
+  });
+
+  bibleStackEventManager.subscribe("OnSectionDeselected", ({ data }) => {
+    interactionRegistry.handleSectionInteracted(data);
+  });
+
+  SendEmbedMessage({ type: "ready" });
 
   // 7. Disposers
 
-  experienceService.displayExperience();
-
   audioAdapter.bufferSounds();
+
+  experienceService.displayExperience();
 };

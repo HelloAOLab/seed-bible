@@ -3,6 +3,8 @@ import { useEffect } from "preact/hooks";
 import { signal } from "@preact/signals";
 import type { i18n as I18nInstance } from "i18next";
 import { useI18n } from "../../i18n/I18nManager";
+import { useOverlayDismiss } from "../useOverlayDismiss";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 /**
  * Tracks which languages have had their Terms of Service bundle loaded into
@@ -83,6 +85,8 @@ export function TermsOfServiceModal({
     }
   }, [isOpen, language]);
 
+  const overlayDismiss = useOverlayDismiss(onClose);
+
   if (!isOpen) {
     return null;
   }
@@ -92,7 +96,7 @@ export function TermsOfServiceModal({
   return (
     <div
       className="sb-footnote-modal-overlay"
-      onClick={onClose}
+      {...overlayDismiss}
       onKeyDown={(event: KeyboardEvent) => {
         if (event.key === "Escape") {
           event.preventDefault();
@@ -109,14 +113,7 @@ export function TermsOfServiceModal({
       >
         <div className="sb-footnote-modal-header">
           <h3 className="sb-footnote-modal-title">{title}</h3>
-          <button
-            type="button"
-            className="sb-footnote-modal-close"
-            aria-label={t("close", { defaultValue: "Close" })}
-            onClick={onClose}
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+          <CloseButton className="sb-footnote-modal-close" onClose={onClose} />
         </div>
 
         <div

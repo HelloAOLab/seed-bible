@@ -1,9 +1,4 @@
-import type {
-  TestamentStackUpdaterPort,
-  UpdateCommand,
-} from "../../../application/ports/out/StackTestamentUpdater";
 import type { StackUpdateConfigProvider } from "../../config/stackUpdate/StackUpdateConfigProvider";
-import type { LoggerPort } from "../../../application/ports/in/Logger";
 import type { StackTestamentMapper } from "../../mappers/StackTestamentMapper";
 import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMapper";
 import type { StackUpdatePacing } from "../../../domain/models/stacks";
@@ -15,6 +10,11 @@ import type { SectionStackUpdaterAdapter } from "./SectionStackUpdaterAdapter";
 import type { BookStackUpdaterAdapter } from "./BookStackUpdaterAdapter";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 import { SetStrictTag, AnimateStrictTag } from "../../functions/casualos";
+import type {
+  TestamentStackUpdaterPort,
+  TestamentStackUpdateCommand,
+} from "../../../application/ports/out/TestamentStackUpdater";
+import type { LoggerAdapter } from "../environment/LoggerAdapter";
 
 interface AdapterParams {
   getDimension: () => string;
@@ -25,7 +25,7 @@ interface AdapterParams {
   sectionStackUpdaterAdapter: SectionStackUpdaterAdapter;
   bookStackUpdaterAdapter: BookStackUpdaterAdapter;
   visualStateRegistry: VisualStateRegistry;
-  loggerPort: LoggerPort;
+  loggerPort: LoggerAdapter;
 }
 
 interface TestamentUpdateContext {
@@ -74,7 +74,7 @@ export class TestamentStackUpdaterAdapter implements TestamentStackUpdaterPort {
     this.#loggerPort = loggerPort;
   }
 
-  async update({ data, pacing }: UpdateCommand): Promise<void> {
+  async update({ data, pacing }: TestamentStackUpdateCommand): Promise<void> {
     const dimension = this.#getDimension();
     const duration = this.#stackUpdateConfigProvider.getDuration(pacing);
     const easing = this.#stackUpdateConfigProvider.getEasing();

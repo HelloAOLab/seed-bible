@@ -1,4 +1,3 @@
-import type { BibleSetupAdapterPort } from "../../../application/ports/bibleLifecycle";
 import type {
   BibleTransformerBot,
   BibleShadowBot,
@@ -15,7 +14,6 @@ import type {
 import { ApplyStrictMod } from "../../functions/casualos";
 import { GetDarkerColor } from "../../../domain/functions/colors";
 import { BibleTypes } from "../../../domain/models/canvas";
-// import { GetIsInHistoryMode } from "bibleVizUtils.services.HistoryMode";
 import type { WorldPosition } from "../../../domain/models/spatial";
 import type { BibleType, Piece } from "../../../domain/models/canvas";
 import type { StackBibleData } from "../../../domain/entities/StackBibleData";
@@ -25,6 +23,8 @@ import type { VisualStateRegistry } from "./VisualStateRegistry";
 import type { PieceMapper } from "../../mappers/PieceMapper";
 import type { StackPieceLifecycleAdapter } from "./StackPieceLifecycleAdapter";
 import type { StackTestamentMapper } from "../../mappers/StackTestamentMapper";
+import type { BibleSetupPort } from "../../../application/ports/out/BibleSetup";
+// import { GetIsInHistoryMode } from "bibleVizUtils.services.HistoryMode";
 
 export interface DimensionProviderPort {
   getCurrentDimension(): string;
@@ -39,7 +39,7 @@ export interface BibleSetupAdapterParams {
   testamentMapperPort: StackTestamentMapper;
 }
 
-export class BibleSetupAdapter implements BibleSetupAdapterPort {
+export class BibleSetupAdapter implements BibleSetupPort {
   #configProviderPort: BibleSetupAdapterParams["configProviderPort"];
   #visualStateRegistryPort: BibleSetupAdapterParams["visualStateRegistryPort"];
   #pieceMapperPort: BibleSetupAdapterParams["pieceMapperPort"];

@@ -34,6 +34,42 @@
   white-space: nowrap;
 }
 
+/*
+ * Multi-line clamp. The wrapper is a flex container so the body's height is
+ * definite, which the `::before` spacer's percentage height needs. The spacer
+ * fills every clamped line but the last, pushing the floated toggle down to
+ * the end of the last visible line, where the clamp's ellipsis sits before
+ * it. The toggle is only rendered once the text is measured as overflowing,
+ * and adding it only takes space away, so it can't flip that answer back.
+ */
+.sb-expandable-text--multiline.sb-expandable-text--clamped {
+  display: flex;
+}
+
+.sb-expandable-text--multiline.sb-expandable-text--clamped
+  .sb-expandable-text-body {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--sb-expandable-text-lines);
+  line-clamp: var(--sb-expandable-text-lines);
+  overflow: hidden;
+  /* Undoes the single-line clamp's `nowrap`, which this also matches. */
+  white-space: pre-wrap;
+}
+
+.sb-expandable-text--multiline.sb-expandable-text--clamped
+  .sb-expandable-text-body::before {
+  content: "";
+  float: inline-end;
+  height: calc(100% - 1lh);
+}
+
+.sb-expandable-text--multiline.sb-expandable-text--clamped
+  .sb-expandable-text-toggle {
+  float: inline-end;
+  clear: inline-end;
+}
+
 .sb-expandable-text-ellipsis {
   flex: 0 0 auto;
 }

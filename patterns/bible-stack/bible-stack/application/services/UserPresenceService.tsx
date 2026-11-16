@@ -1,56 +1,121 @@
 import type {
-  UserPresenceData,
+  ReadingInstance,
   UserPresence,
 } from "../../domain/models/userPresence";
-import type { UserPresenceProviderPort } from "../../application/ports/out/UserPresence";
-import type { UserPresencePort } from "../ports/in/UserPresence";
+import type { EventManagerPort } from "../ports/out/EventManager";
+import type { BibleStackEvents } from "../../domain/models/events";
+import type { UserPresenceServicePort } from "../ports/in/UserPresence";
 
 interface UserPresenceParams {
-  userPresenceProviderPort: UserPresenceProviderPort;
+  eventManagerPort: EventManagerPort<BibleStackEvents>;
+  initialUserPresence?: UserPresence;
+  connectionId: string;
 }
 
-export class UserPresenceService implements UserPresencePort {
+export class UserPresenceService implements UserPresenceServicePort {
   #userPresence: UserPresence = new Map();
-  #userPresenceProviderPort: UserPresenceProviderPort;
+  #eventManagerPort: UserPresenceParams["eventManagerPort"];
+  #connectionId: UserPresenceParams["connectionId"];
 
-  constructor({ userPresenceProviderPort }: UserPresenceParams) {
-    this.#userPresenceProviderPort = userPresenceProviderPort;
-    this.updateUserPresence();
+  constructor({
+    eventManagerPort,
+    initialUserPresence = new Map(),
+    connectionId,
+  }: UserPresenceParams) {
+    this.#eventManagerPort = eventManagerPort;
+    this.#connectionId = connectionId;
+    this.update(initialUserPresence);
   }
 
-  updateUserPresence() {
-    const newPresence: UserPresence = new Map();
-    const currUserId = this.#userPresenceProviderPort.getCurrUserId();
-    const selectedReadingInstance =
-      this.#userPresenceProviderPort.getSelectedReadingInstance();
-    if (selectedReadingInstance) {
-      const currUserPresenceData: UserPresenceData = {
-        bookId: selectedReadingInstance.bookId,
-        chapter: selectedReadingInstance.chapter,
-        readingInstanceId: selectedReadingInstance.id,
-      };
-      newPresence.set(currUserId, currUserPresenceData);
-    }
-    const othersPresence: UserPresence =
-      this.#userPresenceProviderPort.getRemotesPresence();
-    for (const [otherId, otherPresence] of othersPresence) {
-      if (!newPresence.has(otherId)) {
-        newPresence.set(otherId, otherPresence);
-      }
-    }
+  #isSamePresence(newPresence: UserPresence): boolean {
+    const check = (
+      firstMap: UserPresence,
+      secondMap: UserPresence
+    ): boolean => {
+      const firstEntries = [...firstMap.entries()];
 
-    this.#userPresence = newPresence;
+      if (firstMap.size !== secondMap.size) return false;
+
+      for (const [connectionId, firstInstances] of firstEntries) {
+        if (secondMap.has(connectionId)) {
+          const secondInstances = secondMap.get(connectionId)!;
+          if (firstInstances.length !== secondInstances.length) {
+            return false;
+          }
+          for (const firstInstance of firstInstances) {
+            const existent = secondInstances.find(
+              (secondInstance) => secondInstance.id === firstInstance.id
+            );
+            if (existent) {
+              if (
+                existent.selected !== firstInstance.selected ||
+                existent.bookId !== firstInstance.bookId ||
+                existent.chapter !== firstInstance.chapter ||
+                existent.translation !== firstInstance.translation
+              ) {
+                return false;
+              }
+            } else {
+              return false;
+            }
+          }
+        } else {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    return check(this.#userPresence, newPresence);
+  }
+
+  #clone(presence: UserPresence): UserPresence {
+    return new Map(
+      [...presence.entries()].map(([connectionId, instances]) => {
+        return [
+          connectionId,
+          instances.map((instance) => {
+            return { ...instance };
+          }),
+        ];
+      })
+    );
+  }
+
+  update(newPresence: UserPresence) {
+    const changed = !this.#isSamePresence(newPresence);
+
+    if (!changed) return;
+
+    this.#userPresence = this.#clone(newPresence);
+    this.#eventManagerPort.emit("OnUserPresenceUpdated", {
+      userPresence: this.getUserPresence(),
+    });
   }
 
   getUserPresence(): UserPresence {
-    return new Map(this.#userPresence);
+    return this.#clone(this.#userPresence);
   }
 
-  getOwnUserConfigId() {
-    return this.#userPresenceProviderPort.getCurrUserId();
+  getOwnConnectionId(): string {
+    return this.#connectionId;
   }
 
   getOwnUserPresence() {
-    return this.#userPresence.get(this.getOwnUserConfigId());
+    return this.#userPresence.get(this.#connectionId) ?? [];
+  }
+
+  getRemotesUserPresence(): Map<string, ReadingInstance[]> {
+    return new Map(
+      [...this.#userPresence.entries()].filter(
+        ([connectionId]) => connectionId !== this.#connectionId
+      )
+    );
+  }
+
+  getOwnUserSelectedInstance(): ReadingInstance | undefined {
+    const instances = this.getOwnUserPresence();
+
+    return instances?.find((instance) => instance.selected);
   }
 }

@@ -1,4 +1,5 @@
 import i18n from "i18next";
+import type { TFunction } from "i18next";
 import resourcesToBackend from "i18next-resources-to-backend";
 import { useContext, useMemo } from "preact/hooks";
 import en from "./en.json";
@@ -17,6 +18,7 @@ import {
   parseReadingPath,
 } from "../managers/ReadingUrlPath";
 import { parseStaticPagePath } from "../managers/StaticPagePath";
+import { parseSharedPagePath } from "../managers/SharedPagePath";
 import type { BrandingConfig } from "../app/appConfig";
 
 function getLanguageName(importPath: string): string {
@@ -164,8 +166,9 @@ export function getPreferredSupportedLanguage(
  * meaning of the 3-segment "fully default" form, not "detect from the
  * browser" (browser-based detection only applies to a bare `/` with no
  * reading path at all, via `getInitialLanguage`). Next, a static page path
- * (e.g. "/es/about") always names its language explicitly. Falls back to the
- * legacy `?lang=` query param for anything else.
+ * (e.g. "/es/about") or a shared playlist or reading plan page path always
+ * names its language explicitly. Falls back to the legacy `?lang=` query
+ * param for anything else.
  */
 export function getUrlLanguage(url: URL, basePath: string): string | null {
   const parsed = parseReadingPath(url.pathname, basePath);
@@ -176,6 +179,11 @@ export function getUrlLanguage(url: URL, basePath: string): string | null {
   const staticPage = parseStaticPagePath(url.pathname, basePath);
   if (staticPage) {
     return staticPage.language;
+  }
+
+  const sharedPage = parseSharedPagePath(url.pathname, basePath);
+  if (sharedPage) {
+    return sharedPage.language;
   }
 
   const urlLang = url.searchParams.get("lang");
@@ -292,9 +300,20 @@ export function createI18nManager(
   }
 
   const language = signal(i18n.language);
-  i18n.on("languageChanged", (lng) => {
+  const onLanguageChanged = (lng: string) => {
     language.value = lng;
-  });
+  };
+  i18n.on("languageChanged", onLanguageChanged);
+
+  /**
+   * `i18n` is the process-wide i18next instance, so its listener list outlives
+   * this manager. The SSR host builds a manager per request; without this, each
+   * one's listener (and, through `language`, its whole app state) stays alive
+   * for the life of the server process.
+   */
+  const dispose = () => {
+    i18n.off("languageChanged", onLanguageChanged);
+  };
 
   // URL <-> language sync (both directions) is owned by `TabsManager`, not
   // here: the language segment is part of the same coordinated reading path
@@ -352,7 +371,15 @@ export function createI18nManager(
     persistLanguage = persister;
   };
 
-  const changeLanguage = i18n.changeLanguage.bind(i18n);
+  // Explicitly typed (dropping the rarely-used `callback` second parameter,
+  // never passed by any caller here) rather than left inferred from
+  // `.bind()`: the inferred type otherwise carries i18next's internal,
+  // non-portable `Callback` type, which TypeScript's declaration emitter
+  // refuses to print (TS2883) — this only surfaces when actually emitting
+  // `.d.ts` output (e.g. `seed-bible-extension-scripts`'s vendored-types
+  // sync), never during this repo's own `noEmit` type-checking.
+  const changeLanguage: (lng?: string) => Promise<TFunction> =
+    i18n.changeLanguage.bind(i18n);
 
   const applyBibleTranslationForUiLanguage = async (uiLanguage: string) => {
     let available = getAvailableTranslations?.() ?? null;
@@ -509,6 +536,7 @@ export function createI18nManager(
     language,
     isRtl,
     ready,
+    dispose,
   };
 }
 
@@ -527,6 +555,19 @@ export function I18nProvider(props: {
 }
 
 export type I18nHook = ReturnType<typeof useI18n>;
+
+/**
+ * For shared components an extension may render in a root of its own, with no
+ * `I18nProvider` above: the translate function, or null there instead of
+ * `useI18n()`'s error.
+ */
+export function useOptionalI18n() {
+  const i18nManager = useContext(I18nContext);
+  // Reading the language subscribes the caller, as `useI18n()` does, so it
+  // re-renders when the language changes.
+  const language = i18nManager?.language.value;
+  return i18nManager ? { t: i18nManager.i18n.t, language } : null;
+}
 
 const RTL_LANGUAGE_CODES = new Set(["ar", "fa", "he", "ur", "ps", "dv", "yi"]);
 

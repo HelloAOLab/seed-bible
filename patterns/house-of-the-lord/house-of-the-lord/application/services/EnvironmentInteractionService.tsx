@@ -1,27 +1,22 @@
-import type {
-  ContextMenuRendererPort,
-  PieceHighlightPort,
-} from "../ports/out/EnvironmentInteraction";
+import type { PieceHighlightPort } from "../ports/in/PieceHighlight";
+import type { NavMenuStatePort } from "../ports/in/NavMenuState";
 
-interface EnvironmentInteractionServiceParams {
+interface ServiceParams {
   pieceHighlight: PieceHighlightPort;
-  contextMenu: ContextMenuRendererPort;
+  navMenuStatePort: NavMenuStatePort;
 }
 
 export class EnvironmentInteractionService {
-  #pieceHighlight: PieceHighlightPort;
-  #contextMenu: ContextMenuRendererPort;
+  #pieceHighlight: ServiceParams["pieceHighlight"];
+  #navMenuStatePort: ServiceParams["navMenuStatePort"];
 
-  constructor({
-    pieceHighlight,
-    contextMenu,
-  }: EnvironmentInteractionServiceParams) {
+  constructor({ pieceHighlight, navMenuStatePort }: ServiceParams) {
     this.#pieceHighlight = pieceHighlight;
-    this.#contextMenu = contextMenu;
+    this.#navMenuStatePort = navMenuStatePort;
   }
 
   handleBlur(): void {
     this.#pieceHighlight.stopHighlight();
-    this.#contextMenu.hideContextMenu();
+    this.#navMenuStatePort.clearSelection();
   }
 }

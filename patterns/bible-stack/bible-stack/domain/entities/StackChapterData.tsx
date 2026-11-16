@@ -3,13 +3,12 @@ import type {
   ParentDataIds,
   ChapterCreationParams,
   BiblePiece,
-  ActivityIndicator,
   ActivityNotification,
 } from "../models/canvas";
+import type { ActivityIndicatorData } from "./ActivityIndicatorData";
 import type { ChapterInfo } from "../models/arrangement";
 import type { HexString } from "../models/commonTypes";
 import type { Piece } from "../models/canvas";
-import type { Point2D } from "../models/commonTypes";
 import type { VersesBundleData } from "./VersesBundleData";
 import { SelectionEvents, SelectionStates } from "../models/selection";
 
@@ -24,8 +23,7 @@ interface DataParams {
   isActive?: boolean;
   isHidden?: boolean;
   creationParams: ChapterCreationParams;
-  isExpanded?: boolean;
-  activityIndicators?: Map<ActivityIndicator["id"], ActivityIndicator>;
+  activityIndicators?: ActivityIndicatorData[];
   activityNotification?: ActivityNotification;
   childrenData?: VersesBundleData[];
 }
@@ -44,7 +42,6 @@ export class StackChapterData extends StackPieceData<
 > {
   #highlightsInfo: HighlightInfo[] = [];
   #isInsideBook: DataParams["isInsideBook"];
-  #isExpanded: NonNullable<boolean>;
   #activityIndicators: NonNullable<DataParams["activityIndicators"]>;
   #activityNotification: DataParams["activityNotification"];
 
@@ -58,8 +55,7 @@ export class StackChapterData extends StackPieceData<
     isInsideBook = true,
     isHidden = false,
     creationParams,
-    isExpanded = false,
-    activityIndicators = new Map(),
+    activityIndicators = [],
     activityNotification,
     childrenData,
   }: DataParams) {
@@ -79,7 +75,6 @@ export class StackChapterData extends StackPieceData<
     if (isSelected) {
       this.changeSelectionState(SelectionEvents.RequestSelect);
     }
-    this.#isExpanded = isExpanded;
     this.#activityIndicators = activityIndicators;
     this.#activityNotification = activityNotification;
   }
@@ -104,11 +99,15 @@ export class StackChapterData extends StackPieceData<
   }
 
   getIsSelectedForNotification(): boolean {
-    return this.#isExpanded;
+    return (
+      this.selectionState === SelectionStates.Selected && this.isOnTheGround
+    );
   }
 
-  getNotificationDirection(): Point2D {
-    return new Vector2(1, -1);
+  shouldShowActivityIndicators() {
+    return (
+      this.selectionState === SelectionStates.Selected && this.isOnTheGround
+    );
   }
 
   get isInsideBook() {
@@ -126,23 +125,25 @@ export class StackChapterData extends StackPieceData<
   }
 
   get activityIndicators() {
-    return [...this.#activityIndicators.values()];
+    return [...this.#activityIndicators];
   }
   clearActivityIndicators() {
-    if (this.#activityIndicators.size > 0) {
-      const indicators = [...this.#activityIndicators.values()];
-      this.#activityIndicators.clear();
+    if (this.#activityIndicators.length > 0) {
+      const indicators = [...this.#activityIndicators];
+      this.#activityIndicators = [];
       return indicators;
     }
     return undefined;
   }
-  addActivityIndicator(indicator: ActivityIndicator) {
-    if (!this.#activityIndicators.has(indicator.id)) {
-      this.#activityIndicators.set(indicator.id, indicator);
+  addActivityIndicator(indicator: ActivityIndicatorData) {
+    if (!this.#activityIndicators.some((data) => data.id === indicator.id)) {
+      this.#activityIndicators.push(indicator);
     }
   }
-  removeActivityIndicator(indicatorId: ActivityIndicator["id"]) {
-    this.#activityIndicators.delete(indicatorId);
+  removeActivityIndicator(indicatorId: ActivityIndicatorData["id"]) {
+    this.#activityIndicators = this.#activityIndicators.filter(
+      (data) => data.id !== indicatorId
+    );
   }
 
   get activityNotification() {

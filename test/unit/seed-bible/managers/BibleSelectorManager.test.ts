@@ -23,6 +23,14 @@ import {
   makeChapter,
   nivBooks,
 } from "./testUtils/mockBibleApiData";
+import {
+  createInMemoryTranslationStore,
+  type OfflineTranslationStore,
+} from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
+import {
+  createStreamingResponse,
+  makeCompleteTranslation,
+} from "./testUtils/mockBibleApiData";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import type { Mock } from "vitest";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
@@ -63,8 +71,8 @@ function createApi(): FreeUseBibleAPI {
   return new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT);
 }
 
-function createDataManager() {
-  return createBibleDataManager(createApi());
+function createDataManager(offlineStore?: OfflineTranslationStore) {
+  return createBibleDataManager(createApi(), { offlineStore });
 }
 
 function createHighlightsManagerMock() {
@@ -106,9 +114,9 @@ function createSidebarManagerMock() {
   };
 }
 
-function createBookmarksManagerMock() {
+function createSavesManagerMock() {
   return {
-    bookmarks: signal([]),
+    saves: signal([]),
   };
 }
 
@@ -131,7 +139,7 @@ function createSelectorState(
     tabsLayoutManager,
     createSettingsManagerMock() as any,
     createSidebarManagerMock() as any,
-    createBookmarksManagerMock() as any,
+    createSavesManagerMock() as any,
     createNavigationManager(),
     login as any,
     i18n as any
@@ -149,6 +157,10 @@ async function waitFor(
     }
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
+}
+
+async function flushPromises(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 async function waitForInitialLoad(state: BibleReadingState): Promise<void> {
@@ -190,14 +202,16 @@ function makeTranslationWithLanguage(props: {
   };
 }
 
-async function createManagersWithSelectedSlot(): Promise<{
+async function createManagersWithSelectedSlot(
+  offlineStore?: OfflineTranslationStore
+): Promise<{
   readingState: BibleReadingState;
   slot: TabSlot;
   tabsManager: ReturnType<typeof createTabs>;
   tabsLayoutManager: ReturnType<typeof createTabsLayout>;
   dataManager: ReturnType<typeof createDataManager>;
 }> {
-  const dataManager = createDataManager();
+  const dataManager = createDataManager(offlineStore);
   const navigation = createNavigationManager();
   const tabsManager = createTabs(
     navigation,
@@ -254,6 +268,245 @@ describe("createBibleSelectorState", () => {
     expect(selector.isOpen.value).toBe(true);
     expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
     expect(selector.expandedBookId.value).toBe("GEN");
+  });
+
+  describe("when the translation catalog hasn't been downloaded yet", () => {
+    let errorSpy: Mock;
+    const catalogUrl = makeExampleUrl("/api/available_translations.json");
+
+    beforeEach(() => {
+      errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    afterEach(async () => {
+      // Let any background catalog rejection log while the spy is still up.
+      await flushPromises();
+      errorSpy.mockRestore();
+    });
+
+    /**
+     * A selector over a reader that has loaded its own translation but, like a
+     * real first visit, never the full catalog. `catalogResponse` decides what
+     * the catalog request does from here on.
+     */
+    async function createFirstVisitSelector(
+      catalogResponse: () => Promise<unknown>
+    ) {
+      const responses = createExampleManagerResponseMap();
+      setWebResponses(responses);
+      const managers = await createManagersWithSelectedSlot();
+      const dataManager = createDataManager();
+      // Only the reader's translation is known: the reader loads its own books,
+      // never the catalog.
+      await dataManager.getTranslationBooks(
+        managers.slot.tab!.readingState.translationId.value!
+      );
+      webGetMock.mockImplementation((url: string) =>
+        url === catalogUrl ? catalogResponse() : Promise.resolve(responses[url])
+      );
+      const tabsManager = managers.tabsManager;
+      const selector = createSelectorState(
+        dataManager,
+        tabsManager,
+        managers.tabsLayoutManager
+      );
+      return { ...managers, dataManager, selector, responses };
+    }
+
+    it("shows the slot's books even when the catalog fails to load", async () => {
+      const { selector, slot } = await createFirstVisitSelector(() =>
+        Promise.reject(new Error("Network error"))
+      );
+
+      await selector.setOpen(true, slot);
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(selector.error.value).toBeNull();
+      expect(selector.booksStatus.value).toBe("ready");
+      expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
+      await waitFor(() => selector.catalogStatus.value === "failed");
+    });
+
+    it("fills in the translation list once the background catalog download finishes", async () => {
+      let resolveCatalog!: () => void;
+      const { selector, slot, dataManager, responses } =
+        await createFirstVisitSelector(
+          () =>
+            new Promise((resolve) => {
+              resolveCatalog = () => resolve(responses[catalogUrl]);
+            })
+        );
+
+      await selector.setOpen(true, slot);
+
+      expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
+      expect(selector.catalogStatus.value).toBe("loading");
+      expect(dataManager.catalogLoaded.value).toBe(false);
+
+      resolveCatalog();
+      await waitFor(() => selector.catalogStatus.value === "loaded");
+
+      expect(dataManager.catalogLoaded.value).toBe(true);
+      expect(selector.availableTranslations.value.map((t) => t.id)).toEqual(
+        expect.arrayContaining(translations.translations.map((t) => t.id))
+      );
+    });
+
+    it("loads the full catalog when the failed download is retried", async () => {
+      let catalogFails = true;
+      const { selector, slot, responses } = await createFirstVisitSelector(
+        () =>
+          catalogFails
+            ? Promise.reject(new Error("Network error"))
+            : Promise.resolve(responses[catalogUrl])
+      );
+
+      await selector.setOpen(true, slot);
+      await waitFor(() => selector.catalogStatus.value === "failed");
+
+      catalogFails = false;
+      selector.retryCatalog();
+      await waitFor(() => selector.catalogStatus.value === "loaded");
+
+      expect(selector.availableTranslations.value.map((t) => t.id)).toEqual(
+        expect.arrayContaining(translations.translations.map((t) => t.id))
+      );
+    });
+  });
+
+  describe("book grid loading and failure", () => {
+    let errorSpy: Mock;
+
+    beforeEach(() => {
+      errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    afterEach(async () => {
+      await flushPromises();
+      errorSpy.mockRestore();
+    });
+
+    async function createSelectorWithUncachedBooks(
+      booksResponse: (
+        responses: WebResponseMap,
+        url: string
+      ) => Promise<unknown>
+    ) {
+      const responses = createExampleManagerResponseMap();
+      setWebResponses(responses);
+      const managers = await createManagersWithSelectedSlot();
+      // A fresh data manager has nothing cached, so the selector has to fetch
+      // the slot's books itself.
+      const dataManager = createDataManager();
+      await dataManager.getTranslations();
+      webGetMock.mockImplementation((url: string) =>
+        url.endsWith("/books.json")
+          ? booksResponse(responses, url)
+          : Promise.resolve(responses[url])
+      );
+      const selector = createSelectorState(
+        dataManager,
+        managers.tabsManager,
+        managers.tabsLayoutManager
+      );
+      return { ...managers, selector };
+    }
+
+    it("opens straight away and reports loading until the books arrive", async () => {
+      let resolveBooks!: () => void;
+      const { selector, slot } = await createSelectorWithUncachedBooks(
+        (responses, url) =>
+          new Promise((resolve) => {
+            resolveBooks = () => resolve(responses[url]);
+          })
+      );
+
+      const opening = selector.setOpen(true, slot);
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(selector.booksStatus.value).toBe("loading");
+
+      await waitFor(() => resolveBooks !== undefined);
+      resolveBooks();
+      await opening;
+
+      expect(selector.booksStatus.value).toBe("ready");
+      expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
+    });
+
+    it("reports a failure when the books can't load, and loads them on retry", async () => {
+      let booksFail = true;
+      const { selector, slot } = await createSelectorWithUncachedBooks(
+        (responses, url) =>
+          booksFail
+            ? Promise.reject(new Error("Network error"))
+            : Promise.resolve(responses[url])
+      );
+
+      await selector.setOpen(true, slot);
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(selector.booksStatus.value).toBe("failed");
+
+      booksFail = false;
+      await selector.retryBooks();
+
+      expect(selector.booksStatus.value).toBe("ready");
+      expect(selector.error.value).toBeNull();
+      expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
+    });
+
+    it("reports a picked translation that fails to load, and clears it when the retry works", async () => {
+      let nivFails = true;
+      const { selector, slot } = await createSelectorWithUncachedBooks(
+        (responses, url) =>
+          nivFails && url.includes("/NIV/")
+            ? Promise.reject(new Error("Network error"))
+            : Promise.resolve(responses[url])
+      );
+      await selector.setOpen(true, slot);
+      selector.selectingTranslation.value = true;
+
+      await selector.pickTranslation("NIV");
+
+      expect(selector.translationLoad.value).toEqual({
+        translationId: "NIV",
+        status: "failed",
+      });
+      // The list stays up so the user can try again or pick another.
+      expect(selector.selectingTranslation.value).toBe(true);
+
+      nivFails = false;
+      await selector.selectTranslation("NIV");
+
+      expect(selector.translationLoad.value).toBeNull();
+      expect(selector.selectedTranslationId.value).toBe("NIV");
+    });
+
+    it("keeps the latest translation when an earlier, slower load lands after it", async () => {
+      let resolveNiv!: () => void;
+      const { selector, slot } = await createSelectorWithUncachedBooks(
+        (responses, url) =>
+          url.includes("/NIV/")
+            ? new Promise((resolve) => {
+                resolveNiv = () => resolve(responses[url]);
+              })
+            : Promise.resolve(responses[url])
+      );
+      await selector.setOpen(true, slot);
+      const slotTranslationId = selector.selectedTranslationId.value;
+      selector.selectingTranslation.value = true;
+
+      const slowPick = selector.selectTranslation("NIV");
+      await waitFor(() => resolveNiv !== undefined);
+      // Reopening on the slot's own translation supersedes the pending pick.
+      await selector.setOpen(true, slot);
+      resolveNiv();
+      await slowPick;
+
+      expect(selector.selectedTranslationId.value).toBe(slotTranslationId);
+      expect(selector.loading.value).toBe(false);
+    });
   });
 
   it("syncs the open state to the `selector` URL query param", async () => {
@@ -372,6 +625,90 @@ describe("createBibleSelectorState", () => {
     expect(readingState.chapterNumber.value).toBe(1);
   });
 
+  describe("the saved-translations-only list", () => {
+    /** A selector on a device that has NIV saved and AAB not. */
+    async function createSelectorWithNivSaved() {
+      setWebResponses({
+        ...createExampleManagerResponseMap(),
+        [makeExampleUrl("/api/NIV/complete.json")]: createStreamingResponse(
+          makeCompleteTranslation(nivBooks, 2)
+        ),
+      });
+      const { dataManager, slot, tabsManager, tabsLayoutManager } =
+        await createManagersWithSelectedSlot(createInMemoryTranslationStore());
+      expect(await dataManager.offline.downloadTranslation("NIV")).toBe(true);
+
+      const selector = createSelectorState(
+        dataManager,
+        tabsManager,
+        tabsLayoutManager
+      );
+      return { selector, slot };
+    }
+
+    const listedTranslationIds = (selector: BibleSelectorState) =>
+      selector.filteredApiTranslations.value.flatMap((group) =>
+        group.translations.map((translation) => translation.id)
+      );
+
+    it("opens the translation list showing only translations saved on the device", async () => {
+      const { selector, slot } = await createSelectorWithNivSaved();
+
+      await selector.openDownloadedTranslations(slot);
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(selector.selectingTranslation.value).toBe(true);
+      expect(listedTranslationIds(selector)).toEqual(["NIV"]);
+    });
+
+    it("shows the full list once the translation list is closed and opened again by hand", async () => {
+      const { selector, slot } = await createSelectorWithNivSaved();
+      await selector.openDownloadedTranslations(slot);
+
+      selector.selectingTranslation.value = false;
+      selector.selectingTranslation.value = true;
+
+      expect(listedTranslationIds(selector)).toEqual(
+        expect.arrayContaining(["AAB", "NIV"])
+      );
+    });
+
+    it("shows the full list after the selector is closed and reopened", async () => {
+      const { selector, slot } = await createSelectorWithNivSaved();
+      await selector.openDownloadedTranslations(slot);
+
+      await selector.setOpen(false);
+      await selector.setOpen(true, slot);
+      selector.selectingTranslation.value = true;
+
+      expect(listedTranslationIds(selector)).toEqual(
+        expect.arrayContaining(["AAB", "NIV"])
+      );
+    });
+
+    it("leaves the selector on its books when it couldn't open", async () => {
+      const { selector } = await createSelectorWithNivSaved();
+
+      // A fresh selector has no slot bound, and none was passed.
+      await selector.openDownloadedTranslations();
+
+      expect(selector.isOpen.value).toBe(false);
+      // Otherwise the next ordinary open would land on the translation list.
+      expect(selector.selectingTranslation.value).toBe(false);
+    });
+
+    it("never narrows the list when it is opened the usual way", async () => {
+      const { selector, slot } = await createSelectorWithNivSaved();
+
+      await selector.setOpen(true, slot);
+      selector.selectingTranslation.value = true;
+
+      expect(listedTranslationIds(selector)).toEqual(
+        expect.arrayContaining(["AAB", "NIV"])
+      );
+    });
+  });
+
   it("pickTranslation() behaves like selectTranslation() and persists the choice to the user's profile", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { dataManager, readingState, slot, tabsManager, tabsLayoutManager } =
@@ -443,6 +780,59 @@ describe("createBibleSelectorState", () => {
     expect(readingState.translationId.value).toBe("NIV");
     expect(readingState.bookId.value).toBe("MAT");
     expect(readingState.chapterNumber.value).toBe(1);
+  });
+
+  describe("setOpen({onChapterPick})", () => {
+    const openForPick = async () => {
+      setWebResponses(createExampleManagerResponseMap());
+      const managers = await createManagersWithSelectedSlot();
+      const selector = createSelectorState(
+        managers.dataManager,
+        managers.tabsManager,
+        managers.tabsLayoutManager
+      );
+      const onChapterPick = vi.fn();
+      await selector.setOpen(true, managers.slot, { onChapterPick });
+      return { ...managers, selector, onChapterPick };
+    };
+
+    it("opens the picked chapter, closes, and reports the pick", async () => {
+      const { selector, readingState, onChapterPick } = await openForPick();
+
+      await selector.selectChapter("EXO", 2);
+
+      expect(readingState.bookId.value).toBe("EXO");
+      expect(readingState.chapterNumber.value).toBe(2);
+      expect(selector.isOpen.value).toBe(false);
+      expect(onChapterPick).toHaveBeenCalledExactlyOnceWith("EXO", 2);
+    });
+
+    it("keeps the selector open on a translation switch, and opens the pick in that translation", async () => {
+      const { selector, readingState, onChapterPick } = await openForPick();
+      const startingTranslation = readingState.translationId.value;
+
+      await selector.selectTranslation("NIV");
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(startingTranslation).not.toBe("NIV");
+      expect(readingState.translationId.value).toBe(startingTranslation);
+      expect(onChapterPick).not.toHaveBeenCalled();
+
+      await selector.selectChapter("MAT", 1);
+
+      expect(readingState.translationId.value).toBe("NIV");
+      expect(onChapterPick).toHaveBeenCalledExactlyOnceWith("MAT", 1);
+    });
+
+    it("drops the pick when the selector closes without one", async () => {
+      const { selector, slot, onChapterPick } = await openForPick();
+
+      await selector.setOpen(false);
+      await selector.setOpen(true, slot);
+      await selector.selectChapter("EXO", 2);
+
+      expect(onChapterPick).not.toHaveBeenCalled();
+    });
   });
 
   it("setOpen({forNewTab}) flips forceNewTab and selectChapter creates a new tab bound to the slot", async () => {
@@ -821,13 +1211,14 @@ describe("createBibleSelectorState", () => {
     function createManagersWithTablessSlot() {
       const dataManager = createDataManager();
       const navigation = createNavigationManager();
+      const login = createLoginManagerMock();
       const tabsManager = createTabs(
         navigation,
         dataManager,
         createHighlightsManagerMock() as any,
         {} as any,
         createI18nManager(navigation, ["en"]),
-        createLoginManagerMock() as any
+        login as any
       );
       const tabsLayoutManager = createTabsLayout(tabsManager, signal(true));
 
@@ -837,8 +1228,36 @@ describe("createBibleSelectorState", () => {
       );
       const tablessSlot = tabsLayoutManager.slots.value[0]!;
 
-      return { dataManager, tabsManager, tabsLayoutManager, tablessSlot };
+      return {
+        dataManager,
+        login,
+        tabsManager,
+        tabsLayoutManager,
+        tablessSlot,
+      };
     }
+
+    it("setOpen() selects the reader's saved translation when no slot has a tab", async () => {
+      setWebResponses(createExampleManagerResponseMap());
+      const {
+        dataManager,
+        login,
+        tabsManager,
+        tabsLayoutManager,
+        tablessSlot,
+      } = createManagersWithTablessSlot();
+      login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+      const selector = createSelectorState(
+        dataManager,
+        tabsManager,
+        tabsLayoutManager
+      );
+      await selector.setOpen(true, tablessSlot);
+
+      expect(selector.isOpen.value).toBe(true);
+      expect(selector.selectedTranslationId.value).toBe("NIV");
+    });
 
     it("setOpen() selects DEFAULT_TRANSLATION_ID (AAB) when no slot has a tab but AAB is in available translations", async () => {
       setWebResponses(createExampleManagerResponseMap());
@@ -881,6 +1300,41 @@ describe("createBibleSelectorState", () => {
 
       expect(selector.isOpen.value).toBe(true);
       expect(selector.selectedTranslationId.value).toBe("NIV");
+    });
+
+    it("setOpen() falls back to the default translation's books when the catalog fails to load", async () => {
+      const responses = createExampleManagerResponseMap();
+      const catalogUrl = makeExampleUrl("/api/available_translations.json");
+      webGetMock.mockImplementation((url: string) =>
+        url === catalogUrl
+          ? Promise.reject(new Error("Network error"))
+          : Promise.resolve(responses[url])
+      );
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      try {
+        const { tabsManager, tabsLayoutManager, tablessSlot } =
+          createManagersWithTablessSlot();
+        // Knows no translations at all, so nothing but the default
+        // translation's ID is left to go on once the catalog fails.
+        const dataManager = createDataManager();
+
+        const selector = createSelectorState(
+          dataManager,
+          tabsManager,
+          tabsLayoutManager
+        );
+        await selector.setOpen(true, tablessSlot);
+
+        expect(selector.isOpen.value).toBe(true);
+        expect(selector.error.value).toBeNull();
+        expect(selector.selectedTranslationId.value).toBe(
+          tabsManager.defaultTranslation.id
+        );
+        expect(selector.booksStatus.value).toBe("ready");
+        expect(selector.catalogStatus.value).toBe("failed");
+      } finally {
+        errorSpy.mockRestore();
+      }
     });
 
     it("setOpen() sets an error when no translations are available", async () => {

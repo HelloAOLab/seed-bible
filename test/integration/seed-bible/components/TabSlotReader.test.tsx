@@ -1,5 +1,7 @@
+import { createAttachedReadingStates } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { batch, computed, signal, type Signal } from "@preact/signals";
 import {
   PANEL_PCT,
@@ -7,6 +9,7 @@ import {
 } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import type {
   BibleReadingState,
+  VisibleVerseRange,
   SelectedFootnote,
   VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -137,7 +140,9 @@ function createFixture(): ReaderFixture {
     loading: signal(false),
     scrollPosition: signal(0),
     scrollToVerse: signal<number | null>(null),
+    readAlongVerse: signal<{ verse: number } | null>(null),
     error: signal<string | null>(null),
+    failedTranslationId: signal<string | null>(null),
     retryLoad: vi.fn(async () => undefined),
     selectVerse,
     selectFootnote,
@@ -167,6 +172,8 @@ function createFixture(): ReaderFixture {
     discoveredContent: signal([]),
     discoveredCrossReferences,
     discoveredStudyNotes: signal([]),
+    isDiscovering: signal(false),
+    showDiscoveryLoader: signal(false),
     discoverContentPanelInline: signal(true),
     disableExtension: vi.fn(async () => undefined),
     enableExtension: vi.fn(async () => undefined),
@@ -175,6 +182,8 @@ function createFixture(): ReaderFixture {
     enabledExtensions: signal<ReadingExtensionRuntime[]>([]),
     isExtensionEnabled: vi.fn(() => false),
     getUrlQueryParams: vi.fn(() => ({})),
+    getUrlPathOverride: vi.fn(() => null),
+    requestUrlUpdate: vi.fn(),
     onNavigate: vi.fn(() => () => {}),
     shortSubTitle: signal<string>(""),
     shortTitle: signal<string>(""),
@@ -182,6 +191,8 @@ function createFixture(): ReaderFixture {
     title: signal<string>(""),
     selectionAnnotations: signal([]),
     pendingAnnotationScrollVerse: signal<number | null>(null),
+    visibleVerseRange: signal<VisibleVerseRange | null>(null),
+    visibleAreas: signal<ReadonlyMap<string, VisibleVerseRange>>(new Map()),
   } as BibleReadingState;
 
   const selectorState = {
@@ -210,19 +221,28 @@ function createFixture(): ReaderFixture {
   };
 }
 
+function createSavesStub() {
+  return {
+    isLocationSaved: vi.fn(() => false),
+    getSaveForLocation: vi.fn(() => undefined),
+    addSave: vi.fn(async () => undefined),
+  };
+}
+
 function createBookmarksStub() {
   return {
-    isLocationBookmarked: vi.fn(() => false),
-    toggleBookmarkAtLocation: vi.fn(async () => undefined),
+    getBookmarksForLocation: vi.fn(() => []),
   };
 }
 
 function createMobileState(): SeedBibleState {
+  const discover = createDiscoverManager();
   return {
     app: {
       isMobile: signal(true),
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
       effectivePanes: signal([]),
+      isDiscoverOpen: discover.isDiscoverOpen,
     },
     selector: {
       selectingTranslation: signal(false),
@@ -246,33 +266,46 @@ function createMobileState(): SeedBibleState {
       connectionId: "test-connection",
     },
     tools: createBibleToolsManager(testBranding),
+    saves: createSavesStub(),
     bookmarks: createBookmarksStub(),
-    tabs: {} as any,
+    tabs: createAttachedReadingStates() as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: { scrollToVerse: signal(null) },
+    discover,
     playlists: {
       playing: signal(null),
+      openingPlayback: signal(false),
+      view: signal(null),
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
+    settings: {
+      settings: signal({ discoveredContent: { showContent: true } }),
+    },
+    friends: { friends: signal([]), friendIds: signal([]) },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      visibleAnnotationsForChapter: vi.fn(() => []),
       pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
       },
     },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => []),
+    },
   } as any as SeedBibleState;
 }
 
 function createDesktopState(): SeedBibleState {
+  const discover = createDiscoverManager();
   return {
     app: {
       isMobile: signal(false),
       effectiveSlots: signal([{ id: "slot-1", tab: null }]),
       effectivePanes: signal([]),
+      isDiscoverOpen: discover.isDiscoverOpen,
     },
     selector: {
       selectingTranslation: signal(false),
@@ -291,24 +324,38 @@ function createDesktopState(): SeedBibleState {
       profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
       getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
     },
+    os: {
+      connectionId: "test-connection",
+    },
     tools: createBibleToolsManager(testBranding),
+    saves: createSavesStub(),
     bookmarks: createBookmarksStub(),
-    tabs: {} as any,
+    tabs: createAttachedReadingStates() as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: { scrollToVerse: signal(null) },
+    discover,
     playlists: {
       playing: signal(null),
+      openingPlayback: signal(false),
+      view: signal(null),
     },
     features: {
       isFeatureEnabled: vi.fn(() => signal(true)),
     },
+    settings: {
+      settings: signal({ discoveredContent: { showContent: true } }),
+    },
+    friends: { friends: signal([]), friendIds: signal([]) },
     annotations: {
       getAnnotationsForChapter: vi.fn(() => signal([])),
+      visibleAnnotationsForChapter: vi.fn(() => []),
       pendingCountForChapter: vi.fn(() => 0),
       sync: {
         pendingCount: signal(0),
       },
+    },
+    readingPlans: {
+      getReadingPlansForChapter: vi.fn(() => []),
     },
   } as any as SeedBibleState;
 }
@@ -1042,6 +1089,139 @@ describe("TabSlotReader integration", () => {
     }
   });
 
+  // A track left on its own GPU layer let Android Chrome keep stale tiles of
+  // the outgoing chapter painted over the end of the new one after a swipe.
+  it("puts the track on its own layer only while a finger drags it sideways", async () => {
+    vi.useFakeTimers();
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement;
+      const track = container.querySelector(
+        ".sb-reader-swipe-track"
+      ) as HTMLDivElement;
+
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 200, clientY: 300 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 200, clientY: 100 }]);
+        dispatchTouch(viewport, "touchend", []);
+      });
+      expect(track.style.willChange).toBe("");
+
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+      });
+      expect(track.style.willChange).toBe("transform");
+
+      act(() => {
+        dispatchTouch(viewport, "touchend", []);
+      });
+      expect(track.style.willChange).toBe("");
+
+      // Through the slide, the navigation and the recentre that follows.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(250 + 1000);
+      });
+      expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
+      expect(track.style.transform).toBe(CENTRE_PANEL_TRANSFORM);
+      expect(track.style.willChange).toBe("");
+
+      // The browser takes the gesture over mid-drag.
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 150, clientY: 50 }]);
+        dispatchTouch(viewport, "touchcancel", []);
+      });
+      expect(track.style.willChange).toBe("");
+
+      // A second finger lands mid-drag: another touchstart, no touchcancel.
+      act(() => {
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 150, clientY: 50 }]);
+        dispatchTouch(viewport, "touchstart", [{ clientX: 150, clientY: 60 }]);
+        dispatchTouch(viewport, "touchend", []);
+      });
+      expect(track.style.willChange).toBe("");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // Swipe parks an inline translateX on the track. Switching to the larger
+  // layout must not reuse that node as desktop content, or the chapter sits
+  // partly offscreen.
+  it("does not leave the reader shifted offscreen after swiping and switching to a larger layout", () => {
+    vi.useFakeTimers();
+    const { slot, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      previousChapterApiLink: "/api/BSB/GEN/0.json",
+      nextChapterApiLink: "/api/BSB/GEN/2.json",
+      translation: {
+        ...chapterData.value!.translation,
+        textDirection: "ltr",
+      },
+    };
+
+    try {
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const viewport = container.querySelector(
+        ".sb-reader-swipe-viewport"
+      ) as HTMLDivElement | null;
+      expect(viewport).not.toBeNull();
+
+      act(() => {
+        if (!viewport) {
+          return;
+        }
+        dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
+        dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
+        dispatchTouch(viewport, "touchend", []);
+        vi.advanceTimersByTime(250);
+      });
+
+      expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
+
+      act(() => {
+        (state.app.isMobile as Signal<boolean>).value = false;
+      });
+
+      expect(container.querySelector(".sb-reader-swipe-track")).toBeNull();
+      expect(
+        container.querySelector(".sb-bible-reader-content")
+      ).not.toBeNull();
+
+      const content = container.querySelector(
+        ".sb-bible-reader-content"
+      ) as HTMLDivElement | null;
+      const main = container.querySelector(
+        ".sb-bible-reader-main-content"
+      ) as HTMLDivElement | null;
+      expect(content?.style.transform).toBe("");
+      expect(main?.style.transform).toBe("");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // Navigation does not wait on the download, so the *centre* panel still holds
   // the outgoing chapter while the new one is in flight. Recentring straight
   // away is what made a swipe flash the chapter the reader just left.
@@ -1269,6 +1449,44 @@ describe("TabSlotReader integration", () => {
     expect(writes).toEqual([120]);
   });
 
+  it("re-applies the saved scroll offset when the matching chapter text arrives", () => {
+    const { slot, readingState, chapterData } = createFixture();
+
+    renderTabSlotReader(slot, readingState, createDesktopState(), container);
+
+    const rafSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback: FrameRequestCallback) => {
+        callback(0);
+        return 0;
+      });
+
+    try {
+      const writes = recordScrollTopWrites(
+        container.querySelector(".sb-pane-reader") as HTMLDivElement
+      );
+
+      act(() => {
+        batch(() => {
+          readingState.scrollPosition.value = 320;
+          readingState.chapterNumber.value = 2;
+        });
+      });
+      expect(writes).toEqual([320]);
+
+      act(() => {
+        chapterData.value = {
+          ...chapterData.value!,
+          chapter: { ...chapterData.value!.chapter, number: 2 },
+        };
+      });
+
+      expect(writes).toEqual([320, 320]);
+    } finally {
+      rafSpy.mockRestore();
+    }
+  });
+
   // Replays a capture from a real device. A touchmove generated during the
   // previous swipe was delivered 1.2s late, in the middle of the next gesture,
   // carrying the coordinate the finger had back then — which threw the track
@@ -1355,6 +1573,63 @@ describe("TabSlotReader integration", () => {
     expect(offsets.every((offset) => Math.abs(offset) <= 14)).toBe(true);
   });
 
+  describe("bottom toolbar returning when something covers the reader", () => {
+    function renderScrolledDownMobileReader(state: SeedBibleState) {
+      const { slot, readingState } = createFixture();
+      renderTabSlotReader(slot, readingState, state, container);
+
+      const scroller = container.querySelector(
+        ".sb-reader-swipe-panel-current"
+      ) as HTMLDivElement;
+      act(() => {
+        scroller.scrollTop = 200;
+        scroller.dispatchEvent(new Event("scroll"));
+      });
+    }
+
+    afterEach(() => {
+      document.body.classList.remove("sb-scroll-hide-bars");
+    });
+
+    it("hides the bottom toolbar while the user scrolls down the chapter", () => {
+      renderScrolledDownMobileReader(createMobileState());
+
+      expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
+        true
+      );
+    });
+
+    it("brings the bottom toolbar back when the AI chat opens", () => {
+      const state = createMobileState();
+      const isChatPanelOpen = signal(false);
+      (state.sidebar as any).isChatPanelOpen = isChatPanelOpen;
+      renderScrolledDownMobileReader(state);
+
+      act(() => {
+        isChatPanelOpen.value = true;
+      });
+
+      expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
+        false
+      );
+    });
+
+    it("brings the bottom toolbar back when a pane opens", () => {
+      const state = createMobileState();
+      const panes = signal<unknown[]>([]);
+      (state as any).panes = { panes };
+      renderScrolledDownMobileReader(state);
+
+      act(() => {
+        panes.value = [{ id: "compare" }];
+      });
+
+      expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
+        false
+      );
+    });
+  });
+
   describe("discover content panel placement", () => {
     const crossReferenceFixture = [
       {
@@ -1406,6 +1681,29 @@ describe("TabSlotReader integration", () => {
       renderTabSlotReader(slot, readingState, state, container);
 
       expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
+    });
+
+    it("hides the panel while the full Discover pane is open and brings it back when it closes", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createDesktopState();
+
+      renderTabSlotReader(slot, readingState, state, container);
+      expect(
+        container.querySelector(".sb-discover-content-panel")
+      ).not.toBeNull();
+
+      act(() => {
+        state.discover.view.value = "discover";
+      });
+      expect(container.querySelector(".sb-discover-content-panel")).toBeNull();
+
+      act(() => {
+        state.discover.view.value = null;
+      });
+      expect(
+        container.querySelector(".sb-discover-content-panel")
+      ).not.toBeNull();
     });
 
     it("lets a touch gesture starting inside the panel scroll it instead of swiping the chapter", () => {
@@ -1501,6 +1799,27 @@ describe("TabSlotReader integration", () => {
           Node.DOCUMENT_POSITION_FOLLOWING
         )
       ).toBe(true);
+    });
+
+    it("hides the tool while the full Discover pane is open and brings it back when it closes", () => {
+      const { slot, readingState, discoveredCrossReferences } = createFixture();
+      discoveredCrossReferences.value = crossReferenceFixture;
+      const state = createDesktopState();
+      const findTool = () =>
+        container.querySelector('button[aria-label="Discover content"]');
+
+      renderTabSlotReader(slot, readingState, state, container);
+      expect(findTool()).not.toBeNull();
+
+      act(() => {
+        state.discover.view.value = "discover";
+      });
+      expect(findTool()).toBeNull();
+
+      act(() => {
+        state.discover.view.value = null;
+      });
+      expect(findTool()).not.toBeNull();
     });
   });
 });

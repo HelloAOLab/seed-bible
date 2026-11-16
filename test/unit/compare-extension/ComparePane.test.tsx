@@ -665,7 +665,9 @@ describe("ComparePane", () => {
     const title = mount(titleNode);
     containers.push(title);
     act(() => {
-      title.querySelector<HTMLButtonElement>(".sb-reading-plans-back")!.click();
+      title
+        .querySelector<HTMLButtonElement>('button[aria-label="Back"]')!
+        .click();
     });
 
     expect(state.view.value).toBe("compare");
@@ -867,11 +869,11 @@ describe("CompareSettings", () => {
     expect(pinned.classList.contains("sb-compare-settings-pinned")).toBe(true);
     expect(pinned.querySelector(".sb-discover-item-drag-handle")).toBeNull();
     // Not in the saved list, so there is nothing to remove.
-    expect(pinned.querySelector(".sb-discover-item-delete")).toBeNull();
+    expect(pinned.querySelector(".sb-compare-remove")).toBeNull();
 
     for (const row of [rows[1]!, rows[2]!]) {
       expect(row.querySelector(".sb-discover-item-drag-handle")).not.toBeNull();
-      const remove = row.querySelector(".sb-discover-item-delete")!;
+      const remove = row.querySelector(".sb-compare-remove")!;
       expect(remove).not.toBeNull();
       // Same trash-can affordance the playlist editor uses.
       expect(remove.textContent).toBe("delete");
@@ -890,12 +892,10 @@ describe("CompareSettings", () => {
     containers.push(container);
 
     const pinned = container.querySelector(".sb-compare-settings-pinned")!;
-    expect(pinned.querySelector(".sb-discover-item-delete")).not.toBeNull();
+    expect(pinned.querySelector(".sb-compare-remove")).not.toBeNull();
 
     act(() => {
-      pinned
-        .querySelector<HTMLButtonElement>(".sb-discover-item-delete")!
-        .click();
+      pinned.querySelector<HTMLButtonElement>(".sb-compare-remove")!.click();
     });
 
     expect(state.selectedTranslationIds.value).toEqual(["eng_bsb"]);
@@ -915,9 +915,7 @@ describe("CompareSettings", () => {
 
     const rows = container.querySelectorAll(".sb-discover-item");
     act(() => {
-      rows[1]!
-        .querySelector<HTMLButtonElement>(".sb-discover-item-delete")!
-        .click();
+      rows[1]!.querySelector<HTMLButtonElement>(".sb-compare-remove")!.click();
     });
 
     expect(state.selectedTranslationIds.value).toEqual(["eng_web"]);
@@ -961,9 +959,7 @@ describe("CompareSettings", () => {
     // Rows now read eng_web, heb_mod, eng_bsb — remove the middle one mid-drag.
     const rows = container.querySelectorAll(".sb-discover-item");
     act(() => {
-      rows[2]!
-        .querySelector<HTMLButtonElement>(".sb-discover-item-delete")!
-        .click();
+      rows[2]!.querySelector<HTMLButtonElement>(".sb-compare-remove")!.click();
     });
 
     // The reorder survives the removal — eng_web ends up first, not eng_bsb
@@ -1007,7 +1003,7 @@ describe("CompareSettings", () => {
     act(() => {
       container
         .querySelectorAll(".sb-discover-item")[2]!
-        .querySelector<HTMLButtonElement>(".sb-discover-item-delete")!
+        .querySelector<HTMLButtonElement>(".sb-compare-remove")!
         .click();
     });
 

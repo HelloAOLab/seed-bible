@@ -1,7 +1,10 @@
 import {
   acceptLanguageRedirect,
   legacyReadingUrlRedirect,
+  sharedPageQueryRedirect,
   render,
+  stripDefaultOgImageMeta,
+  todayPageRedirect,
 } from "../../../standalone/entry-ssr";
 import { DEFAULT_APP_CONFIG } from "@packages/seed-bible/seed-bible/app/appConfig";
 import {
@@ -13,6 +16,86 @@ import {
 } from "../seed-bible/managers/testUtils/mockBibleApiData";
 import { buildChapterUrl } from "../../../script/lib/sitemap";
 import { resetSsrTranslationsCacheForTests } from "../../../standalone/ssrTranslationsCache";
+import { resetSsrApiResponseCacheForTests } from "../../../standalone/ssrApiResponseCache";
+import i18n from "i18next";
+
+describe("sharedPageQueryRedirect", () => {
+  it("sends an old playlist share link to the playlist's own page", () => {
+    expect(
+      sharedPageQueryRedirect(
+        "/en/AAB/genesis/1?playlist=user-1.playlist_abc",
+        ""
+      )
+    ).toBe("/en/playlist/user-1.playlist_abc");
+  });
+
+  it("keeps the language the link was shared in", () => {
+    expect(
+      sharedPageQueryRedirect("/es/spa_onbv/john/3?playlist=u.p", "")
+    ).toBe("/es/playlist/u.p");
+  });
+
+  it("uses the translation's language when the path names none", () => {
+    expect(sharedPageQueryRedirect("/spa_onbv/john/3?playlist=u.p", "")).toBe(
+      "/es/playlist/u.p"
+    );
+  });
+
+  it("falls back to English for a bare root link", () => {
+    expect(sharedPageQueryRedirect("/?playlist=u.p", "")).toBe(
+      "/en/playlist/u.p"
+    );
+  });
+
+  it("uses ?lang= on a legacy query-param link", () => {
+    expect(
+      sharedPageQueryRedirect("/?book=JHN&chapter=3&lang=fr&playlist=u.p", "")
+    ).toBe("/fr/playlist/u.p");
+  });
+
+  it("keeps the deployment prefix and unrelated params, dropping reading-position ones", () => {
+    expect(
+      sharedPageQueryRedirect(
+        "/b/dev/en/AAB/genesis/1?playlist=u.p&customization=o.c&translation=NIV",
+        "/b/dev"
+      )
+    ).toBe("/b/dev/en/playlist/u.p?customization=o.c");
+  });
+
+  it("sends an old playback URL to the playing path, with the step made 1-based", () => {
+    expect(
+      sharedPageQueryRedirect(
+        "/en/AAB/exodus/2?playlist=u.p&playlistStep=3",
+        ""
+      )
+    ).toBe("/en/playlist/u.p/-/4");
+  });
+
+  it("starts an old playback URL with an unreadable step at the first step", () => {
+    expect(
+      sharedPageQueryRedirect(
+        "/en/AAB/exodus/2?playlist=u.p&playlistStep=x",
+        ""
+      )
+    ).toBe("/en/playlist/u.p/-/1");
+  });
+
+  it("sends an old reading plan share link to the plan's own page", () => {
+    expect(
+      sharedPageQueryRedirect("/es/spa_onbv/john/3?readingPlan=u.plan_1", "")
+    ).toBe("/es/reading-plan/u.plan_1");
+  });
+
+  it("leaves a URL without ?playlist= or ?readingPlan= alone", () => {
+    expect(sharedPageQueryRedirect("/en/AAB/genesis/1", "")).toBeNull();
+    expect(
+      sharedPageQueryRedirect("/en/AAB/genesis/1?playlist=", "")
+    ).toBeNull();
+    expect(
+      sharedPageQueryRedirect("/en/AAB/genesis/1?readingPlan=", "")
+    ).toBeNull();
+  });
+});
 
 describe("legacyReadingUrlRedirect", () => {
   describe("already the canonical shape", () => {
@@ -298,6 +381,101 @@ describe("acceptLanguageRedirect", () => {
   });
 });
 
+describe("todayPageRedirect", () => {
+  it("sends a bare root to the Today page in the visitor's language", () => {
+    expect(todayPageRedirect("/", "", ["es-ES"])).toBe("/es/today");
+  });
+
+  it("falls back to English when no Accept-Language preference is supported", () => {
+    expect(todayPageRedirect("/", "", [])).toBe("/en/today");
+    expect(todayPageRedirect("/", "", ["xx-YY"])).toBe("/en/today");
+  });
+
+  it("keeps the deployment's base path", () => {
+    expect(todayPageRedirect("/b/some-branch/", "/b/some-branch", [])).toBe(
+      "/b/some-branch/en/today"
+    );
+  });
+
+  it("sends ?today=open on a reading path to the Today page in that path's language", () => {
+    expect(
+      todayPageRedirect("/es/spa_onbv/john/3?today=open", "", ["fr-FR"])
+    ).toBe("/es/today");
+  });
+
+  it("drops reading-only params but keeps the rest of the query", () => {
+    expect(
+      todayPageRedirect(
+        "/en/AAB/john/3?today=open&verse=16&customization=owner.theme",
+        "",
+        []
+      )
+    ).toBe("/en/today?customization=owner.theme");
+  });
+
+  it("sends ?today=open on a static page to the Today page", () => {
+    expect(todayPageRedirect("/fr/about?today=open", "", [])).toBe("/fr/today");
+  });
+
+  it.each([
+    ["a reading path", "/en/AAB/john/3"],
+    ["a static page", "/en/about"],
+    ["a shared playlist page", "/en/playlist/owner.playlist_shared"],
+    ["a shared-session invite", "/?sessionId=abc"],
+    ["a legacy ?book= link", "/?book=GEN&chapter=1"],
+    ["?today=closed on a bare root", "/?today=closed"],
+    ["any other ?today= value", "/?today=maybe"],
+    ["a compact embed", "/?embed=minimal"],
+    ["a compact embed asking for Today", "/?embed=true&today=open"],
+    ["the Today page itself", "/en/today"],
+    ["the Today page with a stray ?today=open", "/en/today?today=open"],
+  ])("leaves %s alone", (_, path) => {
+    expect(todayPageRedirect(path, "", ["es-ES"])).toBeNull();
+  });
+});
+
+describe("stripDefaultOgImageMeta", () => {
+  const DEFAULT_OG_IMAGE_BLOCK = [
+    '<meta property="og:type" content="website" />',
+    // Mirrors index.html: `og:image` itself spans multiple lines.
+    '<meta\n      property="og:image"\n      content="/standalone/img/SeedBibleLogoBlackOnWhiteBackground.jpg"\n    />',
+    '<meta property="og:image:type" content="image/jpeg" />',
+    '<meta property="og:image:width" content="1200" />',
+    '<meta property="og:image:height" content="630" />',
+    '<meta property="og:image:alt" content="Seed Bible Logo" />',
+  ].join("\n");
+
+  it("removes every og:image/:type/:width/:height/:alt tag, including one split across lines", () => {
+    const result = stripDefaultOgImageMeta(DEFAULT_OG_IMAGE_BLOCK);
+
+    expect(result).not.toContain("og:image");
+    // Untouched neighbor, to prove this isn't just wiping the whole block.
+    expect(result).toContain('<meta property="og:type" content="website" />');
+  });
+
+  it("leaves other og:*/twitter:* tags alone while stripping only the og:image family", () => {
+    const html = [
+      '<meta property="og:title" content="Hello" />',
+      '<meta property="og:image" content="/default.jpg" />',
+      '<meta name="twitter:card" content="summary_large_image" />',
+    ].join("\n");
+
+    const result = stripDefaultOgImageMeta(html);
+
+    expect(result).toContain('<meta property="og:title" content="Hello" />');
+    expect(result).toContain(
+      '<meta name="twitter:card" content="summary_large_image" />'
+    );
+    expect(result).not.toContain("og:image");
+  });
+
+  it("is a no-op when there is nothing to strip", () => {
+    const html = "<head><title>Test</title></head>";
+
+    expect(stripDefaultOgImageMeta(html)).toBe(html);
+  });
+});
+
 describe("render() redirect wiring", () => {
   // These resolve before any network call (the redirect checks run ahead of
   // `createSeedBibleState`), so no fetch mocking is needed.
@@ -340,6 +518,54 @@ describe("render() redirect wiring", () => {
     expect(result).toEqual({ redirectTo: "/en/AAB/genesis/3" });
   });
 
+  it("returns a plain 301 from an old ?playlist= share link to the playlist page", async () => {
+    const result = await render({
+      path: "/en/AAB/genesis/1?playlist=owner.playlist_shared",
+      config: DEFAULT_APP_CONFIG,
+      html: "",
+    });
+
+    expect(result).toEqual({
+      redirectTo: "/en/playlist/owner.playlist_shared",
+    });
+  });
+
+  it("returns a plain 301 from an old ?readingPlan= share link to the plan page", async () => {
+    const result = await render({
+      path: "/en/AAB/genesis/1?readingPlan=owner.plan_shared",
+      config: DEFAULT_APP_CONFIG,
+      html: "",
+    });
+
+    expect(result).toEqual({
+      redirectTo: "/en/reading-plan/owner.plan_shared",
+    });
+  });
+
+  it("returns a plain 301 from an old playback URL to the playing path", async () => {
+    const result = await render({
+      path: "/es/spa_onbv/john/3?playlist=owner.playlist_shared&playlistStep=0",
+      config: DEFAULT_APP_CONFIG,
+      html: "",
+    });
+
+    expect(result).toEqual({
+      redirectTo: "/es/playlist/owner.playlist_shared/-/1",
+    });
+  });
+
+  it("redirects an old ?playlist= link in one hop, even when its chapter also needed correcting", async () => {
+    const result = await render({
+      path: "/AAB/senesis/3?playlist=owner.playlist_shared",
+      config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: ["fr-FR"] },
+      html: "",
+    });
+
+    expect(result).toEqual({
+      redirectTo: "/en/playlist/owner.playlist_shared",
+    });
+  });
+
   it("returns a plain 301 for a legacy query-param URL that already names an explicit ?lang=", async () => {
     const result = await render({
       path: "/?translation=AAB&book=GEN&chapter=1&lang=en",
@@ -378,6 +604,34 @@ describe("render() redirect wiring", () => {
     });
   });
 
+  it("returns a 302 with Vary: Accept-Language from a bare root to the Today page", async () => {
+    const result = await render({
+      path: "/",
+      config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: ["es-ES"] },
+      html: "",
+    });
+
+    expect(result).toEqual({
+      redirectTo: "/es/today",
+      redirectStatus: 302,
+      vary: "Accept-Language",
+    });
+  });
+
+  it("returns a 302 from a legacy ?today=open link to the Today page", async () => {
+    const result = await render({
+      path: "/en/AAB/john/3?today=open",
+      config: DEFAULT_APP_CONFIG,
+      html: "",
+    });
+
+    expect(result).toEqual({
+      redirectTo: "/en/today",
+      redirectStatus: 302,
+      vary: "Accept-Language",
+    });
+  });
+
   it("returns a 302 for a bare root with an explicit ?translation= and no ?lang=", async () => {
     const result = await render({
       path: "/?translation=AAB&book=GEN&chapter=1",
@@ -404,11 +658,31 @@ describe("render() redirect wiring", () => {
 describe("render() server-rendered meta tags", () => {
   const TEMPLATE = [
     '<!doctype html><html lang="<!-- HTML_LANG -->"><head>',
+    '<meta property="og:type" content="website" />',
+    // Mirrors index.html: `og:image` itself spans multiple lines (its
+    // `property`/`content` attributes on separate lines), the rest don't —
+    // `stripDefaultOgImageMeta` has to handle both shapes.
+    '<meta\n      property="og:image"\n      content="/standalone/img/SeedBibleLogoBlackOnWhiteBackground.jpg"\n    />',
+    '<meta property="og:image:type" content="image/jpeg" />',
+    '<meta property="og:image:width" content="1200" />',
+    '<meta property="og:image:height" content="630" />',
+    '<meta property="og:image:alt" content="Seed Bible Logo" />',
+    // The real default icon links (index.html:15-16) — a `.ico` favicon and a
+    // `.png` apple-touch-icon, matching what a real browser sees, so the
+    // "override wins" tests below assert against an actual ordering effect
+    // rather than a template with nothing to override in the first place.
+    '<link rel="icon" href="/standalone/img/favicon.ico" />',
+    '<link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />',
     '<style id="sb-theme-styles"><!-- THEME_STYLE_TAG --></style>',
     '<script type="application/json" id="sb-theme-presets"><!-- THEME_PRESETS_JSON --></script>',
     "<!-- META -->",
     '</head><body><script type="application/json" id="app-config"><!-- CONFIG_JSON --></script>',
     '<script type="application/json" id="app-seed-data"><!-- SEED_JSON --></script>',
+    '<script type="application/json" id="app-customization-seed"><!-- CUSTOMIZATION_JSON --></script>',
+    '<script type="application/json" id="app-playlist-page-seed"><!-- PLAYLIST_PAGE_JSON --></script>',
+    '<script type="application/json" id="app-reading-plan-page-seed"><!-- READING_PLAN_PAGE_JSON --></script>',
+    '<script type="application/json" id="app-friend-link-seed"><!-- FRIEND_LINK_JSON --></script>',
+    '<script type="application/json" id="app-friend-link-seed"><!-- FRIEND_LINK_JSON --></script>',
     '<div id="app"><!-- APP_HTML --></div></body></html>',
   ].join("");
 
@@ -445,12 +719,27 @@ describe("render() server-rendered meta tags", () => {
     // see ssrTranslationsCache.ts). Reset it so one test's cached response
     // can't leak into the next.
     resetSsrTranslationsCacheForTests();
+    resetSsrApiResponseCacheForTests();
   });
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
     delete import.meta.env.SSR;
   });
+
+  const renderResult = async (
+    path: string
+  ): Promise<{ html: string; notFound?: true }> => {
+    const result = (await render({
+      path,
+      config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
+      html: TEMPLATE,
+    })) as { html: string; notFound?: true; redirectTo?: string };
+    if ("redirectTo" in result) {
+      throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
+    }
+    return result;
+  };
 
   const renderHtml = async (
     path: string,
@@ -466,6 +755,68 @@ describe("render() server-rendered meta tags", () => {
     }
     return result.html;
   };
+
+  // The SSR host calls render() for every request in one long-lived process,
+  // so anything a render leaves registered keeps that request's whole app
+  // state in memory until the process exits.
+  describe("leaves nothing behind once it returns", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("leaves no interval running after rendering a chapter", async () => {
+      const active = new Set<unknown>();
+      const realSetInterval = globalThis.setInterval;
+      const realClearInterval = globalThis.clearInterval;
+      vi.spyOn(globalThis, "setInterval").mockImplementation(((
+        ...args: Parameters<typeof setInterval>
+      ) => {
+        const id = realSetInterval(...args);
+        active.add(id);
+        return id;
+      }) as typeof setInterval);
+      vi.spyOn(globalThis, "clearInterval").mockImplementation(((
+        id: Parameters<typeof clearInterval>[0]
+      ) => {
+        active.delete(id);
+        realClearInterval(id);
+      }) as typeof clearInterval);
+
+      const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+      // A failed chapter load would skip the reading-time effect entirely
+      // and make this pass vacuously.
+      expect(html).toContain("Verse 1");
+      const leftRunning = [...active];
+      leftRunning.forEach((id) => realClearInterval(id as number));
+      expect(leftRunning).toEqual([]);
+    });
+
+    it("removes every languageChanged listener it adds to the shared i18next instance", async () => {
+      const added = new Set<unknown>();
+      const realOn = i18n.on.bind(i18n);
+      const realOff = i18n.off.bind(i18n);
+      vi.spyOn(i18n, "on").mockImplementation(((
+        event: string,
+        listener: (...args: unknown[]) => void
+      ) => {
+        if (event === "languageChanged") added.add(listener);
+        realOn(event, listener);
+      }) as typeof i18n.on);
+      vi.spyOn(i18n, "off").mockImplementation(((
+        event: string,
+        listener?: (...args: unknown[]) => void
+      ) => {
+        if (event === "languageChanged") added.delete(listener);
+        realOff(event, listener);
+      }) as typeof i18n.off);
+
+      await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+      await renderHtml("/en/AAB/john/3?useFreeBibleAPI=true");
+
+      expect(added.size).toBe(0);
+    });
+  });
 
   it("emits the reading position as the canonical URL and og:url", async () => {
     const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
@@ -581,6 +932,20 @@ describe("render() server-rendered meta tags", () => {
     expect(injected).toContain("--sb-");
   });
 
+  // The pre-hydration script in `index.html` corrects `#sb-theme-styles` to
+  // the device's saved or System theme. A `body` rule anywhere later in the
+  // document would beat it, and the server only knows the Light default, so
+  // the page would show Light until the app mounted.
+  it("keeps theme colors out of the app markup when no customization is linked", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const themeStyles = Array.from(doc.querySelectorAll("style"))
+      .filter((style) => style.id !== "sb-theme-styles")
+      .filter((style) => style.textContent?.includes("--sb-background"));
+    expect(themeStyles).toEqual([]);
+  });
+
   it("injects the built-in theme presets into the #sb-theme-presets tag, for the pre-hydration script", async () => {
     const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
 
@@ -591,6 +956,132 @@ describe("render() server-rendered meta tags", () => {
     const presets = JSON.parse(injected as string) as Record<string, string>;
     expect(presets.light).toContain("body {");
     expect(presets.dark).toContain("body {");
+  });
+
+  it("does not inject prefers-color-scheme theme-color tags that would ignore the in-app theme", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    expect(html).not.toMatch(/name="theme-color"[^>]*media=/);
+    expect(html).not.toMatch(
+      /media="\(prefers-color-scheme:[^"]*\)"[^>]*name="theme-color"/
+    );
+  });
+
+  describe("chapter response cache", () => {
+    const countChapterFetches = () => {
+      const inner = globalThis.fetch;
+      const urls: string[] = [];
+      globalThis.fetch = (async (url: string) => {
+        urls.push(url);
+        return inner(url);
+      }) as typeof globalThis.fetch;
+      return () => urls.filter((url) => url.endsWith("/AAB/GEN/1.json")).length;
+    };
+    const path = "/en/AAB/genesis/1?useFreeBibleAPI=true";
+
+    it("does not refetch the chapter on a second render", async () => {
+      const chapterFetches = countChapterFetches();
+
+      const first = await renderHtml(path);
+      const second = await renderHtml(path);
+
+      expect(chapterFetches()).toBe(1);
+      expect(second).toContain("app-seed-data");
+      expect(
+        JSON.parse(second.match(/id="app-seed-data">([^<]*)</)?.[1] as string)
+      ).toEqual(
+        JSON.parse(first.match(/id="app-seed-data">([^<]*)</)?.[1] as string)
+      );
+    });
+
+    it("shares one fetch between concurrent renders of the same chapter", async () => {
+      const chapterFetches = countChapterFetches();
+
+      await Promise.all([renderHtml(path), renderHtml(path), renderHtml(path)]);
+
+      expect(chapterFetches()).toBe(1);
+    });
+
+    it("does not cache a failed chapter fetch", async () => {
+      const inner = globalThis.fetch;
+      let fail = true;
+      let chapterFetches = 0;
+      globalThis.fetch = (async (url: string) => {
+        if (url.endsWith("/AAB/GEN/1.json")) {
+          chapterFetches++;
+          if (fail) {
+            throw new Error("upstream down");
+          }
+        }
+        return inner(url);
+      }) as typeof globalThis.fetch;
+
+      // One failing render's fetch count is the baseline; two concurrent
+      // failing renders must not exceed it, proving they shared the request.
+      await renderHtml(path);
+      const singleRenderFetches = chapterFetches;
+      resetSsrApiResponseCacheForTests();
+      chapterFetches = 0;
+      await Promise.all([renderHtml(path), renderHtml(path)]);
+      expect(chapterFetches).toBe(singleRenderFetches);
+
+      fail = false;
+      chapterFetches = 0;
+      const html = await renderHtml(path);
+
+      expect(chapterFetches).toBeGreaterThan(0);
+      const config = JSON.parse(
+        html.match(/id="app-config">([^<]*)</)?.[1] as string
+      ) as { ssrChapterContentSettled: boolean };
+      expect(config.ssrChapterContentSettled).toBe(true);
+    });
+
+    it("recovers on the next render after a chapter fetch hangs past the deadline", async () => {
+      const inner = globalThis.fetch;
+      let hang = true;
+      let chapterFetches = 0;
+      globalThis.fetch = (async (
+        url: string,
+        init?: { signal?: AbortSignal }
+      ) => {
+        if (url.endsWith("/AAB/GEN/1.json")) {
+          chapterFetches++;
+          if (hang) {
+            return new Promise((_resolve, reject) => {
+              init?.signal?.addEventListener("abort", () =>
+                reject(new DOMException("aborted", "AbortError"))
+              );
+            });
+          }
+        }
+        return inner(url);
+      }) as unknown as typeof globalThis.fetch;
+
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      try {
+        let hungHtml: string | undefined;
+        const hungRender = renderHtml(path).then((html) => {
+          hungHtml = html;
+        });
+        while (hungHtml === undefined) {
+          await vi.advanceTimersByTimeAsync(500);
+        }
+        await hungRender;
+        expect(chapterFetches).toBeGreaterThan(0);
+      } finally {
+        vi.useRealTimers();
+      }
+
+      hang = false;
+      chapterFetches = 0;
+      const html = await renderHtml(path);
+
+      expect(chapterFetches).toBeGreaterThan(0);
+      const config = JSON.parse(
+        html.match(/id="app-config">([^<]*)</)?.[1] as string
+      ) as { ssrChapterContentSettled: boolean };
+      expect(config.ssrChapterContentSettled).toBe(true);
+    });
   });
 
   it("injects the fetched API responses into the #app-seed-data JSON script tag", async () => {
@@ -815,9 +1306,9 @@ describe("render() server-rendered meta tags", () => {
     expect(html).not.toContain('<link rel="canonical" href="/"');
   });
 
-  it("renders the bare root directly, with no redirect and no notFound", async () => {
+  it("renders the bare root directly when ?today=closed keeps it on the reader, with no notFound", async () => {
     const result = (await render({
-      path: "/?useFreeBibleAPI=true",
+      path: "/?today=closed&useFreeBibleAPI=true",
       config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
       html: TEMPLATE,
     })) as { html: string; notFound?: true; redirectTo?: string };
@@ -881,6 +1372,26 @@ describe("render() server-rendered meta tags", () => {
       '<meta property="og:url" content="/en/about"'
     );
     expect(result.html).not.toContain('<link rel="canonical" href="/"');
+  });
+
+  it("renders the Today screen itself on the Today page, with its own title and canonical URL", async () => {
+    const result = (await render({
+      path: "/en/today?useFreeBibleAPI=true",
+      config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
+      html: TEMPLATE,
+    })) as { html: string; notFound?: true; redirectTo?: string };
+
+    if ("redirectTo" in result) {
+      throw new Error(`Expected HTML, got a redirect to ${result.redirectTo}`);
+    }
+    expect(result.notFound).toBeFalsy();
+    // The server can't see a session, so it renders the signed-out Welcome.
+    expect(result.html).toContain("sb-today-welcome-screen");
+    expect(result.html).toContain("<title>Today | Seed Bible</title>");
+    expect(result.html).toContain('<link rel="canonical" href="/en/today"');
+    expect(result.html).toContain(
+      '<meta property="og:url" content="/en/today"'
+    );
   });
 
   // Regression: every `render()` used to build a brand-new, empty-cache
@@ -1005,5 +1516,988 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain("Verse 1");
       expect(html).not.toContain("--sb-primary-color: #abc123;");
     });
+
+    // Asserts a true replacement, not merely an override tag added after the
+    // default: browsers do not reliably prefer the *last* declared icon link
+    // when several share a `rel` (some use whichever they fetch or parse
+    // first), so relying on document order — as an earlier version of this
+    // fix did — can't be trusted. There must be exactly one tag per `rel`,
+    // with the default href gone entirely.
+    it("replaces the favicon and apple-touch-icon with the linked customization's uploaded logo", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: "https://example.com/logo.png",
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html.match(/<link rel="icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="icon" href="https://example.com/logo.png"/>'
+      );
+      expect(html).not.toContain("/standalone/img/favicon.ico");
+
+      expect(html.match(/<link rel="apple-touch-icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="apple-touch-icon" href="https://example.com/logo.png"/>'
+      );
+      expect(html).not.toContain("/standalone/img/apple-touch-icon.png");
+    });
+
+    it("leaves the default favicon and apple-touch-icon alone when the linked customization has no uploaded logo", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      // Exactly one of each — the default, with no override tag alongside it.
+      expect(html.match(/<link rel="icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="icon" href="/standalone/img/favicon.ico" />'
+      );
+      expect(html.match(/<link rel="apple-touch-icon"/g)).toHaveLength(1);
+      expect(html).toContain(
+        '<link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />'
+      );
+    });
+
+    it("replaces og:image with the linked customization's uploaded logo, dropping the stale type/width/height", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: "https://example.com/logo.png",
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html).toContain(
+        '<meta property="og:image" content="https://example.com/logo.png"/>'
+      );
+      // Only one og:image tag — the default was removed, not merely
+      // shadowed, since a crawler can't be relied on to prefer the last of
+      // two.
+      expect(html.match(/property="og:image"/g)).toHaveLength(1);
+      expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground");
+      expect(html).not.toContain('property="og:image:type"');
+      expect(html).not.toContain('property="og:image:width"');
+      expect(html).not.toContain('property="og:image:height"');
+    });
+
+    it("leaves the default og:image (and its type/width/height) alone when the linked customization has no uploaded logo", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground");
+      expect(html).toContain('property="og:image:type"');
+      expect(html.match(/property="og:image"/g)).toHaveLength(1);
+    });
+
+    // Regression coverage for the SSR->client customization re-fetch: before
+    // `getInitialCustomizationSeed` existed, nothing was embedded here, so the
+    // client's own `CustomizationsManager` always repeated the same
+    // `os.getData()` round trip the server had just made, even though the
+    // page already reflects its result.
+    function readEmbeddedCustomizationSeed(html: string): unknown {
+      const match = /id="app-customization-seed">([\s\S]*?)<\/script>/.exec(
+        html
+      );
+      if (!match) {
+        throw new Error("app-customization-seed script tag not found");
+      }
+      return JSON.parse(match[1]!);
+    }
+
+    it("embeds the resolved customization as a seed for the client to reuse", async () => {
+      mockFetchWithCustomizationResponse({
+        success: true,
+        data: {
+          id: "customization_shared",
+          name: "Shared",
+          variants: [
+            {
+              id: "variant_shared",
+              name: "Shared variant",
+              themes: { primaryColor: "#abc123" },
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant_shared",
+          logoUrl: null,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_shared"
+      );
+
+      expect(readEmbeddedCustomizationSeed(html)).toMatchObject({
+        locator: "owner.customization_shared",
+        customization: { id: "customization_shared", name: "Shared" },
+      });
+    });
+
+    it("embeds a resolved-missing seed when the record isn't found, instead of leaving the client to retry", async () => {
+      mockFetchWithCustomizationResponse({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "Data not found",
+      });
+
+      const html = await renderHtml(
+        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_missing"
+      );
+
+      expect(readEmbeddedCustomizationSeed(html)).toEqual({
+        locator: "owner.customization_missing",
+        customization: null,
+      });
+    });
+  });
+
+  describe("shared playlist page", () => {
+    const CALL_PROCEDURE_URL =
+      "https://auth.seedbible.org/api/v3/callProcedure";
+    const PAGE_PATH =
+      "/en/playlist/owner.playlist_shared/psalms-for-hard-days?useFreeBibleAPI=true";
+
+    const PLAYLIST = {
+      id: "playlist_shared",
+      recordName: "owner",
+      authorUserId: "author-1",
+      title: "Psalms for Hard Days",
+      description: "Five psalms to read slowly.",
+      heroImageUrl: "https://files.example/hero.jpg",
+      items: [{ type: "bible-verse", ref: { bookId: "PSA", chapter: 23 } }],
+      createdAtMs: 1,
+      updatedAtMs: 1,
+    };
+
+    /** Answers `getData` calls by `{recordName}/{address}`; anything else is "not found". */
+    function mockRecords(
+      records: Record<string, unknown>,
+      options: { slowUrlSuffix?: string } = {}
+    ) {
+      const responses = createDefaultManagerResponseMap();
+      globalThis.fetch = (async (url: string, init?: RequestInit) => {
+        if (options.slowUrlSuffix && url.endsWith(options.slowUrlSuffix)) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+        if (url === CALL_PROCEDURE_URL) {
+          const body = JSON.parse(String(init?.body));
+          const key = `${body.input?.recordName}/${body.input?.address}`;
+          if (body.procedure === "getData" && key in records) {
+            return createResponse({ success: true, data: records[key] });
+          }
+          return createResponse({
+            success: false,
+            errorCode: "data_not_found",
+            errorMessage: "Data not found",
+          });
+        }
+        const response = responses[url];
+        if (!response) {
+          throw new Error(`No mocked response for ${url}`);
+        }
+        return response;
+      }) as typeof globalThis.fetch;
+    }
+
+    function readEmbeddedPlaylistSeed(html: string): unknown {
+      const match = /id="app-playlist-page-seed">([\s\S]*?)<\/script>/.exec(
+        html
+      );
+      if (!match) {
+        throw new Error("app-playlist-page-seed script tag not found");
+      }
+      return JSON.parse(match[1]!);
+    }
+
+    it("titles and describes the page after the playlist and its author", async () => {
+      mockRecords({
+        "owner/playlist_shared": PLAYLIST,
+        "author-1/profile": { name: "Ruth" },
+      });
+
+      const { html, notFound } = await renderResult(PAGE_PATH);
+
+      expect(notFound).toBeUndefined();
+      expect(html).toContain(
+        "<title>Psalms for Hard Days by Ruth | Seed Bible</title>"
+      );
+      expect(html).toContain(
+        '<meta name="description" content="Five psalms to read slowly."'
+      );
+      expect(html).toContain(
+        '<meta property="og:title" content="Psalms for Hard Days by Ruth"'
+      );
+      expect(html).toContain(
+        '<meta property="og:description" content="Five psalms to read slowly."'
+      );
+      expect(html).toContain(
+        '<link rel="canonical" href="/en/playlist/owner.playlist_shared/psalms-for-hard-days"'
+      );
+    });
+
+    it("renders a playing path at its step's chapter, without the playlist's modal", async () => {
+      // Its own locator: every render in this file shares jsdom's one
+      // `window`, and states from earlier tests stay subscribed to it. One
+      // that had `owner.playlist_shared` cached would start playing it too
+      // when this render writes that playlist's step into the URL, and pull
+      // this render's step along with it. Real SSR has no `window`.
+      mockRecords(
+        {
+          "owner/playlist_steps": {
+            ...PLAYLIST,
+            id: "playlist_steps",
+            items: [
+              {
+                type: "bible-verse",
+                translationId: "AAB",
+                ref: { bookId: "GEN", chapter: 1 },
+              },
+              {
+                type: "bible-verse",
+                translationId: "AAB",
+                ref: { bookId: "EXO", chapter: 2 },
+              },
+            ],
+          },
+        },
+        // A step's chapter that takes a moment to arrive, as a real one does:
+        // the render has to wait for the reader to reach it.
+        { slowUrlSuffix: "/EXO/2.json" }
+      );
+
+      const { html, notFound } = await renderResult(
+        "/en/playlist/owner.playlist_steps/psalms-for-hard-days/2?useFreeBibleAPI=true"
+      );
+
+      expect(notFound).toBeUndefined();
+      expect(html).toMatch(/<title>[^<]*Exodus 2/);
+      expect(html).not.toContain("sb-playlist-page-modal");
+    });
+
+    it("opens a link whose title slug is out of date, pointing the canonical URL at the current title", async () => {
+      mockRecords({ "owner/playlist_shared": PLAYLIST });
+
+      const { html, notFound } = await renderResult(
+        "/en/playlist/owner.playlist_shared/an-old-title?useFreeBibleAPI=true"
+      );
+
+      expect(notFound).toBeUndefined();
+      expect(html).toContain("Start Reading");
+      expect(html).toContain(
+        '<link rel="canonical" href="/en/playlist/owner.playlist_shared/psalms-for-hard-days"'
+      );
+    });
+
+    it("keeps the playlist's preview, canonical link and indexing when a friend link is added to it", async () => {
+      const friendId = "35160ebe-fcea-4883-8b6c-7e8ae6035aff";
+      mockRecords({
+        "owner/playlist_shared": PLAYLIST,
+        "author-1/profile": { name: "Ruth" },
+        [`${friendId}/profile`]: { name: "Ana" },
+      });
+
+      const { html } = await renderResult(
+        `/en/playlist/owner.playlist_shared/psalms-for-hard-days?addFriend=${friendId}&useFreeBibleAPI=true`
+      );
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Psalms for Hard Days by Ruth"'
+      );
+      expect(html).toContain(
+        '<link rel="canonical" href="/en/playlist/owner.playlist_shared/psalms-for-hard-days"'
+      );
+      expect(html).not.toMatch(/<(meta|link)\b[^>]*addFriend/);
+      expect(html).not.toContain('name="robots"');
+    });
+
+    it("uses the playlist's cover as the only og:image", async () => {
+      mockRecords({ "owner/playlist_shared": PLAYLIST });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(html).toContain(
+        '<meta property="og:image" content="https://files.example/hero.jpg"'
+      );
+      expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+      expect(html).not.toContain('property="og:image:width"');
+      // The cover is a social image, not a favicon.
+      expect(html).toContain(
+        '<link rel="icon" href="/standalone/img/favicon.ico"'
+      );
+    });
+
+    it("keeps the default og:image for a playlist without a cover", async () => {
+      mockRecords({
+        "owner/playlist_shared": { ...PLAYLIST, heroImageUrl: null },
+      });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+    });
+
+    it("renders the playlist's page, with its items, Start and Back", async () => {
+      mockRecords({
+        "owner/playlist_shared": PLAYLIST,
+        "author-1/profile": { name: "Ruth" },
+      });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(html).toContain("sb-playlist-page");
+      expect(html).not.toContain("sb-shared-page-modal");
+      expect(html).toContain('aria-label="Back"');
+      expect(html).toContain("By Ruth");
+      expect(html).toContain("Start Reading");
+      expect(html).toContain("1 item");
+    });
+
+    it("leaves the author out of the title when they have no profile", async () => {
+      mockRecords({ "owner/playlist_shared": PLAYLIST });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(html).toContain(
+        "<title>Psalms for Hard Days | Seed Bible</title>"
+      );
+    });
+
+    it("embeds the loaded playlist as a seed for the client to reuse", async () => {
+      mockRecords({
+        "owner/playlist_shared": PLAYLIST,
+        "author-1/profile": { name: "Ruth" },
+      });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(readEmbeddedPlaylistSeed(html)).toEqual({
+        locator: "owner.playlist_shared",
+        item: PLAYLIST,
+        authorName: "Ruth",
+      });
+    });
+
+    it("answers 404 when the playlist doesn't exist", async () => {
+      mockRecords({});
+
+      const { html, notFound } = await renderResult(PAGE_PATH);
+
+      expect(notFound).toBe(true);
+      expect(html).toContain("<title>Playlist not found | Seed Bible</title>");
+      expect(html).toContain("sb-shared-page-modal--not-found");
+      expect(html).toContain("This playlist doesn't exist");
+      expect(html).not.toContain("Start Reading");
+      expect(readEmbeddedPlaylistSeed(html)).toEqual({
+        locator: "owner.playlist_shared",
+        item: null,
+        authorName: null,
+      });
+    });
+
+    it("is not mistaken for a reading path when the title slug is a number", async () => {
+      mockRecords({ "owner/playlist_shared": { ...PLAYLIST, title: "2024" } });
+
+      const { notFound, html } = await renderResult(
+        "/en/playlist/owner.playlist_shared/2024?useFreeBibleAPI=true"
+      );
+
+      expect(notFound).toBeUndefined();
+      expect(html).toContain("<title>2024 | Seed Bible</title>");
+    });
+  });
+
+  describe("shared reading plan page", () => {
+    const CALL_PROCEDURE_URL =
+      "https://auth.seedbible.org/api/v3/callProcedure";
+    const PAGE_PATH =
+      "/en/reading-plan/owner.plan_shared/advent-readings?useFreeBibleAPI=true";
+
+    const PLAN = {
+      address: "plan_shared",
+      recordName: "owner",
+      authorUserId: "author-1",
+      locale: "en",
+      title: "Advent Readings",
+      description: "Four weeks toward Christmas.",
+      heroImageUrl: "https://files.example/advent.jpg",
+      cadenceOptions: [
+        {
+          id: "daily",
+          label: "Daily",
+          cadence: { segments: [{ type: "read", days: 1 }] },
+        },
+      ],
+      defaultCadenceId: "daily",
+      status: "complete",
+      schemaVersion: 1,
+      sessions: [
+        {
+          id: "s1",
+          readings: [
+            {
+              id: "r1",
+              item: { type: "bible-verse", ref: { bookId: "ISA", chapter: 9 } },
+            },
+          ],
+        },
+        { id: "s2", readings: [] },
+      ],
+      createdAtMs: 1,
+      updatedAtMs: 1,
+    };
+
+    function mockRecords(records: Record<string, unknown>) {
+      const responses = createDefaultManagerResponseMap();
+      globalThis.fetch = (async (url: string, init?: RequestInit) => {
+        if (url === CALL_PROCEDURE_URL) {
+          const body = JSON.parse(String(init?.body));
+          const key = `${body.input?.recordName}/${body.input?.address}`;
+          if (body.procedure === "getData" && key in records) {
+            return createResponse({ success: true, data: records[key] });
+          }
+          return createResponse({
+            success: false,
+            errorCode: "data_not_found",
+            errorMessage: "Data not found",
+          });
+        }
+        const response = responses[url];
+        if (!response) {
+          throw new Error(`No mocked response for ${url}`);
+        }
+        return response;
+      }) as typeof globalThis.fetch;
+    }
+
+    function readEmbeddedPlanSeed(html: string): unknown {
+      const match = /id="app-reading-plan-page-seed">([\s\S]*?)<\/script>/.exec(
+        html
+      );
+      if (!match) {
+        throw new Error("app-reading-plan-page-seed script tag not found");
+      }
+      return JSON.parse(match[1]!);
+    }
+
+    it("titles, describes and illustrates the page after the plan", async () => {
+      mockRecords({
+        "owner/plan_shared": PLAN,
+        "author-1/profile": { name: "Ruth" },
+      });
+
+      const { html, notFound } = await renderResult(PAGE_PATH);
+
+      expect(notFound).toBeUndefined();
+      expect(html).toContain(
+        "<title>Advent Readings by Ruth | Seed Bible</title>"
+      );
+      expect(html).toContain(
+        '<meta name="description" content="Four weeks toward Christmas."'
+      );
+      expect(html).toContain(
+        '<meta property="og:title" content="Advent Readings by Ruth"'
+      );
+      expect(html).toContain(
+        '<meta property="og:image" content="https://files.example/advent.jpg"'
+      );
+      expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+      expect(html).toContain(
+        '<link rel="canonical" href="/en/reading-plan/owner.plan_shared/advent-readings"'
+      );
+    });
+
+    it("renders the plan modal with Start Reading Plan and Close", async () => {
+      mockRecords({
+        "owner/plan_shared": PLAN,
+        "author-1/profile": { name: "Ruth" },
+      });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(html).toContain("sb-shared-page-modal");
+      expect(html).toContain("By Ruth");
+      expect(html).toMatch(/2 sessions · About \d+ min per session/);
+      expect(html).toContain("Start Reading Plan");
+    });
+
+    it("embeds the loaded plan as a seed for the client to reuse", async () => {
+      mockRecords({ "owner/plan_shared": PLAN });
+
+      const { html } = await renderResult(PAGE_PATH);
+
+      expect(readEmbeddedPlanSeed(html)).toEqual({
+        locator: "owner.plan_shared",
+        item: PLAN,
+        authorName: null,
+      });
+    });
+
+    it("answers 404 when the plan doesn't exist", async () => {
+      mockRecords({});
+
+      const { html, notFound } = await renderResult(PAGE_PATH);
+
+      expect(notFound).toBe(true);
+      expect(html).toContain(
+        "<title>Reading plan not found | Seed Bible</title>"
+      );
+      expect(html).toContain("sb-shared-page-modal--not-found");
+      expect(html).toContain("This reading plan doesn't exist");
+      expect(html).not.toContain("Start Reading Plan");
+    });
+
+    it("is not mistaken for a reading path when the title slug is a number", async () => {
+      mockRecords({ "owner/plan_shared": { ...PLAN, title: "2024" } });
+
+      const { notFound, html } = await renderResult(
+        "/en/reading-plan/owner.plan_shared/2024?useFreeBibleAPI=true"
+      );
+
+      expect(notFound).toBeUndefined();
+      expect(html).toContain("<title>2024 | Seed Bible</title>");
+    });
+  });
+
+  describe("friend link", () => {
+    const CALL_PROCEDURE_URL =
+      "https://auth.seedbible.org/api/v3/callProcedure";
+    const USER_ID = "35160ebe-fcea-4883-8b6c-7e8ae6035aff";
+    // The link people share, and the Today page it redirects to.
+    const SHARED_LINK_PATH = `/?addFriend=${USER_ID}&useFreeBibleAPI=true`;
+    const LINK_PATH = `/en/today?addFriend=${USER_ID}&useFreeBibleAPI=true`;
+    const PICTURE_URL = "https://files.example/ana.png";
+
+    /**
+     * Answers `getData` for `{userId}/profile` from `profiles`. An ID in
+     * `missingAccounts` answers `record_not_found` (no such account); any
+     * other key answers `data_not_found` (an account that never saved one).
+     */
+    function mockProfiles(
+      profiles: Record<string, unknown>,
+      missingAccounts: string[] = []
+    ) {
+      const responses = createDefaultManagerResponseMap();
+      globalThis.fetch = (async (url: string, init?: RequestInit) => {
+        if (url === CALL_PROCEDURE_URL) {
+          const body = JSON.parse(String(init?.body));
+          const recordName = body.input?.recordName;
+          const key = `${recordName}/${body.input?.address}`;
+          if (body.procedure === "getData" && key in profiles) {
+            return createResponse({ success: true, data: profiles[key] });
+          }
+          if (missingAccounts.includes(recordName)) {
+            return createResponse({
+              success: false,
+              errorCode: "record_not_found",
+              errorMessage: "Record not found",
+            });
+          }
+          return createResponse({
+            success: false,
+            errorCode: "data_not_found",
+            errorMessage: "Data not found",
+          });
+        }
+        const response = responses[url];
+        if (!response) {
+          throw new Error(`No mocked response for ${url}`);
+        }
+        return response;
+      }) as typeof globalThis.fetch;
+    }
+
+    function readEmbeddedFriendLinkSeed(html: string): unknown {
+      const match = /id="app-friend-link-seed">([\s\S]*?)<\/script>/.exec(html);
+      if (!match) {
+        throw new Error("app-friend-link-seed script tag not found");
+      }
+      return JSON.parse(match[1]!);
+    }
+
+    it("redirects the shared link to the Today page, keeping the friend param", async () => {
+      const result = await render({
+        path: SHARED_LINK_PATH,
+        config: { ...DEFAULT_APP_CONFIG, acceptedLanguages: [] },
+        html: TEMPLATE,
+      });
+
+      expect(result).toEqual({
+        redirectTo: `/en/today?addFriend=${USER_ID}&useFreeBibleAPI=true`,
+        redirectStatus: 302,
+        vary: "Accept-Language",
+      });
+    });
+
+    it("titles, describes and illustrates the preview after the linked person", async () => {
+      mockProfiles({
+        [`${USER_ID}/profile`]: { name: "Ana", pictureUrl: PICTURE_URL },
+      });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Add Ana as a friend"'
+      );
+      expect(html).toContain(
+        '<meta name="twitter:title" content="Add Ana as a friend"'
+      );
+      expect(html).toContain(
+        '<meta name="description" content="Ana wants to be your friend on Seed Bible"'
+      );
+      expect(html).toContain(
+        '<meta property="og:description" content="Ana wants to be your friend on Seed Bible"'
+      );
+      expect(html).toContain(
+        `<meta property="og:image" content="${PICTURE_URL}"`
+      );
+      expect(html).toContain('<meta property="og:image:alt" content="Ana"');
+      expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+    });
+
+    it("points og:url and the canonical link at the Today page's friend link, and keeps it out of search results", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        `<meta property="og:url" content="/en/today?addFriend=${USER_ID}"`
+      );
+      expect(html).toContain(
+        `<link rel="canonical" href="/en/today?addFriend=${USER_ID}"`
+      );
+      expect(html).toContain('<meta name="robots" content="noindex"');
+    });
+
+    it("previews a friend link added to a reading page, pointing at the Today page's friend link", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(
+        `/en/AAB/genesis/1?addFriend=${USER_ID}&useFreeBibleAPI=true`
+      );
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Add Ana as a friend"'
+      );
+      expect(html).toContain(
+        `<link rel="canonical" href="/en/today?addFriend=${USER_ID}"`
+      );
+      expect(html).toContain('<meta name="robots" content="noindex"');
+    });
+
+    it("names the Today page in the page's language", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(
+        `/es/today?addFriend=${USER_ID}&useFreeBibleAPI=true`
+      );
+
+      expect(html).toContain(
+        `<meta property="og:url" content="/es/today?addFriend=${USER_ID}"`
+      );
+      expect(html).toContain(
+        `<link rel="canonical" href="/es/today?addFriend=${USER_ID}"`
+      );
+    });
+
+    it("titles the page after the linked person", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        "<title>Add Ana as a friend on Seed Bible</title>"
+      );
+    });
+
+    it("keeps the default image when the person has no picture", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain(
+        '<meta property="og:title" content="Add Ana as a friend"'
+      );
+      expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+    });
+
+    describe("on a white-label deployment", () => {
+      const BRANDING = {
+        appName: "Acme Reader",
+        shortName: "Acme",
+        logo: "https://brand.example/acme-logo.png",
+        icon: "https://brand.example/acme-icon.png",
+        websiteUrl: "https://brand.example",
+      };
+
+      it("names the brand in the title and description", async () => {
+        mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+        const html = await renderHtml(LINK_PATH, { branding: BRANDING });
+
+        expect(html).toContain(
+          "<title>Add Ana as a friend on Acme Reader</title>"
+        );
+        expect(html).toContain(
+          '<meta property="og:description" content="Ana wants to be your friend on Acme Reader"'
+        );
+        expect(html).toContain(
+          '<meta property="og:title" content="Add Ana as a friend"'
+        );
+      });
+
+      it("illustrates the preview with the brand's logo when the person has no picture", async () => {
+        mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+        const html = await renderHtml(LINK_PATH, { branding: BRANDING });
+
+        expect(html).toContain(
+          `<meta property="og:image" content="${BRANDING.logo}"`
+        );
+        expect(html).toContain(
+          '<meta property="og:image:alt" content="Acme Reader"'
+        );
+        expect(html).not.toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+      });
+
+      it("prefers the person's picture over the brand's logo", async () => {
+        mockProfiles({
+          [`${USER_ID}/profile`]: { name: "Ana", pictureUrl: PICTURE_URL },
+        });
+
+        const html = await renderHtml(LINK_PATH, { branding: BRANDING });
+
+        expect(html).toContain(
+          `<meta property="og:image" content="${PICTURE_URL}"`
+        );
+        expect(html).not.toContain(
+          `<meta property="og:image" content="${BRANDING.logo}"`
+        );
+      });
+
+      it("keeps the default image when the brand's logo isn't an absolute URL", async () => {
+        mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+        const html = await renderHtml(LINK_PATH, {
+          branding: { ...BRANDING, logo: "/img/acme-logo.png" },
+        });
+
+        expect(html).not.toContain(
+          '<meta property="og:image" content="/img/acme-logo.png"'
+        );
+        expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+      });
+
+      it("doesn't use the brand's logo outside a friend link", async () => {
+        const html = await renderHtml("/en/today?useFreeBibleAPI=true", {
+          branding: BRANDING,
+        });
+
+        expect(html).not.toContain(
+          `<meta property="og:image" content="${BRANDING.logo}"`
+        );
+        expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground.jpg");
+      });
+    });
+
+    it("embeds the loaded profile as a seed, without its private config", async () => {
+      mockProfiles({
+        [`${USER_ID}/profile`]: {
+          name: "Ana",
+          pictureUrl: PICTURE_URL,
+          config: { themeId: "dark", tutorialSeen: true },
+        },
+      });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(readEmbeddedFriendLinkSeed(html)).toEqual({
+        userId: USER_ID,
+        profile: { name: "Ana", pictureUrl: PICTURE_URL, config: null },
+      });
+      expect(html).not.toContain("tutorialSeen");
+    });
+
+    it("can't be broken out of by a name that closes the script tag", async () => {
+      const name = "</script><script>alert(1)</script>";
+      mockProfiles({ [`${USER_ID}/profile`]: { name } });
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).not.toContain("<script>alert(1)");
+      expect(readEmbeddedFriendLinkSeed(html)).toEqual({
+        userId: USER_ID,
+        profile: { name, config: null },
+      });
+    });
+
+    it("falls back to the Today page preview for an account that never saved a profile", async () => {
+      mockProfiles({});
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain('<meta property="og:title" content="Today"');
+      expect(html).toContain('<link rel="canonical" href="/en/today"');
+      expect(html).not.toContain('name="robots"');
+    });
+
+    it("falls back to the Today page preview and seeds a missing account when no one has that ID", async () => {
+      mockProfiles({}, [USER_ID]);
+
+      const html = await renderHtml(LINK_PATH);
+
+      expect(html).toContain('<meta property="og:title" content="Today"');
+      expect(html).toContain('<link rel="canonical" href="/en/today"');
+      expect(html).not.toContain('name="robots"');
+      expect(readEmbeddedFriendLinkSeed(html)).toEqual({
+        userId: USER_ID,
+        profile: null,
+      });
+    });
+
+    it("leaves a page without a friend link indexable and unseeded", async () => {
+      const html = await renderHtml("/en/today?useFreeBibleAPI=true");
+
+      expect(html).not.toContain('name="robots"');
+      expect(readEmbeddedFriendLinkSeed(html)).toBeNull();
+    });
+
+    it("leaves the about page's preview, canonical link and indexing to it when a friend link is added", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(
+        `/en/about?addFriend=${USER_ID}&useFreeBibleAPI=true`
+      );
+
+      expect(html).not.toMatch(/<title>[^<]*Ana/);
+      expect(html).not.toMatch(/<meta [^>]*Ana/);
+      expect(html).toContain('<link rel="canonical" href="/en/about"');
+      expect(html).not.toMatch(/<(meta|link)\b[^>]*addFriend/);
+      expect(html).not.toContain('name="robots"');
+    });
+
+    it("leaves a missing shared playlist's preview, canonical link and indexing to it when a friend link is added", async () => {
+      mockProfiles({ [`${USER_ID}/profile`]: { name: "Ana" } });
+
+      const html = await renderHtml(
+        `/en/playlist/owner.missing/old-title?addFriend=${USER_ID}&useFreeBibleAPI=true`
+      );
+
+      expect(html).toContain("<title>Playlist not found");
+      expect(html).not.toMatch(/<title>[^<]*Ana/);
+      expect(html).not.toMatch(/<meta [^>]*Ana/);
+      expect(html).not.toMatch(/<(meta|link)\b[^>]*addFriend/);
+      expect(html).not.toContain('name="robots"');
+    });
+  });
+
+  it("embeds no customization seed when there's no ?customization= link", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    const match = /id="app-customization-seed">([\s\S]*?)<\/script>/.exec(html);
+    expect(match).not.toBeNull();
+    expect(JSON.parse(match![1]!)).toBeNull();
+  });
+
+  it("leaves the default favicon and apple-touch-icon alone with no customization active", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    expect(html.match(/<link rel="icon"/g)).toHaveLength(1);
+    expect(html).toContain(
+      '<link rel="icon" href="/standalone/img/favicon.ico" />'
+    );
+    expect(html.match(/<link rel="apple-touch-icon"/g)).toHaveLength(1);
+    expect(html).toContain(
+      '<link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />'
+    );
+  });
+
+  it("leaves the default og:image alone with no customization active", async () => {
+    const html = await renderHtml("/en/AAB/genesis/1?useFreeBibleAPI=true");
+
+    expect(html).toContain("SeedBibleLogoBlackOnWhiteBackground");
+    expect(html.match(/property="og:image"/g)).toHaveLength(1);
   });
 });

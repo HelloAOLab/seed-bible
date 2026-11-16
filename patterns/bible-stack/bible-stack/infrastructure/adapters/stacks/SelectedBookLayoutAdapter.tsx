@@ -1,8 +1,8 @@
 import type { StackBookData } from "../../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
-import type { SelectedBookLayout } from "../../../application/ports/out/StackBookUpdater";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
+import type { SelectedBookLayout } from "../../models/stack";
 
 interface AdapterParams {
   sectionBookVisualStateRegistryPort: VisualStateRegistry;

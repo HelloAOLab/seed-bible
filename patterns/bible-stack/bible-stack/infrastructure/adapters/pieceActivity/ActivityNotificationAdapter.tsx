@@ -1,10 +1,9 @@
 import { computeNotificationDirection } from "../../functions/layout";
 import type { StackChapterData } from "../../../domain/entities/StackChapterData";
 import type {
-  ActivityNotificationAdapterPort,
-  ShowNotificationCommand,
-} from "../../../application/ports/out/PieceActivity";
-import type { ActivityNotification } from "../../../domain/models/canvas";
+  ActivityNotification,
+  BiblePiece,
+} from "../../../domain/models/canvas";
 import type { ActivityNotificationMapper } from "../../mappers/ActivityNotificationMapper";
 import { BiblePieces } from "../../../domain/models/canvas";
 import type {
@@ -16,6 +15,11 @@ import { GetBotScales, SetStrictTag } from "../../functions/casualos";
 import type { PieceMapperPort } from "../../mappers/PieceMapper";
 import type { ObjectPooler } from "../environment/ObjectPooler";
 import type { PieceBotTags } from "../../models/casualos";
+import type { Vector2 as Vector2Type } from "../../../../../pattern-typings/AuxLibraryDefinitions";
+import type {
+  ShowNotificationCommand,
+  ActivityNotificationPort,
+} from "../../../application/ports/out/ActivityNotification";
 
 interface DimensionProviderPort {
   getDimension(): string;
@@ -28,7 +32,21 @@ interface AdapterParams {
   activityNotificationMapper: ActivityNotificationMapper;
 }
 
-export class ActivityNotificationAdapter implements ActivityNotificationAdapterPort {
+const DIRECTION_STRATEGIES: {
+  [P in BiblePiece]?: {
+    grounded: () => Vector2Type;
+    stacked: () => Vector2Type;
+  };
+} = {
+  [BiblePieces.StackChapter]: {
+    stacked: () => new Vector2(1, -1),
+    grounded: () => {
+      return computeNotificationDirection(gridPortalBot.tags.cameraRotationZ);
+    },
+  },
+};
+
+export class ActivityNotificationAdapter implements ActivityNotificationPort {
   #objectPooler: AdapterParams["objectPooler"];
   #dimensionProviderPort: DimensionProviderPort;
   #pieceMapperPort: AdapterParams["pieceMapperPort"];
@@ -59,16 +77,8 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
     );
   }
   showNotification(command: ShowNotificationCommand) {
-    const {
-      isOwnUserInPiece,
-      activityCount,
-      color,
-      direction,
-      notification,
-      container,
-      offset = 0,
-      scales = { x: 1, y: 1 },
-    } = command;
+    const { isOwnUserInPiece, activityCount, color, notification, container } =
+      command;
 
     let notificationBot: ActivityNotificationBot | undefined;
     if (notification) {
@@ -96,18 +106,26 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
     const label = activityCount > 1 ? `${activityCount}` : "";
     const dimension = this.#dimensionProviderPort.getDimension();
 
+    const strategy =
+      DIRECTION_STRATEGIES[container.type]?.[
+        container.isOnTheGround ? "grounded" : "stacked"
+      ];
+
+    const direction =
+      strategy?.() ??
+      computeNotificationDirection(gridPortalBot.tags.cameraRotationZ);
+    const offset = 0.1;
+
     const mod: Partial<ActivityNotificationTags> = {
       [dimension]: true,
       label,
       ownerDataId: container.id,
       ownerBotId: container.piece.id,
       formOpacity,
-      direction,
       color,
       offset,
-      scaleX: scales.x,
-      scaleY: scales.y,
       type: "ActivityNotification",
+      direction,
     };
 
     applyMod(notificationBot, mod);
@@ -208,9 +226,14 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
       );
     }
 
-    const direction = computeNotificationDirection(
-      gridPortalBot.tags.cameraRotationZ
-    );
+    const strategy =
+      DIRECTION_STRATEGIES[container.type]?.[
+        container.isOnTheGround ? "grounded" : "stacked"
+      ];
+
+    const direction =
+      strategy?.() ??
+      computeNotificationDirection(gridPortalBot.tags.cameraRotationZ);
 
     const currDirection = notificationBot.tags.direction;
 

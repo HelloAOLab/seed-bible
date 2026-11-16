@@ -5,14 +5,12 @@ import type { LoginRequestSuccess } from "@casual-simulation/aux-records";
 import { useI18n } from "../../i18n/I18nManager";
 import SeedBibleTitleIcon from "../../img/SeedBibleLogoWithTitleBlack.png";
 import { MaterialIcon } from "../icons";
+import { useOverlayDismiss } from "../useOverlayDismiss";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import type { LoginManager } from "../../managers/LoginManager";
+import { Button } from "../Button/Button";
 
 type LoginStep = "email" | "code";
-
-// Placeholder asset/links. Replace `LOGO_SRC` with the real Seed Bible logo and
-// point the legal links at their real destinations when available.
-const LOGO_SRC = SeedBibleTitleIcon;
 
 /**
  * Guided login flow shown when {@link CasualOSManager.isLoginOpen} is set.
@@ -48,6 +46,8 @@ export function LoginModal({
   const wasOpenRef = useRef(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
+  const logoImgRef = useRef<HTMLImageElement>(null);
+  const logoFailed = useSignal(false);
 
   const termsOfServiceLink = navigation.linkToQuery({
     terms: "open",
@@ -94,13 +94,26 @@ export function LoginModal({
     target?.focus();
   });
 
-  if (!isOpen) {
-    return null;
-  }
+  // The logo can fail while the page is still loading, before this handler
+  // exists. A finished image with no pixels is that missed error.
+  useSignalEffect(() => {
+    if (!login.isLoginOpen.value) {
+      return;
+    }
+    const img = logoImgRef.current;
+    if (img?.complete && img.naturalWidth === 0) {
+      logoFailed.value = true;
+    }
+  });
 
   const cancel = () => {
     void login.cancelLogin();
   };
+  const overlayDismiss = useOverlayDismiss(cancel);
+
+  if (!isOpen) {
+    return null;
+  }
 
   const submitEmail = async (event: Event) => {
     event.preventDefault();
@@ -254,7 +267,7 @@ export function LoginModal({
   return (
     <div
       className="sb-footnote-modal-overlay"
-      onClick={cancel}
+      {...overlayDismiss}
       onKeyDown={(event: KeyboardEvent) => {
         if (event.key === "Escape") {
           event.preventDefault();
@@ -271,13 +284,18 @@ export function LoginModal({
       >
         <div className="sb-login-modal-body">
           <div className="sb-login-header">
-            <img
-              className="sb-login-logo"
-              src={LOGO_SRC}
-              alt={t("login-account-title", {
-                defaultValue: "Login to your account",
-              })}
-            />
+            <span
+              className={`sb-login-logo${logoFailed.value ? " is-broken" : ""}`}
+            >
+              <img
+                ref={logoImgRef}
+                src={SeedBibleTitleIcon}
+                alt={t("seed-bible", { defaultValue: "Seed Bible" })}
+                onError={() => {
+                  logoFailed.value = true;
+                }}
+              />
+            </span>
             <h3 className="sb-login-title">{title}</h3>
             <p className="sb-login-subtitle">{subtitle}</p>
             {onCode && (
@@ -337,23 +355,26 @@ export function LoginModal({
               )}
 
               <div className="sb-login-actions sb-login-actions-row">
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="lg"
                   className="sb-login-secondary"
                   onClick={cancel}
                   disabled={isSubmitting.value}
                 >
                   {t("cancel", { defaultValue: "Cancel" })}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  variant="primary"
+                  size="lg"
                   className="sb-login-submit"
-                  disabled={isSubmitting.value}
+                  loading={isSubmitting.value}
                 >
                   {isSubmitting.value
                     ? t("login-verifying", { defaultValue: "Verifying…" })
                     : t("login-confirm-code", { defaultValue: "Confirm code" })}
-                </button>
+                </Button>
               </div>
             </form>
           ) : (
@@ -412,15 +433,17 @@ export function LoginModal({
               )}
 
               <div className="sb-login-actions">
-                <button
+                <Button
                   type="submit"
+                  variant="primary"
+                  size="lg"
                   className="sb-login-submit"
-                  disabled={isSubmitting.value}
+                  loading={isSubmitting.value}
                 >
                   {isSubmitting.value
                     ? t("login-sending", { defaultValue: "Sending…" })
                     : t("log-in", { defaultValue: "Log in" })}
-                </button>
+                </Button>
               </div>
             </form>
           )}

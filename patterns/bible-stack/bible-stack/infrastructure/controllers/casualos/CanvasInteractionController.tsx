@@ -1,7 +1,7 @@
-import type { SpatialNavigationPort } from "../../../application/ports/in/SpatialNavigation";
+import type { SpatialNavigationServicePort } from "../../../application/ports/in/SpatialNavigation";
 
 interface ControllerParams {
-  spatialNavigationPort: SpatialNavigationPort;
+  spatialNavigationPort: SpatialNavigationServicePort;
 }
 
 export class CanvasInteractionController {

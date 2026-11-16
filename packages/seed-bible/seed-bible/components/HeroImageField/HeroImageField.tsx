@@ -133,6 +133,7 @@ export function HeroImageField(props: {
   const openCropModal = (file: File) => {
     const modalId = modals.openModal({
       title: { key: "set-hero-image", defaultValue: "Set cover image" },
+      mobileSheet: true,
       content: () => (
         <Suspense
           fallback={
@@ -141,7 +142,11 @@ export function HeroImageField(props: {
                 defaultValue: "Loading the picture editor…",
               })}
             >
-              <Skeleton width="100%" height="16rem" radius="0.625rem" />
+              <Skeleton
+                width="100%"
+                height="16rem"
+                radius="var(--sb-radius-md)"
+              />
             </SkeletonContainer>
           }
         >

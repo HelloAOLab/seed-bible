@@ -6,128 +6,71 @@ import {
   type Signal,
 } from "@preact/signals";
 import * as z from "zod/v4";
-import type { LoginManager } from "../managers/LoginManager";
-import type { ReaderTab } from "../managers/TabsManager";
+import type { LoginManager } from "./LoginManager";
 import type { CasualOSManager } from "./OsManager";
+import { readRecord } from "./RecordRead";
 
 /**
- * Verse target for a bookmark: a single verse number or an inclusive `[start, end]`
- * range. Absent when the bookmark refers to a whole chapter.
- */
-export const bookmarkVerseSchema = z.union([
-  z.number().int().positive(),
-  z
-    .tuple([z.number().int().positive(), z.number().int().positive()])
-    .refine(([start, end]) => start <= end, {
-      message: "Verse range start must be less than or equal to end.",
-    }),
-]);
-
-/**
- * A bookmark's category membership: a single folder name (legacy / single-
- * folder bookmarks) or an array of folder names (multi-folder).
- */
-export const bookmarkCategoryFieldSchema = z.union([
-  z.string().min(1),
-  z.array(z.string().min(1)).min(1),
-]);
-
-/**
- * Schema for one bookmark entry.
+ * Schema for one bookmark.
  *
- * A bookmark is a saved Bible location (translation + book + chapter, optionally
- * narrowed to a single verse or `[start, end]` range) that a user has flagged
- * from a tab or from the verse toolbar. Bookmarks are *links* to a location —
- * clicking one navigates the active tab there. They are persisted per user
- * under the `"bookmarks"` storage key so they survive across sessions /
- * devices and are restored when the user logs back in. Each bookmark belongs
- * to one or more categories (folders) — newly added bookmarks land in the
- * default category and can be assigned to additional folders from there.
+ * A bookmark is a named, colored marker for where you are in a book — "Reading
+ * plan", "Sermon prep" — that you move forward as you read. Unlike a save it is
+ * not archival: it always points at exactly one chapter, moving it replaces
+ * where it was, and there is no verse-level form. Several bookmarks may sit on
+ * the same chapter.
+ *
+ * The location fields are required on purpose. A bookmark that points nowhere
+ * is never stored; the premade "My bookmark" offered to a user with none exists
+ * only as modal state until they place it.
  */
 export const bookmarkSchema = z.object({
   id: z.string().min(1),
+  name: z.string().min(1),
+  colorId: z.string().min(1),
   translationId: z.string().min(1),
   bookId: z.string().min(1),
   chapterNumber: z.number().int().positive(),
-  verse: bookmarkVerseSchema.optional(),
   createdAt: z.number().int().nonnegative(),
-  category: bookmarkCategoryFieldSchema,
-});
-
-export const bookmarkCategorySchema = z.object({
-  name: z.string().min(1),
-});
-
-// Persisted shape accepts legacy payloads that predate the `category` field,
-// the `verse` field, and the `categories` list. We normalize them on load
-// before they ever surface to the rest of the app.
-const persistedBookmarkSchema = bookmarkSchema.extend({
-  category: bookmarkCategoryFieldSchema.optional(),
-  verse: bookmarkVerseSchema.optional(),
+  /** Stamped on every move. Drives "most recently moved first" ordering. */
+  updatedAt: z.number().int().nonnegative(),
 });
 
 export const bookmarksPayloadSchema = z.object({
-  bookmarks: z.array(persistedBookmarkSchema),
-  categories: z.array(bookmarkCategorySchema).optional(),
+  bookmarks: z.array(bookmarkSchema),
 });
 
 export type Bookmark = z.infer<typeof bookmarkSchema>;
-export type BookmarkVerse = z.infer<typeof bookmarkVerseSchema>;
-export type BookmarkCategory = z.infer<typeof bookmarkCategorySchema>;
 export type BookmarksPayload = z.infer<typeof bookmarksPayloadSchema>;
 
-const STORAGE_ADDRESS = "bookmarks";
+/** The chapter a bookmark points at. */
+export interface BookmarkLocation {
+  translationId: string;
+  bookId: string;
+  chapterNumber: number;
+}
 
-/** Category every new bookmark lands in if none is specified. */
-export const DEFAULT_BOOKMARK_CATEGORY = "My Bookmarks";
-
-/**
- * Returns the category names a bookmark belongs to as a flat string array.
- * Accepts both the legacy single-string form and the multi-category array form.
- */
-export function getBookmarkCategories(
-  category: string | readonly string[]
-): string[] {
-  if (typeof category === "string") {
-    return [category];
-  }
-  return [...category];
+/** The parts of a bookmark the user names and colors. */
+export interface BookmarkDetails {
+  name: string;
+  colorId: string;
 }
 
 /**
- * True when `bookmark` is a member of the given category name.
+ * Soft cap on how many bookmarks a user can create. Bookmarks are markers you
+ * move, not a collection you grow — Saves is where things accumulate.
+ *
+ * "Soft" because it only stops *creating* one: a stored list already over the
+ * cap (from a later raise of it, or another client) is kept whole, never
+ * truncated.
  */
-export function bookmarkBelongsToCategory(
-  bookmark: Bookmark,
-  categoryName: string
-): boolean {
-  return getBookmarkCategories(bookmark.category).includes(categoryName);
-}
+export const MAX_BOOKMARKS = 5;
 
 /**
- * Serializes a list of category names into the storage form: a single string
- * when only one category is selected (keeps older clients happy), an array
- * when the bookmark spans multiple folders.
+ * The bookmarks record. Deliberately not `bookmarks` (the legacy saves record,
+ * see SavesManager) or `saves`: reading either would surface a user's whole
+ * save history as bookmarks.
  */
-export function serializeBookmarkCategories(
-  categories: readonly string[]
-): string | string[] {
-  const unique: string[] = [];
-  const seen = new Set<string>();
-  for (const raw of categories) {
-    const name = raw.trim();
-    if (!name || seen.has(name)) continue;
-    seen.add(name);
-    unique.push(name);
-  }
-  if (unique.length === 0) {
-    return DEFAULT_BOOKMARK_CATEGORY;
-  }
-  if (unique.length === 1) {
-    return unique[0]!;
-  }
-  return unique;
-}
+const STORAGE_ADDRESS = "readingBookmarks";
 
 function makeBookmarkId(): string {
   if (
@@ -136,739 +79,321 @@ function makeBookmarkId(): string {
   ) {
     return crypto.randomUUID();
   }
-  return `bm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `bookmark-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function bookmarkMatchesChapter(
-  bookmark: Bookmark,
-  translationId: string | null | undefined,
-  bookId: string | null | undefined,
-  chapterNumber: number | null | undefined
-): boolean {
-  if (!translationId || !bookId || !chapterNumber) {
-    return false;
-  }
+/** Most recently moved first; `createdAt` and `id` only break exact ties. */
+function compareByMostRecentlyMoved(a: Bookmark, b: Bookmark): number {
   return (
-    bookmark.translationId === translationId &&
-    bookmark.bookId === bookId &&
-    bookmark.chapterNumber === chapterNumber
+    b.updatedAt - a.updatedAt ||
+    b.createdAt - a.createdAt ||
+    a.id.localeCompare(b.id)
   );
-}
-
-/**
- * True when `bookmark` targets the exact same chapter + verse(s) as the given
- * location. A bookmark with no `verse` field only matches a chapter-level
- * location query (verse=undefined).
- */
-function bookmarkMatchesLocation(
-  bookmark: Bookmark,
-  translationId: string | null | undefined,
-  bookId: string | null | undefined,
-  chapterNumber: number | null | undefined,
-  verse?: BookmarkVerse
-): boolean {
-  if (!bookmarkMatchesChapter(bookmark, translationId, bookId, chapterNumber)) {
-    return false;
-  }
-  return versesEqual(bookmark.verse, verse);
-}
-
-function versesEqual(
-  a: BookmarkVerse | undefined,
-  b: BookmarkVerse | undefined
-): boolean {
-  if (a === undefined && b === undefined) return true;
-  if (a === undefined || b === undefined) return false;
-  if (typeof a === "number" && typeof b === "number") return a === b;
-  if (Array.isArray(a) && Array.isArray(b)) {
-    return a[0] === b[0] && a[1] === b[1];
-  }
-  return false;
-}
-
-/**
- * Derives the bookmark `verse` field from a list of selected verses. Returns:
- *   - `undefined` when nothing is selected,
- *   - a single number when one verse is selected or the range collapses to one,
- *   - `[start, end]` when the selection spans multiple distinct verse numbers.
- */
-export function bookmarkVerseFromSelection(
-  verseNumbers: readonly number[]
-): BookmarkVerse | undefined {
-  if (verseNumbers.length === 0) return undefined;
-  let min = verseNumbers[0]!;
-  let max = verseNumbers[0]!;
-  for (const n of verseNumbers) {
-    if (n < min) min = n;
-    if (n > max) max = n;
-  }
-  return min === max ? min : [min, max];
-}
-
-/**
- * Migrates a raw persisted payload into the current shape:
- *   - bookmarks without a `category` get assigned the default
- *   - empty category arrays collapse to the default
- *   - any category referenced by a bookmark but missing from `categories`
- *     gets appended, preserving order
- *   - the default category is always present (added first if absent) so the
- *     user can drop bookmarks into it on first run
- */
-function normalizePayload(payload: BookmarksPayload): {
-  bookmarks: Bookmark[];
-  categories: BookmarkCategory[];
-} {
-  const bookmarks: Bookmark[] = payload.bookmarks.map((b) => ({
-    ...b,
-    category: serializeBookmarkCategories(
-      b.category === undefined
-        ? [DEFAULT_BOOKMARK_CATEGORY]
-        : getBookmarkCategories(b.category)
-    ),
-  }));
-
-  const categories: BookmarkCategory[] = (payload.categories ?? []).map(
-    (c) => ({
-      name: c.name,
-    })
-  );
-  const seen = new Set(categories.map((c) => c.name));
-
-  if (!seen.has(DEFAULT_BOOKMARK_CATEGORY)) {
-    categories.unshift({ name: DEFAULT_BOOKMARK_CATEGORY });
-    seen.add(DEFAULT_BOOKMARK_CATEGORY);
-  }
-
-  for (const bookmark of bookmarks) {
-    for (const name of getBookmarkCategories(bookmark.category)) {
-      if (!seen.has(name)) {
-        categories.push({ name });
-        seen.add(name);
-      }
-    }
-  }
-
-  return { bookmarks, categories };
 }
 
 export interface BookmarksManager {
-  /** All bookmarks for the current user. Empty array when logged out. */
+  /**
+   * The current user's bookmarks, most recently moved first. Empty when logged
+   * out.
+   */
   bookmarks: ReadonlySignal<Bookmark[]>;
 
-  /** Ordered list of bookmark categories (folders). */
-  categories: ReadonlySignal<BookmarkCategory[]>;
+  /** False once the user has {@link MAX_BOOKMARKS} or more bookmarks. */
+  canCreate: ReadonlySignal<boolean>;
+
+  /** Whether the bookmarks management panel is showing in the sidebar. */
+  isPanelOpen: Signal<boolean>;
 
   /**
-   * Names of categories the user has expanded in the sidebar. Held in memory
-   * only — not persisted, since the user's view preference resets per session.
-   */
-  expandedCategories: ReadonlySignal<ReadonlySet<string>>;
-
-  /**
-   * Whether the bookmarks list is currently open in the sidebar — when true,
-   * the sidebar shows the saved bookmarks list instead of the open tabs list.
-   * The name is kept for backwards compatibility with the header toggle.
-   */
-  isFilterActive: Signal<boolean>;
-
-  /**
-   * Whether the bookmarks view was opened from the bottom toolbar (as opposed
-   * to the Tabs header toggle). On mobile this decides the header's leading
-   * button: a Close (X) that dismisses the whole drawer when opened from the
-   * toolbar, versus a Back arrow that returns to the Tabs list otherwise.
+   * Whether the panel was opened from the mobile toolbar's More menu, which
+   * decides whether its header offers Close (dismiss the drawer) or Back (to
+   * the tabs list it was opened from).
    */
   openedFromToolbar: Signal<boolean>;
 
-  /** Toggles the bookmarks view on/off. */
-  toggleFilter: () => void;
+  togglePanel: () => void;
 
-  /** Closes the bookmarks view. Used after navigating from a bookmark. */
-  closeView: () => void;
-
-  /** Toggles whether a category is expanded in the sidebar. */
-  toggleCategoryExpanded: (name: string) => void;
+  /** Closes the panel and forgets where it was opened from. */
+  closePanel: () => void;
 
   /**
-   * Returns true if a bookmark exists for the given location. When `verse` is
-   * omitted, only chapter-level bookmarks (no verse field) count as a match.
-   * Reactive — re-evaluates when `bookmarks` or login state changes.
+   * Every bookmark on the given chapter in the given translation, most
+   * recently moved first. A bookmark on the same chapter in a different
+   * translation does not count.
    */
-  isLocationBookmarked: (
-    translationId: string | null | undefined,
-    bookId: string | null | undefined,
-    chapterNumber: number | null | undefined,
-    verse?: BookmarkVerse
-  ) => boolean;
-
-  /**
-   * Returns the bookmark saved at the given location, or undefined when there
-   * is none. Matches on the same rules as `isLocationBookmarked` — callers
-   * that need the bookmark's id (to edit its folders, say) use this instead of
-   * re-deriving the match themselves.
-   */
-  getBookmarkForLocation: (
-    translationId: string | null | undefined,
-    bookId: string | null | undefined,
-    chapterNumber: number | null | undefined,
-    verse?: BookmarkVerse
-  ) => Bookmark | undefined;
-
-  /**
-   * Returns true if any bookmark (chapter- or verse-level) exists for the
-   * given chapter. Used by the tab row dot indicator to flag any saved
-   * reference into that chapter.
-   */
-  isChapterBookmarked: (
+  getBookmarksForLocation: (
     translationId: string | null | undefined,
     bookId: string | null | undefined,
     chapterNumber: number | null | undefined
-  ) => boolean;
+  ) => Bookmark[];
 
   /**
-   * Adds the given location as a bookmark if not already saved.
-   * Requires the user to be logged in; will trigger login otherwise.
-   * Defaults to the default category when none is provided. Pass `verse` to
-   * scope the bookmark to a single verse or `[start, end]` range. `category`
-   * may be a single name or a list of names (multi-folder membership).
+   * Resolves once the signed-in user's stored bookmarks are in memory, retrying
+   * a load that failed earlier. False when signed out, or when the record still
+   * could not be read — in which case nothing should be offered that would
+   * write over it.
    */
-  addBookmark: (
-    translationId: string,
-    bookId: string,
-    chapterNumber: number,
-    options?: { verse?: BookmarkVerse; category?: string | string[] }
-  ) => Promise<void>;
+  ensureLoaded: () => Promise<boolean>;
 
   /**
-   * Removes the bookmark matching the given location (and optional verse).
-   * When `verse` is omitted, only the chapter-level bookmark is removed —
-   * verse-scoped bookmarks for the same chapter are left in place.
+   * Creates a bookmark at the given chapter. Returns the new bookmark, or null
+   * when nothing was written: the user is signed out, the record never loaded,
+   * the name is blank, or the user is already at {@link MAX_BOOKMARKS}.
    */
-  removeBookmarkForLocation: (
-    translationId: string,
-    bookId: string,
-    chapterNumber: number,
-    verse?: BookmarkVerse
-  ) => Promise<void>;
+  createBookmark: (
+    details: BookmarkDetails,
+    location: BookmarkLocation
+  ) => Promise<Bookmark | null>;
 
-  /** Removes a specific bookmark by id, from every category it belongs to. */
+  /** Moves a bookmark to the given chapter and stamps it as just moved. */
+  moveBookmark: (id: string, location: BookmarkLocation) => Promise<void>;
+
+  /**
+   * Renames or recolors a bookmark. Leaves its location and `updatedAt`
+   * alone — editing a label is not moving it. A blank name is ignored.
+   */
+  updateBookmark: (id: string, details: BookmarkDetails) => Promise<void>;
+
+  /** Deletes a bookmark. */
   removeBookmark: (id: string) => Promise<void>;
-
-  /**
-   * Drops a bookmark's membership in a single category. The bookmark itself is
-   * only deleted when that category was its last one. No-op when the bookmark
-   * id is unknown or it does not belong to the category.
-   */
-  removeBookmarkFromCategory: (
-    id: string,
-    categoryName: string
-  ) => Promise<void>;
-
-  /**
-   * Sets the categories an existing bookmark belongs to (creating any missing
-   * categories). No-op when the bookmark id is unknown, the list is empty, or
-   * the membership list is unchanged. Accepts a single name or a list.
-   */
-  setBookmarkCategories: (
-    id: string,
-    category: string | string[]
-  ) => Promise<void>;
-
-  /**
-   * Toggles a chapter-level bookmark for a tab's current location. If the
-   * user is not logged in this triggers a login first. Newly added
-   * bookmarks land in the default category.
-   */
-  toggleBookmarkForTab: (tab: ReaderTab) => Promise<void>;
-
-  /**
-   * Toggles the bookmark at the given location. Same login-on-add behavior
-   * as `toggleBookmarkForTab` but takes a raw location instead of a tab.
-   * Pass `verse` to toggle a verse-scoped bookmark instead of the
-   * chapter-level one.
-   */
-  toggleBookmarkAtLocation: (
-    translationId: string | null | undefined,
-    bookId: string | null | undefined,
-    chapterNumber: number | null | undefined,
-    verse?: BookmarkVerse
-  ) => Promise<void>;
-
-  /**
-   * Toggles a verse-scoped bookmark for the currently selected verses in the
-   * given reading state. Collapses a single-verse selection to a number and a
-   * multi-verse selection to an inclusive range based on min/max verse number.
-   * No-op when there is no selection.
-   */
-  toggleBookmarkForSelectedVerses: (
-    readingState: import("../managers/BibleReadingManager").BibleReadingState
-  ) => Promise<void>;
-
-  /** Creates a new (empty) category. No-op if one with that name exists. */
-  createCategory: (name: string) => Promise<void>;
-
-  /**
-   * Renames a category and updates every bookmark that belongs to it. No-op if
-   * the target name is already taken (other than by the category itself).
-   */
-  renameCategory: (oldName: string, newName: string) => Promise<void>;
-
-  /**
-   * Deletes a category. Bookmarks that only belonged to it are removed;
-   * bookmarks that also belong to other categories keep those memberships.
-   * The default category cannot be deleted — it stays as the always-available
-   * landing folder.
-   */
-  deleteCategory: (name: string) => Promise<void>;
 }
 
 export function createBookmarksManager(
   os: CasualOSManager,
   login: LoginManager
 ): BookmarksManager {
-  const bookmarks = signal<Bookmark[]>([]);
-  const categories = signal<BookmarkCategory[]>([
-    { name: DEFAULT_BOOKMARK_CATEGORY },
-  ]);
-  const expandedCategories = signal<ReadonlySet<string>>(
-    new Set([DEFAULT_BOOKMARK_CATEGORY])
-  );
-  const isFilterActive = signal(false);
-  const openedFromToolbar = signal(false);
+  const stored = signal<Bookmark[]>([]);
   const loadedUserId = signal<string | null>(null);
+  const isPanelOpen = signal(false);
+  const openedFromToolbar = signal(false);
 
-  const readBookmarks: ReadonlySignal<Bookmark[]> = computed(
-    () => bookmarks.value
+  /**
+   * The load for the current user while it is in flight. Mutators wait on it
+   * (see {@link ensureLoaded}) so a change made during the round trip isn't
+   * overwritten when the load lands.
+   */
+  let loadPromise: Promise<void> | null = null;
+  /**
+   * The last list the server is known to hold: what was loaded, or what a
+   * write since then succeeded with. `stored` runs ahead of it while writes
+   * are in flight.
+   */
+  let saved: Bookmark[] = [];
+  /** The lists being written right now, cleared at sign-out. */
+  const pendingWrites = new Set<Bookmark[]>();
+
+  const bookmarks = computed(() =>
+    [...stored.value].sort(compareByMostRecentlyMoved)
   );
-  const readCategories: ReadonlySignal<BookmarkCategory[]> = computed(
-    () => categories.value
-  );
-  const readExpanded: ReadonlySignal<ReadonlySet<string>> = computed(
-    () => expandedCategories.value
-  );
+  const canCreate = computed(() => stored.value.length < MAX_BOOKMARKS);
 
   const loadBookmarks = async (userId: string): Promise<void> => {
-    const data = await os.getData(userId, STORAGE_ADDRESS);
-    if (loadedUserId.value !== userId && login.userId.value !== userId) {
+    const result = await os.getData(userId, STORAGE_ADDRESS);
+    if (login.userId.value !== userId) {
       return;
     }
-
-    const setEmpty = () => {
-      bookmarks.value = [];
-      categories.value = [{ name: DEFAULT_BOOKMARK_CATEGORY }];
-      loadedUserId.value = userId;
-    };
-
-    if (!data || !data.success || !data.data) {
-      setEmpty();
+    const read = readRecord(result, bookmarksPayloadSchema, "bookmarks");
+    if (read.status === "error") {
+      // Leave the user unloaded rather than showing an empty list: an empty
+      // list that later persists would replace a record we never managed to
+      // read. The next mutation retries the load.
+      console.warn(
+        "Could not read the bookmarks record; leaving bookmarks untouched until the next load."
+      );
       return;
     }
-
-    const parsed = bookmarksPayloadSchema.safeParse(data.data);
-    if (!parsed.success) {
-      console.warn("Failed to parse bookmarks payload:", parsed.error);
-      setEmpty();
-      return;
-    }
-
-    const normalized = normalizePayload(parsed.data);
-    bookmarks.value = normalized.bookmarks;
-    categories.value = normalized.categories;
+    stored.value = read.status === "found" ? read.value.bookmarks : [];
+    saved = stored.value;
     loadedUserId.value = userId;
   };
 
-  const persist = async (
-    nextBookmarks: Bookmark[],
-    nextCategories: BookmarkCategory[]
-  ): Promise<void> => {
+  const ensureLoaded = async (): Promise<boolean> => {
+    const pending = loadPromise;
+    if (pending) {
+      await pending;
+    }
     const userId = login.userId.value;
     if (!userId) {
-      console.warn("Cannot persist bookmarks: user is not authenticated.");
-      return;
+      return false;
     }
-    const payload = bookmarksPayloadSchema.parse({
-      bookmarks: nextBookmarks,
-      categories: nextCategories,
-    });
-    await os.recordData(userId, STORAGE_ADDRESS, payload, {
-      marker: "publicRead",
-    });
+    if (loadedUserId.value === userId) {
+      return true;
+    }
+    // Share a retry another caller already started rather than firing another.
+    if (loadPromise === pending) {
+      loadPromise = loadBookmarks(userId);
+    }
+    const retry = loadPromise;
+    if (retry) {
+      await retry;
+    }
+    return loadedUserId.value === userId;
   };
 
   effect(() => {
     const userId = login.userId.value;
     if (!userId) {
-      bookmarks.value = [];
-      categories.value = [{ name: DEFAULT_BOOKMARK_CATEGORY }];
-      expandedCategories.value = new Set([DEFAULT_BOOKMARK_CATEGORY]);
+      stored.value = [];
+      saved = [];
+      pendingWrites.clear();
       loadedUserId.value = null;
-      isFilterActive.value = false;
+      loadPromise = null;
+      isPanelOpen.value = false;
+      openedFromToolbar.value = false;
       return;
     }
     if (loadedUserId.value === userId) {
       return;
     }
-    void loadBookmarks(userId);
+    loadPromise = loadBookmarks(userId);
   });
 
-  const getBookmarkForLocation: BookmarksManager["getBookmarkForLocation"] = (
-    translationId,
-    bookId,
-    chapterNumber,
-    verse
-  ) => {
-    return bookmarks.value.find((bookmark) =>
-      bookmarkMatchesLocation(
-        bookmark,
-        translationId,
-        bookId,
-        chapterNumber,
-        verse
-      )
-    );
+  /**
+   * Applies `next` locally and writes it, undoing it on screen if the write
+   * fails. Callers have already passed {@link ensureLoaded}, so what is in
+   * memory is this user's real list.
+   */
+  const commit = async (next: Bookmark[]): Promise<void> => {
+    const userId = login.userId.value;
+    if (!userId) return;
+    const previous = stored.value;
+    stored.value = next;
+    pendingWrites.add(next);
+    try {
+      const payload = bookmarksPayloadSchema.parse({ bookmarks: next });
+      const result = await os.recordData(userId, STORAGE_ADDRESS, payload, {
+        marker: "publicRead",
+      });
+      // A rejected write resolves with `success: false` rather than throwing,
+      // so it has to be checked to be noticed at all.
+      if (result && result.success === false) {
+        throw new Error(`Failed to write bookmarks: ${result.errorCode}`);
+      }
+      // Unless a sign-out has cleared it since: then it's no longer this list.
+      if (pendingWrites.has(next)) {
+        saved = next;
+      }
+    } catch (err) {
+      pendingWrites.delete(next);
+      // Skip if the list has changed since: a later change was sent with this
+      // one included, so its write decides, or a sign-out emptied it.
+      if (stored.peek() === next) {
+        // `previous` may itself be an unsaved change. Another write still out
+        // will settle it; with none left, only the server's list is known.
+        stored.value = pendingWrites.size > 0 ? previous : saved;
+      }
+      throw err;
+    } finally {
+      pendingWrites.delete(next);
+    }
   };
 
-  const isLocationBookmarked: BookmarksManager["isLocationBookmarked"] = (
-    translationId,
-    bookId,
-    chapterNumber,
-    verse
-  ) => {
-    return (
-      getBookmarkForLocation(translationId, bookId, chapterNumber, verse) !==
-      undefined
-    );
-  };
-
-  const isChapterBookmarked: BookmarksManager["isChapterBookmarked"] = (
+  const getBookmarksForLocation: BookmarksManager["getBookmarksForLocation"] = (
     translationId,
     bookId,
     chapterNumber
   ) => {
-    return bookmarks.value.some((bookmark) =>
-      bookmarkMatchesChapter(bookmark, translationId, bookId, chapterNumber)
+    if (!translationId || !bookId || !chapterNumber) {
+      return [];
+    }
+    return bookmarks.value.filter(
+      (bookmark) =>
+        bookmark.translationId === translationId &&
+        bookmark.bookId === bookId &&
+        bookmark.chapterNumber === chapterNumber
     );
   };
 
-  const ensureCategory = (
-    nextCategories: BookmarkCategory[],
-    name: string
-  ): BookmarkCategory[] => {
-    if (nextCategories.some((c) => c.name === name)) {
-      return nextCategories;
-    }
-    return [...nextCategories, { name }];
-  };
-
-  const addBookmark: BookmarksManager["addBookmark"] = async (
-    translationId,
-    bookId,
-    chapterNumber,
-    options
+  const createBookmark: BookmarksManager["createBookmark"] = async (
+    details,
+    location
   ) => {
-    if (!login.userId.value) {
-      await login.login();
-    }
-    if (!login.userId.value) {
-      return;
-    }
-    const verse = options?.verse;
-    if (isLocationBookmarked(translationId, bookId, chapterNumber, verse)) {
-      return;
-    }
-    const targetCategories = serializeBookmarkCategories(
-      options?.category === undefined
-        ? [DEFAULT_BOOKMARK_CATEGORY]
-        : getBookmarkCategories(options.category)
-    );
-    const categoryNames = getBookmarkCategories(targetCategories);
-    const newBookmark: Bookmark = {
+    const name = details.name.trim();
+    if (!name) return null;
+    if (!(await ensureLoaded())) return null;
+    if (!canCreate.value) return null;
+    const now = Date.now();
+    const bookmark: Bookmark = {
       id: makeBookmarkId(),
-      translationId,
-      bookId,
-      chapterNumber,
-      createdAt: Date.now(),
-      category: targetCategories,
-      ...(verse !== undefined ? { verse } : {}),
+      name,
+      colorId: details.colorId,
+      translationId: location.translationId,
+      bookId: location.bookId,
+      chapterNumber: location.chapterNumber,
+      createdAt: now,
+      updatedAt: now,
     };
-    const nextBookmarks: Bookmark[] = [...bookmarks.value, newBookmark];
-    let nextCategories = categories.value;
-    for (const name of categoryNames) {
-      nextCategories = ensureCategory(nextCategories, name);
-    }
-    bookmarks.value = nextBookmarks;
-    categories.value = nextCategories;
-    // Auto-expand every category that just received a bookmark so the user
-    // sees the new entry without having to click open the folder.
-    const nextExpanded = new Set(expandedCategories.value);
-    for (const name of categoryNames) {
-      nextExpanded.add(name);
-    }
-    expandedCategories.value = nextExpanded;
-    await persist(nextBookmarks, nextCategories);
+    await commit([...stored.value, bookmark]);
+    return bookmark;
+  };
+
+  const moveBookmark: BookmarksManager["moveBookmark"] = async (
+    id,
+    location
+  ) => {
+    if (!(await ensureLoaded())) return;
+    if (!stored.value.some((bookmark) => bookmark.id === id)) return;
+    // Always restamped, even onto the chapter it already marks: placing it
+    // again is what brings it to the front of the stack and the lists.
+    const updatedAt = Date.now();
+    await commit(
+      stored.value.map((bookmark) =>
+        bookmark.id === id
+          ? {
+              ...bookmark,
+              translationId: location.translationId,
+              bookId: location.bookId,
+              chapterNumber: location.chapterNumber,
+              updatedAt,
+            }
+          : bookmark
+      )
+    );
+  };
+
+  const updateBookmark: BookmarksManager["updateBookmark"] = async (
+    id,
+    details
+  ) => {
+    const name = details.name.trim();
+    if (!name) return;
+    if (!(await ensureLoaded())) return;
+    const existing = stored.value.find((bookmark) => bookmark.id === id);
+    if (!existing) return;
+    if (existing.name === name && existing.colorId === details.colorId) return;
+    await commit(
+      stored.value.map((bookmark) =>
+        bookmark.id === id
+          ? { ...bookmark, name, colorId: details.colorId }
+          : bookmark
+      )
+    );
   };
 
   const removeBookmark: BookmarksManager["removeBookmark"] = async (id) => {
-    const next = bookmarks.value.filter((bookmark) => bookmark.id !== id);
-    if (next.length === bookmarks.value.length) {
-      return;
-    }
-    bookmarks.value = next;
-    await persist(next, categories.value);
-  };
-
-  const removeBookmarkFromCategory: BookmarksManager["removeBookmarkFromCategory"] =
-    async (id, categoryName) => {
-      const existing = bookmarks.value.find((bookmark) => bookmark.id === id);
-      if (!existing) return;
-
-      const names = getBookmarkCategories(existing.category);
-      if (!names.includes(categoryName)) return;
-
-      const remaining = names.filter((name) => name !== categoryName);
-      const next =
-        remaining.length === 0
-          ? bookmarks.value.filter((bookmark) => bookmark.id !== id)
-          : bookmarks.value.map((bookmark) =>
-              bookmark.id === id
-                ? {
-                    ...bookmark,
-                    category: serializeBookmarkCategories(remaining),
-                  }
-                : bookmark
-            );
-      bookmarks.value = next;
-      await persist(next, categories.value);
-    };
-
-  const setBookmarkCategories: BookmarksManager["setBookmarkCategories"] =
-    async (id, category) => {
-      const nextCategory = serializeBookmarkCategories(
-        getBookmarkCategories(category)
-      );
-      const nextNames = getBookmarkCategories(nextCategory);
-      if (nextNames.length === 0) return;
-
-      const existing = bookmarks.value.find((bookmark) => bookmark.id === id);
-      if (!existing) return;
-
-      const existingNames = getBookmarkCategories(existing.category);
-      const sameMembership =
-        existingNames.length === nextNames.length &&
-        nextNames.every((name) => existingNames.includes(name));
-      if (sameMembership) {
-        return;
-      }
-
-      let nextCategories = categories.value;
-      for (const name of nextNames) {
-        nextCategories = ensureCategory(nextCategories, name);
-      }
-      const nextBookmarks = bookmarks.value.map((bookmark) =>
-        bookmark.id === id ? { ...bookmark, category: nextCategory } : bookmark
-      );
-      bookmarks.value = nextBookmarks;
-      categories.value = nextCategories;
-      const nextExpanded = new Set(expandedCategories.value);
-      for (const name of nextNames) {
-        nextExpanded.add(name);
-      }
-      expandedCategories.value = nextExpanded;
-      await persist(nextBookmarks, nextCategories);
-    };
-
-  const removeBookmarkForLocation: BookmarksManager["removeBookmarkForLocation"] =
-    async (translationId, bookId, chapterNumber, verse) => {
-      const next = bookmarks.value.filter(
-        (bookmark) =>
-          !bookmarkMatchesLocation(
-            bookmark,
-            translationId,
-            bookId,
-            chapterNumber,
-            verse
-          )
-      );
-      if (next.length === bookmarks.value.length) {
-        return;
-      }
-      bookmarks.value = next;
-      await persist(next, categories.value);
-    };
-
-  const toggleBookmarkForTab: BookmarksManager["toggleBookmarkForTab"] = async (
-    tab
-  ) => {
-    const translationId = tab.readingState.translationId.value;
-    const bookId = tab.readingState.bookId.value;
-    const chapterNumber = tab.readingState.chapterNumber.value;
-    await toggleBookmarkAtLocation(translationId, bookId, chapterNumber);
-  };
-
-  const toggleBookmarkAtLocation: BookmarksManager["toggleBookmarkAtLocation"] =
-    async (translationId, bookId, chapterNumber, verse) => {
-      if (!translationId || !bookId || !chapterNumber) {
-        return;
-      }
-      if (isLocationBookmarked(translationId, bookId, chapterNumber, verse)) {
-        await removeBookmarkForLocation(
-          translationId,
-          bookId,
-          chapterNumber,
-          verse
-        );
-        return;
-      }
-      await addBookmark(translationId, bookId, chapterNumber, { verse });
-    };
-
-  const toggleBookmarkForSelectedVerses: BookmarksManager["toggleBookmarkForSelectedVerses"] =
-    async (readingState) => {
-      const selected = readingState.selectedVerses.value;
-      if (selected.length === 0) return;
-
-      const translationId = selected[0]!.translationId;
-      const bookId = selected[0]!.bookId;
-      const chapterNumber = selected[0]!.chapterNumber;
-      const verse = bookmarkVerseFromSelection(
-        selected.map((v) => v.verse.number)
-      );
-
-      await toggleBookmarkAtLocation(
-        translationId,
-        bookId,
-        chapterNumber,
-        verse
-      );
-    };
-
-  const toggleFilter = () => {
-    isFilterActive.value = !isFilterActive.value;
-  };
-
-  const closeView = () => {
-    isFilterActive.value = false;
-    openedFromToolbar.value = false;
-  };
-
-  const toggleCategoryExpanded: BookmarksManager["toggleCategoryExpanded"] = (
-    name
-  ) => {
-    const next = new Set(expandedCategories.value);
-    if (next.has(name)) {
-      next.delete(name);
-    } else {
-      next.add(name);
-    }
-    expandedCategories.value = next;
-  };
-
-  const createCategory: BookmarksManager["createCategory"] = async (name) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    if (categories.value.some((c) => c.name === trimmed)) {
-      return;
-    }
-    const nextCategories = [...categories.value, { name: trimmed }];
-    categories.value = nextCategories;
-    const nextExpanded = new Set(expandedCategories.value);
-    nextExpanded.add(trimmed);
-    expandedCategories.value = nextExpanded;
-    await persist(bookmarks.value, nextCategories);
-  };
-
-  const renameCategory: BookmarksManager["renameCategory"] = async (
-    oldName,
-    newName
-  ) => {
-    const trimmed = newName.trim();
-    if (!trimmed || trimmed === oldName) return;
-    if (!categories.value.some((c) => c.name === oldName)) return;
-    if (categories.value.some((c) => c.name === trimmed)) {
-      // Target name collides with an existing category — skip to keep names
-      // unique (which the rest of the manager relies on for lookup).
-      return;
-    }
-    const nextCategories = categories.value.map((c) =>
-      c.name === oldName ? { ...c, name: trimmed } : c
-    );
-    const nextBookmarks = bookmarks.value.map((b) => {
-      const names = getBookmarkCategories(b.category);
-      if (!names.includes(oldName)) {
-        return b;
-      }
-      return {
-        ...b,
-        category: serializeBookmarkCategories(
-          names.map((n) => (n === oldName ? trimmed : n))
-        ),
-      };
-    });
-    categories.value = nextCategories;
-    bookmarks.value = nextBookmarks;
-    const nextExpanded = new Set(expandedCategories.value);
-    if (nextExpanded.delete(oldName)) {
-      nextExpanded.add(trimmed);
-    }
-    expandedCategories.value = nextExpanded;
-    await persist(nextBookmarks, nextCategories);
-  };
-
-  const deleteCategory: BookmarksManager["deleteCategory"] = async (name) => {
-    if (name === DEFAULT_BOOKMARK_CATEGORY) {
-      // The default folder always exists as the landing spot for new
-      // bookmarks; treat deletion as a no-op rather than silently moving
-      // its contents elsewhere.
-      return;
-    }
-    if (!categories.value.some((c) => c.name === name)) return;
-    const nextCategories = categories.value.filter((c) => c.name !== name);
-    const nextBookmarks: Bookmark[] = [];
-    for (const b of bookmarks.value) {
-      const names = getBookmarkCategories(b.category);
-      if (!names.includes(name)) {
-        nextBookmarks.push(b);
-        continue;
-      }
-      const remaining = names.filter((n) => n !== name);
-      if (remaining.length === 0) {
-        // Sole membership was the deleted folder — drop the bookmark.
-        continue;
-      }
-      nextBookmarks.push({
-        ...b,
-        category: serializeBookmarkCategories(remaining),
-      });
-    }
-    categories.value = nextCategories;
-    bookmarks.value = nextBookmarks;
-    const nextExpanded = new Set(expandedCategories.value);
-    nextExpanded.delete(name);
-    expandedCategories.value = nextExpanded;
-    await persist(nextBookmarks, nextCategories);
+    if (!(await ensureLoaded())) return;
+    const next = stored.value.filter((bookmark) => bookmark.id !== id);
+    if (next.length === stored.value.length) return;
+    await commit(next);
   };
 
   return {
-    bookmarks: readBookmarks,
-    categories: readCategories,
-    expandedCategories: readExpanded,
-    isFilterActive,
+    bookmarks,
+    canCreate,
+    isPanelOpen,
     openedFromToolbar,
-    toggleFilter,
-    closeView,
-    toggleCategoryExpanded,
-    isLocationBookmarked,
-    getBookmarkForLocation,
-    isChapterBookmarked,
-    addBookmark,
+    togglePanel: () => {
+      isPanelOpen.value = !isPanelOpen.value;
+    },
+    closePanel: () => {
+      isPanelOpen.value = false;
+      openedFromToolbar.value = false;
+    },
+    getBookmarksForLocation,
+    ensureLoaded,
+    createBookmark,
+    moveBookmark,
+    updateBookmark,
     removeBookmark,
-    removeBookmarkFromCategory,
-    setBookmarkCategories,
-    removeBookmarkForLocation,
-    toggleBookmarkForTab,
-    toggleBookmarkAtLocation,
-    toggleBookmarkForSelectedVerses,
-    createCategory,
-    renameCategory,
-    deleteCategory,
   };
 }

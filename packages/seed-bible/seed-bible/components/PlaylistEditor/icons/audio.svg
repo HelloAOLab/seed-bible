@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="18" height="14.04" viewBox="0 0 18 14.04" fill="none" xmlns="http://www.w3.org/2000/svg">
+<mask id="stroke0_0_4" fill="white">
+<path d="M0 4.52H4L9 0V14.04L4 9.52H0V4.52ZM12 3.52C14 5.45 14 8.59 12 10.52ZM15 0.52C19 4.11 19 9.93 15 13.52Z"/>
+</mask>
+<path id="Audio" d="M12 3.52C14 5.45 14 8.59 12 10.52M15 0.52C19 4.11 19 9.93 15 13.52M0 4.52H4L9 0V14.04L4 9.52H0V4.52Z" stroke-width="2.7" stroke="#69737C" mask="url(#stroke0_0_4)"/>
+</svg>

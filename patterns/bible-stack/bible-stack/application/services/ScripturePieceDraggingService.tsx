@@ -3,28 +3,21 @@ import {
   type Piece,
   type DraggingEvent,
 } from "../../domain/models/canvas";
-import type {
-  PieceAdapterPort,
-  ScripturePieceDraggingDataRepositoryPort,
-} from "../ports/scripturePieceDragging";
-import type { SequenceStateServicePort } from "../ports/scripturePieceDrag";
-import type { StackParentDataIds } from "../ports/pieces";
 import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
-import type {
-  TestamentDraggingServicePort,
-  SectionDraggingServicePort,
-  ChapterDraggingServicePort,
-} from "../ports/in/ScripturePieceDragging";
+import type { ScripturePieceDraggingServicePort } from "../ports/in/ScripturePieceDragging";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+import type { PiecePort } from "../ports/out/Piece";
+import type { PieceDataRepositoryPort } from "../ports/out/PieceDataRepository";
 
 interface ServiceParams {
-  pieceAdapterPort: PieceAdapterPort;
-  pieceDataRepositoryPort: ScripturePieceDraggingDataRepositoryPort;
+  pieceAdapterPort: PiecePort;
+  pieceDataRepositoryPort: PieceDataRepositoryPort;
   sequenceStateServicePort: SequenceStateServicePort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
 }
 
 // prettier-ignore
-export class ScripturePieceDraggingService implements TestamentDraggingServicePort, SectionDraggingServicePort, ChapterDraggingServicePort {
+export class ScripturePieceDraggingService implements ScripturePieceDraggingServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
@@ -62,7 +55,7 @@ export class ScripturePieceDraggingService implements TestamentDraggingServicePo
     if (!pieceData?.isBeingDragged) return;
 
     const { bibleData } = this.#pieceHierarchyServicePort.getParentDataChain(
-      pieceData.parentDataIds as StackParentDataIds
+      pieceData.parentDataIds ?? {}
     );
 
     if (bibleData?.currentState !== BibleStates.Open) return;

@@ -17,58 +17,34 @@
   font-family: "DM Sans", var(--sb-font-family, sans-serif);
 }
 
-/* The new-plan button and the back button both live in the pane's header (see
-   ReadingPlansPaneActions / ReadingPlansPaneLeading), so they're sized to sit
-   in that 42px-tall row rather than in the pane body. */
-.sb-reading-plans-create {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 9px;
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color, #fff);
-  cursor: pointer;
-}
-
-.sb-reading-plans-create:hover {
-  opacity: 0.9;
-}
-
-.sb-rp-pane-back {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.sb-rp-pane-back:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-}
-
 .sb-reading-plans-empty {
   padding: 24px 8px;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   text-align: center;
   color: var(--rp-muted);
 }
 
 .sb-reading-plans-scroll {
   flex: 1;
+  /* Centre the list with padding rather than a max-width, so this scroll
+     container still spans the pane: the scrollbar stays at the edge and
+     wheel/trackpad scrolling works over the side gutters. */
+  padding-inline: max(0px, calc((100% - 42rem) / 2));
   min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 1.75rem;
+}
+
+/* The reader toolbar floats over the bottom of the pane, fullscreen or side
+   (it's centred across the whole window, see ReadingPlanEditor.css), so leave
+   room to scroll the last plan clear of it. On phones the pane already stops
+   above it (see PaneLayout.css). */
+@media (min-width: 481px) {
+  .sb-reading-plans-scroll {
+    padding-bottom: var(--sb-reader-bottom-inset, 6rem);
+  }
 }
 
 /* Today hero */
@@ -79,7 +55,7 @@
   width: 100%;
   padding: 18px;
   border: none;
-  border-radius: 16px;
+  border-radius: var(--sb-radius-xl);
   background: var(--rp-peach);
   color: inherit;
   text-align: start;
@@ -95,7 +71,7 @@
 }
 
 .sb-rp-today-eyebrow {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -103,13 +79,13 @@
 }
 
 .sb-rp-today-title {
-  font-size: 1.375rem;
+  font-size: var(--sb-font-size-22);
   font-weight: 700;
   line-height: 1.15;
 }
 
 .sb-rp-today-readings {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: var(--rp-muted);
 }
 
@@ -134,7 +110,7 @@
 
 .sb-rp-section-label {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -147,33 +123,65 @@
   gap: 12px;
 }
 
-/* A card plus the things that hang off it: its edit/delete row, and the load
-   error shown in place of opening a dead screen. */
+.sb-rp-friend-groups {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sb-rp-friend-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-rp-friend-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-rp-friend-group-name {
+  font-size: var(--sb-font-size-14);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A card plus the load error shown in place of opening a dead screen. */
 .sb-rp-card-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.sb-rp-card-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
+.sb-rp-card-menu {
+  flex: none;
 }
 
 .sb-rp-card-error {
   margin: 0;
   padding: 0 4px;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: #dc2626;
 }
 
 .sb-rp-card:disabled,
+.sb-rp-card--opening,
 .sb-rp-card-open:disabled,
 .sb-rp-today:disabled {
   cursor: progress;
   opacity: 0.7;
+}
+
+/* The opening card is already faded; fading its open button as well would
+   multiply the two and leave the card at about half strength. */
+.sb-rp-card--opening .sb-rp-card-open:disabled {
+  opacity: 1;
 }
 
 /* Cards */
@@ -184,14 +192,14 @@
   width: 100%;
   padding: 14px;
   border: 1px solid var(--rp-border);
-  border-radius: 14px;
+  border-radius: var(--sb-radius-xl);
   background: transparent;
   color: inherit;
   text-align: start;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color var(--sb-duration-fast) ease,
+    box-shadow var(--sb-duration-fast) ease;
 }
 
 .sb-rp-card:hover {
@@ -199,7 +207,7 @@
     --rp-accent-border,
     color-mix(in srgb, var(--rp-accent) 50%, transparent)
   );
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-rp-card-static {
@@ -250,7 +258,7 @@
 }
 
 .sb-rp-card-title {
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -258,12 +266,19 @@
 }
 
 .sb-rp-card-sub {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
 }
 
 .sb-rp-card-chevron {
   flex: none;
+  color: var(--rp-muted);
+}
+
+.sb-rp-card-open-label {
+  flex: none;
+  font-size: var(--sb-font-size-13);
+  font-weight: 600;
   color: var(--rp-muted);
 }
 
@@ -277,7 +292,7 @@
 .sb-rp-card-progress-bar {
   flex: 1;
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--rp-border);
   overflow: hidden;
 }
@@ -285,13 +300,13 @@
 .sb-rp-card-progress-fill {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--rp-accent);
 }
 
 .sb-rp-card-progress-label {
   flex: none;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 700;
 }
 
@@ -307,8 +322,8 @@
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.75rem;
+  border-radius: var(--sb-radius-full);
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   background: var(--rp-accent-soft);
   color: var(--rp-accent);
@@ -319,27 +334,10 @@
 }
 
 .sb-rp-card-next {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
 }
 
 .sb-rp-restart {
   flex: none;
-  padding: 6px 10px;
-  border: none;
-  background: transparent;
-  color: var(--rp-accent);
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-rp-restart:hover {
-  text-decoration: underline;
-}
-
-/* Second tap on "Discard" — the one that actually erases the draft. */
-.sb-rp-restart-danger {
-  color: #dc2626;
 }

@@ -1,4 +1,3 @@
-import type { AnyStackData } from "../../application/ports/pieces";
 import type { VerseData } from "../entities/VerseData";
 import type { VersesBundleData } from "../entities/VersesBundleData";
 import type {
@@ -7,6 +6,7 @@ import type {
   BiblePieces,
   Piece,
   SectionShadow,
+  AnyStackData,
 } from "./canvas";
 
 export const HighlightRequestSources = {

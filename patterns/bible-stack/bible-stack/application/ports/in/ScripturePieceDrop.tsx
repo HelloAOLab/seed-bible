@@ -1,32 +1,13 @@
-import type {
-  Piece,
-  DropEvent as DomainDropEvent,
-} from "../../../domain/models/canvas";
+import type { DropEvent, Piece } from "../../../domain/models/canvas";
 
-export interface BookDropServicePort {
+export interface ScripturePieceDropServicePort {
   handlePieceDrop(
-    piece: Piece<"StackSectionBook"> | Piece<"StackBook">,
-    dropEvent: DomainDropEvent
+    piece:
+      | Piece<"StackTestament">
+      | Piece<"StackSection">
+      | Piece<"StackSectionBook">
+      | Piece<"StackBook">
+      | Piece<"StackChapter">,
+    dropEvent: DropEvent | undefined
   ): void;
-}
-
-export interface TestamentDropServicePort {
-  handlePieceDrop: (
-    piece: Piece<"StackTestament">,
-    dropEvent: DomainDropEvent
-  ) => void;
-}
-
-export interface SectionDropServicePort {
-  handlePieceDrop: (
-    piece: Piece<"StackSection">,
-    dropEvent: DomainDropEvent
-  ) => void;
-}
-
-export interface ChapterDropServicePort {
-  handlePieceDrop: (
-    piece: Piece<"StackChapter">,
-    dropEvent: DomainDropEvent
-  ) => void;
 }

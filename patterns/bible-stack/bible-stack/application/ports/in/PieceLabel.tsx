@@ -10,7 +10,7 @@ export interface PieceLabelServicePort<T extends BiblePiece> {
     piece: Piece<T>;
     translucencyMode: LabelTranslucencyMode;
     pacing?: ShowSequencePacing;
-  }) => void;
+  }) => Promise<void>;
   hideLabel: (piece: Piece<T>, pacing?: ShowSequencePacing) => Promise<void>;
   changeIntensity: (
     piece: Piece<T>,
