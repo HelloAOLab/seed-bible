@@ -1,6 +1,6 @@
 import "./SearchClearButton.css";
 import { MaterialIcon } from "../icons";
-import { useI18n } from "../../i18n";
+import { useI18n } from "../../i18n/I18nContext";
 
 /**
  * The × at the end of a search box that empties it, the same in every search

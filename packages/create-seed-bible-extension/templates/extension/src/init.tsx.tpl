@@ -37,10 +37,10 @@ export default defineExtension({
       const position = sb.reading.position.value;
       return (
         <div style={{ padding: "1rem" }}>
-          <p>{sb.i18n.t("opened", undefined, { count: opened })}</p>
+          <p>{sb.i18n.t("opened", { count: opened })}</p>
           <p>
             {position
-              ? sb.i18n.t("reading", undefined, {
+              ? sb.i18n.t("reading", {
                   book: position.bookId ?? "",
                   chapter: position.chapterNumber ?? "",
                 })

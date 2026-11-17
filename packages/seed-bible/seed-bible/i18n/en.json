@@ -1425,5 +1425,11 @@
   "custom-icon-must-be-svg": "Icons must be SVG files.",
   "custom-icon-too-large": "That SVG is too large. Icons can be up to 256 KB.",
   "custom-icon-upload-failed": "Couldn't upload that icon. Please try again.",
-  "verse-actions": "Verse actions"
+  "verse-actions": "Verse actions",
+  "extension-screenshots": "Screenshots",
+  "screenshot-position": "{{current}} of {{total}}",
+  "screenshot-previous": "Previous screenshot",
+  "screenshot-next": "Next screenshot",
+  "screenshot-close": "Close screenshot viewer",
+  "screenshot-name": "Screenshot {{n}}"
 }
