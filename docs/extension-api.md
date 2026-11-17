@@ -10,23 +10,45 @@ This document covers extensions written with `defineExtension` from `seed-bible/
 
 ## Contents
 
-1. [Conventions that apply everywhere](#1-conventions-that-apply-everywhere)
-2. [`defineExtension` and views](#2-defineextension-and-views)
-3. [The `sb` object](#3-the-sb-object)
-   - [`sb.extensionId`](#sbextensionid) · [`sb.permissions`](#sbpermissions) · [`sb.i18n`](#sbi18n) · [`sb.app`](#sbapp) · [`sb.identity`](#sbidentity)
-   - [`sb.tools`](#sbtools) · [`sb.panes`](#sbpanes) · [`sb.modals`](#sbmodals)
-   - [`sb.storage`](#sbstorage) · [`sb.settings`](#sbsettings) · [`sb.sensitive`](#sbsensitive)
-   - [`sb.reading`](#sbreading) · [`sb.bible`](#sbbible) · [`sb.history`](#sbhistory)
-   - [`sb.highlights`](#sbhighlights) · [`sb.notes`](#sbnotes) · [`sb.saves`](#sbsaves)
-   - [`sb.profile`](#sbprofile) · [`sb.friends`](#sbfriends) · [`sb.session`](#sbsession)
-   - [`sb.discover`](#sbdiscover) · [`sb.chats`](#sbchats)
-   - [`sb.audio`](#sbaudio) · [`sb.clipboard`](#sbclipboard) · [`sb.devices`](#sbdevices) · [`sb.portals`](#sbportals)
-4. [Shared types](#4-shared-types)
-5. [Errors](#5-errors)
-6. [Limits](#6-limits)
-7. [Permissions at a glance](#7-permissions-at-a-glance)
-8. [`extension.json`](#8-extensionjson)
-9. [Testing with `createTestHost`](#9-testing-with-createtesthost)
+- [Seed Bible Extension API Reference](#seed-bible-extension-api-reference)
+  - [Contents](#contents)
+  - [1. Conventions that apply everywhere](#1-conventions-that-apply-everywhere)
+  - [2. `defineExtension` and views](#2-defineextension-and-views)
+  - [3. The `sb` object](#3-the-sb-object)
+    - [`sb.extensionId`](#sbextensionid)
+    - [`sb.permissions`](#sbpermissions)
+    - [`sb.i18n`](#sbi18n)
+    - [`sb.app`](#sbapp)
+    - [`sb.identity`](#sbidentity)
+    - [`sb.tools`](#sbtools)
+    - [`sb.panes`](#sbpanes)
+    - [`sb.modals`](#sbmodals)
+    - [`sb.storage`](#sbstorage)
+    - [`sb.settings`](#sbsettings)
+    - [`sb.sensitive`](#sbsensitive)
+    - [`sb.reading`](#sbreading)
+    - [`sb.bible`](#sbbible)
+    - [`sb.history`](#sbhistory)
+    - [`sb.highlights`](#sbhighlights)
+    - [`sb.notes`](#sbnotes)
+    - [`sb.saves`](#sbsaves)
+    - [`sb.profile`](#sbprofile)
+    - [`sb.friends`](#sbfriends)
+    - [`sb.session`](#sbsession)
+    - [`sb.discover`](#sbdiscover)
+    - [`sb.chats`](#sbchats)
+    - [`sb.audio`](#sbaudio)
+    - [`sb.clipboard`](#sbclipboard)
+    - [`sb.devices`](#sbdevices)
+    - [`sb.portals`](#sbportals)
+  - [4. Shared types](#4-shared-types)
+  - [5. Errors](#5-errors)
+  - [6. Limits](#6-limits)
+  - [7. Permissions at a glance](#7-permissions-at-a-glance)
+  - [8. `extension.json`](#8-extensionjson)
+    - [Settings](#settings)
+    - [Sensitive settings](#sensitive-settings)
+  - [9. Testing with `createTestHost`](#9-testing-with-createtesthost)
 
 ---
 
@@ -103,7 +125,9 @@ Each view component receives:
 
 **Theme, fonts and language are applied for you.** Each frame's `<html>` gets the user's `lang` and `dir`, the app's fonts are loaded, and every `--sb-*` CSS variable of the active theme is defined, so `color: var(--sb-font-color)` and `background: var(--sb-background)` match the app and follow it when the user switches to dark mode. The page background and text color are already set this way.
 
-**Styles must be in your bundle**, as inline `style` props or CSS imported with `?inline` and put in a `<style>` element. The frame can't load a separate stylesheet file.
+**Import CSS as usual.** The frame can't load a separate stylesheet file, so `seed-bible-extension-scripts` puts every CSS file your code imports (`import "./panel.css"`) inside the bundle, and adds it to the frame's page before your code runs. Inline `style` props work too.
+
+**Seed Bible's shared components bring their own styles.** Import them from `seed-bible/components` (`Button`, `CloseButton`, `BottomSheet` and the rest) and they look the way they do in the app, in the user's theme.
 
 ```tsx
 export default defineExtension({

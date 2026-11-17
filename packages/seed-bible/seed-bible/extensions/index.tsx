@@ -868,8 +868,9 @@ export interface SandboxExtensionDefinition {
   /**
    * The UI for each pane, dialog or settings panel the extension shows, by
    * name. Each renders in its own frame, with the app's theme and fonts
-   * applied, and is destroyed when it closes. Styles must come from the
-   * bundle (inline, or CSS imported with `?inline`).
+   * applied, and is destroyed when it closes. CSS the extension imports, and
+   * the shared components' own, is in the bundle `seed-bible-extension-scripts`
+   * builds, and is on the page before any view renders.
    */
   views?: Record<string, (props: SandboxViewProps) => ComponentChild>;
 }

@@ -95,7 +95,7 @@ walks through it by example.
 | `seed-bible/managers`           | The managers that hold the reader's state (reading position, highlights, sessions, themes, ...).                                                                                                 |
 | `seed-bible/components`         | Shared Preact components and icons.                                                                                                                                                              |
 | `seed-bible/i18n`               | The app's translation manager and language metadata, for trusted extensions. It brings every locale (several MB), so a sandboxed extension takes `useI18n` from `seed-bible/extensions` instead. |
-| `seed-bible/style.css`          | The stylesheet the components need.                                                                                                                                                              |
+| `seed-bible/style.css`          | All of the package's CSS, the app's own included, in one file, for loading the stylesheet yourself. A bundler doesn't need it: each component imports its own CSS.                               |
 
 Trusted extensions (`registerExtension`) get the app's full internal state
 instead of the permission-checked `sb` object, so they are only for

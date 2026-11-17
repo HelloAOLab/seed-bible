@@ -82,12 +82,24 @@ Use `createTestHost` from `seed-bible/extensions/testing` to run the
 extension against a stand-in for Seed Bible; the scaffolded
 `src/init.test.tsx` shows how.
 
+Seed Bible's shared components import their CSS, which Node can't load, so
+the project's `vitest.config.ts` has Vitest handle `seed-bible` itself. A
+project made before that was added fails with `Unknown file extension
+".css"` once a test renders a shared component; add this to its `test`
+options:
+
+```ts
+server: { deps: { inline: ["seed-bible"] } },
+```
+
 ### `build`
 
 Runs `check` and `test`, then writes `dist/standalone/index.js`: one ES
 module with everything the extension imports bundled in. It holds one copy
 of Preact, the project's own, even if `seed-bible` depends on another
-version.
+version. CSS is bundled in too, since the extension's frame can't load a
+stylesheet: the CSS files the extension imports, and those of the shared
+components it uses, are added to the frame's page when the module loads.
 
 For a built-in extension it writes `dist/monorepo-package/` instead: the
 checked source, ready to copy into `packages/<name>/` in a seed-bible

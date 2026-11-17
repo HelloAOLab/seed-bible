@@ -6,6 +6,8 @@ import {
   type SandboxContext,
   type SandboxDiscoverResult,
 } from "seed-bible/extensions";
+// Seed Bible's own button. Its CSS comes along: the build puts it in this
+// extension's bundle, since the frame can't load a stylesheet.
 import { Button } from "seed-bible/components";
 
 /*
