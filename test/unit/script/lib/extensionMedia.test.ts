@@ -50,11 +50,12 @@ describe("checkExtensionMedia", () => {
     ).toEqual([]);
   });
 
+  // No file is written: Windows can't name one with a ?, and the check refuses
+  // the name before it looks at the disk.
   it.each(["#", "?"])(
     "rejects %s in local media filenames",
     async (character) => {
       const src = `shot${character}1.png`;
-      await writeFile(path.join(dir, src), "image");
       expect(
         await checkExtensionMedia(dir, { icon: src, screenshots: [{ src }] })
       ).toEqual([

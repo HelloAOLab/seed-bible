@@ -63,8 +63,9 @@ describe("extensions plugin media", () => {
     await writeFile(path.join(dir, "shot.png"), "image");
     const { load, context } = await loader();
     const source = await load();
-    expect(source).toContain(`${dir}/icon.svg?url`);
-    expect(source).toContain(`${dir}/shot.png?url`);
+    const fsUrl = path.posix.join("/@fs", dir.split(path.sep).join("/"));
+    expect(source).toContain(`"${fsUrl}/icon.svg?url"`);
+    expect(source).toContain(`"${fsUrl}/shot.png?url"`);
     for (const file of ["extension.json", "icon.svg", "shot.png"]) {
       expect(context.addWatchFile).toHaveBeenCalledWith(path.join(dir, file));
     }

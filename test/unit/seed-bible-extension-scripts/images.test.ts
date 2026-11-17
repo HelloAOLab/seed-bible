@@ -44,11 +44,12 @@ describe("checking an extension's icon", () => {
     ).toEqual([]);
   });
 
+  // No file is written: Windows can't name one with a ?, and the check refuses
+  // the name before it looks at the disk.
   it.each(["#", "?"])(
     "rejects %s in local media filenames",
     async (character) => {
       const src = `shot${character}1.png`;
-      await writeFile(path.join(root, src), "image");
       expect(
         await checkImages(root, { ...meta(src), screenshots: [{ src }] })
       ).toEqual([
