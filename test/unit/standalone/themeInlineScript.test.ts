@@ -1,8 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
-  browserColorSchemeForBackground,
-  composeThemeStyleText,
   DARK_THEME,
   LIGHT_THEME,
   THEME_PRESET_STYLE_TEXT,
@@ -34,12 +32,6 @@ function installServerRenderedHead(): void {
       THEME_PRESET_STYLE_TEXT
     )}</script>`,
   ].join("");
-}
-
-function rootColorScheme(): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(
-    "color-scheme"
-  );
 }
 
 /**
@@ -89,7 +81,6 @@ describe("index.html pre-hydration theme script", () => {
       `--sb-background: ${DARK_THEME.variables.background};`
     );
     expect(paintedBackground()).toBe(DARK_THEME.variables.background);
-    expect(rootColorScheme()).toBe("dark");
   });
 
   it("paints Dark for a saved config with no theme on a dark device", () => {
@@ -103,7 +94,6 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(DARK_THEME.variables.background);
-    expect(rootColorScheme()).toBe("dark");
   });
 
   it("keeps Light for a first-time visitor on a light device", () => {
@@ -113,7 +103,6 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
-    expect(rootColorScheme()).toBe("light");
   });
 
   it("paints the embed link's theme instead of the saved one", () => {
@@ -128,7 +117,6 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(DARK_THEME.variables.background);
-    expect(rootColorScheme()).toBe("dark");
   });
 
   it("keeps a saved Light on a dark device", () => {
@@ -142,7 +130,6 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
-    expect(rootColorScheme()).toBe("light");
   });
 
   it("paints a signed-in account's cached Dark on a light device", () => {
@@ -218,38 +205,4 @@ describe("index.html pre-hydration theme script", () => {
     expect(runInlineThemeScript).not.toThrow();
     expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
   });
-});
-
-describe("index.html pre-hydration theme script color-scheme", () => {
-  afterEach(() => {
-    localStorage.clear();
-    document.head.innerHTML = "";
-  });
-
-  it.each(["#0a0a0a", "#222222", "#808080", "#b0b0b0", "#f8fafc"])(
-    "gives the root the color-scheme ThemeManager picks for a %s background",
-    (background) => {
-      const theme = {
-        ...LIGHT_THEME,
-        id: "custom",
-        variables: { ...LIGHT_THEME.variables, background },
-      };
-      document.head.innerHTML = [
-        `<style id="sb-theme-styles"></style>`,
-        `<script type="application/json" id="sb-theme-presets">${JSON.stringify(
-          { custom: composeThemeStyleText(theme) }
-        )}</script>`,
-      ].join("");
-      localStorage.setItem(
-        "sb-profile-config-local",
-        JSON.stringify({ themeId: "custom" })
-      );
-
-      runInlineThemeScript();
-
-      expect(rootColorScheme()).toBe(
-        browserColorSchemeForBackground(background)
-      );
-    }
-  );
 });

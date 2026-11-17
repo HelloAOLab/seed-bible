@@ -6,7 +6,6 @@ import {
   type Signal,
 } from "@preact/signals";
 import { withMetricFallback } from "../app/fontFallbacks";
-import { relativeLuminance } from "../components/ColorPicker/color";
 import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { SettingsManager } from "./SettingsManager";
 
@@ -533,66 +532,6 @@ export function parseThemeBackgroundColor(css: string): string | null {
   return value && value.length > 0 ? value : null;
 }
 
-export type BrowserColorScheme = "light" | "dark";
-
-/**
- * `#rgb` / `#rgba` / `#rrggbb` / `#rrggbbaa` → sRGB channels (0–255) and
- * alpha (0–1). Anything else (named colors, `rgb()`, `color-mix()`, …)
- * returns null so callers can leave the current browser chrome alone rather
- * than guess wrong.
- */
-export function parseCssHexColor(
-  color: string
-): [number, number, number, number] | null {
-  const match = /^#([\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i.exec(color.trim());
-  if (!match) return null;
-  let hex = match[1]!;
-  if (hex.length <= 4) {
-    hex = [...hex].map((digit) => digit + digit).join("");
-  }
-  const channel = (index: number) =>
-    parseInt(hex.slice(index * 2, index * 2 + 2), 16);
-  return [
-    channel(0),
-    channel(1),
-    channel(2),
-    hex.length === 8 ? channel(3) / 255 : 1,
-  ];
-}
-
-/**
- * Relative luminance where black and white text contrast equally against
- * the background (WCAG). Used for `color-scheme` so mid-gray custom
- * branding backgrounds keep light browser controls rather than flipping dark
- * at the naive 0.5 midpoint.
- */
-export const LIGHT_DARK_CROSSOVER = 0.179;
-
-/**
- * Whether the app background is dark enough for the browser's dark
- * `color-scheme` (dark form controls and scrollbars) instead of the light one.
- */
-export function browserColorSchemeForBackground(
-  color: string
-): BrowserColorScheme | null {
-  const rgba = parseCssHexColor(color);
-  if (!rgba) return null;
-  // A see-through background shows the canvas behind it, which is white
-  // under the default (light) scheme, so judge the color mixed over white.
-  // If that mix reads as dark, a dark canvas only makes it darker, so the
-  // answer holds either way.
-  const [r, g, b] = rgba
-    .slice(0, 3)
-    .map((channel) => channel * rgba[3] + 255 * (1 - rgba[3])) as [
-    number,
-    number,
-    number,
-  ];
-  return relativeLuminance({ r, g, b }) < LIGHT_DARK_CROSSOVER
-    ? "dark"
-    : "light";
-}
-
 /**
  * Android Chrome (and other browsers) color the installed-PWA status bar
  * from `<meta name="theme-color">`. A tag without `media` always matches,
@@ -638,47 +577,10 @@ function applyBrowserThemeColorFromCss(css: string): void {
  * string). This text ends up spliced as a raw string into `index.html`
  * server-side (see `entry-ssr.tsx`'s `THEME_STYLE_TAG` substitution), so an
  * override containing `</style` could otherwise break out of that tag.
- *
- * It also carries a `:root` rule with the theme's `color-scheme`, as a
- * literal value: `html` sits above `body` and can't read the `--sb-*`
- * variables. It deliberately sets no background, so `body`'s background
- * (including a customization's) still fills the canvas, the area behind
- * the page that shows on overscroll and below short content. Putting it here
- * means the server-rendered tag, the pre-hydration script in `index.html`
- * (which copies this text) and this manager all get the light/dark decision
- * from `browserColorSchemeForBackground` alone.
  */
-export function composeThemeStyleText(
-  theme: BibleTheme,
-  {
-    rootColorScheme = true,
-  }: {
-    /**
-     * False for a document that only borrows the theme's variables and
-     * classes (a pattern frame) and keeps its own light/dark styling.
-     */
-    rootColorScheme?: boolean;
-  } = {}
-): string {
-  const css = `body {\n${generateThemeCssVariables(theme)}\n}\n${
-    rootColorScheme ? composeRootColorSchemeRule(theme) : ""
-  }${generateThemeCssClasses(theme)}`;
+export function composeThemeStyleText(theme: BibleTheme): string {
+  const css = `body {\n${generateThemeCssVariables(theme)}\n}\n${generateThemeCssClasses(theme)}`;
   return css.replace(/</g, "");
-}
-
-/**
- * The `:root { color-scheme }` line `composeThemeStyleText` adds, on its own,
- * for a layer drawn over the theme (an active Customization). Empty when the
- * background can't be read as light or dark.
- */
-export function composeRootColorSchemeRule(theme: BibleTheme): string {
-  if (!theme.variables.background) return "";
-  // A background we can't read gets no rule, so the browser's default
-  // (light) applies rather than the previous theme's.
-  const scheme = browserColorSchemeForBackground(
-    sanitizeCssValue(String(theme.variables.background))
-  );
-  return scheme ? `:root {\ncolor-scheme: ${scheme};\n}\n` : "";
 }
 
 export const LIGHT_THEME: BibleTheme = {

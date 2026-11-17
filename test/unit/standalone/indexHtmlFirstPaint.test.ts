@@ -19,7 +19,6 @@ import {
   UI_SIZE_SCALE_MAP,
 } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
 import {
-  composeThemeStyleText,
   DARK_THEME,
   generateThemeCssVariables,
   LIGHT_THEME,
@@ -584,30 +583,6 @@ describe("critical CSS defaults agree with the settings defaults", () => {
   it("starts verse line height at the default", () => {
     expect(baseCss).toContain(
       `--text-verse-line-height: ${DEFAULT_VERSE_LINE_HEIGHT};`
-    );
-  });
-});
-
-describe("embedded frames under a dark theme", () => {
-  afterEach(() => {
-    document.head.innerHTML = "";
-    document.body.innerHTML = "";
-  });
-
-  it("keeps frames on the default color-scheme so they don't get a light backdrop", () => {
-    document.head.innerHTML = `<style>${baseCss}</style><style>${composeThemeStyleText(
-      DARK_THEME
-    )}</style>`;
-    const frame = document.createElement("iframe");
-    document.body.appendChild(frame);
-
-    expect(
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "color-scheme"
-      )
-    ).toBe("dark");
-    expect(getComputedStyle(frame).getPropertyValue("color-scheme")).toBe(
-      "normal"
     );
   });
 });

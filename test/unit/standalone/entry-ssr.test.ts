@@ -1495,48 +1495,6 @@ describe("render() server-rendered meta tags", () => {
       expect(html).toContain("--sb-primary-color: #abc123;");
     });
 
-    it("gives the page the linked customization's light/dark scheme", async () => {
-      mockFetchWithCustomizationResponse({
-        success: true,
-        data: {
-          id: "customization_dark",
-          name: "Dark",
-          variants: [
-            {
-              id: "variant_dark",
-              name: "Dark variant",
-              themes: { background: "#0a0a0a" },
-              createdAt: 1,
-              updatedAt: 1,
-            },
-          ],
-          defaultVariantId: "variant_dark",
-          logoUrl: null,
-          createdAt: 1,
-          updatedAt: 1,
-        },
-      });
-
-      const html = await renderHtml(
-        "/en/AAB/genesis/1?useFreeBibleAPI=true&customization=owner.customization_dark"
-      );
-
-      // The server renders Light underneath; the customization's own
-      // layer, later in the document, carries the dark scheme.
-      const styles = Array.from(
-        html.matchAll(/<style([^>]*)>([\s\S]*?)<\/style>/g),
-        (match) => ({ attrs: match[1]!, css: match[2]! })
-      );
-      expect(
-        styles.find((style) => style.attrs.includes('id="sb-theme-styles"'))
-          ?.css
-      ).toContain("color-scheme: light;");
-      const customizationLayer = styles.find((style) =>
-        style.css.includes("--sb-background: #0a0a0a;")
-      );
-      expect(customizationLayer?.css).toContain("color-scheme: dark;");
-    });
-
     // Unlike the test above, this one doesn't actually exercise the SSR
     // suspend: a `data_not_found` response makes `loadByLocator` return
     // before it ever sets `linkedCustomization`, so `--sb-primary-color`

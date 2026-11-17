@@ -1,13 +1,11 @@
 import {
   applyBrowserThemeColor,
   applyHighlightOverrides,
-  browserColorSchemeForBackground,
   createTheme as createThemeManager,
   DARK_THEME,
   LIGHT_THEME,
   filterValidFontFamilyOverrides,
   composeThemeStyleText,
-  parseCssHexColor,
   parseThemeBackgroundColor,
   THEME_PRESET_STYLE_TEXT,
   generateThemeCssClasses,
@@ -156,63 +154,11 @@ describe("ThemeManager CSS helpers", () => {
   });
 
   describe("composeThemeStyleText", () => {
-    it("scopes the theme variables to body, not :root or html", () => {
+    it("scopes the composed CSS to body, not :root or html", () => {
       const css = composeThemeStyleText(createTheme());
 
       expect(css.trimStart().startsWith("body {")).toBe(true);
-      const rootRule = /:root \{[^}]*\}/.exec(css)?.[0] ?? "";
-      expect(rootRule).not.toContain("--sb-");
-    });
-
-    it("sets no color-scheme for a background that is not hex", () => {
-      const style = document.createElement("style");
-      style.textContent = composeThemeStyleText(
-        createTheme({
-          variables: {
-            ...createTheme().variables,
-            background: "rgb(10, 10, 10)",
-          },
-        })
-      );
-      document.head.appendChild(style);
-      try {
-        const root = getComputedStyle(document.documentElement);
-        expect(root.getPropertyValue("color-scheme")).toBe("normal");
-      } finally {
-        style.remove();
-      }
-    });
-
-    it("gives the root element the theme's color-scheme but no background of its own", () => {
-      const style = document.createElement("style");
-      style.textContent = composeThemeStyleText(
-        createTheme({
-          variables: { ...createTheme().variables, background: "#0a0a0a" },
-        })
-      );
-      document.head.appendChild(style);
-      try {
-        const root = getComputedStyle(document.documentElement);
-        expect(root.getPropertyValue("color-scheme")).toBe("dark");
-        // Left transparent so body's background (a customization's
-        // included) is what fills the canvas.
-        expect(root.backgroundColor).toBe("rgba(0, 0, 0, 0)");
-      } finally {
-        style.remove();
-      }
-    });
-
-    it("leaves out the :root rule for a document that keeps its own color-scheme", () => {
-      const css = composeThemeStyleText(
-        createTheme({
-          variables: { ...createTheme().variables, background: "#0a0a0a" },
-        }),
-        { rootColorScheme: false }
-      );
-
       expect(css).not.toContain(":root");
-      expect(css).not.toContain("color-scheme");
-      expect(css).toContain("--sb-background: #0a0a0a;");
     });
 
     it("strips a literal < from a custom override value, preventing a </style breakout", () => {
@@ -245,61 +191,6 @@ describe("parseThemeBackgroundColor", () => {
     expect(
       parseThemeBackgroundColor("body { --sb-font-color: #333; }")
     ).toBeNull();
-  });
-});
-
-describe("parseCssHexColor", () => {
-  it("expands #rgb and reads #rrggbb / #rrggbbaa", () => {
-    expect(parseCssHexColor("#0af")).toEqual([0, 170, 255, 1]);
-    expect(parseCssHexColor("#0a0a0a")).toEqual([10, 10, 10, 1]);
-    expect(parseCssHexColor("#f8fafc80")).toEqual([248, 250, 252, 128 / 255]);
-  });
-
-  it("reads the 4-digit #rgba form", () => {
-    expect(parseCssHexColor("#1118")).toEqual([17, 17, 17, 136 / 255]);
-  });
-
-  it("returns null for non-hex colors so callers can leave chrome alone", () => {
-    expect(parseCssHexColor("rgb(10, 10, 10)")).toBeNull();
-    expect(parseCssHexColor("black")).toBeNull();
-    expect(parseCssHexColor("")).toBeNull();
-  });
-});
-
-describe("browserColorSchemeForBackground", () => {
-  it("maps the built-in Light and Dark backgrounds to matching schemes", () => {
-    expect(
-      browserColorSchemeForBackground(LIGHT_THEME.variables.background)
-    ).toBe("light");
-    expect(
-      browserColorSchemeForBackground(DARK_THEME.variables.background)
-    ).toBe("dark");
-  });
-
-  it("treats near-black custom backgrounds as dark and pale ones as light", () => {
-    expect(browserColorSchemeForBackground("#222222")).toBe("dark");
-    expect(browserColorSchemeForBackground("#eeeeee")).toBe("light");
-  });
-
-  it("keeps mid-gray branding backgrounds on the light scheme", () => {
-    // #b0b0b0 is clearly light (~0.43 luminance) but sits below the naive
-    // 0.5 midpoint — it must stay light so form controls don't flip dark on
-    // a light page.
-    expect(browserColorSchemeForBackground("#b0b0b0")).toBe("light");
-    expect(browserColorSchemeForBackground("#808080")).toBe("light");
-  });
-
-  it("returns null when the color cannot be parsed as hex", () => {
-    expect(browserColorSchemeForBackground("transparent")).toBeNull();
-  });
-
-  it("judges a see-through background by what shows through it", () => {
-    // Mostly opaque near-black still reads as dark...
-    expect(browserColorSchemeForBackground("#111e")).toBe("dark");
-    expect(browserColorSchemeForBackground("#111111ee")).toBe("dark");
-    // ...but a fully transparent one is just the white canvas.
-    expect(browserColorSchemeForBackground("#00000000")).toBe("light");
-    expect(browserColorSchemeForBackground("#0000")).toBe("light");
   });
 });
 
@@ -533,7 +424,7 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(tag?.textContent).toContain("--sb-background: #0a0a0a;");
   });
 
-  it("sets the theme-color meta and the root color-scheme to the active theme", () => {
+  it("sets the theme-color meta to the active theme's background", () => {
     document.querySelectorAll('meta[name="theme-color"]').forEach((el) => {
       el.remove();
     });
@@ -546,11 +437,6 @@ describe("ThemeManager storage (via SettingsManager)", () => {
       'meta[name="theme-color"]'
     ) as HTMLMetaElement | null;
     expect(tag?.content).toBe("#f8fafc");
-    expect(
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "color-scheme"
-      )
-    ).toBe("light");
 
     theme.setTheme("dark");
 
@@ -558,11 +444,6 @@ describe("ThemeManager storage (via SettingsManager)", () => {
       (document.querySelector('meta[name="theme-color"]') as HTMLMetaElement)
         .content
     ).toBe("#0a0a0a");
-    expect(
-      getComputedStyle(document.documentElement).getPropertyValue(
-        "color-scheme"
-      )
-    ).toBe("dark");
   });
 
   it("does not clobber a dark #sb-theme-styles tag with the system default on boot", () => {

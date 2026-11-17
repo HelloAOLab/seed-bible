@@ -32,20 +32,6 @@ export function hexToRgb(hex: string): Rgb | null {
   };
 }
 
-function srgbChannelToLinear(channel: number): number {
-  const c = channel / 255;
-  return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-}
-
-/** WCAG relative luminance, from 0 (black) to 1 (white), of 0–255 channels. */
-export function relativeLuminance({ r, g, b }: Rgb): number {
-  return (
-    0.2126 * srgbChannelToLinear(r) +
-    0.7152 * srgbChannelToLinear(g) +
-    0.0722 * srgbChannelToLinear(b)
-  );
-}
-
 export function rgbToHex(r: number, g: number, b: number): string {
   const toByte = (n: number) =>
     Math.round(Math.min(255, Math.max(0, Number.isFinite(n) ? n : 0)))

@@ -387,15 +387,6 @@ html {
   font-size: calc(16px * var(--sb-ui-scale, 1));
 }
 
-/* A dark theme sets `color-scheme: dark` on the root, which frames inherit.
-   When a frame's own page doesn't also declare dark (extension sandboxes,
-   `ao.bot` portals, video embeds), browsers paint an opaque light backdrop
-   behind it, which flashes white while it loads. Keeping frames on the
-   default scheme matches what most embedded pages declare. */
-iframe {
-  color-scheme: normal;
-}
-
 /* Metric-matched stand-ins used while the Google web fonts download. The
    numbers are measured, and why they are what they are is written up beside
    FALLBACK_FACES in app/fontFallbacks.ts (a test keeps these in step with it).
@@ -489,10 +480,9 @@ body {
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
 
-  /* Gives scrollbars the theme's own font color rather than the browser's
-     stock light or dark ones (`color-scheme` only picks between those two).
-     It inherits, so every scroll container picks up the active theme's
-     colors. */
+  /* Without this, browsers draw light scrollbars even on dark themes (no
+     `color-scheme` is set). It inherits, so every scroll container picks up
+     the active theme's colors. */
   scrollbar-color: color-mix(in srgb, var(--sb-font-color), transparent 80%)
     transparent;
 

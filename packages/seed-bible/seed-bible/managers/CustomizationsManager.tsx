@@ -36,7 +36,6 @@ import {
   type ThemeOverrides,
 } from "./ThemeManager";
 import { toShareableUrl } from "../app/publicLinks";
-import { relativeLuminance } from "../components/ColorPicker/color";
 
 export const CUSTOMIZATION_MARKER = "publicRead:seedBibleCustomization";
 
@@ -129,10 +128,20 @@ export function lightenColor(hex: string, amount: number): string {
 export const SECONDARY_LIGHTEN_AMOUNT = 0.35;
 export const TERTIARY_LIGHTEN_AMOUNT = 0.55;
 
+/** Linearizes one sRGB channel (0-255) per the WCAG relative-luminance formula. */
+function srgbChannelToLinear(channel: number): number {
+  const c = channel / 255;
+  return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
 /** WCAG relative luminance (0-1) of a hex color. */
-function hexLuminance(hex: string): number {
+function relativeLuminance(hex: string): number {
   const [r, g, b] = hexToRgb(hex);
-  return relativeLuminance({ r, g, b });
+  return (
+    0.2126 * srgbChannelToLinear(r) +
+    0.7152 * srgbChannelToLinear(g) +
+    0.0722 * srgbChannelToLinear(b)
+  );
 }
 
 /**
@@ -141,8 +150,8 @@ function hexLuminance(hex: string): number {
  * argument order doesn't matter.
  */
 export function getContrastRatio(hexA: string, hexB: string): number {
-  const luminanceA = hexLuminance(hexA);
-  const luminanceB = hexLuminance(hexB);
+  const luminanceA = relativeLuminance(hexA);
+  const luminanceB = relativeLuminance(hexB);
   const lighter = Math.max(luminanceA, luminanceB);
   const darker = Math.min(luminanceA, luminanceB);
   return (lighter + 0.05) / (darker + 0.05);

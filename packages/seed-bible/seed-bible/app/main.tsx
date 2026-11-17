@@ -15,10 +15,7 @@ import { Suspense } from "preact/compat";
 import { useEffect } from "preact/hooks";
 import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu/ContextMenu";
-import {
-  composeRootColorSchemeRule,
-  type BibleTheme,
-} from "../managers/ThemeManager";
+import type { BibleTheme } from "../managers/ThemeManager";
 import { ModalHost } from "../components/ModalHost/ModalHost";
 import { ToastHost } from "../components/ToastHost/ToastHost";
 import { LoginModal } from "../components/LoginModal/LoginModal";
@@ -116,11 +113,8 @@ export function ExternalResourceDependencies({
       )}
       <style
         dangerouslySetInnerHTML={{
-          __html: activeCustomizationTheme.value
-            ? `body {\n${themeCssVariables.value}\n}\n${
-                composeRootColorSchemeRule(activeCustomizationTheme.value) ||
-                ":root {\ncolor-scheme: normal;\n}\n"
-              }`
+          __html: hasCustomization
+            ? `body {\n${themeCssVariables.value}\n}`
             : "",
         }}
       />
