@@ -1,4 +1,5 @@
 import { signal, type ReadonlySignal } from "@preact/signals";
+import { baseLanguageTag } from "../i18n/I18nManager";
 
 /** One verse to speak, paired with the number that identifies it on screen. */
 export interface SpeechVerse {
@@ -168,18 +169,6 @@ function getSpeechSynthesis(): SpeechSynthesis | null {
 function getUtteranceConstructor(): typeof SpeechSynthesisUtterance | null {
   if (typeof window === "undefined") return null;
   return window.SpeechSynthesisUtterance ?? null;
-}
-
-/**
- * The primary subtag of a language tag, lowercased: "en-GB", "en_US" and "en"
- * all reduce to "en".
- *
- * Voices name themselves with a region ("en-GB", "pt-BR") while a translation
- * only knows its language, so comparing the two has to happen at this level or
- * an American voice would never be considered able to read English.
- */
-function baseLanguageTag(tag: string): string {
-  return tag.toLowerCase().split(/[-_]/)[0] ?? "";
 }
 
 /**

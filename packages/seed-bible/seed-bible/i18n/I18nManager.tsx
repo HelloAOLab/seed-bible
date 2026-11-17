@@ -41,6 +41,18 @@ const localeLoaders = import.meta.glob("./*.json") as Record<
 
 export { i18n };
 
+/**
+ * The primary subtag of a language tag, lowercased: "en-GB", "en_US" and "en"
+ * all reduce to "en".
+ *
+ * Voices name themselves with a region ("en-GB", "pt-BR") while a translation
+ * only knows its language, so comparing the two has to happen at this level or
+ * an American voice would never be considered able to read English.
+ */
+export function baseLanguageTag(tag: string): string {
+  return tag.toLowerCase().split(/[-_]/)[0] ?? "";
+}
+
 export type BotTranslations = Record<string, Record<string, string>>;
 
 function getLanguage(locale: string | null | undefined): string | null {

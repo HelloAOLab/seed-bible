@@ -47,6 +47,8 @@ export interface ExtensionSensitiveProxyDefinitionFile {
 export interface ExtensionMetaFile {
   id: string;
   translations: Record<string, ExtensionTranslationFile>;
+  icon?: string;
+  screenshots?: { src: string; caption?: string }[];
   dependencies?: string[];
   autoinstall?: boolean;
   settings?: Record<string, ExtensionSettingDefinitionFile>;
@@ -163,7 +165,8 @@ export const FALLBACK_LANGUAGE = "en";
 /**
  * Reduces an extension's meta to what the boot path actually needs:
  * `id`/`dependencies`/`autoinstall`, which resolve install order and
- * auto-install eligibility, plus English `title`/`description`.
+ * auto-install eligibility, icon and screenshots, plus English
+ * `title`/`description` and screenshot captions.
  *
  * English stays inline for two reasons: `ExtensionMeta` requires it (it is
  * i18next's `fallbackLng`, so it is what renders when a language has no string
@@ -172,11 +175,12 @@ export const FALLBACK_LANGUAGE = "en";
  * about 1.8 KB; it was all 77 of them that cost 138 KB.
  *
  * Every other language lives in the per-language modules above, and every key
- * beyond `title`/`description` is behind `loadFullTranslations`. `settings` (and
- * the `sensitive` destinations its settings name) is kept inline
- * unconditionally, alongside `dependencies`/`autoinstall`: unlike translations
- * it isn't per-locale text, and it's needed up front to know whether to show a
- * "Configure" action and to build its form.
+ * beyond `title`/`description` and screenshot captions is behind
+ * `loadFullTranslations`. `settings` (and the `sensitive` destinations its
+ * settings name) is kept inline unconditionally, alongside
+ * `dependencies`/`autoinstall`: unlike
+ * translations, it isn't per-locale text, and it's needed up front to know
+ * whether to show a "Configure" action and to build its form.
  */
 export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
   const english = meta.translations?.[FALLBACK_LANGUAGE];
@@ -188,8 +192,19 @@ export function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
       [FALLBACK_LANGUAGE]: {
         title: english?.title ?? meta.id,
         description: english?.description ?? "",
+        ...Object.fromEntries(
+          (meta.screenshots ?? []).flatMap(({ caption }) =>
+            caption && english?.[caption] !== undefined
+              ? [[caption, english[caption]]]
+              : []
+          )
+        ),
       },
     },
+    ...(meta.icon !== undefined ? { icon: meta.icon } : {}),
+    ...(meta.screenshots !== undefined
+      ? { screenshots: meta.screenshots }
+      : {}),
     ...(meta.dependencies ? { dependencies: meta.dependencies } : {}),
     ...(meta.autoinstall !== undefined
       ? { autoinstall: meta.autoinstall }
@@ -219,6 +234,15 @@ export function generateEntryModuleSource(
   const unavailable = (message: string) =>
     `() => Promise.reject(new Error(${toJsLiteral(message)}))`;
 
+  const assetImports: string[] = [];
+  const importAsset = (importBase: string, file: string): string => {
+    const identifier = `asset_${assetImports.length}`;
+    assetImports.push(
+      `import ${identifier} from ${toJsLiteral(`${importBase}/${file}?url`)};`
+    );
+    return identifier;
+  };
+
   const entries = extensions
     .map(({ importBase, entryFile = "index", meta }) => {
       const loadFullTranslations = serverBuild
@@ -229,8 +253,17 @@ export function generateEntryModuleSource(
       const load = serverBuild
         ? unavailable(`${meta.id} is not available in the SSR bundle`)
         : `() => import(${toJsLiteral(`${importBase}/${entryFile}`)})`;
+      const sourceMeta = trimMeta(meta);
+      const { icon, screenshots, ...rest } = sourceMeta;
+      const iconSource =
+        icon === undefined ? "" : `,"icon":${importAsset(importBase, icon)}`;
+      const screenshotsSource =
+        screenshots === undefined
+          ? ""
+          : `, screenshots: [${screenshots.map(({ src, ...shotRest }) => `{...${toJsLiteral(shotRest)}, src: ${importAsset(importBase, src)}}`).join(", ")}]`;
+      const metaSource = `{...${toJsLiteral(rest)}${iconSource}${screenshotsSource}}`;
       return `  {
-    meta: ${toJsLiteral(trimMeta(meta))},
+    meta: ${metaSource},
     loadFullTranslations: ${loadFullTranslations},
     import: ${load},
   },`;
@@ -249,7 +282,7 @@ export function generateEntryModuleSource(
     )
     .join("\n");
 
-  return `const extensions = [
+  return `${assetImports.length ? assetImports.join("\n") + "\n\n" : ""}const extensions = [
 ${entries}
 ];
 
@@ -257,6 +290,6 @@ const loadListTranslations = {
 ${localeEntries}
 };
 
-export default { id: ${JSON.stringify(setId)}, extensions, loadListTranslations };
+export default { id: ${toJsLiteral(setId)}, extensions, loadListTranslations };
 `;
 }
