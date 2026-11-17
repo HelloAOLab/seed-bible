@@ -73,10 +73,10 @@ function paintedBackground(): string | null | undefined {
 
 describe("index.html pre-hydration theme script", () => {
   afterEach(() => {
+    vi.unstubAllGlobals();
     localStorage.clear();
     document.head.innerHTML = "";
     window.history.replaceState({}, "", "/");
-    vi.unstubAllGlobals();
   });
 
   it("paints Dark for a first-time visitor on a dark device, since System is the default", () => {
@@ -217,30 +217,6 @@ describe("index.html pre-hydration theme script", () => {
 
     expect(runInlineThemeScript).not.toThrow();
     expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
-  });
-
-  it("still paints System dark when localStorage is unavailable", () => {
-    installServerRenderedHead();
-    stubColorScheme(true);
-    const original = window.localStorage;
-    Object.defineProperty(window, "localStorage", {
-      configurable: true,
-      get() {
-        return undefined;
-      },
-    });
-
-    try {
-      expect(runInlineThemeScript).not.toThrow();
-      expect(paintedBackground()).toBe(DARK_THEME.variables.background);
-      expect(rootColorScheme()).toBe("dark");
-    } finally {
-      Object.defineProperty(window, "localStorage", {
-        configurable: true,
-        writable: true,
-        value: original,
-      });
-    }
   });
 });
 

@@ -80,15 +80,14 @@
       // account's theme (from the profile copy LoginManager caches under
       // "sb-profile-cache-<userId>"), then the anonymous device store.
       (function () {
-        function readAccountThemeId(store) {
+        function readAccountThemeId() {
           try {
-            if (!store) return null;
             // A CasualOS session key is "vSK1.<base64 userId>.<...>".
-            var sessionKey = store.getItem("sessionKey");
+            var sessionKey = localStorage.getItem("sessionKey");
             if (!sessionKey || sessionKey.indexOf("vSK1.") !== 0) return null;
             var userId = atob(sessionKey.split(".")[1] || "");
             if (!userId) return null;
-            var cached = store.getItem("sb-profile-cache-" + userId);
+            var cached = localStorage.getItem("sb-profile-cache-" + userId);
             var profile = cached && JSON.parse(cached);
             // LoginManager ignores a cached copy that fails its profile
             // schema. Checking the fields it always requires keeps this
@@ -103,15 +102,7 @@
           }
         }
         try {
-          // Storage can be blocked or missing (private mode, blocked
-          // cookies); don't let that stop the System light/dark paint below.
-          var store = null;
-          try {
-            store = window.localStorage;
-          } catch (e) {
-            store = null;
-          }
-          var raw = store ? store.getItem("sb-profile-config-local") : null;
+          var raw = localStorage.getItem("sb-profile-config-local");
           var params = new URLSearchParams(window.location.search);
           var embed = (params.get("embed") || "").toLowerCase();
           var linkTheme =
@@ -120,7 +111,7 @@
               : null;
           var themeId =
             (linkTheme && linkTheme.trim()) ||
-            readAccountThemeId(store) ||
+            readAccountThemeId() ||
             (raw && JSON.parse(raw).themeId) ||
             "system";
           if (themeId === "system") {
@@ -135,13 +126,13 @@
           var tag = document.getElementById("sb-theme-styles");
           if (tag) tag.textContent = css;
           var bg = /--sb-background:\s*([^;]+)/.exec(css);
-          var color = bg && bg[1] ? bg[1].trim() : "";
           var themeColor =
             document.getElementById("sb-theme-color") ||
             document.querySelector('meta[name="theme-color"]');
-          if (color && themeColor) themeColor.setAttribute("content", color);
+          if (bg && themeColor)
+            themeColor.setAttribute("content", bg[1].trim());
         } catch (e) {
-          // Corrupt JSON / unexpected DOM — keep the server's default.
+          // Corrupt/inaccessible storage — keep the server's default.
         }
       })();
     </script>
