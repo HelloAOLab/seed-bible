@@ -1,12 +1,12 @@
 import "./BottomSheet.css";
 import type { ComponentChild, ComponentChildren, JSX, Ref } from "preact";
 import { createPortal } from "preact/compat";
-import { useCallback, useEffect, useRef } from "preact/hooks";
+import { useCallback, useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nContext";
 import { useOverlayDismiss } from "../useOverlayDismiss";
 import { IconButton } from "../IconButton/IconButton";
-import { trapTabKey, useModalFocus } from "../useModalFocus";
+import { useModalLayer } from "../useModalFocus";
 
 /** A press that moves less than this is a tap, not a drag. */
 const TAP_SLOP_PX = 6;
@@ -163,44 +163,19 @@ export function BottomSheet(props: BottomSheetProps) {
     [sheetRef]
   );
 
-  // Read through a ref so the document listener added once on mount always
-  // calls the latest handler.
-  const onEscapeRef = useRef(onClose);
-  onEscapeRef.current = props.onEscape ?? onClose;
+  const onEscape = props.onEscape ?? onClose;
 
-  useModalFocus(sheetEl, undefined, modal);
-
-  useEffect(() => {
-    if (!modal) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.defaultPrevented) return;
-      const sheet = sheetEl.current;
-      const target = event.target as Node | null;
-      // Something stacked over the sheet (a modal opened from it) owns
-      // Escape while it has focus.
-      if (target !== document.body && !sheet?.contains(target)) return;
-      event.preventDefault();
-      onEscapeRef.current();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [modal]);
+  useModalLayer(sheetEl, { enabled: modal, onEscape });
 
   const handleSheetKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Escape" && !modal && !event.defaultPrevented) {
-      // A non-modal sheet can hold other people's content (extension cards in
-      // the verse sheet), whose fields may use Escape without preventing it.
-      if ((event.target as Element | null)?.closest?.(EDITABLE_SELECTOR)) {
-        return;
-      }
-      event.preventDefault();
-      onEscapeRef.current();
+    if (event.key !== "Escape" || modal || event.defaultPrevented) return;
+    // A non-modal sheet can hold other people's content (extension cards in
+    // the verse sheet), whose fields may use Escape without preventing it.
+    if ((event.target as Element | null)?.closest?.(EDITABLE_SELECTOR)) {
       return;
     }
-    if (event.key !== "Tab" || !modal) return;
-    const sheet = sheetEl.current;
-    if (!sheet) return;
-    trapTabKey(event, sheet);
+    event.preventDefault();
+    onEscape();
   };
 
   const canExpand = !!expansion?.canExpand;
