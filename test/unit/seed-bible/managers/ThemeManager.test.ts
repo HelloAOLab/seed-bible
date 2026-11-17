@@ -643,33 +643,6 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     ).toBe("dark");
   });
 
-  it("points the browser chrome at a theme drawn over the user's own, and back", () => {
-    document
-      .querySelectorAll('meta[name="theme-color"], meta[name="color-scheme"]')
-      .forEach((el) => el.remove());
-    document.getElementById("sb-theme-styles")?.remove();
-    const login = makeFakeLogin(null);
-    const settings = makeSettings(login);
-    const theme = createThemeManager(settings);
-    const meta = (name: string) =>
-      (document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement)
-        .content;
-
-    theme.chromeOverrideTheme.value = {
-      ...LIGHT_THEME,
-      id: "customization",
-      variables: { ...LIGHT_THEME.variables, background: "#101820" },
-    };
-
-    expect(meta("theme-color")).toBe("#101820");
-    expect(meta("color-scheme")).toBe("dark");
-
-    theme.chromeOverrideTheme.value = null;
-
-    expect(meta("theme-color")).toBe(LIGHT_THEME.variables.background);
-    expect(meta("color-scheme")).toBe("light");
-  });
-
   it("does not clobber a dark #sb-theme-styles tag with the system default on boot", () => {
     // Returning visitor who pinned dark: the server renders Light, the inline
     // script in index.html patches the tag to dark, then createTheme() runs

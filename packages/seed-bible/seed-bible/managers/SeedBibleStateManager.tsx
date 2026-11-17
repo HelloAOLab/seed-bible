@@ -979,10 +979,6 @@ export function createSeedBibleState(
     options.initialCustomizationSeed,
     options.revalidateInitialCustomizationSeed
   );
-  effect(() => {
-    themeManager.chromeOverrideTheme.value =
-      customizations.activeResolvedTheme.value;
-  });
   // The active Customization's chosen default translation, if any — see
   // `createTabs`'s `activeCustomizationDefaultTranslationId` parameter for how
   // it overrides Seed Bible's per-language default the same way
