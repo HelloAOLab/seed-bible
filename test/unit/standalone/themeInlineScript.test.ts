@@ -251,7 +251,7 @@ describe("index.html pre-hydration theme script", () => {
   });
 });
 
-describe("index.html Android PWA chrome meta", () => {
+describe("index.html color-scheme meta", () => {
   afterEach(() => {
     localStorage.clear();
     document.head.innerHTML = "";
@@ -262,8 +262,8 @@ describe("index.html Android PWA chrome meta", () => {
       resolve(__dirname, "../../../index.html"),
       "utf8"
     );
-    // The bottom strip is driven by color-scheme, not by drawing under the
-    // system bars — keep the page inside the safe area on every platform.
+    // Keep the page inside the safe area on every platform; nothing in the
+    // app pads for content drawn under the system bars.
     expect(html).not.toMatch(/viewport-fit=cover/);
     expect(html).toMatch(
       /<meta name="color-scheme" id="sb-color-scheme" content="light"/

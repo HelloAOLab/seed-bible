@@ -562,16 +562,15 @@ export function parseCssHexColor(
 
 /**
  * Relative luminance where black and white text contrast equally against
- * the background (WCAG). Used for Android PWA `color-scheme` so mid-gray
- * custom branding backgrounds stay on the light strip/controls rather than
- * flipping dark at the naive 0.5 midpoint.
+ * the background (WCAG). Used for `color-scheme` so mid-gray custom
+ * branding backgrounds keep light browser controls rather than flipping dark
+ * at the naive 0.5 midpoint.
  */
 export const LIGHT_DARK_CROSSOVER = 0.179;
 
 /**
- * Whether the app background is dark enough that Android's installed-PWA
- * system navigation strip should use the dark color-scheme (near-black)
- * instead of the light one (near-white).
+ * Whether the app background is dark enough for the browser's dark
+ * `color-scheme` (dark form controls and scrollbars) instead of the light one.
  */
 export function browserColorSchemeForBackground(
   color: string
@@ -595,12 +594,13 @@ export function browserColorSchemeForBackground(
 }
 
 /**
- * Installed Android PWAs paint the bottom system navigation / gesture
- * strip from `<meta name="color-scheme">` (light → white, dark → black),
- * not from `theme-color` (that one drives the top status bar). Keep the
- * meta in sync with the in-app theme so a Dark (or dark custom) background
- * does not sit above a white strip. The root element's own `color-scheme`
+ * Keeps `<meta name="color-scheme">` in sync with the in-app theme, so the
+ * browser's own controls match it. The root element's own `color-scheme`
  * comes from the composed theme CSS (see `composeThemeStyleText`).
+ *
+ * This doesn't color an installed Android app's bottom navigation strip:
+ * Chrome paints that from the manifest's `theme_color` only (see
+ * `vite.config.ts`).
  */
 export function applyBrowserColorScheme(
   scheme: BrowserColorScheme | "normal"
@@ -1414,8 +1414,8 @@ export interface ThemeManager {
   setTheme: (themeId: string) => void;
   /**
    * A theme drawn over the user's own one, such as an active Customization.
-   * While set, the browser chrome (the status bar's `theme-color` and the
-   * Android nav strip's `color-scheme`) follows its background instead.
+   * While set, the `theme-color` and `color-scheme` metas follow its
+   * background instead.
    */
   chromeOverrideTheme: Signal<BibleTheme | null>;
 }

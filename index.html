@@ -19,10 +19,9 @@
          theme's --sb-background so the bar follows light/dark (and custom
          background colors) instead of the OS prefers-color-scheme. -->
     <meta name="theme-color" id="sb-theme-color" content="#f8fafc" />
-    <!-- Installed Android PWAs paint the bottom system navigation / gesture
-         strip from color-scheme (light → white, dark → black), not from
-         theme-color. Keep this in sync with the in-app theme alongside
-         theme-color so Dark mode does not sit above a white strip. -->
+    <!-- Tells the browser whether the theme is light or dark, so its own
+         controls (form fields, scrollbars) match. The script below and
+         ThemeManager keep it in sync with the active theme. -->
     <meta name="color-scheme" id="sb-color-scheme" content="light" />
     <link rel="icon" href="/standalone/img/favicon.ico" />
     <link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />
@@ -145,10 +144,9 @@
             document.getElementById("sb-theme-color") ||
             document.querySelector('meta[name="theme-color"]');
           if (color && themeColor) themeColor.setAttribute("content", color);
-          // The bottom Android PWA nav strip follows <meta name="color-scheme">,
-          // not theme-color. ThemeManager's composeThemeStyleText already
-          // decided light/dark and wrote it into the theme CSS's :root rule;
-          // copy it onto the meta rather than deciding again here.
+          // ThemeManager's composeThemeStyleText already decided light/dark
+          // and wrote it into the theme CSS's :root rule; copy it onto the
+          // color-scheme meta rather than deciding again here.
           var scheme = /[{;\s]color-scheme:\s*(light|dark)/.exec(css);
           var schemeMeta =
             document.getElementById("sb-color-scheme") ||
