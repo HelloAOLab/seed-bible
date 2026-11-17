@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
+import path from "node:path";
 import { createServer, type Server } from "node:http";
 import { loadExtensionProjectInfo } from "./project.js";
-import { readIcon } from "./icon.js";
+import { readIcon, readImage } from "./images.js";
 
 export interface DevExtensionServer {
   /** Where the `ExtensionSet` is served, for `?extensionSet=`. */
@@ -49,10 +50,56 @@ export async function startDevExtensionServer(options: {
         }
         response.setHeader("Content-Type", icon.mimeType);
         response.end(icon.bytes);
+      } else if (pathname.startsWith("/screenshots/")) {
+        const { meta } = await loadExtensionProjectInfo(root);
+        const match = /^\/screenshots\/(\d+)(\.[a-z]+)$/.exec(pathname);
+        const shot =
+          match && Array.isArray(meta.screenshots)
+            ? meta.screenshots[Number(match[1])]
+            : undefined;
+        const image =
+          typeof shot?.src === "string"
+            ? await readImage(root, shot.src, "screenshot").catch(() => null)
+            : null;
+        if (!image || image.extension !== match?.[2]) {
+          response.statusCode = 404;
+          response.end();
+          return;
+        }
+        response.setHeader("Content-Type", image.mimeType);
+        response.end(image.bytes);
       } else if (pathname === "/extension-set.json") {
         const bundle = await readFile(bundlePath);
         const { meta } = await loadExtensionProjectInfo(root);
         const icon = await readIcon(root, meta);
+        const screenshots = Array.isArray(meta.screenshots)
+          ? await Promise.all(
+              meta.screenshots.map(async (shot, index) => {
+                if (
+                  !shot ||
+                  typeof shot.src !== "string" ||
+                  /^(?:[a-z][a-z\d+.-]*:|\/)/i.test(shot.src)
+                )
+                  return shot;
+                const relative = path.relative(
+                  path.resolve(root),
+                  path.resolve(root, shot.src)
+                );
+                if (relative === ".." || relative.startsWith(`..${path.sep}`))
+                  return shot;
+                const exists = await stat(path.resolve(root, shot.src)).then(
+                  (file) => file.isFile(),
+                  () => false
+                );
+                return exists
+                  ? {
+                      ...shot,
+                      src: `${base}/screenshots/${index}${path.extname(shot.src).toLowerCase()}`,
+                    }
+                  : shot;
+              })
+            )
+          : meta.screenshots;
         response.setHeader("Content-Type", "application/json");
         response.end(
           JSON.stringify({
@@ -64,6 +111,7 @@ export async function startDevExtensionServer(options: {
                   ...meta,
                   // Named by its type so the browser can tell what it is.
                   ...(icon && { icon: `${base}/icon${icon.extension}` }),
+                  ...(meta.screenshots !== undefined && { screenshots }),
                   integrity: `sha384-${createHash("sha384").update(bundle).digest("base64")}`,
                 },
               },

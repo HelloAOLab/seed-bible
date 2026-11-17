@@ -1,5 +1,6 @@
 {
   "id": "ext_Apologist",
+  "icon": "icon-square.svg",
   "settings": {
     "chatEnabled": {
       "type": "boolean",
