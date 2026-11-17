@@ -936,7 +936,7 @@ function ItemForm(props: {
         >
           <select
             id="sb-ccl-category"
-            className="sb-cz-input"
+            className="sb-settings-language-select"
             value={form.value.categoryId}
             onChange={set("categoryId")}
           >
@@ -1419,7 +1419,7 @@ function AiSuggestionsSettings(props: {
         </label>
         <select
           id="sb-ccl-classifier"
-          className="sb-cz-input"
+          className="sb-settings-language-select"
           value={chosen}
           disabled={customContent.isSaving.value}
           onChange={(event) => {
