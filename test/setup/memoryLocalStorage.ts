@@ -43,11 +43,9 @@ if (needsPolyfill) {
     configurable: true,
     writable: true,
   });
-  if (typeof window !== "undefined") {
-    Object.defineProperty(window, "localStorage", {
-      value: memory,
-      configurable: true,
-      writable: true,
-    });
-  }
+  Object.defineProperty(window, "localStorage", {
+    value: memory,
+    configurable: true,
+    writable: true,
+  });
 }
