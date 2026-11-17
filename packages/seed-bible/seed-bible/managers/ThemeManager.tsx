@@ -670,9 +670,11 @@ function applyBrowserThemeColorFromCss(css: string): void {
  * server-side (see `entry-ssr.tsx`'s `THEME_STYLE_TAG` substitution), so an
  * override containing `</style` could otherwise break out of that tag.
  *
- * It also carries a `:root` rule with the theme's `color-scheme` and
- * background. That rule holds literal values, never `--sb-*` variables,
- * because `html` sits above `body` and can't read them. Putting it here
+ * It also carries a `:root` rule with the theme's `color-scheme`, as a
+ * literal value: `html` sits above `body` and can't read the `--sb-*`
+ * variables. It deliberately sets no background, so `body`'s background
+ * (including a customization's) still fills the canvas, the area behind
+ * the page that shows on overscroll and below short content. Putting it here
  * means the server-rendered tag, the pre-hydration script in `index.html`
  * (which copies this text and reads the scheme back out of it to set
  * `<meta name="color-scheme">`) and this manager all get the light/dark
@@ -685,15 +687,12 @@ export function composeThemeStyleText(theme: BibleTheme): string {
 
 function composeRootColorSchemeRule(theme: BibleTheme): string {
   if (!theme.variables.background) return "";
-  const background = sanitizeCssValue(String(theme.variables.background));
-  // A background we can't read gets no color-scheme, so the browser's
-  // default (light) applies rather than the previous theme's.
-  const scheme = browserColorSchemeForBackground(background);
-  const declarations = [
-    scheme ? `color-scheme: ${scheme};` : "",
-    `background-color: ${background};`,
-  ].filter(Boolean);
-  return `:root {\n${declarations.join("\n")}\n}\n`;
+  // A background we can't read gets no rule, so the browser's default
+  // (light) applies rather than the previous theme's.
+  const scheme = browserColorSchemeForBackground(
+    sanitizeCssValue(String(theme.variables.background))
+  );
+  return scheme ? `:root {\ncolor-scheme: ${scheme};\n}\n` : "";
 }
 
 export const LIGHT_THEME: BibleTheme = {

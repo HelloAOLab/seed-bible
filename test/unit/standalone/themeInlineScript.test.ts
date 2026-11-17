@@ -294,9 +294,6 @@ describe("index.html Android PWA chrome meta", () => {
     runInlineThemeScript();
 
     expect(paintedColorScheme()).toBe("normal");
-    expect(getComputedStyle(document.documentElement).backgroundColor).toBe(
-      "rgb(10, 10, 10)"
-    );
   });
 
   it.each(["#0a0a0a", "#222222", "#808080", "#b0b0b0", "#f8fafc"])(

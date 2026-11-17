@@ -165,7 +165,7 @@ describe("ThemeManager CSS helpers", () => {
       expect(rootRule).not.toContain("--sb-");
     });
 
-    it("paints the root background but sets no color-scheme for a background that is not hex", () => {
+    it("sets no color-scheme for a background that is not hex", () => {
       const style = document.createElement("style");
       style.textContent = composeThemeStyleText(
         createTheme({
@@ -179,13 +179,12 @@ describe("ThemeManager CSS helpers", () => {
       try {
         const root = getComputedStyle(document.documentElement);
         expect(root.getPropertyValue("color-scheme")).toBe("normal");
-        expect(root.backgroundColor).toBe("rgb(10, 10, 10)");
       } finally {
         style.remove();
       }
     });
 
-    it("gives the root element the theme's color-scheme and background", () => {
+    it("gives the root element the theme's color-scheme but no background of its own", () => {
       const style = document.createElement("style");
       style.textContent = composeThemeStyleText(
         createTheme({
@@ -196,7 +195,9 @@ describe("ThemeManager CSS helpers", () => {
       try {
         const root = getComputedStyle(document.documentElement);
         expect(root.getPropertyValue("color-scheme")).toBe("dark");
-        expect(root.backgroundColor).toBe("rgb(10, 10, 10)");
+        // Left transparent so body's background (a customization's
+        // included) is what fills the canvas.
+        expect(root.backgroundColor).toBe("rgba(0, 0, 0, 0)");
       } finally {
         style.remove();
       }
