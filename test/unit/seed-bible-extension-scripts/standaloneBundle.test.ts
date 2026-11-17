@@ -1,49 +1,114 @@
 // @vitest-environment node
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { JSDOM } from "jsdom";
 import { build } from "vite";
 import { standaloneBundleConfig } from "@packages/seed-bible-extension-scripts/src/lib/standaloneBundle";
 
-/*
- * The example extension's own Preact differs from the one `seed-bible`
- * resolves for its SDK. Bundling both breaks every hook in the
- * extension's views, so the bundle must hold exactly one.
+/**
+ * Builds the sandboxed bundle for `root` into a new folder, and returns the
+ * folder and the bundle's code.
  */
-describe("the sandboxed bundle", () => {
-  it("contains one copy of Preact, the project's own", async () => {
-    const root = path.resolve("packages/sandboxed-example-extension");
-    const outDir = await mkdtemp(path.join(os.tmpdir(), "sb-bundle-"));
-    try {
-      const config = standaloneBundleConfig(root, outDir);
-      // The SDK's source rather than the `seed-bible` package's build, which
-      // tests run before. It still gets Preact from `seed-bible`'s own
-      // dependencies, so the two versions meet as they do in a real project.
-      const sdk = path.resolve(
-        "packages/seed-bible/seed-bible/extensions/index.tsx"
-      );
-      // The extension tooling has its own copy of Vite's types.
-      await build({
-        ...config,
-        logLevel: "silent",
-        resolve: {
-          ...config.resolve,
-          alias: { "seed-bible/extensions": sdk },
-        },
-      } as Parameters<typeof build>[0]);
-      const bundle = await readFile(path.join(outDir, "index.js"), "utf-8");
+async function buildBundle(root: string) {
+  const outDir = await mkdtemp(path.join(os.tmpdir(), "sb-bundle-"));
+  const config = standaloneBundleConfig(root, outDir);
+  // The `seed-bible` package's source rather than its build, which tests
+  // run before. It still gets Preact from `seed-bible`'s own dependencies,
+  // so the two versions meet as they do in a real project.
+  const source = (entry: string) =>
+    path.resolve("packages/seed-bible/seed-bible", entry);
+  // The extension tooling has its own copy of Vite's types.
+  await build({
+    ...config,
+    logLevel: "silent",
+    resolve: {
+      ...config.resolve,
+      alias: {
+        "seed-bible/extensions": source("extensions/index.tsx"),
+        "seed-bible/components": source("components/index.tsx"),
+      },
+    },
+  } as Parameters<typeof build>[0]);
+  return {
+    outDir,
+    code: await readFile(path.join(outDir, "index.js"), "utf-8"),
+  };
+}
 
-      const copies = bundle.match(
-        /\/preact@[^/]+\/node_modules\/preact\/dist\/preact\.module\.js/g
-      );
-      expect(new Set(copies)).toEqual(
-        new Set(["/preact@10.29.2/node_modules/preact/dist/preact.module.js"])
-      );
-      expect(
-        bundle.match(/\/preact\/hooks\/dist\/hooks\.module\.js/g)
-      ).toHaveLength(1);
-    } finally {
-      await rm(outDir, { recursive: true, force: true });
-    }
+describe("the sandboxed bundle", () => {
+  const folders: string[] = [];
+  afterEach(async () => {
+    await Promise.all(
+      folders
+        .splice(0)
+        .map((folder) => rm(folder, { recursive: true, force: true }))
+    );
+  });
+
+  /*
+   * The example extension's own Preact differs from the one `seed-bible`
+   * resolves for its SDK. Bundling both breaks every hook in the
+   * extension's views, so the bundle must hold exactly one.
+   */
+  it("contains one copy of Preact, the project's own", async () => {
+    const { outDir, code } = await buildBundle(
+      path.resolve("packages/sandboxed-example-extension")
+    );
+    folders.push(outDir);
+
+    const copies = code.match(
+      /\/preact@[^/]+\/node_modules\/preact\/dist\/preact\.module\.js/g
+    );
+    expect(new Set(copies)).toEqual(
+      new Set(["/preact@10.29.2/node_modules/preact/dist/preact.module.js"])
+    );
+    expect(
+      code.match(/\/preact\/hooks\/dist\/hooks\.module\.js/g)
+    ).toHaveLength(1);
+  }, 60_000);
+
+  // The frame loads one module, so a stylesheet beside it would never apply.
+  it("carries the shared components' styles inside the module, with no stylesheet beside it", async () => {
+    const { outDir, code } = await buildBundle(
+      path.resolve("packages/sandboxed-example-extension")
+    );
+    folders.push(outDir);
+
+    expect(await readdir(outDir)).toEqual(["index.js"]);
+    // The example's pane uses the shared Button.
+    expect(code).toMatch(/\.sb-button\{/);
+  }, 60_000);
+
+  it("adds the extension's own CSS to the page before its code runs", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "sb-css-extension-"));
+    folders.push(root);
+    await writeFile(
+      path.join(root, "panel.css"),
+      ".panel { color: rgb(1, 2, 3); }"
+    );
+    await writeFile(
+      path.join(root, "index.ts"),
+      [
+        'import "./panel.css";',
+        "document.body.dataset.stylesWhenRun = String(",
+        '  document.head.querySelectorAll("style").length',
+        ");",
+      ].join("\n")
+    );
+    const { outDir, code } = await buildBundle(root);
+    folders.push(outDir);
+
+    const page = new JSDOM(
+      '<!doctype html><html><head></head><body><p class="panel">Hi</p></body></html>',
+      { runScripts: "outside-only" }
+    );
+    page.window.eval(code);
+
+    const { document } = page.window;
+    expect(document.body.dataset.stylesWhenRun).toBe("1");
+    expect(
+      page.window.getComputedStyle(document.querySelector(".panel")!).color
+    ).toBe("rgb(1, 2, 3)");
   }, 60_000);
 });
