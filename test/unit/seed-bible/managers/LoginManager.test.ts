@@ -1437,9 +1437,12 @@ describe("createLoginManager", () => {
 
       manager.updateProfile({ name: "Updated" });
 
-      expect(manager.cachedProfile.value).toEqual({ name: "Updated" });
+      expect(manager.cachedProfile.value).toEqual({
+        name: "Updated",
+        displayNameAnswered: true,
+      });
       expect(localStorage.getItem(`sb-profile-cache-${USER_ID}`)).toBe(
-        JSON.stringify({ name: "Updated" })
+        JSON.stringify({ name: "Updated", displayNameAnswered: true })
       );
     });
 
@@ -1659,7 +1662,10 @@ describe("createLoginManager", () => {
           manager.updateProfile({ name: "Persisted?" })
         ).not.toThrow();
         // The in-memory signal still updates even though persistence failed.
-        expect(manager.cachedProfile.value).toEqual({ name: "Persisted?" });
+        expect(manager.cachedProfile.value).toEqual({
+          name: "Persisted?",
+          displayNameAnswered: true,
+        });
       } finally {
         setItemSpy.mockRestore();
       }
@@ -1725,11 +1731,14 @@ describe("createLoginManager", () => {
 
       manager.updateProfile({ name: "Updated" });
 
-      expect(manager.profile.value).toEqual({ name: "Updated" });
+      expect(manager.profile.value).toEqual({
+        name: "Updated",
+        displayNameAnswered: true,
+      });
       expect(recordDataMock).toHaveBeenCalledWith(
         USER_ID,
         "profile",
-        { name: "Updated" },
+        { name: "Updated", displayNameAnswered: true },
         { marker: "publicRead" }
       );
     });
@@ -2024,11 +2033,16 @@ describe("createLoginManager", () => {
       expect(manager.profile.value).toEqual({
         name: "",
         config: { fontSize: "L", themeId: "dark" },
+        displayNameAnswered: false,
       });
       expect(recordDataMock).toHaveBeenCalledWith(
         USER_ID,
         "profile",
-        { name: "", config: { fontSize: "L", themeId: "dark" } },
+        {
+          name: "",
+          config: { fontSize: "L", themeId: "dark" },
+          displayNameAnswered: false,
+        },
         { marker: "publicRead" }
       );
       // Adoption succeeded, so the local store is cleared — it shouldn't be
@@ -2146,6 +2160,7 @@ describe("createLoginManager", () => {
       expect(manager.profile.value).toEqual({
         name: "",
         config: { fontSize: "L" },
+        displayNameAnswered: false,
       });
       expect(manager.localConfig.value).toEqual({ fontSize: "L" });
       expect(localStorage.getItem("sb-profile-config-local")).toBe(
@@ -2260,11 +2275,12 @@ describe("createLoginManager", () => {
       expect(manager.profile.value).toEqual({
         name: "",
         config: { fontSize: "L" },
+        displayNameAnswered: false,
       });
       expect(recordDataMock).toHaveBeenCalledWith(
         USER_ID,
         "profile",
-        { name: "", config: { fontSize: "L" } },
+        { name: "", config: { fontSize: "L" }, displayNameAnswered: false },
         { marker: "publicRead" }
       );
       // Adopted and persisted, so the anonymous local store is now empty.

@@ -2653,7 +2653,7 @@ describe("SessionsManager", () => {
           },
           isSelf: false,
           isActive: true,
-          visual: getUserAnimalVisual("conn-1"),
+          visual: getUserAnimalVisual("user-1"),
           joinedAtMs: null,
         },
         {
@@ -2678,7 +2678,7 @@ describe("SessionsManager", () => {
           },
           isSelf: false,
           isActive: true,
-          visual: getUserAnimalVisual("conn-1"),
+          visual: getUserAnimalVisual("user-1"),
           joinedAtMs: null,
         },
         {
@@ -2736,7 +2736,7 @@ describe("SessionsManager", () => {
           },
           isSelf: false,
           isActive: false,
-          visual: getUserAnimalVisual("conn-1"),
+          visual: getUserAnimalVisual("user-1"),
           joinedAtMs: null,
         },
       ])
@@ -3286,7 +3286,7 @@ describe("SessionsManager", () => {
           },
           isSelf: false,
           isActive: false,
-          visual: getUserAnimalVisual("conn-old"),
+          visual: getUserAnimalVisual("user-old"),
           joinedAtMs: null,
         },
       ])
