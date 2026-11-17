@@ -38,14 +38,16 @@ export function libraryCssImportsPlugin(
             )};`;
           })
           .join("");
-        // On the first line, without a line break of its own, so the
-        // chunk's source map still lines up.
+        // Before the chunk's other imports, as each component imports its
+        // CSS before the components it uses, so a consumer gets the CSS in
+        // the order the app loads it. On the first line, without a line
+        // break of its own, so the chunk's source map still lines up.
         file.code = imports + file.code;
-        const first = file.isEntry && file.name === options.firstEntry;
-        for (const name of css) {
-          if (sheets.includes(name)) continue;
-          if (first) sheets.unshift(name);
-          else sheets.push(name);
+        const added = css.filter((name) => !sheets.includes(name));
+        if (file.isEntry && file.name === options.firstEntry) {
+          sheets.unshift(...added);
+        } else {
+          sheets.push(...added);
         }
       }
 

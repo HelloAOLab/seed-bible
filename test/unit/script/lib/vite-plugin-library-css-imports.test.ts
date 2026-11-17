@@ -113,4 +113,41 @@ describe("libraryCssImportsPlugin", () => {
       expect(merged).toContain(rule);
     }
   });
+
+  it("keeps the first entry's CSS files in their order", () => {
+    const plugin = libraryCssImportsPlugin({ firstEntry: "styles" });
+    const chunk = (name: string, importedCss: string[]) => ({
+      type: "chunk",
+      fileName: `${name}.js`,
+      name,
+      isEntry: true,
+      code: "",
+      viteMetadata: { importedCss: new Set(importedCss) },
+    });
+    const asset = (fileName: string) => ({
+      type: "asset",
+      fileName,
+      source: `.${fileName.replace(".css", "")} {}`,
+    });
+    const bundle = {
+      "a.js": chunk("a", ["a.css"]),
+      "styles.js": chunk("styles", ["reset.css", "tokens.css"]),
+      "a.css": asset("a.css"),
+      "reset.css": asset("reset.css"),
+      "tokens.css": asset("tokens.css"),
+    };
+    let merged = "";
+    const context = {
+      emitFile: (file: { source: string }) => void (merged = file.source),
+    };
+    (
+      plugin.generateBundle as (
+        this: typeof context,
+        options: unknown,
+        files: typeof bundle
+      ) => void
+    ).call(context, {}, bundle);
+
+    expect(merged.split("\n")).toEqual([".reset {}", ".tokens {}", ".a {}"]);
+  });
 });
