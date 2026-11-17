@@ -102,6 +102,10 @@ of Preact, the project's own, even if `seed-bible` depends on another
 version. CSS is bundled in too, since the extension's frame can't load a
 stylesheet: the CSS files the extension imports, and those of the shared
 components it uses, are added to the frame's page when the module loads.
+The scaffolded `src/css.d.ts` lets TypeScript accept those imports. A
+project made before it was added fails `check` with `Cannot find module or
+type declarations for side-effect import of './panel.css'`; add a
+`src/css.d.ts` containing `declare module "*.css" {}`.
 
 For a built-in extension it writes `dist/monorepo-package/` instead: the
 checked source, ready to copy into `packages/<name>/` in a seed-bible
