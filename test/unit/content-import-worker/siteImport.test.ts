@@ -354,6 +354,40 @@ describe("website imports", () => {
     ).toMatchObject({ status: "done", done: 1, failed: 0 });
   });
 
+  it("gives pages that don't name an author the library's default author", async () => {
+    const { worker, key, casualos, commonCrawl } = setup();
+    const manifest = casualos.records
+      .get(LIBRARY)!
+      .get(CONTENT_MANIFEST_ADDRESS)!;
+    manifest.data = {
+      ...(manifest.data as object),
+      defaultAuthor: "Frontline Bible Church",
+    };
+    commonCrawl.addPage(
+      LATEST,
+      "https://gracecommunity.org/sermons/a",
+      "<title>A</title>"
+    );
+    commonCrawl.addPage(
+      LATEST,
+      "https://gracecommunity.org/sermons/b",
+      '<title>B</title><meta name="author" content="Pastor Dana">'
+    );
+    const listed = await lookUp(worker, key);
+    await pick(
+      worker,
+      key,
+      listed.progress.id,
+      listed.candidates!.map((c) => c.itemId)
+    );
+    await worker.drain();
+    expect(
+      Object.fromEntries(
+        libraryItems(casualos).map((item) => [item.title, item.author])
+      )
+    ).toEqual({ A: "Frontline Bible Church", B: "Pastor Dana" });
+  });
+
   it("reads a page in its own character set", async () => {
     const { worker, key, casualos, commonCrawl } = setup();
     const url = "https://gracecommunity.org/sermons/cafe";

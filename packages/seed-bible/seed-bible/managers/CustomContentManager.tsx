@@ -362,6 +362,17 @@ export function createCustomContentManager(deps: {
   };
 
   /**
+   * An item being published that names no author of its own gets the
+   * library's default author, saved on the item.
+   */
+  const withDefaultAuthor = (item: ContentItem): ContentItem => {
+    const fallback = manifest.value?.defaultAuthor?.trim();
+    return item.status === "published" && !item.author?.trim() && fallback
+      ? { ...item, author: fallback }
+      : item;
+  };
+
+  /**
    * Puts one item into the open list as it is now, so a slow edit can't
    * undo a change made to another item meanwhile (a publish, which applies
    * at once). `null` takes it out.
@@ -440,7 +451,13 @@ export function createCustomContentManager(deps: {
           ...(options.keys ? { keys: [...options.keys] } : {}),
           ...(options.full ? { full: true } : {}),
         })
-      : await publishChapters(store, record, { ...options, items: allItems });
+      : await publishChapters(store, record, {
+          ...options,
+          items: allItems,
+          ...(recordName.value === record
+            ? { defaultAuthor: manifest.value?.defaultAuthor ?? null }
+            : {}),
+        });
     if (recordName.value === record) {
       chapterIndex.value = next;
     }
@@ -848,7 +865,7 @@ export function createCustomContentManager(deps: {
       if (!parsed.success) {
         throw new ContentLibraryError("invalid_item", parsed.error.message);
       }
-      const saved = parsed.data;
+      const saved = withDefaultAuthor(parsed.data);
       await writeItem(record, saved);
       putItem(record, saved.id, saved);
       return { record, saved, keys: affectedChapterKeys(before, saved) };
@@ -875,12 +892,12 @@ export function createCustomContentManager(deps: {
     if (!before || (before.status === "published") === published) {
       return;
     }
-    const after: ContentItem = {
+    const after = withDefaultAuthor({
       ...before,
       // Unpublishing makes a draft, as saving an unpublished edit does.
       status: published ? "published" : "draft",
       updatedAt: Date.now(),
-    };
+    });
     putItem(record, id, after);
     try {
       await writeItem(record, after);
@@ -1252,7 +1269,7 @@ export function createCustomContentManager(deps: {
         !error &&
         isConfidentlyClassified(next)
       ) {
-        next = { ...next, status: "published" };
+        next = withDefaultAuthor({ ...next, status: "published" });
       }
       await writeItem(record, next);
       putItem(record, id, next);

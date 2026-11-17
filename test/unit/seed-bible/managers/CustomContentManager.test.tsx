@@ -282,6 +282,59 @@ describe("CustomContentManager", () => {
     });
   });
 
+  describe("the default author", () => {
+    it("is given to an item published without an author, and shown in Discover", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      await owner.customContent.setDefaultAuthor("Frontline Bible Church");
+      const anonymous = await addSermon(owner.customContent, {}, false);
+      const named = await addSermon(
+        owner.customContent,
+        {
+          url: "https://gracecommunity.org/sermons/door",
+          title: "I Am the Door",
+          author: "Pastor Dana",
+        },
+        false
+      );
+
+      await owner.customContent.setItemPublished(anonymous.id, true);
+      await owner.customContent.setItemPublished(named.id, true);
+
+      expect(
+        Object.fromEntries(
+          owner.customContent.items.value.map((item) => [
+            item.title,
+            item.author,
+          ])
+        )
+      ).toEqual({
+        "The Good Shepherd": "Frontline Bible Church",
+        "I Am the Door": "Pastor Dana",
+      });
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 10);
+      expect(
+        Object.fromEntries(results.map((r) => [r.title, r.author]))
+      ).toEqual({
+        "The Good Shepherd": "Frontline Bible Church",
+        "I Am the Door": "Pastor Dana",
+      });
+    });
+
+    it("shows in Discover for items published before it was set, once their chapters are rebuilt", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      await addSermon(owner.customContent);
+      await owner.customContent.setDefaultAuthor("Frontline Bible Church");
+      await owner.customContent.rebuildIndex();
+
+      const reader = await readerOf(server, owner.customizationId);
+      const [result] = await discoverContent(reader.discover, "JHN", 10);
+      expect(result?.author).toBe("Frontline Bible Church");
+    });
+  });
+
   describe("publishing items in a row", () => {
     /** Drafts on John 10, saved but not yet published. */
     async function drafts(customContent: CustomContentManager, count: number) {

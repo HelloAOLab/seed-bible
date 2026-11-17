@@ -355,6 +355,8 @@ export async function startPickedJob(
   values: {
     total: number;
     sessionKeyEnc: string;
+    /** For pages that don't name an author: the library's, as it is when the owner picks. */
+    defaultAuthor: string | null;
     now: number;
     expiresAt: number;
   }
@@ -362,12 +364,14 @@ export async function startPickedJob(
   const result = await db
     .prepare(
       `UPDATE import_jobs
-       SET status = 'running', total = ?, session_key_enc = ?, updated_at = ?, expires_at = ?
+       SET status = 'running', total = ?, session_key_enc = ?, default_author = ?,
+           updated_at = ?, expires_at = ?
        WHERE id = ? AND status = 'awaiting_pick'`
     )
     .bind(
       values.total,
       values.sessionKeyEnc,
+      values.defaultAuthor,
       values.now,
       values.expiresAt,
       jobId

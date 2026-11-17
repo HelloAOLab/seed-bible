@@ -124,11 +124,21 @@ export async function publishChapters(
     keys?: Iterable<string>;
     full?: boolean;
     items?: readonly ContentItem[];
+    /** The library's default author; read from its manifest when not given. */
+    defaultAuthor?: string | null;
     now?: number;
   }
 ): Promise<ContentChapterIndex> {
   const now = options.now ?? Date.now();
   const items = options.items ?? (await loadLibraryItems(store, recordName));
+  const defaultAuthor =
+    options.defaultAuthor !== undefined
+      ? (options.defaultAuthor ?? undefined)
+      : await readLibraryManifest(store, recordName).then(
+          (manifest) => manifest.defaultAuthor,
+          // Chapters still rebuild without it; items keep their own authors.
+          () => undefined
+        );
   const keys = new Set(options.keys ?? []);
   /** Pages each chapter has stored now, so pages it no longer needs are erased. */
   const storedPages = new Map<string, number>();
@@ -164,7 +174,13 @@ export async function publishChapters(
     if (!chapter) {
       continue;
     }
-    const built = buildChapterRecord(items, chapter.book, chapter.chapter, now);
+    const built = buildChapterRecord(
+      items,
+      chapter.book,
+      chapter.chapter,
+      now,
+      defaultAuthor
+    );
     const written = built ? paginateChapterRecord(built) : [];
     for (const [position, page] of written.entries()) {
       assertStored(

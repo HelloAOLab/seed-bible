@@ -240,7 +240,11 @@ export async function pickSitePages(
     );
   }
   const now = deps.now();
-  await checkLibraryAccess(caller, job.content_record_name, now);
+  const { defaultAuthor } = await checkLibraryAccess(
+    caller,
+    job.content_record_name,
+    now
+  );
   const total = await pickCandidates(env.DB, job.id, chosen);
   const started = await startPickedJob(env.DB, job.id, {
     total,
@@ -248,6 +252,7 @@ export async function pickSitePages(
       caller.sessionKey,
       env.SESSION_KEY_SECRET
     ),
+    defaultAuthor,
     now,
     expiresAt: now + JOB_LIFETIME_MS,
   });

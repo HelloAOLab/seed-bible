@@ -152,7 +152,9 @@ export function buildChapterRecord(
   items: readonly ContentItem[],
   book: string,
   chapter: number,
-  now: number
+  now: number,
+  /** The library's default author, for items that don't name one. */
+  defaultAuthor?: string
 ): ContentChapterRecord | null {
   const entries: ContentChapterEntry[] = [];
   for (const item of items) {
@@ -160,6 +162,7 @@ export function buildChapterRecord(
       continue;
     }
     const verses = versesInChapter(item, book, chapter);
+    const author = item.author?.trim() || defaultAuthor?.trim();
     if (verses === null) {
       continue;
     }
@@ -171,7 +174,7 @@ export function buildChapterRecord(
       title: item.title,
       description: trimDescription(item.description),
       ...(item.image ? { image: item.image } : {}),
-      ...(item.author ? { author: item.author } : {}),
+      ...(author ? { author } : {}),
       categoryIds: item.categoryIds,
       verses,
       reference:
