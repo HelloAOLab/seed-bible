@@ -3107,7 +3107,6 @@ export function createSeedBibleState(
     startPosition?: SessionStartPosition
   ) => {
     joinsInProgress.value++;
-    console.log("Joining started:", id);
 
     try {
       closeSidebarAndSettings();
@@ -3126,7 +3125,6 @@ export function createSeedBibleState(
       return session;
     } finally {
       joinsInProgress.value--;
-      console.log("Joining finished:", joinsInProgress.value);
     }
   };
 
@@ -3236,7 +3234,8 @@ export function createSeedBibleState(
         })
       );
 
-      // Restore the linked chapter in a normal tab.
+      // Restoring saved tabs intentionally skips the chapter from the shared-session link,
+      // because the session is expected to open it. If joining fails, show it in a normal tab.
       if (startPosition) {
         whenTabsRestored(() => showLinkedChapter(startPosition));
       }

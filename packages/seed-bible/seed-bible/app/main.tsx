@@ -346,7 +346,7 @@ function MainContent(props: {
         <ModalHost manager={state.modals} />
 
         <LoginModal login={state.login} navigation={state.navigation} />
-        {state.app.isJoiningSession.value && <JoiningSessionModal />}
+        <JoiningSessionModal isJoiningSession={state.app.isJoiningSession} />
 
         <TermsOfServiceModal
           isOpen={state.isTermsOpen.value}

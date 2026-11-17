@@ -713,7 +713,9 @@ async function createBibleReadingSession(
   startPosition?: SessionStartPosition,
   getAnnotationsManager?: () => AnnotationsManager | undefined
 ): Promise<BibleReadingSession> {
-  const document = await os.getSharedDocument(null, id, "session_data");
+  const document = await os.getSharedDocument(null, id, "session_data", {
+    timeoutMs: 10000,
+  });
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");
 

@@ -475,7 +475,8 @@ describe("SessionsManager", () => {
     expect(getSharedDocumentMock).toHaveBeenCalledWith(
       null,
       "session-123",
-      "session_data"
+      "session_data",
+      { timeoutMs: 10000 }
     );
     expect(session.id).toBe("session-123");
   });
@@ -589,7 +590,8 @@ describe("SessionsManager", () => {
     expect(getSharedDocumentMock).toHaveBeenCalledWith(
       null,
       "group-abc",
-      "session_data"
+      "session_data",
+      { timeoutMs: 10000 }
     );
     expect(session.id).toBe("group-abc");
   });
