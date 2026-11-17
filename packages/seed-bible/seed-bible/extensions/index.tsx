@@ -919,7 +919,9 @@ function applyDocumentState(state: SandboxState) {
   if (!style) {
     style = document.createElement("style");
     style.id = "sb-theme";
-    document.head.appendChild(style);
+    // First, so the extension's own CSS, which its bundle adds before this
+    // runs, can override the page background and font set here.
+    document.head.prepend(style);
   }
   style.textContent = `:root {\n${state.themeCss}\n}\nhtml, body { margin: 0; background: var(--sb-background); color: var(--sb-font-color); font-family: var(--sb-font-family, system-ui, sans-serif); }`;
   const wanted = new Set(state.fontStylesheets);
