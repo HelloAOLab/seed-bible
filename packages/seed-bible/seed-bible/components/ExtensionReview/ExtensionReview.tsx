@@ -1,4 +1,5 @@
 import "./ExtensionReview.css";
+import "../visuallyHidden.inline.css";
 import { useSignal } from "@preact/signals";
 import { useEffect, useId } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
