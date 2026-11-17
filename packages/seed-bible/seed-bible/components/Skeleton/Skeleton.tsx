@@ -59,7 +59,7 @@ export function SkeletonContainer(props: {
   const classes = ["sb-skeleton-status", className].filter(Boolean).join(" ");
   return (
     <div className={classes} role="status" aria-busy="true">
-      <span className="sr-only">{label}</span>
+      <span className="sb-skeleton-label">{label}</span>
       {children}
     </div>
   );

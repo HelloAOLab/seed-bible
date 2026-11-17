@@ -2,9 +2,21 @@
 /* A shimmering placeholder used wherever content is still loading, so a slow
    surface reads as "loading" rather than blank or a deceptively-ready UI.
    Dimensions are authored in `rem`/`%` by callers so blocks scale with the
-   "UI Size" setting (see app/styles/base.css). Only depends on the global
-   `--sb-font-color` token and the `.sr-only` utility (app/styles/utilities.css),
-   both already loaded globally by app/main.tsx. */
+   "UI Size" setting (see app/styles/base.css). Only depends on the
+   `--sb-font-color` token, which sandboxed extension frames also define. */
+
+/* Read by screen readers, not shown. */
+.sb-skeleton-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 .sb-skeleton {
   position: relative;

@@ -154,6 +154,45 @@ describe.each(ENTRIES)("$name", ({ file, reaches }) => {
   });
 });
 
+describe("seed-bible/components", () => {
+  // The app's global utility classes (`sr-only`, `flex-between`, ...) live
+  // in a stylesheet only the app loads, so a sandboxed frame never gets them.
+  // A shared component using one looks right in the app and broken in an
+  // extension: it needs a rule of its own in its own CSS file.
+  const utilityClasses = [
+    ...readFileSync(
+      path.join(appDir, "app/styles/utilities.inline.css"),
+      "utf-8"
+    ).matchAll(/^\.([a-z][\w-]*)/gm),
+  ].map((match) => match[1]!);
+
+  it("doesn't use the app's global utility classes", () => {
+    const pattern = new RegExp(
+      `(?<![\\w-])(${utilityClasses.join("|")})(?![\\w-])`,
+      "g"
+    );
+    const problems: string[] = [];
+    for (const file of importGraph(
+      path.join(appDir, "components/index.tsx")
+    ).keys()) {
+      if (!/\.tsx$/.test(file)) continue;
+      readFileSync(file, "utf-8")
+        .split("\n")
+        .forEach((line, index) => {
+          if (!/className|class=/.test(line) && !/^\s*["'`]/.test(line)) return;
+          for (const match of line.matchAll(pattern)) {
+            problems.push(`${toName(file)}:${index + 1} uses .${match[1]}`);
+          }
+        });
+    }
+
+    expect(utilityClasses).toEqual(
+      expect.arrayContaining(["sr-only", "flex-between"])
+    );
+    expect(problems).toEqual([]);
+  });
+});
+
 describe("the import walk", () => {
   it("follows the repo's path alias and seed-bible's own entry points", () => {
     // Either route into I18nManager would bring every locale back, so the
