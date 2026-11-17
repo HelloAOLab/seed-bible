@@ -27,6 +27,15 @@ export default function initDefaultContentExtension() {
               // `discoveredContent.json`), so the modal can embed it directly
               // rather than reinspecting the URL to figure out what it is.
               onClick: () => {
+                if (item.playInline) {
+                  context.discover.playInline({
+                    id: `discovered-content-${item.id}`,
+                    title: item.title,
+                    url: item.url,
+                    author: item.author,
+                  });
+                  return;
+                }
                 context.modals.openModal({
                   id: `discovered-content-${item.id}`,
                   title: item.title,

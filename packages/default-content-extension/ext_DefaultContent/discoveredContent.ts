@@ -134,6 +134,11 @@ export interface DiscoveredContentItem {
   /** Preview image fetched from the link's metadata (e.g. `og:image`). Absent for older entries generated before link previews were added. */
   imageUrl?: string;
   references: DiscoveredContentReference[];
+  /**
+   * Plays the video in the reader, beside the scripture (above it on an
+   * upright phone), instead of in a modal. Off when absent.
+   */
+  playInline?: boolean;
 }
 
 export const discoveredContent =

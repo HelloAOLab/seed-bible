@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import type { Mock } from "vitest";
+import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   setupExtensionContext,
@@ -49,6 +50,8 @@ vi.mock(
 
 const { default: initDefaultContentExtension } =
   await import("@packages/default-content-extension/ext_DefaultContent/init");
+const { findDiscoveredContentForChapter } =
+  await import("@packages/default-content-extension/ext_DefaultContent/discoveredContent");
 
 function createFakeContext(): SeedBibleState {
   return {
@@ -144,5 +147,48 @@ describe("initDefaultContentExtension", () => {
     });
     const video = container.querySelector("video");
     expect(video?.getAttribute("src")).toBe("https://example.com/bp-video.mp4");
+  });
+
+  it("plays a curated video in the reader instead of a modal when it's marked to play inline", async () => {
+    (findDiscoveredContentForChapter as Mock).mockReturnValueOnce([
+      {
+        item: {
+          id: "inline-1",
+          title: "Inline Title",
+          author: "Inline Author",
+          description: "Inline description",
+          url: "https://youtu.be/xyz789",
+          references: [{ book: "GEN", chapter: 28 }],
+          playInline: true,
+        },
+        reference: { book: "GEN", chapter: 28 },
+      },
+    ]);
+    const discover = createDiscoverManager();
+    const context = {
+      discover,
+      modals: { openModal: vi.fn() },
+    } as unknown as SeedBibleState;
+    setupExtensionContext(context);
+    initDefaultContentExtension();
+
+    const provider = discover.providers.value.find(
+      (entry) => entry.id === "default-content-extension"
+    );
+    const results = await provider!.discover({
+      book: "GEN",
+      chapter: 28,
+      translationId: "t1",
+      language: "en",
+    });
+    act(() => (results[0] as { onClick: () => void }).onClick());
+
+    expect(discover.inlineVideo.value).toEqual({
+      id: "discovered-content-inline-1",
+      title: "Inline Title",
+      author: "Inline Author",
+      url: "https://youtu.be/xyz789",
+    });
+    expect(context.modals.openModal).not.toHaveBeenCalled();
   });
 });

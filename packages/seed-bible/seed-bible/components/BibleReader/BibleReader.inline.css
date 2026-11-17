@@ -475,6 +475,57 @@
   font-size: 1.75rem;
 }
 
+/* Holds the swipe viewport and, while a discovered video plays inline, the
+   player: above the chapter on an upright phone, so the text starts below it
+   and scrolls on its own, and beside it on a phone held sideways. */
+.sb-reader-mobile-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+
+/* The mobile header floats over the top of this column; the top padding
+   keeps the player clear of it, and gives that room back while the header is
+   slid away. */
+.sb-reader-mobile-inline-video {
+  flex: none;
+  padding: 3.25rem 0.75rem 0.5rem;
+  transition: padding-top var(--sb-duration-slow) ease;
+}
+
+.sb-bible-reader-mobile:has(.sb-bible-reader-mobile-header-hidden)
+  .sb-reader-mobile-inline-video {
+  padding-top: 0.5rem;
+}
+
+/* The header sits over the player now, not the chapter. */
+.sb-bible-reader-mobile
+  .sb-reader-mobile-body--inline-video
+  .sb-reader-swipe-panel {
+  padding-top: 0.5rem;
+}
+
+@media (orientation: landscape) {
+  .sb-reader-mobile-body--inline-video {
+    flex-direction: row;
+  }
+
+  /* After the chapter: the right in LTR, the left in RTL. */
+  .sb-reader-mobile-inline-video {
+    order: 1;
+    flex: 0 0 min(45%, 22.5rem);
+    overflow-y: auto;
+  }
+
+  .sb-bible-reader-mobile
+    .sb-reader-mobile-body--inline-video
+    .sb-reader-swipe-panel {
+    padding-top: 2.5rem;
+  }
+}
+
 .sb-reader-swipe-viewport {
   flex: 1 1 auto;
   position: relative;
@@ -1307,7 +1358,7 @@
     flex-direction: column;
     align-items: stretch;
 
-    & > .sb-bible-reader-discover-panel {
+    & .sb-bible-reader-discover-panel {
       max-width: var(--sb-scripture-width, 68ch);
     }
   }
@@ -1354,7 +1405,7 @@
   max-width: var(--sb-scripture-width, 68ch);
   padding-bottom: var(--sb-reader-bottom-inset);
 
-  &:has(+ .sb-bible-reader-discover-panel) {
+  &:has(+ .sb-bible-reader-side-column > .sb-bible-reader-discover-panel) {
     padding-bottom: 5rem;
   }
 }
@@ -1382,7 +1433,122 @@
   }
 
   .sb-bible-reader-content:not(.sb-bible-reader-content--discover-below)
+    > .sb-bible-reader-side-column
     > .sb-bible-reader-discover-panel {
     width: 22.5rem;
+  }
+}
+
+/* ── Inline video (desktop layout) ──
+   The side column groups a discovered video playing inline with the compact
+   Discover panel. With no video it's `display: contents`, so the panel lays
+   out exactly as a direct child of `.sb-bible-reader-content`. */
+.sb-bible-reader-side-column {
+  display: contents;
+}
+
+/* Too narrow for a side column (a tablet held upright, a narrow window): the
+   player goes above the scripture and stays there while the chapter scrolls
+   under it. */
+.sb-bible-reader-content--inline-video .sb-inline-video {
+  order: -1;
+  width: 100%;
+  max-width: var(--sb-scripture-width, 68ch);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Beside the scripture, above the compact Discover panel, both sticking while
+   the chapter scrolls. The panel sticks just below the player (its height is
+   published by InlineVideoPanel), so the two never overlap. */
+@media (min-width: 1024px) {
+  .sb-bible-reader-content--inline-video:not(
+      .sb-bible-reader-content--discover-below
+    )
+    > .sb-bible-reader-side-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1 1 0;
+    min-width: 18rem;
+    max-width: 22.5rem;
+
+    & > .sb-inline-video {
+      top: 1rem;
+    }
+
+    & > .sb-bible-reader-discover-panel {
+      flex: 1 1 auto;
+      width: auto;
+      min-width: 0;
+      max-width: none;
+    }
+
+    & .sb-discover-content-panel {
+      top: calc(2rem + var(--sb-inline-video-height, 0px));
+    }
+  }
+
+  /* The Discover panel is set to sit below the scripture: the player still
+     goes beside it, and the panel wraps onto a line of its own. */
+  .sb-bible-reader-content--inline-video.sb-bible-reader-content--discover-below {
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    & .sb-inline-video {
+      order: 0;
+      flex: 1 1 0;
+      align-self: flex-start;
+      min-width: 18rem;
+      max-width: 22.5rem;
+      top: 1rem;
+    }
+
+    /* `contain` keeps the panel's one-line item descriptions from setting
+       the row's minimum width, which otherwise stretched the reader far
+       past the screen. */
+    & .sb-bible-reader-discover-panel {
+      flex: 0 0 100%;
+      min-width: 0;
+      max-width: none;
+      contain: inline-size;
+    }
+
+    & .sb-discover-content-panel {
+      max-width: var(--sb-scripture-width, 68ch);
+    }
+  }
+}
+
+/* A phone held sideways: too short for the player above the text, so it goes
+   beside it, and the Discover panel wraps below the chapter. */
+@media (max-width: 1023px) and (orientation: landscape) and (max-height: 540px) {
+  .sb-bible-reader-content--inline-video {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+
+    & > .sb-bible-reader-main-content {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    & .sb-inline-video {
+      order: 0;
+      flex: 0 0 min(45%, 22.5rem);
+      align-self: flex-start;
+      top: 0.5rem;
+    }
+
+    /* `contain` keeps the panel's one-line item descriptions from setting
+       the row's minimum width, which otherwise stretched the reader far
+       past the screen. */
+    & .sb-bible-reader-discover-panel {
+      flex: 0 0 100%;
+      min-width: 0;
+      max-width: none;
+      contain: inline-size;
+    }
   }
 }
