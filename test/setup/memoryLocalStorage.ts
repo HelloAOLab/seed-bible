@@ -29,9 +29,12 @@ function createMemoryLocalStorage(): Storage {
   };
 }
 
+// Only under jsdom: `@vitest-environment node` files stand in for the
+// server, where app code reads a missing `localStorage` as "not a browser".
 const needsPolyfill =
-  typeof globalThis.localStorage === "undefined" ||
-  typeof globalThis.localStorage?.getItem !== "function";
+  typeof window !== "undefined" &&
+  (typeof globalThis.localStorage === "undefined" ||
+    typeof globalThis.localStorage?.getItem !== "function");
 
 if (needsPolyfill) {
   const memory = createMemoryLocalStorage();
