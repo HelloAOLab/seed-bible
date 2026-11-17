@@ -680,8 +680,21 @@ function applyBrowserThemeColorFromCss(css: string): void {
  * `<meta name="color-scheme">`) and this manager all get the light/dark
  * decision from `browserColorSchemeForBackground` alone.
  */
-export function composeThemeStyleText(theme: BibleTheme): string {
-  const css = `body {\n${generateThemeCssVariables(theme)}\n}\n${composeRootColorSchemeRule(theme)}${generateThemeCssClasses(theme)}`;
+export function composeThemeStyleText(
+  theme: BibleTheme,
+  {
+    rootColorScheme = true,
+  }: {
+    /**
+     * False for a document that only borrows the theme's variables and
+     * classes (a pattern frame) and keeps its own light/dark styling.
+     */
+    rootColorScheme?: boolean;
+  } = {}
+): string {
+  const css = `body {\n${generateThemeCssVariables(theme)}\n}\n${
+    rootColorScheme ? composeRootColorSchemeRule(theme) : ""
+  }${generateThemeCssClasses(theme)}`;
   return css.replace(/</g, "");
 }
 

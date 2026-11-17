@@ -142,7 +142,9 @@ export const bootstrapExtension = () => {
               if (!isReady.value) return;
               portalRef?.sendMessage({
                 type: "theme-changed",
-                css: composeThemeStyleText(context.theme.currentTheme.value),
+                css: composeThemeStyleText(context.theme.currentTheme.value, {
+                  rootColorScheme: false,
+                }),
               });
             });
 

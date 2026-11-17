@@ -203,6 +203,19 @@ describe("ThemeManager CSS helpers", () => {
       }
     });
 
+    it("leaves out the :root rule for a document that keeps its own color-scheme", () => {
+      const css = composeThemeStyleText(
+        createTheme({
+          variables: { ...createTheme().variables, background: "#0a0a0a" },
+        }),
+        { rootColorScheme: false }
+      );
+
+      expect(css).not.toContain(":root");
+      expect(css).not.toContain("color-scheme");
+      expect(css).toContain("--sb-background: #0a0a0a;");
+    });
+
     it("strips a literal < from a custom override value, preventing a </style breakout", () => {
       // Custom theme/highlight overrides are free text — not validated for
       // CSS syntax (see filterValidColorOverrides) — and this text gets
