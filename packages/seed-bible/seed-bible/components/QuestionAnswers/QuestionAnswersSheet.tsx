@@ -9,6 +9,7 @@ import {
   type BibleReadingSession,
   type SessionQuestionAnswer,
 } from "../../managers/SessionsManager";
+import { visualAnonymousLabel } from "../../managers/Utils";
 import { Avatar } from "../Avatar/Avatar";
 import { MaterialIcon } from "../icons";
 import { Button } from "../Button/Button";
@@ -61,6 +62,8 @@ function QuestionAnswersSheetBody(props: {
     (answer) => answer.stepKey === stepKey
   );
   const mine = answers.find((answer) => answer.authorId === selfId) ?? null;
+  const answerDisplayName = (answer: SessionQuestionAnswer) =>
+    answer.name || visualAnonymousLabel(answer.visual, t);
 
   const share = () => {
     if (!draft.trim()) {
@@ -101,7 +104,11 @@ function QuestionAnswersSheetBody(props: {
           {answers.length > 0 ? (
             <span className="sb-question-answers-avatars" aria-hidden="true">
               {answers.slice(-MAX_BAR_AVATARS).map((answer) => (
-                <AnswerAvatar key={answer.authorId} answer={answer} />
+                <AnswerAvatar
+                  key={answer.authorId}
+                  answer={answer}
+                  displayName={answerDisplayName(answer)}
+                />
               ))}
             </span>
           ) : null}
@@ -130,13 +137,16 @@ function QuestionAnswersSheetBody(props: {
                   const isSelf = answer.authorId === selfId;
                   return (
                     <li key={answer.authorId} className="sb-question-answer">
-                      <AnswerAvatar answer={answer} />
+                      <AnswerAvatar
+                        answer={answer}
+                        displayName={answerDisplayName(answer)}
+                      />
                       <div className="sb-question-answer-main">
                         <div className="sb-question-answer-head">
                           <span className="sb-question-answer-name">
                             {isSelf
                               ? t("you", { defaultValue: "You" })
-                              : answer.name}
+                              : answerDisplayName(answer)}
                           </span>
                           {isSelf ? (
                             <span className="sb-question-answer-actions">
@@ -226,13 +236,16 @@ function QuestionAnswersSheetBody(props: {
   );
 }
 
-function AnswerAvatar(props: { answer: SessionQuestionAnswer }) {
-  const { answer } = props;
+function AnswerAvatar(props: {
+  answer: SessionQuestionAnswer;
+  displayName: string;
+}) {
+  const { answer, displayName } = props;
   return (
     <Avatar
       imageUrl={answer.pictureUrl}
       visual={answer.visual}
-      title={answer.name}
+      title={displayName}
     />
   );
 }

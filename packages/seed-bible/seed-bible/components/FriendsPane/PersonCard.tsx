@@ -164,7 +164,7 @@ function FriendshipActions(props: {
     );
   }
 
-  const name = visualAnonymousLabel(getUserAnimalVisual(person.userId), t);
+  const name = personIdentityName(person, t);
   const run = async (action: FriendAction, work: () => Promise<unknown>) => {
     busy.value = action;
     try {

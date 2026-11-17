@@ -247,6 +247,12 @@ export const userProfileSchema = z.object({
   pictureUrl: z.url().max(1024).optional().nullable(),
   description: z.string().max(300).optional().nullable(),
   config: z.record(z.string(), z.unknown()).optional().nullable(),
+  /**
+   * Set to true once the user has answered the first-login display-name
+   * prompt (whether they typed a name or kept the default). False (or absent)
+   * when the account was created but the prompt hasn't been answered yet.
+   */
+  displayNameAnswered: z.boolean().optional(),
 });
 
 export type UserProfile = z.infer<typeof userProfileSchema>;
@@ -741,7 +747,7 @@ export function createLoginManager({
         const seededConfig = localConfig.value;
         const hasSeededConfig = Object.keys(seededConfig).length > 0;
         const seedProfile: UserProfile = hasSeededConfig
-          ? { name: "", config: seededConfig }
+          ? { name: "", config: seededConfig, displayNameAnswered: false }
           : { name: "" };
         // Only the signed-in user's own blank profile arms the name prompt.
         // Peer fetches (SessionsManager looking up another connection) must
@@ -1281,10 +1287,16 @@ export function createLoginManager({
           cachedProfile.value = p;
           cachedProfileUserId = loadingForUserId;
           writeCachedProfile(loadingForUserId, p);
-          // Only the account that just got a brand-new blank profile — never a
-          // peer fetch, and never an existing empty name from an older account.
+          // Arm the prompt for a brand-new blank profile that hasn't been
+          // answered yet. The `createdBlankProfileForUserId` path covers the
+          // first load (profile was not found and was created this session).
+          // The `displayNameAnswered === false` path covers a reload after a
+          // seeded-config save wrote the blank profile to the server on the
+          // first login — on that path the profile exists when we look it up,
+          // so the first path would miss it.
           if (
-            createdBlankProfileForUserId === loadingForUserId &&
+            (createdBlankProfileForUserId === loadingForUserId ||
+              p.displayNameAnswered === false) &&
             !trimmedOrNull(p.name)
           ) {
             needsDisplayNamePrompt.value = true;
@@ -1379,13 +1391,15 @@ export function createLoginManager({
       ...profile.value,
       ...newData,
     };
+    // Choosing a name (or keeping the default) answers the first-login prompt.
+    // Mark it in the profile so a subsequent reload knows not to re-arm it.
+    if (Object.prototype.hasOwnProperty.call(newData, "name")) {
+      nextProfile.displayNameAnswered = true;
+      needsDisplayNamePrompt.value = false;
+    }
     profile.value = nextProfile;
     cachedProfile.value = nextProfile;
     writeCachedProfile(userId.value, nextProfile);
-    // Choosing a name (or clearing one) answers the first-login prompt.
-    if (Object.prototype.hasOwnProperty.call(newData, "name")) {
-      needsDisplayNamePrompt.value = false;
-    }
 
     // The signal update above is optimistic; the write below is what actually
     // persists it. Track it so the UI can show a "Saving…" indicator, and

@@ -1,3 +1,5 @@
+import { getUserAnimalVisual } from "./UserVisual";
+
 /**
  * The value with surrounding whitespace removed, or null when nothing is left.
  *
@@ -58,14 +60,12 @@ export function visualAnonymousLabel(
 }
 
 /**
- * What to call someone: their profile name, or "User 1a2b3c4d" (the start of
- * their user ID) when they never set one.
+ * What to call someone: their profile name, or the Color + Icon of their
+ * animal avatar (e.g. "Red Forest (Anonymous)") when they never set one.
  *
- * Prefer {@link visualAnonymousLabel} when an avatar visual is on hand (session
- * lists, profile cards): the Color + Icon matches the picture and reads as a
- * real name. This User-ID fallback stays for places that only have an account
- * id (friend toasts, add-by-id), where inventing an animal would disagree with
- * a session that keys the avatar off a connection id.
+ * Uses the user ID as the visual key — the same key that sessions and profile
+ * cards use for signed-in participants — so the label matches the avatar in
+ * every context where a user ID is available.
  */
 export function displayNameOf(
   person: { userId: string; name?: string | null },
@@ -73,10 +73,7 @@ export function displayNameOf(
 ): string {
   return (
     trimmedOrNull(person.name) ??
-    t("unnamed-user", {
-      id: person.userId.slice(0, 8),
-      defaultValue: "User {{id}}",
-    })
+    visualAnonymousLabel(getUserAnimalVisual(person.userId), t)
   );
 }
 
