@@ -249,6 +249,36 @@ describe("CustomizationContentView", () => {
     ).toHaveLength(2);
   });
 
+  it("cleans the site's name off titles and says how many changed", async () => {
+    const server = fakeRecordsServer();
+    const { customContent, toast } = await renderEditor(server);
+    await createLibrary();
+    await customContent.saveItem(
+      {
+        url: "https://gracecommunity.org/sermons/the-good-shepherd",
+        title: "The Good Shepherd | Grace Community",
+        description: "",
+        categoryIds: [],
+        references: [],
+      },
+      { publish: false }
+    );
+    await waitForCondition(() =>
+      container.textContent!.includes("The Good Shepherd | Grace Community")
+    );
+
+    await click(button("Cleanup titles"));
+    await waitForCondition(() => toast.mock.calls.length > 0);
+
+    expect(toast).toHaveBeenCalledWith("Cleaned up 1 titles");
+    expect(container.textContent).toContain("The Good Shepherd");
+    expect(container.textContent).not.toContain("| Grace Community");
+
+    await click(button("Cleanup titles"));
+    await waitForCondition(() => toast.mock.calls.length > 1);
+    expect(toast).toHaveBeenLastCalledWith("No titles needed cleaning up");
+  });
+
   it("shows which chapters have content, book by book", async () => {
     const server = fakeRecordsServer();
     const { customContent } = await renderEditor(server);

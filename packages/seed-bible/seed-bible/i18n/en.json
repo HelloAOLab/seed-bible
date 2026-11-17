@@ -1556,5 +1556,11 @@
   "person-profile-not-friends": "You're not friends yet.",
   "friend-request-account-not-found": "We couldn't find this account.",
   "person-profile-you": "This is you.",
-  "friend-request-link-load-failed": "Couldn't load your friend requests. Check your connection and try again."
+  "friend-request-link-load-failed": "Couldn't load your friend requests. Check your connection and try again.",
+  "custom-content-cleanup-titles": "Cleanup titles",
+  "custom-content-cleanup-titles-hint": "Takes the website's name off item titles, like “Good Things – Grace Church” becoming “Good Things”.",
+  "custom-content-titles-cleaned": "Cleaned up {{count}} titles",
+  "custom-content-titles-cleaned_one": "Cleaned up {{count}} title",
+  "custom-content-titles-cleaned_other": "Cleaned up {{count}} titles",
+  "custom-content-titles-already-clean": "No titles needed cleaning up"
 }

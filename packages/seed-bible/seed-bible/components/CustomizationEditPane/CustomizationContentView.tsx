@@ -769,6 +769,32 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
         <span className="sb-cz-footer-spacer" />
         <Button
           disabled={busy}
+          title={t("custom-content-cleanup-titles-hint", {
+            defaultValue:
+              "Takes the website's name off item titles, like “Good Things – Grace Church” becoming “Good Things”.",
+          })}
+          onClick={() =>
+            void run(async () => {
+              const count = await customContent.cleanupTitles();
+              state.app.toast(
+                count > 0
+                  ? t("custom-content-titles-cleaned", {
+                      count,
+                      defaultValue: "Cleaned up {{count}} titles",
+                    })
+                  : t("custom-content-titles-already-clean", {
+                      defaultValue: "No titles needed cleaning up",
+                    })
+              );
+            })
+          }
+        >
+          {t("custom-content-cleanup-titles", {
+            defaultValue: "Cleanup titles",
+          })}
+        </Button>
+        <Button
+          disabled={busy}
           title={t("custom-content-rebuild-hint", {
             defaultValue:
               "Rewrites what Discover shows from your items, in case a publish was interrupted.",

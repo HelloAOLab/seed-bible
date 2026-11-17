@@ -29,6 +29,7 @@ import {
 import type { ContentImportService } from "./customContent/importClient";
 import type { ImportEntry } from "./customContent/importEntries";
 import { normalizeContentUrl } from "./customContent/normalizeUrl";
+import { trimSiteName } from "./customContent/titles";
 import {
   ContentLibraryError,
   assertStored,
@@ -147,6 +148,12 @@ export interface CustomContentManager {
   deleteItem: (id: string) => Promise<void>;
   /** Rewrites every chapter record from the items, to repair a publish that stopped partway. */
   rebuildIndex: () => Promise<void>;
+  /**
+   * Takes the site's name off every item's title, the way imports do now
+   * ("Good Things – Frontline Bible Church" becomes "Good Things"), for
+   * items imported before they did. Returns how many titles changed.
+   */
+  cleanupTitles: () => Promise<number>;
 
   /**
    * Hands links to the import service, which fills in each one's details in
@@ -935,6 +942,85 @@ export function createCustomContentManager(deps: {
       }
     });
 
+  /** Items saved at once by a change to many of them. */
+  const PARALLEL_ITEM_WRITES = 6;
+
+  const cleanupTitles = async (): Promise<number> => {
+    const { record, keys, count, failure } = await queueWrite(async () => {
+      const { record, current, all } = requireOpen();
+      const clean = (item: ContentItem): ContentItem => {
+        const title = trimSiteName(
+          item.title,
+          [current.defaultAuthor],
+          item.url
+        );
+        return title === item.title
+          ? item
+          : { ...item, title, updatedAt: Date.now() };
+      };
+      const changed = all.flatMap((before) => {
+        const after = clean(before);
+        return after === before ? [] : [{ before, after }];
+      });
+      // Shown at once, so an item published meanwhile is published with its
+      // cleaned title rather than putting the old one back.
+      for (const { after } of changed) {
+        putItem(record, after.id, after);
+      }
+      const keys = new Set<string>();
+      let failure: unknown = null;
+      for (let i = 0; i < changed.length; i += PARALLEL_ITEM_WRITES) {
+        const results = await Promise.allSettled(
+          changed.slice(i, i + PARALLEL_ITEM_WRITES).map(({ before, after }) =>
+            inItemOrder(after.id, async () => {
+              // The item as it is now, in case it changed since.
+              const latest = items.value.find((it) => it.id === after.id);
+              if (!latest) {
+                return;
+              }
+              const cleaned = clean(latest);
+              try {
+                assertStored(
+                  await store.recordData(
+                    record,
+                    contentItemAddress(cleaned.id),
+                    cleaned,
+                    CONTENT_ITEM_MARKER
+                  ),
+                  "save the item"
+                );
+              } catch (error) {
+                if (items.value.find((it) => it.id === after.id) === after) {
+                  putItem(record, before.id, before);
+                }
+                throw error;
+              }
+              if (cleaned !== latest) {
+                putItem(record, cleaned.id, cleaned);
+              }
+              for (const key of publishedChapterKeys(cleaned)) {
+                keys.add(key);
+              }
+            })
+          )
+        );
+        for (const result of results) {
+          if (result.status === "rejected" && failure === null) {
+            failure = result.reason;
+          }
+        }
+      }
+      return { record, keys, count: changed.length, failure };
+    });
+    if (keys.size > 0) {
+      await schedulePublish(record, { keys });
+    }
+    if (failure !== null) {
+      throw failure;
+    }
+    return count;
+  };
+
   const rebuildIndex = (): Promise<void> =>
     schedulePublish(requireOpen().record, { full: true });
 
@@ -1606,6 +1692,7 @@ export function createCustomContentManager(deps: {
     setItemPublished,
     deleteItem,
     rebuildIndex,
+    cleanupTitles,
     importEntries,
     cancelImport,
     resumeImport,

@@ -21,6 +21,7 @@
   - See which chapters your library covers, book by book, to find the gaps you might want to fill.
   - Chapters with hundreds of items still show all of them in Discover.
   - Import a whole website: enter its address, and Seed Bible finds the pages the Common Crawl web archive has saved from it. Pick the folders or pages you want; each one's passages are found in its full text, and a video embedded in the page opens directly from Discover. "Check for new pages" looks again later.
+  - Imported titles leave out the website's name ("Good Things – Frontline Bible Church" becomes "Good Things"). "Cleanup titles" does the same for items imported earlier.
 
 ### 🔧 Changed
 

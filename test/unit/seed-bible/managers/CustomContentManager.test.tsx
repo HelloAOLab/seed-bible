@@ -445,6 +445,146 @@ describe("CustomContentManager", () => {
     });
   });
 
+  describe("cleaning up titles", () => {
+    function storedTitle(
+      server: FakeRecordsServer,
+      customContent: CustomContentManager,
+      id: string
+    ) {
+      return (
+        server.records
+          .get(customContent.recordName.value!)!
+          .get(contentItemAddress(id))?.data as ContentItem
+      ).title;
+    }
+
+    it("takes the site's name off titles, saves them and shows them in Discover", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      await owner.customContent.setDefaultAuthor("Frontline Bible Church");
+      const published = await addSermon(owner.customContent, {
+        title: "The Good Shepherd – Frontline Bible Church",
+      });
+      const draft = await addSermon(
+        owner.customContent,
+        {
+          url: "https://gracecommunity.org/sermons/door",
+          title: "Grace Community | I Am the Door",
+        },
+        false
+      );
+      const untouched = await addSermon(
+        owner.customContent,
+        {
+          url: "https://gracecommunity.org/sermons/gift",
+          title: "Grace – The Gift",
+        },
+        false
+      );
+
+      expect(await owner.customContent.cleanupTitles()).toBe(2);
+
+      expect(storedTitle(server, owner.customContent, published.id)).toBe(
+        "The Good Shepherd"
+      );
+      expect(storedTitle(server, owner.customContent, draft.id)).toBe(
+        "I Am the Door"
+      );
+      expect(storedTitle(server, owner.customContent, untouched.id)).toBe(
+        "Grace – The Gift"
+      );
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 10);
+      expect(results.map((r) => r.title)).toEqual(["The Good Shepherd"]);
+      expect(await owner.customContent.cleanupTitles()).toBe(0);
+    });
+
+    /** Drafts on John 10 whose titles end in the site's name. */
+    async function suffixedDrafts(
+      customContent: CustomContentManager,
+      count: number
+    ) {
+      const saved = [];
+      for (let i = 0; i < count; i++) {
+        saved.push(
+          await addSermon(
+            customContent,
+            {
+              url: `https://gracecommunity.org/sermons/${i}`,
+              title: `Sermon ${i} | Grace Community`,
+            },
+            false
+          )
+        );
+      }
+      return saved;
+    }
+
+    // Enough items that some are saved in a later batch than the first.
+    // Newest are saved first, as the library lists them.
+    const MANY = 8;
+
+    it("keeps a publish clicked while titles are being cleaned up", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const items = await suffixedDrafts(owner.customContent, MANY);
+      const [later] = items;
+      const first = items[items.length - 1]!;
+      let release = () => {};
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      server.hooks.beforeWrite = async (address) => {
+        if (address === contentItemAddress(first.id)) {
+          await held;
+        }
+      };
+
+      const cleaning = owner.customContent.cleanupTitles();
+      await waitForCondition(() =>
+        owner.customContent.items.value.every(
+          (item) => !item.title.includes("|")
+        )
+      );
+      const publishing = owner.customContent.setItemPublished(later!.id, true);
+      await publishing;
+      release();
+      await cleaning;
+
+      expect(
+        server.records
+          .get(owner.customContent.recordName.value!)!
+          .get(contentItemAddress(later!.id))?.data
+      ).toMatchObject({ title: "Sermon 0", status: "published" });
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 10);
+      expect(results.map((r) => r.title)).toEqual(["Sermon 0"]);
+    });
+
+    it("puts a title back, and says so, when saving it fails, but still saves the rest", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const items = await suffixedDrafts(owner.customContent, MANY);
+      const failing = items[items.length - 1]!;
+      server.failWritesTo.add(contentItemAddress(failing.id));
+
+      await expect(owner.customContent.cleanupTitles()).rejects.toMatchObject({
+        code: "server_error",
+      });
+      expect(
+        owner.customContent.items.value.find((item) => item.id === failing.id)
+          ?.title
+      ).toBe(`Sermon ${MANY - 1} | Grace Community`);
+      for (const [i, item] of items.entries()) {
+        if (item !== failing) {
+          expect(storedTitle(server, owner.customContent, item.id)).toBe(
+            `Sermon ${i}`
+          );
+        }
+      }
+    });
+  });
+
   describe("chapters too big for one record entry", () => {
     /**
      * Published items on John 3, stored as an import would leave them, then
