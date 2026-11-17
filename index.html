@@ -108,11 +108,8 @@
           }
         }
         try {
-          // Guard storage: privacy mode, blocked cookies, or a host with no
-          // Storage (Node 26's global localStorage is undefined without
-          // `--localstorage-file`) must not abort before we paint System
-          // light/dark from matchMedia — that was leaving Dark devices on
-          // the server's Light guess and a white Android nav strip.
+          // Storage can be blocked or missing (private mode, blocked
+          // cookies); don't let that stop the System light/dark paint below.
           var store = null;
           try {
             store = window.localStorage;
