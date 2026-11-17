@@ -1,6 +1,6 @@
 import "./ExtensionReview.css";
 import { useSignal } from "@preact/signals";
-import { useEffect } from "preact/hooks";
+import { useEffect, useId } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type {
   ExtensionReviewsManager,
@@ -46,17 +46,43 @@ function toDateTimeInputValue(ms: number): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+/** What the reviews record says about when and why an extension is verified. */
+function useVerificationText(
+  review: ExtensionVerification,
+  builtIn: boolean | undefined
+): string {
+  const { t, language } = useI18n();
+  return builtIn
+    ? t("extension-review-verified-built-in")
+    : review.verifiedAtMs !== undefined
+      ? t("extension-review-verified-on", {
+          date: formatDate(review.verifiedAtMs, language),
+        })
+      : t("extension-review-verified-undated");
+}
+
 /**
  * The Verified mark, for a verified extension. Hovering over it shows when
- * it was verified and the reviewer's public notes.
+ * it was verified and the reviewer's public notes; where it can take focus,
+ * focusing or tapping it does too. Screen readers hear the same text.
  */
 export function ExtensionReviewBadges(props: {
   review: ExtensionVerification | null;
   builtIn?: boolean;
+  /**
+   * Whether the mark is a control of its own. Not inside another control,
+   * like an extension's card, which handles taps and focus itself.
+   */
+  focusable?: boolean;
 }) {
-  const { t, language } = useI18n();
+  const { t } = useI18n();
   const anchor = useSignal<TooltipAnchor | null>(null);
+  const descriptionId = `sb-extension-review-${useId()}`;
   const { review } = props;
+  const verificationText = useVerificationText(
+    review ?? { verified: false },
+    props.builtIn
+  );
   if (!review?.verified) {
     return null;
   }
@@ -71,38 +97,96 @@ export function ExtensionReviewBadges(props: {
     };
   };
   const hide = () => (anchor.value = null);
+  const focusable = props.focusable === true;
 
   return (
-    <span
-      className="sb-extension-review-badge sb-extension-review-badge-verified"
-      onPointerEnter={show}
-      onPointerLeave={hide}
-    >
-      <span className="material-symbols-outlined" aria-hidden="true">
-        verified
-      </span>
-      {t("extension-review-verified")}
-      {anchor.value && (
-        <Tooltip anchor={anchor.value} offsetY={6}>
-          <span className="sb-extension-review-tooltip">
-            <span className="sb-extension-review-tooltip-date">
-              {props.builtIn
-                ? t("extension-review-verified-built-in")
-                : review.verifiedAtMs !== undefined
-                  ? t("extension-review-verified-on", {
-                      date: formatDate(review.verifiedAtMs, language),
-                    })
-                  : t("extension-review-verified-undated")}
-            </span>
-            {review.publicNotes && (
-              <span className="sb-extension-review-tooltip-notes">
-                {review.publicNotes}
+    <>
+      <span
+        className="sb-extension-review-badge sb-extension-review-badge-verified"
+        onPointerEnter={show}
+        onPointerLeave={hide}
+        {...(focusable
+          ? {
+              tabIndex: 0,
+              role: "button",
+              "aria-expanded": anchor.value !== null,
+              "aria-describedby": descriptionId,
+              onFocus: show,
+              onBlur: hide,
+              onClick: (event: MouseEvent) =>
+                anchor.value ? hide() : show(event),
+              onKeyDown: (event: KeyboardEvent) => {
+                if (event.key === "Escape") {
+                  hide();
+                } else if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  if (anchor.value) {
+                    hide();
+                  } else {
+                    show(event);
+                  }
+                }
+              },
+            }
+          : {})}
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">
+          verified
+        </span>
+        {t("extension-review-verified")}
+        {anchor.value && (
+          <Tooltip anchor={anchor.value} offsetY={6}>
+            <span className="sb-extension-review-tooltip">
+              <span className="sb-extension-review-tooltip-date">
+                {verificationText}
               </span>
-            )}
+              {review.publicNotes && (
+                <span className="sb-extension-review-tooltip-notes">
+                  {review.publicNotes}
+                </span>
+              )}
+            </span>
+          </Tooltip>
+        )}
+      </span>
+      <span id={descriptionId} className="sb-visually-hidden">
+        {review.publicNotes
+          ? `${verificationText}. ${review.publicNotes}`
+          : verificationText}
+      </span>
+    </>
+  );
+}
+
+/**
+ * Rows for an extension page's details list saying when and why it's
+ * verified, for anyone who can't hover over the Verified mark.
+ */
+export function ExtensionReviewDetailRows(props: {
+  review: ExtensionVerification | null;
+  builtIn?: boolean;
+}) {
+  const { t } = useI18n();
+  const { review } = props;
+  const verificationText = useVerificationText(
+    review ?? { verified: false },
+    props.builtIn
+  );
+  if (!review?.verified) {
+    return null;
+  }
+  return (
+    <>
+      <dt>{t("extension-review-verified")}</dt>
+      <dd className="sb-extension-review-detail">
+        <span>{verificationText}</span>
+        {review.publicNotes && (
+          <span className="sb-extension-review-detail-notes">
+            {review.publicNotes}
           </span>
-        </Tooltip>
-      )}
-    </span>
+        )}
+      </dd>
+    </>
   );
 }
 
@@ -316,18 +400,31 @@ export function ExtensionReviewControls(props: {
   modals: ModalManager;
   extensionId: string;
   name: string;
-  review: ExtensionVerification | null;
 }) {
-  const { reviews, modals, extensionId, name, review } = props;
+  const { reviews, modals, extensionId, name } = props;
   const { t, language } = useI18n();
   const removing = useSignal(false);
   const failed = useSignal(false);
+  useEffect(() => {
+    reviews.checkCanManage();
+  }, [reviews]);
   if (!reviews.canManage.value) {
     return null;
   }
 
+  // Undefined until the lookup answers. Offering "Mark as verified" before
+  // then would let a save replace a verification that just hadn't loaded.
+  const review = reviews.reviews.value[extensionId];
+  const lookupFailed = reviews.failed.value.has(extensionId);
+  const known = review !== undefined;
+
   const openModal = () =>
-    openVerifyExtensionModal(modals, { reviews, extensionId, name, review });
+    openVerifyExtensionModal(modals, {
+      reviews,
+      extensionId,
+      name,
+      review: review ?? null,
+    });
 
   const unverify = async () => {
     removing.value = true;
@@ -341,44 +438,67 @@ export function ExtensionReviewControls(props: {
       <h2 className="sb-extension-info-heading">
         {t("extension-review-admin-title")}
       </h2>
-      <p className="sb-extension-review-controls-note">
-        {review?.verified
-          ? review.verifiedAtMs !== undefined
-            ? t("extension-review-admin-verified-on", {
-                date: formatDate(review.verifiedAtMs, language),
-              })
-            : t("extension-review-verified-undated")
-          : t("extension-review-admin-not-verified")}
-      </p>
-      <div className="sb-extension-review-controls-actions">
-        <button
-          type="button"
-          className="sb-extension-review-button sb-extension-review-button-primary"
-          onClick={openModal}
-          disabled={removing.value}
-        >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            {review?.verified ? "edit" : "verified"}
-          </span>
-          {review?.verified
-            ? t("extension-review-edit")
-            : t("extension-review-mark-verified")}
-        </button>
-        {review?.verified && (
-          <button
-            type="button"
-            className="sb-extension-review-button"
-            onClick={() => void unverify()}
-            disabled={removing.value}
-          >
-            {t("extension-review-unverify")}
-          </button>
-        )}
-      </div>
-      {failed.value && (
-        <p className="sb-extension-review-error" role="alert">
-          {t("extension-review-admin-save-failed")}
+      {lookupFailed && !known ? (
+        <>
+          <p className="sb-extension-review-error" role="alert">
+            {t("extension-review-admin-load-failed")}
+          </p>
+          <div className="sb-extension-review-controls-actions">
+            <button
+              type="button"
+              className="sb-extension-review-button"
+              onClick={() => void reviews.load(extensionId)}
+            >
+              {t("try-again")}
+            </button>
+          </div>
+        </>
+      ) : !known ? (
+        <p className="sb-extension-review-controls-note">
+          {t("extension-review-admin-loading")}
         </p>
+      ) : (
+        <>
+          <p className="sb-extension-review-controls-note">
+            {review?.verified
+              ? review.verifiedAtMs !== undefined
+                ? t("extension-review-admin-verified-on", {
+                    date: formatDate(review.verifiedAtMs, language),
+                  })
+                : t("extension-review-verified-undated")
+              : t("extension-review-admin-not-verified")}
+          </p>
+          <div className="sb-extension-review-controls-actions">
+            <button
+              type="button"
+              className="sb-extension-review-button sb-extension-review-button-primary"
+              onClick={openModal}
+              disabled={removing.value}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                {review?.verified ? "edit" : "verified"}
+              </span>
+              {review?.verified
+                ? t("extension-review-edit")
+                : t("extension-review-mark-verified")}
+            </button>
+            {review?.verified && (
+              <button
+                type="button"
+                className="sb-extension-review-button"
+                onClick={() => void unverify()}
+                disabled={removing.value}
+              >
+                {t("extension-review-unverify")}
+              </button>
+            )}
+          </div>
+          {failed.value && (
+            <p className="sb-extension-review-error" role="alert">
+              {t("extension-review-admin-save-failed")}
+            </p>
+          )}
+        </>
       )}
     </section>
   );

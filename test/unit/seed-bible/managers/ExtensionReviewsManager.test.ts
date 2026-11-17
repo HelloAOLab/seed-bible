@@ -20,6 +20,7 @@ describe("ExtensionReviewsManager", () => {
   let getData: ReturnType<typeof vi.fn>;
   let recordData: ReturnType<typeof vi.fn>;
   let listPermissions: ReturnType<typeof vi.fn>;
+  let eraseData: ReturnType<typeof vi.fn>;
   let userId: Signal<string | null>;
 
   beforeEach(() => {
@@ -36,7 +37,13 @@ describe("ExtensionReviewsManager", () => {
       errorMessage: "You are not authorized to perform this action.",
     });
     // The records client is a proxy, so the SDK methods are assigned, not spied on.
-    Object.assign(os.client, { getData, recordData, listPermissions });
+    eraseData = vi.fn().mockResolvedValue({ success: true });
+    Object.assign(os.client, {
+      getData,
+      recordData,
+      listPermissions,
+      eraseData,
+    });
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(console, "warn").mockImplementation(() => {});
     userId = signal<string | null>(null);
@@ -113,6 +120,30 @@ describe("ExtensionReviewsManager", () => {
       expect(await reviews.load(VERSE_ART)).toMatchObject({ verified: true });
     });
 
+    it("tells a lookup that failed apart from one that found nothing", async () => {
+      getData.mockRejectedValueOnce(new Error("offline"));
+      const reviews = create();
+
+      await reviews.load(VERSE_ART);
+      expect(reviews.failed.value.has(VERSE_ART)).toBe(true);
+      expect(reviews.reviews.value[VERSE_ART]).toBeUndefined();
+
+      await reviews.load(VERSE_ART);
+      expect(reviews.failed.value.has(VERSE_ART)).toBe(false);
+      expect(reviews.reviews.value[VERSE_ART]).toBeNull();
+    });
+
+    it("counts a refused lookup as failed", async () => {
+      getData.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+      });
+      const reviews = create();
+
+      expect(await reviews.load(VERSE_ART)).toBeNull();
+      expect(reviews.failed.value.has(VERSE_ART)).toBe(true);
+    });
+
     it("reads nothing when the build has no reviews record", async () => {
       const reviews = create(null);
 
@@ -129,9 +160,25 @@ describe("ExtensionReviewsManager", () => {
   });
 
   describe("who can verify extensions", () => {
+    it("isn't asked until something needs to know", async () => {
+      listPermissions.mockResolvedValue({ success: true });
+      userId.value = "admin-1";
+      const reviews = create();
+
+      await Promise.resolve();
+      expect(listPermissions).not.toHaveBeenCalled();
+      expect(reviews.canManage.value).toBe(false);
+
+      reviews.checkCanManage();
+
+      await waitForCondition(() => reviews.canManage.value);
+      expect(listPermissions).toHaveBeenCalledTimes(1);
+    });
+
     it("is nobody while signed out", async () => {
       listPermissions.mockResolvedValue({ success: true });
       const reviews = create();
+      reviews.checkCanManage();
 
       await Promise.resolve();
       expect(reviews.canManage.value).toBe(false);
@@ -141,6 +188,7 @@ describe("ExtensionReviewsManager", () => {
     it("is a signed-in admin of the reviews record", async () => {
       listPermissions.mockResolvedValue({ success: true });
       const reviews = create();
+      reviews.checkCanManage();
 
       userId.value = "admin-1";
 
@@ -150,6 +198,7 @@ describe("ExtensionReviewsManager", () => {
 
     it("isn't someone the record refuses", async () => {
       const reviews = create();
+      reviews.checkCanManage();
 
       userId.value = "user-1";
       await waitForCondition(() => listPermissions.mock.calls.length > 0);
@@ -161,6 +210,7 @@ describe("ExtensionReviewsManager", () => {
     it("stops being the admin once they sign out", async () => {
       listPermissions.mockResolvedValue({ success: true });
       const reviews = create();
+      reviews.checkCanManage();
       userId.value = "admin-1";
       await waitForCondition(() => reviews.canManage.value);
 
@@ -175,6 +225,7 @@ describe("ExtensionReviewsManager", () => {
         new Promise((resolve) => (answer = resolve))
       );
       const reviews = create();
+      reviews.checkCanManage();
       userId.value = "admin-1";
       userId.value = null;
 
@@ -307,6 +358,49 @@ describe("ExtensionReviewsManager", () => {
       expect(reviews.reviews.value[VERSE_ART]).toEqual({
         verified: true,
         verifiedAtMs: 1,
+      });
+    });
+
+    it("puts the internal notes back when the public details are refused", async () => {
+      getData.mockResolvedValue({
+        success: true,
+        data: { internalNotes: "Old notes.", updatedAtMs: 1 },
+      });
+      recordData.mockImplementation(async (request: { address: string }) =>
+        request.address === VERSE_ART
+          ? { success: false, errorCode: "not_authorized" }
+          : { success: true }
+      );
+      const reviews = create();
+      await reviews.loadInternalNotes(VERSE_ART);
+
+      expect(await reviews.verify(VERSE_ART, DETAILS)).toBe(false);
+
+      const internalWrites = recordData.mock.calls
+        .map(([request]) => request)
+        .filter((request) => request.address === `internal/${VERSE_ART}`);
+      expect(internalWrites.map((request) => request.data)).toEqual([
+        expect.objectContaining({
+          internalNotes: "Checked the publisher's domain.",
+        }),
+        { internalNotes: "Old notes.", updatedAtMs: 1 },
+      ]);
+    });
+
+    it("removes internal notes it wrote where there were none, when the public details are refused", async () => {
+      recordData.mockImplementation(async (request: { address: string }) =>
+        request.address === VERSE_ART
+          ? { success: false, errorCode: "not_authorized" }
+          : { success: true }
+      );
+      const reviews = create();
+      await reviews.loadInternalNotes(VERSE_ART);
+
+      expect(await reviews.verify(VERSE_ART, DETAILS)).toBe(false);
+
+      expect(eraseData).toHaveBeenCalledWith({
+        recordKey: RECORD,
+        address: `internal/${VERSE_ART}`,
       });
     });
 

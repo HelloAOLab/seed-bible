@@ -1063,6 +1063,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
         people={catalog.people}
         reviews={state.extensionReviews}
         modals={state.modals}
+        builtIn={catalog.isBuiltIn(openEntry)}
         breadcrumbs={
           <SettingsBreadcrumbs
             onBack={() => (openExtensionId.value = null)}

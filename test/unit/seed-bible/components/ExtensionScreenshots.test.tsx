@@ -98,6 +98,7 @@ describe("extension screenshot strip", () => {
             name="Demo"
             description="Demo extension"
             extensions={extensions}
+            builtIn
             installState={options.installed ? "installed" : "none"}
             layout={options.layout}
             settings={<p>Extension settings</p>}

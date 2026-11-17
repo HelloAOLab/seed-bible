@@ -81,8 +81,18 @@ export interface ExtensionReviewsManager {
    * the record says nothing about; absent for one not looked up yet.
    */
   reviews: ReadonlySignal<Record<string, ExtensionVerification | null>>;
-  /** Whether the signed-in user may verify extensions. */
+  /**
+   * Extensions whose last lookup failed, so their verification is unknown
+   * rather than missing. A later `load` that succeeds takes them off.
+   */
+  failed: ReadonlySignal<ReadonlySet<string>>;
+  /**
+   * Whether the signed-in user may verify extensions. Stays false until
+   * `checkCanManage` asks, since most users never open a screen that needs it.
+   */
   canManage: ReadonlySignal<boolean>;
+  /** Starts checking whether the signed-in user may verify extensions. */
+  checkCanManage: () => void;
   /**
    * Looks up an extension's verification, once per page load. Null when
    * there's none, or when it couldn't be read (and then it's tried again
@@ -107,12 +117,22 @@ export interface ExtensionReviewsManager {
 }
 
 export function createExtensionReviewsManager(
-  os: Pick<CasualOSManager, "getData" | "recordData" | "isRecordAdmin">,
+  os: Pick<
+    CasualOSManager,
+    "getData" | "recordData" | "eraseData" | "isRecordAdmin"
+  >,
   login: Pick<LoginManager, "userId">,
   recordName: string | null = EXTENSION_REVIEWS_RECORD
 ): ExtensionReviewsManager {
   const reviews = signal<Record<string, ExtensionVerification | null>>({});
+  const failed = signal<ReadonlySet<string>>(new Set());
   const canManage = signal(false);
+  const adminCheckWanted = signal(false);
+  /**
+   * Each internal-notes entry as last read or saved (null: there was none),
+   * to put back if a save writes the notes but not the public details.
+   */
+  const knownInternalEntries = new Map<string, object | null>();
   const loading = new Map<string, Promise<ExtensionVerification | null>>();
 
   const store = (
@@ -127,10 +147,23 @@ export function createExtensionReviewsManager(
   const fitsRecord = (extensionId: string) =>
     internalAddress(extensionId).length <= MAX_ADDRESS_LENGTH;
 
+  const setFailed = (extensionId: string, isFailed: boolean) => {
+    if (failed.peek().has(extensionId) === isFailed) {
+      return;
+    }
+    const next = new Set(failed.peek());
+    if (isFailed) {
+      next.add(extensionId);
+    } else {
+      next.delete(extensionId);
+    }
+    failed.value = next;
+  };
+
   effect(() => {
     const userId = login.userId.value;
     canManage.value = false;
-    if (!recordName || !userId) {
+    if (!adminCheckWanted.value || !recordName || !userId) {
       return;
     }
     let current = true;
@@ -165,8 +198,10 @@ export function createExtensionReviewsManager(
             ? null
             : undefined;
         if (found === undefined) {
+          setFailed(extensionId, true);
           return null;
         }
+        setFailed(extensionId, false);
         // A verification saved while this was loading is newer.
         if (reviews.peek()[extensionId] === undefined) {
           store(extensionId, found);
@@ -177,6 +212,7 @@ export function createExtensionReviewsManager(
           `Could not load the verification of '${extensionId}':`,
           err
         );
+        setFailed(extensionId, true);
         return null;
       } finally {
         loading.delete(extensionId);
@@ -195,11 +231,18 @@ export function createExtensionReviewsManager(
     try {
       const result = await os.getData(recordName, internalAddress(extensionId));
       if (!result.success) {
-        return result.errorCode === "data_not_found" ? "" : null;
+        if (result.errorCode !== "data_not_found") {
+          return null;
+        }
+        knownInternalEntries.set(extensionId, null);
+        return "";
       }
-      const notes = (result.data as { internalNotes?: unknown } | null)
-        ?.internalNotes;
-      return typeof notes === "string" ? notes : "";
+      const entry =
+        typeof result.data === "object" && result.data !== null
+          ? (result.data as { internalNotes?: unknown })
+          : {};
+      knownInternalEntries.set(extensionId, entry);
+      return typeof entry.internalNotes === "string" ? entry.internalNotes : "";
     } catch (err) {
       console.warn(
         `Could not load the internal notes of '${extensionId}':`,
@@ -242,10 +285,15 @@ export function createExtensionReviewsManager(
       return false;
     }
     // The notes go first, so a refusal can't leave the extension marked
-    // verified without the notes that explain it.
+    // verified without the notes that explain it. If the public details are
+    // then refused, the notes are put back as they were.
+    const internalEntry = {
+      internalNotes: details.internalNotes.trim(),
+      ...changeStamp(),
+    };
     const savedNotes = await write(
       internalAddress(extensionId),
-      { internalNotes: details.internalNotes.trim(), ...changeStamp() },
+      internalEntry,
       "private"
     );
     if (!savedNotes) {
@@ -259,10 +307,32 @@ export function createExtensionReviewsManager(
       ...changeStamp(),
     };
     if (!(await write(extensionId, verification, "publicRead"))) {
+      await restoreInternalEntry(extensionId);
       return false;
     }
+    knownInternalEntries.set(extensionId, internalEntry);
     store(extensionId, verification);
     return true;
+  };
+
+  /** Puts back the internal notes a failed `verify` overwrote, if known. */
+  const restoreInternalEntry = async (extensionId: string) => {
+    if (!knownInternalEntries.has(extensionId)) {
+      return;
+    }
+    const previous = knownInternalEntries.get(extensionId);
+    try {
+      if (previous) {
+        await write(internalAddress(extensionId), previous, "private");
+      } else {
+        await os.eraseData(recordName!, internalAddress(extensionId));
+      }
+    } catch (err) {
+      console.warn(
+        `Could not restore the internal notes of '${extensionId}':`,
+        err
+      );
+    }
   };
 
   const unverify = async (extensionId: string): Promise<boolean> => {
@@ -283,7 +353,11 @@ export function createExtensionReviewsManager(
   return {
     recordName,
     reviews,
+    failed,
     canManage,
+    checkCanManage: () => {
+      adminCheckWanted.value = true;
+    },
     load,
     loadInternalNotes,
     verify,

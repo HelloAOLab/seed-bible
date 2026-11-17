@@ -733,5 +733,124 @@ describe("ExtensionsPage", () => {
       expect(badges(container)).toEqual([]);
       expect(notice()).toBe("infoextension-consent-unreviewed");
     });
+
+    const controlsNote = () =>
+      container.querySelector(".sb-extension-review-controls-note")
+        ?.textContent;
+
+    it("doesn't offer to verify an extension until its verification has loaded", async () => {
+      const { os, reviews } = createReviews(
+        {
+          "verse-art": {
+            verified: true,
+            verifiedAtMs: VERIFIED_AT,
+            publicNotes: "Published by the Verse Art team.",
+          },
+        },
+        { admin: true }
+      );
+      let answer!: () => void;
+      const realGetData = os.getData.getMockImplementation()!;
+      os.getData.mockImplementationOnce(
+        (recordName: string, address: string) =>
+          new Promise((resolve) => {
+            answer = () => resolve(realGetData(recordName, address));
+          })
+      );
+      await openVerseArt(reviews);
+
+      expect(controlsNote()).toBe("extension-review-admin-loading");
+      expect(
+        buttonNamed(container, "extension-review-mark-verified")
+      ).toBeUndefined();
+
+      answer();
+      await flush();
+      await flush();
+
+      expect(controlsNote()).toBe(
+        "extension-review-admin-verified-on Oct 30, 2026"
+      );
+      expect(buttonNamed(container, "extension-review-edit")).toBeDefined();
+    });
+
+    it("says when an extension's verification couldn't be checked, and tries again", async () => {
+      const { os, reviews } = createReviews(
+        { "verse-art": { verified: true, verifiedAtMs: VERIFIED_AT } },
+        { admin: true }
+      );
+      os.getData.mockImplementationOnce(async () => {
+        throw new Error("offline");
+      });
+      await openVerseArt(reviews);
+
+      expect(
+        container.querySelector(".sb-extension-review-controls [role='alert']")
+          ?.textContent
+      ).toBe("extension-review-admin-load-failed");
+      expect(
+        buttonNamed(container, "extension-review-mark-verified")
+      ).toBeUndefined();
+
+      await act(async () => {
+        buttonNamed(container, "try-again")!.click();
+      });
+      await flush();
+
+      expect(controlsNote()).toBe(
+        "extension-review-admin-verified-on Oct 30, 2026"
+      );
+    });
+
+    it("shows when and why it was verified on the page, for anyone who can't hover", async () => {
+      const { reviews } = createReviews({
+        "verse-art": {
+          verified: true,
+          verifiedAtMs: VERIFIED_AT,
+          publicNotes: "Published by the Verse Art team.",
+        },
+      });
+      await openVerseArt(reviews);
+
+      expect(
+        container.querySelector(".sb-extension-review-detail")?.textContent
+      ).toBe(
+        "extension-review-verified-on Oct 30, 2026" +
+          "Published by the Verse Art team."
+      );
+    });
+
+    it("opens the mark's details on keyboard focus and on a tap, on the extension's page", async () => {
+      const { reviews } = createReviews({
+        "verse-art": {
+          verified: true,
+          verifiedAtMs: VERIFIED_AT,
+          publicNotes: "Published by the Verse Art team.",
+        },
+      });
+      await openVerseArt(reviews);
+      const badge = container.querySelector<HTMLElement>(
+        ".sb-extension-info-title-row .sb-extension-review-badge"
+      )!;
+      const description = document.getElementById(
+        badge.getAttribute("aria-describedby")!
+      );
+
+      expect(badge.getAttribute("tabindex")).toBe("0");
+      expect(description?.textContent).toBe(
+        "extension-review-verified-on Oct 30, 2026. " +
+          "Published by the Verse Art team."
+      );
+
+      act(() => badge.focus());
+      expect(tooltip()).not.toBeNull();
+      act(() => badge.blur());
+      expect(tooltip()).toBeNull();
+
+      act(() => badge.click());
+      expect(tooltip()).not.toBeNull();
+      act(() => badge.click());
+      expect(tooltip()).toBeNull();
+    });
   });
 });

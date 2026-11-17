@@ -30,6 +30,7 @@ import { ScreenshotViewer } from "../ScreenshotViewer/ScreenshotViewer";
 import {
   ExtensionReviewBadges,
   ExtensionReviewControls,
+  ExtensionReviewDetailRows,
   ExtensionReviewNotice,
   useExtensionReview,
 } from "../ExtensionReview/ExtensionReview";
@@ -55,6 +56,8 @@ export interface ExtensionInfoPageProps {
   people?: ConsentPeople;
   /** Which extensions are verified. */
   reviews?: ExtensionReviewsManager;
+  /** Whether the extension is compiled into the app, which makes it verified. */
+  builtIn: boolean;
   /** Opens the dialog an admin marks an extension verified in. */
   modals?: ModalManager;
   /**
@@ -221,7 +224,7 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
   const url = extension && "url" in extension ? extension.url : null;
   const summary = extensions.sandboxPermissions.value[entry.id];
   const uploader = useExtensionUploader(extensions, entry.id, url);
-  const builtIn = extension !== null && !url;
+  const { builtIn } = props;
   const review = useExtensionReview(props.reviews, entry.id, builtIn);
   const installed =
     installState === "installed" || installState === "downloaded";
@@ -288,6 +291,7 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
         <dd className="sb-extension-info-id">
           {sourced?.declaredId ?? entry.id}
         </dd>
+        <ExtensionReviewDetailRows review={review} builtIn={builtIn} />
       </dl>
     </section>
   );
@@ -304,7 +308,6 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
       modals={props.modals}
       name={name}
       extensionId={entry.id}
-      review={review}
     />
   );
 
@@ -436,7 +439,7 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
               {statusLabel}
             </span>
           )}
-          <ExtensionReviewBadges review={review} builtIn={builtIn} />
+          <ExtensionReviewBadges review={review} builtIn={builtIn} focusable />
         </div>
         <p className="sb-extension-consent-source">
           {sourceHost
