@@ -598,7 +598,9 @@ export function browserColorSchemeForBackground(
  * does not sit above a white strip. The root element's own `color-scheme`
  * comes from the composed theme CSS (see `composeThemeStyleText`).
  */
-export function applyBrowserColorScheme(scheme: BrowserColorScheme): void {
+export function applyBrowserColorScheme(
+  scheme: BrowserColorScheme | "normal"
+): void {
   if (typeof document === "undefined") return;
   const metas = [
     ...document.head.querySelectorAll('meta[name="color-scheme"]'),
@@ -642,8 +644,10 @@ export function applyBrowserThemeColor(color: string): void {
       tag.content = color;
     }
   }
-  const scheme = browserColorSchemeForBackground(color);
-  if (scheme) applyBrowserColorScheme(scheme);
+  // "normal" (the browser default) for a color we can't read, rather than
+  // keeping the previous theme's scheme under a page that no longer
+  // matches it.
+  applyBrowserColorScheme(browserColorSchemeForBackground(color) ?? "normal");
 }
 
 function applyBrowserThemeColorFromCss(css: string): void {
@@ -680,10 +684,16 @@ export function composeThemeStyleText(theme: BibleTheme): string {
 }
 
 function composeRootColorSchemeRule(theme: BibleTheme): string {
+  if (!theme.variables.background) return "";
   const background = sanitizeCssValue(String(theme.variables.background));
+  // A background we can't read gets no color-scheme, so the browser's
+  // default (light) applies rather than the previous theme's.
   const scheme = browserColorSchemeForBackground(background);
-  if (!scheme) return "";
-  return `:root {\ncolor-scheme: ${scheme};\nbackground-color: ${background};\n}\n`;
+  const declarations = [
+    scheme ? `color-scheme: ${scheme};` : "",
+    `background-color: ${background};`,
+  ].filter(Boolean);
+  return `:root {\n${declarations.join("\n")}\n}\n`;
 }
 
 export const LIGHT_THEME: BibleTheme = {

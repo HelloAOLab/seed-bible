@@ -156,8 +156,8 @@
           var schemeMeta =
             document.getElementById("sb-color-scheme") ||
             document.querySelector('meta[name="color-scheme"]');
-          if (scheme && schemeMeta)
-            schemeMeta.setAttribute("content", scheme[1]);
+          if (schemeMeta)
+            schemeMeta.setAttribute("content", scheme ? scheme[1] : "normal");
         } catch (e) {
           // Corrupt JSON / unexpected DOM — keep the server's default.
         }

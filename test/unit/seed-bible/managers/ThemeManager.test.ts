@@ -165,6 +165,26 @@ describe("ThemeManager CSS helpers", () => {
       expect(rootRule).not.toContain("--sb-");
     });
 
+    it("paints the root background but sets no color-scheme for a background that is not hex", () => {
+      const style = document.createElement("style");
+      style.textContent = composeThemeStyleText(
+        createTheme({
+          variables: {
+            ...createTheme().variables,
+            background: "rgb(10, 10, 10)",
+          },
+        })
+      );
+      document.head.appendChild(style);
+      try {
+        const root = getComputedStyle(document.documentElement);
+        expect(root.getPropertyValue("color-scheme")).toBe("normal");
+        expect(root.backgroundColor).toBe("rgb(10, 10, 10)");
+      } finally {
+        style.remove();
+      }
+    });
+
     it("gives the root element the theme's color-scheme and background", () => {
       const style = document.createElement("style");
       style.textContent = composeThemeStyleText(
@@ -360,14 +380,14 @@ describe("applyBrowserThemeColor", () => {
     expect(scheme?.content).toBe("light");
   });
 
-  it("leaves color-scheme unchanged when the background is not hex", () => {
-    applyBrowserColorScheme("dark");
-    applyBrowserThemeColor("rgb(10, 10, 10)");
+  it("resets color-scheme when switching to a background that is not hex", () => {
+    applyBrowserThemeColor(DARK_THEME.variables.background);
+    applyBrowserThemeColor("rgb(255, 255, 255)");
 
     const scheme = document.querySelector(
       'meta[name="color-scheme"]'
     ) as HTMLMetaElement | null;
-    expect(scheme?.content).toBe("dark");
+    expect(scheme?.content).toBe("normal");
   });
 });
 

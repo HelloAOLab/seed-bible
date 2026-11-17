@@ -273,6 +273,32 @@ describe("index.html Android PWA chrome meta", () => {
     );
   });
 
+  it("resets the color-scheme meta for a theme whose background is not hex", () => {
+    const theme = {
+      ...DARK_THEME,
+      id: "custom",
+      variables: { ...DARK_THEME.variables, background: "rgb(10, 10, 10)" },
+    };
+    document.head.innerHTML = [
+      `<meta name="color-scheme" id="sb-color-scheme" content="dark" />`,
+      `<style id="sb-theme-styles"></style>`,
+      `<script type="application/json" id="sb-theme-presets">${JSON.stringify({
+        custom: composeThemeStyleText(theme),
+      })}</script>`,
+    ].join("");
+    localStorage.setItem(
+      "sb-profile-config-local",
+      JSON.stringify({ themeId: "custom" })
+    );
+
+    runInlineThemeScript();
+
+    expect(paintedColorScheme()).toBe("normal");
+    expect(getComputedStyle(document.documentElement).backgroundColor).toBe(
+      "rgb(10, 10, 10)"
+    );
+  });
+
   it.each(["#0a0a0a", "#222222", "#808080", "#b0b0b0", "#f8fafc"])(
     "sets the same color-scheme as ThemeManager for a %s background",
     (background) => {
