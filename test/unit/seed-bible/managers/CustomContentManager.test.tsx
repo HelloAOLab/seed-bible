@@ -282,6 +282,116 @@ describe("CustomContentManager", () => {
     });
   });
 
+  describe("publishing items in a row", () => {
+    /** Drafts on John 10, saved but not yet published. */
+    async function drafts(customContent: CustomContentManager, count: number) {
+      const saved = [];
+      for (let i = 0; i < count; i++) {
+        saved.push(
+          await addSermon(
+            customContent,
+            {
+              url: `https://gracecommunity.org/sermons/${i}`,
+              title: `Sermon ${i}`,
+            },
+            false
+          )
+        );
+      }
+      return saved;
+    }
+
+    /** Holds Discover's chapter writes until `release` is called. */
+    function holdChapterWrites(server: FakeRecordsServer) {
+      let release = () => {};
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let chapterWrites = 0;
+      server.hooks.beforeWrite = async (address) => {
+        if (address.startsWith("ch.")) {
+          chapterWrites++;
+          await held;
+        }
+      };
+      return { release, chapterWrites: () => chapterWrites };
+    }
+
+    it("shows each publish at once, and every item reaches Discover however fast they're clicked", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const items = await drafts(owner.customContent, 4);
+      const chapters = holdChapterWrites(server);
+
+      // Clicked one after another, without waiting for anything.
+      const publishing = items.map((item) =>
+        owner.customContent.setItemPublished(item.id, true)
+      );
+      expect(
+        owner.customContent.items.value.map((item) => item.status)
+      ).toEqual(["published", "published", "published", "published"]);
+      await waitForCondition(() => owner.customContent.isPublishing.value);
+
+      chapters.release();
+      await Promise.all(publishing);
+      expect(owner.customContent.isPublishing.value).toBe(false);
+      // Batched: not one rebuild of John 10 per click.
+      expect(chapters.chapterWrites()).toBeLessThan(4);
+
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 10);
+      expect(results.map((r) => r.title).sort()).toEqual([
+        "Sermon 0",
+        "Sermon 1",
+        "Sermon 2",
+        "Sermon 3",
+      ]);
+    });
+
+    it("ends as last clicked when an item is published and quickly unpublished", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const [item] = await drafts(owner.customContent, 1);
+      // The publish's save is slow and the unpublish's fast, so if they
+      // weren't kept in order the publish would land last.
+      let releaseFirst = () => {};
+      const firstHeld = new Promise<void>((resolve) => {
+        releaseFirst = resolve;
+      });
+      let itemWrites = 0;
+      server.hooks.beforeWrite = async (address) => {
+        if (address === contentItemAddress(item!.id) && itemWrites++ === 0) {
+          await firstHeld;
+        }
+      };
+
+      const first = owner.customContent.setItemPublished(item!.id, true);
+      const second = owner.customContent.setItemPublished(item!.id, false);
+      setTimeout(releaseFirst, 0);
+      await Promise.all([first, second]);
+
+      const recordName = owner.customContent.recordName.value!;
+      const stored = server.records
+        .get(recordName)!
+        .get(contentItemAddress(item!.id))?.data as ContentItem;
+      expect(stored.status).toBe("draft");
+      const reader = await readerOf(server, owner.customizationId);
+      expect(await discoverContent(reader.discover, "JHN", 10)).toEqual([]);
+    });
+
+    it("puts an item back, and says so, when saving its publish fails", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const [item] = await drafts(owner.customContent, 1);
+      server.failWritesTo.add(contentItemAddress(item!.id));
+
+      await expect(
+        owner.customContent.setItemPublished(item!.id, true)
+      ).rejects.toMatchObject({ code: "server_error" });
+      expect(owner.customContent.items.value[0]?.status).toBe("draft");
+    });
+  });
+
   describe("chapters too big for one record entry", () => {
     /**
      * Published items on John 3, stored as an import would leave them, then

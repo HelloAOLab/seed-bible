@@ -335,6 +335,8 @@ An optional per-library setting, **"When you ask the AI, publish items without f
 
 Publishing runs on the worker, in the library's **single writer** (a Durable Object per content record, §5.8). Both the owner's "Publish" button and auto-publish send item ids there, so chapter records never have two writers racing each other. Writes are batched: publishing 200 items rebuilds each affected chapter once, not 200 times. Rebuilding from items (rather than patching chapter records in place) means a half-finished publish can always be repaired by a **"Rebuild index"** action that regenerates every chapter record from the items.
 
+**In the editor, publishing never waits.** Clicking Publish moves the item to Published straight away and saves it in the background, so the owner can publish item after item. Each item's saves go out in order (publish then unpublish ends unpublished), and items never wait on each other, since each is its own entry. Rebuilding chapters is the slow part, so the editor batches it: the chapters each change touches are collected, and one rebuild at a time handles everything collected so far, while new changes wait for the next. Each rebuild starts from the items as they are once the changes that asked for it are saved, so none is left out. The summary shows "Updating Discover…" while a rebuild runs. If an item's save fails, it goes back to how it was and the owner is told.
+
 Deleting an item = erase its item record, then rebuild its chapters. Deleting a category = remove its id from every item (items left with no category fall back to an "Other" section), then rebuild.
 
 ### 5.7 Importing a whole website from Common Crawl

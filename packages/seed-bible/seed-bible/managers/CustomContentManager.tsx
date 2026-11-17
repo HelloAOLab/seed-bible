@@ -106,6 +106,11 @@ export interface CustomContentManager {
   items: ReadonlySignal<readonly ContentItem[]>;
   /** True while a write to the open library is in flight. */
   isSaving: ReadonlySignal<boolean>;
+  /**
+   * True while published changes are being written to the chapters Discover
+   * reads. Nothing waits on this: items can be published meanwhile.
+   */
+  isPublishing: ReadonlySignal<boolean>;
 
   /** Whether an import service is configured, so links can be imported in bulk. */
   canImport: boolean;
@@ -303,9 +308,10 @@ export function createCustomContentManager(deps: {
   // Bumped after the owner publishes, so their own Discover picks it up.
   const publishedVersion = signal(0);
 
-  // Writes run one at a time: a chapter rebuild reads `items`, so two
-  // overlapping saves could otherwise each write a chapter missing the
-  // other's change.
+  // Library-wide edits (the manifest, multi-item changes) run one at a
+  // time, since each reads the library, changes it and writes it back.
+  // Publishing and unpublishing don't go through here: they only touch
+  // their own item, so they never wait on anything.
   let writeChain: Promise<unknown> = Promise.resolve();
   const queueWrite = <T,>(run: () => Promise<T>): Promise<T> => {
     pendingWrites.value++;
@@ -355,6 +361,23 @@ export function createCustomContentManager(deps: {
     }
   };
 
+  /**
+   * Puts one item into the open list as it is now, so a slow edit can't
+   * undo a change made to another item meanwhile (a publish, which applies
+   * at once). `null` takes it out.
+   */
+  const putItem = (
+    record: string,
+    id: string,
+    item: ContentItem | null
+  ): void => {
+    if (recordName.value !== record) {
+      return;
+    }
+    const rest = items.value.filter((i) => i.id !== id);
+    setItemsIfOpen(record, item ? [item, ...rest] : rest);
+  };
+
   const writeManifest = async (
     record: string,
     next: ContentLibraryManifest
@@ -373,20 +396,34 @@ export function createCustomContentManager(deps: {
     }
   };
 
-  const writeItem = async (
-    record: string,
-    item: ContentItem
-  ): Promise<void> => {
-    assertStored(
-      await store.recordData(
-        record,
-        contentItemAddress(item.id),
-        item,
-        CONTENT_ITEM_MARKER
-      ),
-      "save the item"
-    );
+  // Each item's writes go out in the order they were made, so publishing
+  // then quickly unpublishing an item ends unpublished. Different items
+  // never wait on each other: each is its own entry in the record.
+  const itemWrites = new Map<string, Promise<unknown>>();
+  const inItemOrder = <T,>(id: string, run: () => Promise<T>): Promise<T> => {
+    const next = (itemWrites.get(id) ?? Promise.resolve()).then(run, run);
+    const settled = next.catch(() => undefined);
+    itemWrites.set(id, settled);
+    void settled.then(() => {
+      if (itemWrites.get(id) === settled) {
+        itemWrites.delete(id);
+      }
+    });
+    return next;
   };
+
+  const writeItem = (record: string, item: ContentItem): Promise<void> =>
+    inItemOrder(item.id, async () => {
+      assertStored(
+        await store.recordData(
+          record,
+          contentItemAddress(item.id),
+          item,
+          CONTENT_ITEM_MARKER
+        ),
+        "save the item"
+      );
+    });
 
   /**
    * Rebuilds chapters after items were saved: on the import worker when
@@ -408,6 +445,75 @@ export function createCustomContentManager(deps: {
       chapterIndex.value = next;
     }
     publishedVersion.value++;
+  };
+
+  /**
+   * Chapter rebuilds, batched. Rebuilding is the slow part of publishing,
+   * so instead of one rebuild per change, the chapters changes touch are
+   * collected and rebuilt together: while one batch is being rebuilt, new
+   * changes join the next. Only one rebuild runs at a time, and each starts
+   * from the items as they are when it starts (after the changes that asked
+   * for it were saved), so no change can be left out of its chapters.
+   * Resolves once the asked-for chapters are rebuilt.
+   */
+  interface PendingPublish {
+    keys: Set<string>;
+    full: boolean;
+    waiters: { resolve: () => void; reject: (error: unknown) => void }[];
+  }
+  const pendingPublishes = new Map<string, PendingPublish>();
+  const isPublishing = signal(false);
+
+  const runPublisher = async (): Promise<void> => {
+    for (;;) {
+      const next = pendingPublishes.entries().next();
+      if (next.done) {
+        // Checked and cleared in the same step, so a change scheduled from
+        // here on starts a new run.
+        isPublishing.value = false;
+        return;
+      }
+      const [record, batch] = next.value;
+      pendingPublishes.delete(record);
+      try {
+        const current =
+          recordName.value === record
+            ? items.value
+            : await loadLibraryItems(store, record);
+        await publish(
+          record,
+          { keys: batch.keys, ...(batch.full ? { full: true } : {}) },
+          current
+        );
+        batch.waiters.forEach((waiter) => waiter.resolve());
+      } catch (error) {
+        batch.waiters.forEach((waiter) => waiter.reject(error));
+      }
+    }
+  };
+
+  const schedulePublish = (
+    record: string,
+    options: { keys?: Iterable<string>; full?: boolean }
+  ): Promise<void> => {
+    const batch = pendingPublishes.get(record) ?? {
+      keys: new Set<string>(),
+      full: false,
+      waiters: [],
+    };
+    for (const key of options.keys ?? []) {
+      batch.keys.add(key);
+    }
+    batch.full ||= options.full === true;
+    const done = new Promise<void>((resolve, reject) => {
+      batch.waiters.push({ resolve, reject });
+    });
+    pendingPublishes.set(record, batch);
+    if (!isPublishing.value) {
+      isPublishing.value = true;
+      void runPublisher();
+    }
+    return done;
   };
 
   const reloadItems = async (record: string): Promise<void> => {
@@ -651,7 +757,6 @@ export function createCustomContentManager(deps: {
       const { record, current, all } = requireOpen();
       const now = Date.now();
       const keys = new Set<string>();
-      let next = all;
       for (const item of all) {
         if (!item.categoryIds.includes(id)) {
           continue;
@@ -662,23 +767,22 @@ export function createCustomContentManager(deps: {
           updatedAt: now,
         };
         await writeItem(record, updated);
-        next = next.map((i) => (i.id === item.id ? updated : i));
+        putItem(record, updated.id, updated);
         for (const key of publishedChapterKeys(updated)) {
           keys.add(key);
         }
       }
-      setItemsIfOpen(record, next);
       await writeManifest(record, {
         ...current,
         categories: current.categories.filter((c) => c.id !== id),
         updatedAt: now,
       });
-      if (keys.size > 0) {
-        await publish(record, { keys }, next);
-      } else {
-        publishedVersion.value++;
-      }
-    });
+      return { record, keys };
+    }).then(({ record, keys }) =>
+      keys.size > 0
+        ? schedulePublish(record, { keys })
+        : void publishedVersion.value++
+    );
 
   const setDefaultAuthor = (author: string): Promise<void> =>
     queueWrite(async () => {
@@ -746,27 +850,51 @@ export function createCustomContentManager(deps: {
       }
       const saved = parsed.data;
       await writeItem(record, saved);
-      const next = before
-        ? all.map((item) => (item.id === saved.id ? saved : item))
-        : [saved, ...all];
-      setItemsIfOpen(record, next);
-
-      const keys = affectedChapterKeys(before, saved);
+      putItem(record, saved.id, saved);
+      return { record, saved, keys: affectedChapterKeys(before, saved) };
+    }).then(async ({ record, saved, keys }) => {
+      // Outside the queue: other edits needn't wait for the rebuild.
       if (keys.size > 0) {
-        await publish(record, { keys }, next);
+        await schedulePublish(record, { keys });
       }
       return saved;
     });
 
+  /**
+   * Publishes or unpublishes an item. The list shows the change at once,
+   * and the owner can go straight on to the next item: the item is saved in
+   * the background, and its chapters join the next batch of rebuilds.
+   * If saving fails, the item goes back to how it was.
+   */
   const setItemPublished = async (
     id: string,
     published: boolean
   ): Promise<void> => {
-    const item = items.value.find((i) => i.id === id);
-    if (!item) {
+    const { record, all } = requireOpen();
+    const before = all.find((i) => i.id === id);
+    if (!before || (before.status === "published") === published) {
       return;
     }
-    await saveItem(item, { publish: published });
+    const after: ContentItem = {
+      ...before,
+      // Unpublishing makes a draft, as saving an unpublished edit does.
+      status: published ? "published" : "draft",
+      updatedAt: Date.now(),
+    };
+    putItem(record, id, after);
+    try {
+      await writeItem(record, after);
+    } catch (error) {
+      // Only if nothing newer has replaced it meanwhile.
+      if (items.value.find((i) => i.id === id) === after) {
+        putItem(record, id, before);
+      }
+      throw error;
+    }
+    const keys = affectedChapterKeys(before, after);
+    if (keys.size > 0) {
+      await schedulePublish(record, { keys });
+    }
   };
 
   const deleteItem = (id: string): Promise<void> =>
@@ -774,25 +902,24 @@ export function createCustomContentManager(deps: {
       const { record, all } = requireOpen();
       const before = all.find((item) => item.id === id);
       if (!before) {
-        return;
+        return null;
       }
-      const erased = await store.eraseData(record, contentItemAddress(id));
-      if (!erased.success && erased.errorCode !== "data_not_found") {
-        assertStored(erased, "delete the item");
-      }
-      const next = all.filter((item) => item.id !== id);
-      setItemsIfOpen(record, next);
-      const keys = affectedChapterKeys(before, undefined);
-      if (keys.size > 0) {
-        await publish(record, { keys }, next);
+      await inItemOrder(id, async () => {
+        const erased = await store.eraseData(record, contentItemAddress(id));
+        if (!erased.success && erased.errorCode !== "data_not_found") {
+          assertStored(erased, "delete the item");
+        }
+      });
+      putItem(record, id, null);
+      return { record, keys: affectedChapterKeys(before, undefined) };
+    }).then(async (deleted) => {
+      if (deleted && deleted.keys.size > 0) {
+        await schedulePublish(deleted.record, { keys: deleted.keys });
       }
     });
 
   const rebuildIndex = (): Promise<void> =>
-    queueWrite(async () => {
-      const { record, all } = requireOpen();
-      await publish(record, { full: true }, all);
-    });
+    schedulePublish(requireOpen().record, { full: true });
 
   // --- Importing ---
 
@@ -1099,16 +1226,16 @@ export function createCustomContentManager(deps: {
       }
     }
 
-    await queueWrite(async () => {
+    const keys = await queueWrite(async () => {
       if (recordName.value !== record) {
-        return;
+        return null;
       }
       const { current: latestManifest, all } = requireOpen();
       const latest = all.find((i) => i.id === id);
       // The automatic pass leaves an item alone once the owner has moved it
       // on; asking the AI is the owner's own request, so it applies anyway.
       if (!latest || (!provider && !needsExplicitPassages(latest))) {
-        return;
+        return null;
       }
       let next = applyClassification(latest, {
         explicit,
@@ -1128,13 +1255,12 @@ export function createCustomContentManager(deps: {
         next = { ...next, status: "published" };
       }
       await writeItem(record, next);
-      const updated = all.map((i) => (i.id === id ? next : i));
-      setItemsIfOpen(record, updated);
-      const keys = affectedChapterKeys(latest, next);
-      if (keys.size > 0) {
-        await publish(record, { keys }, updated);
-      }
+      putItem(record, id, next);
+      return affectedChapterKeys(latest, next);
     });
+    if (keys && keys.size > 0) {
+      await schedulePublish(record, { keys });
+    }
     return !error;
   };
 
@@ -1443,6 +1569,7 @@ export function createCustomContentManager(deps: {
     chapterIndex,
     items,
     isSaving,
+    isPublishing,
     canImport: importService !== null,
     importProgress,
     siteImport,

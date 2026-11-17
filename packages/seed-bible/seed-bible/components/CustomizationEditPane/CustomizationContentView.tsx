@@ -412,6 +412,14 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
             defaultValue:
               "{{published}} published · shown in Discover on {{chapters}} chapters",
           })}
+          {customContent.isPublishing.value && (
+            <span role="status">
+              {" · "}
+              {t("custom-content-updating-discover", {
+                defaultValue: "Updating Discover…",
+              })}
+            </span>
+          )}
         </p>
 
         <div className="sb-cz-group">
@@ -667,10 +675,11 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                             })}
                           </Button>
                           <Button
+                            // Not held up by other saves: publishing applies
+                            // at once, so items can be published in a row.
                             disabled={
-                              busy ||
-                              (item.status !== "published" &&
-                                item.references.length === 0)
+                              item.status !== "published" &&
+                              item.references.length === 0
                             }
                             onClick={() =>
                               void run(() =>

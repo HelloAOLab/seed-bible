@@ -35,6 +35,10 @@ export function fakeRecordsServer() {
   ]);
   const failNextCreate = { code: null as string | null };
   const failWritesTo = new Set<string>();
+  /** Runs before each write is stored, so a test can hold writes back. */
+  const hooks = {
+    beforeWrite: async (_address: string): Promise<void> => undefined,
+  };
 
   function attach(os: CasualOSManager) {
     vi.spyOn(os, "createRecord").mockImplementation(async (recordName) => {
@@ -55,6 +59,7 @@ export function fakeRecordsServer() {
     });
     vi.spyOn(os, "recordData").mockImplementation(
       async (recordKey, address, data, options) => {
+        await hooks.beforeWrite(address);
         const record = records.get(recordKey);
         if (!record || failWritesTo.has(address)) {
           return {
@@ -122,7 +127,7 @@ export function fakeRecordsServer() {
     );
   }
 
-  return { records, attach, failNextCreate, failWritesTo };
+  return { records, attach, failNextCreate, failWritesTo, hooks };
 }
 
 function loginAs(userId: string | null): LoginManager {

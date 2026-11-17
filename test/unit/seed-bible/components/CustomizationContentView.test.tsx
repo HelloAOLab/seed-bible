@@ -189,6 +189,66 @@ describe("CustomizationContentView", () => {
     ).toBeUndefined();
   });
 
+  it("lets items be published one after another without waiting", async () => {
+    const server = fakeRecordsServer();
+    const { customContent } = await renderEditor(server);
+    await createLibrary();
+    for (const title of ["First", "Second"]) {
+      await act(async () => {
+        await customContent.saveItem({
+          url: `https://example.org/${title}`,
+          title,
+          description: "",
+          categoryIds: [],
+          references: [
+            { book: "JHN", chapter: 10, source: "owner", confidence: 1 },
+          ],
+        });
+      });
+    }
+    // Discover's chapters take a while to update.
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.hooks.beforeWrite = async (address) => {
+      if (address.startsWith("ch.")) {
+        await held;
+      }
+    };
+    const publishButton = (title: string) =>
+      [
+        ...container.querySelectorAll<HTMLButtonElement>(".sb-ccl-item button"),
+      ].find(
+        (b) =>
+          b.closest(".sb-ccl-item")!.textContent!.includes(title) &&
+          label(b) === "Publish"
+      )!;
+
+    await click(publishButton("First"));
+    await waitForCondition(() =>
+      container.textContent!.includes("Updating Discover")
+    );
+    // The first is still being added to Discover; the next can go anyway.
+    expect(publishButton("Second").disabled).toBe(false);
+    await click(publishButton("Second"));
+    expect(customContent.items.value.map((item) => item.status)).toEqual([
+      "published",
+      "published",
+    ]);
+
+    release();
+    await waitForCondition(() => !customContent.isPublishing.value);
+    const record = server.records.get(customContent.recordName.value!)!;
+    expect(
+      (
+        record.get(contentChapterAddress("JHN", 10))?.data as {
+          entries: unknown[];
+        }
+      ).entries
+    ).toHaveLength(2);
+  });
+
   it("shows which chapters have content, book by book", async () => {
     const server = fakeRecordsServer();
     const { customContent } = await renderEditor(server);
