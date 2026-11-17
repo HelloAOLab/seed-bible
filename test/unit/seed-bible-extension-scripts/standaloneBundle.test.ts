@@ -92,10 +92,12 @@ describe("the sandboxed bundle", () => {
     expect(code).toMatch(/\.sb-button\{/);
   }, 60_000);
 
-  // Every extension that uses one shared component carries the CSS that
-  // comes with it, so it has to stay small: all the shared components' CSS
-  // together is about 4 KB gzipped. Far more means a component's CSS has
-  // ended up beside the app's own, in a chunk with the managers'.
+  // The bundler keeps every CSS import, even of components the extension
+  // doesn't use, so an extension using one shared component carries all
+  // their CSS: about 4 KB gzipped. Far more means a component's CSS has
+  // grown a lot, or a component imports something heavy, such as one of the
+  // app's stylesheets. Built against the package's source, this can't see
+  // how the package build groups CSS into chunks.
   it("carries only a few KB of CSS for the shared components", async () => {
     const { outDir, code } = await buildBundle(
       path.resolve("packages/sandboxed-example-extension")
