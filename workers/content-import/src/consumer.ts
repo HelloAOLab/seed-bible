@@ -21,6 +21,7 @@ import {
   finishIfComplete,
   getItem,
   getJob,
+  gaveUpReason,
   jobProgress,
   releaseItem,
   setJobStatus,
@@ -250,18 +251,19 @@ export async function processImportMessage(
       });
       return ACK;
     }
+    // An archive failure keeps what the archive answered, so the row says
+    // why without the logs.
+    const reason =
+      error instanceof ArchiveError
+        ? `${code}: ${error.message}`.slice(0, 1000)
+        : code;
     if (isTransientError(code)) {
-      await releaseItem(env.DB, job.id, row.item_id);
+      await releaseItem(env.DB, job.id, row.item_id, reason);
       return { kind: "retry", delaySeconds: retryDelay(attempts) };
     }
     await settleItem(env.DB, job.id, row.item_id, {
       state: "failed",
-      // An archive failure keeps what the archive answered, so the row
-      // says why without the logs.
-      error:
-        error instanceof ArchiveError
-          ? `${code}: ${error.message}`.slice(0, 1000)
-          : code,
+      error: reason,
     });
   }
 
@@ -285,7 +287,7 @@ export async function processDeadLetter(
   }
   await settleItem(env.DB, message.jobId, message.itemId, {
     state: "failed",
-    error: "gave_up_after_retries",
+    error: gaveUpReason(row.error),
   });
   const job = await getJob(env.DB, message.jobId);
   if (!job?.session_key_enc) {

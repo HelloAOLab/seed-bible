@@ -160,6 +160,39 @@ export async function settleLookup(
     .run();
 }
 
+/** Keeps why a lookup is being retried, for when it runs out of retries. */
+export async function noteLookupError(
+  db: D1Database,
+  jobId: string,
+  crawlId: string,
+  page: number,
+  error: string
+): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE site_lookups SET error = ?
+       WHERE job_id = ? AND crawl_id = ? AND page = ? AND state = 'queued'`
+    )
+    .bind(error, jobId, crawlId, page)
+    .run();
+}
+
+/** The reason a lookup last failed, if it has. */
+export async function lookupError(
+  db: D1Database,
+  jobId: string,
+  crawlId: string,
+  page: number
+): Promise<string | null> {
+  const row = await db
+    .prepare(
+      "SELECT error FROM site_lookups WHERE job_id = ? AND crawl_id = ? AND page = ?"
+    )
+    .bind(jobId, crawlId, page)
+    .first<{ error: string | null }>();
+  return row?.error ?? null;
+}
+
 /**
  * Adds pages to offer. A page already offered keeps whichever capture is
  * newer; a page with the same content as one already offered is skipped;

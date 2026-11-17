@@ -23,6 +23,9 @@ const TRANSIENT_ERROR_CODES: readonly string[] = [
   "network_error",
   "rate_limit_exceeded",
   "invalid_response",
+  // Common Crawl's CloudFront answers with the whole file until its edge
+  // has the file cached, and then serves ranges: a retry usually works.
+  "range_not_honored",
 ];
 
 export function isFatalSessionError(code: string): boolean {

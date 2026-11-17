@@ -298,9 +298,10 @@ describe("website imports", () => {
       .prepare("SELECT state, error FROM import_items WHERE item_id = ?")
       .get(b.itemId) as { state: string; error: string };
     expect(row.state).toBe("failed");
-    // The reason, and what the archive actually sent back.
+    // Tried again first (the edge may just not have had the file yet), then
+    // the reason, and what the archive actually sent back.
     expect(row.error).toMatch(
-      /^range_not_honored: HTTP 200, Content-Range none.*body starts gzip data/
+      /^gave_up_after_retries; last: range_not_honored: HTTP 200, Content-Range none.*body starts gzip data/
     );
   });
 
@@ -318,11 +319,39 @@ describe("website imports", () => {
     const row = worker.db.sqlite
       .prepare("SELECT error FROM import_items WHERE item_id = ?")
       .get(id) as { error: string };
-    expect(row.error).toMatch(/^range_not_honored: HTTP 200/);
+    expect(row.error).toMatch(
+      /^gave_up_after_retries; last: range_not_honored: HTTP 200/
+    );
     expect(row.error).toContain("Content-Type text/html");
     expect(row.error).toContain(
       'body starts text "<html><body>Please slow down'
     );
+  });
+
+  it("imports pages whose archive file CloudFront hadn't cached yet, by trying again", async () => {
+    const { worker, key, casualos, commonCrawl } = setup();
+    commonCrawl.addPage(
+      LATEST,
+      "https://gracecommunity.org/sermons/a",
+      "<title>A</title>"
+    );
+    commonCrawl.addPage(
+      LATEST,
+      "https://gracecommunity.org/sermons/b",
+      "<title>B</title>"
+    );
+    const listed = await lookUp(worker, key);
+    commonCrawl.archiveAnswers.value = "cold_cache";
+    const b = listed.candidates!.find((c) => c.url.endsWith("/b"))!;
+    const picked = await pick(worker, key, listed.progress.id, [b.itemId]);
+    const { id } = (await picked.json()) as ImportProgress;
+    await worker.drain();
+    expect(libraryItems(casualos).map((item) => item.title)).toEqual(["B"]);
+    expect(
+      (await (
+        await call(worker, "GET", `/imports/${id}`, { key })
+      ).json()) as ImportProgress
+    ).toMatchObject({ status: "done", done: 1, failed: 0 });
   });
 
   it("reads a page in its own character set", async () => {

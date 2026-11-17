@@ -441,9 +441,12 @@ export function createFakeCommonCrawl() {
     value: "properly" as
       | "properly"
       | "ignoring_range"
+      | "cold_cache"
       | "unzipped"
       | "notice_page",
   };
+  /** Archive files CloudFront's edge has cached whole, in `cold_cache` mode. */
+  const cachedAtEdge = new Set<string>();
   /** Crawls whose index files are built; adding a page rebuilds its crawl's. */
   const built = new Set<string>();
 
@@ -580,6 +583,16 @@ export function createFakeCommonCrawl() {
         status: 200,
         headers: { "Content-Type": "text/html" },
       });
+    }
+    // As CloudFront documents: a range of a file its edge hasn't cached
+    // gets the whole file, which the edge then caches and serves ranges of.
+    if (
+      path.endsWith(".warc.gz") &&
+      archiveAnswers.value === "cold_cache" &&
+      !cachedAtEdge.has(path)
+    ) {
+      cachedAtEdge.add(path);
+      return new Response(new Uint8Array(file), { status: 200 });
     }
     if (
       path.endsWith(".warc.gz") &&

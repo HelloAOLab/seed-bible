@@ -27,6 +27,7 @@ import { HttpError, checkLibraryAccess, readBody, type Caller } from "./http";
 import {
   JOB_LIFETIME_MS,
   findActiveJob,
+  gaveUpReason,
   getJob,
   isActiveImportConflict,
   jobProgress,
@@ -43,7 +44,9 @@ import {
   listCandidates,
   lookupCounts,
   lookupBlock,
+  lookupError,
   lookupState,
+  noteLookupError,
   pickCandidates,
   recordIndexBlocks,
   settleLookup,
@@ -344,14 +347,19 @@ export async function processLookupMessage(
       `Common Crawl lookup failed (${crawl.id}, ${message.page < 0 ? "index search" : `block ${message.page}`}):`,
       error
     );
+    const reason =
+      error instanceof ArchiveError
+        ? `${code}: ${error.message}`.slice(0, 1000)
+        : code;
     if (isTransientError(code)) {
+      await noteLookupError(env.DB, job.id, crawl.id, message.page, reason);
       return { kind: "retry", delaySeconds: retryDelay };
     }
     // A real failure, never read as "no pages": the editor says some may
     // be missing.
     await settleLookup(env.DB, job.id, crawl.id, message.page, {
       state: "failed",
-      error: code,
+      error: reason,
     });
   }
   await finishListingIfComplete(env.DB, job.id, deps.now());
@@ -366,7 +374,9 @@ export async function processLookupDeadLetter(
 ): Promise<void> {
   await settleLookup(env.DB, message.jobId, message.crawlId, message.page, {
     state: "failed",
-    error: "gave_up_after_retries",
+    error: gaveUpReason(
+      await lookupError(env.DB, message.jobId, message.crawlId, message.page)
+    ),
   });
   await finishListingIfComplete(env.DB, message.jobId, deps.now());
 }

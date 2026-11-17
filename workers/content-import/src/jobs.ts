@@ -243,19 +243,31 @@ export async function settleItem(
     .run();
 }
 
-/** Puts a running link back in line, freeing its slot. */
+/**
+ * Puts a running link back in line, freeing its slot. `lastError` is kept
+ * on the row, so a link that runs out of retries can say what kept failing.
+ */
 export async function releaseItem(
   db: D1Database,
   jobId: string,
-  itemId: string
+  itemId: string,
+  lastError?: string
 ): Promise<void> {
   await db
     .prepare(
-      `UPDATE import_items SET state = 'queued', lease_until = NULL
+      `UPDATE import_items SET state = 'queued', lease_until = NULL,
+         error = COALESCE(?, error)
        WHERE job_id = ? AND item_id = ? AND state = 'running'`
     )
-    .bind(jobId, itemId)
+    .bind(lastError ?? null, jobId, itemId)
     .run();
+}
+
+/** Why a link or lookup ran out of retries, with the last reason it failed. */
+export function gaveUpReason(lastError: string | null | undefined): string {
+  return lastError
+    ? `gave_up_after_retries; last: ${lastError}`.slice(0, 1000)
+    : "gave_up_after_retries";
 }
 
 /**
