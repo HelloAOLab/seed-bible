@@ -222,7 +222,6 @@
   "copied-translation-share-link": "복사된 번역 공유 링크",
   "less": "더 적은",
   "swipe-up-more": "더 보려면 위로 스와이프하세요.",
-  "plans": "계획",
   "reading-plans": "독서 계획",
   "create-reading-plan": "독서 계획을 세우세요",
   "reading-plans-empty": "아직 독서 계획이 없으시군요. 지금 바로 계획을 세워 시작해 보세요.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "번역 불러오는 중…",
   "translations-load-failed": "전체 번역 목록을 불러올 수 없어서 일부 번역이 누락되었을 수 있습니다.",
   "verse-of-the-day": "오늘의 말씀",
-  "verse-of-the-day-loading": "오늘의 말씀 불러오는 중…"
+  "verse-of-the-day-loading": "오늘의 말씀 불러오는 중…",
+  "delete-bookmark-confirm-title": "즐겨찾기를 삭제하시겠습니까?",
+  "delete-bookmark-confirm-message": "\" {{name}} \"을 삭제하시겠습니까?",
+  "scripture-font": "성경 글꼴",
+  "ai-limits-title": "AI와 채팅하기 전에",
+  "ai-limits-intro": "인공지능은 유용한 출발점이 될 수 있지만, 그 한계를 염두에 두어야 합니다.",
+  "ai-limits-mistakes": "이 프로그램은 실수를 저지르기도 하고, 틀렸을 때에도 자신감 넘치는 것처럼 들릴 수 있습니다.",
+  "ai-limits-agreeable": "듣고 싶어 하는 말을 해주는 경향이 있고, 인기 있는 답변을 선호하는 경향이 있습니다.",
+  "ai-limits-scripture": "신뢰할 수 있는 출처가 아닙니다. 성경과 대조해 보십시오.",
+  "ai-limits-study": "성경을 직접 공부하세요. 인공지능이 당신 대신 생각하게 두지 마세요.",
+  "ai-limits-confirm": "저는 인공지능이 오류를 범할 수 있으며, 직접 성경을 공부하는 것을 대체할 수 없다는 것을 이해합니다.",
+  "friends-playlists-filter": "친구들의 플레이리스트",
+  "friend-link-social-title": "{{name}} 친구로 추가하세요",
+  "friend-link-meta-description": "{{name}} 님이 {{brand}} 에서 당신과 친구가 되고 싶어합니다.",
+  "friend-link-title": "{ {{brand}} {{name}} 친구로 추가하세요"
 }

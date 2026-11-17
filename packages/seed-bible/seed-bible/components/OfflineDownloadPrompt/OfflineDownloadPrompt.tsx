@@ -8,6 +8,7 @@ import {
 } from "../../managers/OfflineTranslationsManager";
 import { downloadTranslationWithToast } from "./downloadTranslationWithToast";
 import { useOverlayDismiss } from "../useOverlayDismiss";
+import { Button } from "../Button/Button";
 
 /**
  * Offers to save the translation the reader is currently in for offline use.
@@ -102,21 +103,25 @@ export function OfflineDownloadPrompt({
               })}
         </p>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="lg"
+          shape="pill"
           className="sb-offline-prompt-btn sb-offline-prompt-btn-primary"
           onClick={() => void save()}
         >
           {t("offlinePrompt.save", { defaultValue: "Save offline" })}
-        </button>
+        </Button>
 
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="lg"
+          shape="pill"
           className="sb-offline-prompt-btn sb-offline-prompt-btn-secondary"
           onClick={() => offline.dismissDownloadPrompt()}
         >
           {t("offlinePrompt.notNow", { defaultValue: "Not now" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

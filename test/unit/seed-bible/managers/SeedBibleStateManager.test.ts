@@ -8,6 +8,8 @@ import { PROFILE_PANE_ID } from "@packages/seed-bible/seed-bible/components/Prof
 import { PLAYLIST_HISTORY_PANE_ID } from "@packages/seed-bible/seed-bible/components/PlaylistHistoryPane/PlaylistHistoryPane";
 import { EXTENSIONS_PANE_ID } from "@packages/seed-bible/seed-bible/components/ExtensionsPage/ExtensionsPage";
 import { DISCOVER_PANE_ID } from "@packages/seed-bible/seed-bible/components/Discover/DiscoverPane";
+import { READING_PLANS_PANE_ID } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import { YOUR_CONTENT_PANE_ID } from "@packages/seed-bible/seed-bible/components/YourContentPane/YourContentPane";
 import {
   PlaylistPlayHistorySchema,
   PlaylistSchema,
@@ -576,6 +578,53 @@ describe("createSeedBibleState", () => {
       initialBookId: "EXO",
       initialChapterNumber: 2,
     });
+  });
+
+  it("createSharedSession() carries on with the playlist being played, from the same step", async () => {
+    const state = await createState();
+    const items = [
+      { type: "html" as const, html: "<p>One</p>" },
+      { type: "html" as const, html: "<p>Two</p>" },
+      { type: "html" as const, html: "<p>Three</p>" },
+    ];
+    const playlist = {
+      id: "p1",
+      title: "Evening",
+      description: null,
+      items,
+    };
+    const playing = state.playlists.startPlaying(playlist, 0, {
+      history: false,
+    })!;
+    await playing.jumpTo(1);
+    // Moved within the queue, as a reorder would.
+    playing.reorderQueue(2, 0);
+    const session = createMockSharedSession("session-playing");
+    mockSessionsManager.createSession.mockResolvedValue(session);
+
+    await state.app.createSharedSession();
+
+    expect(session.readingState.enableExtension).toHaveBeenCalledWith(
+      "playlist",
+      {
+        playlists: [playlist],
+        queue: [items[2], items[0], items[1]],
+        step: 2,
+      }
+    );
+  });
+
+  it("createSharedSession() plays nothing on the new tab when nothing was playing", async () => {
+    const state = await createState();
+    const session = createMockSharedSession("session-idle");
+    mockSessionsManager.createSession.mockResolvedValue(session);
+
+    await state.app.createSharedSession();
+
+    expect(session.readingState.enableExtension).not.toHaveBeenCalledWith(
+      "playlist",
+      expect.anything()
+    );
   });
 
   it("createSharedSession() captures a create_session posthog event", async () => {
@@ -1605,6 +1654,33 @@ describe("createSeedBibleState", () => {
     await waitFor(() => readingState.bookId.value === "EXO");
 
     expect(state.panes.panes.value).toHaveLength(0);
+  });
+
+  it("keeps a phone's playlist list open while the reader moves to the playlist's first passage", async () => {
+    jsdom.reconfigure({ url: "https://example.com?useFreeBibleAPI=true" });
+    const state = await createState();
+    (state.app.viewportWidth as unknown as { value: number }).value =
+      MOBILE_BREAKPOINT;
+    const readingState = state.tabs.tabs.value[0]!.readingState;
+    await waitFor(() => readingState.chapterData.value !== null);
+
+    state.playlists.startPlaying(
+      {
+        id: "p",
+        title: "Exodus",
+        description: null,
+        items: [{ type: "bible-verse", ref: { bookId: "EXO", chapter: 2 } }],
+      },
+      0,
+      { history: false }
+    );
+    await waitFor(() => readingState.bookId.value === "EXO");
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(state.playlists.view.value).toBe("play_playlist");
+    expect(
+      state.panes.panes.value.some((pane) => pane.id === DISCOVER_PANE_ID)
+    ).toBe(true);
   });
 
   describe("viewport seeding and applyViewport()", () => {
@@ -4573,6 +4649,166 @@ describe("continuing a playlist from Profile", () => {
   });
 });
 
+describe("editors opened from Profile and Your content", () => {
+  let container: HTMLDivElement;
+  let active: SeedBibleState | null = null;
+
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({ url: "https://example.com" });
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    if (active) {
+      active.os.sessionKey.value = null;
+      active = null;
+    }
+    render(null, container);
+    container.remove();
+    localStorage.removeItem("sessionKey");
+    vi.restoreAllMocks();
+  });
+
+  async function signedInDesktopState() {
+    const state = await createState();
+    active = state;
+    (state.app.viewportWidth as unknown as { value: number }).value = 1200;
+    vi.spyOn(state.os, "listAllData").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "listAllDataByMarker").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "listDataByMarker").mockResolvedValue({
+      success: true,
+      items: [],
+    } as never);
+    vi.spyOn(state.os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "Data not found",
+    } as never);
+    vi.spyOn(state.os, "recordData").mockResolvedValue({
+      success: true,
+    } as never);
+    vi.spyOn(state.os, "eraseData").mockResolvedValue({
+      success: true,
+    } as never);
+    state.os.sessionKey.value = formatV1SessionKey(
+      PLAYLIST_USER_ID,
+      "session-1",
+      "secret-1",
+      Date.now() + 60 * 60 * 1000
+    );
+    await waitFor(() => state.login.userId.value === PLAYLIST_USER_ID);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return state;
+  }
+
+  async function renderPane(state: SeedBibleState, paneId: string) {
+    await waitFor(() => state.panes.panes.value.some((p) => p.id === paneId));
+    const pane = state.panes.panes.value.find((p) => p.id === paneId);
+    const Provider = await realI18nProvider();
+    act(() => {
+      render(
+        h(Provider, {
+          i18n: state.i18n,
+          children: pane?.component() ?? null,
+        }),
+        container
+      );
+    });
+  }
+
+  function click(element: Element | null | undefined) {
+    if (!element) throw new Error("Nothing to click.");
+    act(() => {
+      element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+  }
+
+  function playlistEditorBack() {
+    return container.querySelector(".sb-pe-panel-header .sb-pe-back");
+  }
+
+  // Docked rather than fullscreen, so a plan being built can take verses
+  // picked in the reader, the way the playlist editor can.
+  it("docks the plans pane beside the reader on desktop", async () => {
+    const state = await signedInDesktopState();
+    state.openProfile();
+    await renderPane(state, PROFILE_PANE_ID);
+
+    click(container.querySelector(".sb-profile-plans"));
+
+    const plansPane = state.app.effectivePanes.value.find(
+      (pane) => pane.id === READING_PLANS_PANE_ID
+    );
+    expect(plansPane?.placement).toBe("side");
+    expect(state.isProfileOpen.value).toBe(false);
+  });
+
+  // A playlist that's been saved closes to its own page, wherever the editor
+  // was opened from.
+  it("goes to the playlist's page when backing out of a playlist edited from Your content", async () => {
+    const state = await signedInDesktopState();
+    state.playlists.userPlaylists.value = [htmlPlaylist()];
+    state.openYourContent();
+    await renderPane(state, YOUR_CONTENT_PANE_ID);
+
+    click(container.querySelector(".sb-discover-item-menu"));
+    click(
+      Array.from(document.body.querySelectorAll(".sb-context-menu-item")).find(
+        (item) => item.textContent?.includes("Edit")
+      )
+    );
+    expect(state.isYourContentOpen.value).toBe(false);
+
+    await renderPane(state, DISCOVER_PANE_ID);
+    click(playlistEditorBack());
+
+    expect(state.playlists.editingPlaylist.value).toBeNull();
+    expect(state.isYourContentOpen.value).toBe(false);
+    expect(state.playlists.playlistPage.value?.item.id).toBe(htmlPlaylist().id);
+  });
+
+  // One never saved has no page, so it goes back to where it was started.
+  it("returns to Your content when backing out of a new playlist started there", async () => {
+    const state = await signedInDesktopState();
+    state.openYourContent();
+    await renderPane(state, YOUR_CONTENT_PANE_ID);
+
+    click(container.querySelector(".sb-content-create"));
+    click(
+      Array.from(document.body.querySelectorAll(".sb-context-menu-item")).find(
+        (item) => item.textContent?.includes("Playlist")
+      )
+    );
+    await waitFor(() => state.playlists.editingPlaylist.value !== null);
+    expect(state.isYourContentOpen.value).toBe(false);
+
+    await renderPane(state, DISCOVER_PANE_ID);
+    click(playlistEditorBack());
+
+    expect(state.playlists.editingPlaylist.value).toBeNull();
+    expect(state.isYourContentOpen.value).toBe(true);
+  });
+
+  it("stays in Discover when backing out of a playlist edited from Discover", async () => {
+    const state = await signedInDesktopState();
+    state.playlists.editPlaylist(htmlPlaylist());
+    await renderPane(state, DISCOVER_PANE_ID);
+
+    click(playlistEditorBack());
+
+    expect(state.playlists.editingPlaylist.value).toBeNull();
+    expect(state.isYourContentOpen.value).toBe(false);
+  });
+});
+
 describe("closing the Discover pane while a playlist plays", () => {
   let container: HTMLDivElement;
 
@@ -4600,7 +4836,7 @@ describe("closing the Discover pane while a playlist plays", () => {
     return state;
   }
 
-  it("stops playback when the user closes the pane from its close button", async () => {
+  it("has no close button, and stops playback from its back button, back to Discover", async () => {
     const state = await playInDiscoverPane();
     const pane = state.panes.panes.value.find(
       (item) => item.id === DISCOVER_PANE_ID
@@ -4616,16 +4852,17 @@ describe("closing the Discover pane while a playlist plays", () => {
       );
     });
 
+    expect(
+      container.querySelector(".sb-discover-panel-header-close")
+    ).toBeNull();
     act(() => {
       container
-        .querySelector(".sb-discover-panel-header-close")!
+        .querySelector('[aria-label="Close playlist"]')!
         .dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
     await waitFor(() => state.playlists.playing.value === null);
-    expect(
-      state.panes.panes.value.some((item) => item.id === DISCOVER_PANE_ID)
-    ).toBe(false);
+    expect(state.playlists.view.value).toBe("discover");
   });
 
   it("keeps playing when the pane is closed by the app rather than the user", async () => {

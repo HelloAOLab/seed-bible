@@ -19,6 +19,8 @@ export const LinkPreviewSchema = z.object({
   imageUrl: z.string().optional(),
   imageAlt: z.string().optional(),
   siteName: z.string().optional(),
+  /** Who made it: a video's uploader, say. */
+  author: z.string().optional(),
 });
 
 export type LinkPreview = z.infer<typeof LinkPreviewSchema>;
@@ -30,6 +32,11 @@ export interface LinkPreviewResponse {
   imageUrl?: string;
   imageAlt?: string;
   siteName?: string;
+  /**
+   * The page's tags, by name: YouTube's oEmbed fields (`author_name`) for a
+   * YouTube video, the page's meta tags (`author`) for anything else.
+   */
+  meta?: Record<string, string>;
 }
 
 function cleanText(value: string | undefined): string | undefined {
@@ -63,6 +70,7 @@ export function toLinkPreview(data: LinkPreviewResponse): LinkPreview | null {
     imageUrl: safeImageUrl(data.imageUrl),
     imageAlt: cleanText(data.imageAlt),
     siteName: cleanText(data.siteName),
+    author: cleanText(data.meta?.author_name ?? data.meta?.author),
   };
   if (!preview.title && !preview.description && !preview.imageUrl) {
     return null;

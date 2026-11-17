@@ -5,7 +5,7 @@
  */
 .sb-content-screen {
   --sb-content-padding: 16px;
-  --sb-content-radius: 12px;
+  --sb-content-radius: var(--sb-radius-lg);
 
   --sb-content-surface: color-mix(
     in srgb,
@@ -59,28 +59,9 @@
   padding: 0 var(--sb-content-padding) 8px;
 }
 
-/* Same filled look as the Discover pane's Create button. */
-.sb-content-create.sb-context-menu-button {
+.sb-button.sb-content-create {
   flex-shrink: 0;
-  width: auto;
-  height: auto;
-  padding: 7px 16px;
-  border: none;
-  border-radius: 999px;
-  background: var(--sb-primary-color);
-  color: var(--sb-background);
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
 }
-
-.sb-content-create.sb-context-menu-button:hover {
-  opacity: 0.9;
-  background: var(--sb-primary-color);
-}
-
 /* Sets Create apart from the filters beside it. */
 .sb-content-toolbar-divider {
   flex-shrink: 0;
@@ -125,15 +106,15 @@
   flex-shrink: 0;
   padding: 7px 16px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-content-surface-strong);
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--sb-duration-fast) ease;
 }
 
 /* The same step up as Today's filter pills. */
@@ -170,7 +151,7 @@
 
 .sb-content-section-title {
   margin: 0;
-  font-size: 1.375rem;
+  font-size: var(--sb-font-size-22);
   font-weight: 700;
 }
 
@@ -181,7 +162,7 @@
   background: none;
   color: var(--sb-content-muted);
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   cursor: pointer;
 }
 
@@ -192,7 +173,7 @@
 .sb-content-empty {
   padding: 4px 0 8px;
   color: var(--sb-content-muted);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
 }
 
 /* ------------------------------------------------------------- annotations */
@@ -219,25 +200,7 @@
 
 .sb-content-date {
   color: var(--sb-content-muted);
-  font-size: 0.8125rem;
-}
-
-.sb-content-kebab {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: none;
-  color: var(--sb-content-muted);
-  cursor: pointer;
-}
-
-.sb-content-kebab:hover {
-  background: var(--sb-content-surface-strong);
+  font-size: var(--sb-font-size-13);
 }
 
 /* The verse the note is about: an accent rule, the text, then the reference. */
@@ -255,7 +218,7 @@
 
 .sb-content-quote-text {
   display: block;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 700;
   line-height: 1.45;
 }
@@ -264,12 +227,12 @@
   display: block;
   margin-top: 2px;
   color: var(--sb-content-muted);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-content-annotation-body {
   margin-top: 12px;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   line-height: 1.5;
 }
 
@@ -286,7 +249,7 @@
 .sb-content-annotation-body video {
   max-width: 100%;
   height: auto;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
 }
 
 /* -------------------------------------------------------------- highlights */
@@ -321,7 +284,7 @@
 
 .sb-content-highlight-text {
   display: block;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   line-height: 1.5;
 }
 
@@ -333,14 +296,15 @@
   gap: 0.375rem;
   margin-top: 2px;
   color: var(--sb-content-muted);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 /* --------------------------------------------------------------- saves */
 
 /* Equal-width cards in columns: as many as fit at 10rem or wider, which is
    two on a phone and three in the desktop column. */
-.sb-content-saves {
+.sb-content-saves,
+.sb-content-bookmarks {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
   gap: 8px;
@@ -351,21 +315,24 @@
  * one rounded background and highlight together, rather than looking like
  * two separate controls that happen to sit side by side.
  */
-.sb-content-save-row {
+.sb-content-save-row,
+.sb-content-bookmark-row {
   display: flex;
   min-width: 0;
   align-items: center;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-content-surface);
 }
 
-.sb-content-save-row:hover {
+.sb-content-save-row:hover,
+.sb-content-bookmark-row:hover {
   background: var(--sb-content-surface-strong);
 }
 
 /* The name has a line to itself, so a long book name isn't cut short; the
    translation, date and folder count go on the line under it. */
-.sb-content-save {
+.sb-content-save,
+.sb-content-bookmark {
   flex: 1;
   min-width: 0;
   align-self: stretch;
@@ -377,60 +344,70 @@
   padding: 9px 12px;
   text-align: start;
   border: none;
-  border-radius: 8px 0 0 8px;
+  border-radius: var(--sb-radius-md) 0 0 var(--sb-radius-md);
   background: transparent;
   font-family: inherit;
   color: inherit;
   cursor: pointer;
 }
 
-.sb-content-save-menu {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 9px 8px 9px 0;
-  border: none;
-  border-radius: 0 8px 8px 0;
-  background: transparent;
-  color: var(--sb-content-muted);
-  cursor: pointer;
+/* The ribbon beside the name and chapter, as in the sidebar's bookmarks. */
+.sb-content-bookmark {
+  flex-direction: row;
+  gap: 8px;
 }
 
-.sb-content-save-menu:hover {
-  color: inherit;
+.sb-content-bookmark > .sb-bookmark-glyph {
+  margin-top: 0.125rem;
+}
+
+.sb-content-bookmark-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sb-content-bookmark-chapter {
+  overflow-wrap: anywhere;
 }
 
 /* Wraps onto a second line rather than ending in an ellipsis when even its
    own line is too narrow, as on a small phone. */
-.sb-content-save-name {
+.sb-content-save-name,
+.sb-content-bookmark-name {
   overflow-wrap: anywhere;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 700;
 }
 
 /* Matches the translation on the sidebar's save and tab rows. */
 .sb-content-save-translation,
+.sb-content-bookmark-translation,
 .sb-content-highlight-translation {
   color: var(--sb-content-muted);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 500;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
-/* The second line: the translation, the date, then the folder count. */
-.sb-content-save-meta {
+/* The second line: the translation, the date, then the folder count (for a
+   bookmark, the chapter then the translation). */
+.sb-content-save-meta,
+.sb-content-bookmark-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.375rem;
   color: var(--sb-content-muted);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 /* Sized like the tab rows' dot; the colour comes from the line it's on. */
 .sb-content-meta-sep {
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
   line-height: 1;
 }
 
@@ -453,7 +430,7 @@
 /* Where the reader is with the plan — "Day 3 of 10", "Draft" — under its name. */
 .sb-content-plan-status {
   color: var(--sb-content-muted);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 /* --------------------------------------------------------- load / failure */
@@ -461,7 +438,7 @@
 .sb-content-status {
   padding: 24px var(--sb-content-padding);
   color: var(--sb-content-muted);
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   text-align: center;
 }
 
@@ -474,14 +451,6 @@
 
 .sb-content-retry {
   margin-top: 12px;
-  padding: 9px 18px;
-  border: 1px solid var(--sb-content-rule);
-  border-radius: 999px;
-  background: none;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
 }
 
 /* -------------------------------------------------------------- your images */
@@ -506,7 +475,7 @@
   aspect-ratio: 1;
   padding: 0;
   border: 1px solid var(--sb-content-rule);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   overflow: hidden;
   background: var(--sb-content-surface);
   cursor: pointer;
@@ -523,7 +492,7 @@
   display: block;
   margin-top: 4px;
   color: var(--sb-content-muted);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 /*
@@ -542,13 +511,13 @@
   flex-direction: column;
   gap: 10px;
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-images-preview-details dt {
   margin-bottom: 2px;
   color: var(--sb-content-muted);
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
 }
 
 .sb-images-preview-details dd {
@@ -575,16 +544,8 @@
   }
 }
 
-/* Download sits apart at the start of the row, Close and Delete at the end. */
 .sb-images-preview-download {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
   margin-inline-end: auto;
-}
-
-.sb-images-preview-download .material-symbols-outlined {
-  font-size: 1.125rem;
 }
 
 .sb-images-preview-img {
@@ -592,7 +553,7 @@
   max-width: 100%;
   max-height: 60vh;
   margin: 0 auto;
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   object-fit: contain;
 }
 
@@ -601,7 +562,7 @@
   width: 96px;
   height: 96px;
   margin: 0 auto 12px;
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   object-fit: cover;
 }
 

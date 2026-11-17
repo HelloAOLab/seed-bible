@@ -222,7 +222,6 @@
   "copied-translation-share-link": "የተቀዳ የትርጉም ማጋሪያ አገናኝ",
   "less": "ያነሰ",
   "swipe-up-more": "ተጨማሪ ለማየት ወደ ላይ ያንሸራትቱ",
-  "plans": "ዕቅዶች",
   "reading-plans": "የንባብ ዕቅዶች",
   "create-reading-plan": "የንባብ እቅድ ይፍጠሩ",
   "reading-plans-empty": "እስካሁን ምንም የንባብ እቅድ የለዎትም። ለመጀመር አንድ ይፍጠሩ።",
@@ -1275,5 +1274,19 @@
   "loading-translations": "ትርጉሞችን በመጫን ላይ…",
   "translations-load-failed": "ሙሉውን የትርጉም ዝርዝር መጫን አልተቻለም፣ ስለዚህ አንዳንዶቹ ሊጎድሉ ይችላሉ።",
   "verse-of-the-day": "የዕለቱ ጥቅስ",
-  "verse-of-the-day-loading": "የዕለቱን ጥቅስ በመጫን ላይ…"
+  "verse-of-the-day-loading": "የዕለቱን ጥቅስ በመጫን ላይ…",
+  "delete-bookmark-confirm-title": "ዕልባት ይሰረዝ?",
+  "delete-bookmark-confirm-message": "\" {{name}} \"ን ሰርዝ?",
+  "scripture-font": "የቅዱሳት መጻሕፍት ቅርጸ-ቁምፊ",
+  "ai-limits-title": "ከ AI ጋር ከመወያየትዎ በፊት",
+  "ai-limits-intro": "የአዕምሮ ንቃተ ህሊና (AI) ጠቃሚ የመነሻ ነጥብ ሊሆን ይችላል፣ ነገር ግን ገደቦቹን ያስታውሱ፡",
+  "ai-limits-mistakes": "ስህተት ይሠራል፣ እና ስህተት ሲሆን በራስ መተማመን ሊሰማው ይችላል።",
+  "ai-limits-agreeable": "መስማት የምትፈልገውን ነገር ሊነግርህ ይችላል፣ እና ወደ ታዋቂ መልሶች ያዘነብላል።",
+  "ai-limits-scripture": "አስተማማኝ ምንጭ አይደለም። የሚናገረውን ከቅዱስ ቃሉ ጋር አወዳድር።",
+  "ai-limits-study": "መጽሐፍ ቅዱስን ለራስህ አጥና፣ እና AI አስተሳሰብህን እንዲመራልህ አትፍቀድ።",
+  "ai-limits-confirm": "የአእምሮ ሳይንስ ስህተት ሊሠራ እንደሚችል እና መጽሐፍ ቅዱስን ራሴ ማጥናትን የሚተካ እንዳልሆነ ተረድቻለሁ።",
+  "friends-playlists-filter": "የጓደኞች አጫዋች ዝርዝሮች",
+  "friend-link-social-title": "{{name}} ን እንደ ጓደኛ ያክሉ",
+  "friend-link-meta-description": "{{name}} በ {{brand}} ላይ ጓደኛዎ መሆን ይፈልጋል",
+  "friend-link-title": "{{name}} ን በ {{brand}} ላይ እንደ ጓደኛ ያክሉ"
 }

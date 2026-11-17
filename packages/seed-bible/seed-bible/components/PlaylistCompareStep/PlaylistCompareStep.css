@@ -1,0 +1,42 @@
+/* Side by side while each column gets at least 16rem; below that the second
+   wraps under the first. Sized by the reader's own width, not the window's,
+   so a narrow split-view slot stacks too. */
+.sb-playlist-compare-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1.5rem 2rem;
+}
+
+.sb-playlist-compare-column {
+  min-width: 0;
+}
+
+/* In line with the passage's text, which a gutter beside it (note markers on
+   phones, people in a shared session) moves in from the column's edges. */
+.sb-playlist-compare-passage:has(
+  + .sb-chapter-content-note-gutter,
+  + .sb-chapter-content-presence
+) {
+  padding-inline: var(--sb-reader-gutter-inset);
+}
+
+.sb-playlist-compare-passage,
+.sb-playlist-compare-note-title {
+  margin: 0 0 0.5rem;
+  font-family: var(--sb-font-family);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--sb-book-title-font-color);
+}
+
+.sb-playlist-compare-note {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--sb-divider-color);
+}
+
+.sb-playlist-compare-note .sb-play-playlist-content-html {
+  font-size: 1em;
+  line-height: inherit;
+}

@@ -371,6 +371,15 @@ export interface BibleReadingState {
   visibleVerseRange: Signal<VisibleVerseRange | null>;
 
   /**
+   * What else is on screen in this reader besides the chapter's verses, by
+   * area: a playing playlist's note or question page, or a compare step's
+   * second passage. Each range counts that area's own units (its blocks of
+   * text, or its verses). Broadcast alongside `visibleVerseRange` so peers on
+   * the same step can see whereabouts in it this reader is.
+   */
+  visibleAreas: Signal<ReadonlyMap<string, VisibleVerseRange>>;
+
+  /**
    * Toggles a verse in the current selection.
    * If the verse is already selected, it is removed; otherwise it is added with
    * menu anchor coordinates and a timestamp.
@@ -1044,6 +1053,12 @@ export interface SelectTranslationAndChapterOptions {
    * heading — scroll is restored for browser history alone.
    */
   scrollPosition?: number;
+
+  /**
+   * Replace the current history entry instead of pushing a new one, for a
+   * navigation that belongs to an entry something else has just made.
+   */
+  replace?: boolean;
 }
 
 /** Options describing how a reading-state navigation should affect the URL. */
@@ -1583,6 +1598,9 @@ export function createBibleReadingState(
   const readAlongVerse = signal<{ verse: number } | null>(null);
   const pendingAnnotationScrollVerse = signal<number | null>(null);
   const visibleVerseRange = signal<VisibleVerseRange | null>(null);
+  const visibleAreas = signal<ReadonlyMap<string, VisibleVerseRange>>(
+    new Map()
+  );
 
   // Reading-extension enablement (per reading state). Extensions are registered
   // globally on the BibleReadingExtensionManager but never enabled by default;
@@ -2968,6 +2986,7 @@ export function createBibleReadingState(
         scrollToVerse: options?.scrollToVerse ?? null,
         updateUrl: options?.updateUrl,
         scrollPosition: options?.scrollPosition,
+        replace: options?.replace,
       });
       await whenContentSettled(target);
     } catch (err) {
@@ -3695,6 +3714,7 @@ export function createBibleReadingState(
     selectionAnnotations,
     pendingAnnotationScrollVerse,
     visibleVerseRange,
+    visibleAreas,
     selectedFootnote,
     loading,
     error,

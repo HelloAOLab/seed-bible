@@ -179,9 +179,14 @@ export function createNavigationManager(
     // the popstate/pushState/replaceState hooks above cover those cases.
     if (typeof window.navigation !== "undefined") {
       const onNavigate = (event: NavigateEvent) => {
+        // A reload is left alone so it really reloads: intercepting it would
+        // turn it into an in-page update, and things only read while the app
+        // starts (a session to join, a customization) would be skipped. The
+        // native apps rely on this to open links handed to them by the OS.
         if (
           disposed ||
           event.downloadRequest ||
+          event.navigationType === "reload" ||
           !isNavigationToSameOrigin(event.destination?.url)
         ) {
           return;

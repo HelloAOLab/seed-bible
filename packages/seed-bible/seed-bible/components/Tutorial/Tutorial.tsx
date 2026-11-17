@@ -272,6 +272,10 @@ export function TutorialPopoverContent({
             className="sb-tour-btn sb-tour-btn-back"
             onClick={tutorial.prev}
           >
+            {/* Mirrors next's arrow, so the dots between them look centered. */}
+            <span className="sb-tour-back-arrow" dir="ltr" aria-hidden="true">
+              ←
+            </span>
             {t("tutorial.back", { defaultValue: "Back" })}
           </button>
         )}

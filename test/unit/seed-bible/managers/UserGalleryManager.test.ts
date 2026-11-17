@@ -95,7 +95,8 @@ describe("savePhotoToGallery", () => {
     });
     expect(os.recordData).toHaveBeenCalledTimes(1);
     const saved = os.recordData.mock.calls[0]![2];
-    expect(saved.createdAtMs).toBeGreaterThan(existing.createdAtMs);
+    expect(saved.createdAtMs).toBe(existing.createdAtMs);
+    expect(saved.lastUsedAtMs).toBeGreaterThan(existing.createdAtMs);
   });
 });
 
@@ -264,7 +265,7 @@ describe("createUserGalleryManager", () => {
     ).rejects.toThrow("Cannot save a photo while signed out.");
   });
 
-  it("rememberPhoto adds a used cover URL and moves it to the front on reuse", async () => {
+  it("rememberPhoto adds a used cover URL and, on reuse, moves it to the front without changing its upload date", async () => {
     const recordData = vi.fn().mockResolvedValue(undefined);
     const gallery = createUserGalleryManager(makeOs({ recordData }), {
       userId: signal("user-1"),
@@ -276,6 +277,8 @@ describe("createUserGalleryManager", () => {
       vi.setSystemTime(1_000);
       const first = await gallery.rememberPhoto("https://example.com/used.jpg");
       expect(first?.url).toBe("https://example.com/used.jpg");
+      expect(first?.createdAtMs).toBe(1_000);
+      expect(first?.lastUsedAtMs).toBe(1_000);
       expect(gallery.photos.value[0]).toEqual(first);
 
       const older = {
@@ -292,7 +295,8 @@ describe("createUserGalleryManager", () => {
 
       expect(reused?.id).toBe(first?.id);
       expect(gallery.photos.value[0]?.id).toBe(first?.id);
-      expect(gallery.photos.value[0]?.createdAtMs).toBe(2_000);
+      expect(gallery.photos.value[0]?.createdAtMs).toBe(1_000);
+      expect(gallery.photos.value[0]?.lastUsedAtMs).toBe(2_000);
     } finally {
       vi.useRealTimers();
     }
@@ -467,6 +471,25 @@ describe("createUserGalleryManager", () => {
     ).toEqual([]);
   });
 
+  it("keeps a photo uploaded long ago but reused moments ago when the server list lags behind", async () => {
+    const reused = {
+      id: "photo_reused",
+      url: "https://example.com/reused.jpg",
+      createdAtMs: Date.now() - LIST_LAG_GRACE_MS - 1,
+      lastUsedAtMs: Date.now(),
+    };
+    localStorage.setItem(
+      `${USER_GALLERY_CACHE_PREFIX}user-1`,
+      JSON.stringify([reused])
+    );
+    const gallery = createUserGalleryManager(makeOs(), {
+      userId: signal("user-1"),
+    });
+    await flush();
+
+    expect(gallery.photos.value).toEqual([reused]);
+  });
+
   it("reports loading only while the gallery list is in flight", async () => {
     let resolveList: (value: { success: true; items: [] }) => void;
     const listAllDataByMarker = vi.fn(
@@ -635,6 +658,49 @@ describe("mergeGalleryPhotos", () => {
         createdAtMs: 2,
       },
     ]);
+  });
+
+  it("prefers the copy used most recently, not the one uploaded most recently", () => {
+    const reused = {
+      id: "reused",
+      url: "https://example.com/a.jpg",
+      createdAtMs: 1,
+      lastUsedAtMs: 10,
+    };
+    const olderRecord = {
+      id: "older-record",
+      url: "https://example.com/a.jpg",
+      createdAtMs: 5,
+    };
+
+    expect(mergeGalleryPhotos([reused], [olderRecord])).toEqual([reused]);
+    expect(mergeGalleryPhotos([olderRecord], [reused])).toEqual([reused]);
+  });
+
+  it("sorts by last use, falling back to the upload date for older records", () => {
+    const reusedLately = {
+      id: "reused-lately",
+      url: "https://example.com/a.jpg",
+      createdAtMs: 1,
+      lastUsedAtMs: 200,
+    };
+    const olderRecord = {
+      id: "older-record",
+      url: "https://example.com/b.jpg",
+      createdAtMs: 100,
+    };
+    const usedEarlier = {
+      id: "used-earlier",
+      url: "https://example.com/c.jpg",
+      createdAtMs: 50,
+      lastUsedAtMs: 60,
+    };
+
+    expect(
+      mergeGalleryPhotos([usedEarlier, olderRecord, reusedLately]).map(
+        (photo) => photo.id
+      )
+    ).toEqual(["reused-lately", "older-record", "used-earlier"]);
   });
 });
 

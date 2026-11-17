@@ -175,7 +175,7 @@ describe("FriendPlaylistsSection", () => {
     expect(friendsSection()).toBeNull();
   });
 
-  it("plays a friend's playlist", async () => {
+  it("opens a friend's playlist on its page when play is pressed", async () => {
     const { playlists } = await renderWithFriends([ada], {
       ada: [
         createPlaylist({
@@ -185,7 +185,6 @@ describe("FriendPlaylistsSection", () => {
         }),
       ],
     });
-    const startPlaying = vi.spyOn(playlists, "startPlaying");
 
     act(() => {
       friendsSection()!
@@ -193,9 +192,11 @@ describe("FriendPlaylistsSection", () => {
         .click();
     });
 
-    expect(startPlaying).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "p1", recordName: "ada" })
-    );
+    expect(playlists.playlistPage.value?.item).toMatchObject({
+      id: "p1",
+      recordName: "ada",
+    });
+    expect(playlists.playing.value).toBeNull();
   });
 
   it("shares a friend's playlist, and offers nothing to edit or delete it", async () => {

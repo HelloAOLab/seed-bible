@@ -218,7 +218,7 @@ describe("PaneLayout", () => {
         true
       );
       act(() => {
-        vi.advanceTimersByTime(250);
+        vi.advanceTimersByTime(300);
       });
       expect(shell?.classList.contains("sb-pane-side-shell-entering")).toBe(
         false
@@ -238,7 +238,7 @@ describe("PaneLayout", () => {
       expect(copy?.querySelector(".notes-body")).not.toBeNull();
 
       act(() => {
-        vi.advanceTimersByTime(250);
+        vi.advanceTimersByTime(300);
       });
       expect(
         container.querySelector(".sb-pane-side-ghost-host")?.children

@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Povezava za deljenje prevoda je bila kopirana",
   "less": "Manj",
   "swipe-up-more": "Povlecite navzgor za ogled več",
-  "plans": "Načrti",
   "reading-plans": "Načrti branja",
   "create-reading-plan": "Ustvarite bralni načrt",
   "reading-plans-empty": "Še nimate bralnih načrtov. Ustvarite enega, da začnete.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Nalaganje prevodov …",
   "translations-load-failed": "Celotnega seznama prevodov ni bilo mogoče naložiti, zato nekateri morda manjkajo.",
   "verse-of-the-day": "VERZ DNEVA",
-  "verse-of-the-day-loading": "Nalaganje verza dneva ..."
+  "verse-of-the-day-loading": "Nalaganje verza dneva ...",
+  "delete-bookmark-confirm-title": "Izbrisati zaznamek?",
+  "delete-bookmark-confirm-message": "Izbrisati » {{name}} «?",
+  "scripture-font": "Pisava Svetega pisma",
+  "ai-limits-title": "Preden se pogovorite z umetno inteligenco",
+  "ai-limits-intro": "Umetna inteligenca je lahko koristno izhodišče, vendar ne pozabite na njene omejitve:",
+  "ai-limits-mistakes": "Dela napake in se lahko sliši samozavestno, ko se moti.",
+  "ai-limits-agreeable": "Ponavadi vam pove, kar želite slišati, in se nagiba k priljubljenim odgovorom.",
+  "ai-limits-scripture": "To ni zanesljiv vir. Preverite, kaj piše v Svetem pismu.",
+  "ai-limits-study": "Preučuj Sveto pismo sam in ne dovoli, da umetna inteligenca razmišlja namesto tebe.",
+  "ai-limits-confirm": "Razumem, da lahko umetna inteligenca dela napake in da ni nadomestilo za lastno preučevanje Svetega pisma.",
+  "friends-playlists-filter": "Seznami predvajanja prijateljev",
+  "friend-link-social-title": "Dodaj {{name}} kot prijatelja",
+  "friend-link-meta-description": "{{name}} želi biti tvoj prijatelj na {{brand}}",
+  "friend-link-title": "Dodaj {{name}} kot prijatelja na {{brand}}"
 }

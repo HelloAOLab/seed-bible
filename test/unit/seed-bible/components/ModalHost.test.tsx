@@ -1,3 +1,4 @@
+import { signal } from "@preact/signals";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
@@ -183,6 +184,47 @@ describe("ModalHost", () => {
 
       expect(manager.modals.value).toHaveLength(0);
       expect(onDismiss).toHaveBeenCalledTimes(1);
+    });
+
+    it("can't be closed with the X or the backdrop while canDismiss is false", async () => {
+      const state = await createTestSeedBibleState();
+      const manager = createModalManager();
+      const busy = signal(true);
+      act(() => {
+        manager.openModal({
+          id: "busy",
+          title: "Step",
+          content: () => <p>Body</p>,
+          canDismiss: () => !busy.value,
+          useCasualOSApp: false,
+        });
+      });
+      act(() => {
+        render(
+          <TestHost state={state}>
+            <ModalHost manager={manager} />
+          </TestHost>,
+          container
+        );
+      });
+      const close = () =>
+        container.querySelector(
+          ".sb-footnote-modal-close"
+        ) as HTMLButtonElement;
+      const overlay = container.querySelector(
+        ".sb-footnote-modal-overlay"
+      ) as HTMLElement;
+
+      expect(close().disabled).toBe(true);
+      pressAndRelease(overlay, overlay);
+      expect(manager.modals.value).toHaveLength(1);
+
+      act(() => {
+        busy.value = false;
+      });
+      expect(close().disabled).toBe(false);
+      act(() => close().click());
+      expect(manager.modals.value).toHaveLength(0);
     });
 
     it("does not run when code closes the modal or the body is clicked", async () => {

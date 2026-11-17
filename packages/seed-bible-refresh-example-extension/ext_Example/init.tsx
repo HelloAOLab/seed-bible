@@ -1,7 +1,7 @@
 /* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
-import { MaterialIcon, PortalComponent } from "seed-bible/components";
+import { Button, MaterialIcon, PortalComponent } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { v4 as uuid } from "uuid";
 
@@ -163,8 +163,7 @@ export default function initExampleExtension() {
                   {typeof subtitle === "string" && subtitle && (
                     <p style={{ opacity: 0.75 }}>{subtitle}</p>
                   )}
-                  <button
-                    type="button"
+                  <Button
                     onClick={async () => {
                       // Sensitive settings can't be read. Instead the request
                       // goes through the viewer's proxy for httpbin.org, which
@@ -190,7 +189,7 @@ export default function initExampleExtension() {
                     }}
                   >
                     {t("send-sensitive-request")}
-                  </button>
+                  </Button>
                 </div>
               );
             },

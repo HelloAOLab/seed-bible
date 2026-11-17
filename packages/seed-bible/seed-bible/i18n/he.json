@@ -222,7 +222,6 @@
   "copied-translation-share-link": "קישור שיתוף התרגום הועתק",
   "less": "פָּחוֹת",
   "swipe-up-more": "החליקו למעלה כדי לראות עוד",
-  "plans": "תוכניות",
   "reading-plans": "תוכניות קריאה",
   "create-reading-plan": "צור תוכנית קריאה",
   "reading-plans-empty": "אין לך עדיין תוכניות קריאה. צור אחת כדי להתחיל.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "טוען תרגומים…",
   "translations-load-failed": "לא ניתן היה לטעון את רשימת התרגומים המלאה, לכן ייתכן שחלקם חסרים.",
   "verse-of-the-day": "פסוק היום",
-  "verse-of-the-day-loading": "טוען את פסוק היום..."
+  "verse-of-the-day-loading": "טוען את פסוק היום...",
+  "delete-bookmark-confirm-title": "למחוק סימניה?",
+  "delete-bookmark-confirm-message": "למחוק את \" {{name}} \"?",
+  "scripture-font": "גופן כתבי הקודש",
+  "ai-limits-title": "לפני שאתם משוחחים בצ'אט עם בינה מלאכותית",
+  "ai-limits-intro": "בינה מלאכותית יכולה להיות נקודת התחלה מועילה, אך זכרו את מגבלותיה:",
+  "ai-limits-mistakes": "זה עושה טעויות, ויכול להישמע בטוח בעצמו כשהוא טועה.",
+  "ai-limits-agreeable": "זה נוטה לומר לך את מה שאתה רוצה לשמוע, ונוטה לכיוון תשובות פופולריות.",
+  "ai-limits-scripture": "זה לא מקור אמין. בדוק מה כתוב שם מול כתבי הקודש.",
+  "ai-limits-study": "למדו את התנ\"ך בעצמכם, ואל תיתנו לבינה מלאכותית לחשוב בשבילכם.",
+  "ai-limits-confirm": "אני מבין שבינה מלאכותית יכולה לעשות טעויות והיא אינה תחליף ללימוד התנ\"ך בעצמי.",
+  "friends-playlists-filter": "פלייליסטים של חברים",
+  "friend-link-social-title": "הוסף {{name}} כחבר",
+  "friend-link-meta-description": "{{name}} רוצה להיות חבר שלך ב {{brand}}",
+  "friend-link-title": "הוסף {{name}} כחבר ב- {{brand}}"
 }

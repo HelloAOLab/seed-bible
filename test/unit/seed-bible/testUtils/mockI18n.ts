@@ -105,6 +105,9 @@ export async function mockI18nManager(
 
   return {
     ...actual,
+    // i18next only gains its add-strings methods once initialised, which tests
+    // skip; the stub `t` answers with each call's `defaultValue` regardless.
+    addTranslations: () => undefined,
     useI18n: () => ({
       t: mockTranslate,
       // A getter, so a test can reassign `mockI18nState.language` after the
@@ -113,6 +116,12 @@ export async function mockI18nManager(
         return mockI18nState.language;
       },
       ...overrides,
+    }),
+    useOptionalI18n: () => ({
+      t: mockTranslate,
+      get language() {
+        return mockI18nState.language;
+      },
     }),
   };
 }

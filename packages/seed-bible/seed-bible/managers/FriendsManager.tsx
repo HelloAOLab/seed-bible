@@ -117,6 +117,13 @@ export interface FriendsManager {
   isLoading: ReadonlySignal<boolean>;
 
   /**
+   * True once the lists have been read for the signed-in account, and through
+   * later refreshes. Until then (or when every read so far has failed) empty
+   * lists don't mean someone isn't a friend.
+   */
+  hasLoaded: ReadonlySignal<boolean>;
+
+  /**
    * Re-reads friends and requests from the server. Profiles are only fetched
    * for people not seen yet unless `reloadProfiles` is set.
    */
@@ -282,6 +289,10 @@ export function createFriendsManager(
     toRequests(outgoing.value, (request) => request.targetUserId)
   );
   const isLoading = computed(() => loading.value);
+  const hasLoaded = computed(
+    () =>
+      loadedUserId.value !== null && loadedUserId.value === login.userId.value
+  );
 
   const loadProfiles = async (userIds: string[], reload: boolean) => {
     const wanted = userIds.filter(
@@ -728,6 +739,7 @@ export function createFriendsManager(
     incomingRequests,
     outgoingRequests,
     isLoading,
+    hasLoaded,
     refresh,
     sendRequest,
     acceptRequest,

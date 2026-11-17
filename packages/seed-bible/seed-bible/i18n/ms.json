@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Pautan kongsi terjemahan yang disalin",
   "less": "Kurang",
   "swipe-up-more": "Leret ke atas untuk melihat lebih banyak lagi",
-  "plans": "Pelan",
   "reading-plans": "Rancangan membaca",
   "create-reading-plan": "Cipta rancangan bacaan",
   "reading-plans-empty": "Anda belum mempunyai sebarang rancangan membaca. Cipta satu untuk bermula.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Memuatkan terjemahan…",
   "translations-load-failed": "Tidak dapat memuatkan senarai penuh terjemahan, jadi sebahagiannya mungkin tiada.",
   "verse-of-the-day": "AYAT HARI INI",
-  "verse-of-the-day-loading": "Memuatkan ayat hari ini…"
+  "verse-of-the-day-loading": "Memuatkan ayat hari ini…",
+  "delete-bookmark-confirm-title": "Padam penanda buku?",
+  "delete-bookmark-confirm-message": "Padam \" {{name}} \"?",
+  "scripture-font": "Fon Kitab Suci",
+  "ai-limits-title": "Sebelum anda bersembang dengan AI",
+  "ai-limits-intro": "AI boleh menjadi titik permulaan yang berguna, tetapi ingat batasannya:",
+  "ai-limits-mistakes": "Ia membuat kesilapan, dan boleh kedengaran yakin apabila ia salah.",
+  "ai-limits-agreeable": "Ia cenderung untuk memberitahu anda apa yang anda ingin dengar, dan cenderung kepada jawapan yang popular.",
+  "ai-limits-scripture": "Ia bukan sumber yang boleh dipercayai. Semak apa yang dikatakannya berdasarkan Kitab Suci.",
+  "ai-limits-study": "Kajilah Bible sendiri, dan jangan biarkan AI berfikir untuk anda.",
+  "ai-limits-confirm": "Saya faham bahawa AI boleh melakukan kesilapan dan bukanlah pengganti untuk mempelajari Bible sendiri.",
+  "friends-playlists-filter": "Senarai main rakan-rakan",
+  "friend-link-social-title": "Tambahkan {{name}} sebagai rakan",
+  "friend-link-meta-description": "{{name}} mahu menjadi rakan anda di {{brand}}",
+  "friend-link-title": "Tambahkan {{name}} sebagai rakan di {{brand}}"
 }

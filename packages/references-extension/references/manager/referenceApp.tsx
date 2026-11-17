@@ -27,7 +27,7 @@ import type {
 import { signal, useSignal } from "@preact/signals";
 import type { Signal } from "@preact/signals";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "preact/hooks";
-import { Skeleton, SkeletonContainer } from "seed-bible/components";
+import { IconButton, Skeleton, SkeletonContainer } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { ReferenceBody, ReferencePreview } from "./referenceText";
 import type { ReferenceText } from "./referenceText";
@@ -137,29 +137,45 @@ export function openReferencePane(options: {
         currentPane.value = null;
       }
     },
+    // On desktop the header also holds this pane's own round, tinted button.
+    closeButtonLook: isMobile ? "plain" : "tinted",
     header: () => {
       if (isMobile) {
         return null;
       }
-      const headerIcon =
-        placement === "floating" ? "grid_layout_side" : "float_portrait_2";
       return (
-        <button
-          class="sb-pane-header-close-button sb-references-header-button material-symbols-outlined"
-          onClick={() =>
+        <PlacementToggle
+          floating={placement === "floating"}
+          onToggle={() =>
             openReferencePane({
               ...options,
               placement: placement === "floating" ? "side" : "floating",
             })
           }
-        >
-          {headerIcon}
-        </button>
+        />
       );
     },
   });
 
   return currentPane.value;
+}
+
+/** Moves the pane between floating over the reader and docked beside it. */
+function PlacementToggle(props: { floating: boolean; onToggle: () => void }) {
+  const { t } = useI18n("ext_references");
+  return (
+    <IconButton
+      className="sb-references-header-button"
+      look="tinted"
+      icon={props.floating ? "grid_layout_side" : "float_portrait_2"}
+      label={
+        props.floating
+          ? t("dock-pane", { defaultValue: "Dock to the side" })
+          : t("float-pane", { defaultValue: "Float over the reader" })
+      }
+      onClick={props.onToggle}
+    />
+  );
 }
 
 function ReferencePaneTitle(props: {

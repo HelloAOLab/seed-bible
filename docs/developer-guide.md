@@ -560,6 +560,7 @@ Circular dependencies are detected and rejected (with a console error) rather th
 | Shared package                 | What it holds                                              | Used by                                                |
 | ------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------ |
 | `@seed-bible/bible-locations`  | The known Bible places and where their map outlines live   | Theographic (kept separate for any future map feature) |
+| `@seed-bible/maps`             | Maps of places, drawn with Leaflet when one first opens    | Theographic                                            |
 | `@seed-bible/transcription`    | Transcribing sermon audio and finding the references in it | AI Transcript UI, Twitch publisher                     |
 | `@seed-bible/seed-bible-utils` | Book arrangements, reading history and presence services   | Bible Stack, Scripture Map                             |
 
@@ -615,7 +616,15 @@ The **compare extension** (`packages/compare-extension/`) uses this: its "Compar
 
 #### Custom panes — your own UI, anywhere in the app's pane system
 
-`context.panes.openPane({...})` opens an arbitrary Preact component in one of three placements: `"side"` (a docked side panel), `"floating"` (a draggable/resizable window), or `"fullscreen"` (covers the reader). This is how a toolbar tool's `onSelect` typically shows its actual content. Panes can also embed a CasualOS grid or map portal via the `<PortalComponent>` helper (as the Theographic extension and the example extension both do), which is how an extension can render a whole separate CasualOS "pattern" application inside the main app.
+`context.panes.openPane({...})` opens an arbitrary Preact component in one of three placements: `"side"` (a docked side panel), `"floating"` (a draggable/resizable window), or `"fullscreen"` (covers the reader). This is how a toolbar tool's `onSelect` typically shows its actual content. Panes can also embed a CasualOS grid or map portal via the `<PortalComponent>` helper (as the example extension does), which is how an extension can render a whole separate CasualOS "pattern" application inside the main app.
+
+#### Maps — show places without starting CasualOS
+
+Maps come from the `@seed-bible/maps` shared package (add it to your extension's `package.json` dependencies as `"workspace:*"`). `openMap({ panes: context.panes, modals: context.modals, isMobile: context.app.isMobile }, { id, title, label, load })` opens a place's map in a floating pane, or on a phone, in a sheet over whatever is open. `load()` fetches `{ data, attribution }`: the place's GeoJSON (in standard `[longitude, latitude]` order) and the credits that data needs. Opening an `id` that's already open brings it forward instead of reloading it, and `isMapOpen(host, id)` tells you whether it's open.
+
+To put a map inside your own UI instead, such as a card, render `<GeoJsonMap data={...} />`. Pass `inline` when it sits in scrolling content, so the mouse wheel and swipes scroll past it; on a phone an inline map is then a still preview, and `onTap` can open the full map.
+
+The map is drawn with [Leaflet](https://leafletjs.com), which the package downloads the first time any map is shown and never at startup. Don't import `leaflet` yourself: a static import would put it back in the startup bundle. The base map (currently OpenStreetMap's public tiles) and its credit are set once, in `MAP_TILE_SOURCE` in `packages/maps/leaflet.ts`. The Theographic extension draws its maps this way.
 
 #### Discover providers — contribute content to the Discover panel
 
@@ -652,7 +661,7 @@ These are two different mechanisms and it's easy to conflate them because both l
 - An **extension** (`packages/*-extension/`, this guide) runs _inside_ the main Seed Bible app, in the same page, with full access to `SeedBibleState`. It's written the same way the app itself is (Preact/JSX/signals).
 - A **pattern** (`patterns/`) is a separate CasualOS application — bot scripts packaged into a `.aux` file — that gets embedded as a _cross-origin_ `ao.bot` iframe via `<PortalComponent>`. It runs in its own sandboxed context with its own CasualOS runtime (`os`, `thisBot`, `configBot` globals), and it communicates with the host page only through the iframe boundary (query params in, and whatever CasualOS's cross-frame APIs allow).
 
-The reason both show up together in the same example: a pane opened by an extension can embed a pattern. The Theographic extension does exactly this — it's an _extension_ (runs in the main app, adds Discover cards) that opens a pane whose content is the `geo-importer` _pattern_ (a separate CasualOS map applet) to actually render the map. If you need custom code running inside a grid/map portal, you need a pattern; if you need to add a feature to the main app's UI or behavior, you need an extension. Patterns are out of scope for this guide — see `DEVELOPERS.md` for the basics of building one.
+The reason both show up together in the same example: a pane opened by an extension can embed a pattern. The example extension does exactly this — it's an _extension_ (runs in the main app) that opens a pane whose content is a CasualOS _pattern_. The `geo-importer` pattern is a richer CasualOS map applet that can be embedded this way, though the everyday maps of places use the lighter `@seed-bible/maps` instead. If you need custom code running inside a grid/map portal, you need a pattern; if you need to add a feature to the main app's UI or behavior, you need an extension. Patterns are out of scope for this guide — see `DEVELOPERS.md` for the basics of building one.
 
 #### A note on overloaded terminology
 
