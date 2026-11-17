@@ -28,6 +28,7 @@ import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
 import { translateTitle } from "../../app/utils";
 import { CONFIDENT_PASSAGE } from "../../managers/customContent/classify";
+import { contentFeatures } from "./contentFeatures";
 import {
   ACTIVE_IMPORT_STATUSES,
   type SiteCandidate,
@@ -517,7 +518,9 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
           />
         </div>
 
-        <AiSuggestionsSettings state={state} run={run} />
+        {contentFeatures.aiSuggestions && (
+          <AiSuggestionsSettings state={state} run={run} />
+        )}
 
         <div className="sb-cz-group">
           <div className="sb-ccl-heading-row">
@@ -549,8 +552,12 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
               })}
             </p>
           )}
-          <AiSuggestionsRun state={state} run={run} />
-          <SuggestedCategories state={state} run={run} />
+          {contentFeatures.aiSuggestions && (
+            <>
+              <AiSuggestionsRun state={state} run={run} />
+              <SuggestedCategories state={state} run={run} />
+            </>
+          )}
           {items.length === 0 ? (
             <p className="sb-cz-hint">
               {t("custom-content-no-items", {
@@ -619,14 +626,15 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                               />
                             ))}
                       </span>
-                      {item.classification?.status === "failed" && (
-                        <span className="sb-ccl-item-meta sb-ccl-error">
-                          {t("custom-content-ai-failed", {
-                            defaultValue:
-                              "The AI couldn't suggest anything for this item. Try again, or add passages yourself.",
-                          })}
-                        </span>
-                      )}
+                      {contentFeatures.aiSuggestions &&
+                        item.classification?.status === "failed" && (
+                          <span className="sb-ccl-item-meta sb-ccl-error">
+                            {t("custom-content-ai-failed", {
+                              defaultValue:
+                                "The AI couldn't suggest anything for this item. Try again, or add passages yourself.",
+                            })}
+                          </span>
+                        )}
                     </div>
                     <div className="sb-ccl-item-actions">
                       {confirmingDelete.value === item.id ? (
@@ -645,7 +653,8 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
                         </Button>
                       ) : (
                         <>
-                          {item.status !== "published" &&
+                          {contentFeatures.aiSuggestions &&
+                            item.status !== "published" &&
                             customContent.classifier.value && (
                               <Button
                                 variant="ghost"

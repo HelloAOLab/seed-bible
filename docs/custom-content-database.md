@@ -254,6 +254,8 @@ _As built:_ steps 1 and 2 run in the editor (see §5.4 for why). Core uses its o
 
 ### 5.4 AI classification, through chat providers
 
+**Not offered yet.** Everything below is built, but the editor hides it: no agent picker, no "Suggest with AI" buttons, no suggested categories. One switch turns it all back on, `contentFeatures.aiSuggestions` in `components/CustomizationEditPane/contentFeatures.ts`. Passages an item names itself are still found on every import, since that never asks an AI.
+
 **Short answer:** the owner picks a chat agent for the library, for example Apologist, set up with its key and agent under the Custom Branding's Extensions as it is today. Any chat provider can offer suggestions by implementing a new optional function, `classifyContent()`. The editor calls it for each imported item and checks the answer before saving anything.
 
 **The provider API** (`ChatProvider` in `ChatsManager.tsx`):

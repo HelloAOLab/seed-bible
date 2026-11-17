@@ -15,6 +15,7 @@ import type {
   ImportProgress,
   SiteImport,
 } from "@packages/seed-bible/seed-bible/managers/customContent/importApi";
+import { contentFeatures } from "@packages/seed-bible/seed-bible/components/CustomizationEditPane/contentFeatures";
 import { ContentLibraryError } from "@packages/seed-bible/seed-bible/managers/customContent/publish";
 import {
   createApp,
@@ -580,7 +581,46 @@ describe("CustomizationContentView", () => {
     });
   });
 
+  it("doesn't offer AI suggestions yet, even with an agent chosen before", async () => {
+    const server = fakeRecordsServer();
+    const agent: ChatProvider = {
+      id: "agent",
+      name: "Grace Agent",
+      supportsSharedChats: false,
+      generateResponse: () => null,
+      classifyContent: async () => ({ categoryIds: [], passages: [] }),
+    };
+    const { customContent } = await renderEditor(server, {
+      chatProviders: [agent],
+    });
+    await createLibrary();
+    await customContent.setClassifier("agent");
+    await customContent.saveItem(
+      {
+        url: "https://gracecommunity.org/sermons/x",
+        title: "A sermon",
+        description: "",
+        categoryIds: [],
+        references: [],
+      },
+      { publish: false }
+    );
+    await waitForCondition(() => container.textContent!.includes("A sermon"));
+
+    expect(container.querySelector("#sb-ccl-classifier")).toBeNull();
+    expect(container.textContent).not.toContain("AI suggestions");
+    expect(container.textContent).not.toContain("Suggest with");
+  });
+
   describe("AI suggestions", () => {
+    beforeEach(() => {
+      contentFeatures.aiSuggestions = true;
+    });
+
+    afterEach(() => {
+      contentFeatures.aiSuggestions = false;
+    });
+
     const agent: ChatProvider = {
       id: "agent",
       name: "Grace Agent",
