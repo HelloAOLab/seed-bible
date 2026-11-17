@@ -685,7 +685,12 @@ export function composeThemeStyleText(theme: BibleTheme): string {
   return css.replace(/</g, "");
 }
 
-function composeRootColorSchemeRule(theme: BibleTheme): string {
+/**
+ * The `:root { color-scheme }` line `composeThemeStyleText` adds, on its own,
+ * for a layer drawn over the theme (an active Customization). Empty when the
+ * background can't be read as light or dark.
+ */
+export function composeRootColorSchemeRule(theme: BibleTheme): string {
   if (!theme.variables.background) return "";
   // A background we can't read gets no rule, so the browser's default
   // (light) applies rather than the previous theme's.
@@ -1390,6 +1395,12 @@ export interface ThemeManager {
    */
   hydrateSystemColorScheme: () => void;
   setTheme: (themeId: string) => void;
+  /**
+   * A theme drawn over the user's own one, such as an active Customization.
+   * While set, the browser chrome (the status bar's `theme-color` and the
+   * Android nav strip's `color-scheme`) follows its background instead.
+   */
+  chromeOverrideTheme: Signal<BibleTheme | null>;
 }
 
 export function createTheme(
@@ -1447,6 +1458,11 @@ export function createTheme(
   // resolve to Light and clobber the dark CSS the inline script may have
   // just written. The tag's existing CSS is the better answer until the
   // first real *change*.
+  const chromeOverrideTheme = signal<BibleTheme | null>(null);
+  // The theme CSS in `#sb-theme-styles`, which the browser chrome follows
+  // unless `chromeOverrideTheme` is set.
+  const paintedThemeCss = signal("");
+
   if (typeof document !== "undefined") {
     let skipWrite = hasRenderedThemeStyles();
     effect(() => {
@@ -1467,9 +1483,8 @@ export function createTheme(
           embedDocument = false;
         }
         if (!embedDocument) {
-          applyBrowserThemeColorFromCss(
-            document.getElementById("sb-theme-styles")?.textContent ?? ""
-          );
+          paintedThemeCss.value =
+            document.getElementById("sb-theme-styles")?.textContent ?? "";
           return;
         }
       }
@@ -1489,7 +1504,17 @@ export function createTheme(
         document.head.appendChild(tag);
       }
       tag.textContent = text;
-      applyBrowserThemeColorFromCss(text);
+      paintedThemeCss.value = text;
+    });
+
+    effect(() => {
+      const overrideBackground =
+        chromeOverrideTheme.value?.variables.background;
+      if (overrideBackground) {
+        applyBrowserThemeColor(overrideBackground);
+      } else {
+        applyBrowserThemeColorFromCss(paintedThemeCss.value);
+      }
     });
   }
 
@@ -1511,5 +1536,6 @@ export function createTheme(
     prefersDarkScheme,
     hydrateSystemColorScheme,
     setTheme,
+    chromeOverrideTheme,
   };
 }
