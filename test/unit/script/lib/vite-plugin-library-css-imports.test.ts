@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { SourceMap } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { build, type Rollup } from "vite";
@@ -47,6 +48,7 @@ describe("libraryCssImportsPlugin", () => {
       build: {
         outDir: library,
         minify: false,
+        sourcemap: true,
         cssCodeSplit: true,
         lib: {
           entry: {
@@ -149,5 +151,66 @@ describe("libraryCssImportsPlugin", () => {
     ).call(context, {}, bundle);
 
     expect(merged.split("\n")).toEqual([".reset {}", ".tokens {}", ".a {}"]);
+  });
+
+  describe("in a chunk's source map", () => {
+    /** Where `map` says the text at `needle` in `code` came from. */
+    function original(code: string, map: string, needle: string) {
+      const lines = code.split("\n");
+      const line = lines.findIndex((text) => text.includes(needle));
+      const column = lines[line]!.indexOf(needle);
+      const entry = new SourceMap(JSON.parse(map)).findEntry(line, column);
+      return "generatedColumn" in entry && entry.generatedColumn === column
+        ? { line: entry.originalLine, column: entry.originalColumn }
+        : null;
+    }
+
+    it("still points the chunk's code to its source", async () => {
+      const code = await readFile(path.join(library, "a.js"), "utf-8");
+      const map = await readFile(path.join(library, "a.js.map"), "utf-8");
+
+      expect(code.split("\n")[0]).toMatch(/^import "\.\/a\.css";$/);
+      // `"a" + shared()` on a.ts's third line.
+      expect(original(code, map, '"a" + shared()')).toEqual({
+        line: 2,
+        column: 'export const a = () => "a"'.indexOf('"a"'),
+      });
+    });
+
+    it("still points code on the chunk's first line to its source", () => {
+      // `token` at column 6 of the first line, mapped to the same place.
+      const bundle = {
+        "a.js": {
+          type: "chunk",
+          fileName: "a.js",
+          name: "a",
+          isEntry: true,
+          code: "const token = 1;\n//# sourceMappingURL=a.js.map",
+          viteMetadata: { importedCss: new Set(["a.css"]) },
+        },
+        "a.js.map": {
+          type: "asset",
+          fileName: "a.js.map",
+          source: JSON.stringify({
+            version: 3,
+            sources: ["a.ts"],
+            names: [],
+            mappings: "AAAA,MAAM",
+          }),
+        },
+        "a.css": { type: "asset", fileName: "a.css", source: ".a {}" },
+      };
+      (
+        libraryCssImportsPlugin().generateBundle as unknown as (
+          this: { emitFile: () => void },
+          options: unknown,
+          files: typeof bundle
+        ) => void
+      ).call({ emitFile: () => {} }, {}, bundle);
+
+      expect(
+        original(bundle["a.js"].code, bundle["a.js.map"].source, "token")
+      ).toEqual({ line: 0, column: 6 });
+    });
   });
 });

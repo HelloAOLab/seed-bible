@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { SourceMap } from "node:module";
 import os from "node:os";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
@@ -165,5 +166,78 @@ describe("the sandboxed bundle", () => {
       /no entry module/
     );
     expect(bundle["style.css"]).toBeDefined();
+  });
+
+  describe("in a development build's source map", () => {
+    /** Where the map says the text at `needle` came from. */
+    function original(code: string, needle: string) {
+      const data = /base64,([A-Za-z0-9+/=]+)\s*$/.exec(code)![1]!;
+      const map = new SourceMap(
+        JSON.parse(Buffer.from(data, "base64").toString("utf-8"))
+      );
+      const lines = code.split("\n");
+      const line = lines.findIndex((text) => text.includes(needle));
+      const column = lines[line]!.indexOf(needle);
+      const entry = map.findEntry(line, column);
+      return "generatedColumn" in entry && entry.generatedColumn === column
+        ? { line: entry.originalLine, column: entry.originalColumn }
+        : null;
+    }
+
+    it("still points the extension's code to its source", async () => {
+      const root = await mkdtemp(path.join(os.tmpdir(), "sb-css-map-"));
+      folders.push(root);
+      await writeFile(path.join(root, "panel.css"), ".panel { margin: 0; }");
+      await writeFile(
+        path.join(root, "index.ts"),
+        'import "./panel.css";\nexport function fail() {\n  throw new Error("failed here");\n}\n'
+      );
+      const outDir = await mkdtemp(path.join(os.tmpdir(), "sb-bundle-"));
+      folders.push(outDir);
+      await build({
+        ...standaloneBundleConfig(root, outDir, "development"),
+        logLevel: "silent",
+      } as Parameters<typeof build>[0]);
+      const code = await readFile(path.join(outDir, "index.js"), "utf-8");
+
+      expect(code).toMatch(/^\(\(\)=>\{const s=document\.createElement/);
+      // `new Error(` on the source's third line, two spaces in.
+      expect(original(code, "new Error(")).toEqual({ line: 2, column: 8 });
+    }, 60_000);
+
+    it("still points code on the bundle's first line to its source", () => {
+      // `token` at column 6 of the first line, mapped to the same place.
+      const map = {
+        version: 3,
+        sources: ["index.ts"],
+        names: [],
+        mappings: "AAAA,MAAM",
+      };
+      const inline = Buffer.from(JSON.stringify(map)).toString("base64");
+      const bundle = {
+        "index.js": {
+          type: "chunk",
+          isEntry: true,
+          fileName: "index.js",
+          code: `const token = 1;\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,${inline}`,
+        },
+        "style.css": {
+          type: "asset",
+          fileName: "style.css",
+          source: ".panel {}",
+        },
+      };
+      (
+        inlineCssPlugin().generateBundle as unknown as (
+          options: unknown,
+          files: typeof bundle
+        ) => void
+      ).call({}, {}, bundle);
+
+      expect(original(bundle["index.js"].code, "token")).toEqual({
+        line: 0,
+        column: 6,
+      });
+    });
   });
 });

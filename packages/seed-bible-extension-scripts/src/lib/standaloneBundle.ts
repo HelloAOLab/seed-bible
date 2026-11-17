@@ -37,14 +37,24 @@ export function inlineCssPlugin(): Plugin {
       for (const sheet of sheets) delete bundle[sheet.fileName];
 
       // Before the extension's own code, so the styles are there before any
-      // view renders. On the first line, without a line break of its own,
-      // so a development build's source map still lines up.
-      entry.code =
-        `(()=>{const s=document.createElement("style");s.textContent=${JSON.stringify(css)};document.head.append(s)})();` +
-        entry.code;
+      // view renders. On a line of its own, with a development build's
+      // source map moved down one line to match.
+      const addStyle = `(()=>{const s=document.createElement("style");s.textContent=${JSON.stringify(css)};document.head.append(s)})();`;
+      entry.code = `${addStyle}\n${entry.code}`.replace(
+        INLINE_SOURCE_MAP,
+        (_match, prefix: string, data: string) => {
+          const map = JSON.parse(Buffer.from(data, "base64").toString("utf-8"));
+          map.mappings = `;${map.mappings}`;
+          return prefix + Buffer.from(JSON.stringify(map)).toString("base64");
+        }
+      );
     },
   };
 }
+
+/** The source map a development build writes at the end of the bundle. */
+const INLINE_SOURCE_MAP =
+  /(\/\/# sourceMappingURL=data:application\/json;(?:charset=utf-8;)?base64,)([A-Za-z0-9+/=]+)\s*$/;
 
 /**
  * The Vite config for a sandboxed extension's bundle: one ES module with

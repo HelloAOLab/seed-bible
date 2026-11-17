@@ -22,6 +22,13 @@ export function libraryCssImportsPlugin(
     apply: "build",
     enforce: "post",
     generateBundle(_outputOptions, bundle) {
+      const source = (name: string) => {
+        const asset = bundle[name];
+        if (asset?.type !== "asset") return "";
+        return typeof asset.source === "string"
+          ? asset.source
+          : new TextDecoder().decode(asset.source);
+      };
       const sheets: string[] = [];
       for (const file of Object.values(bundle)) {
         if (file.type !== "chunk") continue;
@@ -40,9 +47,15 @@ export function libraryCssImportsPlugin(
           .join("");
         // Before the chunk's other imports, as each component imports its
         // CSS before the components it uses, so a consumer gets the CSS in
-        // the order the app loads it. On the first line, without a line
-        // break of its own, so the chunk's source map still lines up.
-        file.code = imports + file.code;
+        // the order the app loads it. On a line of its own, with the chunk's
+        // source map moved down one line to match.
+        file.code = `${imports}\n${file.code}`;
+        const map = bundle[`${file.fileName}.map`];
+        if (map?.type === "asset") {
+          const json = JSON.parse(source(map.fileName));
+          json.mappings = `;${json.mappings}`;
+          map.source = JSON.stringify(json);
+        }
         const added = css.filter((name) => !sheets.includes(name));
         if (file.isEntry && file.name === options.firstEntry) {
           sheets.unshift(...added);
@@ -51,13 +64,6 @@ export function libraryCssImportsPlugin(
         }
       }
 
-      const source = (name: string) => {
-        const asset = bundle[name];
-        if (asset?.type !== "asset") return "";
-        return typeof asset.source === "string"
-          ? asset.source
-          : new TextDecoder().decode(asset.source);
-      };
       this.emitFile({
         type: "asset",
         fileName: "style.css",
