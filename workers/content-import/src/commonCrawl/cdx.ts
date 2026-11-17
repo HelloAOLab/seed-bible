@@ -98,10 +98,19 @@ function indexFileUrl(crawlId: string, file: string): string {
 function parseClusterLine(line: string): (IndexBlock & { key: string }) | null {
   const [head, file, offset, length] = line.split("\t");
   const key = head?.split(" ")[0];
-  if (!key || !file || !/^cdx-\d+\.gz$/.test(file)) {
+  const block = { key, file, offset: Number(offset), length: Number(length) };
+  if (
+    !key ||
+    !file ||
+    !/^cdx-\d+\.gz$/.test(file) ||
+    !Number.isSafeInteger(block.offset) ||
+    block.offset < 0 ||
+    !Number.isSafeInteger(block.length) ||
+    block.length <= 0
+  ) {
     return null;
   }
-  return { key, file, offset: Number(offset), length: Number(length) };
+  return block;
 }
 
 /** Complete lines in a chunk; the first is dropped when the chunk starts mid-line. */

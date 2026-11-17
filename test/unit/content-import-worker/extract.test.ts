@@ -1,6 +1,10 @@
 // @vitest-environment node
 import { extractPage } from "../../../workers/content-import/src/commonCrawl/extract";
 import {
+  fetchArchivedPage,
+  readArchiveRange,
+} from "../../../workers/content-import/src/commonCrawl/warc";
+import {
   parseCaptures,
   parseCrawlList,
   pickCrawls,
@@ -126,5 +130,60 @@ describe("the index's answers", () => {
       ["https://www.g.org/a/", "20260301000000"],
       ["https://g.org/c", "20260101000000"],
     ]);
+  });
+});
+
+describe("range requests to Common Crawl", () => {
+  /** Answers like CloudFront does for a valid single range, and records what was asked. */
+  function archive() {
+    const ranges: string[] = [];
+    const fetchImpl: typeof fetch = async (_url, init) => {
+      const range = new Headers(init?.headers).get("Range") ?? "";
+      ranges.push(range);
+      const [, first, last] = /^bytes=(\d+)-(\d+)$/.exec(range)!;
+      const length = Number(last) - Number(first) + 1;
+      return new Response(new Uint8Array(length), {
+        status: 206,
+        headers: { "Content-Range": `bytes ${first}-${last}/1000000` },
+      });
+    };
+    return { ranges, fetchImpl };
+  }
+
+  it("asks for one range, first byte to last, as CloudFront requires", async () => {
+    const { ranges, fetchImpl } = archive();
+    await readArchiveRange(
+      fetchImpl,
+      "https://data.commoncrawl.org/x",
+      100,
+      200
+    );
+    await fetchArchivedPage(fetchImpl, {
+      filename: "crawl-data/CC/x.warc.gz",
+      offset: 240769018,
+      length: 25639,
+    }).catch(() => undefined);
+    expect(ranges).toEqual(["bytes=100-199", "bytes=240769018-240794656"]);
+  });
+
+  it("never sends a range CloudFront would answer with the whole file", async () => {
+    const { ranges, fetchImpl } = archive();
+    for (const [start, end] of [
+      [Number.NaN, 10],
+      [5, 5],
+      [10, 5],
+      [-1, 10],
+      [0.5, 10],
+    ] as const) {
+      await expect(
+        readArchiveRange(
+          fetchImpl,
+          "https://data.commoncrawl.org/x",
+          start,
+          end
+        )
+      ).rejects.toMatchObject({ code: "invalid_range" });
+    }
+    expect(ranges).toEqual([]);
   });
 });

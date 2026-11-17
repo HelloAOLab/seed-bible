@@ -246,6 +246,10 @@ function isGzip(bytes: Uint8Array): boolean {
  * Null when the file isn't there. Only the exact slice asked for is
  * accepted: a server that ignored the range and sent the file from its
  * start would otherwise be read as if it were the record asked for.
+ *
+ * Always a single range, `bytes=<first>-<last>`, with whole numbers and
+ * first ≤ last. CloudFront (Common Crawl's front end) answers a range it
+ * considers invalid with the whole file, so an invalid one is never sent.
  */
 export async function readArchiveRange(
   fetchImpl: typeof fetch,
@@ -253,6 +257,17 @@ export async function readArchiveRange(
   start: number,
   end: number
 ): Promise<{ bytes: Uint8Array; size: number } | null> {
+  if (
+    !Number.isSafeInteger(start) ||
+    !Number.isSafeInteger(end) ||
+    start < 0 ||
+    end <= start
+  ) {
+    throw new ArchiveError(
+      "invalid_range",
+      `Won't ask for bytes ${start} to ${end} of ${url}.`
+    );
+  }
   let response: Response;
   try {
     response = await fetchImpl(url, {
