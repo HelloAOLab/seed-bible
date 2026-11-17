@@ -413,16 +413,33 @@ describe("createNavigationManager history state", () => {
         configurable: true,
         writable: true,
       });
+      // jsdom swallows what a listener throws, so the fake keeps a copy of
+      // what a real browser would have thrown.
+      const thrown: unknown[] = [];
       return {
         target,
+        thrown,
         /** Fires a `navigate` event; returns whether it was intercepted. */
-        dispatch: (url: string, navigationType: string): boolean => {
+        dispatch: (
+          url: string,
+          navigationType: string,
+          canIntercept = true
+        ): boolean => {
           let intercepted = false;
           const event = Object.assign(new Event("navigate"), {
             destination: { url, getState: () => undefined },
             navigationType,
             downloadRequest: null,
+            canIntercept,
             intercept: () => {
+              if (!canIntercept) {
+                const error = new DOMException(
+                  "Event is not interceptable",
+                  "SecurityError"
+                );
+                thrown.push(error);
+                throw error;
+              }
               intercepted = true;
             },
           });
@@ -495,6 +512,26 @@ describe("createNavigationManager history state", () => {
 
       expect(intercepted).toBe(false);
       expect(navigation.currentUrl.peek().href).toBe(before);
+
+      navigation.dispose();
+      api.remove();
+    });
+
+    // WebKit reports every navigation in the iOS app (a `capacitor://` page)
+    // as not interceptable, and `intercept()` then throws a SecurityError.
+    it("leaves alone a navigation the browser says can't be intercepted", () => {
+      const api = installNavigationApi();
+      const navigation = createNavigationManager();
+      navigation.push("/genesis/1");
+
+      const intercepted = api.dispatch(
+        new URL("/exodus/2", navigation.currentUrl.peek().href).href,
+        "push",
+        false
+      );
+
+      expect(api.thrown).toEqual([]);
+      expect(intercepted).toBe(false);
 
       navigation.dispose();
       api.remove();
