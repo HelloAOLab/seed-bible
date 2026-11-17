@@ -2098,6 +2098,35 @@ describe("createLoginManager", () => {
       expect(manager.profile.value?.name).toBe("Ada");
     });
 
+    it("keeps the prompt off on a subsequent page load when the user chose Keep default", async () => {
+      // First load: brand-new account, no profile record.
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value !== null);
+      expect(manager.needsDisplayNamePrompt.value).toBe(true);
+
+      // User clicks "Keep default" — this must persist an empty-name profile
+      // record so the account is no longer brand-new from the server's view.
+      manager.updateProfile({ name: "" });
+      expect(manager.needsDisplayNamePrompt.value).toBe(false);
+      await waitFor(() => recordDataMock.mock.calls.length > 0);
+
+      // Page reload: the server now returns the saved profile (not data_not_found).
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { name: "" },
+      });
+      const manager2 = createAuthenticatedManager();
+      await waitFor(() => manager2.profile.value !== null);
+
+      expect(manager2.needsDisplayNamePrompt.value).toBe(false);
+    });
+
     it("keeps the local config in place if persisting the adopted profile fails", async () => {
       localStorage.setItem(
         "sb-profile-config-local",

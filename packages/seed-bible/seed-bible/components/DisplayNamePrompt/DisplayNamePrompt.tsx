@@ -25,11 +25,7 @@ export function DisplayNamePrompt({
 }: {
   login: Pick<
     LoginManager,
-    | "userId"
-    | "profile"
-    | "needsDisplayNamePrompt"
-    | "dismissDisplayNamePrompt"
-    | "updateProfile"
+    "userId" | "profile" | "needsDisplayNamePrompt" | "updateProfile"
   >;
   onboarding: Pick<OnboardingManager, "step">;
   className?: string;
@@ -50,7 +46,10 @@ export function DisplayNamePrompt({
   const defaultName = visualAnonymousLabel(visual, t);
 
   const keepDefault = () => {
-    login.dismissDisplayNamePrompt();
+    // Saving an empty name writes a profile record so the account is no longer
+    // brand-new on the next load — without this, os.getData still finds no
+    // record and arms the prompt again on every page reload.
+    login.updateProfile({ name: "" });
   };
 
   const saveName = () => {
@@ -70,6 +69,9 @@ export function DisplayNamePrompt({
         aria-modal="true"
         aria-labelledby="sb-display-name-prompt-title"
         onClick={(event: MouseEvent) => event.stopPropagation()}
+        onKeyDown={(event: KeyboardEvent) => {
+          if (event.key === "Escape") keepDefault();
+        }}
       >
         <h2 className="sb-onboarding-title" id="sb-display-name-prompt-title">
           {t("display-name-prompt-title", {
@@ -88,38 +90,46 @@ export function DisplayNamePrompt({
           <span className="sb-display-name-prompt-default">{defaultName}</span>
         </div>
 
-        <label
-          className="sb-display-name-prompt-label"
-          htmlFor="sb-display-name-input"
-        >
-          {t("display-name-prompt-input-label", {
-            defaultValue: "Your name",
-          })}
-        </label>
-        <input
-          id="sb-display-name-input"
-          className="sb-display-name-prompt-input"
-          type="text"
-          maxLength={100}
-          value={draftName.value}
-          placeholder={defaultName}
-          onInput={(event: Event) => {
-            draftName.value = (event.currentTarget as HTMLInputElement).value;
+        <form
+          onSubmit={(event: Event) => {
+            event.preventDefault();
+            saveName();
           }}
-        />
+        >
+          <label
+            className="sb-display-name-prompt-label"
+            htmlFor="sb-display-name-input"
+          >
+            {t("display-name-prompt-input-label", {
+              defaultValue: "Your name",
+            })}
+          </label>
+          <input
+            id="sb-display-name-input"
+            className="sb-display-name-prompt-input"
+            type="text"
+            maxLength={100}
+            value={draftName.value}
+            placeholder={defaultName}
+            autoFocus
+            onInput={(event: Event) => {
+              draftName.value = (event.currentTarget as HTMLInputElement).value;
+            }}
+          />
 
-        <div className="sb-onboarding-actions">
-          <Button variant="ghost" onClick={keepDefault}>
-            {t("display-name-prompt-keep-default", {
-              defaultValue: "Keep default",
-            })}
-          </Button>
-          <Button variant="primary" onClick={saveName}>
-            {t("display-name-prompt-save", {
-              defaultValue: "Save name",
-            })}
-          </Button>
-        </div>
+          <div className="sb-onboarding-actions">
+            <Button variant="ghost" type="button" onClick={keepDefault}>
+              {t("display-name-prompt-keep-default", {
+                defaultValue: "Keep default",
+              })}
+            </Button>
+            <Button variant="primary" type="submit">
+              {t("display-name-prompt-save", {
+                defaultValue: "Save name",
+              })}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

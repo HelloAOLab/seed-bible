@@ -450,13 +450,6 @@ function getParticipantVisual(
     : participant.visual;
 }
 
-function getVisualLabel(
-  visual: ConnectionSessionUserVisual,
-  t: (key: string, options?: Record<string, unknown>) => string
-): string {
-  return visualAnonymousLabel(visual, t);
-}
-
 export function getParticipantDisplayLabel(
   participant: ChatParticipant,
   t: (key: string, options?: Record<string, unknown>) => string
@@ -471,9 +464,7 @@ export function getParticipantDisplayLabel(
     return name;
   }
 
-  const visual = getParticipantVisual(participant);
-  const visualLabel = getVisualLabel(visual, t);
-  return visualLabel;
+  return visualAnonymousLabel(getParticipantVisual(participant), t);
 }
 
 export function getParticipantMentionLabel(

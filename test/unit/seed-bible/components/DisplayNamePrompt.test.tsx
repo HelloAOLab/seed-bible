@@ -83,14 +83,14 @@ describe("DisplayNamePrompt", () => {
     expect(container.textContent).toBe("");
   });
 
-  it("keeps the default without writing a name", () => {
+  it("saves an empty profile when keeping the default, so the account has a record on the next load", () => {
     mount();
     const keep = Array.from(container.querySelectorAll("button")).find(
       (el) => el.textContent === "Keep default"
     );
     act(() => keep!.click());
-    expect(dismissDisplayNamePrompt).toHaveBeenCalled();
-    expect(updateProfile).not.toHaveBeenCalled();
+    expect(updateProfile).toHaveBeenCalledWith({ name: "" });
+    expect(dismissDisplayNamePrompt).not.toHaveBeenCalled();
   });
 
   it("saves a typed name onto the profile", () => {

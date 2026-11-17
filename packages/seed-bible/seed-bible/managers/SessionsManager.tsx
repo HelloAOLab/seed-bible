@@ -796,6 +796,35 @@ function hashUserKey(key: string): number {
   return h >>> 0;
 }
 
+// English animal labels — kept in sync with Utils.ENGLISH_ANIMAL_LABELS and
+// the `animal-*` keys in en.json. Used when no i18n `t` is available (e.g.
+// manager-level code that stores names in the shared session map).
+const ENGLISH_ANIMAL_LABELS_SESSION: Record<string, string> = {
+  forest: "Forest",
+  park: "Log",
+  eco: "Leaf",
+  pets: "Dog",
+  cruelty_free: "Rabbit",
+  local_cafe: "Coffee",
+  local_florist: "Flower",
+  grass: "Grass",
+  potted_plant: "Plant",
+  nature: "Tree",
+};
+
+/**
+ * English Color + Icon label for data written to the shared session map,
+ * where a per-user i18n `t` function is unavailable. Produces the same format
+ * as `visualAnonymousLabel` but always in English.
+ */
+function englishVisualLabel(visual: ConnectionSessionUserVisual): string {
+  const colorName =
+    visual.colorName.charAt(0).toUpperCase() + visual.colorName.slice(1);
+  const animalName =
+    ENGLISH_ANIMAL_LABELS_SESSION[visual.defaultIcon] ?? visual.defaultIcon;
+  return `${colorName} ${animalName} (Anonymous)`;
+}
+
 /**
  * Pure-hash user visual. Same input → same output, forever. The icon and
  * color are derived independently from the hash so small changes to the
@@ -1351,7 +1380,12 @@ async function createBibleReadingSession(
           }
         }
 
-        const visual = getUserAnimalVisual(client.connectionId);
+        // Key the visual off the stable user ID when known — this keeps the
+        // avatar and name consistent across reconnects and multiple tabs. Fall
+        // back to connectionId for anonymous guests who have no user ID.
+        const visual = getUserAnimalVisual(
+          effectiveUserId ?? client.connectionId
+        );
 
         return {
           isSelf: client.isSelf,
@@ -1406,7 +1440,7 @@ async function createBibleReadingSession(
         connectionId,
         userId: sharedEntry.userId,
         profile: sharedEntry.profile,
-        visual: getUserAnimalVisual(connectionId),
+        visual: getUserAnimalVisual(sharedEntry.userId ?? connectionId),
         isActive: false,
         joinedAtMs: sharedEntry.joinedAtMs,
       });
@@ -1751,9 +1785,10 @@ async function createBibleReadingSession(
       updatedAtMs: Date.now(),
       // Empty-string names (brand-new accounts) must not land in the shared
       // map: parseQuestionAnswer drops answers with a blank name, and peers
-      // would see a nameless row. Fall back to a short id when unset.
-      name:
-        trimmedOrNull(self?.profile?.name) ?? `User ${authorId.slice(0, 8)}`,
+      // would see a nameless row. Fall back to the Color + Icon visual name so
+      // the question row matches the participant avatar; use English since the
+      // name is a plain string stored for all peers.
+      name: trimmedOrNull(self?.profile?.name) ?? englishVisualLabel(visual),
       pictureUrl: self?.profile?.pictureUrl ?? null,
       visual,
     };

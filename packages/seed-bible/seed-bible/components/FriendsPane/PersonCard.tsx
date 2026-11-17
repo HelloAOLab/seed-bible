@@ -11,11 +11,7 @@ import type { LoginManager } from "../../managers/LoginManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
-import {
-  displayNameOf,
-  trimmedOrNull,
-  visualAnonymousLabel,
-} from "../../managers/Utils";
+import { trimmedOrNull, visualAnonymousLabel } from "../../managers/Utils";
 import { useI18n } from "../../i18n/I18nManager";
 import { Avatar } from "../Avatar/Avatar";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
@@ -168,7 +164,7 @@ function FriendshipActions(props: {
     );
   }
 
-  const name = displayNameOf(person, t);
+  const name = visualAnonymousLabel(getUserAnimalVisual(person.userId), t);
   const run = async (action: FriendAction, work: () => Promise<unknown>) => {
     busy.value = action;
     try {

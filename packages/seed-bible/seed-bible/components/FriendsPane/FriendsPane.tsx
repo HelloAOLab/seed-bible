@@ -9,7 +9,8 @@ import type {
   SendFriendRequestResult,
 } from "../../managers/FriendsManager";
 import type { ModalManager } from "../../managers/ModalManager";
-import { displayNameOf } from "../../managers/Utils";
+import { visualAnonymousLabel } from "../../managers/Utils";
+import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -293,7 +294,7 @@ function IncomingRequestRow(props: {
   // disabled.
   const answering = useSignal<"accept" | "decline" | null>(null);
 
-  const name = displayNameOf(request, t);
+  const name = visualAnonymousLabel(getUserAnimalVisual(request.userId), t);
 
   const answer = async (accept: boolean) => {
     answering.value = accept ? "accept" : "decline";
@@ -348,7 +349,7 @@ function OutgoingRequestRow(props: {
   const { request, friends, navigation, profiles, toast } = props;
   const { t } = useI18n();
   const busy = useSignal(false);
-  const name = displayNameOf(request, t);
+  const name = visualAnonymousLabel(getUserAnimalVisual(request.userId), t);
 
   return (
     <li className="sb-friends-row">

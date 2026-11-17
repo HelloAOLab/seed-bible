@@ -1235,11 +1235,15 @@ export function createLoginManager({
     // If the profile we're holding belongs to a different account — i.e. the
     // user switched accounts without a full logout clearing it first — drop it
     // now so we never display, or (via a later write) merge, one account's
-    // profile under another's id.
+    // profile under another's id. Also reset the display-name prompt so
+    // account B (which may already have a name) doesn't see the prompt armed
+    // with account A's flag, and can't accidentally overwrite B's real name.
     if (profileUserId !== null && profileUserId !== userId.value) {
       profile.value = null;
       profileUserId = null;
       cachedProfile.value = null;
+      needsDisplayNamePrompt.value = false;
+      createdBlankProfileForUserId = null;
     }
 
     if (typeof posthog !== "undefined" && posthog) {
