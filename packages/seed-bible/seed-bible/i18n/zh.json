@@ -1274,5 +1274,19 @@
   "loading-translations": "正在加载翻译…",
   "translations-load-failed": "无法加载完整的翻译列表，因此可能缺少一些翻译。",
   "verse-of-the-day": "每日经文",
-  "verse-of-the-day-loading": "正在加载今日经文……"
+  "verse-of-the-day-loading": "正在加载今日经文……",
+  "delete-bookmark-confirm-title": "删除书签？",
+  "delete-bookmark-confirm-message": "删除“ {{name}} ”？",
+  "scripture-font": "圣经字体",
+  "ai-limits-title": "在与人工智能聊天之前，请先阅读以下内容：",
+  "ai-limits-intro": "人工智能可以作为一个有用的起点，但要牢记它的局限性：",
+  "ai-limits-mistakes": "它会犯错，而且即使错了，听起来也很自信。",
+  "ai-limits-agreeable": "它往往会说你想听的话，并且倾向于受欢迎的答案。",
+  "ai-limits-scripture": "这并非可靠来源。请对照圣经查考其内容。",
+  "ai-limits-study": "自己研读圣经，不要让人工智能替你思考。",
+  "ai-limits-confirm": "我知道人工智能会犯错，也不能代替我自己研读圣经。",
+  "friends-playlists-filter": "朋友们的播放列表",
+  "friend-link-social-title": "添加{{name}}为好友",
+  "friend-link-meta-description": "{{name}}想在{{brand}}上成为你的好友",
+  "friend-link-title": "在{{brand}}上将{{name}} } 添加到好友"
 }

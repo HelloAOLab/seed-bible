@@ -40,7 +40,7 @@
   background: none;
   color: inherit;
   font-family: var(--sb-reader-font-family, inherit);
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   white-space: nowrap;
   text-align: start;
@@ -56,12 +56,12 @@
 .sb-references-card-chevron:focus-visible {
   outline: 2px solid var(--sb-primary-color);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--sb-radius-xs);
 }
 
 .sb-references-card-count {
   flex-shrink: 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
@@ -94,11 +94,11 @@
   padding: 1px 8px;
   border: 1px solid
     color-mix(in srgb, var(--sb-secondary-color), transparent 55%);
-  border-radius: 50px;
+  border-radius: var(--sb-radius-full);
   background: none;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
   font-family: inherit;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   cursor: pointer;
 }
 
@@ -132,13 +132,13 @@
   margin: 4px 0 0;
   padding: 8px 10px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   background: var(--sb-reader-background);
 }
 
 /* Two classes, to outrank the pane's own `.sb-references-text` size. */
 .sb-references-quote .sb-references-quote-text {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.55;
   color: var(--sb-font-color);
 }
@@ -156,7 +156,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
 }
 
 .sb-references-quote-ref {
@@ -170,7 +170,7 @@
   background: none;
   color: var(--sb-primary-color);
   font-family: inherit;
-  font-size: 0.6875rem;
+  font-size: var(--sb-font-size-11);
   font-weight: 600;
   cursor: pointer;
 }

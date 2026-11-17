@@ -1274,5 +1274,19 @@
   "loading-translations": "अनुवादहरू लोड गर्दै...",
   "translations-load-failed": "अनुवादहरूको पूर्ण सूची लोड गर्न सकिएन, त्यसैले केही छुटेका हुन सक्छन्।",
   "verse-of-the-day": "दिनको पद",
-  "verse-of-the-day-loading": "आजको पद लोड गर्दै..."
+  "verse-of-the-day-loading": "आजको पद लोड गर्दै...",
+  "delete-bookmark-confirm-title": "बुकमार्क मेटाउने हो?",
+  "delete-bookmark-confirm-message": "\" {{name}} \" मेटाउने हो?",
+  "scripture-font": "धर्मशास्त्रको फन्ट",
+  "ai-limits-title": "एआईसँग कुराकानी गर्नु अघि",
+  "ai-limits-intro": "एआई एक उपयोगी सुरुवात बिन्दु हुन सक्छ, तर यसको सीमाहरूलाई ध्यानमा राख्नुहोस्:",
+  "ai-limits-mistakes": "यसले गल्ती गर्छ, र गलत हुँदा आत्मविश्वासी लाग्न सक्छ।",
+  "ai-limits-agreeable": "यसले तपाईंलाई के सुन्न चाहन्छ भनेर बताउने गर्छ, र लोकप्रिय उत्तरहरू तिर झुक्छ।",
+  "ai-limits-scripture": "यो भरपर्दो स्रोत होइन। धर्मशास्त्र विरुद्ध के भन्छ भनेर जाँच गर्नुहोस्।",
+  "ai-limits-study": "आफैं बाइबल अध्ययन गर्नुहोस्, र एआईलाई तपाईंको सोचाइ बनाउन नदिनुहोस्।",
+  "ai-limits-confirm": "मलाई थाहा छ कि एआईले गल्ती गर्न सक्छ र यो आफैंले बाइबल अध्ययन गर्नुको विकल्प होइन।",
+  "friends-playlists-filter": "साथीहरूको प्लेलिस्टहरू",
+  "friend-link-social-title": "साथीको रूपमा {{name}} थप्नुहोस्",
+  "friend-link-meta-description": "{{name}} {{brand}} मा तपाईंको साथी बन्न चाहन्छ।",
+  "friend-link-title": "{ {{brand}} मा साथीको रूपमा {{name}} थप्नुहोस्।"
 }

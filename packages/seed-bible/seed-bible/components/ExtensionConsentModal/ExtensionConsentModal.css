@@ -3,7 +3,7 @@
   flex-direction: column;
   gap: 0.75rem;
   color: var(--sb-font-color);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   line-height: 1.5;
 }
 
@@ -14,7 +14,7 @@
 .sb-extension-consent-source,
 .sb-extension-consent-note {
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-extension-consent-text {
@@ -38,12 +38,12 @@
   flex: none;
   width: 3rem;
   height: 3rem;
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 1.0625rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
   background: #2f6f73;
 }
@@ -101,8 +101,8 @@
 
 .sb-extension-consent-relation {
   padding: 0.0625rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
+  border-radius: var(--sb-radius-full);
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
 }
 
@@ -121,9 +121,9 @@
   align-items: flex-start;
   gap: 0.625rem;
   padding: 0.75rem 0.875rem;
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
 }
 
 .sb-extension-consent-notice-icon {
@@ -138,7 +138,7 @@
 
 .sb-extension-consent-section-title {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -150,7 +150,7 @@
   padding: 0;
   list-style: none;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
   overflow: hidden;
 }
 
@@ -187,7 +187,7 @@
   flex: none;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -213,7 +213,7 @@
 
 .sb-extension-consent-card-title {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
 
@@ -231,8 +231,8 @@
   display: inline-block;
   margin-inline-start: 0.5rem;
   padding: 0.0625rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
+  border-radius: var(--sb-radius-full);
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
   color: #8a3a12;
   background: #fdf0e6;
@@ -294,7 +294,7 @@
 
 .sb-extension-request-title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--sb-font-size-20);
   line-height: 1.3;
   font-weight: 600;
 }
@@ -311,7 +311,7 @@
   align-self: stretch;
   text-align: start;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
   overflow: hidden;
 }
 
@@ -326,7 +326,7 @@
 
 .sb-extension-request-box-title {
   margin: 0 0 0.5rem;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -361,7 +361,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
 }
 
 .sb-extension-request-lines li {
@@ -373,6 +373,7 @@
 .sb-extension-request-check,
 .sb-extension-request-cross {
   flex: none;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 1.25rem;
 }
 
@@ -431,42 +432,16 @@
   border-top: 1px solid var(--sb-divider-color);
 }
 
-.sb-extension-consent-cancel,
-.sb-extension-consent-allow {
-  border: none;
-  min-height: 2.75rem;
-  padding: 0 1.25rem;
-  border-radius: 999px;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.sb-extension-consent-cancel {
-  background: transparent;
-  /* Toward the text color: darker in light themes, lighter in dark ones. */
-  color: color-mix(in srgb, var(--sb-primary-color), var(--sb-font-color) 40%);
-}
-
-.sb-extension-consent-cancel:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
-}
-
-/* Darkened so the Light theme's white text on orange passes 4.5:1. Dark's
-   near-black text on its near-white accent still clears that after darkening. */
-.sb-extension-consent-allow {
-  padding: 0 1.5rem;
-  background: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
-  color: var(--sb-primary-font-color);
-}
-
-.sb-extension-consent-allow:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), #000000 35%);
+/* Darkened so the Light theme's white label on orange passes 4.5:1 (the
+   standard orange gives about 3:1). Dark's near-black label on its
+   near-white accent still clears that after darkening. Two classes, to
+   outrank the Button's own accent. */
+.sb-button.sb-extension-consent-allow {
+  --sb-button-accent: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
 }
 
 .sb-extension-permissions-name {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
 
@@ -491,7 +466,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 600;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
 }
@@ -507,10 +482,10 @@
   height: 1.625rem;
   padding: 0;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: color-mix(in srgb, var(--sb-font-color), transparent 70%);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--sb-duration-fast);
 }
 
 .sb-extension-permissions-switch[aria-checked="true"] {
@@ -535,8 +510,8 @@
   height: 1.25rem;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 25%);
-  transition: inset-inline-start 0.15s;
+  box-shadow: var(--sb-shadow-raised);
+  transition: inset-inline-start var(--sb-duration-fast);
 }
 
 .sb-extension-permissions-switch[aria-checked="true"]
@@ -548,8 +523,8 @@
   border: none;
   min-height: 2.75rem;
   padding: 0 1.25rem;
-  border-radius: 999px;
-  font-size: 0.9375rem;
+  border-radius: var(--sb-radius-full);
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;

@@ -1274,5 +1274,19 @@
   "loading-translations": "Laai vertalings…",
   "translations-load-failed": "Kon nie die volledige lys vertalings laai nie, so sommige mag dalk ontbreek.",
   "verse-of-the-day": "VERS VAN DIE DAG",
-  "verse-of-the-day-loading": "Laai tans die vers van die dag…"
+  "verse-of-the-day-loading": "Laai tans die vers van die dag…",
+  "delete-bookmark-confirm-title": "Vee boekmerk uit?",
+  "delete-bookmark-confirm-message": "Vee \" {{name}} \" uit?",
+  "scripture-font": "Skriflettertipe",
+  "ai-limits-title": "Voordat jy met KI gesels",
+  "ai-limits-intro": "KI kan 'n nuttige beginpunt wees, maar hou die beperkings daarvan in gedagte:",
+  "ai-limits-mistakes": "Dit maak foute, en kan selfversekerd klink wanneer dit verkeerd is.",
+  "ai-limits-agreeable": "Dit is geneig om jou te vertel wat jy wil hoor, en leun na gewilde antwoorde.",
+  "ai-limits-scripture": "Dit is nie 'n betroubare bron nie. Kontroleer wat dit sê teenoor die Skrif.",
+  "ai-limits-study": "Bestudeer die Bybel self, en moenie toelaat dat KI jou denke vir jou doen nie.",
+  "ai-limits-confirm": "Ek verstaan ​​dat KI foute kan maak en nie 'n plaasvervanger is vir die bestudering van die Bybel self nie.",
+  "friends-playlists-filter": "Vriende se snitlyste",
+  "friend-link-social-title": "Voeg {{name}} as 'n vriend by",
+  "friend-link-meta-description": "{{name}} wil jou vriend wees op {{brand}}",
+  "friend-link-title": "Voeg {{name}} by as 'n vriend op {{brand}}"
 }

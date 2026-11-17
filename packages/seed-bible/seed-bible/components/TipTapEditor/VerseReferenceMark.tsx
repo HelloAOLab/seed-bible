@@ -3,6 +3,7 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { MarkType } from "@tiptap/pm/model";
 import { scanVerseReferencesInText } from "../../managers/BibleDataManager";
 import { getVerseReferenceLinkHref } from "../../app/verseReferenceLink";
+import { toShareableUrl } from "../../app/publicLinks";
 
 /**
  * Re-scans every textblock touched by a transaction for verse references and
@@ -59,7 +60,13 @@ function verseReferencePlugin(markType: MarkType) {
           tr.addMark(
             contentFrom + match.start,
             contentFrom + match.end,
-            markType.create({ href: getVerseReferenceLinkHref(match.ref) })
+            // Saved with the note and synced to every device, so it has to
+            // be an address that works outside the app it was typed in.
+            markType.create({
+              href: toShareableUrl(
+                getVerseReferenceLinkHref(match.ref)
+              ).toString(),
+            })
           );
         }
       });

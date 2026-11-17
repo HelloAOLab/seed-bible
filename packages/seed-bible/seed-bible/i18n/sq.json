@@ -1274,5 +1274,19 @@
   "loading-translations": "Duke ngarkuar përkthimet…",
   "translations-load-failed": "Nuk mund të ngarkohej lista e plotë e përkthimeve, kështu që disa mund të mungojnë.",
   "verse-of-the-day": "Vargu i ditës",
-  "verse-of-the-day-loading": "Duke ngarkuar vargun e ditës…"
+  "verse-of-the-day-loading": "Duke ngarkuar vargun e ditës…",
+  "delete-bookmark-confirm-title": "Të fshihet faqeshënuesi?",
+  "delete-bookmark-confirm-message": "Të fshihet \" {{name}} \"?",
+  "scripture-font": "Fonti i Shkrimit të Shenjtë",
+  "ai-limits-title": "Para se të bisedoni me IA-në",
+  "ai-limits-intro": "IA mund të jetë një pikënisje e dobishme, por mbani në mend kufijtë e saj:",
+  "ai-limits-mistakes": "Bën gabime dhe mund të tingëllojë i sigurt kur gabon.",
+  "ai-limits-agreeable": "Ka tendencë të të tregojë atë që dëshiron të dëgjosh dhe anon nga përgjigjet popullore.",
+  "ai-limits-scripture": "Nuk është një burim i besueshëm. Kontrolloni se çfarë thotë ai në krahasim me Shkrimin e Shenjtë.",
+  "ai-limits-study": "Studioje Biblën vetë dhe mos lejo që Inteligjenca Artificiale të mendojë për ty.",
+  "ai-limits-confirm": "Unë e kuptoj që inteligjenca artificiale mund të bëjë gabime dhe nuk zëvendëson studimin e Biblës vetë.",
+  "friends-playlists-filter": "Listat e këngëve të miqve",
+  "friend-link-social-title": "Shto {{name}} si mik",
+  "friend-link-meta-description": "{{name}} dëshiron të jetë shoku/shoqja juaj në {{brand}}",
+  "friend-link-title": "Shto {{name}} si mik në {{brand}}"
 }

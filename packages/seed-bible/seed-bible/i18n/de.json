@@ -1274,5 +1274,19 @@
   "loading-translations": "Übersetzungen werden geladen…",
   "translations-load-failed": "Die vollständige Liste der Übersetzungen konnte nicht geladen werden, daher fehlen möglicherweise einige.",
   "verse-of-the-day": "VERS DES TAGES",
-  "verse-of-the-day-loading": "Der Vers des Tages wird geladen…"
+  "verse-of-the-day-loading": "Der Vers des Tages wird geladen…",
+  "delete-bookmark-confirm-title": "Lesezeichen löschen?",
+  "delete-bookmark-confirm-message": "\" {{name}} \" löschen?",
+  "scripture-font": "Schriftart",
+  "ai-limits-title": "Bevor Sie mit KI chatten",
+  "ai-limits-intro": "KI kann ein hilfreicher Ausgangspunkt sein, aber man sollte ihre Grenzen im Auge behalten:",
+  "ai-limits-mistakes": "Es macht Fehler und kann selbstsicher klingen, wenn es falsch liegt.",
+  "ai-limits-agreeable": "Es neigt dazu, Ihnen das zu sagen, was Sie hören wollen, und bevorzugt populäre Antworten.",
+  "ai-limits-scripture": "Es handelt sich nicht um eine verlässliche Quelle. Überprüfen Sie die Aussagen anhand der Heiligen Schrift.",
+  "ai-limits-study": "Studiere die Bibel selbst und lass nicht zu, dass KI für dich denkt.",
+  "ai-limits-confirm": "Mir ist bewusst, dass KI Fehler machen kann und kein Ersatz für das eigene Bibelstudium ist.",
+  "friends-playlists-filter": "Wiedergabelisten von Freunden",
+  "friend-link-social-title": "Füge {{name}} als Freund hinzu",
+  "friend-link-meta-description": "{{name}} möchte dein Freund auf {{brand}} sein.",
+  "friend-link-title": "Füge {{name}} als Freund auf {{brand}} hinzu."
 }

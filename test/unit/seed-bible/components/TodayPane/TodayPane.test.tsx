@@ -1,5 +1,6 @@
 import type { Mock } from "vitest";
-import { render, type ComponentChildren } from "preact";
+import { hydrate, render, type ComponentChildren } from "preact";
+import { renderToString } from "preact-render-to-string";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { TodayPane } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayPane";
@@ -166,6 +167,33 @@ describe("TodayPane", () => {
       expect(q("[data-testid='welcome']")).toBeNull();
       expect(todayContainer()!.style.alignItems).toBe("flex-start");
     });
+  });
+
+  // The server can't see a session (it lives in `localStorage`), so it always
+  // renders a signed-out reader's Welcome. `hydrate()` keeps the attributes
+  // already in the page, so a signed-in reader whose client went straight to
+  // the personalized layout would keep Welcome's centering.
+  it("hydrates a signed-in reader's layout onto the server's Welcome without keeping its attributes", async () => {
+    const serverProps = todayScreenPropsStub({
+      today: todayStub({
+        readingHistory: signal<ReadingHistoryState>({ status: "empty" }),
+      }),
+    });
+    container.innerHTML = renderToString(<TodayPane {...serverProps} />);
+    expect(todayContainer()!.style.alignItems).toBe("safe center");
+
+    const clientProps = todayScreenPropsStub({
+      today: todayStub({
+        readingHistory: signal<ReadingHistoryState>({ status: "loading" }),
+      }),
+    });
+    await act(async () => {
+      hydrate(<TodayPane {...clientProps} />, container);
+    });
+
+    expect(q(".sb-today-content")).not.toBeNull();
+    expect(q("[data-testid='welcome']")).toBeNull();
+    expect(todayContainer()!.style.alignItems).toBe("flex-start");
   });
 
   describe("the personalized layout", () => {

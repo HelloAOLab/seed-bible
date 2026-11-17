@@ -1274,5 +1274,19 @@
   "loading-translations": "جارٍ تحميل الترجمات…",
   "translations-load-failed": "تعذر تحميل القائمة الكاملة للترجمات، لذا قد تكون بعضها مفقودة.",
   "verse-of-the-day": "آية اليوم",
-  "verse-of-the-day-loading": "جارٍ تحميل آية اليوم..."
+  "verse-of-the-day-loading": "جارٍ تحميل آية اليوم...",
+  "delete-bookmark-confirm-title": "حذف الإشارة المرجعية؟",
+  "delete-bookmark-confirm-message": "حذف \" {{name}} \"؟",
+  "scripture-font": "خط الكتاب المقدس",
+  "ai-limits-title": "قبل أن تبدأ الدردشة مع الذكاء الاصطناعي",
+  "ai-limits-intro": "يمكن أن يكون الذكاء الاصطناعي نقطة انطلاق مفيدة، ولكن يجب مراعاة حدوده:",
+  "ai-limits-mistakes": "إنه يرتكب الأخطاء، وقد يبدو واثقاً من نفسه عندما يكون مخطئاً.",
+  "ai-limits-agreeable": "يميل إلى إخبارك بما تريد سماعه، ويميل نحو الإجابات الشائعة.",
+  "ai-limits-scripture": "ليس مصدراً موثوقاً. تحقق مما يقوله في ضوء الكتاب المقدس.",
+  "ai-limits-study": "ادرس الكتاب المقدس بنفسك، ولا تدع الذكاء الاصطناعي يفكر نيابة عنك.",
+  "ai-limits-confirm": "أفهم أن الذكاء الاصطناعي يمكن أن يرتكب أخطاءً، وأنه ليس بديلاً عن دراسة الكتاب المقدس بنفسي.",
+  "friends-playlists-filter": "قوائم تشغيل الأصدقاء",
+  "friend-link-social-title": "أضف {{name}} كصديق",
+  "friend-link-meta-description": "{{name}} يريد أن يكون صديقك على {{brand}}",
+  "friend-link-title": "أضف {{name}} كصديق على {{brand}}"
 }

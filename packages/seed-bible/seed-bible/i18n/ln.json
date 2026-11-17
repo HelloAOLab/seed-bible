@@ -1274,5 +1274,19 @@
   "loading-translations": "Chargement ya mabongoli...",
   "translations-load-failed": "Ekokaki te ko charger liste mobimba ya mabongoli, yango wana misusu ekoki kozanga.",
   "verse-of-the-day": "VERSER YA MOKOLO",
-  "verse-of-the-day-loading": "Chargement ya verset ya mokolo..."
+  "verse-of-the-day-loading": "Chargement ya verset ya mokolo...",
+  "delete-bookmark-confirm-title": "Bolongola marque-page?",
+  "delete-bookmark-confirm-message": "Bolongola \" {{name}} \"?",
+  "scripture-font": "Font ya Makomi",
+  "ai-limits-title": "Yambo ya kosolola na AI",
+  "ai-limits-intro": "AI ekoki kozala esika ya kobanda oyo ekosalisa, kasi kobosana te ndelo na yango:",
+  "ai-limits-mistakes": "Esalaka mabunga, mpe ekoki koyokana na elikya ntango ezali mabe.",
+  "ai-limits-agreeable": "Ezali na momeseno ya koyebisa yo makambo oyo olingi koyoka, mpe ebalukaka epai ya biyano oyo bato mingi bapesaka.",
+  "ai-limits-scripture": "Ezali source ya kozala na confiance te. Tala oyo elobi contre Makomami.",
+  "ai-limits-study": "Yekola Biblia yo moko, mpe kotika te AI esala makanisi na yo mpo na yo.",
+  "ai-limits-confirm": "Nasosoli ete AI ekoki kosala mabunga mpe ezali te eloko oyo ekoki kozwa esika ya koyekola Biblia ngai moko.",
+  "friends-playlists-filter": "Ba playlists ya baninga",
+  "friend-link-social-title": "Bakisa {{name}} lokola moninga",
+  "friend-link-meta-description": "{{name}} alingi kozala moninga na yo na {{brand}}",
+  "friend-link-title": "Bakisa {{name}} lokola moninga na {{brand}}"
 }

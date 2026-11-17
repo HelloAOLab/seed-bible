@@ -1,0 +1,1601 @@
+import { render } from "preact";
+import { act } from "preact/test-utils";
+import type { Editor } from "@tiptap/core";
+import { PlaylistEditorPanel } from "@packages/seed-bible/seed-bible/components/PlaylistEditor/PlaylistEditorPanel";
+import { DiscoverPane } from "@packages/seed-bible/seed-bible/components/Discover/DiscoverPane";
+import { PlaylistEditorWorkspace } from "@packages/seed-bible/seed-bible/components/PlaylistEditor/PlaylistEditorWorkspace";
+import { PlaylistStepNoteSheet } from "@packages/seed-bible/seed-bible/components/PlaylistEditor/PlaylistStepNoteSheet";
+import { PlaylistHtmlContent } from "@packages/seed-bible/seed-bible/components/PlaylistHtmlContent/PlaylistHtmlContent";
+import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
+import {
+  PlaylistSchema,
+  type Playlist,
+} from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import {
+  createTestSeedBibleState,
+  waitFor,
+} from "../testUtils/createTestSeedBibleState";
+import { TestHost } from "./TestHost";
+import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
+import {
+  aabBooks,
+  createDefaultManagerResponseMap,
+  createResponse,
+  makeChapter,
+  makeUrl,
+} from "../managers/testUtils/mockBibleApiData";
+
+function makePlaylist(items: Playlist["items"]): Playlist {
+  return PlaylistSchema.parse({
+    id: "playlist-1",
+    recordName: "user-1",
+    authorUserId: "user-1",
+    title: null,
+    description: null,
+    items,
+    createdAtMs: 1,
+    updatedAtMs: 1,
+  });
+}
+
+const STEPS: Playlist["items"] = [
+  { type: "bible-verse", ref: { bookId: "GEN", chapter: 1, verse: 2 } },
+  { type: "link", title: "Genesis 1 overview", url: "https://youtu.be/abc" },
+  {
+    type: "html",
+    html: "<p>What does light reveal?</p>",
+    question: {},
+    minutes: 4,
+  },
+];
+
+const click = (element: Element | null | undefined) => {
+  if (!element) {
+    throw new Error("Nothing to click");
+  }
+  act(() => {
+    element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+};
+
+const type = (element: Element | null, value: string) => {
+  const input = element as HTMLInputElement | HTMLTextAreaElement | null;
+  if (!input) {
+    throw new Error("Nothing to type into");
+  }
+  act(() => {
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+};
+
+const byText = (root: ParentNode, selector: string, text: string) =>
+  Array.from(root.querySelectorAll(selector)).find((el) =>
+    el.textContent?.includes(text)
+  );
+
+describe("the playlist editor", () => {
+  let container: HTMLDivElement;
+  let state: SeedBibleState;
+
+  beforeEach(async () => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    jsdom.reconfigure({
+      url: "https://example.com/en/bible/BSB/GEN/1?useFreeBibleAPI=true",
+    });
+    state = await createTestSeedBibleState();
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  const openPanel = (items: Playlist["items"] = STEPS) => {
+    act(() => {
+      state.playlists.editPlaylist(makePlaylist(items));
+    });
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <PlaylistEditorPanel
+            playlists={state.playlists}
+            tabs={state.tabs}
+            modals={state.modals}
+          />
+          <ModalHost manager={state.modals} />
+        </TestHost>,
+        container
+      );
+    });
+  };
+
+  const openWorkspace = (
+    items: Playlist["items"] = STEPS,
+    step = 0,
+    compact = false
+  ) => {
+    act(() => {
+      state.playlists.editPlaylist(makePlaylist(items));
+      state.playlists.selectEditorStep(step);
+    });
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <PlaylistEditorWorkspace state={state} compact={compact}>
+            <div className="sb-pane-reader">reader</div>
+          </PlaylistEditorWorkspace>
+          <ModalHost manager={state.modals} />
+        </TestHost>,
+        container
+      );
+    });
+  };
+
+  // The desktop editor as the app lays it out: the reader workspace beside
+  // the Discover pane's side panel, whose footer holds Review & publish.
+  const openDesktopEditor = (items: Playlist["items"] = STEPS, step = 0) => {
+    act(() => {
+      state.playlists.editPlaylist(makePlaylist(items));
+      state.playlists.selectEditorStep(step);
+    });
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <PlaylistEditorWorkspace state={state} compact={false}>
+            <div className="sb-pane-reader">reader</div>
+          </PlaylistEditorWorkspace>
+          <DiscoverPane
+            tabs={state.tabs}
+            playlists={state.playlists}
+            annotations={state.annotations}
+            modals={state.modals}
+            state={state}
+            toast={state.app.toast}
+          />
+          <ModalHost manager={state.modals} />
+        </TestHost>,
+        container
+      );
+    });
+  };
+
+  const items = () => state.playlists.editingPlaylist.value!.items;
+
+  describe("step list", () => {
+    it("lists each step as the playing list does: its icon, name and time, and no kind", () => {
+      openPanel();
+
+      const rows = Array.from(container.querySelectorAll(".sb-pe-step")).map(
+        (row) => [
+          row
+            .querySelector(".sb-discover-item-icon")!
+            .classList.contains("sb-playlist-step-icon-scripture")
+            ? "seed-bible"
+            : row.querySelector(".sb-discover-item-icon")!.textContent,
+          row.querySelector(".sb-discover-item-title")!.textContent,
+          row.querySelector(".sb-playlist-page-item-minutes")!.textContent,
+        ]
+      );
+      expect(rows).toEqual([
+        ["seed-bible", "Genesis 1:2", "1 min"],
+        ["videocam", "Genesis 1 overview", "1 min"],
+        ["help", "What does light reveal?", "4 min"],
+      ]);
+      expect(container.textContent).not.toMatch(/Scripture|Video ·|Question ·/);
+      expect(container.querySelector(".sb-pe-step-count")!.textContent).toBe(
+        "3 steps · ~6 min"
+      );
+    });
+
+    it("opens a step when its row is clicked", () => {
+      openPanel();
+
+      click(byText(container, ".sb-pe-step-open", "Genesis 1 overview"));
+
+      expect(state.playlists.editorStepIndex.value).toBe(1);
+      expect(
+        container.querySelector('[aria-current="step"]')!.textContent
+      ).toContain("Genesis 1 overview");
+    });
+
+    it("duplicates and deletes the open step from its row", () => {
+      openPanel();
+      act(() => state.playlists.selectEditorStep(0));
+
+      click(container.querySelector('[aria-label="Duplicate step"]'));
+      expect(items()).toHaveLength(4);
+      expect(items()[1]).toEqual(items()[0]);
+
+      click(container.querySelector('[aria-label="Delete step"]'));
+      expect(items()).toHaveLength(3);
+      expect(items()[1]!.type).toBe("link");
+    });
+
+    it("lets any step be dragged while another is open beside the list on desktop", () => {
+      const rowHeight = vi
+        .spyOn(HTMLLIElement.prototype, "offsetHeight", "get")
+        .mockReturnValue(40);
+      openDesktopEditor(STEPS, 0);
+
+      const handles = container.querySelectorAll<HTMLElement>(
+        ".sb-pe-step .sb-pe-step-handle"
+      );
+      expect(handles).toHaveLength(3);
+
+      // Drags the third step, which isn't the open one, up above the first.
+      act(() => {
+        handles[2]!.dispatchEvent(
+          new PointerEvent("pointerdown", {
+            bubbles: true,
+            pointerId: 1,
+            clientY: 80,
+          })
+        );
+        window.dispatchEvent(
+          new PointerEvent("pointermove", { pointerId: 1, clientY: 0 })
+        );
+        window.dispatchEvent(
+          new PointerEvent("pointerup", { pointerId: 1, clientY: 0 })
+        );
+      });
+      rowHeight.mockRestore();
+
+      expect(items().map((item) => item.type)).toEqual([
+        "html",
+        "bible-verse",
+        "link",
+      ]);
+      // The open step is still the one that was open, now one row down.
+      expect(state.playlists.editorStepIndex.value).toBe(1);
+    });
+
+    it("shows a step that can't be saved yet as needing attention", () => {
+      openPanel();
+      // A new video step has no link until one is typed in.
+      act(() => state.playlists.addEditorStep("video", 2));
+
+      const invalid = Array.from(container.querySelectorAll(".sb-pe-step")).map(
+        (row) => row.classList.contains("sb-pe-step--invalid")
+      );
+      expect(invalid).toEqual([false, false, false, true]);
+    });
+
+    it("says so when there are no steps, with a button that adds the first", () => {
+      openPanel([]);
+
+      const empty = container.querySelector(".sb-pe-empty-list")!;
+      expect(empty.textContent).toContain("This playlist is empty");
+      expect(container.querySelector(".sb-pe-step-count")).toBeNull();
+
+      click(byText(empty, "button", "Add a step"));
+      click(byText(container, ".sb-pe-add-option", "Note"));
+
+      expect(items()).toEqual([{ type: "html", html: "" }]);
+    });
+  });
+
+  describe("playlist name", () => {
+    it("opens the playlist's details from its title, to rename it, keeping a blank name as untitled", () => {
+      openDesktopEditor();
+      const titleButton = () =>
+        container.querySelector<HTMLButtonElement>(
+          ".sb-pe-panel-title-button"
+        )!;
+      expect(titleButton().textContent).toBe("Untitled playlist");
+
+      click(titleButton());
+
+      // The same fields as a phone's details sheet: title, description, cover.
+      const titleField = document.body.querySelector(
+        "#sb-pe-details-modal-title"
+      );
+      expect(titleField).not.toBeNull();
+      expect(
+        document.body.querySelector("#sb-pe-details-modal-description")
+      ).not.toBeNull();
+      expect(document.body.textContent).toContain("Cover image");
+      type(titleField, "Morning");
+      expect(state.playlists.editingPlaylist.value!.title).toBe("Morning");
+      expect(titleButton().textContent).toBe("Morning");
+      type(titleField, "   ");
+      expect(state.playlists.editingPlaylist.value!.title).toBeNull();
+
+      click(
+        byText(document.body, ".sb-pe-details-modal-footer button", "Done")
+      );
+      expect(
+        document.body.querySelector("#sb-pe-details-modal-title")
+      ).toBeNull();
+      expect(state.playlists.editorDetailsSheetOpen.value).toBe(false);
+    });
+
+    it("says whether the draft has unsaved changes", () => {
+      openPanel();
+      act(() => state.playlists.selectEditorStep(0));
+      expect(container.querySelector(".sb-pe-panel-status")!.textContent).toBe(
+        "Draft"
+      );
+
+      click(container.querySelector('[aria-label="Duplicate step"]'));
+
+      expect(container.querySelector(".sb-pe-panel-status")!.textContent).toBe(
+        "Draft - Unsaved changes"
+      );
+    });
+  });
+
+  describe("pages (phone)", () => {
+    // A phone's width, so the rest of the app is in its phone layout too.
+    const originalWidth = window.innerWidth;
+    beforeEach(() => {
+      window.innerWidth = 390;
+      act(() => state.app.applyViewport());
+    });
+    afterEach(() => {
+      window.innerWidth = originalWidth;
+    });
+
+    const header = () => container.querySelector(".sb-pe-mobile-header")!;
+    const back = () => header().querySelector(".sb-pe-back")!;
+
+    it("opens on the list of steps, with every step there to drag", () => {
+      act(() => state.playlists.editPlaylist(makePlaylist(STEPS)));
+      act(() => {
+        render(
+          <TestHost state={state}>
+            <PlaylistEditorWorkspace state={state} compact>
+              <div className="sb-pane-reader">reader</div>
+            </PlaylistEditorWorkspace>
+          </TestHost>,
+          container
+        );
+      });
+
+      expect(state.playlists.editorStepIndex.value).toBe(-1);
+      const rows = container.querySelectorAll(".sb-pe-list-page .sb-pe-step");
+      expect(rows).toHaveLength(3);
+      expect(
+        container.querySelectorAll(".sb-pe-list-page .sb-pe-step-handle")
+      ).toHaveLength(3);
+    });
+
+    it("goes from the empty list to a new step, back to the list, and out", () => {
+      openWorkspace([], -1, true);
+      expect(container.textContent).toContain("This playlist is empty");
+
+      click(
+        byText(
+          container.querySelector(".sb-pe-empty-list")!,
+          "button",
+          "Add a step"
+        )
+      );
+      click(byText(container, ".sb-pe-add-option", "Note"));
+
+      // The step is a page of its own: the list is gone, its place shown.
+      expect(container.querySelector(".sb-pe-list-page")).toBeNull();
+      expect(header().textContent).toContain("Step 1 of 1 · Note");
+      expect(back().getAttribute("aria-label")).toBe("Back to items");
+
+      click(back());
+
+      expect(state.playlists.editorStepIndex.value).toBe(-1);
+      expect(
+        container.querySelectorAll(".sb-pe-list-page .sb-pe-step")
+      ).toHaveLength(1);
+      expect(back().getAttribute("aria-label")).toBe("Close playlist editor");
+
+      click(back());
+
+      // A step was added, so leaving asks first.
+      expect(document.body.textContent).toContain(
+        "You have unsaved changes. What would you like to do?"
+      );
+    });
+
+    describe("leaving with unsaved changes", () => {
+      const leave = () => {
+        openWorkspace(STEPS, -1, true);
+        act(() => {
+          state.playlists.updateEditingPlaylistMetadata({ title: "Changed" });
+        });
+        click(back());
+      };
+      const reopen = () =>
+        act(() => state.playlists.editPlaylist(makePlaylist(STEPS)));
+      const chooseDraft = (label: string) =>
+        click(
+          byText(document.body, ".sb-pe-draft-choice-actions button", label)
+        );
+      const choose = (label: string) =>
+        click(
+          byText(document.body, ".sb-unsaved-changes-actions button", label)
+        );
+
+      it("offers to discard them, keep them as a draft, or publish them", () => {
+        leave();
+
+        expect(
+          Array.from(
+            document.body.querySelectorAll(
+              ".sb-unsaved-changes-actions button"
+            ),
+            (button) => button.textContent
+          )
+        ).toEqual(["Discard Changes", "Save Draft", "Save & Publish"]);
+      });
+
+      it("keeps them for next time with Save Draft", () => {
+        leave();
+
+        choose("Save Draft");
+
+        expect(state.playlists.editingPlaylist.value).toBeNull();
+        reopen();
+        chooseDraft("Continue from Draft");
+        expect(state.playlists.editingPlaylist.value?.title).toBe("Changed");
+      });
+
+      it("asks, on going to edit the playlist again, whether to continue from the draft, saying when it was last edited", () => {
+        // 12 November 2026, 3:42 PM, where the test runs.
+        const editedAt = new Date(2026, 10, 12, 15, 42).getTime();
+        const now = vi.spyOn(Date, "now").mockReturnValue(editedAt);
+        leave();
+        choose("Save Draft");
+        now.mockRestore();
+
+        reopen();
+
+        // Not opened yet: the choice comes first.
+        expect(state.playlists.editingPlaylist.value).toBeNull();
+        expect(document.body.textContent).toContain(
+          `You have unsaved changes to this playlist, last edited ${new Intl.DateTimeFormat(
+            "en",
+            { dateStyle: "medium", timeStyle: "short" }
+          ).format(editedAt)}.`
+        );
+        expect(
+          Array.from(
+            document.body.querySelectorAll(
+              ".sb-pe-draft-choice-actions button"
+            ),
+            (button) => button.textContent
+          )
+        ).toEqual(["Discard Draft", "Continue from Draft"]);
+      });
+
+      it("opens the playlist as saved, and forgets the draft, with Discard Draft", () => {
+        leave();
+        choose("Save Draft");
+        reopen();
+
+        chooseDraft("Discard Draft");
+
+        expect(state.playlists.editingPlaylist.value?.title).toBeNull();
+        expect(state.playlists.isEditingPlaylistDirty()).toBe(false);
+        // Gone for good: the next visit doesn't ask.
+        act(() => state.playlists.cancelEditingPlaylist());
+        reopen();
+        expect(
+          document.body.querySelector(".sb-pe-draft-choice-actions")
+        ).toBeNull();
+        expect(state.playlists.editingPlaylist.value).not.toBeNull();
+      });
+
+      it("leaves the playlist closed, its draft kept, when the question is closed", () => {
+        leave();
+        choose("Save Draft");
+        reopen();
+
+        act(() => {
+          state.modals.dismissModal("playlist-draft-choice");
+        });
+
+        expect(state.playlists.editingPlaylist.value).toBeNull();
+        reopen();
+        chooseDraft("Continue from Draft");
+        expect(state.playlists.editingPlaylist.value?.title).toBe("Changed");
+      });
+
+      it("throws them away with Discard Changes", () => {
+        leave();
+
+        choose("Discard Changes");
+
+        expect(state.playlists.editingPlaylist.value).toBeNull();
+        act(() => state.playlists.editPlaylist(makePlaylist(STEPS)));
+        expect(state.playlists.editingPlaylist.value?.title).toBeNull();
+      });
+
+      it("saves them with Save & Publish", async () => {
+        const recordData = vi
+          .spyOn(state.os, "recordData")
+          .mockResolvedValue(undefined as never);
+        leave();
+
+        choose("Save & Publish");
+
+        await waitFor(() => state.playlists.editingPlaylist.value === null);
+        expect((recordData.mock.calls[0]![2] as Playlist).title).toBe(
+          "Changed"
+        );
+      });
+    });
+
+    it("opens a step from the list", () => {
+      openWorkspace(STEPS, -1, true);
+
+      click(
+        byText(
+          container.querySelector(".sb-pe-list-page")!,
+          ".sb-pe-step-open",
+          "Genesis 1 overview"
+        )
+      );
+
+      expect(state.playlists.editorStepIndex.value).toBe(1);
+      expect(header().textContent).toContain("Step 2 of 3 · Video");
+    });
+
+    it("puts Add and a menu in a step's title bar, with no Duplicate, Review or bottom bar", () => {
+      openWorkspace(STEPS, 0, true);
+
+      expect(
+        [
+          ...header().querySelectorAll(".sb-pe-mobile-header-actions button"),
+        ].map((b) => b.getAttribute("aria-label"))
+      ).toEqual(["Add a step", "More"]);
+      expect(container.querySelector(".sb-pe-publish")).toBeNull();
+      expect(container.querySelector(".sb-pe-mobile-bottom")).toBeNull();
+    });
+
+    it("puts Add in the list's title bar and keeps Review & publish at the bottom", () => {
+      openWorkspace(STEPS, -1, true);
+
+      expect(
+        [
+          ...header().querySelectorAll(".sb-pe-mobile-header-actions button"),
+        ].map((b) => b.getAttribute("aria-label"))
+      ).toEqual(["Add a step"]);
+      const bottom = container.querySelector(".sb-pe-mobile-bottom")!;
+      expect(bottom.querySelector(".sb-pe-add-step")).toBeNull();
+      expect(bottom.querySelector(".sb-pe-publish")).not.toBeNull();
+    });
+
+    it("adds a step at the end of the list from its title bar's Add", () => {
+      openWorkspace(STEPS, -1, true);
+
+      click(header().querySelector('[aria-label="Add a step"]'));
+      click(byText(header(), ".sb-pe-add-option", "Note"));
+
+      expect(items()).toHaveLength(4);
+      expect(items()[3]).toEqual({ type: "html", html: "" });
+    });
+
+    it("adds a step after the open one from the title bar's Add", () => {
+      openWorkspace(STEPS, 0, true);
+
+      click(header().querySelector('[aria-label="Add a step"]'));
+      expect(header().textContent).toContain("Inserted after step 1");
+      click(byText(header(), ".sb-pe-add-option", "Note"));
+
+      expect(items()).toHaveLength(4);
+      expect(items()[1]).toEqual({ type: "html", html: "" });
+      expect(state.playlists.editorStepIndex.value).toBe(1);
+      expect(container.querySelector(".sb-pe-add-menu")).toBeNull();
+    });
+
+    it("names the verses picked, offers only Apply, and hides once they're deselected", async () => {
+      openWorkspace(STEPS, 0, true);
+      const readingState =
+        state.app.currentReadingState.value!.tab.readingState;
+      const verse = (number: number) => ({
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse: { type: "verse" as const, number, content: [] },
+        translationId: "BSB",
+      });
+      const bar = () =>
+        container.querySelector(".sb-pe-mobile-bottom .sb-pe-pickbar");
+
+      act(() => {
+        readingState.selectedVerses.value = [verse(5), verse(3)];
+      });
+      expect(bar()?.textContent).toContain("Highlight verses 3-5");
+      expect(
+        [...bar()!.querySelectorAll("button")].map((b) => b.textContent)
+      ).toEqual(["Apply"]);
+      expect(container.querySelector(".sb-pe-publish")).toBeNull();
+
+      act(() => {
+        readingState.selectedVerses.value = [verse(7)];
+      });
+      expect(bar()?.textContent).toContain("Highlight verse 7");
+
+      // Deselecting every verse ends the pick: no banner, step unchanged.
+      act(() => {
+        readingState.selectedVerses.value = [];
+      });
+      expect(bar()).toBeNull();
+      expect(state.playlists.editorVersePickIndex.value).toBeNull();
+      expect(items()[0]).toEqual(STEPS[0]);
+    });
+
+    it("offers the chapter the reader moved to, and Apply gives it to the step", async () => {
+      openWorkspace(STEPS, 0, true);
+      const readingState =
+        state.app.currentReadingState.value!.tab.readingState;
+      // Let the editor's own trip to the step's chapter finish first.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      expect(container.querySelector(".sb-pe-chapterbar")).toBeNull();
+
+      act(() => {
+        readingState.bookId.value = "EXO";
+        readingState.chapterNumber.value = 2;
+      });
+
+      const bar = container.querySelector(".sb-pe-chapterbar");
+      expect(bar?.textContent).toContain("for step 1?");
+      expect(
+        [...bar!.querySelectorAll("button")].map((b) => b.textContent)
+      ).toEqual(["Apply"]);
+      click(bar!.querySelector(".sb-pe-pickbar-apply"));
+
+      expect(items()[0]).toEqual({
+        type: "bible-verse",
+        ref: { bookId: "EXO", chapter: 2 },
+      });
+    });
+
+    it("opens the step's settings in a sheet from its menu", () => {
+      openWorkspace(STEPS, 0, true);
+
+      click(header().querySelector('[aria-label="More"]'));
+      expect(
+        [...document.querySelectorAll(".sb-context-menu-item")].map((item) =>
+          item.textContent?.trim()
+        )
+      ).toEqual(["Item settings", "Delete"]);
+      click(byText(document.body, ".sb-context-menu-item", "Item settings"));
+
+      const sheet = container.querySelector(".sb-pe-settings-sheet")!;
+      expect(sheet.textContent).toContain("Item settings");
+      click(sheet.querySelector('[aria-label="More time"]'));
+      expect(items()[0]).toMatchObject({ minutes: 2 });
+
+      click(sheet.querySelector('[aria-label="Close"]'));
+      expect(container.querySelector(".sb-pe-settings-sheet")).toBeNull();
+    });
+
+    it("has no inline note or step settings on a phone", () => {
+      openWorkspace(STEPS, 0, true);
+      expect(container.querySelector(".sb-pe-add-note")).toBeNull();
+      expect(container.querySelector(".sb-pe-step-settings")).toBeNull();
+
+      // Nor on a card step.
+      act(() => state.playlists.selectEditorStep(2));
+      expect(container.querySelector(".sb-pe-card")).not.toBeNull();
+      expect(container.querySelector(".sb-pe-step-settings")).toBeNull();
+    });
+
+    it.each([
+      ["a phone", true],
+      ["desktop", false],
+    ])(
+      "writes a note step on the page on %s, with the formatting toolbar and no Insert row",
+      async (_layout, compact) => {
+        openWorkspace([{ type: "html", html: "<p>Pray</p>" }], 0, compact);
+
+        const card = () => container.querySelector(".sb-pe-card")!;
+        expect(card().classList.contains("sb-pe-card--plain")).toBe(true);
+        // TipTap loads lazily; let each poll render what has arrived.
+        const deadline = Date.now() + 3000;
+        while (
+          !card().querySelector(".sb-editor-toolbar") &&
+          Date.now() < deadline
+        ) {
+          await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 20));
+          });
+        }
+        expect(card().querySelector(".sb-editor-toolbar")).not.toBeNull();
+        expect(
+          card().querySelector(".sb-pe-rich-field-inner--formatting")
+        ).not.toBeNull();
+        expect(card().querySelector(".sb-pe-insert")).toBeNull();
+      }
+    );
+
+    describe.each([
+      ["a phone", true],
+      ["desktop", false],
+    ])("a video step on %s", (_layout, compact) => {
+      const VIDEO: Playlist["items"][number] = {
+        type: "link",
+        url: "https://youtu.be/abc",
+        embed: true,
+        preview: {
+          title: "The Best Catan Strategy",
+          author: "Board Game Lab",
+          imageUrl: "https://example.com/thumb.jpg",
+        },
+        transcript: true,
+      };
+
+      it("has one title, its placeholder the video's own, and no card or transcript", () => {
+        openWorkspace([VIDEO], 0, compact);
+
+        const card = container.querySelector(".sb-pe-card")!;
+        expect(card.classList.contains("sb-pe-card--plain")).toBe(true);
+        const titles =
+          card.querySelectorAll<HTMLInputElement>('input[type="text"]');
+        expect(titles).toHaveLength(1);
+        expect(titles[0]!.value).toBe("");
+        expect(titles[0]!.placeholder).toBe("The Best Catan Strategy");
+        expect(card.textContent).not.toContain("Transcript");
+      });
+
+      it("shows the video's title and uploader in its preview", () => {
+        openWorkspace([VIDEO], 0, compact);
+
+        const check = container.querySelector(".sb-pe-link-check")!;
+        expect(check.textContent).toContain("The Best Catan Strategy");
+        expect(check.textContent).toContain("Board Game Lab");
+        expect(check.textContent).not.toContain("Link looks good");
+      });
+
+      it("uses the author's title while there is one, and the video's again once it's cleared", () => {
+        openWorkspace([VIDEO], 0, compact);
+        const title = container.querySelector("#sb-pe-title-0");
+
+        type(title, "Catan, by the numbers");
+        expect(items()[0]).toMatchObject({ title: "Catan, by the numbers" });
+        if (compact) {
+          expect(header().textContent).toContain("Catan, by the numbers");
+        }
+
+        type(title, "");
+        expect((items()[0] as { title?: string }).title).toBeUndefined();
+        if (compact) {
+          expect(header().textContent).toContain("The Best Catan Strategy");
+        }
+      });
+    });
+
+    it("goes back to the list when the open step is deleted from its menu", () => {
+      openWorkspace(STEPS, 1, true);
+
+      click(header().querySelector('[aria-label="More"]'));
+      // The menu is portaled to <body>.
+      click(byText(document.body, ".sb-context-menu-item", "Delete"));
+
+      expect(items()).toHaveLength(2);
+      expect(state.playlists.editorStepIndex.value).toBe(-1);
+      expect(container.querySelector(".sb-pe-list-page")).not.toBeNull();
+    });
+  });
+
+  describe("details sheet (phone)", () => {
+    const openDetails = () => {
+      openWorkspace(STEPS, -1, true);
+      click(container.querySelector(".sb-pe-mobile-title-button"));
+      return container.querySelector(".sb-pe-details-sheet");
+    };
+
+    it("opens from the playlist's title, with its title, description and cover fields", () => {
+      const sheet = openDetails();
+
+      expect(sheet).not.toBeNull();
+      expect(sheet!.querySelector("#sb-pe-details-title")).not.toBeNull();
+      expect(sheet!.querySelector("#sb-pe-details-description")).not.toBeNull();
+      expect(sheet!.textContent).toContain("Cover image");
+    });
+
+    it("saves the title and description to the draft as they're typed", () => {
+      const sheet = openDetails()!;
+
+      type(sheet.querySelector("#sb-pe-details-title"), "Evening Psalms");
+      type(
+        sheet.querySelector("#sb-pe-details-description"),
+        "Read one before bed."
+      );
+
+      expect(state.playlists.editingPlaylist.value).toMatchObject({
+        title: "Evening Psalms",
+        description: "Read one before bed.",
+      });
+      expect(
+        container.querySelector(".sb-pe-mobile-title-text")?.textContent
+      ).toBe("Evening Psalms");
+    });
+
+    it("closes from its close button and its backdrop, leaving the editor open", () => {
+      const sheet = openDetails()!;
+      click(sheet.querySelector('[aria-label="Close"]'));
+      expect(container.querySelector(".sb-pe-details-sheet")).toBeNull();
+
+      click(container.querySelector(".sb-pe-mobile-title-button"));
+      click(container.querySelector(".sb-pe-sheet-scrim"));
+      expect(container.querySelector(".sb-pe-details-sheet")).toBeNull();
+      expect(state.playlists.editingPlaylist.value).not.toBeNull();
+    });
+
+    it("is closed again when the editor next opens", () => {
+      openDetails();
+      act(() => state.playlists.cancelEditingPlaylist());
+
+      openWorkspace(STEPS, -1, true);
+
+      expect(container.querySelector(".sb-pe-details-sheet")).toBeNull();
+    });
+  });
+
+  describe("closing", () => {
+    it("is a back arrow at the start of the side panel's title bar, in place of a close button", () => {
+      openPanel();
+
+      const header = container.querySelector(".sb-pe-panel-header")!;
+      expect(header.firstElementChild?.getAttribute("aria-label")).toBe(
+        "Close playlist editor"
+      );
+      expect(header.querySelector(".sb-pe-panel-close")).toBeNull();
+    });
+
+    it("is a back arrow at the start of the phone's title bar, and closes the editor from the list", () => {
+      openWorkspace(STEPS, -1, true);
+
+      const header = container.querySelector(".sb-pe-mobile-header")!;
+      const back = header.firstElementChild;
+      expect(back?.getAttribute("aria-label")).toBe("Close playlist editor");
+
+      click(back);
+
+      expect(state.playlists.editingPlaylist.value).toBeNull();
+    });
+
+    it("goes back from an open step to the list first, in the side panel too", () => {
+      openPanel();
+      act(() => state.playlists.selectEditorStep(1));
+
+      click(container.querySelector('[aria-label="Back to items"]'));
+
+      expect(state.playlists.editorStepIndex.value).toBe(-1);
+      expect(state.playlists.editingPlaylist.value).not.toBeNull();
+      expect(
+        container.querySelector('[aria-label="Close playlist editor"]')
+      ).not.toBeNull();
+    });
+
+    it("closes straight away when nothing changed", () => {
+      openPanel();
+
+      click(container.querySelector('[aria-label="Close playlist editor"]'));
+
+      expect(state.playlists.editingPlaylist.value).toBeNull();
+    });
+
+    it("asks before throwing away unsaved changes", () => {
+      openPanel();
+      act(() => state.playlists.selectEditorStep(0));
+      click(container.querySelector('[aria-label="Delete step"]'));
+
+      click(container.querySelector('[aria-label="Close playlist editor"]'));
+
+      expect(state.playlists.editingPlaylist.value).not.toBeNull();
+      expect(document.body.textContent).toContain(
+        "You have unsaved changes. What would you like to do?"
+      );
+    });
+  });
+
+  describe("adding a step", () => {
+    it("has Add in the panel's title bar, not at its foot", () => {
+      openPanel();
+
+      expect(
+        container.querySelector('.sb-pe-panel-header [aria-label="Add a step"]')
+      ).not.toBeNull();
+      expect(container.textContent).not.toContain("Add new step");
+    });
+
+    it("inserts the chosen kind after the open step and opens it", () => {
+      openPanel();
+      act(() => state.playlists.selectEditorStep(0));
+
+      // From the title bar's Add, as on a phone.
+      click(
+        container.querySelector('.sb-pe-panel-header [aria-label="Add a step"]')
+      );
+      expect(container.textContent).toContain("Inserted after step 1");
+      click(byText(container, ".sb-pe-add-option", "Note"));
+
+      expect(items()).toHaveLength(4);
+      expect(items()[1]).toEqual({ type: "html", html: "" });
+      expect(state.playlists.editorStepIndex.value).toBe(1);
+      expect(container.querySelector(".sb-pe-add-menu")).toBeNull();
+    });
+
+    // Video and Link are the same step, under the two names people look for.
+    it("offers Link beside Video, adding the same step", () => {
+      openPanel();
+      const add = () =>
+        click(
+          container.querySelector(
+            '.sb-pe-panel-header [aria-label="Add a step"]'
+          )
+        );
+      add();
+      expect(
+        Array.from(
+          container.querySelectorAll(".sb-pe-add-option-name"),
+          (name) => name.textContent
+        )
+      ).toEqual(["Scripture", "Note", "Video", "Link", "Question", "Compare"]);
+
+      click(byText(container, ".sb-pe-add-option", "Video"));
+      add();
+      click(byText(container, ".sb-pe-add-option", "Link"));
+
+      expect(items()).toHaveLength(5);
+      expect(items()[3]).toEqual(items()[4]);
+      expect(items()[4]).toEqual({ type: "link", url: "", embed: true });
+    });
+
+    it("closes the menu with Escape without adding anything", () => {
+      openPanel();
+      click(
+        container.querySelector('.sb-pe-panel-header [aria-label="Add a step"]')
+      );
+
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      });
+
+      expect(container.querySelector(".sb-pe-add-menu")).toBeNull();
+      expect(items()).toHaveLength(3);
+    });
+  });
+
+  describe("step cards", () => {
+    it.each([
+      ["a phone", true],
+      ["desktop", false],
+    ] as const)(
+      "puts a question step's fields on the page with no card on %s",
+      (_layout, compact) => {
+        openWorkspace(STEPS, 2, compact);
+
+        const card = container.querySelector(".sb-pe-card")!;
+        expect(card.classList.contains("sb-pe-card--plain")).toBe(true);
+      }
+    );
+
+    it("edits a question's title as plain text, and its question, hint, and answer in TipTap", async () => {
+      openWorkspace(STEPS, 2);
+
+      expect(container.querySelector(".sb-pe-eyebrow")!.textContent).toBe(
+        "Step 3 · Question"
+      );
+      expect(container.textContent).not.toContain("Who sees responses");
+      const labels = Array.from(
+        container.querySelectorAll(".sb-pe-field-head"),
+        (head) => [
+          head.querySelector(".sb-pe-field-label")!.textContent,
+          head.querySelector(".sb-pe-field-hint")?.textContent ?? null,
+        ]
+      );
+      expect(labels).toEqual([
+        ["Title", "Optional"],
+        ["Question", null],
+        ["Hint for readers", "Optional"],
+        ["Answer", "Optional"],
+      ]);
+
+      type(container.querySelector("#sb-pe-title-2"), "Light");
+
+      // TipTap loads lazily, and keeps its editor on the element it edits.
+      const editors = () =>
+        Array.from(
+          container.querySelectorAll<HTMLElement & { editor?: Editor }>(
+            ".ProseMirror"
+          ),
+          (el) => el.editor
+        ).filter((editor): editor is Editor => !!editor);
+      const deadline = Date.now() + 3000;
+      while (editors().length < 3 && Date.now() < deadline) {
+        await act(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        });
+      }
+      expect(
+        container.querySelectorAll(".sb-pe-card .sb-editor-toolbar")
+      ).toHaveLength(3);
+      const [question, hint, answer] = editors();
+      // Each edit is sanitized before it's saved, so wait for it to land.
+      const step = () =>
+        items()[2] as Extract<Playlist["items"][number], { type: "html" }>;
+      act(() => {
+        question!.commands.setContent("<p>Where is <strong>God</strong>?</p>");
+      });
+      await waitFor(() => step().html.includes("strong"));
+      act(() => {
+        hint!.commands.setContent("<p>Look <em>back</em></p>");
+      });
+      await waitFor(() => !!step().question?.hint);
+      act(() => {
+        answer!.commands.setContent("<p>Everywhere</p>");
+      });
+      await waitFor(() => !!step().question?.answer);
+
+      expect(items()[2]).toEqual({
+        type: "html",
+        title: "Light",
+        html: "<p>Where is <strong>God</strong>?</p>",
+        question: {
+          hint: "<p>Look <em>back</em></p>",
+          answer: "<p>Everywhere</p>",
+        },
+        minutes: 4,
+      });
+    });
+
+    it("says when a video link isn't one it can play", async () => {
+      openWorkspace(STEPS, 1);
+
+      type(container.querySelector("#sb-pe-link-1"), "not a link");
+
+      expect(container.textContent).toContain(
+        "That isn't a YouTube or Vimeo link."
+      );
+      // The step keeps its old link until the new one is in.
+      expect(items()[1]).toMatchObject({ url: "https://youtu.be/abc" });
+
+      type(
+        container.querySelector("#sb-pe-link-1"),
+        "https://youtube.com/watch?v=xyz"
+      );
+      expect(
+        container.querySelector(".sb-pe-link-check")?.textContent
+      ).toContain("https://youtube.com/watch?v=xyz");
+      await waitFor(
+        () =>
+          (items()[1] as { url: string }).url ===
+          "https://youtube.com/watch?v=xyz"
+      );
+    });
+  });
+
+  describe("compare steps", () => {
+    const verses = (count: number, prefix: string) =>
+      Array.from({ length: count }, (_, i) => ({
+        type: "verse" as const,
+        number: i + 1,
+        content: [`${prefix} ${i + 1}.`],
+      }));
+
+    // Chapters long enough to have verses around a passage.
+    beforeEach(async () => {
+      // The outer setup's state would otherwise go on following the URL this
+      // one writes, and answer it with an editor of its own.
+      state.navigation.dispose();
+      state = await createTestSeedBibleState({
+        responses: {
+          ...createDefaultManagerResponseMap(),
+          [makeUrl("/api/AAB/GEN/1.json")]: createResponse(
+            makeChapter(aabBooks, "GEN", 1, verses(10, "Genesis"))
+          ),
+          [makeUrl("/api/AAB/EXO/2.json")]: createResponse(
+            makeChapter(aabBooks, "EXO", 2, verses(8, "Exodus"))
+          ),
+        },
+      });
+    });
+
+    const COMPARE: Playlist["items"][number] = {
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 1, verse: 5 },
+      compare: { ref: { bookId: "EXO", chapter: 2, verse: 2, endVerse: 3 } },
+    };
+
+    const columns = () =>
+      Array.from(container.querySelectorAll(".sb-playlist-compare-column"));
+    const verse = (column: number, number: number) =>
+      Array.from(
+        columns()[column]!.querySelectorAll(".sb-pe-compare-verse")
+      ).find(
+        (el) =>
+          el.querySelector(".sb-pe-compare-verse-number")?.textContent ===
+          String(number)
+      );
+    const loaded = () =>
+      waitFor(() =>
+        columns().every((c) => !!c.querySelector(".sb-pe-compare-verse"))
+      );
+
+    it.each([
+      ["a phone", true],
+      ["desktop", false],
+    ] as const)(
+      "is edited on %s as the page it plays as: its title, then each passage under its reference",
+      async (_layout, compact) => {
+        openWorkspace([COMPARE], 0, compact);
+        await loaded();
+
+        expect(
+          container.querySelector(".sb-playlist-step-page-title")?.textContent
+        ).toBe("Compare Genesis 1:5 to Exodus 2:2-3");
+        expect(
+          columns().map(
+            (c) => c.querySelector(".sb-pe-compare-reference")?.textContent
+          )
+        ).toEqual(["Genesis 1:5expand_more", "Exodus 2:2-3expand_more"]);
+        // The passage, with two verses either side faded to extend it into.
+        const shown = (column: number) =>
+          Array.from(
+            columns()[column]!.querySelectorAll(".sb-pe-compare-verse"),
+            (el) =>
+              `${el.textContent!.trim()}${
+                el.classList.contains("sb-pe-compare-verse--outside")
+                  ? " (faded)"
+                  : ""
+              }`
+          );
+        expect(shown(0)).toEqual([
+          "3Genesis 3. (faded)",
+          "4Genesis 4. (faded)",
+          "5Genesis 5.",
+          "6Genesis 6. (faded)",
+          "7Genesis 7. (faded)",
+        ]);
+        expect(shown(1)).toEqual([
+          "1Exodus 1. (faded)",
+          "2Exodus 2.",
+          "3Exodus 3.",
+          "4Exodus 4. (faded)",
+          "5Exodus 5. (faded)",
+        ]);
+        expect(container.querySelector(".sb-pe-card")).toBeNull();
+      }
+    );
+
+    it("sets a passage to the verses between the first and last tapped", async () => {
+      openWorkspace([COMPARE], 0);
+      await loaded();
+
+      click(verse(0, 7));
+      expect(
+        container.querySelector(".sb-pe-compare-dock .sb-pe-pickbar")
+          ?.textContent
+      ).toContain("Now tap the last verse");
+      click(verse(0, 3));
+
+      expect(items()[0]).toEqual({
+        ...COMPARE,
+        ref: { bookId: "GEN", chapter: 1, verse: 3, endVerse: 7 },
+      });
+      expect(container.querySelector(".sb-pe-pickbar")).toBeNull();
+    });
+
+    it("can make a passage just the first verse tapped, or be left as it was", async () => {
+      openWorkspace([COMPARE], 0);
+      await loaded();
+
+      click(verse(1, 5));
+      click(byText(container, ".sb-pe-pickbar button", "Cancel"));
+      expect(items()[0]).toEqual(COMPARE);
+
+      click(verse(1, 5));
+      click(byText(container, ".sb-pe-pickbar button", "Just Exodus 2:5"));
+      expect(items()[0]).toEqual({
+        ...COMPARE,
+        compare: { ref: { bookId: "EXO", chapter: 2, verse: 5 } },
+      });
+    });
+
+    it("shows more verses around a passage on request", async () => {
+      openWorkspace([COMPARE], 0);
+      await loaded();
+
+      click(byText(columns()[0]!, ".sb-pe-compare-more", "Later verses"));
+
+      expect(verse(0, 10)).toBeDefined();
+      expect(
+        byText(columns()[0]!, ".sb-pe-compare-more", "Later verses")
+      ).toBeUndefined();
+    });
+
+    it("gives a passage the chapter picked in the book selector, which opens on its book", async () => {
+      openWorkspace([COMPARE], 0);
+      await loaded();
+
+      click(columns()[1]!.querySelector(".sb-pe-compare-reference"));
+      await waitFor(() => state.selector.isOpen.value);
+      expect(state.selector.expandedBookId.value).toBe("EXO");
+
+      await act(async () => {
+        await state.selector.selectChapter("GEN", 1);
+      });
+      await waitFor(() => !state.selector.isOpen.value);
+
+      expect(items()[0]).toEqual({
+        ...COMPARE,
+        compare: { ref: { bookId: "GEN", chapter: 1 } },
+      });
+    });
+
+    it("leaves the passage as it was when the book selector is closed without a pick", async () => {
+      openWorkspace([COMPARE], 0);
+      await loaded();
+
+      click(columns()[0]!.querySelector(".sb-pe-compare-reference"));
+      await waitFor(() => state.selector.isOpen.value);
+      await act(async () => {
+        await state.selector.setOpen(false);
+      });
+
+      expect(items()[0]).toEqual(COMPARE);
+    });
+
+    it("says when a passage's chapter can't be loaded", async () => {
+      openWorkspace(
+        [
+          {
+            ...COMPARE,
+            // No chapter is served for this one.
+            compare: { ref: { bookId: "EXO", chapter: 9, verse: 1 } },
+          },
+        ],
+        0
+      );
+
+      await waitFor(
+        () =>
+          !!container.textContent?.includes("This passage couldn't be loaded.")
+      );
+      expect(verse(0, 5)).toBeDefined();
+    });
+  });
+
+  describe("on a phone", () => {
+    const originalWidth = window.innerWidth;
+    afterEach(() => {
+      window.innerWidth = originalWidth;
+      document.body.classList.remove("sb-scroll-hide-bars");
+    });
+
+    // The reader hides the bottom bars while it's scrolled down; the list of
+    // steps covers it, so nothing would scroll it back to show them.
+    it("brings back the bottom bars a scripture step's chapter scrolled away, on returning to the list", async () => {
+      window.innerWidth = 390;
+      act(() => state.app.applyViewport());
+      act(() => {
+        state.playlists.editPlaylist(makePlaylist(STEPS));
+        state.playlists.selectEditorStep(0);
+      });
+      const tab = state.tabs.tabs.value[0]!;
+      const slot = state.tabsLayout.slots.value[0]!;
+      act(() => {
+        render(
+          <TestHost state={state}>
+            <TabSlotReader tab={tab} state={state} slot={slot} />
+          </TestHost>,
+          container
+        );
+      });
+      const scroller = await (async () => {
+        await waitFor(
+          () => !!container.querySelector(".sb-reader-swipe-panel-current")
+        );
+        return container.querySelector<HTMLElement>(
+          ".sb-reader-swipe-panel-current"
+        )!;
+      })();
+      act(() => {
+        scroller.scrollTop = 200;
+        scroller.dispatchEvent(new Event("scroll"));
+      });
+      expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
+        true
+      );
+
+      act(() => state.playlists.selectEditorStep(-1));
+
+      expect(document.body.classList.contains("sb-scroll-hide-bars")).toBe(
+        false
+      );
+    });
+  });
+
+  describe("the phone layout's reach", () => {
+    const originalWidth = window.innerWidth;
+    afterEach(() => {
+      window.innerWidth = originalWidth;
+      act(() => state.app.applyViewport());
+    });
+
+    it.each([
+      [600, true],
+      [768, true],
+      [769, false],
+    ])("at %ipx wide, uses the phone layout: %s", (width, phoneLayout) => {
+      window.innerWidth = width;
+      act(() => state.app.applyViewport());
+
+      openWorkspace(STEPS, -1, state.app.isCompactPlaylistEditor.value);
+
+      expect(state.app.isCompactPlaylistEditor.value).toBe(phoneLayout);
+      // The phone layout lists the steps in the reader's place, with no
+      // side pane beside it.
+      expect(
+        state.panes.panes.value.some((pane) => pane.id === "discover-pane")
+      ).toBe(!phoneLayout);
+      expect(!!container.querySelector(".sb-pe-list-page")).toBe(phoneLayout);
+    });
+  });
+
+  describe("toolbar", () => {
+    it("sets the open step's reading time", () => {
+      openWorkspace(STEPS, 0);
+
+      click(container.querySelector('[aria-label="More time"]'));
+      click(container.querySelector('[aria-label="More time"]'));
+
+      expect(items()[0]).toMatchObject({ minutes: 3 });
+
+      click(container.querySelector('[aria-label="Less time"]'));
+      expect(items()[0]).toMatchObject({ minutes: 2 });
+    });
+
+    // Neither does anything yet, so neither is offered.
+    it.each([
+      ["a phone", true],
+      ["desktop", false],
+    ] as const)(
+      "doesn't offer Pause for group or Leader only on %s",
+      (_layout, compact) => {
+        openWorkspace(STEPS, 0, compact);
+        if (compact) {
+          act(() => {
+            state.playlists.editorStepSettingsOpen.value = true;
+          });
+        }
+
+        expect(
+          container.querySelector('[aria-label="More time"]')
+        ).not.toBeNull();
+        expect(container.textContent).not.toContain("Pause for group");
+        expect(container.textContent).not.toContain("Leader only");
+      }
+    );
+
+    it("won't go below one minute", () => {
+      openWorkspace(STEPS, 0);
+
+      expect(
+        (
+          container.querySelector(
+            '[aria-label="Less time"]'
+          ) as HTMLButtonElement
+        ).disabled
+      ).toBe(true);
+    });
+  });
+
+  it("has no Edit/Preview switch or note box over a desktop scripture step, leaving the note to the toolbar", () => {
+    openDesktopEditor(STEPS, 0);
+
+    expect(container.querySelector(".sb-pe-workspace")).not.toBeNull();
+    expect(container.textContent).not.toContain("Preview");
+    expect(container.querySelector(".sb-pe-workspace .tiptap")).toBeNull();
+    expect(container.querySelector("[contenteditable]")).toBeNull();
+  });
+
+  describe("saving", () => {
+    it("won't save while a step is unfinished, and links to it", () => {
+      const recordData = vi.spyOn(state.os, "recordData");
+      openDesktopEditor(STEPS, 0);
+      // A new video step has no link until one is typed in.
+      act(() => state.playlists.addEditorStep("video", 2));
+      act(() => state.playlists.selectEditorStep(0));
+
+      click(byText(container, ".sb-pe-publish", "Save & Publish"));
+      click(byText(document.body, ".sb-pe-review-problems button", "Step 4"));
+
+      expect(state.playlists.editorStepIndex.value).toBe(3);
+      expect(recordData).not.toHaveBeenCalled();
+    });
+
+    it("saves the playlist and leaves the editor", async () => {
+      const recordData = vi
+        .spyOn(state.os, "recordData")
+        .mockResolvedValue(undefined as never);
+      openDesktopEditor(STEPS, 0);
+      expect(
+        container.querySelector(".sb-pe-panel-footer .sb-pe-publish")
+          ?.textContent
+      ).toBe("Save & Publish");
+      act(() => {
+        state.playlists.updateEditingPlaylistMetadata({ title: "Light" });
+      });
+
+      click(byText(container, ".sb-pe-publish", "Save & Publish"));
+
+      await waitFor(() => state.playlists.editingPlaylist.value === null);
+      const saved = recordData.mock.calls[0]![2] as Playlist;
+      expect(saved.title).toBe("Light");
+      expect(saved.items).toEqual(STEPS);
+    });
+
+    it("says so and keeps the draft when saving fails", async () => {
+      vi.spyOn(state.os, "recordData").mockRejectedValue(new Error("offline"));
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      const toast = vi.spyOn(state.app, "toast");
+      openDesktopEditor(STEPS, 0);
+
+      click(byText(container, ".sb-pe-publish", "Save & Publish"));
+
+      await waitFor(() => toast.mock.calls.length > 0);
+      expect(toast).toHaveBeenCalledWith(
+        "The playlist couldn't be saved. Try again."
+      );
+      expect(state.playlists.editingPlaylist.value).not.toBeNull();
+    });
+  });
+});
+
+describe("a scripture step's note sheet (phone)", () => {
+  let container: HTMLDivElement;
+  let state: SeedBibleState;
+
+  beforeEach(async () => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    jsdom.reconfigure({
+      url: "https://example.com/en/bible/BSB/GEN/1?useFreeBibleAPI=true",
+    });
+    state = await createTestSeedBibleState();
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  const openSheet = (item: Playlist["items"][number]) => {
+    act(() => {
+      state.playlists.editPlaylist(makePlaylist([item]));
+      state.playlists.selectEditorStep(0);
+    });
+    const Sheet = () => {
+      const current = state.playlists.editingPlaylist.value?.items[0];
+      return current?.type === "bible-verse" ? (
+        <PlaylistStepNoteSheet
+          state={state}
+          index={0}
+          item={current}
+          resolveBookName={(bookId) => (bookId === "GEN" ? "Genesis" : bookId)}
+        />
+      ) : null;
+    };
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sheet />
+        </TestHost>,
+        container
+      );
+    });
+  };
+  const header = () =>
+    container.querySelector(".sb-scripture-note-sheet-header")!;
+  const item = () => state.playlists.editingPlaylist.value!.items[0]!;
+
+  it("offers to add a note when there's none, and opens to write one", () => {
+    openSheet({ type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } });
+
+    expect(header().textContent).toContain("Add note");
+    expect(container.querySelector(".sb-pe-note-sheet-body")).toBeNull();
+
+    click(header());
+
+    const title = container.querySelector<HTMLInputElement>(
+      "#sb-pe-note-sheet-title"
+    );
+    expect(title).not.toBeNull();
+    type(title, "In the beginning");
+    expect(item()).toMatchObject({ noteTitle: "In the beginning" });
+    // Nothing to remove until there's a note.
+    expect(header().textContent).toContain("In the beginning");
+  });
+
+  it("writes the note in TipTap with its formatting toolbar, and no Insert row", async () => {
+    openSheet({ type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } });
+    click(header());
+
+    // TipTap loads lazily.
+    await act(async () => {
+      await waitFor(
+        () => !!container.querySelector(".sb-editor-toolbar"),
+        2000
+      );
+    });
+
+    expect(
+      [...container.querySelectorAll(".sb-editor-toolbar button")].map((b) =>
+        b.getAttribute("aria-label")
+      )
+    ).toEqual([
+      "Bold",
+      "Italic",
+      "Underline",
+      "Align left",
+      "Align center",
+      "Align right",
+      "Justify",
+    ]);
+    expect(container.querySelector(".sb-pe-insert")).toBeNull();
+  });
+
+  it("shows a note the way playback does, and Remove note clears it", () => {
+    openSheet({
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 1 },
+      noteTitle: "Light",
+      note: "<p>God speaks.</p>",
+    });
+
+    expect(header().textContent).toContain("Genesis 1");
+    expect(header().textContent).toContain("Light");
+
+    click(header());
+    click(container.querySelector(".sb-pe-note-remove"));
+
+    expect(item()).toEqual({
+      type: "bible-verse",
+      ref: { bookId: "GEN", chapter: 1 },
+    });
+    expect(header().textContent).toContain("Add note");
+    expect(container.querySelector(".sb-pe-note-sheet-body")).toBeNull();
+  });
+});
+
+describe("a link to another step in a note", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  it("goes to that step instead of following the link", async () => {
+    const onStepClick = vi.fn();
+    act(() => {
+      render(
+        <PlaylistHtmlContent
+          html='<p>See <a href="#playlist-step-3">step 3</a></p>'
+          onStepClick={onStepClick}
+        />,
+        container
+      );
+    });
+    await waitFor(() => !!container.querySelector("a"));
+
+    const event = new MouseEvent("click", { bubbles: true, cancelable: true });
+    act(() => {
+      container.querySelector("a")!.dispatchEvent(event);
+    });
+
+    expect(onStepClick).toHaveBeenCalledWith(2);
+    expect(event.defaultPrevented).toBe(true);
+  });
+});

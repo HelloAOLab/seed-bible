@@ -1274,5 +1274,19 @@
   "loading-translations": "Notiek tulkojumu ielāde…",
   "translations-load-failed": "Nevarēja ielādēt pilnu tulkojumu sarakstu, tāpēc daži var trūkt.",
   "verse-of-the-day": "DIENAS PANTS",
-  "verse-of-the-day-loading": "Notiek dienas panta ielāde…"
+  "verse-of-the-day-loading": "Notiek dienas panta ielāde…",
+  "delete-bookmark-confirm-title": "Vai dzēst grāmatzīmi?",
+  "delete-bookmark-confirm-message": "Dzēst \" {{name}} \"?",
+  "scripture-font": "Svēto Rakstu fonts",
+  "ai-limits-title": "Pirms tērzēšanas ar mākslīgo intelektu",
+  "ai-limits-intro": "Mākslīgais intelekts var būt noderīgs sākumpunkts, taču paturiet prātā tā ierobežojumus:",
+  "ai-limits-mistakes": "Tas pieļauj kļūdas un var izklausīties pārliecināts, kad kļūdās.",
+  "ai-limits-agreeable": "Tas mēdz pateikt to, ko vēlaties dzirdēt, un sliecas uz populārām atbildēm.",
+  "ai-limits-scripture": "Tas nav uzticams avots. Salīdziniet tajā teikto ar Svētajiem Rakstiem.",
+  "ai-limits-study": "Studējiet Bībeli paši un neļaujiet mākslīgajam intelektam domāt jūsu vietā.",
+  "ai-limits-confirm": "Es saprotu, ka mākslīgais intelekts var pieļaut kļūdas un neaizstāj Bībeles studēšanu pašam.",
+  "friends-playlists-filter": "Draugu atskaņošanas saraksti",
+  "friend-link-social-title": "Pievienot {{name}} kā draugu",
+  "friend-link-meta-description": "{{name}} vēlas būt tavs draugs vietnē {{brand}}",
+  "friend-link-title": "Pievienot lietotāju {{name}} kā draugu vietnē {{brand}}"
 }

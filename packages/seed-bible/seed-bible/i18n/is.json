@@ -1274,5 +1274,19 @@
   "loading-translations": "Hleður inn þýðingum…",
   "translations-load-failed": "Ekki tókst að hlaða inn öllum þýðingunum, svo sumar gætu vantað.",
   "verse-of-the-day": "VERS DAGSINS",
-  "verse-of-the-day-loading": "Hleður inn vers dagsins…"
+  "verse-of-the-day-loading": "Hleður inn vers dagsins…",
+  "delete-bookmark-confirm-title": "Eyða bókamerki?",
+  "delete-bookmark-confirm-message": "Eyða „ {{name}} “?",
+  "scripture-font": "Leturgerð ritningarinnar",
+  "ai-limits-title": "Áður en þú spjallar við gervigreind",
+  "ai-limits-intro": "Gervigreind getur verið gagnlegur upphafspunktur, en hafðu takmörk hennar í huga:",
+  "ai-limits-mistakes": "Það gerir mistök og getur hljómað sjálfstraust þegar það hefur rangt fyrir sér.",
+  "ai-limits-agreeable": "Það hefur tilhneigingu til að segja þér það sem þú vilt heyra og hallar sér að vinsælum svörum.",
+  "ai-limits-scripture": "Þetta er ekki áreiðanleg heimild. Athugaðu hvað þar stendur gagnvart Ritningunni.",
+  "ai-limits-study": "Lærðu Biblíuna sjálfur og láttu ekki gervigreind hugsa fyrir þig.",
+  "ai-limits-confirm": "Ég skil að gervigreind getur gert mistök og kemur ekki í staðinn fyrir að læra Biblíuna sjálfur.",
+  "friends-playlists-filter": "Lagalistar vina",
+  "friend-link-social-title": "Bæta við {{name}} sem vini",
+  "friend-link-meta-description": "{{name}} vill vera vinur þinn á {{brand}}",
+  "friend-link-title": "Bæta við {{name}} sem vini á {{brand}}"
 }

@@ -2,6 +2,7 @@ import { useManager } from "./context";
 import { fmtRef, highlightVerse } from "@seed-bible/transcription/highlight";
 import { type SeedBibleState } from "seed-bible";
 import type { OutputSegment } from "@seed-bible/transcription/types";
+import { Button } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 export function LivePanel() {
   const context = useManager();
@@ -20,12 +21,12 @@ export function LivePanel() {
     <section class="ts_picker">
       <div class="ts_live__bar">
         {(idle || connecting) && (
-          <button
-            class="ts_btn ts_btn--primary"
+          <Button
+            variant="primary"
+            icon="mic"
             disabled={connecting}
             onClick={() => tm.startLive()}
           >
-            <span class="material-symbols-outlined">mic</span>
             {connecting
               ? t("Connecting", {
                   ns: "ext_AI_Transcript_UI",
@@ -40,7 +41,7 @@ export function LivePanel() {
                     ns: "ext_AI_Transcript_UI",
                     defaultValue: "Start recording",
                   })}
-          </button>
+          </Button>
         )}
 
         {recording && (
@@ -53,13 +54,9 @@ export function LivePanel() {
               })}
             </span>
             <span class="ts_picker__spacer" />
-            <button
-              class="ts_btn ts_btn--primary"
-              onClick={() => tm.stopLive()}
-            >
-              <span class="material-symbols-outlined">stop</span>
+            <Button variant="primary" icon="stop" onClick={() => tm.stopLive()}>
               {t("Stop", { ns: "ext_AI_Transcript_UI", defaultValue: "Stop" })}
-            </button>
+            </Button>
           </>
         )}
 

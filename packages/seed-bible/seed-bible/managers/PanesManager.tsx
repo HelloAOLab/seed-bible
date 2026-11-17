@@ -1,5 +1,6 @@
 import { signal, type ReadonlySignal, type Signal } from "@preact/signals";
 import type { ComponentChild } from "preact";
+import type { CloseButtonLook } from "../components/CloseButton/CloseButton";
 
 /**
  * Placement mode for a pane. Chosen at creation time and immutable
@@ -49,6 +50,11 @@ export interface Pane {
    */
   header?: () => ComponentChild;
   /**
+   * The header close button's look: `plain` (the default) or `tinted`, for a
+   * pane whose other header buttons sit on tinted circles.
+   */
+  closeButtonLook?: CloseButtonLook;
+  /**
    * Optional callback invoked once when the pane closes, by any path: the
    * header's close (X) button, a programmatic `closePane`/`closeAll`/
    * `closeFullscreenPanes`, or displacement when another pane opens. Receives
@@ -83,6 +89,8 @@ export interface Pane {
   height: number;
   /** Whether the built-in header bar is shown. See PaneOpenOptions.showHeader. */
   showHeader: boolean;
+  /** Extra class on a side pane's shell. See PaneOpenOptions.shellClassName. */
+  shellClassName?: string;
 }
 
 export interface PaneOpenOptions {
@@ -114,6 +122,11 @@ export interface PaneOpenOptions {
    * hooks (i18n, signals). Omit for a plain title-and-close header.
    */
   header?: () => ComponentChild;
+  /**
+   * The header close button's look: `plain` (the default) or `tinted`, for a
+   * pane whose other header buttons sit on tinted circles.
+   */
+  closeButtonLook?: CloseButtonLook;
   /**
    * Optional callback invoked once when the pane closes, by any path: the
    * header's close (X) button, a programmatic `closePane`/`closeAll`/
@@ -152,6 +165,11 @@ export interface PaneOpenOptions {
    * provide its own way to close.
    */
   showHeader?: boolean;
+  /**
+   * Extra class for a docked side pane's shell, for a pane whose content
+   * calls for a different frame (the playlist editor's floating card, say).
+   */
+  shellClassName?: string;
   /**
    * When true, opening (or reusing) this pane closes every other pane —
    * including fullscreen ones — so it is the only pane left open, the same
@@ -327,9 +345,11 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
           icon: options.icon,
           leading: options.leading,
           header: options.header,
+          closeButtonLook: options.closeButtonLook,
           onClose: options.onClose,
           confirmClose: options.confirmClose,
           showHeader: options.showHeader ?? true,
+          shellClassName: options.shellClassName,
         };
         syncPaneState(
           closesOthers

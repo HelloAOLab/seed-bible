@@ -1274,5 +1274,19 @@
   "loading-translations": "ትርጉማት ኣብ ምጽዓን...",
   "translations-load-failed": "ምሉእ ዝርዝር ትርጉማት ክጽዕን ስለዘይከኣለ፡ ገሊኡ ክጎድል ይኽእል እዩ።",
   "verse-of-the-day": "ጥቕሲ ናይቲ መዓልቲ",
-  "verse-of-the-day-loading": "ጥቕሲ ናይቲ መዓልቲ ኣብ ምጽዓን..."
+  "verse-of-the-day-loading": "ጥቕሲ ናይቲ መዓልቲ ኣብ ምጽዓን...",
+  "delete-bookmark-confirm-title": "ዕልባት ምድምሳስ?",
+  "delete-bookmark-confirm-message": "\" {{name}} \" ምድምሳስ?",
+  "scripture-font": "ቅዱሳት መጻሕፍቲ ቅርጺ",
+  "ai-limits-title": "ቅድሚ ምስ AI ምዝርራብካ",
+  "ai-limits-intro": "AI ሓጋዚ መበገሲ ክኸውን ይኽእል እዩ፣ ግን ደረቱ ኣብ ግምት ኣእትው፤",
+  "ai-limits-mistakes": "ጌጋታት ይገብር፣ ጌጋ ኣብ ዝኾነሉ እዋን ድማ ርእሰ ተኣማንነት ዘለዎ ክስማዕ ይኽእል።",
+  "ai-limits-agreeable": "ክትሰምዖ እትደሊ ክነግረካ ዝፍትን ኮይኑ፡ ናብ ህቡብ መልስታት ይጽጋዕ።",
+  "ai-limits-scripture": "ዘተኣማምን ምንጪ ኣይኮነን። እንታይ ከም ዝብል ኣንጻር ቅዱሳት መጻሕፍቲ መርምሩ።",
+  "ai-limits-study": "መጽሓፍ ቅዱስ ንባዕልኻ ኣጽንዕ፡ AI ድማ ኣተሓሳስባኻ ክገብረልካ ኣይትፍቀደሉ።",
+  "ai-limits-confirm": "AI ክጋገ ከም ዝኽእልን ንባዕለይ መጽሓፍ ቅዱስ ምጽናዕ መተካእታ ከም ዘይኮነን ይርዳኣኒ።",
+  "friends-playlists-filter": "ናይ ፈተውቲ ዝርዝር ደርፍታት",
+  "friend-link-social-title": "{{name}} ከም ዓርኪ ወስኸሉ።",
+  "friend-link-meta-description": "{{name}} ኣብ {{brand}} ዓርክኻ ክኸውን ይደሊ።",
+  "friend-link-title": "{{name}} ከም ዓርኪ ኣብ {{brand}} ወስኽ።"
 }

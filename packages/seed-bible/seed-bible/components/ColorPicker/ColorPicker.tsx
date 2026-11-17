@@ -5,6 +5,7 @@ import { createPortal } from "preact/compat";
 import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import { hexToHsv, hsvToHex, normalizeHex, parseHex, type Hsv } from "./color";
+import { Button } from "../Button/Button";
 
 /** Matches `MOBILE_BREAKPOINT` without importing the state manager. */
 const NARROW_VIEWPORT_PX = 480;
@@ -446,8 +447,8 @@ export function ColorPicker(props: ColorPickerProps) {
               </div>
 
               <div className="sb-color-picker-actions">
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
                   className="sb-color-picker-cancel"
                   onClick={(event) => {
                     event.preventDefault();
@@ -456,9 +457,9 @@ export function ColorPicker(props: ColorPickerProps) {
                   }}
                 >
                   {t("cancel", { defaultValue: "Cancel" })}
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="primary"
                   className="sb-color-picker-confirm"
                   onClick={(event) => {
                     event.preventDefault();
@@ -467,7 +468,7 @@ export function ColorPicker(props: ColorPickerProps) {
                   }}
                 >
                   {t("confirm", { defaultValue: "Confirm" })}
-                </button>
+                </Button>
               </div>
             </div>
           </div>,

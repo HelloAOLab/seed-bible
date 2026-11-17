@@ -480,11 +480,15 @@ function customization(id: string, name: string): SeedBibleCustomization {
   } as unknown as SeedBibleCustomization;
 }
 
-function photo(id: string): GalleryPhoto {
+function photo(
+  id: string,
+  overrides: Partial<GalleryPhoto> = {}
+): GalleryPhoto {
   return {
     id,
     url: `https://example.com/${id}.jpg`,
     createdAtMs: 1_762_041_600_000,
+    ...overrides,
   };
 }
 
@@ -1212,7 +1216,26 @@ describe("YourContentPane", () => {
       expect(sectionTitles()).not.toContain("Images");
     });
 
-    it("previews the first few images, in gallery order, until See all", () => {
+    it("orders images by upload date, not by when they were last used", () => {
+      // The gallery lists most recently used first, so a cover picked again
+      // today comes first there, even though it was uploaded first.
+      const { state } = createState({
+        photos: [
+          photo("oldest-reused", { createdAtMs: 1_000, lastUsedAtMs: 9_000 }),
+          photo("newest", { createdAtMs: 3_000, lastUsedAtMs: 3_000 }),
+          photo("middle", { createdAtMs: 2_000 }),
+        ],
+      });
+      renderPane(state);
+
+      expect(tileSrcs()).toEqual([
+        "https://example.com/newest.jpg",
+        "https://example.com/middle.jpg",
+        "https://example.com/oldest-reused.jpg",
+      ]);
+    });
+
+    it("previews the first few images until See all", () => {
       const { state, filter } = createState({
         photos: [photo("i1"), photo("i2"), photo("i3"), photo("i4")],
       });
@@ -1741,7 +1764,9 @@ describe("YourContentPane", () => {
     const create = container.querySelector(".sb-content-create");
     const chips = container.querySelector(".sb-content-chips");
     if (!create || !chips) throw new Error("The toolbar did not render.");
-    expect(create.textContent).toBe("+ Create");
+    expect(create.querySelector(".sb-button-label")?.textContent).toBe(
+      "Create"
+    );
     expect(
       create.compareDocumentPosition(chips) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();

@@ -19,7 +19,7 @@
   position: relative;
   height: min(65dvh, 30rem);
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
 }
 
 .sb-geojson-map-canvas {
@@ -86,9 +86,9 @@
   border: none;
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
-  box-shadow: 0 1px 4px var(--sb-shadow-color);
+  box-shadow: var(--sb-shadow-raised);
 }
 
 .sb-geojson-map .sb-geojson-map-label::before {
@@ -126,7 +126,7 @@
 .sb-geojson-map .leaflet-container .leaflet-control-attribution {
   background: color-mix(in srgb, var(--sb-reader-background), transparent 15%);
   color: var(--sb-primary-color);
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
 }
 
 .sb-geojson-map .leaflet-container .leaflet-control-attribution a {
@@ -150,9 +150,10 @@
   justify-content: center;
   padding: 4px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--sb-radius-xs);
   background: color-mix(in srgb, var(--sb-reader-background), transparent 10%);
   color: var(--sb-primary-color);
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 1.125rem;
   cursor: pointer;
 }
@@ -183,13 +184,13 @@
   text-align: center;
   background: var(--sb-reader-background);
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-geojson-map-retry {
   padding: 0.25rem 0.75rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   background: none;
   color: var(--sb-primary-color);
   font: inherit;

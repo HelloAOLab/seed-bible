@@ -1,8 +1,7 @@
 import "./DiscoverPane.css";
 import "./DiscoverPanelHeader.css";
 import type { ComponentChild, ComponentChildren } from "preact";
-import { useI18n } from "../../i18n/I18nManager";
-import { MaterialIcon } from "../icons";
+import { CloseButton } from "../CloseButton/CloseButton";
 
 interface DiscoverPanelHeaderProps {
   title: ComponentChild;
@@ -20,23 +19,16 @@ interface DiscoverPanelHeaderProps {
  */
 export function DiscoverPanelHeader(props: DiscoverPanelHeaderProps) {
   const { title, actions, onClose } = props;
-  const { t } = useI18n();
-
   return (
     <div className="sb-discover-panel-header">
       <div className="sb-discover-panel-header-title">{title}</div>
       <div className="sb-discover-panel-header-actions">
         {actions}
         {onClose && (
-          <button
-            type="button"
+          <CloseButton
             className="sb-discover-panel-header-close"
-            aria-label={t("close", { defaultValue: "Close" })}
-            title={t("close", { defaultValue: "Close" })}
-            onClick={onClose}
-          >
-            <MaterialIcon>close</MaterialIcon>
-          </button>
+            onClose={onClose}
+          />
         )}
       </div>
     </div>

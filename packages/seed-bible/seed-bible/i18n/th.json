@@ -1274,5 +1274,19 @@
   "loading-translations": "กำลังโหลดคำแปล…",
   "translations-load-failed": "ไม่สามารถโหลดรายการคำแปลทั้งหมดได้ ดังนั้นบางคำแปลอาจหายไป",
   "verse-of-the-day": "ข้อพระคัมภีร์ประจำวัน",
-  "verse-of-the-day-loading": "กำลังโหลดข้อความประจำวัน..."
+  "verse-of-the-day-loading": "กำลังโหลดข้อความประจำวัน...",
+  "delete-bookmark-confirm-title": "ลบที่คั่นหน้า?",
+  "delete-bookmark-confirm-message": "ลบ \" {{name}} \"?",
+  "scripture-font": "แบบอักษรพระคัมภีร์",
+  "ai-limits-title": "ก่อนที่คุณจะสนทนากับ AI",
+  "ai-limits-intro": "AI อาจเป็นจุดเริ่มต้นที่เป็นประโยชน์ แต่ควรคำนึงถึงข้อจำกัดของมันด้วย:",
+  "ai-limits-mistakes": "มันทำผิดพลาดได้ และอาจฟังดูมั่นใจแม้ในขณะที่ทำผิด",
+  "ai-limits-agreeable": "มันมักจะบอกสิ่งที่คุณอยากได้ยิน และโน้มเอียงไปทางคำตอบที่เป็นที่นิยม",
+  "ai-limits-scripture": "แหล่งข้อมูลนี้ไม่น่าเชื่อถือ ตรวจสอบว่าข้อมูลนี้ขัดแย้งกับพระคัมภีร์หรือไม่",
+  "ai-limits-study": "ศึกษาพระคัมภีร์ด้วยตนเอง อย่าปล่อยให้ปัญญาประดิษฐ์ (AI) คิดแทนคุณ",
+  "ai-limits-confirm": "ฉันเข้าใจว่า AI อาจทำผิดพลาดได้ และไม่สามารถทดแทนการศึกษาพระคัมภีร์ด้วยตนเองได้",
+  "friends-playlists-filter": "เพลย์ลิสต์ของเพื่อนๆ",
+  "friend-link-social-title": "เพิ่ม {{name}} เป็นเพื่อน",
+  "friend-link-meta-description": "{{name}} อยากเป็นเพื่อนกับคุณบน {{brand}}",
+  "friend-link-title": "เพิ่ม {{name}} เป็นเพื่อนใน {{brand}}"
 }

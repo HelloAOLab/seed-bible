@@ -1274,5 +1274,19 @@
   "loading-translations": "ترجمے لوڈ ہو رہے ہیں…",
   "translations-load-failed": "تراجم کی مکمل فہرست لوڈ نہیں کی جا سکی، اس لیے کچھ غائب ہو سکتے ہیں۔",
   "verse-of-the-day": "دن کی آیت",
-  "verse-of-the-day-loading": "دن کی آیت لوڈ ہو رہی ہے…"
+  "verse-of-the-day-loading": "دن کی آیت لوڈ ہو رہی ہے…",
+  "delete-bookmark-confirm-title": "بک مارک حذف کریں؟",
+  "delete-bookmark-confirm-message": "\" {{name}} \" کو حذف کریں؟",
+  "scripture-font": "کلام کا فونٹ",
+  "ai-limits-title": "اس سے پہلے کہ آپ AI کے ساتھ چیٹ کریں۔",
+  "ai-limits-intro": "AI ایک مددگار نقطہ آغاز ہو سکتا ہے، لیکن اس کی حدود کو ذہن میں رکھیں:",
+  "ai-limits-mistakes": "یہ غلطیاں کرتا ہے، اور جب یہ غلط ہوتا ہے تو اعتماد محسوس کر سکتا ہے۔",
+  "ai-limits-agreeable": "یہ آپ کو بتاتا ہے کہ آپ کیا سننا چاہتے ہیں، اور مقبول جوابات کی طرف جھکاؤ رکھتے ہیں۔",
+  "ai-limits-scripture": "یہ کوئی قابل اعتماد ذریعہ نہیں ہے۔ چیک کریں کہ یہ کلام کے خلاف کیا کہتا ہے۔",
+  "ai-limits-study": "اپنے لیے بائبل کا مطالعہ کریں، اور AI کو آپ کے لیے اپنی سوچ کرنے نہ دیں۔",
+  "ai-limits-confirm": "میں سمجھتا ہوں کہ AI غلطیاں کر سکتا ہے اور یہ خود بائبل کا مطالعہ کرنے کا متبادل نہیں ہے۔",
+  "friends-playlists-filter": "دوستوں کی پلے لسٹ",
+  "friend-link-social-title": "{{name}} کو بطور دوست شامل کریں۔",
+  "friend-link-meta-description": "{{name}} {{brand}} پر آپ کا دوست بننا چاہتا ہے",
+  "friend-link-title": "{{name}} کو {{brand}} پر بطور دوست شامل کریں"
 }

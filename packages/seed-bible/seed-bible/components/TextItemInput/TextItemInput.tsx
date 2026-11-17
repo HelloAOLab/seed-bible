@@ -5,6 +5,7 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import { sanitize } from "../../managers/Sanitization";
 import type { Editor } from "@tiptap/core";
+import { Button } from "../Button/Button";
 
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
 // actually opens the text editor; Suspense shows a placeholder meanwhile.
@@ -129,15 +130,15 @@ export const TextItemInput = forwardRef<
             onEmptyChange={setEditorEmpty}
           />
         </Suspense>
-        <button
-          type="button"
+        <Button
+          variant="primary"
           className="sb-settings-save-button"
           onClick={handleAdd}
           disabled={editorEmpty}
         >
           {submitLabel ??
             t("playlist-add-button", { defaultValue: "Add item" })}
-        </button>
+        </Button>
       </div>
     </>
   );
