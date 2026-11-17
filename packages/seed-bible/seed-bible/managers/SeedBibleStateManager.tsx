@@ -3527,16 +3527,20 @@ export function createSeedBibleState(
   });
 
   const handleOpenDiscover = () => {
-    if (!playlists.view.peek()) {
-      playlists.view.value = playlists.playing.peek()
-        ? "play_playlist"
-        : "discover";
-    } else {
-      playlists.view.value = null;
-    }
+    annotations.runAfterLeavingAnnotationEditor(() => {
+      if (!playlists.view.peek()) {
+        playlists.view.value = playlists.playing.peek()
+          ? "play_playlist"
+          : "discover";
+      } else {
+        playlists.view.value = null;
+      }
+    });
   };
   const handleCloseDiscover = () => {
-    playlists.view.value = null;
+    annotations.runAfterLeavingAnnotationEditor(() => {
+      playlists.view.value = null;
+    });
   };
 
   effect(() => {

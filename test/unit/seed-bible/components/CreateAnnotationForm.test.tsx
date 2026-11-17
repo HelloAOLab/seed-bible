@@ -1,4 +1,5 @@
 import { render } from "preact";
+import { useEffect } from "preact/hooks";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { CreateAnnotationForm } from "@packages/seed-bible/seed-bible/components/CreateAnnotationForm/CreateAnnotationForm";
@@ -67,7 +68,16 @@ vi.mock(
           getHTML: () => "<p>Great verse</p>",
         };
       }
-      props.onEditor(fakeEditor);
+      // Mirror TipTapEditor and PlainTextAnnotationEditor: report the editor
+      // instance from an effect, not synchronously during render.
+      const editor = fakeEditor;
+      const onEditor = props.onEditor;
+      useEffect(() => {
+        onEditor(editor);
+        return () => {
+          onEditor(null as unknown as NonNullable<typeof fakeEditor>);
+        };
+      }, []);
       return <div className="stub-tiptap-editor" />;
     },
   })
@@ -344,6 +354,52 @@ describe("CreateAnnotationForm", () => {
       render(null, container);
     });
     expect(setAnnotationEditorDirtyCheck).toHaveBeenLastCalledWith(null);
+  });
+
+  it("detects typing as dirty on a second open, after the editor code is already loaded", async () => {
+    // First open: lazily loads the editor; baseline seeds from onEditor.
+    const { annotations, setAnnotationEditorDirtyCheck } =
+      createMockAnnotationsManager(
+        createAnnotation({
+          id: "ann-first",
+          data: { type: "comment", html: "" },
+        })
+      );
+    const tabs = createMockTabsManager();
+
+    await act(async () => {
+      render(
+        <CreateAnnotationForm
+          onClose={vi.fn()}
+          annotations={annotations}
+          tabs={tabs}
+          toast={vi.fn()}
+        />,
+        container
+      );
+      await flushLazyLoad();
+    });
+
+    // Switch to a second note — editor code is already loaded, so the editor
+    // mounts immediately and its effect runs before the form's effect.
+    annotations.editingAnnotation.value = createAnnotation({
+      id: "ann-second",
+      data: { type: "comment", html: "" },
+    });
+    await act(async () => {
+      await flushLazyLoad();
+    });
+
+    const check = setAnnotationEditorDirtyCheck.mock.calls
+      .filter((call) => typeof call[0] === "function")
+      .at(-1)?.[0];
+    expect(typeof check).toBe("function");
+    // Fresh note: untouched editor should report clean.
+    expect(check!()).toBe(false);
+    // User types something into the second note.
+    fakeEditor!.getHTML = () => "<p>Draft on second note</p>";
+    // Must report dirty — this was broken before the fix.
+    expect(check!()).toBe(true);
   });
 
   it("disables Save while the editor is empty, and enables it once typed", async () => {

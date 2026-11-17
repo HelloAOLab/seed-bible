@@ -335,15 +335,26 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
       onClick={(e: MouseEvent) => {
         e.stopPropagation();
         if (firstAnnotatedVerse === null || !bookId || !chapterNumber) {
-          state.app.openDiscover();
+          // No verse to scroll to: toggle Discover open, guarded so an open
+          // editor gets a chance to save before the view changes.
+          state.annotations.runAfterLeavingAnnotationEditor(() => {
+            state.app.openDiscover();
+          });
+          return;
+        }
+        if (state.settings.settings.value.discoveredContent.showContent) {
+          // Inline panel: no view change, so no note is at risk.
+          state.discover.scrollToVerse.value = {
+            bookId,
+            chapterNumber,
+            verseNumber: firstAnnotatedVerse,
+          };
           return;
         }
         // Don't yank Discover off an unsaved note — ask first, then show
         // the notes list (and scroll) once the editor is clear.
         state.annotations.runAfterLeavingAnnotationEditor(() => {
-          if (!state.settings.settings.value.discoveredContent.showContent) {
-            state.discover.view.value = "discover";
-          }
+          state.discover.view.value = "discover";
           state.discover.scrollToVerse.value = {
             bookId,
             chapterNumber,
@@ -3333,18 +3344,23 @@ export function BibleReader(props: BibleReaderProps) {
       return;
     }
 
+    if (state.settings.settings.value.discoveredContent.showContent) {
+      // Inline panel: no view change, so no note is at risk.
+      readingState.discoverContentPanelInline.value = true;
+      state.discover.scrollToVerse.value = {
+        bookId: verse.bookId,
+        chapterNumber: verse.chapterNumber,
+        verseNumber,
+      };
+      return;
+    }
+
     // Switching Discover to the notes list unmounts the annotation editor.
     // Ask before discarding typed text; once clear, open/scroll as usual.
     state.annotations.runAfterLeavingAnnotationEditor(() => {
-      if (state.settings.settings.value.discoveredContent.showContent) {
-        readingState.discoverContentPanelInline.value = true;
-      } else {
-        state.discover.view.value = "discover";
-      }
-
-      // AnnotationsSection's shared effect reacts to this target either way —
-      // scrolling to and highlighting the note's group — whether it's mounted
-      // in this tab's compact panel or the toolbar-toggled Discover pane.
+      state.discover.view.value = "discover";
+      // AnnotationsSection's shared effect reacts to this target —
+      // scrolling to and highlighting the note's group.
       state.discover.scrollToVerse.value = {
         bookId: verse.bookId,
         chapterNumber: verse.chapterNumber,

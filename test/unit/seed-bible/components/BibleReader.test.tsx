@@ -498,6 +498,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       getAnnotationsForChapter: vi.fn(() => signal([])),
       visibleAnnotationsForChapter: vi.fn(() => []),
       pendingCountForChapter: vi.fn(() => 0),
+      runAfterLeavingAnnotationEditor: vi.fn((cb: () => void) => cb()),
       sync: {
         pendingCount: signal(0),
       },
@@ -2914,6 +2915,7 @@ describe("BibleReader", () => {
         getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
         pendingCountForChapter: vi.fn(() => 0),
         visibleAnnotationsForChapter: vi.fn(() => chapterAnnotations.value),
+        runAfterLeavingAnnotationEditor: vi.fn((cb: () => void) => cb()),
       },
     } as any as SeedBibleState;
   }

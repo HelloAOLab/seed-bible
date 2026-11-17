@@ -144,7 +144,6 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
       annotations.setAnnotationEditorDirtyCheck(null);
       return;
     }
-    baselineHtmlRef.current = null;
     annotations.setAnnotationEditorDirtyCheck(() => {
       const editor = editorRef.current;
       if (!editor) {
@@ -250,14 +249,13 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
         }
       >
         <EditorComponent
+          key={editing.id}
           className="sb-settings-text-input sb-annotation-editor"
           initialContent={editing.data.html}
           autofocus="end"
           onEditor={(editor) => {
             editorRef.current = editor;
-            if (editor && baselineHtmlRef.current === null) {
-              baselineHtmlRef.current = editor.getHTML();
-            }
+            baselineHtmlRef.current = editor ? editor.getHTML() : null;
           }}
           onEmptyChange={setEditorEmpty}
           onModEnter={() => {
