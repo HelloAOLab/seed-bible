@@ -156,7 +156,7 @@ describe.each(ENTRIES)("$name", ({ file, reaches }) => {
 });
 
 describe("seed-bible/components", () => {
-  // The app's global utility classes (`sr-only`, `flex-between`, ...) live
+  // The app's global utility classes (`flex-between`, `flex-col`, ...) live
   // in a stylesheet only the app loads, so a sandboxed frame never gets them.
   // A shared component using one looks right in the app and broken in an
   // extension: it needs a rule of its own in its own CSS file.
@@ -205,7 +205,7 @@ describe("seed-bible/components", () => {
     }
 
     expect(utilityClasses).toEqual(
-      expect.arrayContaining(["sr-only", "flex-between"])
+      expect.arrayContaining(["flex-between", "flex-col"])
     );
     expect(problems).toEqual([]);
   });

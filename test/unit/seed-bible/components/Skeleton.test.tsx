@@ -92,7 +92,7 @@ describe("SkeletonContainer", () => {
     // The caller's layout class is applied alongside the status class.
     expect(status.classList.contains("my-layout")).toBe(true);
 
-    const srLabel = status.querySelector(".sb-skeleton-label")!;
+    const srLabel = status.querySelector(".sb-visually-hidden")!;
     expect(srLabel).not.toBeNull();
     expect(srLabel.textContent).toBe("Loading your profile…");
 

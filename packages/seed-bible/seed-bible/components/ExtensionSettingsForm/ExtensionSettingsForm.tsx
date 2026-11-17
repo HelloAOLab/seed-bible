@@ -1,3 +1,4 @@
+import "../visuallyHidden.inline.css";
 import { useSignal } from "@preact/signals";
 import { MaterialIcon } from "../icons";
 import {
@@ -179,7 +180,7 @@ export function ExtensionSettingsForm(props: {
                 Material glyph beside it is what's actually seen. */}
             <input
               type="checkbox"
-              className="sb-settings-field-override-input"
+              className="sb-settings-field-override-input sb-visually-hidden"
               checked={overridden}
               aria-label={t("override-setting", {
                 defaultValue: "Override {{name}}",
