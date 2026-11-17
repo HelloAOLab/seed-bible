@@ -19,6 +19,14 @@ export function inlineCssPlugin(): Plugin {
         (file) => file.type === "asset" && file.fileName.endsWith(".css")
       );
       if (sheets.length === 0) return;
+      const entry = Object.values(bundle).find(
+        (file) => file.type === "chunk" && file.isEntry
+      );
+      if (entry?.type !== "chunk") {
+        this.error(
+          "The bundle has CSS but no entry module to carry it into the frame."
+        );
+      }
       const css = sheets
         .map((sheet) =>
           sheet.type === "asset" && typeof sheet.source === "string"
@@ -28,10 +36,6 @@ export function inlineCssPlugin(): Plugin {
         .join("\n");
       for (const sheet of sheets) delete bundle[sheet.fileName];
 
-      const entry = Object.values(bundle).find(
-        (file) => file.type === "chunk" && file.isEntry
-      );
-      if (entry?.type !== "chunk") return;
       // Before the extension's own code, so the styles are there before any
       // view renders. On the first line, without a line break of its own,
       // so a development build's source map still lines up.

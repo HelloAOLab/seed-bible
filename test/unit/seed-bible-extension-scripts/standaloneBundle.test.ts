@@ -4,7 +4,10 @@ import os from "node:os";
 import path from "node:path";
 import { JSDOM } from "jsdom";
 import { build } from "vite";
-import { standaloneBundleConfig } from "@packages/seed-bible-extension-scripts/src/lib/standaloneBundle";
+import {
+  inlineCssPlugin,
+  standaloneBundleConfig,
+} from "@packages/seed-bible-extension-scripts/src/lib/standaloneBundle";
 
 /**
  * Builds the sandboxed bundle for `root` into a new folder, and returns the
@@ -111,4 +114,30 @@ describe("the sandboxed bundle", () => {
       page.window.getComputedStyle(document.querySelector(".panel")!).color
     ).toBe("rgb(1, 2, 3)");
   }, 60_000);
+
+  it("fails the build, rather than drop the CSS, when there's no entry module to carry it", () => {
+    const plugin = inlineCssPlugin();
+    const bundle = {
+      "style.css": {
+        type: "asset",
+        fileName: "style.css",
+        source: ".panel { color: red; }",
+      },
+    };
+    const context = {
+      error(message: string): never {
+        throw new Error(message);
+      },
+    };
+    const generateBundle = plugin.generateBundle as (
+      this: typeof context,
+      options: unknown,
+      files: typeof bundle
+    ) => void;
+
+    expect(() => generateBundle.call(context, {}, bundle)).toThrow(
+      /no entry module/
+    );
+    expect(bundle["style.css"]).toBeDefined();
+  });
 });
