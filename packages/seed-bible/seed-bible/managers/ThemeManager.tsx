@@ -536,28 +536,27 @@ export function parseThemeBackgroundColor(css: string): string | null {
 export type BrowserColorScheme = "light" | "dark";
 
 /**
- * `#rgb` / `#rrggbb` / `#rrggbbaa` → sRGB channels. Anything else (named
- * colors, `rgb()`, `color-mix()`, …) returns null so callers can leave the
- * current browser chrome alone rather than guess wrong.
+ * `#rgb` / `#rgba` / `#rrggbb` / `#rrggbbaa` → sRGB channels (0–255) and
+ * alpha (0–1). Anything else (named colors, `rgb()`, `color-mix()`, …)
+ * returns null so callers can leave the current browser chrome alone rather
+ * than guess wrong.
  */
 export function parseCssHexColor(
   color: string
-): [number, number, number] | null {
-  const raw = color.trim();
-  const match = /^#([\da-f]{3}|[\da-f]{6}|[\da-f]{8})$/i.exec(raw);
+): [number, number, number, number] | null {
+  const match = /^#([\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i.exec(color.trim());
   if (!match) return null;
-  const hex = match[1]!;
-  if (hex.length === 3) {
-    return [
-      parseInt(hex[0]! + hex[0]!, 16),
-      parseInt(hex[1]! + hex[1]!, 16),
-      parseInt(hex[2]! + hex[2]!, 16),
-    ];
+  let hex = match[1]!;
+  if (hex.length <= 4) {
+    hex = [...hex].map((digit) => digit + digit).join("");
   }
+  const channel = (index: number) =>
+    parseInt(hex.slice(index * 2, index * 2 + 2), 16);
   return [
-    parseInt(hex.slice(0, 2), 16),
-    parseInt(hex.slice(2, 4), 16),
-    parseInt(hex.slice(4, 6), 16),
+    channel(0),
+    channel(1),
+    channel(2),
+    hex.length === 8 ? channel(3) / 255 : 1,
   ];
 }
 
@@ -577,9 +576,19 @@ export const LIGHT_DARK_CROSSOVER = 0.179;
 export function browserColorSchemeForBackground(
   color: string
 ): BrowserColorScheme | null {
-  const rgb = parseCssHexColor(color);
-  if (!rgb) return null;
-  const [r, g, b] = rgb;
+  const rgba = parseCssHexColor(color);
+  if (!rgba) return null;
+  // A see-through background shows the canvas behind it, which is white
+  // under the default (light) scheme, so judge the color mixed over white.
+  // If that mix reads as dark, a dark canvas only makes it darker, so the
+  // answer holds either way.
+  const [r, g, b] = rgba
+    .slice(0, 3)
+    .map((channel) => channel * rgba[3] + 255 * (1 - rgba[3])) as [
+    number,
+    number,
+    number,
+  ];
   return relativeLuminance({ r, g, b }) < LIGHT_DARK_CROSSOVER
     ? "dark"
     : "light";

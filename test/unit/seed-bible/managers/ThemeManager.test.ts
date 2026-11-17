@@ -251,9 +251,13 @@ describe("parseThemeBackgroundColor", () => {
 
 describe("parseCssHexColor", () => {
   it("expands #rgb and reads #rrggbb / #rrggbbaa", () => {
-    expect(parseCssHexColor("#0af")).toEqual([0, 170, 255]);
-    expect(parseCssHexColor("#0a0a0a")).toEqual([10, 10, 10]);
-    expect(parseCssHexColor("#f8fafc80")).toEqual([248, 250, 252]);
+    expect(parseCssHexColor("#0af")).toEqual([0, 170, 255, 1]);
+    expect(parseCssHexColor("#0a0a0a")).toEqual([10, 10, 10, 1]);
+    expect(parseCssHexColor("#f8fafc80")).toEqual([248, 250, 252, 128 / 255]);
+  });
+
+  it("reads the 4-digit #rgba form", () => {
+    expect(parseCssHexColor("#1118")).toEqual([17, 17, 17, 136 / 255]);
   });
 
   it("returns null for non-hex colors so callers can leave chrome alone", () => {
@@ -288,6 +292,15 @@ describe("browserColorSchemeForBackground", () => {
 
   it("returns null when the color cannot be parsed as hex", () => {
     expect(browserColorSchemeForBackground("transparent")).toBeNull();
+  });
+
+  it("judges a see-through background by what shows through it", () => {
+    // Mostly opaque near-black still reads as dark...
+    expect(browserColorSchemeForBackground("#111e")).toBe("dark");
+    expect(browserColorSchemeForBackground("#111111ee")).toBe("dark");
+    // ...but a fully transparent one is just the white canvas.
+    expect(browserColorSchemeForBackground("#00000000")).toBe("light");
+    expect(browserColorSchemeForBackground("#0000")).toBe("light");
   });
 });
 
