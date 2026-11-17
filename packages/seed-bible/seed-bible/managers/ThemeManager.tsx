@@ -6,6 +6,7 @@ import {
   type Signal,
 } from "@preact/signals";
 import { withMetricFallback } from "../app/fontFallbacks";
+import { relativeLuminance } from "../components/ColorPicker/color";
 import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { SettingsManager } from "./SettingsManager";
 
@@ -560,11 +561,6 @@ export function parseCssHexColor(
   ];
 }
 
-function channelToLinear(channel: number): number {
-  const s = channel / 255;
-  return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-}
-
 /**
  * Relative luminance where black and white text contrast equally against
  * the background (WCAG). Used for Android PWA `color-scheme` so mid-gray
@@ -583,11 +579,10 @@ export function browserColorSchemeForBackground(
 ): BrowserColorScheme | null {
   const rgb = parseCssHexColor(color);
   if (!rgb) return null;
-  const luminance =
-    0.2126 * channelToLinear(rgb[0]) +
-    0.7152 * channelToLinear(rgb[1]) +
-    0.0722 * channelToLinear(rgb[2]);
-  return luminance < LIGHT_DARK_CROSSOVER ? "dark" : "light";
+  const [r, g, b] = rgb;
+  return relativeLuminance({ r, g, b }) < LIGHT_DARK_CROSSOVER
+    ? "dark"
+    : "light";
 }
 
 /**
