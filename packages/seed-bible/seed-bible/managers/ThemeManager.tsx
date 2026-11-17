@@ -569,8 +569,7 @@ function channelToLinear(channel: number): number {
  * Relative luminance where black and white text contrast equally against
  * the background (WCAG). Used for Android PWA `color-scheme` so mid-gray
  * custom branding backgrounds stay on the light strip/controls rather than
- * flipping dark at the naive 0.5 midpoint. Keep in sync with the inline
- * copy in `index.html`.
+ * flipping dark at the naive 0.5 midpoint.
  */
 export const LIGHT_DARK_CROSSOVER = 0.179;
 
@@ -595,8 +594,9 @@ export function browserColorSchemeForBackground(
  * Installed Android PWAs paint the bottom system navigation / gesture
  * strip from `<meta name="color-scheme">` (light → white, dark → black),
  * not from `theme-color` (that one drives the top status bar). Keep the
- * meta and the root `color-scheme` style in sync with the in-app theme so
- * a Dark (or dark custom) background does not sit above a white strip.
+ * meta in sync with the in-app theme so a Dark (or dark custom) background
+ * does not sit above a white strip. The root element's own `color-scheme`
+ * comes from the composed theme CSS (see `composeThemeStyleText`).
  */
 export function applyBrowserColorScheme(scheme: BrowserColorScheme): void {
   if (typeof document === "undefined") return;
@@ -614,7 +614,6 @@ export function applyBrowserColorScheme(scheme: BrowserColorScheme): void {
       tag.content = scheme;
     }
   }
-  document.documentElement.style.colorScheme = scheme;
 }
 
 /**
@@ -624,8 +623,7 @@ export function applyBrowserColorScheme(scheme: BrowserColorScheme): void {
  * would be ignored only if we also strip `media` and keep every copy in
  * sync — browsers walk the tags in tree order and stop at the first match.
  *
- * Also drives `<meta name="color-scheme">` and paints `html`'s background
- * so the canvas matches the theme chrome (see `applyBrowserColorScheme`).
+ * Also drives `<meta name="color-scheme">` (see `applyBrowserColorScheme`).
  */
 export function applyBrowserThemeColor(color: string): void {
   if (typeof document === "undefined") return;
@@ -644,9 +642,6 @@ export function applyBrowserThemeColor(color: string): void {
       tag.content = color;
     }
   }
-  // `html` does not inherit body-scoped `--sb-*` vars (ThemeManager paints
-  // those on `body`), so set the canvas color directly.
-  document.documentElement.style.backgroundColor = color;
   const scheme = browserColorSchemeForBackground(color);
   if (scheme) applyBrowserColorScheme(scheme);
 }
@@ -670,10 +665,25 @@ function applyBrowserThemeColorFromCss(css: string): void {
  * string). This text ends up spliced as a raw string into `index.html`
  * server-side (see `entry-ssr.tsx`'s `THEME_STYLE_TAG` substitution), so an
  * override containing `</style` could otherwise break out of that tag.
+ *
+ * It also carries a `:root` rule with the theme's `color-scheme` and
+ * background. That rule holds literal values, never `--sb-*` variables,
+ * because `html` sits above `body` and can't read them. Putting it here
+ * means the server-rendered tag, the pre-hydration script in `index.html`
+ * (which copies this text and reads the scheme back out of it to set
+ * `<meta name="color-scheme">`) and this manager all get the light/dark
+ * decision from `browserColorSchemeForBackground` alone.
  */
 export function composeThemeStyleText(theme: BibleTheme): string {
-  const css = `body {\n${generateThemeCssVariables(theme)}\n}\n${generateThemeCssClasses(theme)}`;
+  const css = `body {\n${generateThemeCssVariables(theme)}\n}\n${composeRootColorSchemeRule(theme)}${generateThemeCssClasses(theme)}`;
   return css.replace(/</g, "");
+}
+
+function composeRootColorSchemeRule(theme: BibleTheme): string {
+  const background = sanitizeCssValue(String(theme.variables.background));
+  const scheme = browserColorSchemeForBackground(background);
+  if (!scheme) return "";
+  return `:root {\ncolor-scheme: ${scheme};\nbackground-color: ${background};\n}\n`;
 }
 
 export const LIGHT_THEME: BibleTheme = {

@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  browserColorSchemeForBackground,
+  composeThemeStyleText,
   DARK_THEME,
   LIGHT_THEME,
   THEME_PRESET_STYLE_TEXT,
@@ -39,6 +41,12 @@ function paintedColorScheme(): string | null | undefined {
   return document.getElementById("sb-color-scheme")?.getAttribute("content");
 }
 
+function rootColorScheme(): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(
+    "color-scheme"
+  );
+}
+
 /**
  * Signs `userId` in the way `LoginManager` leaves storage: a CasualOS V1
  * session key, plus the profile copy it caches for that account.
@@ -72,8 +80,6 @@ describe("index.html pre-hydration theme script", () => {
   afterEach(() => {
     localStorage.clear();
     document.head.innerHTML = "";
-    document.documentElement.style.colorScheme = "";
-    document.documentElement.style.backgroundColor = "";
     window.history.replaceState({}, "", "/");
     vi.unstubAllGlobals();
   });
@@ -89,7 +95,7 @@ describe("index.html pre-hydration theme script", () => {
     );
     expect(paintedBackground()).toBe(DARK_THEME.variables.background);
     expect(paintedColorScheme()).toBe("dark");
-    expect(document.documentElement.style.colorScheme).toBe("dark");
+    expect(rootColorScheme()).toBe("dark");
   });
 
   it("paints Dark for a saved config with no theme on a dark device", () => {
@@ -114,7 +120,7 @@ describe("index.html pre-hydration theme script", () => {
 
     expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
     expect(paintedColorScheme()).toBe("light");
-    expect(document.documentElement.style.colorScheme).toBe("light");
+    expect(rootColorScheme()).toBe("light");
   });
 
   it("paints the embed link's theme instead of the saved one", () => {
@@ -246,6 +252,11 @@ describe("index.html pre-hydration theme script", () => {
 });
 
 describe("index.html Android PWA chrome meta", () => {
+  afterEach(() => {
+    localStorage.clear();
+    document.head.innerHTML = "";
+  });
+
   it("ships a color-scheme meta beside theme-color without viewport-fit=cover", () => {
     const html = readFileSync(
       resolve(__dirname, "../../../index.html"),
@@ -262,12 +273,31 @@ describe("index.html Android PWA chrome meta", () => {
     );
   });
 
-  it("uses the same light/dark luminance crossover as ThemeManager", () => {
-    const html = readFileSync(
-      resolve(__dirname, "../../../index.html"),
-      "utf8"
-    );
-    expect(html).toMatch(/0\.179/);
-    expect(html).not.toMatch(/toLin\(b\)\s*<\s*0\.5\s*\?\s*"dark"/);
-  });
+  it.each(["#0a0a0a", "#222222", "#808080", "#b0b0b0", "#f8fafc"])(
+    "sets the same color-scheme as ThemeManager for a %s background",
+    (background) => {
+      const theme = {
+        ...LIGHT_THEME,
+        id: "custom",
+        variables: { ...LIGHT_THEME.variables, background },
+      };
+      document.head.innerHTML = [
+        `<meta name="color-scheme" id="sb-color-scheme" content="normal" />`,
+        `<style id="sb-theme-styles"></style>`,
+        `<script type="application/json" id="sb-theme-presets">${JSON.stringify(
+          { custom: composeThemeStyleText(theme) }
+        )}</script>`,
+      ].join("");
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ themeId: "custom" })
+      );
+
+      runInlineThemeScript();
+
+      const expected = browserColorSchemeForBackground(background);
+      expect(paintedColorScheme()).toBe(expected);
+      expect(rootColorScheme()).toBe(expected);
+    }
+  );
 });

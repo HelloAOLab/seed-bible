@@ -157,11 +157,29 @@ describe("ThemeManager CSS helpers", () => {
   });
 
   describe("composeThemeStyleText", () => {
-    it("scopes the composed CSS to body, not :root or html", () => {
+    it("scopes the theme variables to body, not :root or html", () => {
       const css = composeThemeStyleText(createTheme());
 
       expect(css.trimStart().startsWith("body {")).toBe(true);
-      expect(css).not.toContain(":root");
+      const rootRule = /:root \{[^}]*\}/.exec(css)?.[0] ?? "";
+      expect(rootRule).not.toContain("--sb-");
+    });
+
+    it("gives the root element the theme's color-scheme and background", () => {
+      const style = document.createElement("style");
+      style.textContent = composeThemeStyleText(
+        createTheme({
+          variables: { ...createTheme().variables, background: "#0a0a0a" },
+        })
+      );
+      document.head.appendChild(style);
+      try {
+        const root = getComputedStyle(document.documentElement);
+        expect(root.getPropertyValue("color-scheme")).toBe("dark");
+        expect(root.backgroundColor).toBe("rgb(10, 10, 10)");
+      } finally {
+        style.remove();
+      }
     });
 
     it("strips a literal < from a custom override value, preventing a </style breakout", () => {
@@ -244,7 +262,6 @@ describe("applyBrowserColorScheme", () => {
     document
       .querySelectorAll('meta[name="color-scheme"]')
       .forEach((el) => el.remove());
-    document.documentElement.style.colorScheme = "";
   });
 
   it("creates a color-scheme meta tag when the document has none", () => {
@@ -256,7 +273,6 @@ describe("applyBrowserColorScheme", () => {
     expect(tag).not.toBeNull();
     expect(tag?.id).toBe("sb-color-scheme");
     expect(tag?.content).toBe("dark");
-    expect(document.documentElement.style.colorScheme).toBe("dark");
   });
 
   it("updates every existing color-scheme tag", () => {
@@ -289,8 +305,6 @@ describe("applyBrowserThemeColor", () => {
     document
       .querySelectorAll('meta[name="color-scheme"]')
       .forEach((el) => el.remove());
-    document.documentElement.style.colorScheme = "";
-    document.documentElement.style.backgroundColor = "";
   });
 
   it("creates a theme-color meta tag when the document has none", () => {
@@ -328,18 +342,13 @@ describe("applyBrowserThemeColor", () => {
     }
   });
 
-  it("sets color-scheme and the html canvas for a dark background", () => {
+  it("sets color-scheme dark for the Dark theme background", () => {
     applyBrowserThemeColor(DARK_THEME.variables.background);
 
     const scheme = document.querySelector(
       'meta[name="color-scheme"]'
     ) as HTMLMetaElement | null;
     expect(scheme?.content).toBe("dark");
-    expect(document.documentElement.style.colorScheme).toBe("dark");
-    // jsdom may keep the hex or normalize to rgb().
-    expect(
-      document.documentElement.style.backgroundColor.toLowerCase()
-    ).toMatch(/^(#0a0a0a|rgb\(10,\s*10,\s*10\))$/);
   });
 
   it("sets color-scheme light for the Light theme background", () => {
@@ -349,7 +358,6 @@ describe("applyBrowserThemeColor", () => {
       'meta[name="color-scheme"]'
     ) as HTMLMetaElement | null;
     expect(scheme?.content).toBe("light");
-    expect(document.documentElement.style.colorScheme).toBe("light");
   });
 
   it("leaves color-scheme unchanged when the background is not hex", () => {
@@ -360,10 +368,6 @@ describe("applyBrowserThemeColor", () => {
       'meta[name="color-scheme"]'
     ) as HTMLMetaElement | null;
     expect(scheme?.content).toBe("dark");
-    expect(document.documentElement.style.colorScheme).toBe("dark");
-    expect(document.documentElement.style.backgroundColor).toBe(
-      "rgb(10, 10, 10)"
-    );
   });
 });
 
@@ -561,8 +565,6 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     document.querySelectorAll('meta[name="color-scheme"]').forEach((el) => {
       el.remove();
     });
-    document.documentElement.style.colorScheme = "";
-    document.documentElement.style.backgroundColor = "";
     document.getElementById("sb-theme-styles")?.remove();
     const login = makeFakeLogin(null);
     const settings = makeSettings(login);
@@ -587,7 +589,11 @@ describe("ThemeManager storage (via SettingsManager)", () => {
       (document.querySelector('meta[name="color-scheme"]') as HTMLMetaElement)
         .content
     ).toBe("dark");
-    expect(document.documentElement.style.colorScheme).toBe("dark");
+    expect(
+      getComputedStyle(document.documentElement).getPropertyValue(
+        "color-scheme"
+      )
+    ).toBe("dark");
   });
 
   it("does not clobber a dark #sb-theme-styles tag with the system default on boot", () => {
