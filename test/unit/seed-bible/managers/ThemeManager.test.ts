@@ -1,5 +1,4 @@
 import {
-  applyBrowserColorScheme,
   applyBrowserThemeColor,
   applyHighlightOverrides,
   browserColorSchemeForBackground,
@@ -304,53 +303,10 @@ describe("browserColorSchemeForBackground", () => {
   });
 });
 
-describe("applyBrowserColorScheme", () => {
-  afterEach(() => {
-    document
-      .querySelectorAll('meta[name="color-scheme"]')
-      .forEach((el) => el.remove());
-  });
-
-  it("creates a color-scheme meta tag when the document has none", () => {
-    applyBrowserColorScheme("dark");
-
-    const tag = document.querySelector(
-      'meta[name="color-scheme"]'
-    ) as HTMLMetaElement | null;
-    expect(tag).not.toBeNull();
-    expect(tag?.id).toBe("sb-color-scheme");
-    expect(tag?.content).toBe("dark");
-  });
-
-  it("updates every existing color-scheme tag", () => {
-    const first = document.createElement("meta");
-    first.name = "color-scheme";
-    first.content = "light";
-    document.head.appendChild(first);
-    const second = document.createElement("meta");
-    second.name = "color-scheme";
-    second.content = "light dark";
-    document.head.appendChild(second);
-
-    applyBrowserColorScheme("dark");
-
-    const metas = [
-      ...document.querySelectorAll('meta[name="color-scheme"]'),
-    ] as HTMLMetaElement[];
-    expect(metas).toHaveLength(2);
-    for (const meta of metas) {
-      expect(meta.content).toBe("dark");
-    }
-  });
-});
-
 describe("applyBrowserThemeColor", () => {
   afterEach(() => {
     document
       .querySelectorAll('meta[name="theme-color"]')
-      .forEach((el) => el.remove());
-    document
-      .querySelectorAll('meta[name="color-scheme"]')
       .forEach((el) => el.remove());
   });
 
@@ -387,34 +343,6 @@ describe("applyBrowserThemeColor", () => {
       expect(meta.getAttribute("media")).toBeNull();
       expect(meta.content).toBe("#0a0a0a");
     }
-  });
-
-  it("sets color-scheme dark for the Dark theme background", () => {
-    applyBrowserThemeColor(DARK_THEME.variables.background);
-
-    const scheme = document.querySelector(
-      'meta[name="color-scheme"]'
-    ) as HTMLMetaElement | null;
-    expect(scheme?.content).toBe("dark");
-  });
-
-  it("sets color-scheme light for the Light theme background", () => {
-    applyBrowserThemeColor(LIGHT_THEME.variables.background);
-
-    const scheme = document.querySelector(
-      'meta[name="color-scheme"]'
-    ) as HTMLMetaElement | null;
-    expect(scheme?.content).toBe("light");
-  });
-
-  it("resets color-scheme when switching to a background that is not hex", () => {
-    applyBrowserThemeColor(DARK_THEME.variables.background);
-    applyBrowserThemeColor("rgb(255, 255, 255)");
-
-    const scheme = document.querySelector(
-      'meta[name="color-scheme"]'
-    ) as HTMLMetaElement | null;
-    expect(scheme?.content).toBe("normal");
   });
 });
 
@@ -605,11 +533,8 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     expect(tag?.textContent).toContain("--sb-background: #0a0a0a;");
   });
 
-  it("sets the theme-color and color-scheme metas to the active theme", () => {
+  it("sets the theme-color meta and the root color-scheme to the active theme", () => {
     document.querySelectorAll('meta[name="theme-color"]').forEach((el) => {
-      el.remove();
-    });
-    document.querySelectorAll('meta[name="color-scheme"]').forEach((el) => {
       el.remove();
     });
     document.getElementById("sb-theme-styles")?.remove();
@@ -622,8 +547,9 @@ describe("ThemeManager storage (via SettingsManager)", () => {
     ) as HTMLMetaElement | null;
     expect(tag?.content).toBe("#f8fafc");
     expect(
-      (document.querySelector('meta[name="color-scheme"]') as HTMLMetaElement)
-        .content
+      getComputedStyle(document.documentElement).getPropertyValue(
+        "color-scheme"
+      )
     ).toBe("light");
 
     theme.setTheme("dark");
@@ -632,10 +558,6 @@ describe("ThemeManager storage (via SettingsManager)", () => {
       (document.querySelector('meta[name="theme-color"]') as HTMLMetaElement)
         .content
     ).toBe("#0a0a0a");
-    expect(
-      (document.querySelector('meta[name="color-scheme"]') as HTMLMetaElement)
-        .content
-    ).toBe("dark");
     expect(
       getComputedStyle(document.documentElement).getPropertyValue(
         "color-scheme"
@@ -669,10 +591,6 @@ describe("ThemeManager storage (via SettingsManager)", () => {
       (document.querySelector('meta[name="theme-color"]') as HTMLMetaElement)
         .content
     ).toBe("#0a0a0a");
-    expect(
-      (document.querySelector('meta[name="color-scheme"]') as HTMLMetaElement)
-        .content
-    ).toBe("dark");
 
     // ...and once the real saved config lands, the tag still tracks it.
     login.localConfig.value = { themeId: "dark" };

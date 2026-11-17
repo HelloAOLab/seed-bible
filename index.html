@@ -19,10 +19,6 @@
          theme's --sb-background so the bar follows light/dark (and custom
          background colors) instead of the OS prefers-color-scheme. -->
     <meta name="theme-color" id="sb-theme-color" content="#f8fafc" />
-    <!-- Tells the browser whether the theme is light or dark, so its own
-         controls (form fields, scrollbars) match. The script below and
-         ThemeManager keep it in sync with the active theme. -->
-    <meta name="color-scheme" id="sb-color-scheme" content="light" />
     <link rel="icon" href="/standalone/img/favicon.ico" />
     <link rel="apple-touch-icon" href="/standalone/img/apple-touch-icon.png" />
     <link rel="preconnect" href="https://assets.seedbible.org" />
@@ -144,15 +140,6 @@
             document.getElementById("sb-theme-color") ||
             document.querySelector('meta[name="theme-color"]');
           if (color && themeColor) themeColor.setAttribute("content", color);
-          // ThemeManager's composeThemeStyleText already decided light/dark
-          // and wrote it into the theme CSS's :root rule; copy it onto the
-          // color-scheme meta rather than deciding again here.
-          var scheme = /[{;\s]color-scheme:\s*(light|dark)/.exec(css);
-          var schemeMeta =
-            document.getElementById("sb-color-scheme") ||
-            document.querySelector('meta[name="color-scheme"]');
-          if (schemeMeta)
-            schemeMeta.setAttribute("content", scheme ? scheme[1] : "normal");
         } catch (e) {
           // Corrupt JSON / unexpected DOM — keep the server's default.
         }

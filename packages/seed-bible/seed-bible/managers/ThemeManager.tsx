@@ -594,42 +594,11 @@ export function browserColorSchemeForBackground(
 }
 
 /**
- * Keeps `<meta name="color-scheme">` in sync with the in-app theme, so the
- * browser's own controls match it. The root element's own `color-scheme`
- * comes from the composed theme CSS (see `composeThemeStyleText`).
- *
- * This doesn't color an installed Android app's bottom navigation strip:
- * Chrome paints that from the manifest's `theme_color` only (see
- * `vite.config.ts`).
- */
-export function applyBrowserColorScheme(
-  scheme: BrowserColorScheme | "normal"
-): void {
-  if (typeof document === "undefined") return;
-  const metas = [
-    ...document.head.querySelectorAll('meta[name="color-scheme"]'),
-  ] as HTMLMetaElement[];
-  if (metas.length === 0) {
-    const tag = document.createElement("meta");
-    tag.name = "color-scheme";
-    tag.id = "sb-color-scheme";
-    tag.content = scheme;
-    document.head.appendChild(tag);
-  } else {
-    for (const tag of metas) {
-      tag.content = scheme;
-    }
-  }
-}
-
-/**
  * Android Chrome (and other browsers) color the installed-PWA status bar
  * from `<meta name="theme-color">`. A tag without `media` always matches,
  * so any leftover `prefers-color-scheme` tags from an older SSR document
  * would be ignored only if we also strip `media` and keep every copy in
  * sync — browsers walk the tags in tree order and stop at the first match.
- *
- * Also drives `<meta name="color-scheme">` (see `applyBrowserColorScheme`).
  */
 export function applyBrowserThemeColor(color: string): void {
   if (typeof document === "undefined") return;
@@ -642,16 +611,12 @@ export function applyBrowserThemeColor(color: string): void {
     tag.id = "sb-theme-color";
     tag.content = color;
     document.head.appendChild(tag);
-  } else {
-    for (const tag of metas) {
-      tag.removeAttribute("media");
-      tag.content = color;
-    }
+    return;
   }
-  // "normal" (the browser default) for a color we can't read, rather than
-  // keeping the previous theme's scheme under a page that no longer
-  // matches it.
-  applyBrowserColorScheme(browserColorSchemeForBackground(color) ?? "normal");
+  for (const tag of metas) {
+    tag.removeAttribute("media");
+    tag.content = color;
+  }
 }
 
 function applyBrowserThemeColorFromCss(css: string): void {
@@ -680,9 +645,8 @@ function applyBrowserThemeColorFromCss(css: string): void {
  * (including a customization's) still fills the canvas, the area behind
  * the page that shows on overscroll and below short content. Putting it here
  * means the server-rendered tag, the pre-hydration script in `index.html`
- * (which copies this text and reads the scheme back out of it to set
- * `<meta name="color-scheme">`) and this manager all get the light/dark
- * decision from `browserColorSchemeForBackground` alone.
+ * (which copies this text) and this manager all get the light/dark decision
+ * from `browserColorSchemeForBackground` alone.
  */
 export function composeThemeStyleText(
   theme: BibleTheme,

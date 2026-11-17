@@ -29,16 +29,11 @@ function readInlineThemeScript(): string {
 function installServerRenderedHead(): void {
   document.head.innerHTML = [
     `<meta name="theme-color" id="sb-theme-color" content="${LIGHT_THEME.variables.background}" />`,
-    `<meta name="color-scheme" id="sb-color-scheme" content="light" />`,
     `<style id="sb-theme-styles">${THEME_PRESET_STYLE_TEXT.light}</style>`,
     `<script type="application/json" id="sb-theme-presets">${JSON.stringify(
       THEME_PRESET_STYLE_TEXT
     )}</script>`,
   ].join("");
-}
-
-function paintedColorScheme(): string | null | undefined {
-  return document.getElementById("sb-color-scheme")?.getAttribute("content");
 }
 
 function rootColorScheme(): string {
@@ -94,7 +89,6 @@ describe("index.html pre-hydration theme script", () => {
       `--sb-background: ${DARK_THEME.variables.background};`
     );
     expect(paintedBackground()).toBe(DARK_THEME.variables.background);
-    expect(paintedColorScheme()).toBe("dark");
     expect(rootColorScheme()).toBe("dark");
   });
 
@@ -109,7 +103,7 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(DARK_THEME.variables.background);
-    expect(paintedColorScheme()).toBe("dark");
+    expect(rootColorScheme()).toBe("dark");
   });
 
   it("keeps Light for a first-time visitor on a light device", () => {
@@ -119,7 +113,6 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
-    expect(paintedColorScheme()).toBe("light");
     expect(rootColorScheme()).toBe("light");
   });
 
@@ -135,7 +128,7 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(DARK_THEME.variables.background);
-    expect(paintedColorScheme()).toBe("dark");
+    expect(rootColorScheme()).toBe("dark");
   });
 
   it("keeps a saved Light on a dark device", () => {
@@ -149,7 +142,7 @@ describe("index.html pre-hydration theme script", () => {
     runInlineThemeScript();
 
     expect(paintedBackground()).toBe(LIGHT_THEME.variables.background);
-    expect(paintedColorScheme()).toBe("light");
+    expect(rootColorScheme()).toBe("light");
   });
 
   it("paints a signed-in account's cached Dark on a light device", () => {
@@ -240,7 +233,7 @@ describe("index.html pre-hydration theme script", () => {
     try {
       expect(runInlineThemeScript).not.toThrow();
       expect(paintedBackground()).toBe(DARK_THEME.variables.background);
-      expect(paintedColorScheme()).toBe("dark");
+      expect(rootColorScheme()).toBe("dark");
     } finally {
       Object.defineProperty(window, "localStorage", {
         configurable: true,
@@ -251,53 +244,14 @@ describe("index.html pre-hydration theme script", () => {
   });
 });
 
-describe("index.html color-scheme meta", () => {
+describe("index.html pre-hydration theme script color-scheme", () => {
   afterEach(() => {
     localStorage.clear();
     document.head.innerHTML = "";
   });
 
-  it("ships a color-scheme meta beside theme-color without viewport-fit=cover", () => {
-    const html = readFileSync(
-      resolve(__dirname, "../../../index.html"),
-      "utf8"
-    );
-    // Keep the page inside the safe area on every platform; nothing in the
-    // app pads for content drawn under the system bars.
-    expect(html).not.toMatch(/viewport-fit=cover/);
-    expect(html).toMatch(
-      /<meta name="color-scheme" id="sb-color-scheme" content="light"/
-    );
-    expect(html).toMatch(
-      /<meta name="theme-color" id="sb-theme-color" content="#f8fafc"/
-    );
-  });
-
-  it("resets the color-scheme meta for a theme whose background is not hex", () => {
-    const theme = {
-      ...DARK_THEME,
-      id: "custom",
-      variables: { ...DARK_THEME.variables, background: "rgb(10, 10, 10)" },
-    };
-    document.head.innerHTML = [
-      `<meta name="color-scheme" id="sb-color-scheme" content="dark" />`,
-      `<style id="sb-theme-styles"></style>`,
-      `<script type="application/json" id="sb-theme-presets">${JSON.stringify({
-        custom: composeThemeStyleText(theme),
-      })}</script>`,
-    ].join("");
-    localStorage.setItem(
-      "sb-profile-config-local",
-      JSON.stringify({ themeId: "custom" })
-    );
-
-    runInlineThemeScript();
-
-    expect(paintedColorScheme()).toBe("normal");
-  });
-
   it.each(["#0a0a0a", "#222222", "#808080", "#b0b0b0", "#f8fafc"])(
-    "sets the same color-scheme as ThemeManager for a %s background",
+    "gives the root the color-scheme ThemeManager picks for a %s background",
     (background) => {
       const theme = {
         ...LIGHT_THEME,
@@ -305,7 +259,6 @@ describe("index.html color-scheme meta", () => {
         variables: { ...LIGHT_THEME.variables, background },
       };
       document.head.innerHTML = [
-        `<meta name="color-scheme" id="sb-color-scheme" content="normal" />`,
         `<style id="sb-theme-styles"></style>`,
         `<script type="application/json" id="sb-theme-presets">${JSON.stringify(
           { custom: composeThemeStyleText(theme) }
@@ -318,9 +271,9 @@ describe("index.html color-scheme meta", () => {
 
       runInlineThemeScript();
 
-      const expected = browserColorSchemeForBackground(background);
-      expect(paintedColorScheme()).toBe(expected);
-      expect(rootColorScheme()).toBe(expected);
+      expect(rootColorScheme()).toBe(
+        browserColorSchemeForBackground(background)
+      );
     }
   );
 });

@@ -229,8 +229,8 @@ export default defineConfig(({ isSsrBuild, mode }) => ({
               // in ThemeManager.
               background_color: "#f8fafc",
               // The installed Android app's bottom navigation strip. Chrome
-              // paints it from this alone: the page's theme-color and
-              // color-scheme metas don't reach it, installed apps aren't drawn
+              // paints it from this alone: the page's theme-color meta and
+              // color-scheme don't reach it, installed apps aren't drawn
               // edge to edge, and there's no dark-mode variant, so one color
               // serves every theme. DARK_THEME's `background`, because a dark
               // strip under Light reads as a frame, while a white one under
