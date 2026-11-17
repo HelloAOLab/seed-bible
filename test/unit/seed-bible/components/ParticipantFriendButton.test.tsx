@@ -317,6 +317,7 @@ describe("ParticipantFriendButton", () => {
       openSessionSettingsModal(state, session);
       act(() => render(modalContent!(), container));
       await settle();
+      return session;
     };
 
     it("lets a participant who isn't the host add people as friends", async () => {
@@ -344,6 +345,42 @@ describe("ParticipantFriendButton", () => {
 
       expect(button("Add friend")).toBeDefined();
       expect(button("Make co-host")).toBeDefined();
+    });
+
+    const viewingAreaButton = (label: string) => {
+      const group = container.querySelector('[aria-label="Viewing areas"]');
+      return Array.from(group?.querySelectorAll("button") ?? []).find(
+        (el) => visibleLabel(el) === label
+      ) as HTMLButtonElement | undefined;
+    };
+
+    it("lets the host choose whose viewing areas are shown", async () => {
+      const session = await openSettings(ME);
+
+      expect(viewingAreaButton("Automatic")!.getAttribute("aria-pressed")).toBe(
+        "true"
+      );
+      expect(text()).toContain(
+        "Show everyone's place when fewer than 4 people are here"
+      );
+
+      act(() => viewingAreaButton("Hosts only")!.click());
+
+      expect(session.updateOptions).toHaveBeenCalledWith({
+        viewingAreaVisibility: "hosts-only",
+      });
+    });
+
+    it("shows the viewing-area choice to someone who is not the host, without letting them change it", async () => {
+      const session = await openSettings(ADA_ID);
+
+      expect(viewingAreaButton("Automatic")!.disabled).toBe(true);
+      expect(viewingAreaButton("Everyone")!.disabled).toBe(true);
+      expect(viewingAreaButton("Hosts only")!.disabled).toBe(true);
+
+      act(() => viewingAreaButton("Everyone")!.click());
+
+      expect(session.updateOptions).not.toHaveBeenCalled();
     });
   });
 });

@@ -9,9 +9,10 @@
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  /* Above the mobile reader toolbar wrap (z-index 101) so Ask AI / Chat are
-     not trapped under the bottom chrome after the verse sheet dismisses. */
-  z-index: calc(var(--sb-layer-chrome) + 2);
+  /* Above the mobile reader toolbar wrap (chrome + 1) so Ask AI / Chat are
+     not trapped under the bottom chrome after the verse sheet dismisses, and
+     above the phone verse sheet itself (chrome + 2, BottomSheet.css). */
+  z-index: calc(var(--sb-layer-chrome) + 3);
   background: var(--sb-reader-toolbar-background);
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-xl);

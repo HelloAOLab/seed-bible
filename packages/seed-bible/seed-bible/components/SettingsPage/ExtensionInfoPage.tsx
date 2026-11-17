@@ -1,9 +1,11 @@
 import "./ExtensionInfoPage.css";
 import type { ComponentChildren } from "preact";
 import { useSignal } from "@preact/signals";
-import { useEffect, useRef } from "preact/hooks";
-import { useI18n } from "../../i18n/I18nManager";
+import { useEffect, useMemo, useRef } from "preact/hooks";
+import { baseLanguageTag, useI18n } from "../../i18n/I18nManager";
+import { DEFAULT_UI_LANGUAGE } from "../../managers/ReadingUrlPath";
 import type {
+  Extension,
   ExtensionListEntry,
   ExtensionManager,
 } from "../../managers/ExtensionManager";
@@ -24,6 +26,7 @@ import {
   type PermissionsApi,
 } from "../ExtensionConsentModal/ExtensionPermissionsPanel";
 import { Button } from "../Button/Button";
+import { ScreenshotViewer } from "../ScreenshotViewer/ScreenshotViewer";
 
 export type ExtensionInstallState =
   | "none"
@@ -39,7 +42,8 @@ export interface ExtensionInfoPageProps {
   name: string;
   description: string;
   installState: ExtensionInstallState;
-  extensions: PermissionsApi & Pick<ExtensionManager, "describeUploader">;
+  extensions: PermissionsApi &
+    Pick<ExtensionManager, "describeUploader" | "loadExtensionTranslations">;
   people?: ConsentPeople;
   /**
    * "narrow" stacks everything for the sidebar; "wide" lays it out across a
@@ -87,6 +91,104 @@ const TAB_ICONS: Record<InfoTab, string> = {
   permissions: "shield",
   settings: "settings",
 };
+
+function ExtensionScreenshots(props: {
+  extension: Extension;
+  extensions: Pick<ExtensionManager, "loadExtensionTranslations">;
+}) {
+  const { extension, extensions } = props;
+  const { t, language } = useI18n();
+  const failed = useSignal<Set<string>>(new Set());
+  const opened = useSignal<number | null>(null);
+  const translationsReady = useSignal(false);
+  const declared = extension.meta.screenshots ?? [];
+  const hasCaptions = declared.some((shot) => shot.caption);
+
+  useEffect(() => {
+    if (baseLanguageTag(language) === DEFAULT_UI_LANGUAGE || !hasCaptions)
+      return;
+    let current = true;
+    translationsReady.value = false;
+    void extensions.loadExtensionTranslations(extension).then(
+      () => {
+        if (current) translationsReady.value = true;
+      },
+      () => {
+        // The inline English captions remain usable when the import fails.
+      }
+    );
+    return () => {
+      current = false;
+    };
+  }, [extension, extensions, language, hasCaptions]);
+
+  // Resource bundle updates do not change the language signal, so recompute
+  // captions when the deferred translations have arrived.
+  const screenshots = useMemo(
+    () =>
+      declared.flatMap((shot, index) => {
+        if (failed.value.has(shot.src)) return [];
+        const english = extension.meta.translations.en;
+        const fallback =
+          shot.caption && Object.hasOwn(english, shot.caption)
+            ? english[shot.caption]
+            : undefined;
+        const translated = shot.caption
+          ? t(shot.caption, {
+              ns: extension.meta.id,
+              defaultValue: fallback ?? "",
+            })
+          : undefined;
+        const caption = translated || undefined;
+        return [
+          {
+            src: shot.src,
+            caption,
+            accessibleName: caption ?? t("screenshot-name", { n: index + 1 }),
+          },
+        ];
+      }),
+    [declared, failed.value, language, translationsReady.value, extension, t]
+  );
+  const remove = (src: string) => {
+    failed.value = new Set([...failed.value, src]);
+  };
+
+  if (screenshots.length === 0) return null;
+  return (
+    <section className="sb-extension-info-section sb-extension-screenshots">
+      <h2 className="sb-extension-info-heading">
+        {t("extension-screenshots")}
+      </h2>
+      <div className="sb-extension-screenshot-strip">
+        {screenshots.map((shot, index) => (
+          <button
+            key={index}
+            type="button"
+            className="sb-extension-screenshot"
+            aria-label={shot.accessibleName}
+            onClick={() => (opened.value = index)}
+          >
+            <img
+              src={shot.src}
+              alt=""
+              loading="lazy"
+              onError={() => remove(shot.src)}
+            />
+          </button>
+        ))}
+      </div>
+      {opened.value !== null && (
+        <ScreenshotViewer
+          screenshots={screenshots}
+          initialIndex={opened.value}
+          onClose={() => (opened.value = null)}
+          onImageError={remove}
+        />
+      )}
+    </section>
+  );
+}
 
 /**
  * Everything about one extension in one place: what it is and can do, and,
@@ -263,10 +365,19 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
     </section>
   );
 
+  const screenshots = extension && (
+    <ExtensionScreenshots
+      key={entry.id}
+      extension={extension}
+      extensions={extensions}
+    />
+  );
+
   const about = wide ? (
     <div className="sb-extension-info-about">
       <div className="sb-extension-info-about-main">
         {description}
+        {screenshots}
         {unreviewed}
       </div>
       {details}
@@ -274,6 +385,7 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
   ) : (
     <div className="sb-extension-info-panel">
       {description}
+      {screenshots}
       {installButton}
       {unreviewed}
       {whatItCanDo}
@@ -413,7 +525,10 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
           </div>
         ) : (
           <div className="sb-extension-info-body">
-            <div className="sb-extension-info-body-main">{whatItCanDo}</div>
+            <div className="sb-extension-info-body-main">
+              {screenshots}
+              {whatItCanDo}
+            </div>
             <aside className="sb-extension-info-aside">{details}</aside>
           </div>
         )}
