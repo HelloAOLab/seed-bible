@@ -545,10 +545,23 @@ export function createSavesManager(
     // The legacy record is fetched even when `saves` exists, purely so
     // `reportLegacyDivergence` can run. Both reads go out together, so the
     // extra address costs a request but no added latency.
-    const [currentData, legacyData] = await Promise.all([
-      os.getData(userId, STORAGE_ADDRESS),
-      os.getData(userId, LEGACY_SAVES_ADDRESS),
-    ]);
+    let currentData: Awaited<ReturnType<typeof os.getData>>;
+    let legacyData: Awaited<ReturnType<typeof os.getData>>;
+    try {
+      [currentData, legacyData] = await Promise.all([
+        os.getData(userId, STORAGE_ADDRESS),
+        os.getData(userId, LEGACY_SAVES_ADDRESS),
+      ]);
+    } catch (error) {
+      // A request that never got an answer (offline, dropped connection) is
+      // handled like a failed read below: leave the user unloaded so
+      // `ensureLoaded` retries on their next action.
+      console.warn(
+        "Could not reach the saves records; leaving saves untouched until the next load.",
+        error
+      );
+      return;
+    }
     if (loadedUserId.value !== userId && login.userId.value !== userId) {
       return;
     }
