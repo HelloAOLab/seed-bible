@@ -7,6 +7,7 @@ import { readInjectedCustomizationSeed } from "../app/customizationSeed";
 import { readInjectedFriendLinkSeed } from "../app/friendLinkSeed";
 import { readTrustedSharedPageSeeds } from "../app/sharedPageSeeds";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
+import { setDefaultI18n } from "../i18n/I18nManager";
 import {
   decideStartupHydration,
   isRenderedByThisBuild,
@@ -73,6 +74,10 @@ const state = createSeedBibleState({
   initialReadingPlanPageSeed,
   initialFriendLinkSeed,
 });
+
+// So a shared component an extension renders in a root of its own speaks the
+// app's language too.
+setDefaultI18n(state.i18n);
 
 /**
  * Every initial tab's chapter fetch is already in flight by the time

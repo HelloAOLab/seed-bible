@@ -128,4 +128,47 @@ describe("the hostable package", () => {
     expect(document.querySelector("h1")!.children).toHaveLength(0);
     dom.window.close();
   });
+  it("copies screenshots under content hashes, preserving captions, links and order", async () => {
+    const image = (text: string) => ({
+      bytes: new TextEncoder().encode(text),
+      extension: ".png",
+      mimeType: "image/png",
+    });
+    const first = image("first");
+    const second = image("second");
+    const shots = [
+      { src: "first.png", caption: "overview" },
+      { src: "https://cdn.example.com/hosted.jpg" },
+      { src: "second.png" },
+    ];
+    const write = (firstImage = first) =>
+      writeSitePackage({
+        outDir,
+        bundle,
+        meta: { ...meta, screenshots: shots },
+        screenshots: [firstImage, null, second],
+      });
+    await write();
+    const set = JSON.parse(await read("extension-set.json"));
+    const screenshots = set.extensions[0].meta.screenshots;
+    expect(screenshots).toEqual([
+      {
+        src: expect.stringMatching(/^\.\/screenshot-[0-9a-f]{12}\.png$/),
+        caption: "overview",
+      },
+      shots[1],
+      { src: expect.stringMatching(/^\.\/screenshot-[0-9a-f]{12}\.png$/) },
+    ]);
+    expect(await read(screenshots[0].src)).toBe("first");
+    expect(await read(screenshots[2].src)).toBe("second");
+    expect(await read("_headers")).toContain(
+      "/screenshot-*\n  Cache-Control: public, max-age=31536000, immutable"
+    );
+    await write(image("changed"));
+    const updated = JSON.parse(await read("extension-set.json")).extensions[0]
+      .meta.screenshots;
+    expect(updated[0].src).not.toBe(screenshots[0].src);
+    expect(updated[2].src).toBe(screenshots[2].src);
+    expect(await readdir(outDir)).not.toContain(screenshots[0].src.slice(2));
+  });
 });

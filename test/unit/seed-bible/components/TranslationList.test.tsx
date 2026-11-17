@@ -3,9 +3,9 @@ import { act } from "preact/test-utils";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { groupTranslationsByLanguage } from "@packages/seed-bible/seed-bible/managers/translationGrouping";
 
-vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const { mockI18nManager } = await import("../testUtils/mockI18n");
-  return mockI18nManager();
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nContext", async () => {
+  const { mockI18nContext } = await import("../testUtils/mockI18n");
+  return mockI18nContext();
 });
 
 const { TranslationList } =

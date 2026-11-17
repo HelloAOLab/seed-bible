@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createTestHost, type TestHost } from "seed-bible/extensions/testing";
 import extension from "./init";
+import manifest from "../extension.json";
 
 // `createTestHost` runs the extension exactly as Seed Bible would, against a
 // stand-in for the app: every call is checked against the permissions you
@@ -30,13 +31,26 @@ describe("{{extensionId}}", () => {
       granted: ["reading:position"],
       state: {
         position: { translationId: "BSB", bookId: "JHN", chapterNumber: 3 },
-        strings: { reading: "Reading {{book}} {{chapter}}" },
       },
+      translations: manifest.translations,
     });
 
     const pane = await host.renderView("main", { props: { opened: 1 } });
 
-    expect(pane.textContent).toContain("Reading JHN 3");
+    expect(pane.textContent).toContain("You're reading JHN 3.");
+  });
+
+  it("counts how many times it has been opened", async () => {
+    // The strings from `extension.json`, so the test reads what users see.
+    host = await createTestHost(extension, {
+      translations: manifest.translations,
+    });
+
+    const once = await host.renderView("main", { props: { opened: 1 } });
+    const thrice = await host.renderView("main", { props: { opened: 3 } });
+
+    expect(once.textContent).toContain("Opened once.");
+    expect(thrice.textContent).toContain("Opened 3 times.");
   });
 
   it("still opens its pane when the user says no", async () => {

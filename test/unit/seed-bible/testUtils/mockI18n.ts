@@ -89,12 +89,28 @@ export function mockTranslate(
 }
 
 /**
+ * The stub `useI18n`. It deliberately exposes only `t` and `language` — the
+ * fields tests actually read. Pass `overrides` for anything more (`isRtl`, say)
+ * rather than widening this for one caller.
+ */
+function stubUseI18n(overrides: Record<string, unknown>) {
+  return () => ({
+    t: mockTranslate,
+    // A getter, so a test can reassign `mockI18nState.language` after the
+    // module is mocked and still have the next render observe it.
+    get language() {
+      return mockI18nState.language;
+    },
+    ...overrides,
+  });
+}
+
+/**
  * Replacement module for `vi.mock`ing `i18n/I18nManager`, with every other
  * export left real.
  *
- * The returned `useI18n` deliberately exposes only `t` and `language` — the
- * fields tests actually read. Pass `overrides` for anything more (`isRtl`, say)
- * rather than widening this for one caller.
+ * Shared components import `useI18n` from `i18n/I18nContext` instead, which
+ * this doesn't reach; mock that with {@link mockI18nContext}.
  */
 export async function mockI18nManager(
   overrides: Record<string, unknown> = {}
@@ -108,20 +124,20 @@ export async function mockI18nManager(
     // i18next only gains its add-strings methods once initialised, which tests
     // skip; the stub `t` answers with each call's `defaultValue` regardless.
     addTranslations: () => undefined,
-    useI18n: () => ({
-      t: mockTranslate,
-      // A getter, so a test can reassign `mockI18nState.language` after the
-      // module is mocked and still have the next render observe it.
-      get language() {
-        return mockI18nState.language;
-      },
-      ...overrides,
-    }),
-    useOptionalI18n: () => ({
-      t: mockTranslate,
-      get language() {
-        return mockI18nState.language;
-      },
-    }),
+    useI18n: stubUseI18n(overrides),
   };
+}
+
+/**
+ * Replacement module for `vi.mock`ing `i18n/I18nContext`, where `useI18n`
+ * lives. `I18nManager` passes it through, so this stubs it for both imports.
+ */
+export async function mockI18nContext(
+  overrides: Record<string, unknown> = {}
+): Promise<Record<string, unknown>> {
+  const actual = await vi.importActual<
+    typeof import("@packages/seed-bible/seed-bible/i18n/I18nContext")
+  >("@packages/seed-bible/seed-bible/i18n/I18nContext");
+
+  return { ...actual, useI18n: stubUseI18n(overrides) };
 }

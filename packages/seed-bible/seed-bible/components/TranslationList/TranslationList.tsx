@@ -2,7 +2,7 @@ import "./TranslationList.css";
 import { useEffect, useMemo, useRef } from "preact/hooks";
 import { signal } from "@preact/signals";
 import type { ComponentChild } from "preact";
-import { useI18n } from "../../i18n/I18nManager";
+import { useI18n } from "../../i18n/I18nContext";
 import { TickIcon } from "../icons";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import type {
