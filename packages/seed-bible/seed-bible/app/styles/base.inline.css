@@ -484,9 +484,10 @@ body {
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
 
-  /* Without this, browsers draw light scrollbars even on dark themes (no
-     `color-scheme` is set). It inherits, so every scroll container picks up
-     the active theme's colors. */
+  /* Gives scrollbars the theme's own font color rather than the browser's
+     stock light or dark ones (`color-scheme` only picks between those two).
+     It inherits, so every scroll container picks up the active theme's
+     colors. */
   scrollbar-color: color-mix(in srgb, var(--sb-font-color), transparent 80%)
     transparent;
 
