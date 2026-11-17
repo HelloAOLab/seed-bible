@@ -7,6 +7,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import ts from "typescript";
 
 // A sandboxed extension's build packs everything it imports into one file, so
 // whatever the SDK imports, every extension carries, and whatever
@@ -167,23 +168,40 @@ describe("seed-bible/components", () => {
   ].map((match) => match[1]!);
 
   it("doesn't use the app's global utility classes", () => {
-    const pattern = new RegExp(
-      `(?<![\\w-])(${utilityClasses.join("|")})(?![\\w-])`,
-      "g"
-    );
+    const utilities = new Set(utilityClasses);
     const problems: string[] = [];
     for (const file of importGraph(
       path.join(appDir, "components/index.tsx")
     ).keys()) {
-      if (!/\.tsx$/.test(file)) continue;
-      readFileSync(file, "utf-8")
-        .split("\n")
-        .forEach((line, index) => {
-          if (!/className|class=/.test(line) && !/^\s*["'`]/.test(line)) return;
-          for (const match of line.matchAll(pattern)) {
-            problems.push(`${toName(file)}:${index + 1} uses .${match[1]}`);
+      if (!/\.tsx?$/.test(file)) continue;
+      const source = ts.createSourceFile(
+        file,
+        readFileSync(file, "utf-8"),
+        ts.ScriptTarget.Latest,
+        true,
+        file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+      );
+      // Every string, wherever it's used: a class name kept in a variable
+      // first ends up on an element just the same.
+      const visit = (node: ts.Node) => {
+        if (
+          ts.isStringLiteral(node) ||
+          ts.isNoSubstitutionTemplateLiteral(node) ||
+          ts.isTemplateHead(node) ||
+          ts.isTemplateMiddle(node) ||
+          ts.isTemplateTail(node)
+        ) {
+          for (const word of node.text.split(/\s+/)) {
+            if (!utilities.has(word)) continue;
+            const { line } = source.getLineAndCharacterOfPosition(
+              node.getStart(source)
+            );
+            problems.push(`${toName(file)}:${line + 1} uses .${word}`);
           }
-        });
+        }
+        ts.forEachChild(node, visit);
+      };
+      visit(source);
     }
 
     expect(utilityClasses).toEqual(
