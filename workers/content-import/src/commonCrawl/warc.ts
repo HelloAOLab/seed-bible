@@ -212,9 +212,29 @@ export async function parseWarcRecord(
 /** The first bytes of a response, as text and hex, for the logs. */
 function describeBytes(bytes: Uint8Array): string {
   const head = bytes.subarray(0, 24);
-  return `${JSON.stringify(bytesToText(head))} (${[...head]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join(" ")})`;
+  return `${JSON.stringify(bytesToText(head))} (${hex(head)})`;
+}
+
+function hex(bytes: Uint8Array): string {
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join(" ");
+}
+
+/**
+ * What an unexpected answer's body is: readable text (an error or notice
+ * page) is quoted, compressed data is named as such, anything else is
+ * shown in hex.
+ */
+function describeBody(bytes: Uint8Array): string {
+  if (isGzip(bytes)) {
+    return `gzip data (${hex(bytes.subarray(0, 10))}, ${bytes.length}+ bytes)`;
+  }
+  const readable = [...bytes].filter(
+    (byte) =>
+      byte === 9 || byte === 10 || byte === 13 || (byte >= 32 && byte < 127)
+  ).length;
+  return readable >= bytes.length * 0.9
+    ? `text ${JSON.stringify(new TextDecoder().decode(bytes))}`
+    : `binary (${hex(bytes.subarray(0, 24))})`;
 }
 
 function isGzip(bytes: Uint8Array): boolean {
@@ -247,8 +267,14 @@ export async function readArchiveRange(
   } catch (error) {
     throw new ArchiveError("network_error", String(error));
   }
+  const header = (name: string) => response.headers.get(name) ?? "none";
   const report = () =>
-    `HTTP ${response.status}, Content-Range ${response.headers.get("Content-Range") ?? "none"}, Content-Encoding ${response.headers.get("Content-Encoding") ?? "none"}, for ${url} bytes ${start}-${end - 1}`;
+    `HTTP ${response.status}, Content-Range ${header("Content-Range")}, Content-Type ${header("Content-Type")}, Content-Length ${header("Content-Length")}, Content-Encoding ${header("Content-Encoding")}, for ${url} bytes ${start}-${end - 1}`;
+  /** What an unexpected answer actually holds: its first bytes, never the whole (possibly huge) body. */
+  const sample = async () =>
+    response.body
+      ? describeBody(await readCapped(response.body, 300))
+      : "no body";
   if (response.status === 404) {
     return null;
   }
@@ -266,20 +292,25 @@ export async function readArchiveRange(
     throw new ArchiveError("http_403", `Common Crawl refused: ${report()}.`);
   }
   if (response.status !== 206 && !(response.status === 200 && start === 0)) {
-    console.warn(`Common Crawl read failed: ${report()}`);
+    const body = await sample();
+    console.warn(`Common Crawl read failed: ${report()}; body starts`, body);
     throw new ArchiveError(
       response.status === 200 ? "range_not_honored" : `http_${response.status}`,
-      `Unexpected answer: ${report()}.`
+      `${report()}; body starts ${body}`
     );
   }
   const range = /^bytes (\d+)-(\d+)\/(\d+|\*)$/.exec(
     response.headers.get("Content-Range") ?? ""
   );
   if (response.status === 206 && (!range || Number(range[1]) !== start)) {
-    console.warn(`Common Crawl sent the wrong part of a file: ${report()}`);
+    const body = await sample();
+    console.warn(
+      `Common Crawl sent the wrong part of a file: ${report()}; body starts`,
+      body
+    );
     throw new ArchiveError(
       "range_not_honored",
-      `Wrong part of the file: ${report()}.`
+      `Wrong part of the file: ${report()}; body starts ${body}`
     );
   }
   if (!response.body) {

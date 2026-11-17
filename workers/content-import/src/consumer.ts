@@ -256,7 +256,12 @@ export async function processImportMessage(
     }
     await settleItem(env.DB, job.id, row.item_id, {
       state: "failed",
-      error: code,
+      // An archive failure keeps what the archive answered, so the row
+      // says why without the logs.
+      error:
+        error instanceof ArchiveError
+          ? `${code}: ${error.message}`.slice(0, 1000)
+          : code,
     });
   }
 

@@ -438,7 +438,11 @@ export function createFakeCommonCrawl() {
    * already unzipped.
    */
   const archiveAnswers = {
-    value: "properly" as "properly" | "ignoring_range" | "unzipped",
+    value: "properly" as
+      | "properly"
+      | "ignoring_range"
+      | "unzipped"
+      | "notice_page",
   };
   /** Crawls whose index files are built; adding a page rebuilds its crawl's. */
   const built = new Set<string>();
@@ -571,6 +575,12 @@ export function createFakeCommonCrawl() {
     }
     const start = Number(range[1]);
     const end = Math.min(Number(range[2]), file.length - 1);
+    if (path.endsWith(".warc.gz") && archiveAnswers.value === "notice_page") {
+      return new Response("<html><body>Please slow down</body></html>", {
+        status: 200,
+        headers: { "Content-Type": "text/html" },
+      });
+    }
     if (
       path.endsWith(".warc.gz") &&
       archiveAnswers.value === "ignoring_range"

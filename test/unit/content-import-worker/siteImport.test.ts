@@ -297,7 +297,32 @@ describe("website imports", () => {
     const row = worker.db.sqlite
       .prepare("SELECT state, error FROM import_items WHERE item_id = ?")
       .get(b.itemId) as { state: string; error: string };
-    expect(row).toEqual({ state: "failed", error: "range_not_honored" });
+    expect(row.state).toBe("failed");
+    // The reason, and what the archive actually sent back.
+    expect(row.error).toMatch(
+      /^range_not_honored: HTTP 200, Content-Range none.*body starts gzip data/
+    );
+  });
+
+  it("records what the archive sent instead of the page, so a failed row explains itself", async () => {
+    const { worker, key, commonCrawl } = setup();
+    // The page asked for is past the start of its archive file, as almost
+    // every page is.
+    commonCrawl.addPage(LATEST, "https://gracecommunity.org/sermons/a", "");
+    commonCrawl.addPage(LATEST, "https://gracecommunity.org/sermons/b", "");
+    const listed = await lookUp(worker, key);
+    commonCrawl.archiveAnswers.value = "notice_page";
+    const id = listed.candidates!.find((c) => c.url.endsWith("/b"))!.itemId;
+    await pick(worker, key, listed.progress.id, [id]);
+    await worker.drain();
+    const row = worker.db.sqlite
+      .prepare("SELECT error FROM import_items WHERE item_id = ?")
+      .get(id) as { error: string };
+    expect(row.error).toMatch(/^range_not_honored: HTTP 200/);
+    expect(row.error).toContain("Content-Type text/html");
+    expect(row.error).toContain(
+      'body starts text "<html><body>Please slow down'
+    );
   });
 
   it("reads a page in its own character set", async () => {
