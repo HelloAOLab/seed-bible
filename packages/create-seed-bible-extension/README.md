@@ -68,7 +68,7 @@ The starting extension shows the usual pieces:
 - asking for an optional permission (`reading:position`) when the button is
   clicked, and still working if the user says no;
 - the extension's own storage (`sb.storage`) and translations
-  (`sb.i18n.t`, from `extension.json`).
+  (`sb.i18n.t`, from `extension.json`), including a plural.
 
 ## Scripts in the new project
 

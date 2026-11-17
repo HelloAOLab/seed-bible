@@ -3,7 +3,7 @@ import type { ComponentChild, ComponentChildren, JSX, Ref } from "preact";
 import { createPortal } from "preact/compat";
 import { useCallback, useEffect, useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
-import { useI18n } from "../../i18n/I18nManager";
+import { useI18n } from "../../i18n/I18nContext";
 import { useOverlayDismiss } from "../useOverlayDismiss";
 import { IconButton } from "../IconButton/IconButton";
 import { trapTabKey, useModalFocus } from "../useModalFocus";

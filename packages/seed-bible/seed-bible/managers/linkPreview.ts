@@ -1,10 +1,10 @@
 import { z } from "zod";
 import type { PlaylistItemData } from "./PlaylistManager";
+import { safeImageUrl } from "./safeImageUrl";
 
 // Caps keep a page with an enormous og:description from bloating every saved
 // playlist and reading plan that links to it.
 const MAX_TEXT_LENGTH = 1000;
-const MAX_URL_LENGTH = 2048;
 
 /**
  * The parts of a page's link preview (its Open Graph tags) that are stored on
@@ -42,21 +42,6 @@ export interface LinkPreviewResponse {
 function cleanText(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
   return trimmed ? trimmed.slice(0, MAX_TEXT_LENGTH) : undefined;
-}
-
-/** The URL when it is an http(s) image URL that can safely go in `<img src>`. */
-export function safeImageUrl(value: string | undefined): string | undefined {
-  if (!value || value.length > MAX_URL_LENGTH) {
-    return undefined;
-  }
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" || url.protocol === "http:"
-      ? url.toString()
-      : undefined;
-  } catch {
-    return undefined;
-  }
 }
 
 /**

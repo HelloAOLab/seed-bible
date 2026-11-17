@@ -2,6 +2,7 @@ import { effect, useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import {
   defineExtension,
+  useI18n,
   type SandboxContext,
   type SandboxDiscoverResult,
 } from "seed-bible/extensions";
@@ -64,7 +65,11 @@ async function openPortal(
   });
 }
 
-function GreetingPane({ sb }: { sb: SandboxContext }) {
+function GreetingPane({ sb, paneId }: { sb: SandboxContext; paneId: string }) {
+  // Seed Bible's own strings, through the hook its shared components use, so
+  // the Close button below says "Close" in whatever language the app is in.
+  // `useI18n(sb.extensionId)` would give this extension's own strings.
+  const app = useI18n();
   // Settings arrive by message, not by reading a signal while rendering,
   // so the pane shows them once they've loaded.
   const settings = useSignal<Record<string, SettingValue> | null>(null);
@@ -77,7 +82,13 @@ function GreetingPane({ sb }: { sb: SandboxContext }) {
   }, []);
 
   if (!settings.value) {
-    return <p style={{ padding: 20 }}>{sb.i18n.t("loading")}</p>;
+    // The app's strings without the hook, which works anywhere, `main`
+    // included. Always pass the text to fall back on: the app's keys change.
+    return (
+      <p style={{ padding: 20 }}>
+        {sb.i18n.t("loading", { ns: "seed-bible", defaultValue: "Loading…" })}
+      </p>
+    );
   }
   const { greeting, greetingSize, subtitle, showBanner, repeatCount, tone } =
     settings.value;
@@ -112,6 +123,12 @@ function GreetingPane({ sb }: { sb: SandboxContext }) {
             : greeting}
         </p>
       )}
+      {typeof repeatCount === "number" && (
+        <p style={{ opacity: 0.75 }}>
+          {/* `count` picks `greeting-shown_one` or `greeting-shown_other`. */}
+          {sb.i18n.t("greeting-shown", { count: repeatCount })}
+        </p>
+      )}
       {typeof subtitle === "string" && subtitle && (
         <p style={{ opacity: 0.75 }}>{subtitle}</p>
       )}
@@ -127,7 +144,7 @@ function GreetingPane({ sb }: { sb: SandboxContext }) {
               body: { hello: "world" },
             });
             await sb.app.toast(
-              sb.i18n.t("sensitive-result", undefined, {
+              sb.i18n.t("sensitive-result", {
                 status: response.status,
               })
             );
@@ -137,6 +154,9 @@ function GreetingPane({ sb }: { sb: SandboxContext }) {
         }}
       >
         {sb.i18n.t("send-sensitive-request")}
+      </button>{" "}
+      <button type="button" onClick={() => void sb.panes.close(paneId)}>
+        {app.t("close", { defaultValue: "Close" })}
       </button>
     </div>
   );
@@ -180,9 +200,7 @@ export default defineExtension({
         title: title(id),
         icon: { material: index === 0 ? "looks_one" : "looks_two" },
         onSelect: () =>
-          void sb.app.toast(
-            sb.i18n.t("item-clicked", undefined, { item: sb.i18n.t(id) })
-          ),
+          void sb.app.toast(sb.i18n.t("item-clicked", { item: sb.i18n.t(id) })),
       })),
     });
 
@@ -229,6 +247,6 @@ export default defineExtension({
   },
 
   views: {
-    greeting: ({ sb }) => <GreetingPane sb={sb} />,
+    greeting: ({ sb, paneId }) => <GreetingPane sb={sb} paneId={paneId} />,
   },
 });

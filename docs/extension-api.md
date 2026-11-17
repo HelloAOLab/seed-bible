@@ -121,7 +121,9 @@ export default defineExtension({
     });
   },
   views: {
-    hello: ({ sb }) => <p>{sb.i18n.t("greeting", "Hello!")}</p>,
+    hello: ({ sb }) => (
+      <p>{sb.i18n.t("greeting", { defaultValue: "Hello!" })}</p>
+    ),
   },
 });
 ```
@@ -167,23 +169,53 @@ When the user turns an optional permission off in Settings, your extension is re
 
 ### `sb.i18n`
 
-Your extension's own translations, from the `translations` section of `extension.json`.
+Translations, through [i18next](https://www.i18next.com), the translator Seed Bible itself uses. `t` is i18next's own `t`, so [its documentation](https://www.i18next.com/translation-function/essentials) applies as it stands. The one difference: it reads your extension's strings unless you name another set.
 
 ```ts
 i18n: {
   language: ReadonlySignal<string>;           // e.g. "en", "es"
   direction: ReadonlySignal<"ltr" | "rtl">;
-  t(key: string, defaultValue?: string, values?: Record<string, string | number>): string;
+  t(key: string, options?: Record<string, unknown>): string;
 };
 ```
 
-`t` looks `key` up in the strings for the current language, falls back to `en`, then to `defaultValue`, then to the key itself. It fills `{{name}}` placeholders from `values`:
+**Your own strings** come from the `translations` section of `extension.json`. `t` looks `key` up in the current language, falls back to `en`, then to `defaultValue`, then to the key itself. The other options fill in `{{name}}` placeholders:
 
 ```ts
-sb.i18n.t("verses-found", "Found {{count}} verses", { count: 3 });
+sb.i18n.t("verses-found", { defaultValue: "Found {{count}} verses", count: 3 });
 ```
 
-`t` is synchronous and reads the current language each time, so calling it inside a component re-renders it in the new language when the user switches.
+**Plurals.** With a `count`, a `key_one` or `key_other` string wins over `key`, picked by the language's rules:
+
+```json
+"verses-found_one": "Found {{count}} verse",
+"verses-found_other": "Found {{count}} verses"
+```
+
+**Seed Bible's own strings** are the `seed-bible` set, so a button can say "Close" the way the app does, in every language the app has:
+
+```ts
+sb.i18n.t("close", { ns: "seed-bible", defaultValue: "Close" });
+```
+
+Always pass `defaultValue` for these. Seed Bible's keys aren't part of this API: one can be renamed or removed, and your extension then shows `defaultValue` instead of the bare key. The two sets never mix: without `ns`, `t` only reads your strings, even when a key exists only in Seed Bible's.
+
+**In a view**, the `useI18n` hook gives the same `t`: `useI18n(sb.extensionId)` for your strings, and `useI18n()` for Seed Bible's. Seed Bible's shared components use the same hook, so they show the user's language too.
+
+```tsx
+import { useI18n, type SandboxViewProps } from "seed-bible/extensions";
+
+function Toolbar({ sb }: SandboxViewProps) {
+  const { t } = useI18n(sb.extensionId);
+  return <p>{t("verses-found", { count: 3 })}</p>;
+}
+```
+
+`t` reads the current language each time, so calling it inside a component re-renders it in the new language when the user switches.
+
+An older form, `sb.i18n.t(key, "Default text", values)`, still works, for extensions written before `t` became i18next's. The hook's `t` only takes the options form.
+
+**Keys can't contain `:`.** The translator reads `a:b` as the key `b` in a set of strings named `a`, so the string is never found. A `.` is fine. Inside a string, `$t(other-key)` is replaced with that key's text.
 
 ### `sb.app`
 
@@ -1011,7 +1043,9 @@ try {
   await sb.notes.create({ bookId: "JHN", chapter: 3, text: "…" });
 } catch (err) {
   if (err instanceof SandboxError && err.code === "unavailable") {
-    void sb.app.toast(sb.i18n.t("sign-in-to-save", "Sign in to save notes."));
+    void sb.app.toast(
+      sb.i18n.t("sign-in-to-save", { defaultValue: "Sign in to save notes." })
+    );
   } else {
     throw err;
   }
@@ -1133,7 +1167,7 @@ The manifest sits at the root of your project. `seed-bible-extension-scripts` va
 | `network`             | Every host your frames may contact (`fetch`, images, media, fonts), as bare hosts like `api.example.com` or `example.com:8443`. Everything else is blocked. Can't be optional.                                                                                                                                                |
 | `settings`            | Settings the user can change on your extension's Settings tab. See below.                                                                                                                                                                                                                                                     |
 | `sensitive`           | Destinations for sensitive settings. See below.                                                                                                                                                                                                                                                                               |
-| `translations`        | Strings by language code. `title` and `description` name your extension in the app; other keys are yours for `sb.i18n.t` and `{ key }` titles. `en` is the fallback.                                                                                                                                                          |
+| `translations`        | Strings by language code. `title` and `description` name your extension in the app; other keys are yours for `sb.i18n.t` and `{ key }` titles, with `_one` and `_other` forms for [plurals](#sbi18n). Keys can't contain `:`. `en` is the fallback.                                                                           |
 
 **A manifest that names a permission this version of Seed Bible doesn't know won't install**, rather than install without it. A sandboxed extension can't declare `dependencies`, and `autoinstall` is ignored: it's never installed without the user being asked.
 
@@ -1185,15 +1219,17 @@ function createTestHost(
 
 **`TestHostOptions`:**
 
-| Option          | Default            | What it does                                                                                                          |
-| --------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `granted`       | `[]`               | Permissions granted from the start, as if required by the manifest.                                                   |
-| `optional`      | `[]`               | What the manifest lists under `optionalPermissions`.                                                                  |
-| `allowRequests` | `true`             | How the "user" answers `sb.permissions.request`. `false` declines.                                                    |
-| `state`         | sensible defaults  | The app state frames start with: `position`, `selection`, `language`, `identity`, `session`, `isMobile`, `strings`, … |
-| `settings`      | `{}`               | Values for `sb.settings.get`.                                                                                         |
-| `answers`       | none               | Answers for calls the stand-in doesn't simulate, or replacements for ones it does. See below.                         |
-| `extensionId`   | `"test-extension"` | The value of `sb.extensionId`.                                                                                        |
+| Option            | Default                                  | What it does                                                                                                                          |
+| ----------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `granted`         | `[]`                                     | Permissions granted from the start, as if required by the manifest.                                                                   |
+| `optional`        | `[]`                                     | What the manifest lists under `optionalPermissions`.                                                                                  |
+| `allowRequests`   | `true`                                   | How the "user" answers `sb.permissions.request`. `false` declines.                                                                    |
+| `state`           | sensible defaults                        | The app state frames start with: `position`, `selection`, `language`, `identity`, `session`, `isMobile`, …                            |
+| `translations`    | `state.strings`, for its `language` only | Your strings by language, as in the `translations` section of `extension.json`. Pass `extension.json`'s own to test what users see.   |
+| `appTranslations` | none                                     | Seed Bible's own strings by language, for `ns: "seed-bible"` and shared components. Without them, each call shows its `defaultValue`. |
+| `settings`        | `{}`                                     | Values for `sb.settings.get`.                                                                                                         |
+| `answers`         | none                                     | Answers for calls the stand-in doesn't simulate, or replacements for ones it does. See below.                                         |
+| `extensionId`     | `"test-extension"`                       | The value of `sb.extensionId`.                                                                                                        |
 
 **What the stand-in simulates:** tools, panes and portals, toasts, `sb.reading.open`, storage, settings, the clipboard, Discover and chat provider registration, and permission requests. Everything else (Bible text, highlights, notes, saves, history, profile, friends, audio, devices, modals, sensitive requests) needs an answer in `answers`, keyed by the protocol's method name. Without one, the call fails with a message telling you which method to answer:
 
@@ -1218,26 +1254,26 @@ The method name is the `sb` path without the `sb.`: `sb.notes.create` is `"notes
 
 **`TestHost`** records what your extension did and lets you act as the user:
 
-| Member                                                        | What it is                                                                                           |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `ready`                                                       | Settles when `main` has finished; rejects with its error.                                            |
-| `tools`                                                       | Registered tools by id, with their current definition (title, icon, `visible`, `disabled`, `items`). |
-| `panes`                                                       | Open panes and portals by pane id: `{ paneId, view, options }`. `view` is `null` for a portal.       |
-| `toasts`                                                      | Every toast message, in order.                                                                       |
-| `opened`                                                      | Every `sb.reading.open` reference.                                                                   |
-| `storage`                                                     | The extension's storage, as a `Map`.                                                                 |
-| `clipboard`                                                   | Everything copied.                                                                                   |
-| `calls`                                                       | Every call that passed the permission check, as `{ method, params }`.                                |
-| `requests`                                                    | Every permission prompt the user would have seen, with the answer.                                   |
-| `discoverProviders`, `chatProviders`                          | The ids of registered providers.                                                                     |
-| `granted()`                                                   | What's granted now, implied permissions included.                                                    |
-| `selectTool(id, { itemId?, selection? })`                     | Selects a tool (or a submenu item) and waits for its handler.                                        |
-| `setState(partialState)`                                      | Changes the app state, e.g. moves the reader with `{ position }`.                                    |
-| `discover(providerId, request)`                               | Asks a Discover provider for results.                                                                |
-| `chat(providerId, request)`                                   | Asks a chat provider for its reply.                                                                  |
-| `renderView(view, { props?, surface?, paneId?, container? })` | Renders a view into the test's document with its own `sb`; returns the element.                      |
-| `flush()`                                                     | Waits until every message already sent between the extension and the stand-in has arrived.           |
-| `dispose()`                                                   | Closes everything. Call it after each test.                                                          |
+| Member                                                        | What it is                                                                                                                              |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `ready`                                                       | Settles when `main` has finished; rejects with its error.                                                                               |
+| `tools`                                                       | Registered tools by id, with their current definition (title, icon, `visible`, `disabled`, `items`).                                    |
+| `panes`                                                       | Open panes and portals by pane id: `{ paneId, view, options }`. `view` is `null` for a portal.                                          |
+| `toasts`                                                      | Every toast message, in order.                                                                                                          |
+| `opened`                                                      | Every `sb.reading.open` reference.                                                                                                      |
+| `storage`                                                     | The extension's storage, as a `Map`.                                                                                                    |
+| `clipboard`                                                   | Everything copied.                                                                                                                      |
+| `calls`                                                       | Every call that passed the permission check, as `{ method, params }`.                                                                   |
+| `requests`                                                    | Every permission prompt the user would have seen, with the answer.                                                                      |
+| `discoverProviders`, `chatProviders`                          | The ids of registered providers.                                                                                                        |
+| `granted()`                                                   | What's granted now, implied permissions included.                                                                                       |
+| `selectTool(id, { itemId?, selection? })`                     | Selects a tool (or a submenu item) and waits for its handler.                                                                           |
+| `setState(partialState)`                                      | Changes the app state, e.g. moves the reader with `{ position }`. A new `language` also sends that language's strings, as the app does. |
+| `discover(providerId, request)`                               | Asks a Discover provider for results.                                                                                                   |
+| `chat(providerId, request)`                                   | Asks a chat provider for its reply.                                                                                                     |
+| `renderView(view, { props?, surface?, paneId?, container? })` | Renders a view into the test's document with its own `sb`; returns the element.                                                         |
+| `flush()`                                                     | Waits until every message already sent between the extension and the stand-in has arrived.                                              |
+| `dispose()`                                                   | Closes everything. Call it after each test.                                                                                             |
 
 In the stand-in, every call counts as a user interaction, so a test doesn't have to simulate clicks to use calls marked **Needs interaction**.
 
