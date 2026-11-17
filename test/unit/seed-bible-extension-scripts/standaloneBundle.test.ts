@@ -153,7 +153,7 @@ describe("the sandboxed bundle", () => {
         throw new Error(message);
       },
     };
-    const generateBundle = plugin.generateBundle as (
+    const generateBundle = plugin.generateBundle as unknown as (
       this: typeof context,
       options: unknown,
       files: typeof bundle

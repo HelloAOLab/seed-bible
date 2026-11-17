@@ -141,7 +141,7 @@ describe("libraryCssImportsPlugin", () => {
       emitFile: (file: { source: string }) => void (merged = file.source),
     };
     (
-      plugin.generateBundle as (
+      plugin.generateBundle as unknown as (
         this: typeof context,
         options: unknown,
         files: typeof bundle
