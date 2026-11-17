@@ -60,7 +60,11 @@
   box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
 }
 
-/* Participants sheet — reuses the mobile settings sheet shell, adds a roster. */
+/* Participants sheet: a BottomSheet with a roster. */
+.sb-session-participants-sheet {
+  --sb-bottom-sheet-max-height: 85dvh;
+}
+
 .sb-session-participants-list {
   list-style: none;
   margin: 0;

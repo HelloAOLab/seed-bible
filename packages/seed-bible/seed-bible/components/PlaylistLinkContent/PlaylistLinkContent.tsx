@@ -1,7 +1,8 @@
 import "./PlaylistLinkContent.css";
-import { useI18n } from "../../i18n";
+import { useI18n } from "../../i18n/I18nContext";
 import { resolveLinkMedia } from "../../managers/resolveLinkMedia";
-import { safeImageUrl, type LinkPreview } from "../../managers/linkPreview";
+import type { LinkPreview } from "../../managers/linkPreview";
+import { safeImageUrl } from "../../managers/safeImageUrl";
 import { Button } from "../Button/Button";
 
 /**

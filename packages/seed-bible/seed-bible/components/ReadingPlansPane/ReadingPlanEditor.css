@@ -162,18 +162,7 @@
 /* Cadences are a multi-select — an author can offer several paces for the same
    plan — so they get a checkbox rather than the radio the pace picker uses. The
    native input is kept for keyboard and screen-reader use and visually replaced
-   by .sb-rp-choice-box. */
-.sb-rp-choice-checkbox {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
+   by .sb-rp-choice-box (the input is .sb-visually-hidden). */
 
 .sb-rp-choice-box {
   display: flex;

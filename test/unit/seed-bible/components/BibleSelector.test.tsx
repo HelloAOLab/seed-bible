@@ -31,9 +31,9 @@ import {
 import type { Mock } from "vitest";
 import { pressAndRelease } from "../testUtils/pressAndRelease";
 
-vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const { mockI18nManager } = await import("../testUtils/mockI18n");
-  return mockI18nManager();
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nContext", async () => {
+  const { mockI18nContext } = await import("../testUtils/mockI18n");
+  return mockI18nContext();
 });
 
 type SelectorFixture = {

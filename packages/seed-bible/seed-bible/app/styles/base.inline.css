@@ -70,6 +70,10 @@
   --sb-layer-tour: 1200;
   --sb-layer-toast: 1300;
 
+  /* The dimming behind a sheet or modal that blocks the page. Black in both
+     themes, so the page behind reads as paused on light and dark alike. */
+  --sb-backdrop: rgba(0, 0, 0, 0.3);
+
   /* UI animation speeds: quick feedback (hover, press), most open/close and
      fade changes, and larger moves (sheets, modals, slides). Long or looping
      animations keep their own timings. */

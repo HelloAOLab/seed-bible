@@ -110,4 +110,75 @@ describe("publishing an extension set", () => {
     expect(published.extensions[0]!.meta.icon).toBeUndefined();
     expect(server.files.size).toBe(1);
   });
+  it("uploads local screenshots and keeps hosted links, captions and order", async () => {
+    const server = fakeRecordsServer();
+    const set = manifest();
+    set.extensions[0]!.meta.screenshots = [
+      { src: "one.png", caption: "overview" },
+      { src: "https://cdn.example.com/hosted.jpg" },
+      { src: "two.webp" },
+    ];
+    const image = (text: string, extension: string, mimeType: string) => ({
+      bytes: new TextEncoder().encode(text),
+      extension,
+      mimeType,
+    });
+    const one = image("one", ".png", "image/png");
+    const two = image("two", ".webp", "image/webp");
+    const { manifest: published } = await uploadExtensionSet(
+      server.client,
+      "key",
+      set,
+      bundle,
+      icon,
+      [one, null, two]
+    );
+    const shots = published.extensions[0]!.meta.screenshots!;
+    expect(shots).toEqual([
+      {
+        src: expect.stringMatching(/^https:\/\/files.example.com\//),
+        caption: "overview",
+      },
+      { src: "https://cdn.example.com/hosted.jpg" },
+      { src: expect.stringMatching(/^https:\/\/files.example.com\//) },
+    ]);
+    expect(server.files.get(shots[0]!.src)).toEqual({
+      bytes: one.bytes,
+      mimeType: one.mimeType,
+    });
+    expect(server.files.get(shots[2]!.src)).toEqual({
+      bytes: two.bytes,
+      mimeType: two.mimeType,
+    });
+    expect(server.records.get("extension-sets/verse-art")).toEqual(published);
+  });
+
+  it("does not write the set when a screenshot upload fails", async () => {
+    const server = fakeRecordsServer();
+    server.client.recordFile = vi
+      .fn()
+      .mockResolvedValueOnce({
+        success: true,
+        uploadUrl: "https://files.example.com/bundle",
+        uploadMethod: "PUT",
+        uploadHeaders: {},
+      })
+      .mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "Upload unavailable",
+      });
+    const set = manifest();
+    set.extensions[0]!.meta.screenshots = [{ src: "one.png" }];
+    await expect(
+      uploadExtensionSet(server.client, "key", set, bundle, null, [
+        {
+          bytes: new TextEncoder().encode("one"),
+          extension: ".png",
+          mimeType: "image/png",
+        },
+      ])
+    ).rejects.toThrow();
+    expect(server.records.size).toBe(0);
+  });
 });
