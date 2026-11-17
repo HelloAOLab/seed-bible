@@ -1029,7 +1029,8 @@ describe("SessionsManager", () => {
         mockDataManager as any,
         mockLoginManager as any,
         mockHighlightsManager as any,
-        i18n
+        i18n,
+        discoverManager
       );
 
       const session = await manager.createSession();
@@ -1061,7 +1062,8 @@ describe("SessionsManager", () => {
           mockDataManager as any,
           mockLoginManager as any,
           mockHighlightsManager as any,
-          i18n
+          i18n,
+          discoverManager
         );
         const session = await manager.joinSession("group-abc");
 
@@ -1083,7 +1085,8 @@ describe("SessionsManager", () => {
         mockDataManager as any,
         mockLoginManager as any,
         mockHighlightsManager as any,
-        i18n
+        i18n,
+        discoverManager
       );
       const session = await manager.joinSession("group-abc");
 
@@ -1096,7 +1099,8 @@ describe("SessionsManager", () => {
         mockDataManager as any,
         mockLoginManager as any,
         mockHighlightsManager as any,
-        i18n
+        i18n,
+        discoverManager
       );
       const session = await manager.joinSession("group-abc");
       mockOptionsMap.setEmitOnSet(true);
@@ -1234,7 +1238,8 @@ describe("SessionsManager", () => {
         mockDataManager as any,
         mockLoginManager as any,
         mockHighlightsManager as any,
-        i18n
+        i18n,
+        discoverManager
       );
       const session = await manager.joinSession("group-abc");
       mockOptionsMap.setEmitOnSet(true);
@@ -1572,7 +1577,8 @@ describe("SessionsManager", () => {
         mockDataManager as any,
         mockLoginManager as any,
         mockHighlightsManager as any,
-        i18n
+        i18n,
+        discoverManager
       );
       const session = await manager.joinSession("group-abc");
 
@@ -2803,7 +2809,8 @@ describe("SessionsManager", () => {
         mockDataManager as any,
         mockLoginManager as any,
         mockHighlightsManager as any,
-        i18n
+        i18n,
+        discoverManager
       );
       return manager.joinSession("group-abc");
     };
@@ -3063,7 +3070,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -3088,7 +3096,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
     mockRemoteClients.emit({
