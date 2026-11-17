@@ -388,6 +388,21 @@ describe("website imports", () => {
     ).toEqual({ A: "Frontline Bible Church", B: "Pastor Dana" });
   });
 
+  it("takes the site's name off page titles", async () => {
+    const { worker, key, casualos, commonCrawl } = setup();
+    commonCrawl.addPage(
+      LATEST,
+      "https://gracecommunity.org/sermons/a",
+      '<title>Good Things – Grace Community</title><meta property="og:site_name" content="Grace Community">'
+    );
+    const listed = await lookUp(worker, key);
+    await pick(worker, key, listed.progress.id, [
+      listed.candidates![0]!.itemId,
+    ]);
+    await worker.drain();
+    expect(libraryItems(casualos)[0]?.title).toBe("Good Things");
+  });
+
   it("reads a page in its own character set", async () => {
     const { worker, key, casualos, commonCrawl } = setup();
     const url = "https://gracecommunity.org/sermons/cafe";

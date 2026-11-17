@@ -262,6 +262,30 @@ describe("content import worker", () => {
       });
     });
 
+    it("takes the site's name off a previewed title, but never off one the owner gave", async () => {
+      const { worker, key, casualos } = setup();
+      for (const url of ["https://example.org/a", "https://example.org/b"]) {
+        casualos.previews.set(url, {
+          title: "The Good Shepherd | Grace Community Church",
+          siteName: "Grace Community Church",
+        });
+      }
+      await startImport(worker, key, [
+        { url: "https://example.org/a" },
+        {
+          url: "https://example.org/b",
+          title: "Our Series | Grace Community Church",
+        },
+      ]);
+      await worker.drain();
+      expect(
+        Object.fromEntries(libraryItems(casualos).map((i) => [i.url, i.title]))
+      ).toEqual({
+        "https://example.org/a": "The Good Shepherd",
+        "https://example.org/b": "Our Series | Grace Community Church",
+      });
+    });
+
     it("keeps what the owner supplied over the page's own details", async () => {
       const { worker, key, casualos } = setup();
       await startImport(worker, key, [

@@ -17,6 +17,8 @@ export interface ExtractedPage {
   author?: string;
   /** A YouTube or Vimeo video embedded in the page. */
   mediaUrl?: string;
+  /** What the site calls itself, for taking it off the title. */
+  siteName?: string;
   text: string;
 }
 
@@ -262,7 +264,12 @@ export function extractPage(html: string, url: string): ExtractedPage {
         : flat;
   }
 
+  const publisher = personName(jsonLdValues(html, "publisher")[0]);
+  const siteName =
+    meta.get("og:site_name") ?? meta.get("application-name") ?? publisher;
+
   return {
+    ...(siteName ? { siteName } : {}),
     title:
       meta.get("og:title") ??
       meta.get("twitter:title") ??

@@ -30,6 +30,7 @@ import {
   type JobRow,
 } from "./jobs";
 import { ArchiveError, fetchArchivedPage } from "./commonCrawl/warc";
+import { trimSiteName } from "../../../packages/seed-bible/seed-bible/managers/customContent/titles";
 import { extractPage } from "./commonCrawl/extract";
 import { findPageReferences } from "../../../packages/seed-bible/seed-bible/managers/customContent/explicitReferences";
 import type {
@@ -105,6 +106,7 @@ async function importOne(
 
   let details: {
     title?: string;
+    siteName?: string;
     description?: string;
     image?: string;
     author?: string;
@@ -119,6 +121,7 @@ async function importOne(
     );
     details = {
       title: page.title,
+      siteName: page.siteName,
       description: page.description,
       image: page.image,
       author: page.author,
@@ -145,7 +148,19 @@ async function importOne(
     id: row.item_id,
     url: input.url,
     status: "needs_review",
-    title: clip(input.title ?? details?.title, MAX_CONTENT_TITLE_LENGTH) ?? "",
+    // A title the owner gave is kept as it is; one found on the page loses
+    // the site's name, which the author and link already show.
+    title:
+      clip(
+        input.title ??
+          (details?.title &&
+            trimSiteName(
+              details.title,
+              [details.siteName, job.default_author],
+              input.url
+            )),
+        MAX_CONTENT_TITLE_LENGTH
+      ) ?? "",
     description:
       clip(
         input.description ?? details?.description,
