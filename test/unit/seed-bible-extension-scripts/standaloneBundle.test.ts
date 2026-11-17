@@ -2,6 +2,7 @@
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { gzipSync } from "node:zlib";
 import { JSDOM } from "jsdom";
 import { build } from "vite";
 import {
@@ -37,6 +38,14 @@ async function buildBundle(root: string) {
     outDir,
     code: await readFile(path.join(outDir, "index.js"), "utf-8"),
   };
+}
+
+/** The CSS `inlineCssPlugin` put at the start of the bundle. */
+function inlinedCss(code: string): string {
+  const start = "s.textContent=";
+  const from = code.indexOf(start) + start.length;
+  const to = code.indexOf(";document.head.append(s)", from);
+  return JSON.parse(code.slice(from, to)) as string;
 }
 
 describe("the sandboxed bundle", () => {
@@ -81,6 +90,21 @@ describe("the sandboxed bundle", () => {
     expect(await readdir(outDir)).toEqual(["index.js"]);
     // The example's pane uses the shared Button.
     expect(code).toMatch(/\.sb-button\{/);
+  }, 60_000);
+
+  // Every extension that uses one shared component carries the CSS that
+  // comes with it, so it has to stay small: all the shared components' CSS
+  // together is about 4 KB gzipped. Far more means a component's CSS has
+  // ended up beside the app's own, in a chunk with the managers'.
+  it("carries only a few KB of CSS for the shared components", async () => {
+    const { outDir, code } = await buildBundle(
+      path.resolve("packages/sandboxed-example-extension")
+    );
+    folders.push(outDir);
+
+    const css = inlinedCss(code);
+    expect(css).toMatch(/\.sb-button\{/);
+    expect(gzipSync(css).length).toBeLessThan(8 * 1024);
   }, 60_000);
 
   it("adds the extension's own CSS to the page before its code runs", async () => {
