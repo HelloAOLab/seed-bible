@@ -54,12 +54,12 @@ export function TranslationViewModeMenu(props: {
             role="menuitemradio"
             aria-checked={isSelected}
             className={
-              "translation-option flex-between-center-gap-md sb-translation-view-mode-option" +
+              "translation-option sb-translation-view-mode-option" +
               (isSelected ? " sb-translation-view-mode-option--selected" : "")
             }
             onClick={() => onChange(mode)}
           >
-            <span className="translation-title inline-flex-start-center-gap-sm">
+            <span className="translation-title">
               {isSelected ? (
                 <SelectedIcon height={17} width={17} />
               ) : (

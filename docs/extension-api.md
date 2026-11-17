@@ -101,9 +101,11 @@ Each view component receives:
 | `surface` | `"pane"` \| `"modal"` \| `"settings"` | Where it's being shown.                                                |
 | `paneId`  | `string`                              | The pane's id (for a dialog or settings panel, an id for that).        |
 
-**Theme, fonts and language are applied for you.** Each frame's `<html>` gets the user's `lang` and `dir`, the app's fonts are loaded, and every `--sb-*` CSS variable of the active theme is defined, so `color: var(--sb-font-color)` and `background: var(--sb-background)` match the app and follow it when the user switches to dark mode. The page background and text color are already set this way.
+**Theme, fonts and language are applied for you.** Each frame's `<html>` gets the user's `lang` and `dir`, the app's fonts are loaded, and every `--sb-*` CSS variable of the active theme is defined, so `color: var(--sb-font-color)` and `background: var(--sb-background)` match the app and follow it when the user switches to dark mode. The page background and text color are already set this way, and your own CSS can override them.
 
-**Styles must be in your bundle**, as inline `style` props or CSS imported with `?inline` and put in a `<style>` element. The frame can't load a separate stylesheet file.
+**Import CSS as usual.** The frame can't load a separate stylesheet file, so `seed-bible-extension-scripts` puts every CSS file your code imports (`import "./panel.css"`) inside the bundle, and adds it to the frame's page before your code runs. Inline `style` props work too.
+
+**Seed Bible's shared components bring their own styles.** Import them from `seed-bible/components` (`Button`, `CloseButton`, `BottomSheet` and the rest) and they look the way they do in the app, in the user's theme.
 
 ```tsx
 export default defineExtension({

@@ -1,4 +1,5 @@
 import "./BibleReaderToolbar.inline.css";
+import "../visuallyHidden.inline.css";
 import {
   effect,
   signal,
@@ -2653,7 +2654,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         >
           <ToolIcon />
           {hideLabel ? (
-            <span className="sr-only">{label}</span>
+            <span className="sb-visually-hidden">{label}</span>
           ) : (
             <span className="sb-reader-toolbar-button-label">{label}</span>
           )}
@@ -2868,7 +2869,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             <MaterialIcon>
               {isAudioPlaying ? "pause" : "play_arrow"}
             </MaterialIcon>
-            <span className="sr-only">{toggleLabel}</span>
+            <span className="sb-visually-hidden">{toggleLabel}</span>
           </button>
         </div>
         {!isAudioPlaying && (
@@ -2880,7 +2881,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               onClick={() => playback.stop()}
             >
               <StopIcon />
-              <span className="sr-only">{stopLabel}</span>
+              <span className="sb-visually-hidden">{stopLabel}</span>
             </button>
           </div>
         )}

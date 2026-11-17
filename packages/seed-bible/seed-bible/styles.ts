@@ -1,8 +1,7 @@
-// Publishes the foundation reset/utility styles as their own build entry so
-// they land in the package's single bundled CSS output (see vite.config.ts's
-// `cssCodeSplit: false`) even though no exported module reaches them through
-// a normal import chain — `app/main.tsx` (the app's own mount point) isn't
-// part of this package's public surface, but consumers still need this CSS
-// loaded once, before any component's own co-located CSS.
+// The foundation styles (tokens, resets, utilities) as a build entry of their
+// own. No exported module imports them (`app/main.tsx`, the app's own mount
+// point, isn't part of the package), so without this entry they'd be missing
+// from the package. `libraryCssImportsPlugin({ firstEntry: "styles" })` puts
+// them first in `style.css`, before the components' CSS that builds on them.
 import "./app/styles/base.inline.css";
 import "./app/styles/utilities.inline.css";

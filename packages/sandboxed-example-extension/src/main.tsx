@@ -6,6 +6,9 @@ import {
   type SandboxContext,
   type SandboxDiscoverResult,
 } from "seed-bible/extensions";
+// Seed Bible's own button. Its CSS comes along: the build puts it in this
+// extension's bundle, since the frame can't load a stylesheet.
+import { Button } from "seed-bible/components";
 
 /*
  * `packages/seed-bible-refresh-example-extension`, ported to the sandbox: the
@@ -132,8 +135,7 @@ function GreetingPane({ sb, paneId }: { sb: SandboxContext; paneId: string }) {
       {typeof subtitle === "string" && subtitle && (
         <p style={{ opacity: 0.75 }}>{subtitle}</p>
       )}
-      <button
-        type="button"
+      <Button
         onClick={async () => {
           // The host adds the API key and client ID on the server, through
           // the user's proxy for httpbin.org; the values never reach here.
@@ -154,10 +156,10 @@ function GreetingPane({ sb, paneId }: { sb: SandboxContext; paneId: string }) {
         }}
       >
         {sb.i18n.t("send-sensitive-request")}
-      </button>{" "}
-      <button type="button" onClick={() => void sb.panes.close(paneId)}>
+      </Button>{" "}
+      <Button variant="primary" onClick={() => void sb.panes.close(paneId)}>
         {app.t("close", { defaultValue: "Close" })}
-      </button>
+      </Button>
     </div>
   );
 }

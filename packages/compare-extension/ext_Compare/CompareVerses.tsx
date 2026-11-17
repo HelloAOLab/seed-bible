@@ -79,7 +79,7 @@ function TranslationBlockHeader(props: {
     return (
       <div className="sb-compare-block-header" dir={dir}>
         {content}
-        <span className="sr-only">
+        <span className="sb-visually-hidden">
           {t("currently-reading", { defaultValue: "Currently reading" })}
         </span>
       </div>

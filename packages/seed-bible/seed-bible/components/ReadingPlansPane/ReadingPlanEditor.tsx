@@ -1,4 +1,5 @@
 import "./ReadingPlanEditor.css";
+import "../visuallyHidden.inline.css";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { RefObject } from "preact";
 import { MaterialIcon } from "../icons";
@@ -448,7 +449,7 @@ function CadencesSection(props: CadencesSectionProps) {
           >
             <input
               type="checkbox"
-              className="sb-rp-choice-checkbox"
+              className="sb-rp-choice-checkbox sb-visually-hidden"
               checked={selected}
               // A plan has to offer at least one cadence, so the last one
               // standing can't be unchecked.

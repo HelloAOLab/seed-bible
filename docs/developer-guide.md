@@ -139,7 +139,7 @@ Extensions are written in TypeScript with three tools. If you've used React, you
 4. **Update.** When you publish a new version, it's used on the user's next visit. If it asks for no new permissions, it loads without a prompt. If it asks for more, the user sees only what's new, and it doesn't load until they agree.
 5. **Uninstall.** Everything you registered is removed, your storage is deleted, and Seed Bible forgets what the user granted, so reinstalling asks again.
 
-**What a sandboxed extension can't do (yet).** It can't depend on other extensions, and it's never installed without the user being asked. A chat provider replies with one whole message (no streaming), and a Discover provider answers with data (`content`, `cross-reference` or `study-note` results), not its own markup. If your background frame stops responding, Seed Bible stops the extension until the page reloads. Styles must come from your bundle itself, as inline styles or CSS imported with `?inline`, since a frame can't load a separate stylesheet.
+**What a sandboxed extension can't do (yet).** It can't depend on other extensions, and it's never installed without the user being asked. A chat provider replies with one whole message (no streaming), and a Discover provider answers with data (`content`, `cross-reference` or `study-note` results), not its own markup. If your background frame stops responding, Seed Bible stops the extension until the page reloads.
 
 ---
 
