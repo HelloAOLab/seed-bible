@@ -408,7 +408,7 @@ function FriendRow(props: {
         <Button
           size="sm"
           aria-label={t("remove-friend-user", {
-            name: displayNameOf(friend, t),
+            name: visualAnonymousLabel(getUserAnimalVisual(friend.userId), t),
             defaultValue: "Remove {{name}} as a friend",
           })}
           onClick={() =>
