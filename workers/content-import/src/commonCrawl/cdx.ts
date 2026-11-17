@@ -110,7 +110,7 @@ function parseClusterLine(line: string): (IndexBlock & { key: string }) | null {
   ) {
     return null;
   }
-  return block;
+  return { key, file, offset: block.offset, length: block.length };
 }
 
 /** Complete lines in a chunk; the first is dropped when the chunk starts mid-line. */
