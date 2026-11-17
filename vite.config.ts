@@ -493,10 +493,7 @@ export default defineConfig(({ isSsrBuild, mode }) => ({
     globals: true,
     // Blocks real WebSocket connections, so a test that reaches the network
     // fails in its own file instead of as an unattributed async error.
-    setupFiles: [
-      "./test/setup/memoryLocalStorage.ts",
-      "./test/setup/blockRealSockets.ts",
-    ],
+    setupFiles: ["./test/setup/blockRealSockets.ts"],
     // Inline react-i18next so the use-sync-external-store alias above applies
     // to its imports (aliases don't reach externalized modules, which are
     // loaded directly by Node).
