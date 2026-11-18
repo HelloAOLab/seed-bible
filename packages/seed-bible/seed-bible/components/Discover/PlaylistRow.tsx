@@ -1,6 +1,10 @@
 import { i18n, useI18n } from "../../i18n";
 import type { ModalManager } from "../../managers/ModalManager";
-import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
+import type {
+  FinishedPlaylist,
+  Playlist,
+  PlaylistManager,
+} from "../../managers/PlaylistManager";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { openLinkShareModal } from "../ShareModal/openLinkShareModal";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
@@ -184,7 +188,7 @@ export function openDeletePlaylistConfirm(
  * playlist in that session, for everyone who joins.
  */
 export function openPlaylistShareModal(options: {
-  playlist: Playlist;
+  playlist: FinishedPlaylist;
   playlists: PlaylistManager;
   modals: ModalManager;
   app: AppState;
@@ -206,7 +210,11 @@ export function openPlaylistShareModal(options: {
       defaultValue: "Couldn't copy the playlist link",
     }),
     // Plays rather than opening the playlist page, so everyone who joins
-    // lands in the playlist itself.
-    onSessionStarted: () => playlists.startPlaying(playlist),
+    // lands in the playlist itself. Shared from the finished page, that page
+    // would otherwise stay over the new session's playback.
+    onSessionStarted: () => {
+      playlists.dismissFinishedPlaylist();
+      playlists.startPlaying(playlist);
+    },
   });
 }

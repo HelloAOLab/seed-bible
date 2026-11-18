@@ -5,7 +5,10 @@ import { PlaylistRow } from "@packages/seed-bible/seed-bible/components/Discover
 import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
 import { ToastHost } from "@packages/seed-bible/seed-bible/components/ToastHost/ToastHost";
 import type { Playlist } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
-import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import {
+  PLAYLIST_PAGE_PANE_ID,
+  type SeedBibleState,
+} from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { BibleReadingSession } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import {
   createTestSeedBibleState,
@@ -182,5 +185,89 @@ describe("sharing a playlist", () => {
     await waitFor(() => shareActions().length === 0);
     expect(state.playlists.playing.value).toBeNull();
     expect(writeText).not.toHaveBeenCalled();
+  });
+});
+
+describe("sharing from a playlist's page", () => {
+  const PAGE_PLAYLIST: Playlist = {
+    id: "p2",
+    recordName: "rec",
+    authorUserId: "user-1",
+    title: "Evening",
+    description: null,
+    items: [{ type: "bible-verse", ref: { bookId: "JHN", chapter: 3 } }],
+    createdAtMs: 1761868800000,
+    updatedAtMs: 1761868800000,
+  };
+  let container: HTMLDivElement;
+  let state: SeedBibleState;
+  let writeText: ReturnType<typeof vi.fn>;
+
+  beforeEach(async () => {
+    writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(window.navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    state = await createTestSeedBibleState();
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    vi.restoreAllMocks();
+  });
+
+  it("starts a session that plays the playlist", async () => {
+    const getData = state.os.getData.bind(state.os);
+    vi.spyOn(state.os, "getData").mockImplementation(
+      (recordName: string, address: string) =>
+        recordName === PAGE_PLAYLIST.recordName && address === PAGE_PLAYLIST.id
+          ? Promise.resolve({
+              success: true,
+              data: PAGE_PLAYLIST,
+            } as Awaited<ReturnType<typeof getData>>)
+          : getData(recordName, address)
+    );
+    state.playlists.openPlaylistPage(PAGE_PLAYLIST);
+    await waitFor(() =>
+      state.panes.panes.value.some((pane) => pane.id === PLAYLIST_PAGE_PANE_ID)
+    );
+    const pane = state.panes.panes.value.find(
+      (item) => item.id === PLAYLIST_PAGE_PANE_ID
+    )!;
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <>
+            {pane.component()}
+            <ModalHost manager={state.modals} isMobile={state.app.isMobile} />
+          </>
+        </TestHost>,
+        container
+      );
+    });
+    const tabsBefore = state.tabs.tabs.value.length;
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-playlist-page-share")!
+        .click();
+    });
+    const start = Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>(".sb-share-action")
+    ).find((button) => button.textContent?.includes("Start and share session"));
+    await act(async () => {
+      start!.click();
+    });
+
+    await waitFor(() => writeText.mock.calls.length > 0);
+    expect(state.tabs.tabs.value).toHaveLength(tabsBefore + 1);
+    expect(state.app.selectedTab.value?.sharedSession).not.toBeNull();
+    expect(
+      state.playlists.playing.value?.playlists.value.map((p) => p.id)
+    ).toEqual(["p2"]);
   });
 });
