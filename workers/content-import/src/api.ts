@@ -7,7 +7,13 @@ import {
 import { normalizeContentUrl } from "../../../packages/seed-bible/seed-bible/managers/customContent/normalizeUrl";
 import { createCasualOSClient, isFatalSessionError } from "./casualos";
 import type { WorkerDeps } from "./deps";
-import { HttpError, checkLibraryAccess, readBody, type Caller } from "./http";
+import {
+  HttpError,
+  checkLibraryAccess,
+  queueUnavailable,
+  readBody,
+  type Caller,
+} from "./http";
 import { writeImportStatus } from "./importStatus";
 import {
   JOB_LIFETIME_MS,
@@ -205,11 +211,20 @@ async function startImport(
     }
     throw error;
   }
-  await enqueue(
-    env,
-    jobId,
-    items.map((item) => item.itemId)
-  );
+  try {
+    await enqueue(
+      env,
+      jobId,
+      items.map((item) => item.itemId)
+    );
+  } catch (error) {
+    // Nothing would ever run its links: end it now, so it doesn't hold the
+    // library's one import slot.
+    await setJobStatus(env.DB, jobId, ["running"], "cancelled", deps.now(), {
+      clearKey: true,
+    });
+    throw queueUnavailable(error);
+  }
   const job = await getJob(env.DB, jobId);
   return { body: await jobProgress(env.DB, job!), status: 201 };
 }

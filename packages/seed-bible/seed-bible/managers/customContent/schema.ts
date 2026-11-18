@@ -14,11 +14,14 @@ export const CONTENT_MANIFEST_ADDRESS = "manifest";
 export const CONTENT_CHAPTER_INDEX_ADDRESS = "chapters";
 
 export const CONTENT_LIBRARY_MARKER = "publicRead:seedBibleContentLibrary";
-/**
- * Where the import worker reports on the library's latest import. It also
- * proves the worker can write to the record before it queues anything.
- */
+/** Where the import worker reports on the library's latest import. */
 export const CONTENT_IMPORT_STATUS_ADDRESS = "importStatus";
+/**
+ * What the import worker writes to prove the owner may change the library
+ * before it queues anything. Its own entry, so a refused start never
+ * replaces a real import's summary in `importStatus`.
+ */
+export const CONTENT_IMPORT_ACCESS_ADDRESS = "importAccess";
 export const CONTENT_IMPORT_STATUS_MARKER = "seedBibleContentImport";
 /** Items hold review state and owner notes, so only the owner reads them. */
 export const CONTENT_ITEM_MARKER = "seedBibleContentItem";

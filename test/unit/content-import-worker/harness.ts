@@ -290,16 +290,26 @@ export function createTestWorker(
   const pending: { body: ImportMessage; attempts: number }[] = [];
   const deadLetters: { body: ImportMessage; attempts: number }[] = [];
   const sent: ImportMessage[] = [];
+  /** How many of the next sends the queue refuses, as if it were down. */
+  const queue = { failSends: 0 };
+  const refuseIfDown = () => {
+    if (queue.failSends > 0) {
+      queue.failSends--;
+      throw new Error("Queue unavailable");
+    }
+  };
   const writers = new Map<string, LibraryWriter>();
 
   const env: Env = {
     DB: db,
     IMPORT_QUEUE: {
       send: async (body) => {
+        refuseIfDown();
         sent.push(body);
         pending.push({ body, attempts: 1 });
       },
       sendBatch: async (messages) => {
+        refuseIfDown();
         for (const message of messages) {
           sent.push(message.body);
           pending.push({ body: message.body, attempts: 1 });
@@ -359,7 +369,18 @@ export function createTestWorker(
     }
   };
 
-  return { env, deps, db, clock, sent, pending, drain, requests, commonCrawl };
+  return {
+    env,
+    deps,
+    db,
+    clock,
+    sent,
+    queue,
+    pending,
+    drain,
+    requests,
+    commonCrawl,
+  };
 }
 
 export type TestWorker = ReturnType<typeof createTestWorker>;

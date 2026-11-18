@@ -89,8 +89,9 @@ export async function lookupState(
 
 /**
  * Records which blocks of a crawl's index hold the site: one queued lookup
- * per block, stored in the same batch that marks the search done, so the
- * listing can never look finished in between.
+ * per block. The search itself stays queued until their messages are sent
+ * (then {@link settleLookup} marks it done), so a failed send is retried
+ * instead of leaving lookups nothing will run. Recording again is harmless.
  */
 export async function recordIndexBlocks(
   db: D1Database,
@@ -98,21 +99,53 @@ export async function recordIndexBlocks(
   crawlId: string,
   blocks: readonly IndexBlock[]
 ): Promise<void> {
-  await db.batch([
-    ...blocks.map((block, page) =>
+  if (blocks.length === 0) {
+    return;
+  }
+  await db.batch(
+    blocks.map((block, page) =>
       db
         .prepare(
           `INSERT OR IGNORE INTO site_lookups (job_id, crawl_id, page, state, block)
            VALUES (?, ?, ?, 'queued', ?)`
         )
         .bind(jobId, crawlId, page, JSON.stringify(block))
-    ),
-    db
-      .prepare(
-        "UPDATE site_lookups SET state = 'done' WHERE job_id = ? AND crawl_id = ? AND page = -1"
-      )
-      .bind(jobId, crawlId),
-  ]);
+    )
+  );
+}
+
+/**
+ * Gives up on a listing's lookups still waiting to run: all of them, or one
+ * crawl's. The listing can then finish with the pages found so far, and
+ * the editor says some may be missing.
+ */
+export async function failQueuedLookups(
+  db: D1Database,
+  jobId: string,
+  error: string,
+  crawlId?: string
+): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE site_lookups SET state = 'failed', error = COALESCE(error, ?)
+       WHERE job_id = ? AND state = 'queued'${crawlId ? " AND crawl_id = ?" : ""}`
+    )
+    .bind(error, jobId, ...(crawlId ? [crawlId] : []))
+    .run();
+}
+
+/** Website imports still listing pages that started before `startedBefore`. */
+export async function listingsStartedBefore(
+  db: D1Database,
+  startedBefore: number
+): Promise<JobRow[]> {
+  const { results } = await db
+    .prepare(
+      "SELECT * FROM import_jobs WHERE status = 'listing' AND created_at <= ?"
+    )
+    .bind(startedBefore)
+    .all<JobRow>();
+  return results;
 }
 
 /** The index block a lookup reads, as {@link recordIndexBlocks} stored it. */
@@ -378,6 +411,32 @@ export async function startPickedJob(
     )
     .run();
   return result.meta.changes === 1;
+}
+
+/**
+ * Undoes a pick whose pages couldn't be queued: the import waits for the
+ * owner again, offering the pages they picked, and holds no key.
+ */
+export async function returnToPick(
+  db: D1Database,
+  jobId: string,
+  now: number
+): Promise<void> {
+  await db.batch([
+    db
+      .prepare(
+        "UPDATE import_items SET state = 'candidate' WHERE job_id = ? AND state = 'queued'"
+      )
+      .bind(jobId),
+    db
+      .prepare(
+        `UPDATE import_jobs
+         SET status = 'awaiting_pick', total = 0, session_key_enc = NULL,
+             default_author = NULL, updated_at = ?
+         WHERE id = ? AND status = 'running'`
+      )
+      .bind(now, jobId),
+  ]);
 }
 
 /** Forgets the pages a website import offered, once it has ended without a pick. */

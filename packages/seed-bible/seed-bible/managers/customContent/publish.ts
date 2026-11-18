@@ -1,5 +1,6 @@
 import {
   buildChapterRecord,
+  itemsByChapter,
   countPublishedChapters,
   paginateChapterRecord,
   publishedChapterKeys,
@@ -117,6 +118,42 @@ export async function loadLibraryItems(
  * `full` rewrites every chapter that has a record now or should have one,
  * which also erases records left behind for chapters nothing points at.
  */
+/**
+ * Chapters rebuilt at once. A full rebuild of a big library touches
+ * hundreds of chapters, and one at a time it could run past the worker's
+ * time limit; a few at once stays gentle on CasualOS.
+ */
+const PARALLEL_CHAPTER_WRITES = 4;
+
+/**
+ * Runs `run` for each value, at most `limit` at once. After a failure no
+ * more are started; the ones running finish, then the first error is thrown.
+ */
+async function inParallel<T>(
+  values: readonly T[],
+  limit: number,
+  run: (value: T) => Promise<void>
+): Promise<void> {
+  let next = 0;
+  let failure: { error: unknown } | null = null;
+  const lane = async (): Promise<void> => {
+    while (!failure && next < values.length) {
+      const value = values[next++]!;
+      try {
+        await run(value);
+      } catch (error) {
+        failure ??= { error };
+      }
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, values.length) }, lane)
+  );
+  if (failure) {
+    throw (failure as { error: unknown }).error;
+  }
+}
+
 export async function publishChapters(
   store: ContentRecordStore,
   recordName: string,
@@ -169,13 +206,14 @@ export async function publishChapters(
     pages = { ...(await readChapterIndex(store, recordName)).pages };
   }
 
-  for (const key of keys) {
+  const byChapter = itemsByChapter(items);
+  const rebuild = async (key: string): Promise<void> => {
     const chapter = parseContentChapterKey(key);
     if (!chapter) {
-      continue;
+      return;
     }
     const built = buildChapterRecord(
-      items,
+      byChapter.get(key) ?? [],
       chapter.book,
       chapter.chapter,
       now,
@@ -208,7 +246,8 @@ export async function publishChapters(
     } else {
       delete pages[key];
     }
-  }
+  };
+  await inParallel([...keys], PARALLEL_CHAPTER_WRITES, rebuild);
 
   const chapters = countPublishedChapters(items);
   const pagedChapters = Object.fromEntries(

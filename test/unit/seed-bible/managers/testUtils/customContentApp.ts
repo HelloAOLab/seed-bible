@@ -35,6 +35,7 @@ export function fakeRecordsServer() {
   ]);
   const failNextCreate = { code: null as string | null };
   const failWritesTo = new Set<string>();
+  const failErasesTo = new Set<string>();
   /** Runs before each write is stored, so a test can hold writes back. */
   const hooks = {
     beforeWrite: async (_address: string): Promise<void> => undefined,
@@ -105,6 +106,13 @@ export function fakeRecordsServer() {
     });
     vi.spyOn(os, "eraseData").mockImplementation(async (recordKey, address) => {
       const record = records.get(recordKey);
+      if (failErasesTo.has(address)) {
+        return {
+          success: false,
+          errorCode: "server_error",
+          errorMessage: "refused",
+        } as never;
+      }
       if (!record?.delete(address)) {
         return {
           success: false,
@@ -127,7 +135,14 @@ export function fakeRecordsServer() {
     );
   }
 
-  return { records, attach, failNextCreate, failWritesTo, hooks };
+  return {
+    records,
+    attach,
+    failNextCreate,
+    failWritesTo,
+    failErasesTo,
+    hooks,
+  };
 }
 
 function loginAs(userId: string | null): LoginManager {
@@ -202,7 +217,7 @@ export function createApp(
     importPollMs: options.importPollMs,
     chats: { providers: signal(options.chatProviders ?? []) },
   });
-  return { os, customizations, discover, modals, customContent };
+  return { os, login, customizations, discover, modals, customContent };
 }
 
 export async function waitForCondition(

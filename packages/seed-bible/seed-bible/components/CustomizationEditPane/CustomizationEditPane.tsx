@@ -666,7 +666,7 @@ function ContentViewLoading() {
           defaultValue: "Loading the content library…",
         })}
       >
-        <Skeleton width="100%" height="12rem" radius="0.625rem" />
+        <Skeleton width="100%" height="12rem" radius="var(--sb-radius-md)" />
       </SkeletonContainer>
     </div>
   );

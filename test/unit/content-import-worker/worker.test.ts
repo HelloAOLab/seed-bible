@@ -357,6 +357,46 @@ describe("content import worker", () => {
       ).toMatchObject({ jobId: started.id, status: "done", done: 6 });
     });
 
+    it("ends an import whose links couldn't be queued, so another can start", async () => {
+      const { worker, key } = setup();
+      worker.queue.failSends = 1;
+
+      const refused = await call(worker, "POST", "/imports", {
+        key,
+        body: {
+          contentRecordName: LIBRARY,
+          items: [{ url: "https://example.org/a" }],
+        },
+      });
+      expect(refused.status).toBe(503);
+      expect(await refused.json()).toMatchObject({
+        error: "queue_unavailable",
+      });
+
+      const started = await startImport(worker, key, [
+        { url: "https://example.org/a" },
+      ]);
+      await worker.drain();
+      expect(started.status).toBe("running");
+    });
+
+    it("keeps the last import's summary when a new start is refused", async () => {
+      const { worker, key, casualos } = setup();
+      const finished = await startImport(worker, key, [
+        { url: "https://example.org/a" },
+      ]);
+      await worker.drain();
+
+      const response = await call(worker, "POST", "/imports", {
+        key,
+        body: { contentRecordName: LIBRARY, items: [{ url: "not a link" }] },
+      });
+      expect(response.status).toBe(400);
+      expect(
+        casualos.records.get(LIBRARY)!.get(CONTENT_IMPORT_STATUS_ADDRESS)?.data
+      ).toMatchObject({ jobId: finished.id, status: "done" });
+    });
+
     it("lets only the first of several finishers end the import", async () => {
       const { worker, key } = setup();
       const started = await startImport(worker, key, [

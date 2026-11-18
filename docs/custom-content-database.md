@@ -67,6 +67,7 @@ Inside the content record these data entries are distinguished by address:
 | Chapter record   | `ch.{BOOK}.{chapter}` | `publicRead:seedBibleContentChapter` | Every viewer, once per chapter they open             |
 | Chapter index    | `chapters`            | `publicRead:seedBibleContentLibrary` | Every viewer, once, with the manifest                |
 | Import status    | `importStatus`        | `seedBibleContentImport` (private)   | The owner; written by the import worker              |
+| Import access    | `importAccess`        | `seedBibleContentImport` (private)   | No one; the import worker writes it to check access  |
 
 **Why the chapter index is separate from the manifest.** The editor writes the manifest (categories, default author); publishing writes the chapter counts. Once publishing moved to the import worker (§5.8), keeping both in one entry would let the editor and the worker each read, change and rewrite it, silently undoing each other's changes. So each entry has exactly one writer.
 
@@ -392,6 +393,8 @@ Once a page is extracted it becomes an ordinary queue message, so classifying an
 
 **A. List the site's pages.** `POST /site-imports` on the worker with `{ contentRecordName, site, include?, exclude? }` starts a lookup and returns its id. The editor checks on it with `GET /site-imports/{id}`. The listing runs as queue messages: for each crawl, one that finds which index blocks can hold the site, then one per block that reads it. The pages found are stored as `candidate` rows in the job's D1 table until the owner picks.
 
+Each step is recorded in D1 only together with the queue messages that will finish it, so a queue that refuses a send can never leave work that nothing will run (and an import holding the library's one import slot forever). If starting a lookup or a links import can't queue its first messages, the import is cancelled and the editor says the service couldn't be reached. An index search whose block lookups can't be queued stays unfinished and is retried, and if it runs out of retries, its blocks are marked failed so the listing still finishes. If the owner's pick can't be queued, the import goes back to waiting with the picked pages still offered.
+
 - Query the **latest 3 crawls**, because each crawl only samples a site and a page missing from one is often in another. Keep only `status` 200 with `mime` `text/html`.
 - Merge the results: one entry per normalized URL (same rules as §5.1), keeping the **newest capture**. Captures with identical `digest` (the same content under two URLs) are collapsed.
 - Apply the owner's path filters. Include patterns like `/sermons/*`, exclude patterns like `/tag/*` or `/page/*`. Sensible defaults drop listing and archive pages (`/tag/`, `/category/`, `/page/N`, `/feed`, `?replytocom=`), which are noise for verse lookup.
@@ -560,7 +563,7 @@ The editor sends `Authorization: Bearer {sessionKey}`, the key the app already h
 
 1. Parses the user id out of the key (CasualOS session keys carry it, as `OsManager.parsedSessionKey` already relies on).
 2. Calls CasualOS `getUserInfo({ userId })` using that key, the same call `LoginManager` makes. Success proves the key is live and belongs to that user. Anything else is rejected with 401.
-3. Checks that the user can write to the target content record by writing a small `importStatus` entry to it with the same key (the editor reads this entry to find a running import). If CasualOS refuses, the request is rejected with 403 before anything is queued. Every later write is also made **as the user** with their key, so CasualOS enforces permissions on each one; the worker never needs its own admin access to anyone's records.
+3. Checks that the user can write to the target content record by writing a small `importAccess` entry to it with the same key. It's an entry of its own so that a start refused afterwards (another import running, nothing to import) never replaces the last import's summary in `importStatus`. If CasualOS refuses, the request is rejected with 403 before anything is queued. Every later write is also made **as the user** with their key, so CasualOS enforces permissions on each one; the worker never needs its own admin access to anyone's records.
 
 **Handling the key carefully.** A session key is a full-account credential, so the worker treats it like a password:
 
@@ -585,7 +588,8 @@ A narrower credential would be better than a full session key. CasualOS **record
 A scheduled worker (a Cron Trigger, proposal: every 15 minutes):
 
 - Puts `running` items whose lease has expired back to `queued` and re-sends their messages.
-- Expires `running` and `paused_signin` jobs past `expires_at`: sets them to `expired`, erases the key, and writes the summary to `importStatus`. Website lookups still `listing` or `awaiting_pick` never expire; they wait for the owner.
+- Expires `running` and `paused_signin` jobs past `expires_at`: sets them to `expired`, erases the key, and writes the summary to `importStatus`. A website lookup `awaiting_pick` never expires; it waits for the owner, who can pick or cancel whenever they come back.
+- Gives up on a website lookup still `listing` a day after it started (it normally takes minutes, so its remaining lookups have nothing running them): those lookups are marked failed and the owner is offered the pages found so far, with the usual note that some may be missing.
 - Deletes finished jobs and their item rows 30 days after they end. The lasting record is the `importStatus` entry and the items themselves, both in the content record.
 
 #### Deployment

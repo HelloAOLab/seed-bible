@@ -102,6 +102,28 @@ export function publishedChapterKeys(
 }
 
 /**
+ * Published items grouped by the chapters they're on, in one pass over the
+ * library, so rebuilding many chapters doesn't look through every item for
+ * each one.
+ */
+export function itemsByChapter(
+  items: readonly ContentItem[]
+): Map<string, ContentItem[]> {
+  const groups = new Map<string, ContentItem[]>();
+  for (const item of items) {
+    for (const key of publishedChapterKeys(item)) {
+      const group = groups.get(key);
+      if (group) {
+        group.push(item);
+      } else {
+        groups.set(key, [item]);
+      }
+    }
+  }
+  return groups;
+}
+
+/**
  * The chapters whose records must be rebuilt after an item changes: the
  * ones it was on before as well as the ones it's on now, so moving an item
  * from John 3 to John 4 also takes it off John 3.

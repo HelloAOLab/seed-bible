@@ -261,6 +261,37 @@ describe("CustomContentManager", () => {
       expect(owner.customContent.items.value).toEqual([]);
     });
 
+    it("rebuilds several chapters at once, and every one ends up right", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      for (let chapter = 1; chapter <= 8; chapter++) {
+        await addSermon(owner.customContent, {
+          url: `https://gracecommunity.org/sermons/john-${chapter}`,
+          title: `John ${chapter}`,
+          references: [ref({ book: "JHN", chapter })],
+        });
+      }
+      let writing = 0;
+      let mostAtOnce = 0;
+      server.hooks.beforeWrite = async (address) => {
+        if (address.startsWith("ch.")) {
+          writing++;
+          mostAtOnce = Math.max(mostAtOnce, writing);
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          writing--;
+        }
+      };
+
+      await owner.customContent.rebuildIndex();
+
+      expect(mostAtOnce).toBeGreaterThan(1);
+      const reader = await readerOf(server, owner.customizationId);
+      for (const chapter of [1, 5, 8]) {
+        const results = await discoverContent(reader.discover, "JHN", chapter);
+        expect(results.map((r) => r.title)).toEqual([`John ${chapter}`]);
+      }
+    });
+
     it("can repair the index after a chapter write fails partway", async () => {
       const server = fakeRecordsServer();
       const owner = await ownerWithLibrary(server);
@@ -705,6 +736,40 @@ describe("CustomContentManager", () => {
       const app = createApp(server, { userId: OWNER });
       await app.customContent.openLibrary("seedbible-content-gone");
       expect(app.customContent.status.value).toBe("missing");
+    });
+
+    it("closes the library, letting go of the owner's drafts, when they sign out", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      await addSermon(owner.customContent, {}, false);
+
+      owner.login.userId.value = null;
+
+      expect(owner.customContent.status.value).toBe("closed");
+      expect(owner.customContent.items.value).toEqual([]);
+      expect(owner.customContent.manifest.value).toBeNull();
+    });
+
+    it("says so, and keeps the library open to try again, when part of it can't be erased", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const item = await addSermon(owner.customContent);
+      const recordName = owner.customContent.recordName.value!;
+      server.failErasesTo.add(contentItemAddress(item.id));
+
+      await expect(owner.customContent.deleteLibrary()).rejects.toMatchObject({
+        code: "delete_incomplete",
+      });
+      const saved = server.records.get(OWNER)!.get(owner.customizationId)!;
+      expect(
+        (saved.data as { contentRecordName?: string }).contentRecordName
+      ).toBe(recordName);
+      expect(owner.customContent.status.value).toBe("ready");
+
+      server.failErasesTo.clear();
+      await owner.customContent.deleteLibrary();
+      expect(server.records.get(recordName)?.size).toBe(0);
+      expect(owner.customContent.status.value).toBe("closed");
     });
 
     it("erases the library and unlinks it from the Custom Branding", async () => {

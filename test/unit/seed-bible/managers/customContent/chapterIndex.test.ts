@@ -4,6 +4,7 @@ import {
   CHAPTER_ENTRY_DESCRIPTION_LENGTH,
   chapterCoverage,
   countPublishedChapters,
+  itemsByChapter,
   paginateChapterRecord,
   publishedChapterKeys,
   sliceReferenceByChapter,
@@ -239,6 +240,28 @@ describe("affectedChapterKeys", () => {
 
   it("ignores drafts, which were never on any chapter", () => {
     expect(publishedChapterKeys(item({ status: "draft" })).size).toBe(0);
+  });
+});
+
+describe("itemsByChapter", () => {
+  it("lists each published item under every chapter it's on, and leaves drafts out", () => {
+    const spanning = item({
+      id: "spanning",
+      references: [ref({ book: "JHN", chapter: 3, endChapter: 4 })],
+    });
+    const single = item({
+      id: "single",
+      references: [ref({ book: "JHN", chapter: 4, verse: 7 })],
+    });
+    const draft = item({ id: "draft", status: "draft" });
+
+    const groups = itemsByChapter([spanning, single, draft]);
+
+    expect(
+      Object.fromEntries(
+        [...groups].map(([key, items]) => [key, items.map((i) => i.id)])
+      )
+    ).toEqual({ "JHN.3": ["spanning"], "JHN.4": ["spanning", "single"] });
   });
 });
 

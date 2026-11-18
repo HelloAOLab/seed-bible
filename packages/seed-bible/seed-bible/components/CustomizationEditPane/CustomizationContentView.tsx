@@ -188,6 +188,7 @@ function errorMessage(t: TFunction, error: unknown): string {
       });
     case "network_error":
     case "casualos_unavailable":
+    case "queue_unavailable":
       return t("custom-content-error-unreachable", {
         defaultValue:
           "The import service couldn't be reached. Please try again.",
@@ -233,6 +234,10 @@ export function CustomizationContentView(props: { state: SeedBibleState }) {
       void customContent.openLibrary(recordName);
     }
   }, [recordName]);
+
+  // Leaving the library stops its import polling and passage finding, and
+  // lets go of the owner's items.
+  useEffect(() => () => customContent.closeLibrary(), []);
 
   if (!record) {
     return null;

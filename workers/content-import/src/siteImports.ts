@@ -8,7 +8,7 @@ import {
   formatSiteAddress,
   parseSiteAddress,
 } from "../../../packages/seed-bible/seed-bible/managers/customContent/siteImport";
-import { enqueue } from "./queue";
+import { QueueSendError, enqueue, sendAll } from "./queue";
 import {
   CRAWL_LIST_URL,
   findIndexBlocks,
@@ -23,7 +23,13 @@ import {
 import { ArchiveError, COMMON_CRAWL_USER_AGENT } from "./commonCrawl/warc";
 import { isTransientError } from "./casualos";
 import type { WorkerDeps } from "./deps";
-import { HttpError, checkLibraryAccess, readBody, type Caller } from "./http";
+import {
+  HttpError,
+  checkLibraryAccess,
+  queueUnavailable,
+  readBody,
+  type Caller,
+} from "./http";
 import {
   JOB_LIFETIME_MS,
   findActiveJob,
@@ -32,14 +38,17 @@ import {
   isActiveImportConflict,
   jobProgress,
   queuedItemIds,
+  setJobStatus,
   type JobRow,
 } from "./jobs";
 import type { MessageOutcome } from "./consumer";
-import type { Env, SiteLookupMessage } from "./platform";
+import type { Env, ImportMessage, SiteLookupMessage } from "./platform";
 import { encryptSessionKey } from "./sessionKeys";
 import {
   addCandidates,
   createSiteJob,
+  deleteCandidates,
+  failQueuedLookups,
   finishListingIfComplete,
   listCandidates,
   lookupCounts,
@@ -49,6 +58,7 @@ import {
   noteLookupError,
   pickCandidates,
   recordIndexBlocks,
+  returnToPick,
   settleLookup,
   siteDetails,
   startPickedJob,
@@ -193,11 +203,23 @@ export async function startSiteImport(
     throw error;
   }
   if (crawls.length > 0) {
-    await env.IMPORT_QUEUE.sendBatch(
-      crawls.map((crawl) => ({
-        body: { kind: "lookup", jobId, crawlId: crawl.id, page: -1 },
-      }))
-    );
+    try {
+      await sendAll<ImportMessage>(
+        env.IMPORT_QUEUE,
+        crawls.map((crawl) => ({
+          kind: "lookup",
+          jobId,
+          crawlId: crawl.id,
+          page: -1,
+        }))
+      );
+    } catch (error) {
+      // Nothing would ever run its lookups: end it now, so it doesn't hold
+      // the library's one import slot.
+      await setJobStatus(env.DB, jobId, ["listing"], "cancelled", now);
+      await deleteCandidates(env.DB, jobId);
+      throw queueUnavailable(error);
+    }
   } else {
     // Nothing newer to look in: straight to an empty pick.
     await finishListingIfComplete(env.DB, jobId, now);
@@ -263,7 +285,14 @@ export async function pickSitePages(
       "This website import isn't waiting for pages to be picked."
     );
   }
-  await enqueue(env, job.id, await queuedItemIds(env.DB, job.id));
+  try {
+    await enqueue(env, job.id, await queuedItemIds(env.DB, job.id));
+  } catch (error) {
+    // Back to waiting, with the picked pages still offered, so the owner can
+    // press Import again rather than the import sitting with nothing to run.
+    await returnToPick(env.DB, job.id, deps.now());
+    throw queueUnavailable(error);
+  }
   return {
     body: await jobProgress(env.DB, (await getJob(env.DB, job.id))!),
     status: 200,
@@ -309,18 +338,16 @@ export async function processLookupMessage(
       const blocks =
         (await findIndexBlocks(deps.fetch, crawl.id, details.prefix)) ?? [];
       await recordIndexBlocks(env.DB, job.id, crawl.id, blocks);
-      if (blocks.length > 0) {
-        await env.IMPORT_QUEUE.sendBatch(
-          blocks.map((_, page) => ({
-            body: {
-              kind: "lookup" as const,
-              jobId: job.id,
-              crawlId: crawl.id,
-              page,
-            },
-          }))
-        );
-      }
+      await sendAll<ImportMessage>(
+        env.IMPORT_QUEUE,
+        blocks.map((_, page) => ({
+          kind: "lookup",
+          jobId: job.id,
+          crawlId: crawl.id,
+          page,
+        }))
+      );
+      await settleLookup(env.DB, job.id, crawl.id, -1, { state: "done" });
     } else {
       const block = await lookupBlock(env.DB, job.id, crawl.id, message.page);
       const rows = block
@@ -347,16 +374,21 @@ export async function processLookupMessage(
       });
     }
   } catch (error) {
-    const code = error instanceof ArchiveError ? error.code : "server_error";
+    const code =
+      error instanceof ArchiveError
+        ? error.code
+        : error instanceof QueueSendError
+          ? "queue_unavailable"
+          : "server_error";
     console.warn(
       `Common Crawl lookup failed (${crawl.id}, ${message.page < 0 ? "index search" : `block ${message.page}`}):`,
       error
     );
     const reason =
-      error instanceof ArchiveError
+      error instanceof ArchiveError || error instanceof QueueSendError
         ? `${code}: ${error.message}`.slice(0, 1000)
         : code;
-    if (isTransientError(code)) {
+    if (isTransientError(code) || code === "queue_unavailable") {
       await noteLookupError(env.DB, job.id, crawl.id, message.page, reason);
       return { kind: "retry", delaySeconds: retryDelay };
     }
@@ -377,11 +409,17 @@ export async function processLookupDeadLetter(
   deps: WorkerDeps,
   message: SiteLookupMessage
 ): Promise<void> {
+  const error = gaveUpReason(
+    await lookupError(env.DB, message.jobId, message.crawlId, message.page)
+  );
   await settleLookup(env.DB, message.jobId, message.crawlId, message.page, {
     state: "failed",
-    error: gaveUpReason(
-      await lookupError(env.DB, message.jobId, message.crawlId, message.page)
-    ),
+    error,
   });
+  if (message.page < 0) {
+    // A search that gave up may have recorded blocks whose messages were
+    // never sent; nothing would run them.
+    await failQueuedLookups(env.DB, message.jobId, error, message.crawlId);
+  }
   await finishListingIfComplete(env.DB, message.jobId, deps.now());
 }

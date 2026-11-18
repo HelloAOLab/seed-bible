@@ -612,6 +612,119 @@ describe("website imports", () => {
     expect(((await picked.json()) as ImportProgress).status).toBe("running");
   });
 
+  describe("when the queue fails", () => {
+    async function startLookup(worker: TestWorker, key: string) {
+      return call(worker, "POST", "/site-imports", {
+        key,
+        body: { contentRecordName: LIBRARY, site: "gracecommunity.org" },
+      });
+    }
+
+    it("ends a lookup it couldn't queue, so another can start", async () => {
+      const { worker, key, commonCrawl } = setup();
+      commonCrawl.addPage(LATEST, "https://gracecommunity.org/sermons/a", "");
+      worker.queue.failSends = 1;
+
+      const refused = await startLookup(worker, key);
+      expect(refused.status).toBe(503);
+      expect(await refused.json()).toMatchObject({
+        error: "queue_unavailable",
+      });
+
+      const listed = await lookUp(worker, key);
+      expect(listed.candidates).toHaveLength(1);
+    });
+
+    it("tries the index search again when its block lookups couldn't be queued", async () => {
+      const { worker, key, commonCrawl } = setup();
+      commonCrawl.addPage(LATEST, "https://gracecommunity.org/sermons/a", "");
+      const started = (await (
+        await startLookup(worker, key)
+      ).json()) as SiteImport;
+
+      // The first search to send its block lookups is refused.
+      worker.queue.failSends = 1;
+      await worker.drain();
+
+      const listed = await siteImport(worker, key, started.progress.id);
+      expect(listed.progress.status).toBe("awaiting_pick");
+      expect(listed.candidates!.map((c) => c.url)).toEqual([
+        "https://gracecommunity.org/sermons/a",
+      ]);
+      expect(listed.lookups.failed).toBe(0);
+    });
+
+    it("finishes the listing, saying lookups failed, when the queue stays down", async () => {
+      const { worker, key, commonCrawl } = setup();
+      commonCrawl.addPage(LATEST, "https://gracecommunity.org/sermons/a", "");
+      const started = (await (
+        await startLookup(worker, key)
+      ).json()) as SiteImport;
+
+      worker.queue.failSends = 1000;
+      await worker.drain();
+
+      const listed = await siteImport(worker, key, started.progress.id);
+      expect(listed.progress.status).toBe("awaiting_pick");
+      expect(listed.lookups.failed).toBeGreaterThan(0);
+      expect(listed.lookups.done + listed.lookups.failed).toBe(
+        listed.lookups.total
+      );
+    });
+
+    it("keeps the picked pages offered when they couldn't be queued", async () => {
+      const { worker, key, casualos, commonCrawl } = setup();
+      commonCrawl.addPage(
+        LATEST,
+        "https://gracecommunity.org/sermons/a",
+        sermonPage("Grace")
+      );
+      commonCrawl.addPage(LATEST, "https://gracecommunity.org/sermons/b", "");
+      const listed = await lookUp(worker, key);
+      const chosen = listed.candidates!.find((c) => c.url.endsWith("/a"))!;
+
+      worker.queue.failSends = 1;
+      const refused = await pick(worker, key, listed.progress.id, [
+        chosen.itemId,
+      ]);
+      expect(refused.status).toBe(503);
+      const waiting = await siteImport(worker, key, listed.progress.id);
+      expect(waiting.progress.status).toBe("awaiting_pick");
+      expect(waiting.candidates!.map((c) => c.itemId)).toEqual([chosen.itemId]);
+
+      const picked = await pick(worker, key, listed.progress.id, [
+        chosen.itemId,
+      ]);
+      expect(picked.status).toBe(200);
+      await worker.drain();
+      expect(libraryItems(casualos).map((item) => item.title)).toEqual([
+        "Grace",
+      ]);
+    });
+
+    it("offers what it found when a listing's lookups never ran", async () => {
+      const { worker, key, commonCrawl } = setup();
+      commonCrawl.addPage(LATEST, "https://gracecommunity.org/sermons/a", "");
+      const started = (await (
+        await startLookup(worker, key)
+      ).json()) as SiteImport;
+      // The queue lost the lookups' messages.
+      worker.pending.length = 0;
+
+      worker.clock.now += 2 * 60 * 60 * 1000;
+      await runCleanup(worker.env, worker.deps);
+      expect(
+        (await siteImport(worker, key, started.progress.id)).progress.status
+      ).toBe("listing");
+
+      worker.clock.now += 24 * 60 * 60 * 1000;
+      await runCleanup(worker.env, worker.deps);
+      const later = await siteImport(worker, key, started.progress.id);
+      expect(later.progress.status).toBe("awaiting_pick");
+      expect(later.lookups.failed).toBe(later.lookups.total);
+    });
+  });
+
   it("counts as the library's one running import", async () => {
     const { worker, key, commonCrawl } = setup();
     commonCrawl.addPage(LATEST, "https://gracecommunity.org/sermons/a", "");

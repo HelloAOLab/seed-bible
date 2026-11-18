@@ -1,6 +1,6 @@
 import { readLibraryManifest } from "../../../packages/seed-bible/seed-bible/managers/customContent/publish";
 import {
-  CONTENT_IMPORT_STATUS_ADDRESS,
+  CONTENT_IMPORT_ACCESS_ADDRESS,
   CONTENT_IMPORT_STATUS_MARKER,
 } from "../../../packages/seed-bible/seed-bible/managers/customContent/schema";
 import type { CasualOSClient } from "./casualos";
@@ -24,6 +24,16 @@ export interface Caller {
   client: CasualOSClient;
 }
 
+/** What the editor is told when the queue fails while an import starts. */
+export function queueUnavailable(error: unknown): HttpError {
+  console.error("Couldn't queue an import's work:", error);
+  return new HttpError(
+    503,
+    "queue_unavailable",
+    "The import couldn't be started. Please try again."
+  );
+}
+
 export async function readBody(request: Request): Promise<unknown> {
   try {
     return await request.json();
@@ -35,7 +45,7 @@ export async function readBody(request: Request): Promise<unknown> {
 /**
  * Checks the caller may import into a library before anything is queued:
  * reading the manifest proves the library exists (and finds its default
- * author), and writing the status entry proves the caller may write to it.
+ * author), and writing its access entry proves the caller may write to it.
  */
 export async function checkLibraryAccess(
   caller: Caller,
@@ -52,8 +62,8 @@ export async function checkLibraryAccess(
   }
   const probe = await caller.client.store.recordData(
     contentRecordName,
-    CONTENT_IMPORT_STATUS_ADDRESS,
-    { status: "starting", updatedAt: now },
+    CONTENT_IMPORT_ACCESS_ADDRESS,
+    { checkedAt: now },
     CONTENT_IMPORT_STATUS_MARKER
   );
   if (!probe.success) {

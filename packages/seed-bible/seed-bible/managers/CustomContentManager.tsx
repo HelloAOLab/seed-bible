@@ -42,6 +42,7 @@ import {
 import {
   CONTENT_CHAPTER_INDEX_ADDRESS,
   CONTENT_CHAPTER_MARKER,
+  CONTENT_IMPORT_ACCESS_ADDRESS,
   CONTENT_IMPORT_STATUS_ADDRESS,
   CONTENT_ITEM_MARKER,
   CONTENT_LIBRARY_MARKER,
@@ -688,6 +689,20 @@ export function createCustomContentManager(deps: {
     items.value = [];
   };
 
+  // Signing out (or in as someone else) closes the library, so the last
+  // owner's drafts don't stay in memory and nothing keeps working with a
+  // session that has ended.
+  let libraryUser = login.userId.peek();
+  effect(() => {
+    const userId = login.userId.value;
+    if (userId !== libraryUser) {
+      libraryUser = userId;
+      if (recordName.peek()) {
+        closeLibrary();
+      }
+    }
+  });
+
   const createLibrary = (): Promise<void> =>
     queueWrite(async () => {
       const userId = login.userId.value;
@@ -733,17 +748,39 @@ export function createCustomContentManager(deps: {
       stopWatching();
       // Readers stop finding the library first, so they never see a half-erased one.
       await customizations.setEditingContentRecordName(null);
-      for (const marker of [CONTENT_CHAPTER_MARKER, CONTENT_ITEM_MARKER]) {
-        for (const entry of await store.listByMarker(record, marker)) {
-          await store.eraseData(record, entry.address);
+      const erase = async (address: string): Promise<boolean> => {
+        try {
+          const erased = await store.eraseData(record, address);
+          return erased.success || erased.errorCode === "data_not_found";
+        } catch {
+          return false;
         }
+      };
+      let complete = true;
+      try {
+        for (const marker of [CONTENT_CHAPTER_MARKER, CONTENT_ITEM_MARKER]) {
+          for (const entry of await store.listByMarker(record, marker)) {
+            complete = (await erase(entry.address)) && complete;
+          }
+        }
+        for (const address of [
+          CONTENT_CHAPTER_INDEX_ADDRESS,
+          CONTENT_IMPORT_STATUS_ADDRESS,
+          CONTENT_IMPORT_ACCESS_ADDRESS,
+        ]) {
+          complete = (await erase(address)) && complete;
+        }
+      } catch {
+        complete = false;
       }
-      for (const address of [
-        CONTENT_CHAPTER_INDEX_ADDRESS,
-        CONTENT_IMPORT_STATUS_ADDRESS,
-        CONTENT_MANIFEST_ADDRESS,
-      ]) {
-        await store.eraseData(record, address);
+      // The manifest goes last, and only once the rest is gone: with it, the
+      // library can still be opened to finish deleting it.
+      if (!complete || !(await erase(CONTENT_MANIFEST_ADDRESS))) {
+        await customizations.setEditingContentRecordName(record);
+        throw new ContentLibraryError(
+          "delete_incomplete",
+          "Some of the content library couldn't be deleted."
+        );
       }
       closeLibrary();
     });

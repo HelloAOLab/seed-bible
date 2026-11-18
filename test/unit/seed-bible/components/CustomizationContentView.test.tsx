@@ -250,6 +250,30 @@ describe("CustomizationContentView", () => {
     ).toHaveLength(2);
   });
 
+  it("closes the library when the owner leaves it, and opens it again on return", async () => {
+    const server = fakeRecordsServer();
+    const { customContent, customizations } = await renderEditor(server);
+    await createLibrary();
+    const recordName = customContent.recordName.value;
+
+    await act(() => {
+      render(null, container);
+    });
+    expect(customContent.status.value).toBe("closed");
+    expect(customContent.recordName.value).toBeNull();
+
+    const state = {
+      customizations,
+      customContent,
+      app: { toast: vi.fn(), selectedTab: signal(null) },
+    } as unknown as SeedBibleState;
+    await act(() => {
+      render(<CustomizationContentView state={state} />, container);
+    });
+    await waitForCondition(() => customContent.status.value === "ready");
+    expect(customContent.recordName.value).toBe(recordName);
+  });
+
   it("cleans the site's name off titles and says how many changed", async () => {
     const server = fakeRecordsServer();
     const { customContent, toast } = await renderEditor(server);
