@@ -1091,8 +1091,10 @@ export function createSeedBibleState(
     login,
     highlights,
     i18n,
+    discover,
     readingExtensions,
-    () => annotations
+    () => annotations,
+    settings
   );
   const extensionReviews = createExtensionReviewsManager(os, login);
   const extensions = createExtensionManager(login, {
