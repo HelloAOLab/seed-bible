@@ -150,14 +150,14 @@
   font-size: var(--sb-font-size-22);
 }
 
-/* No title row: the close button sits in the top corner on the reading side's
- * end, so it follows the layout in right-to-left languages. Two classes, to
- * win over the button's own `position: relative`. */
 /* Part of the sheet's own drag surface, with or without a header around it. */
 .sb-bottom-sheet-close {
   touch-action: none;
 }
 
+/* No title row: the close button sits in the top corner on the reading side's
+ * end, so it follows the layout in right-to-left languages. Two classes, to
+ * win over the button's own `position: relative`. */
 .sb-bottom-sheet .sb-bottom-sheet-close-corner {
   position: absolute;
   top: 0.625rem;
