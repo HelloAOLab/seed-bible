@@ -893,9 +893,9 @@ describe("BibleSelector", () => {
       infoButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    await waitFor(() => Boolean(container.querySelector("#apocrypha-info")));
+    await waitFor(() => Boolean(document.querySelector("#apocrypha-info")));
 
-    expect(container.textContent).toContain("About the Apocrypha");
+    expect(document.body.textContent).toContain("About the Apocrypha");
   });
 
   it("closes the Apocrypha info popup with the close button", async () => {
@@ -933,12 +933,12 @@ describe("BibleSelector", () => {
       infoButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    await waitFor(() => Boolean(container.querySelector("#apocrypha-info")));
+    await waitFor(() => Boolean(document.querySelector("#apocrypha-info")));
 
-    expect(container.textContent).toContain("About the Apocrypha");
+    expect(document.body.textContent).toContain("About the Apocrypha");
 
-    const closeButton = container.querySelector(
-      'button[aria-label="Close"]'
+    const closeButton = document.querySelector(
+      '.sb-apocrypha-info button[aria-label=\"Close\"]'
     ) as HTMLButtonElement | null;
 
     expect(closeButton).not.toBeNull();
@@ -947,9 +947,9 @@ describe("BibleSelector", () => {
       closeButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    await waitFor(() => !container.querySelector("#apocrypha-info"));
+    await waitFor(() => !document.querySelector("#apocrypha-info"));
 
-    expect(container.querySelector("#apocrypha-info")).toBeNull();
+    expect(document.querySelector("#apocrypha-info")).toBeNull();
   });
   it("keeps the Apocrypha info popup open when clicking inside the popup content", async () => {
     const onClose = vi.fn();
@@ -988,9 +988,9 @@ describe("BibleSelector", () => {
       infoButton?.click();
     });
 
-    await waitFor(() => Boolean(container.querySelector("#apocrypha-info")));
+    await waitFor(() => Boolean(document.querySelector("#apocrypha-info")));
 
-    const content = container.querySelector(
+    const content = document.querySelector(
       ".sb-apocrypha-info-content"
     ) as HTMLElement | null;
 
@@ -1000,7 +1000,7 @@ describe("BibleSelector", () => {
       content?.click();
     });
 
-    expect(container.querySelector("#apocrypha-info")).not.toBeNull();
+    expect(document.querySelector("#apocrypha-info")).not.toBeNull();
 
     expect(onClose).not.toHaveBeenCalled();
   });
@@ -1041,21 +1041,22 @@ describe("BibleSelector", () => {
       infoButton?.click();
     });
 
-    await waitFor(() => Boolean(container.querySelector("#apocrypha-info")));
+    await waitFor(() => Boolean(document.querySelector("#apocrypha-info")));
 
-    const backdrop = container.querySelector(
-      ".sb-apocrypha-info-backdrop"
+    const backdrop = document.querySelector(
+      ".sb-dialog-backdrop"
     ) as HTMLElement | null;
 
     expect(backdrop).not.toBeNull();
 
     act(() => {
+      backdrop?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
       backdrop?.click();
     });
 
-    await waitFor(() => !container.querySelector("#apocrypha-info"));
+    await waitFor(() => !document.querySelector("#apocrypha-info"));
 
-    expect(container.querySelector("#apocrypha-info")).toBeNull();
+    expect(document.querySelector("#apocrypha-info")).toBeNull();
 
     expect(onClose).not.toHaveBeenCalled();
   });
@@ -2584,5 +2585,55 @@ describe("BibleSelector loading and failure states", () => {
     await waitFor(() => text().includes("NIV couldn't be loaded."));
     expect(state.selector.selectingTranslation.value).toBe(true);
     expect(tryAgainButton()).toBeDefined();
+  });
+  it("closes only the Apocrypha info popup on Escape, with focus back on its button", async () => {
+    const onClose = vi.fn();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
+    selectorState.localSelectedTestament.value = 3;
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={onClose}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+          app={state.app}
+        />,
+        container
+      );
+    });
+
+    await waitFor(() =>
+      Boolean(
+        container.querySelector('button[aria-label="About the Apocrypha"]')
+      )
+    );
+    const infoButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="About the Apocrypha"]'
+    )!;
+    act(() => infoButton.focus());
+    act(() => {
+      infoButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    await waitFor(() => Boolean(document.querySelector("#apocrypha-info")));
+
+    const dialog = document.querySelector<HTMLElement>(
+      '[role="dialog"].sb-apocrypha-info'
+    )!;
+    expect(dialog.contains(document.activeElement)).toBe(true);
+
+    act(() => {
+      document.activeElement!.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    await waitFor(() => !document.querySelector("#apocrypha-info"));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(
+      container.querySelector('button[aria-label="About the Apocrypha"]')
+    );
   });
 });

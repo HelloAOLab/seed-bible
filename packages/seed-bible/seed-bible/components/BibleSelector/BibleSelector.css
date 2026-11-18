@@ -898,59 +898,13 @@
   color: inherit;
   cursor: pointer;
 }
-.sb-apocrypha-info-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  background: rgba(0, 0, 0, 0.4);
-}
-/* Rendered beside .sb-selector-panel, not inside it, so it needs the same
-   switch to the reader toolbar colors. */
-.sb-apocrypha-info-overlay {
-  --sb-font-color: var(--sb-reader-toolbar-font-color);
-  --sb-background: var(--sb-reader-toolbar-background);
-
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 1rem 0.8rem 1rem 0.8rem;
-  /* stylelint-disable-next-line seed-bible/use-design-tokens -- local stacking inside the Books panel */
-  z-index: 1000;
-  width: min(85vw, 35rem);
-  max-height: 80vh;
-  box-sizing: border-box;
-  background: var(--sb-reader-toolbar-background);
-  color: var(--sb-reader-toolbar-font-color);
-  border-radius: var(--sb-radius-md);
-  overflow-y: auto;
-}
-
+/* About the Apocrypha, opened from the info button beside its heading. */
 .sb-apocrypha-info {
-  position: relative;
-  width: 100%;
-  box-sizing: border-box;
+  --sb-dialog-width: min(35rem, 100%);
 }
 
 .sb-apocrypha-info-content {
-  font-size: clamp(0.875rem, 1.5vw, 1rem);
-  line-height: 1.5;
   overflow-wrap: anywhere;
-  word-break: normal;
-}
-
-.sb-apocrypha-info-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: auto;
-  min-height: 0;
-  margin-bottom: 1rem;
-}
-
-.sb-apocrypha-info-title {
-  margin: 0;
-  line-height: 1.2;
 }
 
 /* ─── Offline translation downloads ──────────────────────────────────────── */
