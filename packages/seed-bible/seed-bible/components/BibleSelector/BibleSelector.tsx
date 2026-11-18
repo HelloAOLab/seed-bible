@@ -45,7 +45,6 @@ import type { TutorialManager } from "../../managers/TutorialManager";
 import { Spinner } from "../Spinner/Spinner";
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
-import { MOBILE_BREAKPOINT } from "../../managers/SeedBibleStateManager";
 import { toShareableUrl } from "../../app/publicLinks";
 import { SearchBar as SearchField } from "../SearchBar/SearchBar";
 import { CloseButton } from "../CloseButton/CloseButton";
@@ -570,7 +569,7 @@ const SideBarBooks = (props: {
 
   const { t } = useI18n();
 
-  const { viewportWidth } = app;
+  const { viewportWidth, isMobile } = app;
 
   const {
     lastBookClicked,
@@ -587,6 +586,7 @@ const SideBarBooks = (props: {
 
   const RenderBooksByTestament = computed(() => {
     const ws = viewportWidth.value;
+    const mobile = isMobile.value;
     const lbc = lastBookClicked.value;
     const bd = bookData.value;
     const cht = chT.value;
@@ -599,7 +599,7 @@ const SideBarBooks = (props: {
     let singleColumns = 5;
     let otWidthPercent = 60;
     let ntWidthPercent = 40;
-    if (ws <= MOBILE_BREAKPOINT) {
+    if (mobile) {
       otColumns = 1;
       ntColumns = 1;
       singleColumns = 1;
@@ -729,16 +729,15 @@ const SideBarBooks = (props: {
                 class="sidebar-chapters show-sidebar-chapter"
                 style={{
                   ...chapterGridStyle,
-                  justifyContent:
-                    ws <= MOBILE_BREAKPOINT
-                      ? "flex-start"
-                      : bd.numberOfChapters < 4 * separator
-                        ? chapterColumnPosition === "end"
-                          ? "flex-end"
-                          : chapterColumnPosition === "middle"
-                            ? "center"
-                            : "flex-start"
-                        : "space-between",
+                  justifyContent: mobile
+                    ? "flex-start"
+                    : bd.numberOfChapters < 4 * separator
+                      ? chapterColumnPosition === "end"
+                        ? "flex-end"
+                        : chapterColumnPosition === "middle"
+                          ? "center"
+                          : "flex-start"
+                      : "space-between",
                 }}
               >
                 {narrowChapterStyle && ntColumns === 2 && (
@@ -836,7 +835,7 @@ const SideBarBooks = (props: {
             </span>
             {renderBooksGrid(NTBooks, ntColumns, 1, undefined, true)}
           </div>
-          {ws <= MOBILE_BREAKPOINT && apocryphaAvailable.value && (
+          {mobile && apocryphaAvailable.value && (
             <>
               <div className="separator" style={{ display: "flex" }} />
               <div
@@ -899,7 +898,7 @@ const SideBarBooks = (props: {
           class="testament-container flex-col-gap-sm"
           style={{ width: "100%" }}
         >
-          {(config.alwaysShowTitle || ws > MOBILE_BREAKPOINT) && (
+          {(config.alwaysShowTitle || !mobile) && (
             <span class="testament-title testament-title--with-action">
               {config.title}
 

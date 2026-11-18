@@ -1731,6 +1731,56 @@ describe("createSeedBibleState", () => {
         });
       }
     });
+
+    // The phone-vs-desktop styles all key off `<html data-sb-app-layout>`.
+    it("marks <html> with the layout it starts in, then the one the measured window calls for", async () => {
+      const originalWidth = window.innerWidth;
+      try {
+        const state = await createTestSeedBibleState({
+          config: { ...DEFAULT_APP_CONFIG, renderedAsMobile: true },
+        });
+        expect(document.documentElement.dataset.sbAppLayout).toBe("mobile");
+
+        Object.defineProperty(window, "innerWidth", {
+          value: 1234,
+          configurable: true,
+        });
+        state.app.applyViewport();
+        expect(document.documentElement.dataset.sbAppLayout).toBe("desktop");
+
+        Object.defineProperty(window, "innerWidth", {
+          value: 400,
+          configurable: true,
+        });
+        window.dispatchEvent(new Event("resize"));
+        expect(document.documentElement.dataset.sbAppLayout).toBe("mobile");
+      } finally {
+        Object.defineProperty(window, "innerWidth", {
+          value: originalWidth,
+          configurable: true,
+        });
+        document.documentElement.removeAttribute("data-sb-app-layout");
+      }
+    });
+
+    // `<html>` is shared by everything on the page, so a state that's been
+    // disposed must stop writing to it.
+    it("stops marking <html> once disposed", async () => {
+      try {
+        const state = await createTestSeedBibleState({
+          config: { ...DEFAULT_APP_CONFIG, renderedAsMobile: false },
+        });
+        expect(document.documentElement.dataset.sbAppLayout).toBe("desktop");
+
+        state.dispose();
+        (state.app.viewportWidth as unknown as { value: number }).value = 400;
+
+        expect(state.app.isMobile.value).toBe(true);
+        expect(document.documentElement.dataset.sbAppLayout).toBe("desktop");
+      } finally {
+        document.documentElement.removeAttribute("data-sb-app-layout");
+      }
+    });
   });
 
   it("closes the tabs drawer when the window widens past phone size, so the sidebar can collapse again", async () => {
