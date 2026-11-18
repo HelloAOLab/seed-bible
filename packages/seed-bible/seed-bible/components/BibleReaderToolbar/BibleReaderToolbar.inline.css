@@ -322,7 +322,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 0.8rem;
   background: var(--sb-reader-toolbar-background);
   color: var(--sb-font-color);
   height: 3.125rem;
@@ -366,8 +366,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.125rem;
-  height: 2.125rem;
+  width: 2.325rem;
+  height: 2.325rem;
   padding: 0;
   border: none;
   background: transparent;
@@ -418,11 +418,13 @@
 
 .sb-reader-floating-nav-arrow {
   position: relative;
-  flex: 0 0 auto;
+  /* Flex-grow so that the arrows grow if there is available space, up to a limit */
+  flex: 1 0 auto;
   /* Full-height, wide hit region; the visual circle lives in ::before so the
        whole button is tappable with no dead margin around the chevron. */
   align-self: stretch;
-  min-width: 3.2rem;
+  min-width: 2.375rem;
+  max-width: 3.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
