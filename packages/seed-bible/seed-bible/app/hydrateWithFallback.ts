@@ -38,6 +38,7 @@ export function hydrateWithFallback(
   container: Element
 ): HydrateOutcome {
   try {
+    removeWhitespaceText(container);
     hydrate(app, container);
     return { outcome: "hydrated" };
   } catch (hydrateError) {
@@ -52,6 +53,23 @@ export function hydrateWithFallback(
       target.textContent =
         "Something went wrong loading this page. Please refresh to try again.";
       return { outcome: "failed", hydrateError, renderError };
+    }
+  }
+}
+
+/**
+ * `index.html` puts the server-rendered app on its own line inside the
+ * container, so the container starts with a whitespace text node. Preact
+ * expects the app's root element to be the first child; finding the text
+ * node there instead, it moves the root in front of it. Moving it detaches
+ * the whole app, so the browser paints the chapter again and reports that
+ * later paint as the page's Largest Contentful Paint (about a second later
+ * on a mid-range phone).
+ */
+function removeWhitespaceText(container: Element): void {
+  for (const node of [...container.childNodes]) {
+    if (node.nodeType === Node.TEXT_NODE && !node.textContent?.trim()) {
+      node.remove();
     }
   }
 }

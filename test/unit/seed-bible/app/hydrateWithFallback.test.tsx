@@ -76,6 +76,41 @@ describe("hydrateWithFallback", () => {
     expect(replacement?.textContent).toContain("refresh");
   });
 
+  it("hydrates server markup on its own line without moving it", async () => {
+    // index.html puts the server-rendered app on its own line inside #app.
+    // Moving the app's root during hydration detaches it, which makes the
+    // browser paint the chapter again and report a much later LCP.
+    const container = document.createElement("div");
+    container.id = "app";
+    container.innerHTML =
+      '\n      <main class="sb-app-root"><p>Genesis 1</p></main>\n    ';
+    document.body.appendChild(container);
+    const serverRoot = container.querySelector("main");
+    const detached: Node[] = [];
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of record.removedNodes) {
+          if (node.nodeType === Node.ELEMENT_NODE) detached.push(node);
+        }
+      }
+    });
+    observer.observe(container, { childList: true });
+
+    const result = hydrateWithFallback(
+      <main class="sb-app-root">
+        <p>Genesis 1</p>
+      </main>,
+      container
+    );
+    await Promise.resolve();
+    observer.disconnect();
+
+    expect(result.outcome).toBe("hydrated");
+    expect(detached).toEqual([]);
+    expect(container.querySelector("main")).toBe(serverRoot);
+    expect(container.textContent).toBe("Genesis 1");
+  });
+
   it("renders directly onto document.body instead of replacing it", () => {
     const originalBody = document.body;
     originalBody.innerHTML = "<p>server-rendered content</p>";
