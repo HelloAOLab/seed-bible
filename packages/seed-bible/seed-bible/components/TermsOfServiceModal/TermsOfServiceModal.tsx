@@ -18,15 +18,13 @@ const loadingPromises = new Map<string, Promise<void>>();
 /**
  * Lazily imports the Terms of Service policy bundle for the given language and
  * registers it with i18n. The returned promise is cached per language and
- * resolves once the bundle is available — callers can await it (during SSR) to
- * block rendering until the policy text is present.
+ * resolves once the bundle is available. The server render awaits it before
+ * rendering, so a page opened with this window shows its text.
  */
-// Resolves — never rejects, even on failure (logged below). A rejected
-// promise thrown during `renderToStringAsync` surfaces as a render exception
-// and takes down the whole SSR document (see BibleReadingManager's
-// `chapterDataPromise`); resolving lets the modal render with an empty body
-// instead.
-function loadTermsOfService(
+// Resolves — never rejects, even on failure (logged below). The server render
+// awaits it, so a rejection would take down the whole SSR document; resolving
+// lets the modal render with an empty body instead.
+export function loadTermsOfService(
   i18n: I18nInstance,
   language: string
 ): Promise<void> {
@@ -55,10 +53,10 @@ function loadTermsOfService(
  * a controlled component: the parent owns the open state and passes `onClose`,
  * mirroring how {@link BibleSelector} is wired up.
  *
- * The policy bundle is loaded lazily the first time the modal opens. During SSR
- * we suspend (throw the load promise) so the server-rendered HTML includes the
- * policy text; on the client we render immediately and re-render once the
- * bundle finishes loading.
+ * The policy bundle is loaded lazily the first time the modal opens, and the
+ * modal re-renders once it arrives. A page opened with the modal (its `?…=open`
+ * link) has the bundle loaded by the server render first, so the HTML includes
+ * the policy text.
  */
 export function TermsOfServiceModal({
   isOpen,
@@ -72,17 +70,13 @@ export function TermsOfServiceModal({
   // Read unconditionally so the client subscribes and re-renders once loaded.
   const isLoaded = loadedLanguages.value.has(language);
 
-  // During SSR, block rendering until the policy text is available.
-  if (isOpen && import.meta.env.SSR && !isLoaded) {
-    throw loadTermsOfService(i18n, language);
-  }
-
-  // On the client, kick off the load when the modal opens.
+  // In the browser, start the load when the modal opens. The server render
+  // loads it before rendering (`standalone/entry-ssr.tsx`).
   useEffect(() => {
-    if (isOpen && !loadedLanguages.value.has(language)) {
+    if (isOpen && !isLoaded) {
       loadTermsOfService(i18n, language);
     }
-  }, [isOpen, language]);
+  }, [isOpen, language, isLoaded]);
 
   if (!isOpen) {
     return null;

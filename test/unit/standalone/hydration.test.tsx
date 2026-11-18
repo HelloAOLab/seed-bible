@@ -1,5 +1,5 @@
 import { render as ssrRender } from "../../../standalone/entry-ssr";
-import { hydrate } from "preact";
+import { hydrate, render } from "preact";
 import { act } from "preact/test-utils";
 import { Main } from "@packages/seed-bible/seed-bible/app/main";
 import {
@@ -344,6 +344,8 @@ describe("client hydration", () => {
     expect(normalizeKnownSsrClientDivergences(container.innerHTML)).toBe(
       normalizeKnownSsrClientDivergences(beforeHtml)
     );
+
+    render(null, container);
   });
 
   it("hydrates cleanly when the visitor already has this chapter's tab saved", async () => {
