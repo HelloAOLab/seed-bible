@@ -108,23 +108,9 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
-.sbd-donate {
-  display: block;
+.sb-button.sbd-donate {
   width: 100%;
   margin-top: 1.4rem;
-  padding: 0.9rem 1rem;
-  border: none;
-  border-radius: var(--sb-radius-lg);
-  background: var(--sb-primary-color, #e8623a);
-  color: var(--sb-primary-font-color, #ffffff);
-  font: inherit;
-  font-size: var(--sb-font-size-16);
-  font-weight: 700;
-  cursor: pointer;
-  transition: background var(--sb-duration-fast);
-}
-.sbd-donate:hover {
-  background: color-mix(in srgb, var(--sb-primary-color, #e8623a), #000 10%);
 }
 .sbd-dismiss {
   display: block;

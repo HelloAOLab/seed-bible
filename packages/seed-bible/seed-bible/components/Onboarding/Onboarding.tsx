@@ -10,6 +10,7 @@ import { InstallAppsIcon, SafariIcon } from "../../components/icons";
 import type { OnboardingManager } from "../../managers/OnboardingManager";
 import type { CasualOSManager } from "../../managers/OsManager";
 import { useAppConfig } from "../../app/appConfig";
+import { Button } from "../Button/Button";
 
 /**
  * First-run onboarding modal: a device-aware prompt to install the app / add it
@@ -116,9 +117,10 @@ export function LanguageUnavailableModal({
           })}
         </p>
         <div className="sb-onboarding-actions">
-          <button
-            type="button"
-            className="sb-onboarding-btn sb-onboarding-btn-primary"
+          <Button
+            variant="primary"
+            size="lg"
+            className="sb-onboarding-btn"
             onClick={() => {
               void confirmLanguageFallback();
             }}
@@ -126,10 +128,11 @@ export function LanguageUnavailableModal({
             {t("languageUnavailable.yesContinue", {
               defaultValue: "Yes, Continue",
             })}
-          </button>
-          <button
-            type="button"
-            className="sb-onboarding-btn sb-onboarding-btn-secondary"
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            className="sb-onboarding-btn"
             onClick={() => {
               void cancelLanguageFallback();
             }}
@@ -137,7 +140,7 @@ export function LanguageUnavailableModal({
             {t("languageUnavailable.noGoBack", {
               defaultValue: "No, Go back",
             })}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -197,18 +200,20 @@ export function UiLanguageSwitchModal({
           })}
         </p>
         <div className="sb-onboarding-actions">
-          <button
-            type="button"
-            className="sb-onboarding-btn sb-onboarding-btn-primary"
+          <Button
+            variant="primary"
+            size="lg"
+            className="sb-onboarding-btn"
             onClick={() => {
               void confirmUiLanguageSwitch();
             }}
           >
             {translate("switch-language-confirm", { defaultValue: "Switch" })}
-          </button>
-          <button
-            type="button"
-            className="sb-onboarding-btn sb-onboarding-btn-secondary"
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            className="sb-onboarding-btn"
             onClick={() => {
               dismissUiLanguageSwitch();
             }}
@@ -216,10 +221,11 @@ export function UiLanguageSwitchModal({
             {translate("switch-language-dismiss", {
               defaultValue: "Don't Switch",
             })}
-          </button>
-          <button
-            type="button"
-            className="sb-onboarding-btn sb-onboarding-btn-tertiary"
+          </Button>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="sb-onboarding-btn"
             onClick={() => {
               neverAskUiLanguageSwitch();
             }}
@@ -227,7 +233,7 @@ export function UiLanguageSwitchModal({
             {translate("switch-language-never", {
               defaultValue: "Never Ask Again",
             })}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -321,31 +327,34 @@ function InstallContent({
             })}
           </p>
           <div className="sb-onboarding-actions">
-            <button
-              type="button"
-              className="sb-onboarding-btn sb-onboarding-btn-primary"
+            <Button
+              variant="primary"
+              size="lg"
+              className="sb-onboarding-btn"
               onClick={onboarding.dismissInstall}
             >
               {t("onboarding.gotIt", { defaultValue: "Got it" })}
-            </button>
+            </Button>
           </div>
         </>
       ) : (
         <div className="sb-onboarding-actions">
-          <button
-            type="button"
-            className="sb-onboarding-btn sb-onboarding-btn-primary"
+          <Button
+            variant="primary"
+            size="lg"
+            className="sb-onboarding-btn"
             onClick={handleInstall}
           >
             {t("onboarding.installApp", { defaultValue: "Install App" })}
-          </button>
-          <button
-            type="button"
-            className="sb-onboarding-btn sb-onboarding-btn-secondary"
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            className="sb-onboarding-btn"
             onClick={onboarding.dismissInstall}
           >
             {t("onboarding.maybeLater", { defaultValue: "Maybe later" })}
-          </button>
+          </Button>
         </div>
       )}
     </>

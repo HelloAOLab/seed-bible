@@ -112,4 +112,107 @@ describe("the dev extension server", () => {
 
     expect((await fetch(server.setUrl)).status).toBe(503);
   });
+  it("serves local screenshots in manifest order and preserves hosted links", async () => {
+    await writeFile(path.join(root, "shot.png"), "png bytes");
+    await writeFile(
+      path.join(root, "extension.json"),
+      JSON.stringify({
+        id: "my-ext",
+        screenshots: [
+          { src: "shot.png", caption: "overview" },
+          { src: "https://cdn.example.com/shot.jpg" },
+        ],
+        translations: {
+          en: { title: "Mine", description: "", overview: "Overview" },
+        },
+      })
+    );
+    const set = await (await fetch(server.setUrl)).json();
+    const shots = set.extensions[0].meta.screenshots;
+    expect(shots).toEqual([
+      {
+        src: expect.stringMatching(
+          /^http:\/\/localhost:\d+\/screenshots\/0\.png$/
+        ),
+        caption: "overview",
+      },
+      { src: "https://cdn.example.com/shot.jpg" },
+    ]);
+    const response = await fetch(shots[0].src);
+    expect(response.headers.get("content-type")).toBe("image/png");
+    expect(await response.text()).toBe("png bytes");
+    for (const url of [
+      "/screenshots/1.jpg",
+      "/screenshots/99.png",
+      "/screenshots/0.jpg",
+      "/screenshots/no.png",
+    ]) {
+      expect((await fetch(new URL(url, server.setUrl))).status).toBe(404);
+    }
+    await writeFile(path.join(root, "shot.png"), "updated png");
+    expect(await (await fetch(shots[0].src)).text()).toBe("updated png");
+  });
+
+  it("keeps serving the set and remaining image when a screenshot is missing", async () => {
+    await writeFile(path.join(root, "good.png"), "good");
+    await writeFile(
+      path.join(root, "extension.json"),
+      JSON.stringify({
+        id: "my-ext",
+        screenshots: [{ src: "missing.png" }, { src: "good.png" }],
+        translations: { en: { title: "Mine", description: "" } },
+      })
+    );
+    const response = await fetch(server.setUrl);
+    expect(response.status).toBe(200);
+    const shots = (await response.json()).extensions[0].meta.screenshots;
+    expect(shots[0].src).toBe("missing.png");
+    expect(shots[1].src).toMatch(/\/screenshots\/1\.png$/);
+    expect(await (await fetch(shots[1].src)).text()).toBe("good");
+    expect(
+      (await fetch(new URL("/screenshots/0.png", server.setUrl))).status
+    ).toBe(404);
+  });
+
+  it.each([null, "invalid", [null]])(
+    "keeps serving malformed screenshot data %j",
+    async (screenshots) => {
+      await writeFile(
+        path.join(root, "extension.json"),
+        JSON.stringify({
+          id: "my-ext",
+          screenshots,
+          translations: { en: { title: "Mine", description: "" } },
+        })
+      );
+      const response = await fetch(server.setUrl);
+      expect(response.status).toBe(200);
+      expect((await response.json()).extensions[0].meta.screenshots).toEqual(
+        screenshots
+      );
+      expect(
+        (await fetch(new URL("/screenshots/0.png", server.setUrl))).status
+      ).toBe(404);
+    }
+  );
+
+  it("does not serve screenshots outside the extension project", async () => {
+    const outside = path.join(path.dirname(root), "outside.png");
+    await writeFile(outside, "private bytes");
+    await writeFile(
+      path.join(root, "extension.json"),
+      JSON.stringify({
+        id: "my-ext",
+        screenshots: [{ src: "../outside.png" }],
+        translations: { en: { title: "Mine", description: "" } },
+      })
+    );
+
+    try {
+      const image = await fetch(new URL("/screenshots/0.png", server.setUrl));
+      expect(image.status).toBe(404);
+    } finally {
+      await rm(outside, { force: true });
+    }
+  });
 });

@@ -11,6 +11,7 @@ import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import { computeSuggestions } from "./scriptureSuggestions";
 import { sanitize } from "../../managers/Sanitization";
 import { MaterialIcon } from "../icons";
+import { Button } from "../Button/Button";
 
 const TipTapEditor = lazy(() => import("../TipTapEditor/TipTapEditor"));
 
@@ -332,15 +333,15 @@ export const ScriptureItemInput = forwardRef<
               }
             }}
           />
-          <button
-            type="button"
+          <Button
+            variant="primary"
             className="sb-settings-save-button"
             onClick={() => void handleSubmit()}
             disabled={!value.trim()}
           >
             {submitLabel ??
               t("playlist-add-button", { defaultValue: "Add item" })}
-          </button>
+          </Button>
         </div>
 
         {showSuggestions ? (

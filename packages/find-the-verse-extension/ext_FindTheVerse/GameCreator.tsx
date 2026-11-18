@@ -2,6 +2,7 @@ import { useSignal } from "@preact/signals";
 import { useLayoutEffect, useRef } from "preact/hooks";
 import type { SeedBibleState } from "seed-bible";
 import { extractContentText, parseVerseReference } from "seed-bible/managers";
+import { Button, IconButton } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { formatReference, isKnownBookId } from "./books";
 import { FormField } from "./FormField";
@@ -308,15 +309,13 @@ export function GameCreator({
               defaultValue:
                 "Tap any verse in the reader, then choose Set as target in the toolbar.",
             })}
-            <button
-              type="button"
-              className="ftv-btn"
+            <Button
               onClick={() => {
                 game.selectingViaToolbar.value = false;
               }}
             >
               {t("cancel", { defaultValue: "Cancel" })}
-            </button>
+            </Button>
           </div>
         ) : (
           <>
@@ -353,23 +352,17 @@ export function GameCreator({
                   if (e.key === "Enter") void handleRefGo();
                 }}
               />
-              <button
-                type="button"
-                className="ftv-btn ftv-btn--primary"
-                onClick={() => void handleRefGo()}
-              >
+              <Button variant="primary" onClick={() => void handleRefGo()}>
                 {t("go", { defaultValue: "Go" })}
-              </button>
+              </Button>
             </div>
-            <button
-              type="button"
-              className="ftv-btn"
+            <Button
               onClick={() => {
                 game.selectingViaToolbar.value = true;
               }}
             >
               {t("select-from-reader", { defaultValue: "Select from reader…" })}
-            </button>
+            </Button>
           </>
         )}
       </FormField>
@@ -400,55 +393,49 @@ export function GameCreator({
                 onChange={(hint) => handleStepHintChange(i, hint)}
               />
               {steps.length > MIN_HINTS && (
-                <button
-                  type="button"
+                <IconButton
                   className="ftv-step-remove"
-                  title={t("remove-chance", {
+                  size="sm"
+                  icon="close"
+                  label={t("remove-chance", {
                     defaultValue: "Remove this chance",
                   })}
                   onClick={() => removeStep(i)}
-                >
-                  ×
-                </button>
+                />
               )}
             </div>
           ))}
         </div>
-        <button
-          type="button"
-          className="ftv-btn ftv-add-step"
-          onClick={addStep}
-        >
+        <Button className="ftv-add-step" onClick={addStep}>
           {t("add-chance", { defaultValue: "+ Add chance" })}
-        </button>
+        </Button>
       </FormField>
 
       {notice && <p className="ftv-notice">{notice}</p>}
 
       <div className="ftv-creator-actions">
-        <button
-          type="button"
-          className="ftv-btn ftv-btn--primary ftv-btn--grow"
+        <Button
+          className="ftv-btn--grow"
+          variant="primary"
           disabled={saving.value}
           onClick={() => void handlePlay()}
         >
           {editing
             ? t("save-and-start", { defaultValue: "Save & Start" })
             : t("start-game", { defaultValue: "Start game" })}
-        </button>
-        <button
-          type="button"
-          className="ftv-btn ftv-btn--grow"
+        </Button>
+        <Button
+          className="ftv-btn--grow"
           disabled={saving.value}
           onClick={handleSave}
         >
           {signedIn
             ? t("save-game", { defaultValue: "Save game" })
             : t("sign-in-to-save", { defaultValue: "Sign in to save games" })}
-        </button>
-        <button type="button" className="ftv-btn" onClick={onCancel}>
+        </Button>
+        <Button onClick={onCancel}>
           {t("cancel", { defaultValue: "Cancel" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

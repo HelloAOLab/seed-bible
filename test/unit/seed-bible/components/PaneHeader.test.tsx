@@ -172,7 +172,7 @@ describe("PaneHeader", () => {
     });
     const close = () =>
       container.querySelector(".sb-pane-header-close-button")!.classList;
-    expect(close()).toContain("sb-close-button-plain");
+    expect(close()).toContain("sb-icon-button-plain");
 
     act(() => {
       render(
@@ -184,6 +184,6 @@ describe("PaneHeader", () => {
         container
       );
     });
-    expect(close()).toContain("sb-close-button-tinted");
+    expect(close()).toContain("sb-icon-button-tinted");
   });
 });

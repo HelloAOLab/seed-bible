@@ -1,5 +1,6 @@
 import "../ScriptureNote/ScriptureNote.css";
 import "./QuestionAnswersSheet.css";
+import "../visuallyHidden.inline.css";
 import { useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { PlayingState } from "../../managers/PlaylistManager";
@@ -11,6 +12,7 @@ import {
 } from "../../managers/SessionsManager";
 import { Avatar } from "../Avatar/Avatar";
 import { MaterialIcon } from "../icons";
+import { Button } from "../Button/Button";
 
 /** How many answerers' avatars the closed sheet shows. */
 const MAX_BAR_AVATARS = 3;
@@ -139,16 +141,19 @@ function QuestionAnswersSheetBody(props: {
                           </span>
                           {isSelf ? (
                             <span className="sb-question-answer-actions">
-                              <button
-                                type="button"
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => setDraft(answer.text)}
                               >
                                 {t("question-answers-edit", {
                                   defaultValue: "Edit",
                                 })}
-                              </button>
-                              <button
-                                type="button"
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                tone="danger"
                                 onClick={() =>
                                   session.setQuestionAnswer(stepKey, "")
                                 }
@@ -156,7 +161,7 @@ function QuestionAnswersSheetBody(props: {
                                 {t("question-answers-remove", {
                                   defaultValue: "Remove",
                                 })}
-                              </button>
+                              </Button>
                             </span>
                           ) : null}
                         </div>
@@ -178,7 +183,7 @@ function QuestionAnswersSheetBody(props: {
             }}
           >
             <label
-              className="sr-only"
+              className="sb-visually-hidden"
               htmlFor={`sb-question-answer-${stepKey}`}
             >
               {t("question-answers-yours", { defaultValue: "Your answer" })}

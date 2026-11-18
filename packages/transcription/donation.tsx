@@ -1,7 +1,7 @@
 import { render } from "preact";
 import { useState } from "preact/hooks";
 import type { SeedBibleState } from "seed-bible";
-import { CloseButton } from "seed-bible/components";
+import { Button, CloseButton } from "seed-bible/components";
 import { addTranslations, I18nProvider } from "seed-bible/i18n";
 import "./styles.css";
 
@@ -140,7 +140,12 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
           </button>
         </div>
 
-        <button type="button" class="sbd-donate" onClick={donate}>
+        <Button
+          className="sbd-donate"
+          variant="primary"
+          size="lg"
+          onClick={donate}
+        >
           {selected == null
             ? t("donate", { ns: "transcription", defaultValue: "Donate" })
             : t("donateAmount", {
@@ -148,7 +153,7 @@ const DonationDialog = ({ onSuccess, i18n }: Props) => {
                 defaultValue: "Donate {{amount}}",
                 amount: `$${selected}`,
               })}
-        </button>
+        </Button>
 
         <button type="button" class="sbd-dismiss" onClick={closeDonationDialog}>
           {t("donationDismiss", {

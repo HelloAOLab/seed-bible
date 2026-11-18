@@ -693,35 +693,6 @@
   min-width: 0;
 }
 
-/* A bare icon, unlike the pills: no background, and the accent colour while
-   history is open. */
-.sb-today-container .sb-today-feed-card .sb-today-feed-history-button {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  margin: 0;
-  border: none;
-  background-color: transparent;
-  color: var(--sb-font-color);
-  cursor: pointer;
-}
-
-.sb-today-container .sb-today-feed-card .sb-today-feed-history-button:hover,
-.sb-today-container
-  .sb-today-feed-card
-  .sb-today-feed-history-button.sb-today-feed-history-button-selected {
-  color: var(--sb-primary-color);
-}
-
-.sb-today-container
-  .sb-today-feed-card
-  .sb-today-feed-history-button
-  > .material-symbols-outlined {
-  font-size: 1.5rem;
-}
-
 .sb-today-container .sb-today-feed-card .sb-today-feed-kind-filter {
   --sb-today-feed-fade-left: 0px;
   --sb-today-feed-fade-right: 0px;
@@ -1093,13 +1064,6 @@
 
   .sb-today-container .sb-today-feed-row-note > .sb-today-feed-time {
     line-height: calc(0.875rem * 1.4);
-  }
-
-  .sb-today-container
-    .sb-today-feed-card
-    .sb-today-feed-history-button
-    > .material-symbols-outlined {
-    font-size: 1.25rem;
   }
 
   .sb-today-container

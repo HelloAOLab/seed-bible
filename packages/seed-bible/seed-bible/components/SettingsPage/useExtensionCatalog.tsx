@@ -11,6 +11,7 @@ import { useAppConfig } from "../../app/appConfig";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
 import type { ExtensionInstallState } from "./ExtensionInfoPage";
+import { Button } from "../Button/Button";
 
 export function getExtensionInstallState(
   installed: boolean,
@@ -81,13 +82,14 @@ export function AddExtensionFromLink(props: {
           value={url.value}
           onInput={(e) => (url.value = e.currentTarget.value)}
         />
-        <button
+        <Button
           type="submit"
-          className="sb-settings-action-button"
-          disabled={status.value.kind === "adding" || !url.value.trim()}
+          variant="primary"
+          loading={status.value.kind === "adding"}
+          disabled={!url.value.trim()}
         >
           {t("extension-add-link-button")}
-        </button>
+        </Button>
       </div>
       <p className="sb-extension-add-link-status" role="status">
         {status.value.kind === "failed"
@@ -177,13 +179,9 @@ export function useExtensionCatalog(state: SeedBibleState) {
               defaultValue: "Please log in to configure this extension.",
             })}
           </p>
-          <button
-            type="button"
-            className="sb-settings-action-button"
-            onClick={() => void login.login()}
-          >
+          <Button variant="primary" onClick={() => void login.login()}>
             {t("log-in", { defaultValue: "Log in" })}
-          </button>
+          </Button>
         </div>
       ) : (
         <>

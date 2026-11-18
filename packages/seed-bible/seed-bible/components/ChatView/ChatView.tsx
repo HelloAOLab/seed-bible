@@ -25,11 +25,13 @@ import {
 } from "../../managers/SessionsManager";
 import { Avatar } from "../Avatar/Avatar";
 import { formatRelativeTime, translateTitle } from "../../app/utils";
-import { AskIcon } from "../icons";
+import { AskIcon, MaterialIcon } from "../icons";
 import { VerseReferenceLink } from "../../app/verseReferenceLink";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { VerseRef } from "../../managers/BibleDataManager";
 import { useEffect, useRef, useState } from "preact/hooks";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 interface ChatViewProps {
   chat: ChatSession;
@@ -672,9 +674,9 @@ function AiLimitsNotice({ onAcknowledge }: { onAcknowledge: () => void }) {
           })}
         </li>
       </ul>
-      <button
+      <Button
         id={AI_LIMITS_CONFIRM_ID}
-        type="button"
+        variant="primary"
         className="sb-chat-ai-limits-confirm"
         onClick={onAcknowledge}
       >
@@ -682,7 +684,7 @@ function AiLimitsNotice({ onAcknowledge }: { onAcknowledge: () => void }) {
           defaultValue:
             "I understand that AI can make mistakes and isn't a substitute for studying the Bible myself.",
         })}
-      </button>
+      </Button>
     </section>
   );
 }
@@ -1171,8 +1173,10 @@ export function ChatView(props: ChatViewProps) {
             </p>
           ) : null}
           <div className="sb-chat-view-translation-banner-actions">
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="sm"
+              shape="pill"
               className="sb-chat-view-translation-banner-switch"
               disabled={suggestionPending.value}
               onClick={() => {
@@ -1180,9 +1184,10 @@ export function ChatView(props: ChatViewProps) {
               }}
             >
               {t("chat-suggest-switch", { defaultValue: "Switch" })}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              size="sm"
+              shape="pill"
               className="sb-chat-view-translation-banner-dismiss"
               disabled={suggestionPending.value}
               onClick={() => {
@@ -1190,7 +1195,7 @@ export function ChatView(props: ChatViewProps) {
               }}
             >
               {t("chat-suggest-dismiss", { defaultValue: "Dismiss" })}
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}
@@ -1493,20 +1498,15 @@ export function ChatView(props: ChatViewProps) {
               })}
             />
           </div>
-          <button
+          <IconButton
             type="submit"
+            size="lg"
+            look="tinted"
             className="sb-chat-view-send"
             disabled={!canSubmit}
-            aria-label={t("send-message", { defaultValue: "Send message" })}
-            title={t("send-message", { defaultValue: "Send message" })}
-          >
-            <span
-              className="material-symbols-outlined rtl-mirror"
-              aria-hidden="true"
-            >
-              send
-            </span>
-          </button>
+            icon={<MaterialIcon className="rtl-mirror">send</MaterialIcon>}
+            label={t("send-message", { defaultValue: "Send message" })}
+          />
         </form>
       </div>
 

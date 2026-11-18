@@ -6,7 +6,7 @@ import type {
   ConnectedSessionUser,
 } from "../../managers/SessionsManager";
 import { useI18n } from "../../i18n/I18nManager";
-import { MaterialIcon } from "../icons";
+import { Button } from "../Button/Button";
 
 /**
  * Display name for a book id in the session reader's translation, falling
@@ -113,26 +113,28 @@ export function AskToComeBackButton({
 
   if (isCoolingDown) {
     return (
-      <button
-        type="button"
-        className="sb-ask-come-back sb-ask-come-back-asked"
+      <Button
+        variant="secondary"
+        size="sm"
+        shape="pill"
+        icon="check"
+        className="sb-ask-come-back"
         disabled
       >
-        <MaterialIcon className="sb-ask-come-back-icon" aria-hidden="true">
-          check
-        </MaterialIcon>
         {t("session-asked-to-come-back", { defaultValue: "Asked" })}
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="secondary"
+      size="sm"
+      shape="pill"
       className="sb-ask-come-back"
       onClick={() => session.askToComeBack(user.connectionId)}
     >
       {t("session-ask-to-come-back", { defaultValue: "Ask to come back" })}
-    </button>
+    </Button>
   );
 }

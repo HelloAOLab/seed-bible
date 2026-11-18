@@ -18,13 +18,13 @@ import { ExpandableText } from "../ExpandableText/ExpandableText";
 import { MaterialIcon } from "../icons";
 import {
   answerFriendRequest,
-  BusyButton,
   cancelFriendRequest,
   CopyButton,
   openRemoveFriendConfirm,
   sendFriendRequestTo,
 } from "./friendActions";
 import { getFriendRequestUrl } from "./friendLinks";
+import { Button } from "../Button/Button";
 
 type T = ReturnType<typeof useI18n>["t"];
 
@@ -180,9 +180,7 @@ function FriendshipActions(props: {
     // Add friend disabled until it's done: a request sent meanwhile would be
     // ended along with the friendship.
     actions = (
-      <button
-        type="button"
-        className="sb-session-settings-cancel"
+      <Button
         aria-label={t("remove-friend-user", {
           name,
           defaultValue: "Remove {{name}} as a friend",
@@ -196,7 +194,7 @@ function FriendshipActions(props: {
         }
       >
         {t("remove", { defaultValue: "Remove" })}
-      </button>
+      </Button>
     );
   } else if (incoming) {
     message = t("friend-request-link-confirm", {
@@ -205,11 +203,10 @@ function FriendshipActions(props: {
     });
     actions = (
       <>
-        <BusyButton
-          className="sb-session-settings-cancel"
-          busy={busy.value === "decline"}
+        <Button
+          loading={busy.value === "decline"}
           disabled={busy.value !== null}
-          ariaLabel={t("decline-friend-user", {
+          aria-label={t("decline-friend-user", {
             name,
             defaultValue: "Decline {{name}}'s friend request",
           })}
@@ -220,12 +217,12 @@ function FriendshipActions(props: {
           }
         >
           {t("decline", { defaultValue: "Decline" })}
-        </BusyButton>
-        <BusyButton
-          className="sb-friends-button sb-friends-button--primary"
-          busy={busy.value === "accept"}
+        </Button>
+        <Button
+          variant="primary"
+          loading={busy.value === "accept"}
           disabled={busy.value !== null}
-          ariaLabel={t("accept-friend-user", {
+          aria-label={t("accept-friend-user", {
             name,
             defaultValue: "Accept {{name}}'s friend request",
           })}
@@ -236,7 +233,7 @@ function FriendshipActions(props: {
           }
         >
           {t("accept", { defaultValue: "Accept" })}
-        </BusyButton>
+        </Button>
       </>
     );
   } else if (outgoing) {
@@ -248,7 +245,7 @@ function FriendshipActions(props: {
     actions = (
       <>
         <CopyButton
-          className="sb-session-settings-cancel"
+          size="md"
           toast={toast}
           text={getFriendRequestUrl(navigation, outgoing.id)}
           label={t("copy-friend-request-link", { defaultValue: "Copy link" })}
@@ -257,11 +254,10 @@ function FriendshipActions(props: {
             defaultValue: "Copy the link to your friend request to {{name}}",
           })}
         />
-        <BusyButton
-          className="sb-session-settings-cancel"
-          busy={busy.value === "cancel"}
+        <Button
+          loading={busy.value === "cancel"}
           disabled={busy.value !== null}
-          ariaLabel={t("cancel-friend-request-user", {
+          aria-label={t("cancel-friend-request-user", {
             name,
             defaultValue: "Cancel your friend request to {{name}}",
           })}
@@ -272,7 +268,7 @@ function FriendshipActions(props: {
           }
         >
           {t("cancel", { defaultValue: "Cancel" })}
-        </BusyButton>
+        </Button>
       </>
     );
   } else if (
@@ -287,11 +283,11 @@ function FriendshipActions(props: {
       defaultValue: "You're not friends yet.",
     });
     actions = (
-      <BusyButton
-        className="sb-friends-button sb-friends-button--primary"
-        busy={busy.value === "send"}
+      <Button
+        variant="primary"
+        loading={busy.value === "send"}
         disabled={busy.value !== null}
-        ariaLabel={t("add-friend-user", {
+        aria-label={t("add-friend-user", {
           name,
           defaultValue: "Add {{name}} as a friend",
         })}
@@ -302,7 +298,7 @@ function FriendshipActions(props: {
         }
       >
         {t("add-friend-button", { defaultValue: "Add friend" })}
-      </BusyButton>
+      </Button>
     );
   }
 

@@ -17,26 +17,6 @@
   font-family: "DM Sans", var(--sb-font-family, sans-serif);
 }
 
-/* The new-plan button and the back button both live in the pane's header (see
-   ReadingPlansPaneActions / ReadingPlansPaneLeading), so they're sized to sit
-   in that 42px-tall row rather than in the pane body. The new-plan button
-   matches the "+ Create" button in the Discover pane's header. */
-.sb-reading-plans-create {
-  padding: 0.375rem 0.75rem;
-  border: 1px solid var(--sb-primary-color);
-  border-radius: var(--sb-radius-full);
-  background: var(--sb-primary-color);
-  color: var(--sb-background);
-  font-family: inherit;
-  font-size: var(--sb-font-size-13);
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.sb-reading-plans-create:hover {
-  opacity: 0.9;
-}
-
 .sb-reading-plans-empty {
   padding: 24px 8px;
   font-size: var(--sb-font-size-15);
@@ -360,21 +340,4 @@
 
 .sb-rp-restart {
   flex: none;
-  padding: 6px 10px;
-  border: none;
-  background: transparent;
-  color: var(--rp-accent);
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-rp-restart:hover {
-  text-decoration: underline;
-}
-
-/* Second tap on "Discard" — the one that actually erases the draft. */
-.sb-rp-restart-danger {
-  color: #dc2626;
 }

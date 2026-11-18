@@ -1,3 +1,4 @@
+import "../visuallyHidden.inline.css";
 import { useSignal } from "@preact/signals";
 import { MaterialIcon } from "../icons";
 import {
@@ -7,6 +8,7 @@ import {
   type ExtensionSettingValue,
 } from "../../managers/ExtensionManager";
 import type { I18nHook } from "../../i18n/I18nManager";
+import { IconButton } from "../IconButton/IconButton";
 
 function NumberSettingInput(props: {
   id: string;
@@ -178,7 +180,7 @@ export function ExtensionSettingsForm(props: {
                 Material glyph beside it is what's actually seen. */}
             <input
               type="checkbox"
-              className="sb-settings-field-override-input"
+              className="sb-settings-field-override-input sb-visually-hidden"
               checked={overridden}
               aria-label={t("override-setting", {
                 defaultValue: "Override {{name}}",
@@ -218,19 +220,12 @@ export function ExtensionSettingsForm(props: {
             </p>
           ) : null;
         const resetNode = resetting?.hasOwnValue(key) ? (
-          <button
-            type="button"
-            className="sb-theme-color-reset"
-            title={t("reset-to-default", {
-              defaultValue: "Reset to default",
-            })}
-            aria-label={t("reset-to-default", {
-              defaultValue: "Reset to default",
-            })}
+          <IconButton
+            size="sm"
+            icon="restart_alt"
+            label={t("reset-to-default", { defaultValue: "Reset to default" })}
             onClick={() => resetting.onReset(key)}
-          >
-            <span className="material-symbols-outlined">restart_alt</span>
-          </button>
+          />
         ) : null;
 
         return (

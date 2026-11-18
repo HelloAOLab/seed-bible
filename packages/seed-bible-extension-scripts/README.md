@@ -50,8 +50,20 @@ Type-checks the project with its own `tsconfig.json`, then checks
   error, because Seed Bible would refuse it every time.
 - As a warning, every declared permission is used somewhere. Unused ones
   only make the install prompt longer.
-- The `icon`, if there is one, is a `.png`, `.svg`, `.webp` or `.jpg` in
+- The `icon`, if there is one, is a `.png`, `.svg`, `.webp`, `.jpg` or `.jpeg` in
   the project under 256 KB, or an `https:` link.
+- `screenshots`, if present, is a list of up to 8 objects with an image
+  `src` and an optional `caption` translation key. Local images must be
+  inside the project, use `.png`, `.webp`, `.jpg` or `.jpeg` (not SVG), and
+  be smaller than 1 MB (1,048,576 bytes) each. A caption key must have
+  nonblank English text in `translations.en`. Full `https:` sources are
+  accepted without downloading or checking their image type or size.
+
+Malformed entries, missing files, paths outside the project, unsupported
+local types, files at or above the screenshot size limit, too many screenshots,
+missing English caption text and insecure image links are errors. `check`
+prints the affected field or entry and the reason, and exits with status 1.
+Use WebP at about 1280 pixels on the long edge for screenshots.
 
 It reads the code as text, so it can't see a call made some roundabout way.
 Exits non-zero on an error.
@@ -70,12 +82,30 @@ Use `createTestHost` from `seed-bible/extensions/testing` to run the
 extension against a stand-in for Seed Bible; the scaffolded
 `src/init.test.tsx` shows how.
 
+Seed Bible's shared components import their CSS, which Node can't load, so
+the project's `vitest.config.ts` has Vitest handle `seed-bible` itself. A
+project made before that was added fails with `Unknown file extension
+".css"` as soon as a test imports `seed-bible/components`,
+`seed-bible/managers` or `seed-bible`, even through another file. Only
+`seed-bible/extensions`, `seed-bible/extensions/testing` and `seed-bible/i18n`
+load no CSS. Add this to its `test` options:
+
+```ts
+server: { deps: { inline: ["seed-bible"] } },
+```
+
 ### `build`
 
 Runs `check` and `test`, then writes `dist/standalone/index.js`: one ES
 module with everything the extension imports bundled in. It holds one copy
 of Preact, the project's own, even if `seed-bible` depends on another
-version.
+version. CSS is bundled in too, since the extension's frame can't load a
+stylesheet: the CSS files the extension imports, and those of the shared
+components it uses, are added to the frame's page when the module loads.
+The scaffolded `src/css.d.ts` lets TypeScript accept those imports. A
+project made before it was added fails `check` with `Cannot find module or
+type declarations for side-effect import of './panel.css'`; add a
+`src/css.d.ts` containing `declare module "*.css" {}`.
 
 For a built-in extension it writes `dist/monorepo-package/` instead: the
 checked source, ready to copy into `packages/<name>/` in a seed-bible
@@ -88,14 +118,19 @@ Runs `build`, then writes `dist/site/`: everything needed to install the
 extension, as plain files for any static host. See
 [Hosting it yourself](#hosting-it-yourself).
 
-| File                 | What it's for                                                                                            |
-| -------------------- | -------------------------------------------------------------------------------------------------------- |
-| `<id>-<hash>.js`     | The bundle, named after its contents, so it can be cached forever.                                       |
-| `icon-<hash>.<ext>`  | The `icon` from `extension.json`, if it has one, also named after its contents.                          |
-| `extension-set.json` | The link Seed Bible installs from. It points at the bundle by file name and pins its hash (`integrity`). |
-| `index.html`         | An install page with an **Install in Seed Bible** button. It works out the link from its own address.    |
-| `_headers`           | Lets Seed Bible fetch the files from Cloudflare (Pages and Workers) and Netlify.                         |
-| `.nojekyll`          | Makes GitHub Pages serve the folder as it is.                                                            |
+| File                     | What it's for                                                                                            |
+| ------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `<id>-<hash>.js`         | The bundle, named after its contents, so it can be cached forever.                                       |
+| `icon-<hash><ext>`       | The `icon` from `extension.json`, if it has one, also named after its contents.                          |
+| `screenshot-<hash><ext>` | Each local screenshot, named after its contents; `<ext>` includes the dot, such as `.webp`.              |
+| `extension-set.json`     | The link Seed Bible installs from. It points at the bundle by file name and pins its hash (`integrity`). |
+| `index.html`             | An install page with an **Install in Seed Bible** button. It works out the link from its own address.    |
+| `_headers`               | Lets Seed Bible fetch the files from Cloudflare (Pages and Workers) and Netlify.                         |
+| `.nojekyll`              | Makes GitHub Pages serve the folder as it is.                                                            |
+
+The set points screenshot sources at these copies, keeping their order and
+captions. Full `https:` image links stay as they are; no copy is made.
+Screenshots appear in Seed Bible, not on the generated install page.
 
 `--app-url <url>` points the install button at another Seed Bible (the
 default is `https://seedbible.org/`).
@@ -109,7 +144,9 @@ install link.
 The link stays the same every time you publish: the bundle is uploaded as a
 new file, and the manifest the link points to is overwritten to name it.
 The `icon` from `extension.json`, if it has one, is uploaded too, to a link
-of its own that the manifest names. So
+of its own that the manifest names. Each local screenshot is uploaded too,
+and its `src` is replaced with the uploaded link, keeping its caption and
+position in the list. Full `https:` image links stay as they are. So
 to release an update, bump `version` in `extension.json` and run `publish`
 again. People who installed it get the new version the next time they open
 Seed Bible. Each extension has its own link, so publishing one never
@@ -119,7 +156,10 @@ The first run asks for your Seed Bible account's email and the code it
 sends you, then prints a `SEED_BIBLE_RECORD_KEY`. Save it as an
 environment variable (for example a CI secret) and later runs won't ask
 again. Treat it like a password: anyone with it can publish under your
-account. `--dry-run` prints the manifest without uploading anything.
+account. `--dry-run` still builds and checks the extension, then prints the
+manifest without uploading anything. Its bundle URL is empty and local image
+paths remain unchanged; the output notes that uploaded links would be filled
+in when publishing.
 
 ### `dev`
 
@@ -135,6 +175,11 @@ in it. For a sandboxed extension it:
 Approve it once. After that, reload the page to run your latest code. If
 you add a permission to `extension.json`, the reload shows the update
 prompt, as a real update would.
+
+Local screenshots are served at `/screenshots/<index><ext>` on the extension
+server, with a zero-based index (for example,
+`http://localhost:5174/screenshots/0.webp`). The served manifest points to
+those URLs and keeps the captions. Full `https:` sources stay as they are.
 
 Which Seed Bible it runs:
 

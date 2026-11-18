@@ -2,29 +2,6 @@
   position: relative;
 }
 
-.sb-context-menu-button {
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  border-radius: var(--sb-radius-sm);
-  background: transparent;
-  color: var(--sb-font-color);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-.sb-context-menu-button:hover {
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 70%);
-}
-
-.sb-context-more-icon {
-  font-size: 1.125rem;
-  opacity: 0.9;
-}
-
 .sb-context-menu {
   position: fixed;
   width: max-content;

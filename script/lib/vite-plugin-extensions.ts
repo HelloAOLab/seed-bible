@@ -2,6 +2,7 @@ import type { Plugin, ViteDevServer } from "vite";
 import { readFile, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { checkExtensionMedia } from "./extensionMedia";
 import {
   generateEntryModuleSource,
   generateLocaleModuleSource,
@@ -24,8 +25,8 @@ import {
 // directories named by `SEED_BIBLE_EXTRA_EXTENSION_DIRS` — see below.
 //
 // The module is generated as source: each extension's `meta` is inlined as a JS
-// literal, trimmed to `id`/`dependencies`/`autoinstall` — what the boot path
-// needs to resolve install order. Its code and its full per-locale translations
+// literal, trimmed to installation metadata, icon, screenshots and English
+// list text and captions. Its code and its full per-locale translations
 // are `() => import(...)` thunks, so Vite code-splits both into chunks fetched
 // only once the extension is installed.
 //
@@ -243,11 +244,21 @@ function discoverExtensions(): Promise<DiscoveredExtension[]> {
   if (!cachedExtensions) {
     // Cache the promise rather than the result so concurrent `load()` calls —
     // which is how Rollup drives this — share one read instead of racing.
-    cachedExtensions = readExtensions().catch((err) => {
-      // Don't poison the cache with a failed read; let the next call retry.
-      cachedExtensions = null;
-      throw err;
-    });
+    cachedExtensions = readExtensions()
+      .then(async (extensions) => {
+        for (const { dir, meta } of extensions) {
+          const messages = await checkExtensionMedia(dir, meta);
+          if (messages.length > 0) {
+            throw new Error(`[extensions] ${meta.id}:\n${messages.join("\n")}`);
+          }
+        }
+        return extensions;
+      })
+      .catch((err) => {
+        // Don't poison the cache with a failed read; let the next call retry.
+        cachedExtensions = null;
+        throw err;
+      });
   }
   return cachedExtensions;
 }
@@ -289,9 +300,14 @@ export function extensionsPlugin(): Plugin {
 
       const extensions = await discoverExtensions();
 
-      // Reload the module if any extension's meta changes.
-      for (const { dir } of extensions) {
+      for (const { dir, meta } of extensions) {
         this.addWatchFile(path.resolve(dir, "extension.json"));
+        for (const file of [
+          ...(meta.icon !== undefined ? [meta.icon] : []),
+          ...(meta.screenshots ?? []).map(({ src }) => src),
+        ]) {
+          this.addWatchFile(path.resolve(dir, file));
+        }
       }
 
       return isEntry
@@ -339,16 +355,13 @@ export function extensionsPlugin(): Plugin {
         });
       };
 
-      // A file's *contents* changing is already handled by the `addWatchFile`
-      // calls in `load()`, which make Vite re-run it — but that would now be
-      // served the cached metas, so the cache has to be dropped here too.
-      server.watcher.on("change", (file) => {
-        if (isExtensionManifest(file)) {
-          cachedExtensions = null;
-        }
+      // Recheck media as well as manifests when watched files change.
+      server.watcher.on("change", () => {
+        cachedExtensions = null;
       });
 
       const handle = (file: string) => {
+        cachedExtensions = null;
         if (!isExtensionManifest(file)) {
           return;
         }

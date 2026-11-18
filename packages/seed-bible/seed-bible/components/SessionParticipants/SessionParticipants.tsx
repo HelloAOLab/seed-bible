@@ -1,6 +1,5 @@
 import "./SessionParticipants.css";
 import { signal, useSignal } from "@preact/signals";
-import { createPortal } from "preact/compat";
 import type {
   BibleReadingSession,
   ConnectedSessionUser,
@@ -31,7 +30,9 @@ import {
   ParticipantName,
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
-import { CloseButton } from "../CloseButton/CloseButton";
+import { BottomSheet } from "../BottomSheet/BottomSheet";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 /** How many avatars the compact stack shows before collapsing into a "+N" chip. */
 const MAX_STACK_AVATARS = 3;
@@ -104,60 +105,17 @@ export function MobileSessionParticipants({
         )}
       </button>
 
-      {/* Portal to <body>: the mobile reader header is its own stacking context
-       * (z-index + overflow:hidden), so a sheet rendered inside it would sit
-       * behind the bottom nav. Rendering to body lets it cover the whole
-       * screen. The portal only runs on click, so SSR is unaffected. */}
-      {isSheetOpen.value &&
-        createPortal(
-          <>
-            <div
-              className="sb-mobile-settings-sheet-overlay"
-              onClick={() => {
-                isSheetOpen.value = false;
-              }}
-              aria-hidden="true"
-            />
-            <div
-              className="sb-mobile-settings-sheet sb-session-participants-sheet"
-              role="dialog"
-              aria-modal="true"
-              aria-label={t("participants", { defaultValue: "Participants" })}
-            >
-              <div className="sb-mobile-settings-sheet-header">
-                <div className="sb-mobile-settings-sheet-title">
-                  <span
-                    className="material-symbols-outlined"
-                    aria-hidden="true"
-                    style={{ fontSize: 22 }}
-                  >
-                    group
-                  </span>
-                  <span>
-                    {t("participants", { defaultValue: "Participants" })}
-                  </span>
-                </div>
-
-                <CloseButton
-                  onClose={() => {
-                    isSheetOpen.value = false;
-                  }}
-                />
-              </div>
-              <div className="sb-mobile-settings-sheet-body">
-                <SessionParticipantList
-                  state={state}
-                  session={session}
-                  // The sheet sits above every modal, so it closes to let a
-                  // participant's profile show, and comes back after.
-                  onOpenProfile={() => {
-                    isSheetOpen.value = false;
-                  }}
-                  onCloseProfile={() => {
-                    isSheetOpen.value = true;
-                  }}
-                />
-              </div>
+      {isSheetOpen.value && (
+        <BottomSheet
+          className="sb-session-participants-sheet"
+          label={t("participants", { defaultValue: "Participants" })}
+          title={t("participants", { defaultValue: "Participants" })}
+          titleIcon="group"
+          onClose={() => {
+            isSheetOpen.value = false;
+          }}
+          footer={
+            <>
               <div className="sb-mobile-settings-sheet-divider" />
               {isHost && (
                 <button
@@ -211,10 +169,23 @@ export function MobileSessionParticipants({
                   chevron_right
                 </MaterialIcon>
               </button>
-            </div>
-          </>,
-          document.body
-        )}
+            </>
+          }
+        >
+          <SessionParticipantList
+            state={state}
+            session={session}
+            // The sheet sits above every modal, so it closes to let a
+            // participant's profile show, and comes back after.
+            onOpenProfile={() => {
+              isSheetOpen.value = false;
+            }}
+            onCloseProfile={() => {
+              isSheetOpen.value = true;
+            }}
+          />
+        </BottomSheet>
+      )}
     </>
   );
 }
@@ -288,21 +259,18 @@ export function SessionParticipantList({
           <AskToComeBackButton session={session} user={user} />
         )}
         {user.isSelf && session.isAwayFromGroup.value && (
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
+            shape="pill"
+            icon={<MaterialIcon className="rtl-mirror">undo</MaterialIcon>}
             className="sb-ask-come-back"
             onClick={() => {
               void session.rejoinGroup();
             }}
           >
-            <MaterialIcon
-              className="sb-ask-come-back-icon rtl-mirror"
-              aria-hidden="true"
-            >
-              undo
-            </MaterialIcon>
             {t("session-rejoin-group", { defaultValue: "Rejoin" })}
-          </button>
+          </Button>
         )}
         {friendButtonRows.has(user.connectionId) && (
           <ParticipantFriendButton
@@ -433,39 +401,36 @@ export function TabSessionParticipants({
             count: users.length,
           })}
         </span>
-        <button
-          type="button"
+        <IconButton
           className="sb-tab-participants-collapse"
           aria-expanded="true"
-          aria-label={t("hide-participants", {
-            defaultValue: "Hide participants",
-          })}
-          title={t("hide-participants", { defaultValue: "Hide participants" })}
+          icon="expand_less"
+          label={t("hide-participants", { defaultValue: "Hide participants" })}
           onClick={() => setTabParticipantsListExpanded(false)}
-        >
-          <MaterialIcon aria-hidden="true">expand_less</MaterialIcon>
-        </button>
+        />
       </div>
       <SessionParticipantList state={state} session={session} />
       <div className="sb-tab-participants-footer">
         {isLocalSessionHost(state, session) && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
+            icon="settings"
             className="sb-tab-participants-link"
             onClick={() => openSessionSettingsModal(state, session)}
           >
-            <MaterialIcon aria-hidden="true">settings</MaterialIcon>
             {t("session-settings", { defaultValue: "Session settings" })}
-          </button>
+          </Button>
         )}
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
+          icon="share"
           className="sb-tab-participants-link"
           onClick={() => openShareSessionModal(state, session)}
         >
-          <MaterialIcon aria-hidden="true">share</MaterialIcon>
           {t("share-session", { defaultValue: "Share session" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

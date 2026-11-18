@@ -432,38 +432,12 @@
   border-top: 1px solid var(--sb-divider-color);
 }
 
-.sb-extension-consent-cancel,
-.sb-extension-consent-allow {
-  border: none;
-  min-height: 2.75rem;
-  padding: 0 1.25rem;
-  border-radius: var(--sb-radius-full);
-  font-size: var(--sb-font-size-15);
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.sb-extension-consent-cancel {
-  background: transparent;
-  /* Toward the text color: darker in light themes, lighter in dark ones. */
-  color: color-mix(in srgb, var(--sb-primary-color), var(--sb-font-color) 40%);
-}
-
-.sb-extension-consent-cancel:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
-}
-
-/* Darkened so the Light theme's white text on orange passes 4.5:1. Dark's
-   near-black text on its near-white accent still clears that after darkening. */
-.sb-extension-consent-allow {
-  padding: 0 1.5rem;
-  background: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
-  color: var(--sb-primary-font-color);
-}
-
-.sb-extension-consent-allow:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), #000000 35%);
+/* Darkened so the Light theme's white label on orange passes 4.5:1 (the
+   standard orange gives about 3:1). Dark's near-black label on its
+   near-white accent still clears that after darkening. Two classes, to
+   outrank the Button's own accent. */
+.sb-button.sb-extension-consent-allow {
+  --sb-button-accent: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
 }
 
 .sb-extension-permissions-name {
