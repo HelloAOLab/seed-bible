@@ -1,4 +1,5 @@
 import { computed, effect, signal } from "@preact/signals";
+import { toShareableUrl } from "../app/publicLinks";
 
 export type NavigationDestination = number | string | URL;
 
@@ -555,6 +556,12 @@ export function createNavigationManager(
     syncSignalsToUrl,
     linkToQuery,
     linkToBareRoot,
+    /**
+     * Makes a link built from this page work for whoever receives it: in the
+     * native apps the page is served from `localhost`, so the link is moved
+     * onto the public site. Use it for any link meant for someone else.
+     */
+    toShareableUrl,
     dispose,
   };
 }

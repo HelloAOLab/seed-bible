@@ -1,23 +1,54 @@
 import type { Signal } from "@preact/signals";
-import type { CasualOSManager } from "seed-bible/managers";
+import type { CasualOSManager, SeedBibleState } from "seed-bible/managers";
 import type { GameDraft, SavedGame } from "./types";
 
 /**
- * Each game is its own record at `find-the-verse/games/<id>`, so a game can
- * later be shared on its own without opening up every other game's answer.
+ * Each game is its own record at `find-the-verse/games/<id>`, so sharing one
+ * game doesn't open up any other game's answer.
  */
 export const GAME_ADDRESS_PREFIX = "find-the-verse/games/";
 
 /**
- * The record holds the secret verse. `private` keeps it off the public
- * records API; `publicRead` would let anyone who knows the creator's user id
- * read every answer. The path after the colon lets the list ask for these
+ * The record holds the secret verse, so a game stays `private` until its
+ * creator shares it. Sharing moves that one record to `publicRead`, which
+ * lets anyone with the link read it, and lets anyone who knows the creator's
+ * user id list their shared games. The marker is the only place a game's
+ * shared state is kept. The path after the colon lets the list ask for these
  * records alone.
  */
-export const GAMES_MARKER = "private:findTheVerseGames";
+export const PRIVATE_GAME_MARKER = "private:findTheVerseGames";
+export const PUBLIC_GAME_MARKER = "publicRead:findTheVerseGames";
+
+function getMarker(shared: boolean): string {
+  return shared ? PUBLIC_GAME_MARKER : PRIVATE_GAME_MARKER;
+}
 
 export function gameAddress(id: string): string {
   return `${GAME_ADDRESS_PREFIX}${id}`;
+}
+
+export const SHARED_GAME_CREATOR_PARAM = "findTheVerseCreator";
+export const SHARED_GAME_PARAM = "findTheVerseGame";
+
+export function sharedGameUrl(
+  navigation: SeedBibleState["navigation"],
+  creatorId: string,
+  gameId: string
+): string {
+  const url = new URL(`${navigation.basePath}/`, navigation.currentUrl.peek());
+  url.searchParams.set(SHARED_GAME_CREATOR_PARAM, creatorId);
+  url.searchParams.set(SHARED_GAME_PARAM, gameId);
+  url.searchParams.set("autoinstall-find-the-verse-extension", "true");
+  return navigation.toShareableUrl(url).toString();
+}
+
+/** The game a share link points at, or null when `url` isn't one. */
+export function sharedGameFromUrl(
+  url: URL
+): { creatorId: string; gameId: string } | null {
+  const creatorId = url.searchParams.get(SHARED_GAME_CREATOR_PARAM);
+  const gameId = url.searchParams.get(SHARED_GAME_PARAM);
+  return creatorId && gameId ? { creatorId, gameId } : null;
 }
 
 export type LoadGamesResult =
@@ -27,6 +58,7 @@ export type LoadGamesResult =
 export type SavedGamesWriteCode =
   | "signed_out"
   | "not_loaded"
+  | "privacy_blocked"
   | "persist_failed";
 
 export class SavedGamesWriteError extends Error {
@@ -44,7 +76,10 @@ function isGameStep(value: unknown): boolean {
   return typeof (value as { hint?: unknown }).hint === "string";
 }
 
-export function readSavedGame(value: unknown): SavedGame | null {
+export function readSavedGame(
+  value: unknown,
+  shared: boolean
+): SavedGame | null {
   if (!value || typeof value !== "object") return null;
   const game = value as Record<string, unknown>;
   const target = game.targetVerse as Record<string, unknown> | null;
@@ -82,12 +117,37 @@ export function readSavedGame(value: unknown): SavedGame | null {
       verseText: target.verseText,
       translationId: target.translationId,
     },
+    shared,
   };
 }
 
 /** A record the user hasn't written to yet. Not a failure. */
 function isMissing(errorCode: unknown): boolean {
   return errorCode === "data_not_found" || errorCode === "record_not_found";
+}
+
+/**
+ * A refusal caused by an account's privacy settings: the creator's account
+ * can't publish data, or the creator's or reader's account can't use public
+ * data. `getData`'s failure type leaves out `reason`, but the server sends it,
+ * so this reads the result as `unknown`.
+ */
+function isPrivacyRefusal(result: unknown): boolean {
+  if (!result || typeof result !== "object") return false;
+  const { errorCode, reason } = result as {
+    errorCode?: unknown;
+    reason?: { type?: unknown } | null;
+  };
+  return (
+    errorCode === "not_authorized" &&
+    reason?.type === "disabled_privacy_feature"
+  );
+}
+
+function writeFailure(result: unknown): SavedGamesWriteError {
+  return new SavedGamesWriteError(
+    isPrivacyRefusal(result) ? "privacy_blocked" : "persist_failed"
+  );
 }
 
 /** Newest first. */
@@ -107,25 +167,33 @@ export async function loadGames(
   os: CasualOSManager
 ): Promise<LoadGamesResult> {
   const games: SavedGame[] = [];
-  let lastAddress: string | undefined;
-  let listed = 0;
-  try {
+  const loadByMarker = async (marker: string): Promise<SavedGame[]> => {
+    let lastAddress: string | undefined;
+    let listed = 0;
+    const currGames: SavedGame[] = [];
     while (true) {
-      const page = await os.listDataByMarker(userId, GAMES_MARKER, lastAddress);
+      const page = await os.listDataByMarker(userId, marker, lastAddress);
       if (!page || page.success === false) {
         if (page && isMissing(page.errorCode)) break;
-        return { status: "error" };
+        throw new Error();
       }
       if (page.items.length === 0) break;
       for (const item of page.items) {
         if (!item.address.startsWith(GAME_ADDRESS_PREFIX)) continue;
-        const saved = readSavedGame(item.data);
-        if (saved && gameAddress(saved.id) === item.address) games.push(saved);
+        const saved = readSavedGame(item.data, marker === PUBLIC_GAME_MARKER);
+        if (saved && gameAddress(saved.id) === item.address)
+          currGames.push(saved);
       }
       listed += page.items.length;
       if (listed >= page.totalCount) break;
       lastAddress = page.items[page.items.length - 1]?.address;
     }
+    return currGames;
+  };
+  try {
+    const privateResults = await loadByMarker(PRIVATE_GAME_MARKER);
+    const publicResults = await loadByMarker(PUBLIC_GAME_MARKER);
+    games.push(...privateResults, ...publicResults);
   } catch {
     return { status: "error" };
   }
@@ -145,7 +213,9 @@ async function loadGame(
         ? { status: "ok", game: null }
         : { status: "error" };
     }
-    return { status: "ok", game: readSavedGame(result.data) };
+    const shared = result.markers.includes(PUBLIC_GAME_MARKER);
+    const game = readSavedGame(result.data, shared);
+    return { status: "ok", game };
   } catch {
     return { status: "error" };
   }
@@ -156,11 +226,61 @@ export async function persistGame(
   game: SavedGame,
   os: CasualOSManager
 ): Promise<void> {
-  const result = await os.recordData(userId, gameAddress(game.id), game, {
-    marker: GAMES_MARKER,
+  const { shared, ...data } = game;
+  const result = await os.recordData(userId, gameAddress(game.id), data, {
+    marker: getMarker(shared),
   });
   if (result && result.success === false) {
-    throw new SavedGamesWriteError("persist_failed");
+    throw writeFailure(result);
+  }
+}
+
+/**
+ * How the server answers a link to a game that isn't public. A private record
+ * is `not_logged_in` for a signed-out reader and `not_authorized` for a
+ * signed-in one.
+ */
+function isRefusedOrMissing(errorCode: unknown): boolean {
+  return (
+    isMissing(errorCode) ||
+    errorCode === "not_authorized" ||
+    errorCode === "not_logged_in"
+  );
+}
+
+export type SharedGameResult =
+  | { status: "ok"; game: SavedGame }
+  | { status: "not_shared" }
+  | { status: "privacy_blocked" }
+  | { status: "error" };
+
+/**
+ * A game opened from a share link. A game that was deleted, unshared, never
+ * shared, or can't be read as a game is `not_shared`, even for its creator,
+ * so the link stops working as soon as sharing stops.
+ */
+export async function loadSharedGame(
+  creatorId: string,
+  gameId: string,
+  os: CasualOSManager
+): Promise<SharedGameResult> {
+  try {
+    const result = await os.getData(creatorId, gameAddress(gameId));
+    if (!result || result.success === false) {
+      if (isPrivacyRefusal(result)) return { status: "privacy_blocked" };
+      if (result && isRefusedOrMissing(result.errorCode)) {
+        return { status: "not_shared" };
+      }
+      return { status: "error" };
+    }
+    if (!result.markers.includes(PUBLIC_GAME_MARKER)) {
+      return { status: "not_shared" };
+    }
+    const game = readSavedGame(result.data, true);
+    if (!game || game.id !== gameId) return { status: "not_shared" };
+    return { status: "ok", game };
+  } catch {
+    return { status: "error" };
   }
 }
 
@@ -206,6 +326,7 @@ export function toSavedGame(
     targetVerse: { ...draft.targetVerse },
     steps: draft.steps.map((step) => ({ hint: step.hint })),
     createdAtMs: existing?.createdAtMs ?? nowMs,
+    shared: existing?.shared ?? false,
   };
 }
 
@@ -218,6 +339,7 @@ export function savedGamesErrorKey(
   if (error instanceof SavedGamesWriteError) {
     if (error.code === "signed_out") return "sign-in-to-save";
     if (error.code === "not_loaded") return "save-blocked-not-loaded";
+    if (error.code === "privacy_blocked") return "share-blocked-privacy";
   }
   return action === "save" ? "save-failed" : "delete-failed";
 }
@@ -232,10 +354,41 @@ export function savedGamesErrorMessage(
     if (error.code === "not_loaded") {
       return "Couldn't load that game, so nothing was changed.";
     }
+    if (error.code === "privacy_blocked") {
+      return "Your account's privacy settings don't allow sharing games.";
+    }
   }
   return action === "save"
     ? "Couldn't save that game. Try again."
     : "Couldn't delete that game. Try again.";
+}
+
+export async function setGamePrivacy(
+  userId: string,
+  gameId: string,
+  os: CasualOSManager,
+  shared: boolean
+) {
+  const marker = getMarker(shared);
+
+  const gameData = await os.getData(userId, gameAddress(gameId));
+  if (!gameData.success) {
+    throw new SavedGamesWriteError("not_loaded");
+  }
+
+  if (gameData.markers.includes(marker)) return;
+
+  const result = await os.recordData(
+    userId,
+    gameAddress(gameId),
+    gameData.data,
+    {
+      marker,
+    }
+  );
+  if (result && result.success === false) {
+    throw writeFailure(result);
+  }
 }
 
 export interface SavedGamesController {
@@ -246,6 +399,7 @@ export interface SavedGamesController {
    */
   save(draft: GameDraft, editingId: string | null): Promise<void>;
   remove(id: string): Promise<void>;
+  setPrivacy(gameId: string, shared: boolean): Promise<void>;
 }
 
 /**
@@ -327,6 +481,20 @@ export function createSavedGamesController(
       throw new SavedGamesWriteError("persist_failed");
     }
   }
+
+  const setPrivacy: SavedGamesController["setPrivacy"] = (gameId, shared) => {
+    return enqueue(async () => {
+      const userId = getUserId();
+      if (!userId) throw new SavedGamesWriteError("signed_out");
+      const previous = currentList(userId);
+      const next = previous.map((game) =>
+        game.id === gameId ? { ...game, shared } : game
+      );
+      await write(userId, previous, next, () =>
+        setGamePrivacy(userId, gameId, os, shared)
+      );
+    });
+  };
 
   return {
     syncUser(userId) {
@@ -410,5 +578,7 @@ export function createSavedGamesController(
         await write(userId, previous, next, () => eraseGame(userId, id, os));
       });
     },
+
+    setPrivacy,
   };
 }
