@@ -8,6 +8,7 @@ import type {
   ExtensionVerification,
 } from "../../managers/ExtensionReviewsManager";
 import type { ModalManager } from "../../managers/ModalManager";
+import { Button } from "../Button/Button";
 import { Tooltip, type TooltipAnchor } from "../Tooltip/Tooltip";
 
 /**
@@ -339,23 +340,19 @@ function VerifyExtensionModalContent(props: {
         </p>
       )}
       <div className="sb-extension-review-modal-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onClose}
-          disabled={saving.value}
-        >
+        <Button onClick={onClose} disabled={saving.value}>
           {t("cancel")}
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
-          className="sb-extension-review-button sb-extension-review-button-primary"
-          disabled={saving.value || internalNotesLoaded.value !== true}
+          variant="primary"
+          loading={saving.value}
+          disabled={internalNotesLoaded.value !== true}
         >
           {review?.verified
             ? t("extension-review-modal-save")
             : t("extension-review-mark-verified")}
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -445,13 +442,14 @@ export function ExtensionReviewControls(props: {
             {t("extension-review-admin-load-failed")}
           </p>
           <div className="sb-extension-review-controls-actions">
-            <button
-              type="button"
-              className="sb-extension-review-button"
+            <Button
+              size="sm"
+              shape="pill"
+              icon="refresh"
               onClick={() => void reviews.load(extensionId)}
             >
               {t("try-again")}
-            </button>
+            </Button>
           </div>
         </>
       ) : !known ? (
@@ -470,28 +468,27 @@ export function ExtensionReviewControls(props: {
               : t("extension-review-admin-not-verified")}
           </p>
           <div className="sb-extension-review-controls-actions">
-            <button
-              type="button"
-              className="sb-extension-review-button sb-extension-review-button-primary"
+            <Button
+              variant="primary"
+              size="sm"
+              shape="pill"
+              icon={review?.verified ? "edit" : "verified"}
               onClick={openModal}
               disabled={removing.value}
             >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                {review?.verified ? "edit" : "verified"}
-              </span>
               {review?.verified
                 ? t("extension-review-edit")
                 : t("extension-review-mark-verified")}
-            </button>
+            </Button>
             {review?.verified && (
-              <button
-                type="button"
-                className="sb-extension-review-button"
+              <Button
+                size="sm"
+                shape="pill"
                 onClick={() => void unverify()}
-                disabled={removing.value}
+                loading={removing.value}
               >
                 {t("extension-review-unverify")}
-              </button>
+              </Button>
             )}
           </div>
           {failed.value && (
