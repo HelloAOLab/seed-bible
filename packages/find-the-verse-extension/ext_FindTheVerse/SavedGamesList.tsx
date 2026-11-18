@@ -205,17 +205,23 @@ function SavedGameCard({
             {saved.shared ? (
               <>
                 <ContextMenuItem onClick={copyLink}>
-                  <MaterialIcon>link</MaterialIcon>
+                  <MaterialIcon className="sb-context-menu-item-icon">
+                    link
+                  </MaterialIcon>
                   {t("copy-link", { defaultValue: "Copy link" })}
                 </ContextMenuItem>
                 <ContextMenuItem onClick={stopSharing}>
-                  <MaterialIcon>share_off</MaterialIcon>
+                  <MaterialIcon className="sb-context-menu-item-icon">
+                    share_off
+                  </MaterialIcon>
                   {t("stop-sharing", { defaultValue: "Stop sharing" })}
                 </ContextMenuItem>
               </>
             ) : (
               <ContextMenuItem onClick={share}>
-                <MaterialIcon>share</MaterialIcon>
+                <MaterialIcon className="sb-context-menu-item-icon">
+                  share
+                </MaterialIcon>
                 {t("share", { defaultValue: "Share" })}
               </ContextMenuItem>
             )}
