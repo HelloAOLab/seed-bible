@@ -80,6 +80,7 @@ import {
 import {
   openReadingPlanDetail,
   openReadingPlanEditor,
+  openPlanCreate,
 } from "../components/ReadingPlansPane/ReadingPlansPane";
 import {
   FRIENDS_PANE_ID,
@@ -176,6 +177,10 @@ import {
   setupExtensionContext,
   type ExtensionManager,
 } from "../managers/ExtensionManager";
+import {
+  createExtensionReviewsManager,
+  type ExtensionReviewsManager,
+} from "../managers/ExtensionReviewsManager";
 import {
   createExtensionSettingsManager,
   type ExtensionSettingsManager,
@@ -650,6 +655,8 @@ export interface SeedBibleState {
   app: AppState;
   /** Extension loading and runtime manager. */
   extensions: ExtensionManager;
+  /** Which extensions are verified, and verifying them for admins. */
+  extensionReviews: ExtensionReviewsManager;
   /** Per-viewer values for extensions' declared settings, resolved against the active Customization's defaults. */
   extensionSettings: ExtensionSettingsManager;
 
@@ -1087,13 +1094,19 @@ export function createSeedBibleState(
     readingExtensions,
     () => annotations
   );
+  const extensionReviews = createExtensionReviewsManager(os, login);
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
     requestSandboxConsent: (request) =>
-      openExtensionConsentModal(modals, request, {
-        userId: login.userId,
-        friends,
-      }),
+      openExtensionConsentModal(
+        modals,
+        request,
+        {
+          userId: login.userId,
+          friends,
+        },
+        extensionReviews
+      ),
     records: os,
     fileRecords: os,
   });
@@ -3883,6 +3896,7 @@ export function createSeedBibleState(
     today,
     readingExtensions,
     extensions,
+    extensionReviews,
     extensionSettings,
     readingPlans,
     playlists,
@@ -4360,9 +4374,9 @@ export function createSeedBibleState(
       buildCustomizationTutorialSteps(state, created.defaultVariantId)
     );
   };
-  // Both land in the plans pane, opened the way the Profile card opens it,
-  // and then drill straight into the plan so the user doesn't have
-  // to find it in the list a second time.
+  // All three land in the plans pane, opened the way the Profile card opens
+  // it, and then go straight to what the user picked (a plan, or the editor
+  // on a new one) so they don't have to find it in the list.
   const openReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
     if (!openReadingPlansFromScreen(openYourContent)) {
       return;
@@ -4385,6 +4399,12 @@ export function createSeedBibleState(
     }
     void openReadingPlanEditor(readingPlans, plan, { fromAnotherScreen: true });
   };
+  const createReadingPlanFromContent = () => {
+    if (!openReadingPlansFromScreen(openYourContent)) {
+      return;
+    }
+    openPlanCreate(readingPlans, { fromAnotherScreen: true });
+  };
   const renderYourContentPane = () => (
     <YourContentPane
       state={state}
@@ -4395,6 +4415,7 @@ export function createSeedBibleState(
       onCreatePlaylist={createPlaylistFromContent}
       onOpenReadingPlan={openReadingPlanFromContent}
       onEditReadingPlan={editReadingPlanFromContent}
+      onCreateReadingPlan={createReadingPlanFromContent}
       onEditCustomization={editCustomizationFromContent}
       onCreateCustomization={() => void createCustomizationFromContent()}
     />
