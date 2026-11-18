@@ -1,5 +1,6 @@
 import "./ModalHost.css";
 import type { ReadonlySignal } from "@preact/signals";
+import { useRef } from "preact/hooks";
 import { CasualOSApp } from "../CasualOSApp/CasualOSApp";
 import type { ManagedModal, ModalManager } from "../../managers/ModalManager";
 import { useI18n } from "../../i18n/I18nManager";
@@ -14,23 +15,37 @@ export function ModalHost(props: {
 }) {
   const { manager } = props;
   const isMobile = props.isMobile.value;
+  const modals = manager.modals.value;
+
+  // A window open on the first render was drawn by the server (a shared
+  // page's link opens one), so it stays where the server put it for the
+  // browser to pick up. Windows opened later go to the end of <body>.
+  const inPlace = useRef<Set<string> | null>(null);
+  inPlace.current ??= new Set(modals.map((modal) => modal.id));
+  for (const id of inPlace.current) {
+    if (!modals.some((modal) => modal.id === id)) inPlace.current.delete(id);
+  }
 
   return (
     <>
-      {manager.modals.value.map((modal) =>
-        modal.useCasualOSApp ? (
-          <CasualOSApp id={`modal-${modal.id}`} key={modal.id}>
-            <HostedModal manager={manager} modal={modal} isMobile={isMobile} />
-          </CasualOSApp>
-        ) : (
+      {modals.map((modal) => {
+        const hosted = (
           <HostedModal
             key={modal.id}
             manager={manager}
             modal={modal}
             isMobile={isMobile}
+            portal={!inPlace.current!.has(modal.id)}
           />
-        )
-      )}
+        );
+        return modal.useCasualOSApp ? (
+          <CasualOSApp id={`modal-${modal.id}`} key={modal.id}>
+            {hosted}
+          </CasualOSApp>
+        ) : (
+          hosted
+        );
+      })}
     </>
   );
 }
@@ -39,6 +54,7 @@ function HostedModal(props: {
   manager: ModalManager;
   modal: ManagedModal;
   isMobile: boolean;
+  portal: boolean;
 }) {
   const { manager, modal } = props;
 
@@ -74,6 +90,7 @@ function HostedModal(props: {
       dismissible={dismissible}
       onClose={dismiss}
       footer={footer}
+      portal={props.portal}
     >
       {modal.content({ t })}
     </Dialog>

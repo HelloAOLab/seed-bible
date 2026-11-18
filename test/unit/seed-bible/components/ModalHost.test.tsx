@@ -140,6 +140,48 @@ describe("ModalHost", () => {
     });
   });
 
+  describe("placement", () => {
+    it("keeps a window open from the start where it was drawn, and puts later ones at the end of the page", async () => {
+      // A shared page's link has the server draw its window inside the app,
+      // and the browser has to find it in the same place.
+      const { manager } = await renderHost({ id: "shared-page" });
+      expect(container.contains(dialog())).toBe(true);
+
+      act(() => {
+        manager.openModal({
+          id: "later",
+          title: "Later",
+          content: () => <p className="test-later">Later</p>,
+          useCasualOSApp: false,
+        });
+      });
+
+      const later = document.querySelector(".test-later")!;
+      expect(container.contains(later)).toBe(false);
+      expect(later.closest(".sb-dialog-backdrop")?.parentElement).toBe(
+        document.body
+      );
+    });
+
+    it("puts a window opened again after closing at the end of the page", async () => {
+      const { manager } = await renderHost({ id: "shared-page" });
+
+      act(() => manager.closeModal("shared-page"));
+      act(() => {
+        manager.openModal({
+          id: "shared-page",
+          title: "Again",
+          content: () => <p className="test-again">Again</p>,
+          useCasualOSApp: false,
+        });
+      });
+
+      expect(container.contains(document.querySelector(".test-again"))).toBe(
+        false
+      );
+    });
+  });
+
   describe("focus", () => {
     it("moves into the window when it opens and back to the opener when it closes", async () => {
       const { manager } = await renderHost({ id: "settings" });
