@@ -277,6 +277,12 @@ function SharedPeople(props: {
               <span className="sb-cz-row-hint">
                 {studioRoleLabel(t, member.role)}
               </span>
+              {isManager && member.userId === login.userId.value && (
+                <span
+                  className="sb-cz-people-action-spacer"
+                  aria-hidden="true"
+                />
+              )}
               {isManager && member.userId !== login.userId.value && (
                 <IconButton
                   icon="person_remove"

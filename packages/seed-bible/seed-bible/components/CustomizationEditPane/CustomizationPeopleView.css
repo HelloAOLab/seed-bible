@@ -48,6 +48,12 @@
   overflow-wrap: anywhere;
 }
 
+/* Keeps the role labels lined up on the one row (your own) without a remove button. */
+.sb-cz-people-action-spacer {
+  flex-shrink: 0;
+  width: 2rem;
+}
+
 .sb-cz-people-add {
   display: flex;
   flex-direction: column;
@@ -70,7 +76,7 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: var(--sb-background-color);
+  background: var(--sb-reader-background);
   /* stylelint-disable-next-line seed-bible/use-design-tokens -- hairline divider */
   border-bottom: 1px solid
     color-mix(in srgb, var(--sb-font-color), transparent 85%);
