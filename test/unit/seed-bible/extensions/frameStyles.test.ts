@@ -26,6 +26,29 @@ describe("the frame's page styles", () => {
       channel.port2.close();
     }
     document.head.innerHTML = "";
+    document.documentElement.removeAttribute("data-layout");
+  });
+
+  // Shared components' phone styles key off `<html data-layout>`, and the
+  // frame has its own `<html>`, so it needs the app's layout copied in.
+  it("mark the frame's <html> with the app's layout, and follow it when it changes", async () => {
+    const channel = new MessageChannel();
+    channels.push(channel);
+    createSandboxClient(channel.port2, {
+      protocol: SANDBOX_PROTOCOL_VERSION,
+      extensionId: "layout-extension",
+      mode: { kind: "background" },
+      granted: [],
+      optional: [],
+      state: { ...STATE, isMobile: true },
+    });
+    expect(document.documentElement.dataset.layout).toBe("mobile");
+
+    channel.port1.postMessage({ type: "state", state: { isMobile: false } });
+
+    await vi.waitFor(() =>
+      expect(document.documentElement.dataset.layout).toBe("desktop")
+    );
   });
 
   it("put the theme's page background before the extension's own CSS, so the extension's can override it", () => {

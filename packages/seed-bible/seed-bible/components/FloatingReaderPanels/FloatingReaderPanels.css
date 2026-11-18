@@ -249,39 +249,37 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
 }
 
-@media (max-width: 480px) {
-  /* Search is a bottom-anchored sheet on mobile: the input sits just above the
-     5-tab bar and results grow upward. It is capped to the *small* viewport
-     height (`svh`, which excludes the Android address bar) and anchored to the
-     bottom rather than `top: 0`, so the top results can never be pushed behind
-     the browser chrome (the old full-screen `top: 0` overlay anchored to the
-     taller layout viewport, hiding the first results until the bar collapsed).
-     Keeping it off the top of the screen also leaves the reader above the sheet
-     visible and tappable, so the app never feels frozen — tapping a reader
-     control closes search (via the outside-tap handler) and activates it. */
-  .sb-floating-search-panel {
-    left: 0;
-    right: 0;
-    top: auto;
-    bottom: 4.5rem;
-    transform: none;
-    width: 100%;
-    max-width: 100%;
-    max-height: calc(
-      100svh - 4.5rem - env(safe-area-inset-top, 0px) -
-        env(safe-area-inset-bottom, 0px) - 0.75rem
-    );
-    border-radius: 0;
-    border: none;
-    box-shadow: none;
-    padding: calc(env(safe-area-inset-top, 0px) + 0.875rem) 1rem 0.875rem;
-    background: transparent;
-    gap: 0.875rem;
-    animation: none;
-    /* Empty areas of the sheet let taps fall through to the reader; the input
-       row and results below re-enable pointer events. */
-    pointer-events: none;
-  }
+/* Search is a bottom-anchored sheet on mobile: the input sits just above the
+   5-tab bar and results grow upward. It is capped to the *small* viewport
+   height (`svh`, which excludes the Android address bar) and anchored to the
+   bottom rather than `top: 0`, so the top results can never be pushed behind
+   the browser chrome (the old full-screen `top: 0` overlay anchored to the
+   taller layout viewport, hiding the first results until the bar collapsed).
+   Keeping it off the top of the screen also leaves the reader above the sheet
+   visible and tappable, so the app never feels frozen — tapping a reader
+   control closes search (via the outside-tap handler) and activates it. */
+:where(html[data-layout="mobile"]) .sb-floating-search-panel {
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 4.5rem;
+  transform: none;
+  width: 100%;
+  max-width: 100%;
+  max-height: calc(
+    100svh - 4.5rem - env(safe-area-inset-top, 0px) -
+      env(safe-area-inset-bottom, 0px) - 0.75rem
+  );
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  padding: calc(env(safe-area-inset-top, 0px) + 0.875rem) 1rem 0.875rem;
+  background: transparent;
+  gap: 0.875rem;
+  animation: none;
+  /* Empty areas of the sheet let taps fall through to the reader; the input
+     row and results below re-enable pointer events. */
+  pointer-events: none;
 }
 
 .sb-floating-chat-members-menu {
@@ -721,23 +719,21 @@
   }
 }
 
-@media (max-width: 480px) {
-  /* Fill the screen above the 5-tab bar. The wider rule pins the panel
-     7.5rem up (tab bar + chapter nav) and sizes it with a capped viewport
-     height, which leaves a strip of the reader under the browser chrome and
-     another between the composer and the tabs. Stretch between the top of
-     the viewport and the toolbar instead — same 4.375rem inset the
-     fullscreen panes use. */
-  .sb-floating-chat-panel {
-    inset: 0 0 4.375rem;
-    transform: none;
-    width: auto;
-    height: auto;
-    max-height: none;
-    border-radius: 0;
-    border: none;
-    box-shadow: none;
-    animation: none;
-    padding-top: env(safe-area-inset-top, 0px);
-  }
+/* Fill the screen above the 5-tab bar. The wider rule pins the panel
+   7.5rem up (tab bar + chapter nav) and sizes it with a capped viewport
+   height, which leaves a strip of the reader under the browser chrome and
+   another between the composer and the tabs. Stretch between the top of
+   the viewport and the toolbar instead — same 4.375rem inset the
+   fullscreen panes use. */
+:where(html[data-layout="mobile"]) .sb-floating-chat-panel {
+  inset: 0 0 4.375rem;
+  transform: none;
+  width: auto;
+  height: auto;
+  max-height: none;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  animation: none;
+  padding-top: env(safe-area-inset-top, 0px);
 }

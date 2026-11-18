@@ -180,10 +180,8 @@
 
 /* Inside the reader's modal the list fills the remaining height instead of
    using its own fixed height. */
-@media only screen and (max-width: 480px) {
-  .modal .sb-translation-list {
-    height: calc(100% - 1.25rem);
-  }
+:where(html[data-layout="mobile"]) .modal .sb-translation-list {
+  height: calc(100% - 1.25rem);
 }
 
 /* ─── View-mode (catalog filter) menu ─────────────────────────────────────── */

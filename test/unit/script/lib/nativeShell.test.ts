@@ -29,12 +29,15 @@ function loadDocument(html: string): void {
   const parsed = new DOMParser().parseFromString(html, "text/html");
   document.documentElement.innerHTML = parsed.documentElement.innerHTML;
   document.documentElement.lang = parsed.documentElement.lang;
+  document.documentElement.dataset.layout =
+    parsed.documentElement.dataset.layout;
 }
 
 describe("fillNativeShellPlaceholders", () => {
   afterEach(() => {
     document.documentElement.innerHTML = "<head></head><body></body>";
     document.documentElement.removeAttribute("lang");
+    document.documentElement.removeAttribute("data-layout");
   });
 
   it("fills every placeholder in index.html except the critical CSS, which its own plugin fills", () => {
@@ -68,6 +71,8 @@ describe("fillNativeShellPlaceholders", () => {
     expect(readInjectedCustomizationSeed()).toBeUndefined();
     expect(readInjectedFriendLinkSeed()).toBeUndefined();
     expect(document.documentElement.getAttribute("lang")).toBe("en");
+    // Styled for the same layout the app starts in, before it measures.
+    expect(document.documentElement.dataset.layout).toBe("mobile");
   });
 
   it("gives the pre-load theme script presets it can parse, and the fallback theme", () => {

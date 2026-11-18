@@ -123,13 +123,12 @@
 /* The rule above is the phone reader's tight 1% margin, which a compact embed
    also uses at any frame width. Only the desktop layout widens it. `:where()`
    keeps this at the base rule's specificity, so more specific reader rules
-   still win as they did before. Breakpoint mirrors `isMobile` in
-   SeedBibleStateManager (viewportWidth <= 480). */
-@media (min-width: 481px) {
-  :where(.sb-app-root:not(.sb-embed-minimal)) .sb-bible-reader {
-    width: auto;
-    padding-inline: 1.5rem;
-  }
+   still win as they did before. */
+:where(html:not([data-layout="mobile"]))
+  :where(.sb-app-root:not(.sb-embed-minimal))
+  .sb-bible-reader {
+  width: auto;
+  padding-inline: 1.5rem;
 }
 
 /* Reader header: lays the chapter title and the right-hand action cluster
@@ -654,10 +653,10 @@
 /* Desktop drops the phone/embed side padding set on `.sb-chapter-content`.
    `:where()` keeps this at the base rule's specificity so the gutter rules
    (`-presence`, `-note-gutter`) still override it. */
-@media (min-width: 481px) {
-  :where(.sb-app-root:not(.sb-embed-minimal)) .sb-chapter-content {
-    padding-inline: 0;
-  }
+:where(html:not([data-layout="mobile"]))
+  :where(.sb-app-root:not(.sb-embed-minimal))
+  .sb-chapter-content {
+  padding-inline: 0;
 }
 
 .sb-chapter-heading {
@@ -1192,41 +1191,41 @@
  * as a sheet that slides up like the reader's settings sheet. The modal frame
  * itself is reused, but the outer overlay aligns it to the bottom and
  * stretches it to full width. */
-@media (max-width: 480px) {
-  .sb-footnote-modal-overlay-mobile-sheet {
-    align-items: flex-end;
-    padding: 0;
+:where(html[data-layout="mobile"]) .sb-footnote-modal-overlay-mobile-sheet {
+  align-items: flex-end;
+  padding: 0;
 
+  > .sb-footnote-modal {
+    width: 100%;
+    max-width: 100%;
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    border-radius: var(--sb-radius-xl) var(--sb-radius-xl) 0 0;
+    border-bottom: none;
+    box-shadow: var(--sb-shadow-sheet);
+  }
+
+  /* Reaching the end of the sheet's list shouldn't start scrolling the
+     page behind it. */
+  .sb-footnote-modal-content {
+    overscroll-behavior: contain;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(html[data-layout="mobile"])
+    .sb-footnote-modal-overlay-mobile-sheet
     > .sb-footnote-modal {
-      width: 100%;
-      max-width: 100%;
-      padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
-      border-radius: var(--sb-radius-xl) var(--sb-radius-xl) 0 0;
-      border-bottom: none;
-      box-shadow: var(--sb-shadow-sheet);
-    }
+    animation: sb-modal-sheet-slide-up var(--sb-duration-slow) ease-out;
+  }
+}
 
-    /* Reaching the end of the sheet's list shouldn't start scrolling the
-       page behind it. */
-    .sb-footnote-modal-content {
-      overscroll-behavior: contain;
-    }
+@keyframes sb-modal-sheet-slide-up {
+  from {
+    transform: translateY(100%);
   }
 
-  @media (prefers-reduced-motion: no-preference) {
-    .sb-footnote-modal-overlay-mobile-sheet > .sb-footnote-modal {
-      animation: sb-modal-sheet-slide-up var(--sb-duration-slow) ease-out;
-    }
-  }
-
-  @keyframes sb-modal-sheet-slide-up {
-    from {
-      transform: translateY(100%);
-    }
-
-    to {
-      transform: translateY(0);
-    }
+  to {
+    transform: translateY(0);
   }
 }
 

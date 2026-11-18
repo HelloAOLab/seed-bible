@@ -3655,6 +3655,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     customColorPickerOpen.value = next;
                   }}
                   anchorRef={customColorAnchorRef}
+                  isMobile={props.state.app.isMobile.value}
                   ariaLabel={t("add-custom-color", {
                     defaultValue: "Add custom color",
                   })}

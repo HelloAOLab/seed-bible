@@ -312,7 +312,7 @@
  * scrolls down, the toolbar slides off the bottom and this bar drops into
  * its place (see the scroll-hide rule below).
  *
- * Unscoped from the 480px query so a compact embed (`?embed=minimal`) can
+ * Not limited to the mobile layout, so a compact embed (`?embed=minimal`) can
  * reuse the same chrome in a wider iframe — the element is only in the DOM
  * for phone layout and embed. */
 .sb-reader-floating-nav {
@@ -648,153 +648,164 @@
   animation: sb-reader-toolbar-typing-pulse 1.4s ease-out infinite;
 }
 
-@media (max-width: 480px) {
-  .sb-reader-toolbar-wrap {
-    position: fixed;
-    /* Pinned to both edges rather than centered with translateX(-50%): at
-     * fractional device-pixel widths (e.g. 125% display scaling) the
-     * translated bar snaps half a pixel off and the page shows through as a
-     * hairline along one edge. */
-    left: 0;
-    right: 0;
-    bottom: 0;
-    /* Sit above the mobile sidebar/settings overlay (z-index: 100) so the
-     * bottom bar of options stays visible while the account panel is open.
-     * The overlay already reserves `padding-bottom: 68px` for it. */
-    z-index: calc(var(--sb-layer-chrome) + 1);
-  }
+:where(html[data-layout="mobile"]) .sb-reader-toolbar-wrap {
+  position: fixed;
+  /* Pinned to both edges rather than centered with translateX(-50%): at
+   * fractional device-pixel widths (e.g. 125% display scaling) the
+   * translated bar snaps half a pixel off and the page shows through as a
+   * hairline along one edge. */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Sit above the mobile sidebar/settings overlay (z-index: 100) so the
+   * bottom bar of options stays visible while the account panel is open.
+   * The overlay already reserves `padding-bottom: 68px` for it. */
+  z-index: calc(var(--sb-layer-chrome) + 1);
+}
 
-  .sb-action-btns {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+:where(html[data-layout="mobile"]) .sb-action-btns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
+:where(html[data-layout="mobile"])
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout {
-    position: static;
-    transform: none;
-    left: auto;
-    bottom: auto;
-    height: auto;
-    width: 100%;
-    border-radius: 0;
-    padding: 0.5rem 0.5rem 0.625rem;
-    justify-content: space-around;
-    align-items: stretch;
-    gap: 0;
-    background: var(--sb-reader-toolbar-background);
-    border: none;
-    box-shadow: none;
-  }
+  position: static;
+  transform: none;
+  left: auto;
+  bottom: auto;
+  height: auto;
+  width: 100%;
+  border-radius: 0;
+  padding: 0.5rem 0.5rem 0.625rem;
+  justify-content: space-around;
+  align-items: stretch;
+  gap: 0;
+  background: var(--sb-reader-toolbar-background);
+  border: none;
+  box-shadow: none;
+}
 
-  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout .sb-reader-toolbar-item {
-    flex: 1 1 0;
-    height: auto;
-    min-width: 0;
-  }
-
+:where(html[data-layout="mobile"])
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-mobile-tab {
-    display: flex;
-    align-items: stretch;
-    position: relative;
-    flex-basis: auto;
-  }
+  .sb-reader-toolbar-item {
+  flex: 1 1 0;
+  height: auto;
+  min-width: 0;
+}
 
+:where(html[data-layout="mobile"])
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-mobile-tab-button {
-    flex: 1;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-    padding: 0.375rem 0.25rem;
-    min-height: 3.25rem;
-    width: 100%;
-    height: auto;
-    background: transparent;
-    color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-    border-radius: var(--sb-radius-md);
-    transition: color var(--sb-duration-fast) ease;
-  }
+  .sb-reader-toolbar-mobile-tab {
+  display: flex;
+  align-items: stretch;
+  position: relative;
+  flex-basis: auto;
+}
 
-  /* Exclude the active tab from hover: on touch devices `:hover` sticks after
-   * a tap, and (being more specific than the active rule) it would otherwise
-   * override the active tab's theme color back to the dark font color — which
-   * left the label black while the icon stayed colored. */
+:where(html[data-layout="mobile"])
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-mobile-tab-button:hover:not(:disabled):not(
-      .sb-reader-toolbar-mobile-tab-button-active
-    ) {
-    background: transparent;
-    color: var(--sb-font-color);
-  }
+  .sb-reader-toolbar-mobile-tab-button {
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.25rem;
+  min-height: 3.25rem;
+  width: 100%;
+  height: auto;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  border-radius: var(--sb-radius-md);
+  transition: color var(--sb-duration-fast) ease;
+}
 
+/* Exclude the active tab from hover: on touch devices `:hover` sticks after
+ * a tap, and (being more specific than the active rule) it would otherwise
+ * override the active tab's theme color back to the dark font color — which
+ * left the label black while the icon stayed colored. */
+:where(html[data-layout="mobile"])
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-mobile-tab-button-active {
-    color: var(--sb-primary-color);
-  }
+  .sb-reader-toolbar-mobile-tab-button:hover:not(:disabled):not(
+    .sb-reader-toolbar-mobile-tab-button-active
+  ) {
+  background: transparent;
+  color: var(--sb-font-color);
+}
 
-  .sb-reader-toolbar-mobile-tab-icon {
-    font-size: 1.5rem;
-    line-height: 1;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 1.5rem;
-  }
+:where(html[data-layout="mobile"])
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
+  .sb-reader-toolbar-mobile-tab-button-active {
+  color: var(--sb-primary-color);
+}
 
-  .sb-reader-toolbar-mobile-tab-icon-custom > img,
-  .sb-reader-toolbar-mobile-tab-icon-custom > svg {
-    display: block;
-    max-width: 1.5rem;
-    max-height: 1.5rem;
-  }
+:where(html[data-layout="mobile"]) .sb-reader-toolbar-mobile-tab-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.5rem;
+}
 
-  .sb-reader-toolbar-mobile-tab-label {
-    font-size: var(--sb-reader-toolbar-mobile-tabs-label-font-size);
-    font-weight: 500;
-    text-align: center;
-    line-height: 1;
-    color: inherit;
-  }
+:where(html[data-layout="mobile"])
+  .sb-reader-toolbar-mobile-tab-icon-custom
+  > img,
+:where(html[data-layout="mobile"])
+  .sb-reader-toolbar-mobile-tab-icon-custom
+  > svg {
+  display: block;
+  max-width: 1.5rem;
+  max-height: 1.5rem;
+}
 
-  .sb-reader-toolbar-floating-button {
-    position: absolute;
-    top: var(--sb-reader-toolbar-floating-button-top);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--sb-reader-toolbar-floating-button-width);
-    height: var(--sb-reader-toolbar-floating-button-height);
-    border: var(--sb-reader-toolbar-floating-button-border);
-    border-radius: var(--sb-reader-toolbar-floating-button-border-radius);
-    background: var(--sb-reader-toolbar-floating-button-background);
-    color: var(--sb-reader-toolbar-floating-button-font-color);
-    box-shadow: var(--sb-reader-toolbar-floating-button-box-shadow);
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-  }
+:where(html[data-layout="mobile"]) .sb-reader-toolbar-mobile-tab-label {
+  font-size: var(--sb-reader-toolbar-mobile-tabs-label-font-size);
+  font-weight: 500;
+  text-align: center;
+  line-height: 1;
+  color: inherit;
+}
 
-  .sb-reader-toolbar-floating-button-left {
-    inset-inline-start: var(--sb-reader-toolbar-floating-button-side-offset);
-  }
+:where(html[data-layout="mobile"]) .sb-reader-toolbar-floating-button {
+  position: absolute;
+  top: var(--sb-reader-toolbar-floating-button-top);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sb-reader-toolbar-floating-button-width);
+  height: var(--sb-reader-toolbar-floating-button-height);
+  border: var(--sb-reader-toolbar-floating-button-border);
+  border-radius: var(--sb-reader-toolbar-floating-button-border-radius);
+  background: var(--sb-reader-toolbar-floating-button-background);
+  color: var(--sb-reader-toolbar-floating-button-font-color);
+  box-shadow: var(--sb-reader-toolbar-floating-button-box-shadow);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
 
-  .sb-reader-toolbar-floating-button-right {
-    inset-inline-end: var(--sb-reader-toolbar-floating-button-side-offset);
-  }
+:where(html[data-layout="mobile"]) .sb-reader-toolbar-floating-button-left {
+  inset-inline-start: var(--sb-reader-toolbar-floating-button-side-offset);
+}
 
-  /* When the user scrolls down on a mobile reader, slide the wrap down by
-   * exactly the toolbar's own height (100%). That drops the main bottom
-   * toolbar off the bottom of the viewport while the floating chapter-nav
-   * bar — which sits directly above the toolbar at `bottom: 100%` — lands
-   * flush at the bottom and stays visible, taking the toolbar's place.
-   * Scrolling back up removes the body class and both slide back. */
-  body.sb-scroll-hide-bars .sb-reader-toolbar-wrap {
-    transform: translateY(100%);
-  }
+:where(html[data-layout="mobile"]) .sb-reader-toolbar-floating-button-right {
+  inset-inline-end: var(--sb-reader-toolbar-floating-button-side-offset);
+}
+
+/* When the user scrolls down on a mobile reader, slide the wrap down by
+ * exactly the toolbar's own height (100%). That drops the main bottom
+ * toolbar off the bottom of the viewport while the floating chapter-nav
+ * bar — which sits directly above the toolbar at `bottom: 100%` — lands
+ * flush at the bottom and stays visible, taking the toolbar's place.
+ * Scrolling back up removes the body class and both slide back. */
+:where(html[data-layout="mobile"])
+  body.sb-scroll-hide-bars
+  .sb-reader-toolbar-wrap {
+  transform: translateY(100%);
 }
 
 /* Compact embed: pin the floating chapter nav to the iframe bottom with no

@@ -1829,6 +1829,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                   <ColorTile
                     key={field.key}
                     label={label}
+                    isMobile={state.app.isMobile.value}
                     value={resolvedTheme.variables[field.key] ?? ""}
                     isOverridden={variant.themes[field.key] !== undefined}
                     contrastWarning={getContrastWarning(
@@ -1921,6 +1922,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                       <LazyColorPicker
                         value={normalizeHex(bg)}
                         className="sb-cz-highlight-picker"
+                        isMobile={state.app.isMobile.value}
                         ariaLabel={t("id_highlight-background-color", { id })}
                         onOpenChange={(open) => {
                           if (open) previewHighlightId.value = id;
@@ -1950,6 +1952,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                       <LazyColorPicker
                         value={normalizeHex(fg)}
                         className="sb-cz-highlight-picker"
+                        isMobile={state.app.isMobile.value}
                         ariaLabel={t("id_highlight-text-color", { id })}
                         onOpenChange={(open) => {
                           if (open) previewHighlightId.value = id;
@@ -2063,6 +2066,7 @@ function ResetButton(props: { label: string; onReset: () => void }) {
 function ColorTile(props: {
   label: string;
   value: string;
+  isMobile: boolean;
   isOverridden: boolean;
   contrastWarning: { ratio: number; label: string } | null;
   onChange: (color: string) => void;
@@ -2112,6 +2116,7 @@ function ColorTile(props: {
           isOpen.value = open;
         }}
         anchorRef={swatchRef}
+        isMobile={props.isMobile}
         ariaLabel={label}
         onChange={props.onChange}
         onPreview={props.onPreview}

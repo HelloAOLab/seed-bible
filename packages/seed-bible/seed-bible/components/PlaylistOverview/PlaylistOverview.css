@@ -98,24 +98,26 @@
 /* Wider than a phone, the pane runs under the app's floating navigation bar
    (a phone's pane stops above its bottom bar instead), so the Start button is
    lifted clear of it. A compact embed has no such bar. */
-@media (min-width: 481px) {
+:where(html:not([data-layout="mobile"])) .sb-playlist-page-footer {
+  padding-bottom: 5.5rem;
+}
+
+:where(html:not([data-layout="mobile"]))
+  .sb-embed-minimal
   .sb-playlist-page-footer {
-    padding-bottom: 5.5rem;
-  }
+  padding-bottom: 0.75rem;
+}
 
-  .sb-embed-minimal .sb-playlist-page-footer {
-    padding-bottom: 0.75rem;
-  }
+/* With no button below (the playing list on a wider screen), the steps
+   themselves need to scroll clear of that bar. */
+:where(html:not([data-layout="mobile"])) .sb-playlist-page-body:last-child {
+  padding-bottom: 5.5rem;
+}
 
-  /* With no button below (the playing list on a wider screen), the steps
-     themselves need to scroll clear of that bar. */
+:where(html:not([data-layout="mobile"]))
+  .sb-embed-minimal
   .sb-playlist-page-body:last-child {
-    padding-bottom: 5.5rem;
-  }
-
-  .sb-embed-minimal .sb-playlist-page-body:last-child {
-    padding-bottom: 1rem;
-  }
+  padding-bottom: 1rem;
 }
 
 /* A step's time estimate, at the end of its row. */
@@ -177,8 +179,10 @@
    Tabs.css); touch and phone widths, with no hover to reveal it, always show
    it. Hidden, it gives back its width and the row's gap after it (the
    negative margin), sliding open rather than jumping when it's revealed. */
-@media (hover: hover) and (min-width: 481px) {
-  .sb-playlist-page-item > .sb-discover-item-drag-handle {
+@media (hover: hover) {
+  :where(html:not([data-layout="mobile"]))
+    .sb-playlist-page-item
+    > .sb-discover-item-drag-handle {
     box-sizing: border-box;
     width: 2rem;
     overflow: hidden;
@@ -190,7 +194,8 @@
       visibility 0s;
   }
 
-  .sb-playlist-page-item:not(
+  :where(html:not([data-layout="mobile"]))
+    .sb-playlist-page-item:not(
       :hover,
       :has(:focus-visible),
       .sb-discover-item--dragging

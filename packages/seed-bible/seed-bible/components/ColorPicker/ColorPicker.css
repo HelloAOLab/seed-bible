@@ -197,26 +197,26 @@
   gap: 0.5rem;
 }
 
-@media (max-width: 480px) {
-  .sb-color-picker-sv {
-    aspect-ratio: 1 / 0.85;
-  }
+/* The bottom sheet is for fingers: bigger handles and full-width buttons.
+   `:where()` keeps each rule at the strength it has without the sheet. */
+:where(.sb-color-picker-dialog-sheet) .sb-color-picker-sv {
+  aspect-ratio: 1 / 0.85;
+}
 
-  .sb-color-picker-hue {
-    height: 1.25rem;
-  }
+:where(.sb-color-picker-dialog-sheet) .sb-color-picker-hue {
+  height: 1.25rem;
+}
 
-  .sb-color-picker-hue-thumb,
-  .sb-color-picker-sv-thumb {
-    width: 1.375rem;
-    height: 1.375rem;
-  }
+:where(.sb-color-picker-dialog-sheet) .sb-color-picker-hue-thumb,
+:where(.sb-color-picker-dialog-sheet) .sb-color-picker-sv-thumb {
+  width: 1.375rem;
+  height: 1.375rem;
+}
 
-  /* Two classes, to outrank the Button's own size. */
-  .sb-button.sb-color-picker-cancel,
-  .sb-button.sb-color-picker-confirm {
-    flex: 1;
-    --sb-button-height: 2.75rem;
-    --sb-button-font-size: var(--sb-font-size-14);
-  }
+/* Two classes, to outrank the Button's own size. */
+:where(.sb-color-picker-dialog-sheet) .sb-button.sb-color-picker-cancel,
+:where(.sb-color-picker-dialog-sheet) .sb-button.sb-color-picker-confirm {
+  flex: 1;
+  --sb-button-height: 2.75rem;
+  --sb-button-font-size: var(--sb-font-size-14);
 }

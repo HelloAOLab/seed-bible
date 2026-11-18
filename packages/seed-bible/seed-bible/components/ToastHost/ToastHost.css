@@ -176,13 +176,11 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
-@media (max-width: 480px) {
-  .sb-toast-host {
-    bottom: auto;
-    top: 3rem;
-  }
+:where(html[data-layout="mobile"]) .sb-toast-host {
+  bottom: auto;
+  top: 3rem;
+}
 
-  .sb-toast {
-    animation: sb-toast-slide-down var(--sb-duration-slow) ease-out;
-  }
+:where(html[data-layout="mobile"]) .sb-toast {
+  animation: sb-toast-slide-down var(--sb-duration-slow) ease-out;
 }

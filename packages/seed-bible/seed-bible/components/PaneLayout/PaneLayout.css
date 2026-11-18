@@ -176,12 +176,11 @@
    way, rather than undone for phones and embeds, so the flush values above
    live in one place. Its extra classes also let it win on specificity, so it
    doesn't rely on coming after the rule above. */
-@media (min-width: 481px) {
+:where(html:not([data-layout="mobile"]))
   .sb-app-root:not(.sb-embed-minimal)
-    .sb-pane-shell:not(.sb-pane-shell-detached) {
-    border-radius: var(--sb-radius-lg);
-    margin: 0.75rem 0rem;
-  }
+  .sb-pane-shell:not(.sb-pane-shell-detached) {
+  border-radius: var(--sb-radius-lg);
+  margin: 0.75rem 0rem;
 }
 
 .sb-pane-shell-detached {
@@ -199,7 +198,7 @@
    whole viewport and the desktop sidebar stays docked beside it. These
    properties live here rather than in an inline style so the mobile bottom
    inset below can actually override them — an inline `bottom: 0` would win
-   over any stylesheet rule and silently defeat that media query. */
+   over any stylesheet rule and silently defeat that mobile rule. */
 .sb-pane-shell-detached[data-placement="fullscreen"] {
   box-shadow: none;
   border-radius: 0;
@@ -221,11 +220,10 @@
    while a pane fills the screen rather than having room reserved for it (see
    `isVerseToolbarVisible` in BibleReaderToolbar).
    NOTE: `FullscreenPane` must not set `bottom` inline — an inline value beats
-   this media query and reopens the "footer hidden behind the toolbar" bug. */
-@media (max-width: 480px) {
+   this rule and reopens the "footer hidden behind the toolbar" bug. */
+:where(html[data-layout="mobile"])
   .sb-pane-shell-detached[data-placement="fullscreen"] {
-    bottom: 4.375rem;
-  }
+  bottom: 4.375rem;
 }
 
 /* A compact embed hides that bottom bar, so the same inset would leave a

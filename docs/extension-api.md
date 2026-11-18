@@ -228,7 +228,7 @@ app: {
 };
 ```
 
-- **`isMobile`**: whether the app is in its phone layout.
+- **`isMobile`**: whether the app is in its phone layout. Your frame's `<html>` carries the same answer as `data-layout="mobile"` or `data-layout="desktop"`, so CSS can follow it with `:where(html[data-layout="mobile"]) .your-class` instead of checking the frame's width.
 - **`toast(message)`**: shows a short, temporary message (1–300 characters), prefixed with your extension's name so the user knows where it came from.
 
 ### `sb.identity`

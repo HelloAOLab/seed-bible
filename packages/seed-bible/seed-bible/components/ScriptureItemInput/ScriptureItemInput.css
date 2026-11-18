@@ -53,11 +53,9 @@
   cursor: pointer;
 }
 
-@media (max-width: 480px) {
-  .sb-scripture-chapter-button {
-    min-width: 4rem;
-    min-height: 4rem;
-  }
+:where(html[data-layout="mobile"]) .sb-scripture-chapter-button {
+  min-width: 4rem;
+  min-height: 4rem;
 }
 
 .sb-scripture-chapter-button:hover {
