@@ -139,7 +139,7 @@ Extensions are written in TypeScript with three tools. If you've used React, you
 4. **Update.** When you publish a new version, it's used on the user's next visit. If it asks for no new permissions, it loads without a prompt. If it asks for more, the user sees only what's new, and it doesn't load until they agree.
 5. **Uninstall.** Everything you registered is removed, your storage is deleted, and Seed Bible forgets what the user granted, so reinstalling asks again.
 
-**What a sandboxed extension can't do (yet).** It can't depend on other extensions, and it's never installed without the user being asked. A chat provider replies with one whole message (no streaming), and a Discover provider answers with data (`content`, `cross-reference` or `study-note` results), not its own markup. If your background frame stops responding, Seed Bible stops the extension until the page reloads. Styles must come from your bundle itself, as inline styles or CSS imported with `?inline`, since a frame can't load a separate stylesheet.
+**What a sandboxed extension can't do (yet).** It can't depend on other extensions, and it's never installed without the user being asked. A chat provider replies with one whole message (no streaming), and a Discover provider answers with data (`content`, `cross-reference` or `study-note` results), not its own markup. If your background frame stops responding, Seed Bible stops the extension until the page reloads.
 
 ---
 
@@ -659,6 +659,8 @@ The map is drawn with [Leaflet](https://leafletjs.com), which the package downlo
 #### Chat providers — plug in a conversational participant
 
 `context.chats.registerProvider({ id, name, generateResponse, supportsSharedChats })` adds a chat participant that can generate responses to messages — effectively, "install an AI assistant into the chat panel." The **apologist extension** (`packages/apologist-extension/`) is a complete real example: it reads configuration from the URL's query parameters (an API domain, key, model, an optional shared-conversation token), and its `generateResponse` forwards the conversation (plus what chapter the user is currently reading, for context) to an external chat-completion API and returns the reply as a chat message.
+
+A chat provider can also implement the optional `classifyContent(request)`, which suggests categories and Bible passages for Custom Branding content libraries (design: `docs/custom-content-database.md` §5.4). The request carries a ready-made `instructions` prompt and `input`; a provider backed by a chat model can send those as its system and user messages and return `parseContentClassification(reply)` from `managers/customContent/classify.ts`. The app checks every answer (unknown categories and passages that don't exist are dropped), so a provider doesn't need to. Apologist's implementation is in `packages/apologist-extension/ext_Apologist/main/init.tsx`. Only built-in extensions can offer it for now; the sandbox protocol for third-party chat providers doesn't carry it yet.
 
 #### Reacting to app state — effects
 

@@ -1,7 +1,3 @@
-.sb-language-english-name {
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-}
-
 .sb-settings-page {
   padding: 0.75rem 0.5rem 1.5rem;
   color: var(--sb-font-color);
@@ -304,18 +300,6 @@
   cursor: pointer;
 }
 
-.sb-settings-field-override-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 .sb-settings-field-override-icon {
   font-size: 1.125rem;
 }
@@ -475,20 +459,18 @@
    the default downward-opening absolute menu spills off-screen behind the tab
    bar. Render it as a bottom-anchored sheet that stays above the nav bar and
    scrolls internally, with the overlay dimming the whole screen. */
-@media (max-width: 480px) {
-  .sb-language-picker-overlay {
-    background: var(--sb-backdrop);
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-language-picker-overlay {
+  background: var(--sb-backdrop);
+}
 
-  .sb-language-picker-menu {
-    position: fixed;
-    left: 0.75rem;
-    right: 0.75rem;
-    top: auto;
-    bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
-    min-width: 0;
-    max-height: min(50dvh, 22.5rem);
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-language-picker-menu {
+  position: fixed;
+  left: 0.75rem;
+  right: 0.75rem;
+  top: auto;
+  bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
+  min-width: 0;
+  max-height: min(50dvh, 22.5rem);
 }
 
 .sb-settings-toggle-row {
@@ -503,6 +485,18 @@
   font-size: var(--sb-font-size-14);
   font-weight: 500;
   color: var(--sb-font-color);
+}
+
+.sb-settings-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sb-settings-toggle-description {
+  margin: 0;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
 /* Custom pill-toggle (ported from develop design) */
@@ -1003,10 +997,8 @@
 }
 
 /* This can be added at main css too but that is not being used by setting bar to so avoid whole css load use here */
-@media screen and (max-width: 480px) {
-  .hide-on-mobile {
-    display: none;
-  }
+:where(html[data-sb-app-layout="mobile"]) .hide-on-mobile {
+  display: none;
 }
 
 /*

@@ -797,7 +797,7 @@ describe("FloatingChatPanel", () => {
     expect(closeChatPanel).not.toHaveBeenCalled();
   });
 
-  it("ignores a pointerdown on .sb-footnote-modal-overlay so modal clicks do not close chat", () => {
+  it("ignores a pointerdown on a dialog's backdrop so dialog clicks do not close chat", () => {
     const { state, closeChatPanel } = createMockFloatingChatPanelState();
 
     act(() => {
@@ -809,7 +809,7 @@ describe("FloatingChatPanel", () => {
     });
 
     const overlay = document.createElement("div");
-    overlay.className = "sb-footnote-modal-overlay";
+    overlay.className = "sb-dialog-backdrop";
     const modalButton = document.createElement("button");
     overlay.appendChild(modalButton);
     document.body.appendChild(overlay);

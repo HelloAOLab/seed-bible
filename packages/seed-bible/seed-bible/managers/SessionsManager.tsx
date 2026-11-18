@@ -25,6 +25,8 @@ import type {
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
 import type { AnnotationsManager } from "./AnnotationsManager";
+import type { DiscoverManager } from "./DiscoverManager";
+import type { SettingsManager } from "./SettingsManager";
 import { toShareableUrl } from "../app/publicLinks";
 
 export interface ConnectionSessionUserVisual {
@@ -1017,11 +1019,13 @@ async function createBibleReadingSession(
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
+  discoverManager: DiscoverManager,
   readingExtensionManager: BibleReadingExtensionManager | undefined,
   id: string,
   defaultOptions?: SessionOptions,
   startPosition?: SessionStartPosition,
-  getAnnotationsManager?: () => AnnotationsManager | undefined
+  getAnnotationsManager?: () => AnnotationsManager | undefined,
+  settingsManager?: SettingsManager
 ): Promise<BibleReadingSession> {
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
@@ -1037,9 +1041,10 @@ async function createBibleReadingSession(
     // `isShared` last: a caller's start position must not be able to turn a
     // session's reading state back into an unshared one.
     { ...effectiveStartPosition, isShared: true },
-    undefined,
+    discoverManager,
     readingExtensionManager,
-    getAnnotationsManager
+    getAnnotationsManager,
+    settingsManager
   );
   const optionsMap = document.getMap<SessionOptionValue>("options");
   const decorationsMap = document.getMap<SessionDecorationValue>("decorations");
@@ -2547,8 +2552,10 @@ export function createSessionsManager(
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
+  discoverManager: DiscoverManager,
   readingExtensionManager?: BibleReadingExtensionManager,
-  getAnnotationsManager?: () => AnnotationsManager | undefined
+  getAnnotationsManager?: () => AnnotationsManager | undefined,
+  settingsManager?: SettingsManager
 ): SessionsManager {
   const createSession = async (startPosition?: SessionStartPosition) => {
     const id = createSessionId();
@@ -2561,11 +2568,13 @@ export function createSessionsManager(
       loginManager,
       highlightsManager,
       i18nManager,
+      discoverManager,
       readingExtensionManager,
       id,
       { ...DEFAULT_SESSION_OPTIONS, hostUserId },
       startPosition,
-      getAnnotationsManager
+      getAnnotationsManager,
+      settingsManager
     );
   };
 
@@ -2579,11 +2588,13 @@ export function createSessionsManager(
       loginManager,
       highlightsManager,
       i18nManager,
+      discoverManager,
       readingExtensionManager,
       id,
       undefined,
       startPosition,
-      getAnnotationsManager
+      getAnnotationsManager,
+      settingsManager
     );
   };
 

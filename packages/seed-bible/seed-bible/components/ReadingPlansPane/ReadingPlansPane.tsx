@@ -236,15 +236,21 @@ export async function openReadingPlanEditor(
 }
 
 /**
- * Opens the editor on a new plan. An in-flight draft is resumed rather than
+ * Opens the editor on a new plan. An in-flight new plan is resumed rather than
  * thrown away — the user may have stepped out of the editor to go read and add
- * a passage from the verse toolbar.
+ * a passage from the verse toolbar. An edit to a published plan is not: the
+ * user asked for a new plan, and the published copy is untouched until saved.
+ *
+ * Exported for the same reason as {@link openReadingPlanDetail}.
  */
-function openPlanCreate(readingPlans: ReadingPlansManager) {
-  if (!readingPlans.editingReadingPlan.peek()) {
+export function openPlanCreate(
+  readingPlans: ReadingPlansManager,
+  options: OpenPlanOptions = {}
+) {
+  if (!readingPlans.editingReadingPlan.peek()?.isNew) {
     readingPlans.startEditingReadingPlan();
   }
-  readingPlansView.value = "edit";
+  showPlan("edit", options);
 }
 
 /**

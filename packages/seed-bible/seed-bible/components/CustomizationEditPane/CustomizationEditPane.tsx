@@ -99,11 +99,19 @@ const LogoCropModalContent = lazy(() =>
   }))
 );
 
+// Only owners building a content library see this screen, so it (and its
+// import and AI-suggestion code) isn't part of every reader's first load.
+const loadContentView = () => import("./CustomizationContentView");
+const CustomizationContentView = lazy(() =>
+  loadContentView().then((m) => ({ default: m.CustomizationContentView }))
+);
+
 type CustomizationEditView =
   | "edit"
   | "edit-variant"
   | "edit-extensions"
-  | "edit-icons";
+  | "edit-icons"
+  | "edit-content";
 
 /**
  * Whether `foregroundKey` (e.g. `primaryFontColor`) has a known reading
@@ -375,6 +383,11 @@ export function CustomizationEditPaneTitle(props: {
   if (view === "edit-icons") {
     return <>{t("customization-icons", { defaultValue: "Icons" })}</>;
   }
+  if (view === "edit-content") {
+    return (
+      <>{t("custom-content-library", { defaultValue: "Content library" })}</>
+    );
+  }
   if (view === "edit-variant") {
     const variant = record.variants.find(
       (v) => v.id === props.customizations.editingVariantId.value
@@ -634,10 +647,32 @@ export function CustomizationEditPane(props: { state: SeedBibleState }) {
   if (view === "edit-icons") {
     return <CustomizationEditIconsView state={state} />;
   }
+  if (view === "edit-content") {
+    return (
+      <Suspense fallback={<ContentViewLoading />}>
+        <CustomizationContentView state={state} />
+      </Suspense>
+    );
+  }
   if (view === "edit-variant") {
     return <CustomizationEditVariantView state={state} />;
   }
   return <CustomizationEditMainView state={state} />;
+}
+
+function ContentViewLoading() {
+  const { t } = useI18n();
+  return (
+    <div className="sb-settings-page sb-cz-page">
+      <SkeletonContainer
+        label={t("custom-content-loading", {
+          defaultValue: "Loading the content library…",
+        })}
+      >
+        <Skeleton width="100%" height="12rem" radius="var(--sb-radius-md)" />
+      </SkeletonContainer>
+    </div>
+  );
 }
 
 function CustomizationEditMainView(props: { state: SeedBibleState }) {
@@ -958,6 +993,39 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                 defaultValue:
                   "{{available}} available · {{auto}} auto · {{hidden}} hidden",
               })}
+            </span>
+          </span>
+          <span className="material-symbols-outlined rtl-mirror">
+            chevron_right
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className="sb-cz-row sb-cz-row-tall"
+          onPointerEnter={() => void loadContentView()}
+          onFocus={() => void loadContentView()}
+          onClick={() => {
+            customizationEditView.value = "edit-content";
+          }}
+        >
+          <span className="material-symbols-outlined sb-cz-row-icon">
+            video_library
+          </span>
+          <span className="sb-cz-row-text">
+            <span className="sb-cz-row-label">
+              {t("custom-content-library", {
+                defaultValue: "Content library",
+              })}
+            </span>
+            <span className="sb-cz-row-hint">
+              {record.contentRecordName
+                ? t("custom-content-row-hint-ready", {
+                    defaultValue: "Your videos and articles in Discover",
+                  })
+                : t("custom-content-row-hint-empty", {
+                    defaultValue: "Add your videos and articles to Discover",
+                  })}
             </span>
           </span>
           <span className="material-symbols-outlined rtl-mirror">
@@ -1827,6 +1895,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                   <ColorTile
                     key={field.key}
                     label={label}
+                    isMobile={state.app.isMobile.value}
                     value={resolvedTheme.variables[field.key] ?? ""}
                     isOverridden={variant.themes[field.key] !== undefined}
                     contrastWarning={getContrastWarning(
@@ -1919,6 +1988,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                       <LazyColorPicker
                         value={normalizeHex(bg)}
                         className="sb-cz-highlight-picker"
+                        isMobile={state.app.isMobile.value}
                         ariaLabel={t("id_highlight-background-color", { id })}
                         onOpenChange={(open) => {
                           if (open) previewHighlightId.value = id;
@@ -1948,6 +2018,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                       <LazyColorPicker
                         value={normalizeHex(fg)}
                         className="sb-cz-highlight-picker"
+                        isMobile={state.app.isMobile.value}
                         ariaLabel={t("id_highlight-text-color", { id })}
                         onOpenChange={(open) => {
                           if (open) previewHighlightId.value = id;
@@ -2103,6 +2174,7 @@ function ResetButton(props: { label: string; onReset: () => void }) {
 function ColorTile(props: {
   label: string;
   value: string;
+  isMobile: boolean;
   isOverridden: boolean;
   contrastWarning: { ratio: number; label: string } | null;
   onChange: (color: string) => void;
@@ -2152,6 +2224,7 @@ function ColorTile(props: {
           isOpen.value = open;
         }}
         anchorRef={swatchRef}
+        isMobile={props.isMobile}
         ariaLabel={label}
         onChange={props.onChange}
         onPreview={props.onPreview}

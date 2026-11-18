@@ -6,8 +6,10 @@
   inset: 0;
   background: var(--sb-backdrop);
   /* A sheet with a backdrop blocks the page, so it belongs to the modal
-   * layer. The sheet comes later in the DOM, so it is on top. */
-  z-index: var(--sb-layer-modal);
+   * layer, level with the sheet and with a dialog's backdrop: whichever window
+   * opened last is on top, dimmed background included. The sheet comes after
+   * its backdrop in the DOM, so it is on top of it. */
+  z-index: calc(var(--sb-layer-modal) + 1);
   touch-action: none;
 }
 
@@ -59,9 +61,11 @@
 
 /* A sheet that drags from anywhere must stop the browser turning the gesture
  * into a page scroll, or it answers our first pointermove or two with a
- * `pointercancel` and the drag snaps back. */
+ * `pointercancel` and the drag snaps back. A sheet with content that scrolls
+ * sets --sb-bottom-sheet-touch-action: auto and puts `none` back on its own
+ * parts that still drag; the handle and ✕ keep theirs. */
 .sb-bottom-sheet-drag-anywhere {
-  touch-action: none;
+  touch-action: var(--sb-bottom-sheet-touch-action, none);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -148,6 +152,11 @@
   font-size: var(--sb-font-size-22);
 }
 
+/* Part of the sheet's own drag surface, with or without a header around it. */
+.sb-bottom-sheet-close {
+  touch-action: none;
+}
+
 /* No title row: the close button sits in the top corner on the reading side's
  * end, so it follows the layout in right-to-left languages. Two classes, to
  * win over the button's own `position: relative`. */
@@ -159,6 +168,9 @@
 }
 
 .sb-bottom-sheet-body {
+  /* Content that has to fill the body sets
+   * --sb-bottom-sheet-body-display: flex and grows to fit. */
+  display: var(--sb-bottom-sheet-body-display, block);
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;

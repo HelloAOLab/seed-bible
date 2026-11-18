@@ -150,10 +150,10 @@
   margin-inline-end: 0.5rem;
 }
 
-/* The menu is portaled to <body>, so without this it opens under the modal
-   overlay (z-index 1000) it was opened from. */
+/* The menu is portaled to <body>, so without this it opens under the window
+   it was opened from (a dialog or modal sheet, at the modal layer + 1). */
 .sb-context-menu.sb-bookmark-picker-menu {
-  z-index: calc(var(--sb-layer-modal) + 1);
+  z-index: calc(var(--sb-layer-modal) + 2);
 }
 
 .sb-bookmark-picker-hint {
