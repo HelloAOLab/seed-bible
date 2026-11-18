@@ -136,11 +136,18 @@ describe("opening a save from the mobile sidebar", () => {
     state.saves.isFilterActive.value = true;
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     render(null, container);
     container.remove();
     window.innerWidth = originalInnerWidth;
     window.localStorage.clear();
+    // Preact runs a render's effects on the next frame, with a timer as a
+    // fallback that calls cancelAnimationFrame. Waiting a frame lets that
+    // finish here; otherwise the timer can fire after the file's DOM is torn
+    // down, where cancelAnimationFrame no longer exists.
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve())
+    );
   });
 
   async function renderSidebar(): Promise<void> {
