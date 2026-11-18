@@ -158,6 +158,12 @@ export default defineConfig(({ isSsrBuild, mode }) => ({
     __ASSET_BASE_URL__: JSON.stringify(assetBaseUrl),
 
     __BRANDING_CONFIG__: JSON.stringify(brandingConfig),
+
+    // The record holding which extensions are verified (see
+    // `managers/ExtensionReviewsManager.tsx`).
+    __EXTENSION_REVIEWS_RECORD__: JSON.stringify(
+      process.env.EXTENSION_REVIEWS_RECORD_NAME?.trim() || null
+    ),
   },
 
   plugins: [

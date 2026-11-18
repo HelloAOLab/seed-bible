@@ -14,6 +14,7 @@ import type {
   DiscoverProvider,
 } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 import { PlaylistLinkContent } from "seed-bible/components";
+import { parseContentClassification } from "@packages/seed-bible/seed-bible/managers/customContent/classify";
 import { rankResultsForChapter, searchApologistContent } from "./search";
 import {
   APOLOGIST_EXTENSION_ID,
@@ -283,6 +284,44 @@ export default function initApologistExtension() {
         iconUrl: apologistIconUrl,
         supportsSharedChats: true,
         supportsToolCalling: true,
+        // Suggests categories and passages for Custom Branding content
+        // libraries, through the same agent (and key) as chat.
+        classifyContent: async (request) => {
+          const { response } = await postApologistChatCompletion({
+            send: (body) =>
+              apologistRequest("/api/v1/chat/completions", {
+                method: "POST",
+                body,
+              }),
+            model:
+              urlModel ?? readSavedText("model") ?? DEFAULT_APOLOGIST_MODEL,
+            stream: false,
+            language: uiLocaleForApologist(i18n.language),
+            bible: resolveApologistBible(
+              getEffectiveSeedTranslationForAi(context)
+            ).code,
+            messages: [
+              { role: "developer", content: request.instructions },
+              { role: "user", content: request.input },
+            ],
+          });
+          if (!response.ok) {
+            const body = await response.text().catch(() => "");
+            throw new Error(
+              `Apologist couldn't suggest categories (${response.status})${
+                body ? `: ${body}` : ""
+              }`
+            );
+          }
+          const json = (await response.json().catch(() => null)) as {
+            choices?: { message?: { content?: unknown } }[];
+          } | null;
+          const answer = json?.choices?.[0]?.message?.content;
+          if (typeof answer !== "string") {
+            throw new Error("Apologist sent no suggestions.");
+          }
+          return parseContentClassification(answer);
+        },
         generateResponse: async function* (
           chatContext
         ): AsyncGenerator<ChatProviderMessageOptions> {

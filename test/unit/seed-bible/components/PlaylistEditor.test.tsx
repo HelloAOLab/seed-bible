@@ -105,7 +105,7 @@ describe("the playlist editor", () => {
             tabs={state.tabs}
             modals={state.modals}
           />
-          <ModalHost manager={state.modals} />
+          <ModalHost manager={state.modals} isMobile={state.app.isMobile} />
         </TestHost>,
         container
       );
@@ -127,7 +127,7 @@ describe("the playlist editor", () => {
           <PlaylistEditorWorkspace state={state} compact={compact}>
             <div className="sb-pane-reader">reader</div>
           </PlaylistEditorWorkspace>
-          <ModalHost manager={state.modals} />
+          <ModalHost manager={state.modals} isMobile={state.app.isMobile} />
         </TestHost>,
         container
       );
@@ -155,7 +155,7 @@ describe("the playlist editor", () => {
             state={state}
             toast={state.app.toast}
           />
-          <ModalHost manager={state.modals} />
+          <ModalHost manager={state.modals} isMobile={state.app.isMobile} />
         </TestHost>,
         container
       );

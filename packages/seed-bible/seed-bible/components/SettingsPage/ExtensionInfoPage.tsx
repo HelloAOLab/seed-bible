@@ -27,6 +27,15 @@ import {
 } from "../ExtensionConsentModal/ExtensionPermissionsPanel";
 import { Button } from "../Button/Button";
 import { ScreenshotViewer } from "../ScreenshotViewer/ScreenshotViewer";
+import {
+  ExtensionReviewBadges,
+  ExtensionReviewControls,
+  ExtensionReviewDetailRows,
+  ExtensionReviewNotice,
+  useExtensionReview,
+} from "../ExtensionReview/ExtensionReview";
+import type { ExtensionReviewsManager } from "../../managers/ExtensionReviewsManager";
+import type { ModalManager } from "../../managers/ModalManager";
 
 export type ExtensionInstallState =
   | "none"
@@ -45,6 +54,12 @@ export interface ExtensionInfoPageProps {
   extensions: PermissionsApi &
     Pick<ExtensionManager, "describeUploader" | "loadExtensionTranslations">;
   people?: ConsentPeople;
+  /** Which extensions are verified. */
+  reviews?: ExtensionReviewsManager;
+  /** Whether the extension is compiled into the app, which makes it verified. */
+  builtIn: boolean;
+  /** Opens the dialog an admin marks an extension verified in. */
+  modals?: ModalManager;
   /**
    * "narrow" stacks everything for the sidebar; "wide" lays it out across a
    * full-screen page, with the tabs down the side.
@@ -209,6 +224,8 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
   const url = extension && "url" in extension ? extension.url : null;
   const summary = extensions.sandboxPermissions.value[entry.id];
   const uploader = useExtensionUploader(extensions, entry.id, url);
+  const { builtIn } = props;
+  const review = useExtensionReview(props.reviews, entry.id, builtIn);
   const installed =
     installState === "installed" || installState === "downloaded";
 
@@ -274,6 +291,7 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
         <dd className="sb-extension-info-id">
           {sourced?.declaredId ?? entry.id}
         </dd>
+        <ExtensionReviewDetailRows review={review} builtIn={builtIn} />
       </dl>
     </section>
   );
@@ -282,16 +300,15 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
     <p className="sb-extension-info-description">{props.description}</p>
   );
 
-  const unreviewed = url && (
-    <p className="sb-extension-consent-notice">
-      <span
-        className="material-symbols-outlined sb-extension-consent-notice-icon"
-        aria-hidden="true"
-      >
-        info
-      </span>
-      {t("extension-consent-unreviewed")}
-    </p>
+  const unreviewed = url && <ExtensionReviewNotice review={review} />;
+
+  const reviewControls = !builtIn && props.reviews && props.modals && (
+    <ExtensionReviewControls
+      reviews={props.reviews}
+      modals={props.modals}
+      name={name}
+      extensionId={entry.id}
+    />
   );
 
   const installButton = !installed && (
@@ -381,6 +398,7 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
         {unreviewed}
       </div>
       {details}
+      {reviewControls}
     </div>
   ) : (
     <div className="sb-extension-info-panel">
@@ -390,6 +408,7 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
       {unreviewed}
       {whatItCanDo}
       {details}
+      {reviewControls}
       {uninstallButton}
     </div>
   );
@@ -420,6 +439,7 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
               {statusLabel}
             </span>
           )}
+          <ExtensionReviewBadges review={review} builtIn={builtIn} focusable />
         </div>
         <p className="sb-extension-consent-source">
           {sourceHost
@@ -529,7 +549,10 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
               {screenshots}
               {whatItCanDo}
             </div>
-            <aside className="sb-extension-info-aside">{details}</aside>
+            <aside className="sb-extension-info-aside">
+              {details}
+              {reviewControls}
+            </aside>
           </div>
         )}
       </div>

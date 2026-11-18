@@ -4,6 +4,7 @@ export * from "./Button/Button";
 export * from "./CloseButton/CloseButton";
 export * from "./IconButton/IconButton";
 export * from "./BottomSheet/BottomSheet";
+export * from "./Dialog/Dialog";
 export {
   ContextMenuWithButton,
   ContextMenuItem,

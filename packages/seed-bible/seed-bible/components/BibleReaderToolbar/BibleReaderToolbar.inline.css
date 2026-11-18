@@ -1154,17 +1154,16 @@
 }
 
 /* While the notes scroll, the sheet can no longer use `touch-action: none`
-   (that would block the scroller). Put it back on the parts that still drag. */
+   (that would block the scroller). Put it back on the parts that still drag;
+   the sheet's own handle and ✕ keep theirs. */
 .sb-verse-toolbar-mobile.sb-verse-sheet-scrollable {
-  touch-action: auto;
+  --sb-bottom-sheet-touch-action: auto;
 }
 
-.sb-verse-toolbar-mobile.sb-verse-sheet-scrollable .sb-bottom-sheet-handle-area,
 .sb-verse-toolbar-mobile.sb-verse-sheet-scrollable .sb-verse-toolbar-ref,
 .sb-verse-toolbar-mobile.sb-verse-sheet-scrollable
   .sb-verse-toolbar-cards
-  > .sb-verse-toolbar-action-item,
-.sb-verse-toolbar-mobile.sb-verse-sheet-scrollable .sb-bottom-sheet-close {
+  > .sb-verse-toolbar-action-item {
   touch-action: none;
 }
 

@@ -26,7 +26,11 @@ import {
 import {
   getPreferredSupportedLanguage,
   getUrlLanguage,
+  i18n,
 } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import { loadTermsOfService } from "@packages/seed-bible/seed-bible/components/TermsOfServiceModal/TermsOfServiceModal";
+import { loadPrivacyPolicy } from "@packages/seed-bible/seed-bible/components/PrivacyPolicyModal/PrivacyPolicyModal";
+import { loadCodeOfConduct } from "@packages/seed-bible/seed-bible/components/CodeOfConductModal/CodeOfConductModal";
 import { getTodayPageRedirect } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import {
   composeThemeStyleText,
@@ -748,6 +752,18 @@ async function renderState(
   await timer.wait(
     "ssr.wait.playlistPlayback",
     state.playlists.initialPlaybackPromise
+  );
+
+  // A `?terms=open` style link opens a legal window, whose text loads on
+  // demand. Load it before rendering, for the same reason as the waits above.
+  const language = state.i18n.language.value;
+  await timer.wait(
+    "ssr.wait.legalText",
+    Promise.all([
+      state.isTermsOpen.value && loadTermsOfService(i18n, language),
+      state.isPrivacyOpen.value && loadPrivacyPolicy(i18n, language),
+      state.isCodeOfConductOpen.value && loadCodeOfConduct(i18n, language),
+    ])
   );
 
   const appHtml = await timer.step("ssr.renderToString", () =>

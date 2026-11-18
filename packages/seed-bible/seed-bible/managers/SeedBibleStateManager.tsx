@@ -80,6 +80,7 @@ import {
 import {
   openReadingPlanDetail,
   openReadingPlanEditor,
+  openPlanCreate,
 } from "../components/ReadingPlansPane/ReadingPlansPane";
 import {
   FRIENDS_PANE_ID,
@@ -144,6 +145,11 @@ import type {
   ThemeFontFamilyKey,
 } from "../managers/ThemeManager";
 import {
+  createCustomContentManager,
+  type CustomContentManager,
+} from "../managers/CustomContentManager";
+import { createContentImportClient } from "../managers/customContent/importClient";
+import {
   createCustomizationsManager,
   CUSTOMIZATION_FONT_FIELDS,
   CUSTOMIZATION_FONT_PRESETS,
@@ -171,6 +177,10 @@ import {
   setupExtensionContext,
   type ExtensionManager,
 } from "../managers/ExtensionManager";
+import {
+  createExtensionReviewsManager,
+  type ExtensionReviewsManager,
+} from "../managers/ExtensionReviewsManager";
 import {
   createExtensionSettingsManager,
   type ExtensionSettingsManager,
@@ -617,6 +627,8 @@ export interface SeedBibleState {
   readingPlans: ReadingPlansManager;
   /** Discover manager for contextual content providers. */
   discover: DiscoverManager;
+  /** Customization content libraries: the editor's open library, and Discover for the active one. */
+  customContent: CustomContentManager;
   /** The Today screen: its open state and the data its cards read. */
   today: TodayManager;
   /**
@@ -644,6 +656,8 @@ export interface SeedBibleState {
   app: AppState;
   /** Extension loading and runtime manager. */
   extensions: ExtensionManager;
+  /** Which extensions are verified, and verifying them for admins. */
+  extensionReviews: ExtensionReviewsManager;
   /** Per-viewer values for extensions' declared settings, resolved against the active Customization's defaults. */
   extensionSettings: ExtensionSettingsManager;
 
@@ -994,6 +1008,21 @@ export function createSeedBibleState(
   const chats = createChatsManager(login, i18n, selectedTabTranslationBooks);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
+  const contentImportUrl = import.meta.env.VITE_CONTENT_IMPORT_URL;
+  const customContent = createCustomContentManager({
+    os,
+    login,
+    customizations,
+    discover,
+    modals,
+    chats,
+    // Set at build time; without it bulk import is off and publishing
+    // happens in the browser.
+    importService:
+      typeof contentImportUrl === "string" && contentImportUrl
+        ? createContentImportClient(contentImportUrl)
+        : null,
+  });
   const readingExtensions = createBibleReadingExtensionManager();
   const tabs = createTabs(
     navigation,
@@ -1071,16 +1100,24 @@ export function createSeedBibleState(
     login,
     highlights,
     i18n,
+    discover,
     readingExtensions,
-    () => annotations
+    () => annotations,
+    settings
   );
+  const extensionReviews = createExtensionReviewsManager(os, login);
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
     requestSandboxConsent: (request) =>
-      openExtensionConsentModal(modals, request, {
-        userId: login.userId,
-        friends,
-      }),
+      openExtensionConsentModal(
+        modals,
+        request,
+        {
+          userId: login.userId,
+          friends,
+        },
+        extensionReviews
+      ),
     records: os,
     fileRecords: os,
   });
@@ -3866,9 +3903,11 @@ export function createSeedBibleState(
     navigation,
     i18n,
     discover,
+    customContent,
     today,
     readingExtensions,
     extensions,
+    extensionReviews,
     extensionSettings,
     readingPlans,
     playlists,
@@ -4346,9 +4385,9 @@ export function createSeedBibleState(
       buildCustomizationTutorialSteps(state, created.defaultVariantId)
     );
   };
-  // Both land in the plans pane, opened the way the Profile card opens it,
-  // and then drill straight into the plan so the user doesn't have
-  // to find it in the list a second time.
+  // All three land in the plans pane, opened the way the Profile card opens
+  // it, and then go straight to what the user picked (a plan, or the editor
+  // on a new one) so they don't have to find it in the list.
   const openReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
     if (!openReadingPlansFromScreen(openYourContent)) {
       return;
@@ -4371,6 +4410,12 @@ export function createSeedBibleState(
     }
     void openReadingPlanEditor(readingPlans, plan, { fromAnotherScreen: true });
   };
+  const createReadingPlanFromContent = () => {
+    if (!openReadingPlansFromScreen(openYourContent)) {
+      return;
+    }
+    openPlanCreate(readingPlans, { fromAnotherScreen: true });
+  };
   const renderYourContentPane = () => (
     <YourContentPane
       state={state}
@@ -4381,6 +4426,7 @@ export function createSeedBibleState(
       onCreatePlaylist={createPlaylistFromContent}
       onOpenReadingPlan={openReadingPlanFromContent}
       onEditReadingPlan={editReadingPlanFromContent}
+      onCreateReadingPlan={createReadingPlanFromContent}
       onEditCustomization={editCustomizationFromContent}
       onCreateCustomization={() => void createCustomizationFromContent()}
     />
