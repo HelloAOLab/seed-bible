@@ -14,6 +14,7 @@ import {
   createFixedI18n,
   I18nProvider,
   setDefaultI18n,
+  useI18n as useAppI18n,
   type I18nResources,
 } from "../i18n/I18nContext";
 import {
@@ -66,6 +67,8 @@ import {
 } from "./protocol";
 
 export type {
+  SandboxPanePlacement,
+  SandboxPermissionInfo,
   SandboxBook,
   SandboxChapter,
   SandboxChapterContent,
@@ -98,6 +101,7 @@ export type {
   SandboxSessionParticipant,
 } from "./protocol";
 export type {
+  SandboxErrorCode,
   SandboxIcon,
   SandboxJsonValue,
   SandboxPaneOptions,
@@ -111,9 +115,35 @@ export type {
   SandboxVerseRef,
 };
 export { SANDBOX_PERMISSIONS, SANDBOX_PERMISSION_INFO } from "./protocol";
-// The same hook shared components use, from the module kept small for
-// extensions. `seed-bible/i18n` has it too, but brings every locale with it.
-export { useI18n } from "../i18n/I18nContext";
+
+/** What {@link useI18n} returns. */
+export interface SandboxI18nHook {
+  /**
+   * i18next's `t`, reading the strings `useI18n` was given the namespace of
+   * (Seed Bible's own without one) unless `options.ns` names another.
+   */
+  t: (key: string, options?: Record<string, unknown>) => string;
+  /** The namespace `useI18n` was called with, if any. */
+  ns?: string;
+  /** The app's current language code, like `"en"` or `"es"`. */
+  language: string;
+  /** Whether that language is written right to left. */
+  isRtl: boolean;
+}
+
+// Typed narrower than the app's hook, which also carries the app's own
+// language prompts. Imported from the module kept small for extensions;
+// `seed-bible/i18n` has it too, but brings every locale with it.
+/**
+ * The strings hook for an extension's views, the same one Seed Bible's
+ * shared components use: `useI18n(sb.extensionId)` for the extension's own
+ * strings, `useI18n()` for Seed Bible's. Redraws when the language changes.
+ *
+ * @example
+ * const { t } = useI18n(sb.extensionId);
+ * return <h2>{t("title")}</h2>;
+ */
+export const useI18n: (ns?: string) => SandboxI18nHook = useAppI18n;
 
 /**
  * Why a call to Seed Bible failed. Every `sb.*` promise rejects with one of
@@ -155,8 +185,6 @@ export interface SandboxToolSelectContext {
   selection: SandboxSelectedVerse[];
 }
 
-type ToolFlag = boolean | ReadonlySignal<boolean>;
-
 /** One entry in a tool's submenu (`SandboxToolOptions.items`). */
 export interface SandboxToolItemOptions {
   /** Unique within the tool: letters, digits, `_`, `.` or `-`, up to 64. */
@@ -188,9 +216,9 @@ export interface SandboxToolOptions {
    */
   priority?: number;
   /** A signal keeps the host up to date as it changes. Defaults to visible. */
-  isVisible?: ToolFlag;
+  isVisible?: boolean | ReadonlySignal<boolean>;
   /** A signal keeps the host up to date as it changes. */
-  isDisabled?: ToolFlag;
+  isDisabled?: boolean | ReadonlySignal<boolean>;
   /**
    * Called when the user selects the tool. Counts as a user interaction, so
    * it may open dialogs, copy, play audio or ask for permissions. Errors it
@@ -473,11 +501,7 @@ export interface SandboxContext {
      *   chapter: 3,
      * });
      */
-    chapter: (ref: {
-      translationId: string;
-      bookId: string;
-      chapter: number;
-    }) => Promise<SandboxChapter>;
+    chapter: (ref: SandboxTranslationChapterRef) => Promise<SandboxChapter>;
     /** Every commentary available. */
     commentaries: () => Promise<SandboxCommentary[]>;
     /** The books a commentary covers. */
@@ -542,16 +566,18 @@ export interface SandboxContext {
      */
     colors: () => Promise<string[]>;
     /** The chapter's highlights. Needs `highlights:read`. */
-    list: (ref: ChapterRef) => Promise<SandboxHighlight[]>;
+    list: (ref: SandboxTranslationChapterRef) => Promise<SandboxHighlight[]>;
     /**
      * Highlights 1–200 verses in one of `colors()`; any other `colorId`
      * rejects with `invalid_request`. Needs `highlights:write`.
      */
     add: (
-      ref: ChapterRef & { verses: number[]; colorId: string }
+      ref: SandboxTranslationChapterRef & { verses: number[]; colorId: string }
     ) => Promise<void>;
     /** Removes the highlight from those verses. Needs `highlights:write`. */
-    remove: (ref: ChapterRef & { verses: number[] }) => Promise<void>;
+    remove: (
+      ref: SandboxTranslationChapterRef & { verses: number[] }
+    ) => Promise<void>;
   };
   /**
    * Reading needs `notes:read`; writing, `notes:write`. Notes are plain text
@@ -602,7 +628,7 @@ export interface SandboxContext {
      * to 10 categories. Needs `saves:write`; `unavailable` when signed out.
      */
     add: (
-      save: ChapterRef & {
+      save: SandboxTranslationChapterRef & {
         verse?: number | [number, number];
         categories?: string[];
       }
@@ -666,16 +692,19 @@ export interface SandboxContext {
      * the chapter has none; fall back to `readAloud`.
      */
     playNarration: (
-      ref: ChapterRef & { reader?: string }
+      ref: SandboxTranslationChapterRef & { reader?: string }
     ) => Promise<{ finished: boolean }>;
     /** Who has recorded narration for a chapter; empty when no one has. */
-    narrators: (ref: ChapterRef) => Promise<string[]>;
+    narrators: (ref: SandboxTranslationChapterRef) => Promise<string[]>;
     /**
      * Reads a chapter, or verses `fromVerse` to `toVerse` of it, with the
      * app's text-to-speech.
      */
     readAloud: (
-      ref: ChapterRef & { fromVerse?: number; toVerse?: number }
+      ref: SandboxTranslationChapterRef & {
+        fromVerse?: number;
+        toVerse?: number;
+      }
     ) => Promise<{ finished: boolean }>;
     /** Pauses what this extension is playing. */
     pause: () => Promise<void>;
@@ -835,8 +864,11 @@ export interface SandboxContext {
   };
 }
 
-/** A chapter of a particular translation. */
-interface ChapterRef {
+/**
+ * A chapter of a particular translation: what `sb.bible.chapter` takes, and
+ * what the `sb.highlights` and `sb.audio` calls build on.
+ */
+export interface SandboxTranslationChapterRef {
   /** A Free Use Bible API translation id, like `"BSB"`. */
   translationId: string;
   /** A three-letter USFM book code, like `"JHN"` or `"1CO"`. */
@@ -875,7 +907,13 @@ export interface SandboxExtensionDefinition {
   views?: Record<string, (props: SandboxViewProps) => ComponentChild>;
 }
 
+/** What `defineExtension` returns: the extension module's default export. */
 export type SandboxExtension = SandboxExtensionDefinition & {
+  /**
+   * How Seed Bible starts each of the extension's frames.
+   *
+   * @internal
+   */
   [SANDBOX_START_KEY]: (port: MessagePort, init: SandboxInit) => Promise<void>;
 };
 
@@ -946,6 +984,8 @@ function applyDocumentState(state: SandboxState) {
 /**
  * Connects to the host over `port` and builds the `sb` object an extension
  * uses. Exported for tests, which drive a frame without an iframe.
+ *
+ * @internal
  */
 export function createSandboxClient(port: MessagePort, init: SandboxInit) {
   const state = signal<SandboxState>(init.state);
@@ -1147,7 +1187,7 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     direction.value = state.value.direction;
   });
 
-  const readFlag = (flag: ToolFlag | undefined) =>
+  const readFlag = (flag: SandboxToolOptions["isVisible"]) =>
     flag === undefined || typeof flag === "boolean" ? flag : flag.peek();
 
   const toItems = (items: SandboxToolItemOptions[]): SandboxToolItem[] =>

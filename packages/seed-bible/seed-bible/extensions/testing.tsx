@@ -48,6 +48,18 @@ import {
   type SandboxVerseRef,
 } from "./protocol";
 import type { SandboxExtension } from "./index";
+
+// What a test reads or passes to the test host, and what those refer to.
+export type {
+  SandboxCapture,
+  SandboxMethod,
+  SandboxMethods,
+  SandboxState,
+  SandboxToolDefinition,
+  SandboxToolItem,
+  SandboxToolPatch,
+  SandboxToolSurface,
+} from "./protocol";
 import {
   getDefaultI18n,
   setDefaultI18n,
