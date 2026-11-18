@@ -657,7 +657,7 @@ describe("render() redirect wiring", () => {
 // test that only reads `state.app.canonicalUrl`.
 describe("render() server-rendered meta tags", () => {
   const TEMPLATE = [
-    '<!doctype html><html lang="<!-- HTML_LANG -->" data-layout="<!-- HTML_LAYOUT -->"><head>',
+    '<!doctype html><html lang="<!-- HTML_LANG -->" data-sb-app-layout="<!-- HTML_LAYOUT -->"><head>',
     '<meta property="og:type" content="website" />',
     // Mirrors index.html: `og:image` itself spans multiple lines (its
     // `property`/`content` attributes on separate lines), the rest don't —
@@ -1292,10 +1292,10 @@ describe("render() server-rendered meta tags", () => {
     // The decoded language segment is `"><script>` — escaping just the quote
     // keeps it a single, well-formed `lang="..."` attribute instead of one
     // that terminates early and lets `<script>` become a real tag.
-    expect(html).toContain('<html lang="&quot;><script>" data-layout=');
+    expect(html).toContain('<html lang="&quot;><script>" data-sb-app-layout=');
   });
 
-  // Every phone-vs-desktop style rule keys off `<html data-layout>`, so the
+  // Every phone-vs-desktop style rule keys off `<html data-sb-app-layout>`, so the
   // first paint only matches the markup if the server writes the same layout
   // it rendered.
   it("marks <html> with the desktop layout for a desktop visitor", async () => {
@@ -1303,7 +1303,7 @@ describe("render() server-rendered meta tags", () => {
       renderedAsMobile: false,
     });
 
-    expect(html).toContain('data-layout="desktop">');
+    expect(html).toContain('data-sb-app-layout="desktop">');
   });
 
   it("marks <html> with the mobile layout for a phone visitor", async () => {
@@ -1311,7 +1311,7 @@ describe("render() server-rendered meta tags", () => {
       renderedAsMobile: true,
     });
 
-    expect(html).toContain('data-layout="mobile">');
+    expect(html).toContain('data-sb-app-layout="mobile">');
   });
 
   it("still emits the real canonical URL when the chapter fails to load", async () => {

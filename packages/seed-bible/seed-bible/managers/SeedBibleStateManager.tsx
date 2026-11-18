@@ -240,7 +240,7 @@ import {
 } from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
 import { type AppConfig } from "../app/appConfig";
-import { layoutAttribute } from "../app/layoutAttribute";
+import { LAYOUT_ATTRIBUTE, layoutAttribute } from "../app/layoutAttribute";
 import {
   createI18nManager,
   getBrandedAppText,
@@ -281,7 +281,7 @@ type SearchManager = ReturnType<typeof createSearchManager>;
  * App-wide mobile breakpoint, in pixels. Viewports at or below this width use
  * the mobile layout (drawer sidebar, mobile header, full-screen selector);
  * above it the docked desktop layout applies. Styles don't repeat this
- * number: they read `isMobile` through the `data-layout` attribute on
+ * number: they read `isMobile` through the `data-sb-app-layout` attribute on
  * `<html>` (see `app/layoutAttribute.ts`).
  */
 export const MOBILE_BREAKPOINT = 480;
@@ -1067,11 +1067,14 @@ export function createSeedBibleState(
   const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
   // Hydration never touches `<html>`, so this is what keeps the stylesheet's
   // layout in step once the real viewport is measured.
-  effect(() => {
+  const disposeLayoutAttribute = effect(() => {
     if (typeof document === "undefined") {
       return;
     }
-    document.documentElement.dataset.layout = layoutAttribute(isMobile.value);
+    document.documentElement.setAttribute(
+      LAYOUT_ATTRIBUTE,
+      layoutAttribute(isMobile.value)
+    );
   });
 
   const annotationRecordKey =
@@ -3956,6 +3959,7 @@ export function createSeedBibleState(
       }
       i18n.dispose();
       disposeReadingTicker();
+      disposeLayoutAttribute();
     },
     app: {
       createSharedSession: handleCreateSharedSession,

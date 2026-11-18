@@ -513,8 +513,8 @@ body {
  * browsers don't show the default white "overscroll" gap when the user
  * pulls the page up past the bottom toolbar. Scrolling happens inside
  * the inner panes (which have their own overflow scrollers). */
-html:where([data-layout="mobile"]),
-:where(html[data-layout="mobile"]) body {
+html:where([data-sb-app-layout="mobile"]),
+:where(html[data-sb-app-layout="mobile"]) body {
   position: fixed;
   top: 0;
   left: 0;

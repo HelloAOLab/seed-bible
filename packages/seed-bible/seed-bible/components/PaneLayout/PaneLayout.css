@@ -176,7 +176,7 @@
    way, rather than undone for phones and embeds, so the flush values above
    live in one place. Its extra classes also let it win on specificity, so it
    doesn't rely on coming after the rule above. */
-:where(html:not([data-layout="mobile"]))
+:where(html:not([data-sb-app-layout="mobile"]))
   .sb-app-root:not(.sb-embed-minimal)
   .sb-pane-shell:not(.sb-pane-shell-detached) {
   border-radius: var(--sb-radius-lg);
@@ -221,7 +221,7 @@
    `isVerseToolbarVisible` in BibleReaderToolbar).
    NOTE: `FullscreenPane` must not set `bottom` inline — an inline value beats
    this rule and reopens the "footer hidden behind the toolbar" bug. */
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-pane-shell-detached[data-placement="fullscreen"] {
   bottom: 4.375rem;
 }

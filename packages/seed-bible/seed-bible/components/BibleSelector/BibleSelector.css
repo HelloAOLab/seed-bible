@@ -9,12 +9,12 @@
   background: var(--sb-backdrop);
 }
 
-:where(html[data-layout="mobile"]) .sb-selector-overlay {
+:where(html[data-sb-app-layout="mobile"]) .sb-selector-overlay {
   display: none;
   pointer-events: all;
 }
 
-:where(html[data-layout="mobile"]) .sb-selector-overlay.open {
+:where(html[data-sb-app-layout="mobile"]) .sb-selector-overlay.open {
   display: flex;
 }
 
@@ -65,7 +65,7 @@
 /* Keep these overrides in this file, directly after the rules above, for the
    same reason as the docked-pane override in PaneLayout.css: same selectors,
    and cross-file order follows Vite's import traversal, not intent. */
-:where(html[data-layout="mobile"]) .sb-selector-panel {
+:where(html[data-sb-app-layout="mobile"]) .sb-selector-panel {
   width: 100%;
   height: 100dvh;
   bottom: 0;
@@ -78,13 +78,13 @@
 
 /* Override the desktop translateY animation — on mobile the selector
  * behaves like a tab swap (instant), not a sheet that slides up. */
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-selector-overlay.open
   .sb-selector-panel {
   transform: none;
 }
 
-:where(html:not([data-layout="mobile"])) .sb-selector-panel {
+:where(html:not([data-sb-app-layout="mobile"])) .sb-selector-panel {
   /* Cap to the viewport (minus the overlay's 1.25rem padding each side) so
      the panel never extends past the screen edges at UI Size > M, where
      the fixed rem width would otherwise scale wider than the viewport. No-op
@@ -257,7 +257,7 @@
   text-transform: capitalize;
 }
 
-:where(html:not([data-layout="mobile"])) .sb-selector-book-button {
+:where(html:not([data-sb-app-layout="mobile"])) .sb-selector-book-button {
   width: 12.5rem;
 }
 
@@ -305,11 +305,11 @@
   color: var(--sb-primary-font-color);
 }
 
-:where(html:not([data-layout="mobile"])) .sb-selector-chapter-grid {
+:where(html:not([data-sb-app-layout="mobile"])) .sb-selector-chapter-grid {
   grid-template-columns: repeat(auto-fit, minmax(2.375rem, 1fr));
 }
 
-:where(html:not([data-layout="mobile"])) .sb-selector-chapter-button {
+:where(html:not([data-sb-app-layout="mobile"])) .sb-selector-chapter-button {
   width: 2.375rem;
   justify-self: center;
 }
@@ -324,12 +324,12 @@
   }
 }
 
-:where(html[data-layout="mobile"]) .sb-selector-grid {
+:where(html[data-sb-app-layout="mobile"]) .sb-selector-grid {
   grid-template-columns: 1fr;
   gap: 0.75rem;
 }
 
-:where(html[data-layout="mobile"]) .sb-selector-column-divider {
+:where(html[data-sb-app-layout="mobile"]) .sb-selector-column-divider {
   border-right: none;
   padding-right: 0;
 }
@@ -1146,67 +1146,68 @@
   }
 }
 
-:where(html[data-layout="mobile"]) .dropdown {
+:where(html[data-sb-app-layout="mobile"]) .dropdown {
   /* display: none; */
   width: 62%;
 }
 
-:where(html[data-layout="mobile"]) .sidebar-translation-selector {
+:where(html[data-sb-app-layout="mobile"]) .sidebar-translation-selector {
   width: 5.625rem;
 }
 
-:where(html[data-layout="mobile"]) .testament-selection {
+:where(html[data-sb-app-layout="mobile"]) .testament-selection {
   padding: 0.3125rem 0.9375rem;
 }
 
-:where(html[data-layout="mobile"]) .sidebar-selected-title {
+:where(html[data-sb-app-layout="mobile"]) .sidebar-selected-title {
   font-size: var(--sb-font-size-16);
   font-weight: bold;
 }
 
-:where(html[data-layout="mobile"]) .sidebar {
+:where(html[data-sb-app-layout="mobile"]) .sidebar {
   transition: all 0.5s;
   height: 80dvh;
   padding-bottom: 2.5rem;
   width: 20.625rem;
 }
 
-:where(html[data-layout="mobile"]) .sidebar-results {
+:where(html[data-sb-app-layout="mobile"]) .sidebar-results {
   height: calc(95dvh);
 }
 
-:where(html[data-layout="mobile"]) .books-container {
+:where(html[data-sb-app-layout="mobile"]) .books-container {
   height: calc(100dvh - 5rem);
   flex-direction: column;
   overflow: auto;
 }
 
-:where(html[data-layout="mobile"]) .dropdown-select {
+:where(html[data-sb-app-layout="mobile"]) .dropdown-select {
   width: 100%;
   font-weight: bold;
 }
 
-:where(html[data-layout="mobile"]) .dropdown-option {
+:where(html[data-sb-app-layout="mobile"]) .dropdown-option {
   width: 100%;
 }
 
-:where(html[data-layout="mobile"]) .testament-title {
+:where(html[data-sb-app-layout="mobile"]) .testament-title {
   text-align: left;
   padding-left: 0px;
   width: 100%;
 }
 
-:where(html[data-layout="mobile"]) .sidebar.experience_id-3 {
+:where(html[data-sb-app-layout="mobile"]) .sidebar.experience_id-3 {
   width: calc(100vw - 2.5rem);
   height: 80dvh;
 }
 
-:where(html[data-layout="mobile"]) .sidebar.experience_id-3.close-sideBar {
+:where(html[data-sb-app-layout="mobile"])
+  .sidebar.experience_id-3.close-sideBar {
   height: 45dvh;
   width: 12.5rem;
 }
 
-:where(html[data-layout="mobile"]) .open-sideBar {
+:where(html[data-sb-app-layout="mobile"]) .open-sideBar {
   right: 0;
   opacity: 1;
   bottom: 2.8125rem;
@@ -1217,23 +1218,23 @@
   top: 0px;
 }
 
-:where(html[data-layout="mobile"]) .close-sideBar {
+:where(html[data-sb-app-layout="mobile"]) .close-sideBar {
   right: -12.5rem;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
 
-:where(html[data-layout="mobile"]) .sidebar-itm {
+:where(html[data-sb-app-layout="mobile"]) .sidebar-itm {
   width: 100%;
   font-size: var(--sb-font-size-16);
 }
 
-:where(html[data-layout="mobile"]) .chapter-btn {
+:where(html[data-sb-app-layout="mobile"]) .chapter-btn {
   width: calc(20% - 0.625rem);
 }
 
-:where(html[data-layout="mobile"]) .show-sidebar-chapter {
+:where(html[data-sb-app-layout="mobile"]) .show-sidebar-chapter {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -1248,30 +1249,30 @@
   width: 100%;
 }
 
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-selector-panel
   .sidebar-selected-itm:hover {
   background: transparent;
   color: var(--sb-primary-color);
 }
 
-:where(html[data-layout="mobile"]) .psalms-btn {
+:where(html[data-sb-app-layout="mobile"]) .psalms-btn {
   width: 10.25rem;
 }
 
-:where(html[data-layout="mobile"]) .sidebar-select {
+:where(html[data-sb-app-layout="mobile"]) .sidebar-select {
   font-size: var(--sb-font-size-18);
   padding-left: 0px;
 }
 
-:where(html[data-layout="mobile"]) .sidebar-selected-itm {
+:where(html[data-sb-app-layout="mobile"]) .sidebar-selected-itm {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   color: var(--sb-primary-color);
   font-weight: 600;
 }
 
-:where(html[data-layout="mobile"]) .separator {
+:where(html[data-sb-app-layout="mobile"]) .separator {
   width: 100%;
   height: 0.125rem;
   position: relative;
@@ -1281,7 +1282,7 @@
   display: block;
 }
 
-:where(html[data-layout="mobile"]) .modal {
+:where(html[data-sb-app-layout="mobile"]) .modal {
   width: 100%;
   left: 0;
   top: 0.3125rem;
@@ -1290,7 +1291,7 @@
   box-shadow: none;
 }
 
-:where(html[data-layout="mobile"]) .translationSettingsModal {
+:where(html[data-sb-app-layout="mobile"]) .translationSettingsModal {
   top: 3.4375rem;
   padding: 0px 0.625rem;
   height: fit-content;
@@ -1306,7 +1307,7 @@
   border-radius: var(--sb-radius-sm);
 }
 
-:where(html[data-layout="mobile"]) .translationInfoModal {
+:where(html[data-sb-app-layout="mobile"]) .translationInfoModal {
   width: 15.625rem;
   height: fit-content;
   border-radius: var(--sb-radius-sm);
@@ -1323,7 +1324,7 @@
  * screen; the delete confirmation must stay a centered dialog, so it restores
  * its own box.
    */
-:where(html[data-layout="mobile"]) .translationDeleteModal {
+:where(html[data-sb-app-layout="mobile"]) .translationDeleteModal {
   top: 50%;
   left: 50%;
   width: calc(100% - 2.5rem);
@@ -1337,13 +1338,15 @@
     );
 }
 
-:where(html[data-layout="mobile"]) .footer {
+:where(html[data-sb-app-layout="mobile"]) .footer {
   bottom: -2.8125rem;
 }
 
 /* BibleSelector's testament columns stack full-width on mobile. Migrated from
    the former global legacy.css. */
-:where(html[data-layout="mobile"]) .books-container .testament-container {
+:where(html[data-sb-app-layout="mobile"])
+  .books-container
+  .testament-container {
   width: 100%;
   color: var(--sb-font-color);
 }

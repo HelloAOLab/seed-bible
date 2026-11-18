@@ -160,6 +160,6 @@
   }
 }
 
-:where(html[data-layout="mobile"]) .sb-about-actions {
+:where(html[data-sb-app-layout="mobile"]) .sb-about-actions {
   padding-bottom: 4rem;
 }

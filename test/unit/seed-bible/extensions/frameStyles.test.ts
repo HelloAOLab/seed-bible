@@ -26,10 +26,10 @@ describe("the frame's page styles", () => {
       channel.port2.close();
     }
     document.head.innerHTML = "";
-    document.documentElement.removeAttribute("data-layout");
+    document.documentElement.removeAttribute("data-sb-app-layout");
   });
 
-  // Shared components' phone styles key off `<html data-layout>`, and the
+  // Shared components' phone styles key off `<html data-sb-app-layout>`, and the
   // frame has its own `<html>`, so it needs the app's layout copied in.
   it("mark the frame's <html> with the app's layout, and follow it when it changes", async () => {
     const channel = new MessageChannel();
@@ -42,12 +42,12 @@ describe("the frame's page styles", () => {
       optional: [],
       state: { ...STATE, isMobile: true },
     });
-    expect(document.documentElement.dataset.layout).toBe("mobile");
+    expect(document.documentElement.dataset.sbAppLayout).toBe("mobile");
 
     channel.port1.postMessage({ type: "state", state: { isMobile: false } });
 
     await vi.waitFor(() =>
-      expect(document.documentElement.dataset.layout).toBe("desktop")
+      expect(document.documentElement.dataset.sbAppLayout).toBe("desktop")
     );
   });
 

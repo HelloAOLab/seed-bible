@@ -50,7 +50,7 @@
 /* The reader toolbar floats over the bottom of the pane, so leave room to
    scroll "Log out" clear of it. On phones the pane already stops above it
    (see PaneLayout.css). */
-:where(html:not([data-layout="mobile"])) .sb-profile-screen {
+:where(html:not([data-sb-app-layout="mobile"])) .sb-profile-screen {
   padding-bottom: var(--sb-reader-bottom-inset, 6rem);
 }
 

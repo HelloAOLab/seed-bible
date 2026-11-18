@@ -648,7 +648,7 @@
   animation: sb-reader-toolbar-typing-pulse 1.4s ease-out infinite;
 }
 
-:where(html[data-layout="mobile"]) .sb-reader-toolbar-wrap {
+:where(html[data-sb-app-layout="mobile"]) .sb-reader-toolbar-wrap {
   position: fixed;
   /* Pinned to both edges rather than centered with translateX(-50%): at
    * fractional device-pixel widths (e.g. 125% display scaling) the
@@ -663,13 +663,13 @@
   z-index: calc(var(--sb-layer-chrome) + 1);
 }
 
-:where(html[data-layout="mobile"]) .sb-action-btns {
+:where(html[data-sb-app-layout="mobile"]) .sb-action-btns {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout {
   position: static;
   transform: none;
@@ -687,7 +687,7 @@
   box-shadow: none;
 }
 
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
   .sb-reader-toolbar-item {
   flex: 1 1 0;
@@ -695,7 +695,7 @@
   min-width: 0;
 }
 
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
   .sb-reader-toolbar-mobile-tab {
   display: flex;
@@ -704,7 +704,7 @@
   flex-basis: auto;
 }
 
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
   .sb-reader-toolbar-mobile-tab-button {
   flex: 1;
@@ -726,7 +726,7 @@
  * a tap, and (being more specific than the active rule) it would otherwise
  * override the active tab's theme color back to the dark font color — which
  * left the label black while the icon stayed colored. */
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
   .sb-reader-toolbar-mobile-tab-button:hover:not(:disabled):not(
     .sb-reader-toolbar-mobile-tab-button-active
@@ -735,13 +735,13 @@
   color: var(--sb-font-color);
 }
 
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
   .sb-reader-toolbar-mobile-tab-button-active {
   color: var(--sb-primary-color);
 }
 
-:where(html[data-layout="mobile"]) .sb-reader-toolbar-mobile-tab-icon {
+:where(html[data-sb-app-layout="mobile"]) .sb-reader-toolbar-mobile-tab-icon {
   font-size: 1.5rem;
   line-height: 1;
   flex-shrink: 0;
@@ -751,10 +751,10 @@
   height: 1.5rem;
 }
 
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-reader-toolbar-mobile-tab-icon-custom
   > img,
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-reader-toolbar-mobile-tab-icon-custom
   > svg {
   display: block;
@@ -762,7 +762,7 @@
   max-height: 1.5rem;
 }
 
-:where(html[data-layout="mobile"]) .sb-reader-toolbar-mobile-tab-label {
+:where(html[data-sb-app-layout="mobile"]) .sb-reader-toolbar-mobile-tab-label {
   font-size: var(--sb-reader-toolbar-mobile-tabs-label-font-size);
   font-weight: 500;
   text-align: center;
@@ -770,7 +770,7 @@
   color: inherit;
 }
 
-:where(html[data-layout="mobile"]) .sb-reader-toolbar-floating-button {
+:where(html[data-sb-app-layout="mobile"]) .sb-reader-toolbar-floating-button {
   position: absolute;
   top: var(--sb-reader-toolbar-floating-button-top);
   display: inline-flex;
@@ -788,11 +788,13 @@
   -webkit-user-select: none;
 }
 
-:where(html[data-layout="mobile"]) .sb-reader-toolbar-floating-button-left {
+:where(html[data-sb-app-layout="mobile"])
+  .sb-reader-toolbar-floating-button-left {
   inset-inline-start: var(--sb-reader-toolbar-floating-button-side-offset);
 }
 
-:where(html[data-layout="mobile"]) .sb-reader-toolbar-floating-button-right {
+:where(html[data-sb-app-layout="mobile"])
+  .sb-reader-toolbar-floating-button-right {
   inset-inline-end: var(--sb-reader-toolbar-floating-button-side-offset);
 }
 
@@ -802,7 +804,7 @@
  * bar — which sits directly above the toolbar at `bottom: 100%` — lands
  * flush at the bottom and stays visible, taking the toolbar's place.
  * Scrolling back up removes the body class and both slide back. */
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   body.sb-scroll-hide-bars
   .sb-reader-toolbar-wrap {
   transform: translateY(100%);

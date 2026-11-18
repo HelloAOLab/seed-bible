@@ -124,7 +124,7 @@
    also uses at any frame width. Only the desktop layout widens it. `:where()`
    keeps this at the base rule's specificity, so more specific reader rules
    still win as they did before. */
-:where(html:not([data-layout="mobile"]))
+:where(html:not([data-sb-app-layout="mobile"]))
   :where(.sb-app-root:not(.sb-embed-minimal))
   .sb-bible-reader {
   width: auto;
@@ -653,7 +653,7 @@
 /* Desktop drops the phone/embed side padding set on `.sb-chapter-content`.
    `:where()` keeps this at the base rule's specificity so the gutter rules
    (`-presence`, `-note-gutter`) still override it. */
-:where(html:not([data-layout="mobile"]))
+:where(html:not([data-sb-app-layout="mobile"]))
   :where(.sb-app-root:not(.sb-embed-minimal))
   .sb-chapter-content {
   padding-inline: 0;

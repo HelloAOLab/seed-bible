@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 
-// Phone-vs-desktop styles read `<html data-layout>` (see
+// Phone-vs-desktop styles read `<html data-sb-app-layout>` (see
 // `app/layoutAttribute.ts`) instead of checking the window width themselves,
 // so they can't disagree with `isMobile` about which layout is showing. A new
 // `@media (max-width: 480px)` would bring that disagreement back.
@@ -77,8 +77,8 @@ describe("phone breakpoint media queries", () => {
       );
     });
 
-    // Use `:where(html[data-layout="mobile"]) .x` (or
-    // `:where(html:not([data-layout="mobile"])) .x` for desktop) instead.
+    // Use `:where(html[data-sb-app-layout="mobile"]) .x` (or
+    // `:where(html:not([data-sb-app-layout="mobile"])) .x` for desktop) instead.
     expect(offenders).toEqual([]);
   });
 

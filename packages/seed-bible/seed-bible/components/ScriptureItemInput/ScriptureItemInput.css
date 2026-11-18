@@ -53,7 +53,7 @@
   cursor: pointer;
 }
 
-:where(html[data-layout="mobile"]) .sb-scripture-chapter-button {
+:where(html[data-sb-app-layout="mobile"]) .sb-scripture-chapter-button {
   min-width: 4rem;
   min-height: 4rem;
 }

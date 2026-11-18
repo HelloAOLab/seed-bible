@@ -3,7 +3,7 @@
   opacity: 0;
 }
 
-:where(html[data-layout="mobile"]) .sb-tabs-sidebar {
+:where(html[data-sb-app-layout="mobile"]) .sb-tabs-sidebar {
   display: none;
 }
 

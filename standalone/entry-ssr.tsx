@@ -88,7 +88,7 @@ export interface RenderOptions {
    * - `<!--META-->` where any additional meta tags should be injected (optional).
    * - `<!-- HTML_LANG -->` inside the root `<html lang="...">` attribute,
    *   where the detected page language should be injected.
-   * - `<!-- HTML_LAYOUT -->` inside the root `<html data-layout="...">`
+   * - `<!-- HTML_LAYOUT -->` inside the root `<html data-sb-app-layout="...">`
    *   attribute, where the layout the markup was rendered for goes (see
    *   `app/layoutAttribute.ts`), so the first paint's styles match it.
    *

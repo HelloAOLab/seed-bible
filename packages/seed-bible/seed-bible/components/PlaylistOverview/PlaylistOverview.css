@@ -98,11 +98,11 @@
 /* Wider than a phone, the pane runs under the app's floating navigation bar
    (a phone's pane stops above its bottom bar instead), so the Start button is
    lifted clear of it. A compact embed has no such bar. */
-:where(html:not([data-layout="mobile"])) .sb-playlist-page-footer {
+:where(html:not([data-sb-app-layout="mobile"])) .sb-playlist-page-footer {
   padding-bottom: 5.5rem;
 }
 
-:where(html:not([data-layout="mobile"]))
+:where(html:not([data-sb-app-layout="mobile"]))
   .sb-embed-minimal
   .sb-playlist-page-footer {
   padding-bottom: 0.75rem;
@@ -110,11 +110,12 @@
 
 /* With no button below (the playing list on a wider screen), the steps
    themselves need to scroll clear of that bar. */
-:where(html:not([data-layout="mobile"])) .sb-playlist-page-body:last-child {
+:where(html:not([data-sb-app-layout="mobile"]))
+  .sb-playlist-page-body:last-child {
   padding-bottom: 5.5rem;
 }
 
-:where(html:not([data-layout="mobile"]))
+:where(html:not([data-sb-app-layout="mobile"]))
   .sb-embed-minimal
   .sb-playlist-page-body:last-child {
   padding-bottom: 1rem;
@@ -180,7 +181,7 @@
    it. Hidden, it gives back its width and the row's gap after it (the
    negative margin), sliding open rather than jumping when it's revealed. */
 @media (hover: hover) {
-  :where(html:not([data-layout="mobile"]))
+  :where(html:not([data-sb-app-layout="mobile"]))
     .sb-playlist-page-item
     > .sb-discover-item-drag-handle {
     box-sizing: border-box;
@@ -194,7 +195,7 @@
       visibility 0s;
   }
 
-  :where(html:not([data-layout="mobile"]))
+  :where(html:not([data-sb-app-layout="mobile"]))
     .sb-playlist-page-item:not(
       :hover,
       :has(:focus-visible),

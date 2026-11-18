@@ -973,27 +973,27 @@
   opacity: 0.8;
 }
 
-:where(html[data-layout="mobile"]) .sb-today-content,
-:where(html[data-layout="mobile"]) .sb-today-welcome-screen {
+:where(html[data-sb-app-layout="mobile"]) .sb-today-content,
+:where(html[data-sb-app-layout="mobile"]) .sb-today-welcome-screen {
   margin-top: 1rem;
   gap: 1rem;
 }
-:where(html[data-layout="mobile"]) .sb-today-header > h1 {
+:where(html[data-sb-app-layout="mobile"]) .sb-today-header > h1 {
   font-size: var(--sb-font-size-20);
 }
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-welcome-screen
   .sb-today-welcome-screen-navigation {
   flex-direction: column-reverse;
   align-items: stretch;
   gap: 1rem;
 }
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-welcome-screen
   .sb-today-welcome-screen-actions {
   align-items: stretch;
 }
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-welcome-screen
   .sb-today-welcome-screen-tour-button {
   height: 3rem;
@@ -1005,29 +1005,29 @@
    width once enabled. `100%` rather than `none`: the disabled state
    transitions from `0`, and CSS can't animate a length to the keyword
    `none` (it just jumps), so the reveal wouldn't actually grow in here. */
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-welcome-screen
   .sb-today-welcome-screen-start-button {
   margin-left: 0;
   max-width: 100%;
 }
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-welcome-screen
   .sb-today-welcome-screen-greeting {
   font-size: var(--sb-font-size-32);
 }
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-welcome-screen
   .sb-today-welcome-screen-book {
   font-size: var(--sb-font-size-16);
 }
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-welcome-screen
   .sb-today-welcome-screen-navigation
   > button {
   height: 3rem;
 }
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-container
   .sb-today-bookmarks-section
   .sb-today-bookmarks-section-bookmark {
@@ -1037,7 +1037,7 @@
   font-size: var(--sb-font-size-13);
 }
 /* A touch smaller on a phone than the shared search bar's own sizes. */
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-container
   .sb-today-search-container
   .sb-today-searchbar {
@@ -1054,7 +1054,7 @@
   }
 }
 
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-container
   .sb-today-bookmarks-section
   .sb-today-bookmarks-section-container {
@@ -1063,14 +1063,14 @@
   overflow-x: scroll;
   scrollbar-width: none;
 }
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-container
   .sb-today-search-container
   .sb-today-book-selector-button {
   font-size: var(--sb-font-size-14);
   padding: 0.4rem 0.65rem;
 }
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-container
   .sb-today-feed-card
   .sb-today-feed-kind-option {
@@ -1080,21 +1080,23 @@
   min-width: 3.25rem;
 }
 
-:where(html[data-layout="mobile"]) .sb-today-container .sb-today-feed-sentence,
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-container
+  .sb-today-feed-sentence,
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-container
   .sb-today-feed-note-text {
   font-size: var(--sb-font-size-14);
 }
 
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-container
   .sb-today-feed-row-note
   > .sb-today-feed-time {
   line-height: calc(0.875rem * 1.4);
 }
 
-:where(html[data-layout="mobile"])
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-container
   .sb-today-titled-section
   .sb-today-titled-section-header

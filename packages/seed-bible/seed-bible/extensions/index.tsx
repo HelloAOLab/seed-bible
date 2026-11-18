@@ -97,7 +97,7 @@ export type {
   SandboxSave,
   SandboxSessionParticipant,
 } from "./protocol";
-import { layoutAttribute } from "../app/layoutAttribute";
+import { LAYOUT_ATTRIBUTE, layoutAttribute } from "../app/layoutAttribute";
 export type {
   SandboxIcon,
   SandboxJsonValue,
@@ -942,7 +942,10 @@ function applyDocumentState(state: SandboxState) {
   }
   document.documentElement.lang = state.language;
   document.documentElement.dir = state.direction;
-  document.documentElement.dataset.layout = layoutAttribute(state.isMobile);
+  document.documentElement.setAttribute(
+    LAYOUT_ATTRIBUTE,
+    layoutAttribute(state.isMobile)
+  );
 }
 
 /**

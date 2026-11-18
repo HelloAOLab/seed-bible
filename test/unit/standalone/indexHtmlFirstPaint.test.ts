@@ -18,6 +18,8 @@ import {
   READER_SETTINGS_MIRROR_KEY,
   UI_SIZE_SCALE_MAP,
 } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
+import { LAYOUT_ATTRIBUTE } from "@packages/seed-bible/seed-bible/app/layoutAttribute";
+import { MOBILE_BREAKPOINT } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   DARK_THEME,
   generateThemeCssVariables,
@@ -373,6 +375,61 @@ describe("index.html early config script: scripture font", () => {
 
     expect(html.style.getPropertyValue(FONT_OVERRIDE_VAR)).toBe("");
     expect(html.hasAttribute("data-sb-early-config")).toBe(false);
+  });
+});
+
+describe("index.html layout fallback script", () => {
+  function layoutFallbackScript(): string {
+    const script = Array.from(
+      indexHtml.matchAll(/<script>([\s\S]*?)<\/script>/g),
+      (match) => match[1]!
+    ).find((body) => body.includes(LAYOUT_ATTRIBUTE));
+    if (!script) throw new Error("index.html has no layout fallback script");
+    return script;
+  }
+
+  /** Loads a page whose `<html>` came with `layout` and runs the script. */
+  function runLayoutFallback(
+    layout: string,
+    windowWidth: number
+  ): string | null {
+    document.documentElement.setAttribute(LAYOUT_ATTRIBUTE, layout);
+    Object.defineProperty(window, "innerWidth", {
+      value: windowWidth,
+      configurable: true,
+    });
+    new Function(layoutFallbackScript())();
+    return document.documentElement.getAttribute(LAYOUT_ATTRIBUTE);
+  }
+
+  const originalWidth = window.innerWidth;
+  afterEach(() => {
+    document.documentElement.removeAttribute(LAYOUT_ATTRIBUTE);
+    Object.defineProperty(window, "innerWidth", {
+      value: originalWidth,
+      configurable: true,
+    });
+  });
+
+  // A branch preview rendered by an older build, or the unrendered page sent
+  // when rendering fails, leaves the server's placeholder in the attribute.
+  it("picks the phone layout from the window width when the server didn't fill it in", () => {
+    expect(runLayoutFallback("<!-- HTML_LAYOUT -->", MOBILE_BREAKPOINT)).toBe(
+      "mobile"
+    );
+  });
+
+  it("picks the desktop layout just above the phone breakpoint", () => {
+    expect(
+      runLayoutFallback("<!-- HTML_LAYOUT -->", MOBILE_BREAKPOINT + 1)
+    ).toBe("desktop");
+  });
+
+  // The server's answer matches the markup it rendered, so the first paint
+  // keeps it even when the window disagrees; the app corrects it after mount.
+  it("keeps the layout the server wrote, whatever the window width", () => {
+    expect(runLayoutFallback("desktop", 400)).toBe("desktop");
+    expect(runLayoutFallback("mobile", 1200)).toBe("mobile");
   });
 });
 

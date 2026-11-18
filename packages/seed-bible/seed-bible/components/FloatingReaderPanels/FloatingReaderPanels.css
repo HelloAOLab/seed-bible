@@ -258,7 +258,7 @@
    Keeping it off the top of the screen also leaves the reader above the sheet
    visible and tappable, so the app never feels frozen — tapping a reader
    control closes search (via the outside-tap handler) and activates it. */
-:where(html[data-layout="mobile"]) .sb-floating-search-panel {
+:where(html[data-sb-app-layout="mobile"]) .sb-floating-search-panel {
   left: 0;
   right: 0;
   top: auto;
@@ -725,7 +725,7 @@
    another between the composer and the tabs. Stretch between the top of
    the viewport and the toolbar instead — same 4.375rem inset the
    fullscreen panes use. */
-:where(html[data-layout="mobile"]) .sb-floating-chat-panel {
+:where(html[data-sb-app-layout="mobile"]) .sb-floating-chat-panel {
   inset: 0 0 4.375rem;
   transform: none;
   width: auto;

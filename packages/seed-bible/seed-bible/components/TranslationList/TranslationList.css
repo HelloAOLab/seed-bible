@@ -180,7 +180,7 @@
 
 /* Inside the reader's modal the list fills the remaining height instead of
    using its own fixed height. */
-:where(html[data-layout="mobile"]) .modal .sb-translation-list {
+:where(html[data-sb-app-layout="mobile"]) .modal .sb-translation-list {
   height: calc(100% - 1.25rem);
 }
 
