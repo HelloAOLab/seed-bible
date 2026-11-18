@@ -6,8 +6,10 @@
   inset: 0;
   background: var(--sb-backdrop);
   /* A sheet with a backdrop blocks the page, so it belongs to the modal
-   * layer. The sheet comes later in the DOM, so it is on top. */
-  z-index: var(--sb-layer-modal);
+   * layer, level with the sheet and with a dialog's backdrop: whichever window
+   * opened last is on top, dimmed background included. The sheet comes after
+   * its backdrop in the DOM, so it is on top of it. */
+  z-index: calc(var(--sb-layer-modal) + 1);
   touch-action: none;
 }
 
