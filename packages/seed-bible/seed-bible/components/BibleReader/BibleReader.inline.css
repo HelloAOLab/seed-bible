@@ -1063,102 +1063,15 @@
   margin-bottom: 1.5em;
 }
 
-.sb-footnote-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: var(--sb-layer-modal);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  box-sizing: border-box;
-}
-
-/* The dimmed backdrop and the modal on it fade in together (the modal is the
-   overlay's child, so fading the overlay fades both), while the modal rises
-   from below like the desktop book selector. */
-@media (prefers-reduced-motion: no-preference) {
-  .sb-footnote-modal-overlay {
-    animation: sb-modal-fade-in var(--sb-duration-slow) ease-out;
-  }
-
-  .sb-footnote-modal {
-    animation: sb-modal-rise var(--sb-duration-slow) ease-out;
-  }
-}
-
-@keyframes sb-modal-fade-in {
-  from {
-    opacity: 0;
-  }
-}
-
-@keyframes sb-modal-rise {
-  from {
-    transform: translateY(50%);
-  }
-}
-
-.sb-footnote-modal {
-  width: min(28.4375rem, 100%);
-  max-height: min(40rem, calc(100dvh - 2rem));
-  background: var(--sb-reader-background);
-  color: var(--sb-font-color);
-  display: flex;
-  flex-direction: column;
-  padding: 1.125rem 1rem 1.5rem;
-  box-sizing: border-box;
-  border-radius: var(--sb-radius-xl);
-  /* Just a hairline: the shadow is what lifts the modal off the page. */
-  border: 1px solid var(--sb-divider-color);
-  box-shadow: var(--sb-shadow-modal);
-}
-
-.sb-footnote-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--sb-divider-color);
-  padding-bottom: 0.625rem;
-}
-
-.sb-footnote-modal-title {
-  margin: 0;
-  font-family: var(--sb-chapter-heading-font-family), sans-serif;
-  font-size: 1.4em;
-  color: var(--sb-chapter-heading-font-color);
-}
-
-.sb-footnote-modal-content {
-  margin-top: 1rem;
-  font-family: var(--sb-font-family);
-  color: var(--sb-font-color);
-  line-height: 1.6;
-  overflow: auto;
-}
-
-.sb-footnote-modal-footer {
-  flex-shrink: 0;
-  margin-top: 1rem;
-}
-
-.sb-footnote-modal-content .sb-verse-reference-link {
+.sb-footnote-dialog .sb-verse-reference-link {
   color: var(--sb-primary-color);
   text-decoration: underline;
   text-underline-offset: 0.15em;
   cursor: pointer;
 }
 
-.sb-footnote-modal-content .sb-verse-reference-link:hover {
+.sb-footnote-dialog .sb-verse-reference-link:hover {
   color: color-mix(in srgb, var(--sb-primary-color), var(--sb-font-color) 20%);
-}
-
-.sb-footnote-modal-reference {
-  margin: 0 0 0.625rem 0;
-  font-family: var(--sb-font-family);
-  color: var(--sb-font-color);
-  font-weight: 600;
 }
 
 .sb-verse-decoration-highlight {

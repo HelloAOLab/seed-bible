@@ -5704,7 +5704,7 @@ describe("BibleReader", () => {
     });
 
     expect(container.querySelector(".sb-inline-footnote-button")).toBeNull();
-    expect(container.querySelector(".sb-footnote-modal")).toBeNull();
+    expect(document.querySelector(".sb-footnote-dialog")).toBeNull();
   });
 
   it("hides highlight classes/styles when scriptureElements.showHighlights is false", () => {
@@ -5835,16 +5835,17 @@ describe("BibleReader", () => {
       );
     });
 
-    expect(
-      container.querySelector(".sb-footnote-modal-title")?.textContent
-    ).toContain("Genesis 1:1");
-    expect(
-      container.querySelector(".sb-footnote-modal-content")?.textContent
-    ).toContain("Footnote text");
+    const dialog = document.querySelector<HTMLElement>(".sb-footnote-dialog");
+    expect(dialog?.getAttribute("role")).toBe("dialog");
+    expect(dialog?.querySelector(".sb-dialog-title")?.textContent).toContain(
+      "Genesis 1:1"
+    );
+    expect(dialog?.querySelector(".sb-dialog-body")?.textContent).toContain(
+      "Footnote text"
+    );
 
-    const closeButton = container.querySelector(
-      ".sb-footnote-modal-close"
-    ) as HTMLButtonElement | null;
+    const closeButton =
+      dialog?.querySelector<HTMLButtonElement>(".sb-dialog-close");
     expect(closeButton).not.toBeNull();
 
     act(() => {
@@ -5852,6 +5853,60 @@ describe("BibleReader", () => {
     });
 
     expect(selectFootnote).toHaveBeenCalledWith(null);
+  });
+
+  function renderOpenFootnote(
+    change: (fixture: ReaderFixture) => void = () => {}
+  ) {
+    const fixture = createFixture();
+    change(fixture);
+    fixture.selectedFootnote.value = {
+      chapter: fixture.chapterData.value!,
+      verse: null,
+      note: { noteId: 7, text: "Footnote text", caller: "+" },
+    };
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={fixture.slot}
+          selectorState={fixture.selectorState}
+          readingState={fixture.readingState}
+        />,
+        container
+      );
+    });
+    return fixture;
+  }
+
+  it("closes the footnote on Escape", () => {
+    const { selectFootnote } = renderOpenFootnote();
+    const dialog = document.querySelector<HTMLElement>(".sb-footnote-dialog")!;
+
+    act(() => {
+      dialog.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    expect(selectFootnote).toHaveBeenCalledWith(null);
+  });
+
+  it("shows the footnote at the reader's text size and in the translation's direction", () => {
+    renderOpenFootnote(({ chapterData }) => {
+      const chapter = chapterData.value!;
+      chapterData.value = {
+        ...chapter,
+        translation: { ...chapter.translation, textDirection: "rtl" },
+      };
+    });
+    const text = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="dialog"] *')
+    ).findLast((el) => el.textContent === "Footnote text")!;
+
+    expect(
+      text.closest('[class*="sb-reader-font-size-"]')?.classList
+    ).toContain("sb-reader-font-size-m");
+    expect(text.closest("[dir]")?.getAttribute("dir")).toBe("rtl");
   });
 
   it("makes scripture references in footnote text clickable", () => {
@@ -5928,7 +5983,7 @@ describe("BibleReader", () => {
     });
 
     const links = Array.from(
-      container.querySelectorAll(".sb-verse-reference-link")
+      document.querySelectorAll(".sb-footnote-dialog .sb-verse-reference-link")
     ) as HTMLAnchorElement[];
     expect(links).toHaveLength(2);
     expect(links[0]?.textContent).toBe("John 3:16");
@@ -7920,9 +7975,10 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
           };
         });
         expect(
-          container.querySelector(".sb-footnote-modal-content")?.textContent
+          document.querySelector(".sb-footnote-dialog .sb-dialog-body")
+            ?.textContent
         ).toContain("Footnote text");
-        click(container.querySelector(".sb-footnote-modal-close"));
+        click(document.querySelector(".sb-footnote-dialog .sb-dialog-close"));
         expect(second.readingState.selectFootnote).toHaveBeenCalledWith(null);
       });
 

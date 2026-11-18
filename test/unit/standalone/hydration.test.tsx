@@ -317,6 +317,35 @@ describe("client hydration", () => {
     );
   });
 
+  // A link to the terms has the server draw them open, so the policy text is
+  // in the page before any script runs; the browser must keep that dialog
+  // where the server put it rather than drawing its own somewhere else.
+  it("server-renders a link to the terms with them open and hydrates onto it without changing the DOM", async () => {
+    const { container, beforeHtml } = await installSsrDocument(
+      `${PATH}&terms=open`
+    );
+    expect(beforeHtml).toContain("AO Lab Web Services Terms of Service");
+
+    const { config, state } = await createClientState();
+    expect(state.isTermsOpen.value).toBe(true);
+    expect(
+      decideHydration({
+        config,
+        pathname: location.pathname,
+        search: location.search,
+        container,
+        clientCommit: __GIT_COMMIT__,
+      })
+    ).toEqual({ hydrate: true });
+
+    hydrate(<Main initialState={state} config={config} />, container);
+
+    expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
+    expect(normalizeKnownSsrClientDivergences(container.innerHTML)).toBe(
+      normalizeKnownSsrClientDivergences(beforeHtml)
+    );
+  });
+
   it("hydrates cleanly when the visitor already has this chapter's tab saved", async () => {
     // The reported repro: load a chapter, then refresh. The refresh finds an
     // `sb-tabs-state` entry describing the tab the previous load persisted.

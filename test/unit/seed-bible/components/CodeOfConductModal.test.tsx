@@ -32,7 +32,7 @@ describe("CodeOfConductModal", () => {
       );
     });
 
-    expect(container.querySelector(".sb-tos-modal")).toBeNull();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 
   it("loads and renders the real code of conduct text when opened", async () => {
@@ -61,5 +61,35 @@ describe("CodeOfConductModal", () => {
     expect(content?.textContent).toContain(
       "AO Lab Web Services Acceptable Use Policy"
     );
+  });
+
+  it("is a dialog named by its title that closes on Escape", async () => {
+    const state = await createTestSeedBibleState();
+    const onClose = vi.fn();
+
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <CodeOfConductModal isOpen={true} onClose={onClose} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const dialog = container.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    const titleId = dialog.getAttribute("aria-labelledby")!;
+    expect(document.getElementById(titleId)?.textContent).toBe(
+      "Code of conduct"
+    );
+    expect(dialog.contains(document.activeElement)).toBe(true);
+
+    act(() => {
+      dialog.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

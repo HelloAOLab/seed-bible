@@ -2,8 +2,7 @@ import { useEffect } from "preact/hooks";
 import { signal } from "@preact/signals";
 import type { i18n as I18nInstance } from "i18next";
 import { useI18n } from "../../i18n/I18nManager";
-import { useOverlayDismiss } from "../useOverlayDismiss";
-import { CloseButton } from "../CloseButton/CloseButton";
+import { Dialog } from "../Dialog/Dialog";
 
 /**
  * Tracks which languages have had their Privacy Policy bundle loaded into i18n.
@@ -84,8 +83,6 @@ export function PrivacyPolicyModal({
     }
   }, [isOpen, language]);
 
-  const overlayDismiss = useOverlayDismiss(onClose);
-
   if (!isOpen) {
     return null;
   }
@@ -93,39 +90,19 @@ export function PrivacyPolicyModal({
   const title = t("privacy-policy", { defaultValue: "Privacy policy" });
 
   return (
-    <div
-      className="sb-footnote-modal-overlay"
-      {...overlayDismiss}
-      onKeyDown={(event: KeyboardEvent) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          onClose();
-        }
-      }}
-    >
+    // Drawn in place, not at the end of <body>: a `?privacy=open` link has
+    // the server draw it, and the first render here has to match that.
+    <Dialog title={title} onClose={onClose} portal={false}>
       <div
-        className="sb-footnote-modal sb-tos-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(event: MouseEvent) => event.stopPropagation()}
-      >
-        <div className="sb-footnote-modal-header">
-          <h3 className="sb-footnote-modal-title">{title}</h3>
-          <CloseButton className="sb-footnote-modal-close" onClose={onClose} />
-        </div>
-
-        <div
-          className="sb-footnote-modal-content sb-tos-content"
-          dangerouslySetInnerHTML={{
-            // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
-            __html: t("privacy-policy-policy", {
-              ns: "privacy-policy",
-              defaultValue: "",
-            }),
-          }}
-        />
-      </div>
-    </div>
+        className="sb-tos-content"
+        dangerouslySetInnerHTML={{
+          // eslint-disable-next-line seed-bible-i18n/translation-missing-keys
+          __html: t("privacy-policy-policy", {
+            ns: "privacy-policy",
+            defaultValue: "",
+          }),
+        }}
+      />
+    </Dialog>
   );
 }

@@ -2423,7 +2423,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       if (target.closest(".sb-tool-context-menu")) return;
       if (
         target.closest(
-          ".sb-dialog-backdrop, .sb-bottom-sheet-backdrop, .sb-bottom-sheet-modal, .sb-footnote-modal-overlay"
+          ".sb-dialog-backdrop, .sb-bottom-sheet-backdrop, .sb-bottom-sheet-modal"
         )
       )
         return;

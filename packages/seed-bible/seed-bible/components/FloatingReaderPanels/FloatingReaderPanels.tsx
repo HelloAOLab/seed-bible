@@ -741,7 +741,7 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       // chat.
       if (
         target.closest(
-          ".sb-dialog-backdrop, .sb-bottom-sheet-backdrop, .sb-bottom-sheet-modal, .sb-footnote-modal-overlay"
+          ".sb-dialog-backdrop, .sb-bottom-sheet-backdrop, .sb-bottom-sheet-modal"
         )
       )
         return;

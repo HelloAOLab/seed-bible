@@ -71,7 +71,8 @@
   line-height: 1.6;
 }
 
-.sb-dialog-header-untitled + .sb-dialog-body {
+.sb-dialog-header-untitled + .sb-dialog-body,
+.sb-dialog-body:first-child {
   margin-top: 0;
 }
 

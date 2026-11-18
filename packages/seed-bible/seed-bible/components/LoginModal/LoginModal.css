@@ -1,8 +1,7 @@
 /* Login modal -------------------------------------------------------------- */
 
 .sb-login-modal {
-  width: min(26.25rem, 100%);
-  max-height: min(40rem, calc(100dvh - 2rem));
+  --sb-dialog-width: min(26.25rem, 100%);
 }
 
 .sb-login-modal-body {
@@ -10,7 +9,6 @@
   flex-direction: column;
   gap: 1.25rem;
   padding: 0.5rem 0.75rem;
-  overflow: auto;
 }
 
 .sb-login-header {

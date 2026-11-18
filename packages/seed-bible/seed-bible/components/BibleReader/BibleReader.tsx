@@ -72,7 +72,6 @@ import {
 } from "../../managers/SessionsManager";
 import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
 import { useI18n } from "../../i18n/I18nManager";
-import { useOverlayDismiss } from "../useOverlayDismiss";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon } from "../../components/icons";
@@ -128,7 +127,7 @@ import {
   isPlaylistEditorTab,
   PlaylistReaderHint,
 } from "../PlaylistEditor/PlaylistEditorWorkspace";
-import { CloseButton } from "../CloseButton/CloseButton";
+import { Dialog } from "../Dialog/Dialog";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
 
@@ -3101,12 +3100,6 @@ export function BibleReader(props: BibleReaderProps) {
     selectedFootnote,
     selectFootnote,
   } = readingState;
-  // Set below, once a compare step's second passage (which can have a
-  // footnote open too) is known.
-  const closeFootnoteRef = useRef(() => selectFootnote(null));
-  const footnoteOverlayDismiss = useOverlayDismiss(() =>
-    closeFootnoteRef.current()
-  );
   const readerRootRef = useRef<HTMLDivElement>(null);
 
   if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
@@ -3903,7 +3896,6 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote(null);
     compareReadingState?.selectFootnote(null);
   };
-  closeFootnoteRef.current = closeFootnote;
 
   const renderMainContent = () =>
     comparePage && compareReadingState ? (
@@ -4533,42 +4525,30 @@ export function BibleReader(props: BibleReaderProps) {
       )}
 
       {scriptureElements.showFootnotes && openFootnote && (
-        <div className="sb-footnote-modal-overlay" {...footnoteOverlayDismiss}>
-          <div
-            className="sb-footnote-modal"
-            onClick={(event: MouseEvent) => {
-              event.stopPropagation();
-            }}
-          >
-            <div className="sb-footnote-modal-header">
-              <h3 className="sb-footnote-modal-title">
-                {openFootnote.chapter.book.name}{" "}
-                {openFootnote.chapter.chapter.number}
-                {openFootnote.verse ? ":" + openFootnote.verse.number : ""}
-              </h3>
-              <CloseButton
-                className="sb-footnote-modal-close"
-                label={t("close-footnote", {
-                  defaultValue: "Close footnote",
-                })}
-                onClose={() => {
-                  closeFootnote();
-                }}
-              />
-            </div>
-
-            <div className="sb-footnote-modal-content">
-              <VerseReferenceText
-                text={openFootnote.note.text}
-                books={translationBooks.value?.books}
-                onReferenceClick={(ref) => {
-                  closeFootnote();
-                  void state?.app.openVerseReference(ref);
-                }}
-              />
-            </div>
+        <Dialog
+          // Rendered outside the reader, so it brings the reader's text size.
+          className={`sb-footnote-dialog ${readerFontSizeClass}`}
+          title={
+            <>
+              {openFootnote.chapter.book.name}{" "}
+              {openFootnote.chapter.chapter.number}
+              {openFootnote.verse ? ":" + openFootnote.verse.number : ""}
+            </>
+          }
+          closeLabel={t("close-footnote", { defaultValue: "Close footnote" })}
+          onClose={closeFootnote}
+        >
+          <div dir={translation.value?.textDirection ?? "auto"}>
+            <VerseReferenceText
+              text={openFootnote.note.text}
+              books={translationBooks.value?.books}
+              onReferenceClick={(ref) => {
+                closeFootnote();
+                void state?.app.openVerseReference(ref);
+              }}
+            />
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );
