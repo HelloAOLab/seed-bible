@@ -51,7 +51,8 @@ verse-art/
 ├── index.ts                the entry point; re-exports src/init.tsx
 ├── src/
 │   ├── init.tsx            the extension: a toolbar button that opens a pane
-│   └── init.test.tsx       its tests, using createTestHost
+│   ├── init.test.tsx       its tests, using createTestHost
+│   └── css.d.ts            lets TypeScript accept `import "./panel.css"`
 ├── .github/workflows/
 │   └── deploy-pages.yml    publishes to GitHub Pages on every push to main
 ├── wrangler.jsonc          for hosting on Cloudflare Workers

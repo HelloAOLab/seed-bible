@@ -97,6 +97,7 @@ export type {
   SandboxSave,
   SandboxSessionParticipant,
 } from "./protocol";
+import { LAYOUT_ATTRIBUTE, layoutAttribute } from "../app/layoutAttribute";
 export type {
   SandboxIcon,
   SandboxJsonValue,
@@ -868,8 +869,9 @@ export interface SandboxExtensionDefinition {
   /**
    * The UI for each pane, dialog or settings panel the extension shows, by
    * name. Each renders in its own frame, with the app's theme and fonts
-   * applied, and is destroyed when it closes. Styles must come from the
-   * bundle (inline, or CSS imported with `?inline`).
+   * applied, and is destroyed when it closes. CSS the extension imports, and
+   * the shared components' own, is in the bundle `seed-bible-extension-scripts`
+   * builds, and is on the page before any view renders.
    */
   views?: Record<string, (props: SandboxViewProps) => ComponentChild>;
 }
@@ -918,7 +920,9 @@ function applyDocumentState(state: SandboxState) {
   if (!style) {
     style = document.createElement("style");
     style.id = "sb-theme";
-    document.head.appendChild(style);
+    // First, so the extension's own CSS, which its bundle adds before this
+    // runs, can override the page background and font set here.
+    document.head.prepend(style);
   }
   style.textContent = `:root {\n${state.themeCss}\n}\nhtml, body { margin: 0; background: var(--sb-background); color: var(--sb-font-color); font-family: var(--sb-font-family, system-ui, sans-serif); }`;
   const wanted = new Set(state.fontStylesheets);
@@ -938,6 +942,10 @@ function applyDocumentState(state: SandboxState) {
   }
   document.documentElement.lang = state.language;
   document.documentElement.dir = state.direction;
+  document.documentElement.setAttribute(
+    LAYOUT_ATTRIBUTE,
+    layoutAttribute(state.isMobile)
+  );
 }
 
 /**

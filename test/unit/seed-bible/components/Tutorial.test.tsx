@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
+import { BottomSheet } from "@packages/seed-bible/seed-bible/components/BottomSheet/BottomSheet";
 import { Tutorial } from "@packages/seed-bible/seed-bible/components/Tutorial/Tutorial";
 import type {
   TutorialManager,
@@ -251,5 +252,82 @@ describe("Tutorial — scrolling an off-screen target into view", () => {
     });
 
     expect(scrollIntoViewMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("Tutorial — over a sheet that keeps Tab inside it", () => {
+  let sheetRoot: HTMLDivElement;
+  let tourRoot: HTMLDivElement;
+  const closeSheet = vi.fn();
+
+  beforeEach(() => {
+    sheetRoot = document.createElement("div");
+    tourRoot = document.createElement("div");
+    document.body.append(sheetRoot, tourRoot);
+    act(() =>
+      render(
+        <BottomSheet label="Settings" onClose={closeSheet}>
+          <button type="button">Text size</button>
+        </BottomSheet>,
+        sheetRoot
+      )
+    );
+  });
+
+  afterEach(() => {
+    act(() => render(null, tourRoot));
+    act(() => render(null, sheetRoot));
+    sheetRoot.remove();
+    tourRoot.remove();
+    closeSheet.mockReset();
+  });
+
+  function press(key: string, shiftKey = false) {
+    act(() => {
+      (document.activeElement ?? document.body).dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key,
+          shiftKey,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+  }
+
+  const tip = () => document.querySelector<HTMLElement>(".sb-tour-popover")!;
+  const sheetButton = () =>
+    [...document.querySelectorAll("button")].find(
+      (button) => button.textContent === "Text size"
+    )!;
+
+  it("moves focus to the tip that opens over the sheet, and keeps Tab and Escape there", () => {
+    act(() =>
+      render(<Tutorial tutorial={createFakeTutorial(makeStep())} />, tourRoot)
+    );
+    expect(tip().contains(document.activeElement)).toBe(true);
+
+    // Focus left in the sheet underneath (a click there before the tip) goes
+    // to the tip on the next Tab rather than going round the sheet.
+    sheetButton().focus();
+    press("Tab");
+    expect(tip().contains(document.activeElement)).toBe(true);
+
+    const buttons = tip().querySelectorAll<HTMLElement>("button");
+    buttons[buttons.length - 1]!.focus();
+    press("Tab");
+    expect(document.activeElement).toBe(buttons[0]);
+
+    press("Escape");
+    expect(closeSheet).not.toHaveBeenCalled();
+  });
+
+  it("gives focus back to the sheet when the tip goes away", () => {
+    sheetButton().focus();
+    act(() =>
+      render(<Tutorial tutorial={createFakeTutorial(makeStep())} />, tourRoot)
+    );
+    act(() => render(null, tourRoot));
+    expect(document.activeElement).toBe(sheetButton());
   });
 });

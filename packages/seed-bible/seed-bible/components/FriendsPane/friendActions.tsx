@@ -1,4 +1,5 @@
 import "./FriendsPane.css";
+import "../visuallyHidden.inline.css";
 import { useSignal } from "@preact/signals";
 import type {
   Friend,
@@ -63,7 +64,7 @@ export function CopyButton(props: {
       </Button>
       {/* The label flipping to "Copied" isn't announced on its own. Kept
         outside the button so it doesn't become part of the button's name. */}
-      <span className="sr-only" role="status">
+      <span className="sb-visually-hidden" role="status">
         {copied.value ? t("copied", { defaultValue: "Copied" }) : ""}
       </span>
     </>

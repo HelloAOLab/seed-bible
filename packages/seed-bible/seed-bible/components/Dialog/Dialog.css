@@ -1,0 +1,110 @@
+/* Shared centered dialog. A dialog that needs another size sets the
+ * --sb-dialog-* variables rather than overriding these rules, so the result
+ * doesn't depend on which stylesheet loads last. */
+.sb-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  /* Level with a modal sheet, so whichever is later on the page is on top;
+   * windows that go to the end of <body> get there in the order they open.
+   * One drawn in place inside the app sets --sb-dialog-layer to stay above
+   * them (the login and legal windows). A window opened while one of those
+   * is showing therefore sits under it, though it still takes the keyboard. */
+  z-index: var(--sb-dialog-layer, calc(var(--sb-layer-modal) + 1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: var(--sb-dialog-backdrop, var(--sb-backdrop));
+}
+
+.sb-dialog {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: var(--sb-dialog-width, min(28.4375rem, 100%));
+  height: var(--sb-dialog-height, auto);
+  max-height: var(--sb-dialog-max-height, min(40rem, calc(100dvh - 2rem)));
+  padding: 1.125rem 1rem 1.5rem;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  border-radius: var(--sb-radius-xl);
+  /* Just a hairline: the shadow is what lifts the dialog off the page. */
+  border: 1px solid var(--sb-divider-color);
+  box-shadow: var(--sb-shadow-modal);
+}
+
+.sb-dialog:focus {
+  outline: none;
+}
+
+.sb-dialog-header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid var(--sb-divider-color);
+}
+
+.sb-dialog-header-untitled {
+  justify-content: flex-end;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.sb-dialog-title {
+  margin: 0;
+  font-family: var(--sb-chapter-heading-font-family), sans-serif;
+  font-size: 1.4em;
+  color: var(--sb-chapter-heading-font-color);
+}
+
+.sb-dialog-body {
+  /* Lets the body shrink and scroll inside the dialog's max height, and
+   * stretch when the dialog is given a fixed one. */
+  /* Content that has to fill the body (a pinned action row, an embed) sets
+   * --sb-dialog-body-display: flex and grows to fit. */
+  display: var(--sb-dialog-body-display, block);
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 1rem;
+  overflow: auto;
+  font-family: var(--sb-font-family);
+  line-height: 1.6;
+}
+
+.sb-dialog-header-untitled + .sb-dialog-body,
+.sb-dialog-body:first-child {
+  margin-top: 0;
+}
+
+.sb-dialog-footer {
+  flex-shrink: 0;
+  margin-top: 1rem;
+}
+
+/* The dimmed page and the dialog on it fade in together, while the dialog
+ * rises from below. */
+@media (prefers-reduced-motion: no-preference) {
+  .sb-dialog-backdrop {
+    animation: sb-dialog-fade-in var(--sb-duration-slow) ease-out;
+  }
+
+  .sb-dialog {
+    animation: sb-dialog-rise var(--sb-duration-slow) ease-out;
+  }
+}
+
+@keyframes sb-dialog-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sb-dialog-rise {
+  from {
+    transform: translateY(50%);
+  }
+}

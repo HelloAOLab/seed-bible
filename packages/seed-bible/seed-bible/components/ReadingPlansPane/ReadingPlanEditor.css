@@ -162,18 +162,7 @@
 /* Cadences are a multi-select — an author can offer several paces for the same
    plan — so they get a checkbox rather than the radio the pace picker uses. The
    native input is kept for keyboard and screen-reader use and visually replaced
-   by .sb-rp-choice-box. */
-.sb-rp-choice-checkbox {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
+   by .sb-rp-choice-box (the input is .sb-visually-hidden). */
 
 .sb-rp-choice-box {
   display: flex;
@@ -473,11 +462,9 @@
 /* On mobile the toolbar is a full-width bar pinned to the bottom of the screen
    and the pane is already inset above it (see PaneLayout.css), so only a small
    breathing gap — plus the home indicator — is needed. */
-@media (max-width: 480px) {
-  .sb-rp-editor-footer,
-  .sb-rpd-footer {
-    --rp-toolbar-clearance: env(safe-area-inset-bottom, 0px);
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-rp-editor-footer,
+:where(html[data-sb-app-layout="mobile"]) .sb-rpd-footer {
+  --rp-toolbar-clearance: env(safe-area-inset-bottom, 0px);
 }
 
 .sb-rp-footer-note {

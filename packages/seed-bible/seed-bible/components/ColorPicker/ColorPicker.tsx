@@ -7,8 +7,6 @@ import { useI18n } from "../../i18n/I18nManager";
 import { hexToHsv, hsvToHex, normalizeHex, parseHex, type Hsv } from "./color";
 import { Button } from "../Button/Button";
 
-/** Matches `MOBILE_BREAKPOINT` without importing the state manager. */
-const NARROW_VIEWPORT_PX = 480;
 const POPOVER_GAP_PX = 8;
 const VIEWPORT_MARGIN_PX = 8;
 const PICKER_HOST_ID = "sb-color-picker-host";
@@ -54,6 +52,11 @@ export interface ColorPickerProps {
   onOpenChange?: (open: boolean) => void;
   /** Used to position the popover when `showTrigger` is false. */
   anchorRef?: { current: HTMLElement | null };
+  /**
+   * The app's `isMobile`. In the mobile layout the picker opens as a card
+   * just above the bottom toolbar; otherwise as a popover beside its anchor.
+   */
+  isMobile: boolean;
 }
 
 function clamp(n: number, min: number, max: number): number {
@@ -97,6 +100,7 @@ export function ColorPicker(props: ColorPickerProps) {
     open,
     onOpenChange,
     anchorRef,
+    isMobile,
   } = props;
   const { t } = useI18n();
 
@@ -217,7 +221,7 @@ export function ColorPicker(props: ColorPickerProps) {
       const panel = panelRef.current;
       if (!panel) return;
 
-      if (window.innerWidth <= NARROW_VIEWPORT_PX) {
+      if (isMobile) {
         panelStyle.value = undefined;
         return;
       }
@@ -257,7 +261,7 @@ export function ColorPicker(props: ColorPickerProps) {
       window.removeEventListener("resize", position);
       window.removeEventListener("scroll", position, true);
     };
-  }, [isOpen, showTrigger, anchorRef]);
+  }, [isOpen, showTrigger, anchorRef, isMobile]);
 
   const onSvPointerDown = (event: PointerEvent) => {
     const el = svRef.current;
@@ -360,10 +364,7 @@ export function ColorPicker(props: ColorPickerProps) {
             <div
               ref={panelRef}
               className={`sb-color-picker-dialog${
-                typeof window !== "undefined" &&
-                window.innerWidth <= NARROW_VIEWPORT_PX
-                  ? " sb-color-picker-dialog-sheet"
-                  : ""
+                isMobile ? " sb-color-picker-dialog-card" : ""
               }`}
               style={panelStyle.value}
               role="dialog"

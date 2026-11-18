@@ -23,6 +23,7 @@ import type {
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { AppState } from "../../managers/SeedBibleStateManager";
 import type { Friend, FriendsManager } from "../../managers/FriendsManager";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import { Avatar } from "../Avatar/Avatar";
@@ -75,6 +76,8 @@ interface ReadingPlansPaneProps {
   ) => void;
   /** Shown after a plan share URL is copied. Optional — copy still works without it. */
   toast?: (message: string) => void;
+  /** Lets a plan's Share open the share sheet rather than only copy its link. */
+  app?: AppState;
   /**
    * Returns to the screen that opened the pane, when leaving a plan that screen
    * opened directly. The same callback the header's back button gets.
@@ -236,15 +239,21 @@ export async function openReadingPlanEditor(
 }
 
 /**
- * Opens the editor on a new plan. An in-flight draft is resumed rather than
+ * Opens the editor on a new plan. An in-flight new plan is resumed rather than
  * thrown away — the user may have stepped out of the editor to go read and add
- * a passage from the verse toolbar.
+ * a passage from the verse toolbar. An edit to a published plan is not: the
+ * user asked for a new plan, and the published copy is untouched until saved.
+ *
+ * Exported for the same reason as {@link openReadingPlanDetail}.
  */
-function openPlanCreate(readingPlans: ReadingPlansManager) {
-  if (!readingPlans.editingReadingPlan.peek()) {
+export function openPlanCreate(
+  readingPlans: ReadingPlansManager,
+  options: OpenPlanOptions = {}
+) {
+  if (!readingPlans.editingReadingPlan.peek()?.isNew) {
     readingPlans.startEditingReadingPlan();
   }
-  readingPlansView.value = "edit";
+  showPlan("edit", options);
 }
 
 /**
@@ -393,6 +402,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
     onOpenScripture,
     onPlayReadings,
     toast,
+    app,
     onBack,
   } = props;
   // The view outlives this component, so closing the pane to go read and add a
@@ -446,6 +456,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
         onOpenScripture={onOpenScripture}
         onPlayReadings={onPlayReadings}
         toast={toast}
+        app={app}
         onEdit={() => {
           const plan = readingPlans.selectedReadingPlan.peek();
           if (plan) {
@@ -469,6 +480,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
       onEdit={(plan) => void editPlan(plan)}
       onRestart={(plan) => void restartPlan(plan)}
       toast={toast}
+      app={app}
     />
   );
 }
@@ -496,6 +508,7 @@ interface ReadingPlansListProps {
   /** Starts a completed plan over on a fresh progress, then opens it. */
   onRestart: (plan: ReadingPlanMetadata) => void;
   toast?: (message: string) => void;
+  app?: AppState;
 }
 
 /** Resolves a book id to its display name, for reading labels/typeaheads. */
@@ -529,6 +542,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
     onEdit,
     onRestart,
     toast,
+    app,
   } = props;
   const { t } = useI18n();
   // Deleting a plan erases it for good, so the button asks once first rather
@@ -595,6 +609,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
       fullPlan={row.full}
       onEdit={() => onEdit(row.meta)}
       modals={modals}
+      app={app}
       toast={toast}
     />
   );
