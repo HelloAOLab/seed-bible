@@ -34,7 +34,7 @@ import {
   playlistTotalMinutes,
 } from "./playlistSteps";
 import { Button } from "../Button/Button";
-import { CloseButton } from "../CloseButton/CloseButton";
+import { BottomSheet } from "../BottomSheet/BottomSheet";
 
 type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 
@@ -283,23 +283,16 @@ function PlaylistDetailsSheet(props: { state: SeedBibleState }) {
   });
 
   return (
-    <>
-      <div className="sb-pe-sheet-scrim" onClick={close} />
-      <div
-        className="sb-pe sb-pe-sheet sb-pe-details-sheet"
-        role="dialog"
-        aria-label={heading}
-      >
-        <div className="sb-pe-sheet-handle" />
-        <div className="sb-pe-details-sheet-header">
-          <h3 className="sb-pe-details-sheet-title">{heading}</h3>
-          <CloseButton className="sb-pe-panel-close" onClose={close} />
-        </div>
-        <div className="sb-pe-details-sheet-body">
-          <PlaylistDetailsFields state={state} idPrefix="sb-pe-details" />
-        </div>
+    <BottomSheet
+      className="sb-pe-details-sheet"
+      label={heading}
+      title={heading}
+      onClose={close}
+    >
+      <div className="sb-pe sb-pe-details-sheet-body">
+        <PlaylistDetailsFields state={state} idPrefix="sb-pe-details" />
       </div>
-    </>
+    </BottomSheet>
   );
 }
 
@@ -318,23 +311,16 @@ function PlaylistStepSettingsSheet(props: {
   });
 
   return (
-    <>
-      <div className="sb-pe-sheet-scrim" onClick={close} />
-      <div
-        className="sb-pe sb-pe-sheet sb-pe-details-sheet sb-pe-settings-sheet"
-        role="dialog"
-        aria-label={heading}
-      >
-        <div className="sb-pe-sheet-handle" />
-        <div className="sb-pe-details-sheet-header">
-          <h3 className="sb-pe-details-sheet-title">{heading}</h3>
-          <CloseButton className="sb-pe-panel-close" onClose={close} />
-        </div>
-        <div className="sb-pe-details-sheet-body">
-          <StepSettings playlists={playlists} index={index} item={item} />
-        </div>
+    <BottomSheet
+      className="sb-pe-details-sheet sb-pe-settings-sheet"
+      label={heading}
+      title={heading}
+      onClose={close}
+    >
+      <div className="sb-pe sb-pe-details-sheet-body">
+        <StepSettings playlists={playlists} index={index} item={item} />
       </div>
-    </>
+    </BottomSheet>
   );
 }
 

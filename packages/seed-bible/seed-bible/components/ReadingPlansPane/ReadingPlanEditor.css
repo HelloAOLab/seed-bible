@@ -462,11 +462,9 @@
 /* On mobile the toolbar is a full-width bar pinned to the bottom of the screen
    and the pane is already inset above it (see PaneLayout.css), so only a small
    breathing gap — plus the home indicator — is needed. */
-@media (max-width: 480px) {
-  .sb-rp-editor-footer,
-  .sb-rpd-footer {
-    --rp-toolbar-clearance: env(safe-area-inset-bottom, 0px);
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-rp-editor-footer,
+:where(html[data-sb-app-layout="mobile"]) .sb-rpd-footer {
+  --rp-toolbar-clearance: env(safe-area-inset-bottom, 0px);
 }
 
 .sb-rp-footer-note {

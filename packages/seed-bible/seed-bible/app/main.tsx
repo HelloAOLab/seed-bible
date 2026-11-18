@@ -19,9 +19,7 @@ import type { BibleTheme } from "../managers/ThemeManager";
 import { ModalHost } from "../components/ModalHost/ModalHost";
 import { ToastHost } from "../components/ToastHost/ToastHost";
 import { LoginModal } from "../components/LoginModal/LoginModal";
-import { TermsOfServiceModal } from "../components/TermsOfServiceModal/TermsOfServiceModal";
-import { PrivacyPolicyModal } from "../components/PrivacyPolicyModal/PrivacyPolicyModal";
-import { CodeOfConductModal } from "../components/CodeOfConductModal/CodeOfConductModal";
+import { LegalDialog } from "../components/LegalDialog/LegalDialog";
 import { useMemo } from "preact/hooks";
 import {
   AppConfigProvider,
@@ -340,20 +338,26 @@ function MainContent(props: {
 
         <LoginModal login={state.login} navigation={state.navigation} />
 
-        <TermsOfServiceModal
-          isOpen={state.isTermsOpen.value}
-          onClose={() => state.closeTerms()}
-        />
+        {state.isTermsOpen.value && (
+          <LegalDialog
+            document="terms-of-service"
+            onClose={() => state.closeTerms()}
+          />
+        )}
 
-        <PrivacyPolicyModal
-          isOpen={state.isPrivacyOpen.value}
-          onClose={() => state.closePrivacy()}
-        />
+        {state.isPrivacyOpen.value && (
+          <LegalDialog
+            document="privacy-policy"
+            onClose={() => state.closePrivacy()}
+          />
+        )}
 
-        <CodeOfConductModal
-          isOpen={state.isCodeOfConductOpen.value}
-          onClose={() => state.closeCodeOfConduct()}
-        />
+        {state.isCodeOfConductOpen.value && (
+          <LegalDialog
+            document="code-of-conduct"
+            onClose={() => state.closeCodeOfConduct()}
+          />
+        )}
 
         <OnboardingModals
           onboarding={state.onboarding}
