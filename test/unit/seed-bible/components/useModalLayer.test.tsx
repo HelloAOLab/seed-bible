@@ -87,6 +87,22 @@ describe("useModalLayer", () => {
     expect(closePanel).not.toHaveBeenCalled();
   });
 
+  it("keeps a panel's own Escape listener from also acting on it while nothing has focus", () => {
+    // A listener added after the layer opened, like Share's own one was:
+    // only the top layer may act on the key.
+    const closeDialog = vi.fn();
+    open(upper, <Layer name="Dialog" onEscape={closeDialog} />);
+    const closePanel = vi.fn();
+    document.addEventListener("keydown", closePanel);
+    (document.activeElement as HTMLElement).blur();
+
+    press("Escape");
+    document.removeEventListener("keydown", closePanel);
+
+    expect(closeDialog).toHaveBeenCalledTimes(1);
+    expect(closePanel).not.toHaveBeenCalled();
+  });
+
   it("wraps Tab inside the top layer", () => {
     open(upper, <Layer name="Dialog" />);
     button("Dialog last").focus();

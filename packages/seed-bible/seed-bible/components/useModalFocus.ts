@@ -127,7 +127,9 @@ export function useModalLayer(
       containFocus,
     };
     if (layers.length === 0) {
-      document.addEventListener("keydown", handleDocumentKeyDown);
+      // On `window`, capturing, so it runs before any `document` listener:
+      // stopping the key there then keeps those from acting on it too.
+      window.addEventListener("keydown", handleDocumentKeyDown, true);
       document.addEventListener("focusin", handleFocusIn);
     }
     const onKeyDown = (event: KeyboardEvent) =>
@@ -153,7 +155,7 @@ export function useModalLayer(
       const wasTop = index === layers.length - 1;
       layers.splice(index, 1);
       if (layers.length === 0) {
-        document.removeEventListener("keydown", handleDocumentKeyDown);
+        window.removeEventListener("keydown", handleDocumentKeyDown, true);
         document.removeEventListener("focusin", handleFocusIn);
       }
       if (!wasTop) {
