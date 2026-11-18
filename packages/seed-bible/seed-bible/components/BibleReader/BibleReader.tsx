@@ -4538,7 +4538,9 @@ export function BibleReader(props: BibleReaderProps) {
           closeLabel={t("close-footnote", { defaultValue: "Close footnote" })}
           onClose={closeFootnote}
         >
-          <div dir={translation.value?.textDirection ?? "auto"}>
+          {/* From the passage it belongs to, which in a compare step can be
+              the second one, in another translation. */}
+          <div dir={openFootnote.chapter.translation.textDirection ?? "auto"}>
             <VerseReferenceText
               text={openFootnote.note.text}
               books={translationBooks.value?.books}

@@ -7982,6 +7982,41 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
         expect(second.readingState.selectFootnote).toHaveBeenCalledWith(null);
       });
 
+      it("lays out a footnote from its second passage in that passage's direction", async () => {
+        // A left-to-right tab beside a right-to-left passage.
+        const second = createFixture();
+        const chapter = second.chapterData.value!;
+        second.chapterData.value = {
+          ...chapter,
+          translation: { ...chapter.translation, textDirection: "rtl" },
+        };
+        const playing = renderStep(
+          [
+            {
+              ...COMPARE,
+              compare: { ref: { bookId: "GEN", chapter: 1, verse: 1 } },
+            },
+          ],
+          { compact: true, compareReadingState: second.readingState }
+        );
+        await act(async () => {
+          await playing.jumpTo(0);
+        });
+
+        act(() => {
+          second.selectedFootnote.value = {
+            note: second.chapterData.value!.chapter.footnotes[0]!,
+            verse: null,
+            chapter: second.chapterData.value!,
+          };
+        });
+
+        const text = Array.from(
+          document.querySelectorAll<HTMLElement>(".sb-footnote-dialog *")
+        ).findLast((el) => el.textContent === "Footnote text")!;
+        expect(text.closest("[dir]")?.getAttribute("dir")).toBe("rtl");
+      });
+
       it("hands the verse toolbar back to the tab's own passage when it's used", async () => {
         const { second } = await renderCompare({ compact: true });
         click(secondColumn().querySelector(".sb-verse-decorator"));
