@@ -6,6 +6,7 @@ import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import { hexToHsv, hsvToHex, normalizeHex, parseHex, type Hsv } from "./color";
 import { Button } from "../Button/Button";
+import { useModalLayer } from "../useModalFocus";
 
 const POPOVER_GAP_PX = 8;
 const VIEWPORT_MARGIN_PX = 8;
@@ -189,18 +190,14 @@ export function ColorPicker(props: ColorPickerProps) {
     };
   }, [isOpen]);
 
+  // A popover rather than a Dialog, so the theme editor can raise its live
+  // preview between the dimmed page and the picker; but it joins the same
+  // stack of open windows, for focus, Tab and Escape.
+  useModalLayer(panelRef, { enabled: isOpen, onEscape: cancel });
+
   useEffect(() => {
     if (!isOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        setOpen(false);
-      }
-    };
-    document.addEventListener("keydown", onKeyDown, true);
     return () => {
-      document.removeEventListener("keydown", onKeyDown, true);
       if (!committedRef.current) {
         onCancel?.();
       }
@@ -215,7 +212,6 @@ export function ColorPicker(props: ColorPickerProps) {
       panelStyle.value = undefined;
       return;
     }
-    panelRef.current?.focus();
 
     const position = () => {
       const panel = panelRef.current;
