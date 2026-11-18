@@ -1,11 +1,12 @@
 import "./BottomSheet.css";
 import type { ComponentChild, ComponentChildren, JSX, Ref } from "preact";
 import { createPortal } from "preact/compat";
-import { useCallback, useEffect, useLayoutEffect, useRef } from "preact/hooks";
+import { useCallback, useEffect, useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
-import { useI18n } from "../../i18n/I18nManager";
+import { useI18n } from "../../i18n/I18nContext";
 import { useOverlayDismiss } from "../useOverlayDismiss";
 import { IconButton } from "../IconButton/IconButton";
+import { trapTabKey, useModalFocus } from "../useModalFocus";
 
 /** A press that moves less than this is a tap, not a drag. */
 const TAP_SLOP_PX = 6;
@@ -25,9 +26,6 @@ const DEFAULT_DRAG_IGNORE_SELECTOR =
 /** Where Escape belongs to the field (clearing or cancelling an edit). */
 const EDITABLE_SELECTOR =
   'textarea, select, input:not([type="checkbox"], [type="radio"], [type="button"], [type="submit"], [type="reset"], [type="range"], [type="color"]), [contenteditable]:not([contenteditable="false"])';
-
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Lets a sheet grow by dragging its handle up. The sheet only runs the
@@ -170,19 +168,7 @@ export function BottomSheet(props: BottomSheetProps) {
   const onEscapeRef = useRef(onClose);
   onEscapeRef.current = props.onEscape ?? onClose;
 
-  // A modal sheet takes focus while open and hands it back when it closes, so
-  // keyboard and screen-reader users land where they were.
-  useLayoutEffect(() => {
-    if (!modal) return;
-    const previous =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    sheetEl.current?.focus({ preventScroll: true });
-    return () => {
-      if (previous?.isConnected) previous.focus({ preventScroll: true });
-    };
-  }, [modal]);
+  useModalFocus(sheetEl, undefined, modal);
 
   useEffect(() => {
     if (!modal) return;
@@ -214,23 +200,7 @@ export function BottomSheet(props: BottomSheetProps) {
     if (event.key !== "Tab" || !modal) return;
     const sheet = sheetEl.current;
     if (!sheet) return;
-    const focusables = Array.from(
-      sheet.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-    );
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-    if (!first || !last) {
-      event.preventDefault();
-      return;
-    }
-    const active = document.activeElement;
-    if (event.shiftKey && (active === first || active === sheet)) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
+    trapTabKey(event, sheet);
   };
 
   const canExpand = !!expansion?.canExpand;

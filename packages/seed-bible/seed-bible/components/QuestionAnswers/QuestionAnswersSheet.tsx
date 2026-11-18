@@ -1,5 +1,6 @@
 import "../ScriptureNote/ScriptureNote.css";
 import "./QuestionAnswersSheet.css";
+import "../visuallyHidden.inline.css";
 import { useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { PlayingState } from "../../managers/PlaylistManager";
@@ -182,7 +183,7 @@ function QuestionAnswersSheetBody(props: {
             }}
           >
             <label
-              className="sr-only"
+              className="sb-visually-hidden"
               htmlFor={`sb-question-answer-${stepKey}`}
             >
               {t("question-answers-yours", { defaultValue: "Your answer" })}

@@ -1094,6 +1094,9 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
         installState={catalog.installStateOf(openEntry)}
         extensions={extensions}
         people={catalog.people}
+        reviews={state.extensionReviews}
+        modals={state.modals}
+        builtIn={catalog.isBuiltIn(openEntry)}
         breadcrumbs={
           <SettingsBreadcrumbs
             onBack={() => (openExtensionId.value = null)}

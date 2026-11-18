@@ -7,7 +7,7 @@ import type {
   PlaylistManager,
 } from "../../managers/PlaylistManager";
 import { resolveLinkMedia } from "../../managers/resolveLinkMedia";
-import { safeImageUrl } from "../../managers/linkPreview";
+import { safeImageUrl } from "../../managers/safeImageUrl";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { PeIcon } from "./editorControls";
 import { PlaylistNoteComposer } from "./PlaylistNoteComposer";
