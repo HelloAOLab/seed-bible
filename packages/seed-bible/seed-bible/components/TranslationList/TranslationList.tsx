@@ -2,7 +2,7 @@ import "./TranslationList.css";
 import { useEffect, useMemo, useRef } from "preact/hooks";
 import { signal } from "@preact/signals";
 import type { ComponentChild } from "preact";
-import { useI18n } from "../../i18n/I18nManager";
+import { useI18n } from "../../i18n/I18nContext";
 import { TickIcon } from "../icons";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import type {
@@ -275,7 +275,7 @@ function TranslationLanguageSection(props: {
   return (
     <>
       <div
-        className="sb-translation-list-language flex-between"
+        className="sb-translation-list-language"
         onClick={() => {
           showSig.value = !showSig.value;
         }}
@@ -318,9 +318,9 @@ function TranslationLanguageSection(props: {
                     ? "color-mix(in srgb, var(--pageBookBackground) 50%, transparent)"
                     : "var(--sb-background)",
                 }}
-                className="translation-option flex-between-center-gap-md"
+                className="translation-option"
               >
-                <span className="translation-title inline-flex-start-center-gap-sm">
+                <span className="translation-title">
                   {isSelected ? (
                     <TickIcon height={15} width={15} />
                   ) : (
@@ -354,7 +354,7 @@ function TranslationLanguageSection(props: {
                   )}
                 </span>
                 {renderActions && (
-                  <span className="sb-translation-list-actions inline-flex-start-center-gap-sm">
+                  <span className="sb-translation-list-actions">
                     {renderActions(value)}
                   </span>
                 )}

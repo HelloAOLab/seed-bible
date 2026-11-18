@@ -91,6 +91,21 @@ describe("createSearchManager", () => {
     });
   });
 
+  it("asks for the given page of results", async () => {
+    const manager = createSearchManager();
+    const typesenseMock = await getTypesenseMock();
+    typesenseMock.search.mockResolvedValue({ found: 0, page: 3, hits: [] });
+
+    await manager.searchVerses("eng", "BSB", "light", undefined, {
+      page: 3,
+      perPage: 20,
+    });
+
+    expect(typesenseMock.search).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 3, per_page: 20 })
+    );
+  });
+
   it("maps object filters to filter_by clauses", async () => {
     const manager = createSearchManager();
     const typesenseMock = await getTypesenseMock();

@@ -15,7 +15,13 @@ import {
   useExtensionUploader,
 } from "../SettingsPage/ExtensionInfoPage";
 import { useExtensionCatalog } from "../SettingsPage/useExtensionCatalog";
+import {
+  ExtensionReviewBadges,
+  useExtensionReview,
+} from "../ExtensionReview/ExtensionReview";
 import { UnusedSensitiveSettingsList } from "../ExtensionSettingsForm/SensitiveSettingsForm";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 export const EXTENSIONS_PANE_ID = "extensions-pane";
 
@@ -35,15 +41,12 @@ export function ExtensionsPaneBackButton(props: { state: SeedBibleState }) {
     return null;
   }
   return (
-    <button
-      type="button"
-      className="sb-pane-header-button sb-extensions-page-back"
+    <IconButton
+      className="sb-extensions-page-back"
+      icon={<MaterialIcon className="rtl-mirror">arrow_back</MaterialIcon>}
+      label={t("extensions-page-back")}
       onClick={() => props.state.openExtensions()}
-      aria-label={t("extensions-page-back")}
-      title={t("extensions-page-back")}
-    >
-      <MaterialIcon className="rtl-mirror">arrow_back</MaterialIcon>
-    </button>
+    />
   );
 }
 
@@ -57,6 +60,8 @@ function ExtensionCard(props: {
   const extension = entry.extension;
   const url = extension && "url" in extension ? extension.url : null;
   const uploader = useExtensionUploader(state.extensions, entry.id, url);
+  const builtIn = catalog.isBuiltIn(entry);
+  const review = useExtensionReview(state.extensionReviews, entry.id, builtIn);
   let sourceHost: string | null = null;
   try {
     sourceHost = url ? new URL(url).host : null;
@@ -83,7 +88,10 @@ function ExtensionCard(props: {
             }}
           />
           <span className="sb-extensions-card-titles">
-            <span className="sb-extensions-card-name">{name}</span>
+            <span className="sb-extensions-card-name">
+              {name}
+              <ExtensionReviewBadges review={review} builtIn={builtIn} />
+            </span>
             <span className="sb-extensions-card-source">
               {sourceHost
                 ? withSource(
@@ -147,6 +155,9 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
           installState={catalog.installStateOf(openEntry)}
           extensions={state.extensions}
           people={catalog.people}
+          reviews={state.extensionReviews}
+          modals={state.modals}
+          builtIn={catalog.isBuiltIn(openEntry)}
           onInstall={() => void catalog.install(openEntry.id)}
           onUninstall={() => catalog.uninstall(openEntry.id)}
           settings={catalog.renderSettings(openEntry)}
@@ -244,8 +255,10 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
           }}
           placeholder={t("extensions-search")}
         />
-        <button
-          type="button"
+        <Button
+          size="lg"
+          shape="pill"
+          icon="link"
           className="sb-extensions-page-add-link"
           onClick={() =>
             catalog.openAddFromLink((extensionId) =>
@@ -253,11 +266,8 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
             )
           }
         >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            link
-          </span>
           {t("extensions-page-add-link")}
-        </button>
+        </Button>
       </div>
 
       <div className="sb-extensions-page-columns">

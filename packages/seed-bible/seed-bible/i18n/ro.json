@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Link de partajare a traducerii copiat",
   "less": "Mai puțin",
   "swipe-up-more": "Glisează în sus pentru a vedea mai multe",
-  "plans": "Planuri",
   "reading-plans": "Planuri de lectură",
   "create-reading-plan": "Creați un plan de lectură",
   "reading-plans-empty": "Nu ai încă niciun plan de lectură. Creează unul pentru a începe.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Se încarcă traducerile…",
   "translations-load-failed": "Nu s-a putut încărca lista completă de traduceri, așadar este posibil ca unele să lipsească.",
   "verse-of-the-day": "VERSETUL ZILEI",
-  "verse-of-the-day-loading": "Se încarcă versetul zilei…"
+  "verse-of-the-day-loading": "Se încarcă versetul zilei…",
+  "delete-bookmark-confirm-title": "Ștergeți marcajul?",
+  "delete-bookmark-confirm-message": "Ștergeți „ {{name}} ”?",
+  "scripture-font": "Fontul Scripturii",
+  "ai-limits-title": "Înainte de a discuta cu inteligența artificială",
+  "ai-limits-intro": "IA poate fi un punct de plecare util, dar țineți cont de limitele sale:",
+  "ai-limits-mistakes": "Face greșeli și poate părea încrezător atunci când greșește.",
+  "ai-limits-agreeable": "Are tendința să-ți spună ce vrei să auzi și se înclină spre răspunsuri populare.",
+  "ai-limits-scripture": "Nu este o sursă de încredere. Verifică ce spune în raport cu Scriptura.",
+  "ai-limits-study": "Studiază Biblia singur și nu lăsa inteligența artificială să gândească în locul tău.",
+  "ai-limits-confirm": "Înțeleg că inteligența artificială poate face greșeli și nu înlocuiește studiul propriu al Bibliei.",
+  "friends-playlists-filter": "Listele de redare ale prietenilor",
+  "friend-link-social-title": "Adaugă {{name}} ca prieten",
+  "friend-link-meta-description": "{{name}} vrea să fie prietenul tău pe {{brand}}",
+  "friend-link-title": "Adaugă {{name}} ca prieten pe {{brand}}"
 }

@@ -1,5 +1,5 @@
 import "./shareModal.css";
-import { useEffect, useState } from "preact/hooks";
+import { useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import type { ModalManager } from "../../managers/ModalManager";
@@ -21,9 +21,10 @@ import {
   getSessionUrl,
   type BibleReadingSession,
 } from "../../managers/SessionsManager";
+import { Button } from "../Button/Button";
 
 export interface ShareModalProps {
-  /** Called when the sheet should close (Cancel or Escape). */
+  /** Called when the sheet should close (Cancel). */
   onClose?: () => void;
   /** Copy a shareable link to the clipboard. */
   onShareLink?: () => void;
@@ -70,18 +71,6 @@ export const ShareModal = (props: ShareModalProps) => {
   const sessionActive = props.session !== null;
   // A partner-site embed shares a link to the passage, not a live session.
   const hideSharedSession = props.app.isMinimalEmbed.value;
-
-  const close = () => props.onClose?.();
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        close();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
 
   const canShareVia =
     typeof navigator !== "undefined" && typeof navigator.share === "function";
@@ -259,15 +248,15 @@ export const ShareModal = (props: ShareModalProps) => {
           />
         </div>
         <footer className="sb-share-embed-footer">
-          <button
-            type="button"
-            className="sb-share-embed-copy"
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => {
               void copyEmbedHtml();
             }}
           >
             {t("copy", { defaultValue: "Copy" })}
-          </button>
+          </Button>
         </footer>
       </div>
     );

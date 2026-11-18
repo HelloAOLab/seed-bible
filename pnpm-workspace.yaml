@@ -1,5 +1,6 @@
 packages:
   - "packages/*"
+  - "mobile"
 allowBuilds:
   "@google/genai": false
   esbuild: false
@@ -99,6 +100,7 @@ overrides:
   "brace-expansion@>=5 <5.0.12": "^5.0.12"
   "fast-uri@>=3 <3.1.9": "^3.1.9"
   "flatted@>=3 <3.4.2": "^3.4.2"
+  "fast-xml-parser@>=5 <5.11.3": "^5.11.3"
   "@humanfs/node@>=0.16 <0.16.8": "^0.16.8"
   "js-yaml@>=4 <4.3.2": "^4.3.2"
   "minimatch@>=3 <3.1.5": "^3.1.5"

@@ -19,6 +19,7 @@ import {
 } from "./script/lib/vite-plugin-extensions";
 import { htmlMetaAssetsPlugin } from "./script/lib/vite-plugin-html-meta-assets";
 import { inlineCriticalCssPlugin } from "./script/lib/vite-plugin-inline-critical-css";
+import { nativeShellPlugin } from "./script/lib/vite-plugin-native-shell";
 
 // Directories outside `packages/` that hold an out-of-tree extension under
 // active development (see `seed-bible-extension-scripts dev`). Empty by
@@ -71,6 +72,15 @@ function withTrailingSlash(url: string): string {
 }
 
 const clientOutDir = "standalone/dist/client";
+
+// `vite build --mode native` builds the web bundle the Capacitor apps in
+// `mobile/` ship on the device. That page is loaded from the app's own local
+// server, so its assets must stay same-origin (never the CDN `base`), it skips
+// the service worker (the app files are already on disk, and iOS's WKWebView
+// can't run one from the app's custom scheme anyway), and its index.html has
+// no host server to fill it in, so the build does that instead.
+const NATIVE_MODE = "native";
+const nativeOutDir = "standalone/dist/native";
 
 /**
  * Reads this build's Vite client manifest, which is written before the service
@@ -137,12 +147,12 @@ function resolveGitCommit(): string {
 }
 const gitCommit = resolveGitCommit();
 
-export default defineConfig(({ isSsrBuild }) => ({
+export default defineConfig(({ isSsrBuild, mode }) => ({
   // SSR builds must not treat index.html as an input; only the client build
   // is an HTML/SPA build.
   appType: "custom",
   publicDir: false,
-  base: assetBaseUrl,
+  base: mode === NATIVE_MODE ? "/" : assetBaseUrl,
 
   define: {
     __APP_VERSION__: JSON.stringify(appVersion),
@@ -153,6 +163,12 @@ export default defineConfig(({ isSsrBuild }) => ({
     __ASSET_BASE_URL__: JSON.stringify(assetBaseUrl),
 
     __BRANDING_CONFIG__: JSON.stringify(brandingConfig),
+
+    // The record holding which extensions are verified (see
+    // `managers/ExtensionReviewsManager.tsx`).
+    __EXTENSION_REVIEWS_RECORD__: JSON.stringify(
+      process.env.EXTENSION_REVIEWS_RECORD_NAME?.trim() || null
+    ),
   },
 
   plugins: [
@@ -161,8 +177,9 @@ export default defineConfig(({ isSsrBuild }) => ({
     extensionsPlugin(),
     htmlMetaAssetsPlugin(),
     ...inlineCriticalCssPlugin(),
+    ...(mode === NATIVE_MODE ? nativeShellPlugin() : []),
     // Only the root build ships a service worker (see `isRootBuild` above).
-    ...(isRootBuild
+    ...(isRootBuild && mode !== NATIVE_MODE
       ? [
           VitePWA({
             registerType: "autoUpdate",
@@ -219,12 +236,18 @@ export default defineConfig(({ isSsrBuild }) => ({
               ],
               start_url: "/",
               display: "standalone",
-              // Splash/default only. Keep in sync with LIGHT_THEME
-              // `background` in ThemeManager. The installed app's live
-              // status bar is driven by <meta name="theme-color">, which
-              // ThemeManager updates to the active theme.
+              // The splash screen. Keep in sync with LIGHT_THEME `background`
+              // in ThemeManager.
               background_color: "#f8fafc",
-              theme_color: "#f8fafc",
+              // The installed Android app's bottom navigation strip. Chrome
+              // paints it from this alone: the page's theme-color meta and
+              // color-scheme don't reach it, installed apps aren't drawn
+              // edge to edge, and there's no dark-mode variant, so one color
+              // serves every theme. DARK_THEME's `background`, because a dark
+              // strip under Light reads as a frame, while a white one under
+              // Dark is a bright band. (The top status bar does follow
+              // <meta name="theme-color">, kept in sync by ThemeManager.)
+              theme_color: "#0a0a0a",
               icons: [
                 {
                   src: "https://favicon.ao.bot/pwa/pwa-192x192.png",
@@ -297,10 +320,16 @@ export default defineConfig(({ isSsrBuild }) => ({
           }),
         ]
       : []),
-    analyzer({
-      analyzerMode: "static",
-      openAnalyzer: false,
-    }),
+    // The report would otherwise be written into the native output and
+    // shipped inside the app.
+    ...(mode === NATIVE_MODE
+      ? []
+      : [
+          analyzer({
+            analyzerMode: "static",
+            openAnalyzer: false,
+          }),
+        ]),
   ],
 
   // Bundle all dependencies into the SSR output instead of leaving them as
@@ -344,12 +373,13 @@ export default defineConfig(({ isSsrBuild }) => ({
         // Client build: hashed assets + a manifest mapping the entry to its
         // emitted files. The SSR entry reads the manifest to emit the correct
         // <script>/<link> tags (prefixed with the CDN host).
-        outDir: clientOutDir,
+        outDir: mode === NATIVE_MODE ? nativeOutDir : clientOutDir,
         emptyOutDir: true,
         // Also read back by `readCoreAssetFiles()` to work out which emitted
         // files the service worker should precache.
         manifest: true,
-        sourcemap: true,
+        // Maps would more than double the size of the native app download.
+        sourcemap: mode !== NATIVE_MODE,
         rolldownOptions: {
           // `@casual-simulation/aux-common` ships no `sideEffects` field, so
           // every module in it is assumed to have import-time side effects and

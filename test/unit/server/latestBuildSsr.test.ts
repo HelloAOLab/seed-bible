@@ -156,40 +156,45 @@ describe("production host: SSR runs only a branch's latest build", () => {
     expect(attemptsAfter).toEqual(attemptsBefore);
   });
 
-  it("still renders a request holding a build that a deploy retires mid-request", async () => {
-    // The pinned build's HTML is a named pipe, so reading it blocks until the
-    // test writes to it: the request holds the latest build while it waits.
-    const buildDir = path.join(dir, "branches", "main", "slow");
-    await mkdir(buildDir, { recursive: true });
-    const htmlPipe = path.join(buildDir, "index.html");
-    execFileSync("mkfifo", [htmlPipe]);
+  // Windows has no `mkfifo`, and its own named pipes can't stand in for a file
+  // here. CI runs on Linux, so this still guards every pull request.
+  it.skipIf(process.platform === "win32")(
+    "still renders a request holding a build that a deploy retires mid-request",
+    async () => {
+      // The pinned build's HTML is a named pipe, so reading it blocks until the
+      // test writes to it: the request holds the latest build while it waits.
+      const buildDir = path.join(dir, "branches", "main", "slow");
+      await mkdir(buildDir, { recursive: true });
+      const htmlPipe = path.join(buildDir, "index.html");
+      execFileSync("mkfifo", [htmlPipe]);
 
-    const pending = get("/b/main/slow/en/AAB/genesis/1");
+      const pending = get("/b/main/slow/en/AAB/genesis/1");
 
-    // Opening a pipe for writing without blocking only succeeds once it has a
-    // reader, i.e. once the request has reached the HTML read.
-    const deadline = Date.now() + 5_000;
-    let writer: Awaited<ReturnType<typeof open>> | undefined;
-    while (!writer) {
-      try {
-        writer = await open(
-          htmlPipe,
-          constants.O_WRONLY | constants.O_NONBLOCK
-        );
-      } catch {
-        if (Date.now() > deadline)
-          throw new Error("request never read the HTML");
-        await new Promise((resolve) => setTimeout(resolve, 10));
+      // Opening a pipe for writing without blocking only succeeds once it has a
+      // reader, i.e. once the request has reached the HTML read.
+      const deadline = Date.now() + 5_000;
+      let writer: Awaited<ReturnType<typeof open>> | undefined;
+      while (!writer) {
+        try {
+          writer = await open(
+            htmlPipe,
+            constants.O_WRONLY | constants.O_NONBLOCK
+          );
+        } catch {
+          if (Date.now() > deadline)
+            throw new Error("request never read the HTML");
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        }
       }
+
+      // What CD sends on every deploy.
+      await fetch(`${baseUrl}/__invalidate?branch=main`, { method: "POST" });
+      await writer.write("html of slow");
+      await writer.close();
+
+      expect((await pending).body).toBe("rendered by new over [html of slow]");
     }
-
-    // What CD sends on every deploy.
-    await fetch(`${baseUrl}/__invalidate?branch=main`, { method: "POST" });
-    await writer.write("html of slow");
-    await writer.close();
-
-    expect((await pending).body).toBe("rendered by new over [html of slow]");
-  });
+  );
 
   it("replaces a worker that a render left stuck in a loop", async () => {
     const countImports = async () =>

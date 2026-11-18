@@ -3,6 +3,7 @@ import { useEffect } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { OfflineTranslationsManager } from "../../managers/OfflineTranslationsManager";
 import { downloadTranslationWithToast } from "./downloadTranslationWithToast";
+import { Button } from "../Button/Button";
 
 /**
  * Suggests saving the translation for offline reading once a chapter that
@@ -67,23 +68,21 @@ export function OfflineRecoveryToast({
         })}
       </p>
       <div className="sb-offline-recovery-actions">
-        <button
-          type="button"
-          className="sb-offline-recovery-btn sb-offline-recovery-btn-secondary"
+        <Button
+          variant="ghost"
+          className="sb-offline-recovery-btn-secondary"
           onClick={() => offline.dismissRecoveryPrompt()}
         >
           {t("offlineRecovery.notNow", { defaultValue: "Not now" })}
-        </button>
-        <button
-          type="button"
-          className="sb-offline-recovery-btn sb-offline-recovery-btn-primary"
+        </Button>
+        <Button
+          variant="primary"
+          icon="download"
+          className="sb-offline-recovery-btn-primary"
           onClick={() => void save()}
         >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            download
-          </span>
           {t("offlineRecovery.download", { defaultValue: "Download" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

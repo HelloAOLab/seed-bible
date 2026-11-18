@@ -4,8 +4,10 @@ import { render } from "preact";
 import { readInjectedConfig } from "../app/appConfig";
 import { readInjectedApiResponseSnapshot } from "../app/apiResponseSeed";
 import { readInjectedCustomizationSeed } from "../app/customizationSeed";
+import { readInjectedFriendLinkSeed } from "../app/friendLinkSeed";
 import { readTrustedSharedPageSeeds } from "../app/sharedPageSeeds";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
+import { setDefaultI18n } from "../i18n/I18nManager";
 import {
   decideStartupHydration,
   isRenderedByThisBuild,
@@ -51,6 +53,9 @@ const {
   readingPlan: initialReadingPlanPageSeed,
 } = readTrustedSharedPageSeeds(config, __GIT_COMMIT__);
 
+// Same, for the profile an `?addFriend=` link opens on.
+const initialFriendLinkSeed = readInjectedFriendLinkSeed();
+
 const container = document.getElementById("app") ?? document.body;
 
 console.log("Starting APP");
@@ -67,7 +72,12 @@ const state = createSeedBibleState({
   revalidateInitialCustomizationSeed,
   initialPlaylistPageSeed,
   initialReadingPlanPageSeed,
+  initialFriendLinkSeed,
 });
+
+// So a shared component an extension renders in a root of its own speaks the
+// app's language too.
+setDefaultI18n(state.i18n);
 
 /**
  * Every initial tab's chapter fetch is already in flight by the time

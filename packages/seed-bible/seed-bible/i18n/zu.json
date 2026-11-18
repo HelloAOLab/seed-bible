@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Isixhumanisi sokwabelana ngokuhumusha esikopishiwe",
   "less": "Ngaphansi",
   "swipe-up-more": "Swayiphela phezulu ukuze ubuke okwengeziwe",
-  "plans": "Amacebo",
   "reading-plans": "Izinhlelo zokufunda",
   "create-reading-plan": "Dala uhlelo lokufunda",
   "reading-plans-empty": "Awunazo izinhlelo zokufunda okwamanje. Dala eyodwa ukuze uqalise.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Ilayisha ukuhumusha…",
   "translations-load-failed": "Ayikwazanga ukulayisha uhlu oluphelele lwezinguqulo, ngakho ezinye kungenzeka ukuthi azikho.",
   "verse-of-the-day": "Ivesi Losuku",
-  "verse-of-the-day-loading": "Ilayisha ivesi losuku..."
+  "verse-of-the-day-loading": "Ilayisha ivesi losuku...",
+  "delete-bookmark-confirm-title": "Susa ibhukhimakhi?",
+  "delete-bookmark-confirm-message": "Susa \" {{name}} \"?",
+  "scripture-font": "Ifonti Yombhalo",
+  "ai-limits-title": "Ngaphambi kokuthi uxoxe ne-AI",
+  "ai-limits-intro": "I-AI ingaba yindawo yokuqala ewusizo, kodwa khumbula imikhawulo yayo:",
+  "ai-limits-mistakes": "Iyawenza amaphutha, futhi ingazwakala iqiniseka uma ingalungile.",
+  "ai-limits-agreeable": "Kuvame ukukutshela lokho ofuna ukukuzwa, futhi kuthambekele ezimpendulweni ezidumile.",
+  "ai-limits-scripture": "Akuyona imithombo ethembekile. Hlola ukuthi ithini uma iqhathaniswa nemiBhalo.",
+  "ai-limits-study": "Zifundele iBhayibheli, ungavumeli i-AI ikucabangele.",
+  "ai-limits-confirm": "Ngiyaqonda ukuthi i-AI ingenza amaphutha futhi ayithathi indawo yokufunda iBhayibheli mina.",
+  "friends-playlists-filter": "Uhlu lwadlalwayo lwabangani",
+  "friend-link-social-title": "Engeza u {{name}} njengomngane",
+  "friend-link-meta-description": "{{name}} ufuna ukuba umngane wakho ku {{brand}}",
+  "friend-link-title": "Engeza u {{name}} njengomngane ku {{brand}}"
 }

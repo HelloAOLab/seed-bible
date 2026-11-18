@@ -1,0 +1,792 @@
+import {
+  ContentLibraryError,
+  customContentTypeId,
+  UNCATEGORIZED_ID,
+  type CustomContentManager,
+} from "@packages/seed-bible/seed-bible/managers/CustomContentManager";
+import { CUSTOMIZATION_MARKER } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
+import type {
+  DiscoverContentResult,
+  DiscoverManager,
+} from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import {
+  CONTENT_ITEM_MARKER,
+  CONTENT_MANIFEST_ADDRESS,
+  contentChapterAddress,
+  contentItemAddress,
+  type ContentItem,
+  type ContentReference,
+} from "@packages/seed-bible/seed-bible/managers/customContent/schema";
+import type { Mock } from "vitest";
+import {
+  createApp,
+  fakeRecordsServer,
+  OWNER,
+  waitForCondition,
+  type FakeRecordsServer,
+} from "./testUtils/customContentApp";
+
+/** What Discover shows from custom content for a chapter. */
+async function discoverContent(
+  discover: DiscoverManager,
+  book: string,
+  chapter: number
+): Promise<DiscoverContentResult[]> {
+  const results: DiscoverContentResult[] = [];
+  for await (const batch of discover.discover({
+    translationId: "BSB",
+    book,
+    chapter,
+    language: "en",
+  })) {
+    if (batch.providerId.startsWith("custom-content:")) {
+      results.push(
+        ...batch.results.filter(
+          (r): r is DiscoverContentResult => r.type === "content"
+        )
+      );
+    }
+  }
+  return results;
+}
+
+function ref(
+  reference: Omit<ContentReference, "source" | "confidence">
+): ContentReference {
+  return { ...reference, source: "owner", confidence: 1 };
+}
+
+/** Signs in as the owner, creates a Custom Branding, opens it in the editor and gives it a library. */
+async function ownerWithLibrary(server: FakeRecordsServer) {
+  const app = createApp(server, { userId: OWNER });
+  const created = await app.customizations.create();
+  app.customizations.startEditing(created.id);
+  await app.customContent.createLibrary();
+  return { ...app, customizationId: created.id };
+}
+
+/**
+ * A signed-out reader opening the owner's share link, once their Discover
+ * has picked up the library. A fresh app has nothing cached, so what it sees
+ * is exactly what's stored.
+ */
+async function readerOf(server: FakeRecordsServer, customizationId: string) {
+  const locator = `${OWNER}.${customizationId}`;
+  const reader = createApp(server, {
+    userId: null,
+    href: `http://localhost/?customization=${locator}`,
+  });
+  await reader.customizations.loadByLocator(locator);
+  await waitForCondition(() =>
+    reader.discover.providers.value.some((p) =>
+      p.id.startsWith("custom-content:")
+    )
+  );
+  return reader;
+}
+
+async function addSermon(
+  customContent: CustomContentManager,
+  overrides: Partial<Parameters<CustomContentManager["saveItem"]>[0]> = {},
+  publish = true
+) {
+  return customContent.saveItem(
+    {
+      url: "https://gracecommunity.org/sermons/the-good-shepherd",
+      title: "The Good Shepherd",
+      description: "Jesus, the shepherd who lays down his life.",
+      categoryIds: [],
+      references: [ref({ book: "JHN", chapter: 10, verse: 1, endVerse: 18 })],
+      ...overrides,
+    },
+    { publish }
+  );
+}
+
+describe("CustomContentManager", () => {
+  let warnSpy: Mock;
+
+  beforeEach(() => {
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+    vi.restoreAllMocks();
+  });
+
+  describe("creating a library", () => {
+    it("puts the library in a new record of its own, and only the pointer in the owner's record", async () => {
+      const server = fakeRecordsServer();
+      const { customContent, customizationId } = await ownerWithLibrary(server);
+
+      const recordName = customContent.recordName.value!;
+      expect(recordName).toMatch(/^seedbible-content-/);
+      expect(
+        server.records.get(recordName)?.has(CONTENT_MANIFEST_ADDRESS)
+      ).toBe(true);
+
+      const personal = server.records.get(OWNER)!;
+      expect([...personal.keys()]).toEqual([customizationId]);
+      const saved = personal.get(customizationId)!;
+      expect(saved.markers).toEqual([CUSTOMIZATION_MARKER]);
+      expect(
+        (saved.data as { contentRecordName?: string }).contentRecordName
+      ).toBe(recordName);
+      expect(customContent.status.value).toBe("ready");
+    });
+
+    it("reports a plan limit and leaves the Custom Branding without a library", async () => {
+      const server = fakeRecordsServer();
+      const app = createApp(server, { userId: OWNER });
+      const created = await app.customizations.create();
+      app.customizations.startEditing(created.id);
+      server.failNextCreate.code = "subscription_limit_reached";
+
+      await expect(app.customContent.createLibrary()).rejects.toMatchObject({
+        code: "subscription_limit_reached",
+      });
+      expect(
+        app.customizations.editingCustomization.value?.contentRecordName
+      ).toBeUndefined();
+      expect(app.customContent.status.value).toBe("closed");
+    });
+  });
+
+  describe("publishing", () => {
+    it("shows a published item in Discover to a signed-out reader using the share link", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const sermons = await owner.customContent.addCategory("Sermons");
+      await addSermon(owner.customContent, { categoryIds: [sermons.id] });
+
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 10);
+      expect(results).toHaveLength(1);
+      expect(results[0]).toMatchObject({
+        title: "The Good Shepherd",
+        contentType: customContentTypeId(
+          owner.customContent.recordName.value!,
+          sermons.id
+        ),
+        reference: { book: "JHN", chapter: 10, verse: 1, endVerse: 18 },
+      });
+      expect(results[0]!.verses).toHaveLength(18);
+      expect(
+        reader.discover.contentTypes.value.map((type) => type.title)
+      ).toContain("Sermons");
+    });
+
+    it("never shows drafts", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      await addSermon(owner.customContent, {}, false);
+
+      const record = server.records.get(owner.customContent.recordName.value!)!;
+      expect(record.has(contentChapterAddress("JHN", 10))).toBe(false);
+      const reader = await readerOf(server, owner.customizationId);
+      expect(await discoverContent(reader.discover, "JHN", 10)).toEqual([]);
+    });
+
+    it("leaves verses out for a whole-chapter item, so it still shows when a verse is selected", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      await addSermon(owner.customContent, {
+        references: [ref({ book: "PSA", chapter: 23 })],
+      });
+
+      const reader = await readerOf(server, owner.customizationId);
+      const [result] = await discoverContent(reader.discover, "PSA", 23);
+      expect(result?.title).toBe("The Good Shepherd");
+      expect(result?.verses).toBeUndefined();
+    });
+
+    it("moves an item between chapters when its verses change", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const saved = await addSermon(owner.customContent, {
+        references: [ref({ book: "JHN", chapter: 3 })],
+      });
+      await owner.customContent.saveItem({
+        ...saved,
+        references: [ref({ book: "JHN", chapter: 4 })],
+      });
+
+      const record = server.records.get(owner.customContent.recordName.value!)!;
+      expect(record.has(contentChapterAddress("JHN", 3))).toBe(false);
+      expect(record.has(contentChapterAddress("JHN", 4))).toBe(true);
+      expect(owner.customContent.chapterIndex.value?.chapters).toEqual({
+        "JHN.4": 1,
+      });
+    });
+
+    it("takes an unpublished item out of Discover without a network read for the empty chapter", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const saved = await addSermon(owner.customContent);
+      await owner.customContent.setItemPublished(saved.id, false);
+
+      expect(owner.customContent.chapterIndex.value?.chapters).toEqual({});
+      const reader = await readerOf(server, owner.customizationId);
+      expect(await discoverContent(reader.discover, "JHN", 10)).toEqual([]);
+      expect(reader.os.getData).not.toHaveBeenCalledWith(
+        owner.customContent.recordName.value,
+        contentChapterAddress("JHN", 10)
+      );
+    });
+
+    it("keeps other items on a chapter when one is deleted", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const first = await addSermon(owner.customContent);
+      await addSermon(owner.customContent, {
+        url: "https://gracecommunity.org/sermons/i-am-the-door",
+        title: "I Am the Door",
+      });
+      await owner.customContent.deleteItem(first.id);
+
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 10);
+      expect(results.map((r) => r.title)).toEqual(["I Am the Door"]);
+    });
+
+    it("refuses a link that isn't http(s) and saves nothing", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+
+      await expect(
+        addSermon(owner.customContent, { url: "javascript:alert(1)" })
+      ).rejects.toBeInstanceOf(ContentLibraryError);
+      expect(owner.customContent.items.value).toEqual([]);
+    });
+
+    it("rebuilds several chapters at once, and every one ends up right", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      for (let chapter = 1; chapter <= 8; chapter++) {
+        await addSermon(owner.customContent, {
+          url: `https://gracecommunity.org/sermons/john-${chapter}`,
+          title: `John ${chapter}`,
+          references: [ref({ book: "JHN", chapter })],
+        });
+      }
+      let writing = 0;
+      let mostAtOnce = 0;
+      server.hooks.beforeWrite = async (address) => {
+        if (address.startsWith("ch.")) {
+          writing++;
+          mostAtOnce = Math.max(mostAtOnce, writing);
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          writing--;
+        }
+      };
+
+      await owner.customContent.rebuildIndex();
+
+      expect(mostAtOnce).toBeGreaterThan(1);
+      const reader = await readerOf(server, owner.customizationId);
+      for (const chapter of [1, 5, 8]) {
+        const results = await discoverContent(reader.discover, "JHN", chapter);
+        expect(results.map((r) => r.title)).toEqual([`John ${chapter}`]);
+      }
+    });
+
+    it("can repair the index after a chapter write fails partway", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      server.failWritesTo.add(contentChapterAddress("JHN", 10));
+
+      await expect(addSermon(owner.customContent)).rejects.toMatchObject({
+        code: "server_error",
+      });
+      // The item itself was saved; only its chapter is missing.
+      expect(owner.customContent.items.value).toHaveLength(1);
+
+      server.failWritesTo.clear();
+      await owner.customContent.rebuildIndex();
+      const record = server.records.get(owner.customContent.recordName.value!)!;
+      expect(record.has(contentChapterAddress("JHN", 10))).toBe(true);
+      expect(owner.customContent.chapterIndex.value?.chapters).toEqual({
+        "JHN.10": 1,
+      });
+    });
+  });
+
+  describe("the default author", () => {
+    it("is given to an item published without an author, and shown in Discover", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      await owner.customContent.setDefaultAuthor("Frontline Bible Church");
+      const anonymous = await addSermon(owner.customContent, {}, false);
+      const named = await addSermon(
+        owner.customContent,
+        {
+          url: "https://gracecommunity.org/sermons/door",
+          title: "I Am the Door",
+          author: "Pastor Dana",
+        },
+        false
+      );
+
+      await owner.customContent.setItemPublished(anonymous.id, true);
+      await owner.customContent.setItemPublished(named.id, true);
+
+      expect(
+        Object.fromEntries(
+          owner.customContent.items.value.map((item) => [
+            item.title,
+            item.author,
+          ])
+        )
+      ).toEqual({
+        "The Good Shepherd": "Frontline Bible Church",
+        "I Am the Door": "Pastor Dana",
+      });
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 10);
+      expect(
+        Object.fromEntries(results.map((r) => [r.title, r.author]))
+      ).toEqual({
+        "The Good Shepherd": "Frontline Bible Church",
+        "I Am the Door": "Pastor Dana",
+      });
+    });
+
+    it("shows in Discover for items published before it was set, once their chapters are rebuilt", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      await addSermon(owner.customContent);
+      await owner.customContent.setDefaultAuthor("Frontline Bible Church");
+      await owner.customContent.rebuildIndex();
+
+      const reader = await readerOf(server, owner.customizationId);
+      const [result] = await discoverContent(reader.discover, "JHN", 10);
+      expect(result?.author).toBe("Frontline Bible Church");
+    });
+  });
+
+  describe("publishing items in a row", () => {
+    /** Drafts on John 10, saved but not yet published. */
+    async function drafts(customContent: CustomContentManager, count: number) {
+      const saved = [];
+      for (let i = 0; i < count; i++) {
+        saved.push(
+          await addSermon(
+            customContent,
+            {
+              url: `https://gracecommunity.org/sermons/${i}`,
+              title: `Sermon ${i}`,
+            },
+            false
+          )
+        );
+      }
+      return saved;
+    }
+
+    /** Holds Discover's chapter writes until `release` is called. */
+    function holdChapterWrites(server: FakeRecordsServer) {
+      let release = () => {};
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let chapterWrites = 0;
+      server.hooks.beforeWrite = async (address) => {
+        if (address.startsWith("ch.")) {
+          chapterWrites++;
+          await held;
+        }
+      };
+      return { release, chapterWrites: () => chapterWrites };
+    }
+
+    it("shows each publish at once, and every item reaches Discover however fast they're clicked", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const items = await drafts(owner.customContent, 4);
+      const chapters = holdChapterWrites(server);
+
+      // Clicked one after another, without waiting for anything.
+      const publishing = items.map((item) =>
+        owner.customContent.setItemPublished(item.id, true)
+      );
+      expect(
+        owner.customContent.items.value.map((item) => item.status)
+      ).toEqual(["published", "published", "published", "published"]);
+      await waitForCondition(() => owner.customContent.isPublishing.value);
+
+      chapters.release();
+      await Promise.all(publishing);
+      expect(owner.customContent.isPublishing.value).toBe(false);
+      // Batched: not one rebuild of John 10 per click.
+      expect(chapters.chapterWrites()).toBeLessThan(4);
+
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 10);
+      expect(results.map((r) => r.title).sort()).toEqual([
+        "Sermon 0",
+        "Sermon 1",
+        "Sermon 2",
+        "Sermon 3",
+      ]);
+    });
+
+    it("ends as last clicked when an item is published and quickly unpublished", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const [item] = await drafts(owner.customContent, 1);
+      // The publish's save is slow and the unpublish's fast, so if they
+      // weren't kept in order the publish would land last.
+      let releaseFirst = () => {};
+      const firstHeld = new Promise<void>((resolve) => {
+        releaseFirst = resolve;
+      });
+      let itemWrites = 0;
+      server.hooks.beforeWrite = async (address) => {
+        if (address === contentItemAddress(item!.id) && itemWrites++ === 0) {
+          await firstHeld;
+        }
+      };
+
+      const first = owner.customContent.setItemPublished(item!.id, true);
+      const second = owner.customContent.setItemPublished(item!.id, false);
+      setTimeout(releaseFirst, 0);
+      await Promise.all([first, second]);
+
+      const recordName = owner.customContent.recordName.value!;
+      const stored = server.records
+        .get(recordName)!
+        .get(contentItemAddress(item!.id))?.data as ContentItem;
+      expect(stored.status).toBe("draft");
+      const reader = await readerOf(server, owner.customizationId);
+      expect(await discoverContent(reader.discover, "JHN", 10)).toEqual([]);
+    });
+
+    it("puts an item back, and says so, when saving its publish fails", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const [item] = await drafts(owner.customContent, 1);
+      server.failWritesTo.add(contentItemAddress(item!.id));
+
+      await expect(
+        owner.customContent.setItemPublished(item!.id, true)
+      ).rejects.toMatchObject({ code: "server_error" });
+      expect(owner.customContent.items.value[0]?.status).toBe("draft");
+    });
+  });
+
+  describe("cleaning up titles", () => {
+    function storedTitle(
+      server: FakeRecordsServer,
+      customContent: CustomContentManager,
+      id: string
+    ) {
+      return (
+        server.records
+          .get(customContent.recordName.value!)!
+          .get(contentItemAddress(id))?.data as ContentItem
+      ).title;
+    }
+
+    it("takes the site's name off titles, saves them and shows them in Discover", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      await owner.customContent.setDefaultAuthor("Frontline Bible Church");
+      const published = await addSermon(owner.customContent, {
+        title: "The Good Shepherd – Frontline Bible Church",
+      });
+      const draft = await addSermon(
+        owner.customContent,
+        {
+          url: "https://gracecommunity.org/sermons/door",
+          title: "Grace Community | I Am the Door",
+        },
+        false
+      );
+      const untouched = await addSermon(
+        owner.customContent,
+        {
+          url: "https://gracecommunity.org/sermons/gift",
+          title: "Grace – The Gift",
+        },
+        false
+      );
+
+      expect(await owner.customContent.cleanupTitles()).toBe(2);
+
+      expect(storedTitle(server, owner.customContent, published.id)).toBe(
+        "The Good Shepherd"
+      );
+      expect(storedTitle(server, owner.customContent, draft.id)).toBe(
+        "I Am the Door"
+      );
+      expect(storedTitle(server, owner.customContent, untouched.id)).toBe(
+        "Grace – The Gift"
+      );
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 10);
+      expect(results.map((r) => r.title)).toEqual(["The Good Shepherd"]);
+      expect(await owner.customContent.cleanupTitles()).toBe(0);
+    });
+
+    /** Drafts on John 10 whose titles end in the site's name. */
+    async function suffixedDrafts(
+      customContent: CustomContentManager,
+      count: number
+    ) {
+      const saved = [];
+      for (let i = 0; i < count; i++) {
+        saved.push(
+          await addSermon(
+            customContent,
+            {
+              url: `https://gracecommunity.org/sermons/${i}`,
+              title: `Sermon ${i} | Grace Community`,
+            },
+            false
+          )
+        );
+      }
+      return saved;
+    }
+
+    // Enough items that some are saved in a later batch than the first.
+    // Newest are saved first, as the library lists them.
+    const MANY = 8;
+
+    it("keeps a publish clicked while titles are being cleaned up", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const items = await suffixedDrafts(owner.customContent, MANY);
+      const [later] = items;
+      const first = items[items.length - 1]!;
+      let release = () => {};
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      server.hooks.beforeWrite = async (address) => {
+        if (address === contentItemAddress(first.id)) {
+          await held;
+        }
+      };
+
+      const cleaning = owner.customContent.cleanupTitles();
+      await waitForCondition(() =>
+        owner.customContent.items.value.every(
+          (item) => !item.title.includes("|")
+        )
+      );
+      const publishing = owner.customContent.setItemPublished(later!.id, true);
+      await publishing;
+      release();
+      await cleaning;
+
+      expect(
+        server.records
+          .get(owner.customContent.recordName.value!)!
+          .get(contentItemAddress(later!.id))?.data
+      ).toMatchObject({ title: "Sermon 0", status: "published" });
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 10);
+      expect(results.map((r) => r.title)).toEqual(["Sermon 0"]);
+    });
+
+    it("puts a title back, and says so, when saving it fails, but still saves the rest", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const items = await suffixedDrafts(owner.customContent, MANY);
+      const failing = items[items.length - 1]!;
+      server.failWritesTo.add(contentItemAddress(failing.id));
+
+      await expect(owner.customContent.cleanupTitles()).rejects.toMatchObject({
+        code: "server_error",
+      });
+      expect(
+        owner.customContent.items.value.find((item) => item.id === failing.id)
+          ?.title
+      ).toBe(`Sermon ${MANY - 1} | Grace Community`);
+      for (const [i, item] of items.entries()) {
+        if (item !== failing) {
+          expect(storedTitle(server, owner.customContent, item.id)).toBe(
+            `Sermon ${i}`
+          );
+        }
+      }
+    });
+  });
+
+  describe("chapters too big for one record entry", () => {
+    /**
+     * Published items on John 3, stored as an import would leave them, then
+     * the library opened again so the owner's editor knows about them.
+     * Together they're well over CasualOS's 500 KB limit for one entry.
+     */
+    async function crowdedChapter(server: FakeRecordsServer, count: number) {
+      const owner = await ownerWithLibrary(server);
+      const recordName = owner.customContent.recordName.value!;
+      const record = server.records.get(recordName)!;
+      for (let i = 0; i < count; i++) {
+        const id = `item-${i}`;
+        record.set(contentItemAddress(id), {
+          data: {
+            id,
+            url: `https://gracecommunity.org/sermons/${i}`,
+            status: "published",
+            title: `Born again, part ${i}`,
+            description: "Nicodemus comes to Jesus by night. ".repeat(10),
+            image: `https://gracecommunity.org/images/${"x".repeat(1000)}/${i}.jpg`,
+            categoryIds: [],
+            references: [ref({ book: "JHN", chapter: 3 })],
+            createdAt: i,
+            updatedAt: i,
+          } satisfies ContentItem,
+          markers: [CONTENT_ITEM_MARKER],
+        });
+      }
+      await owner.customContent.openLibrary(recordName);
+      await owner.customContent.rebuildIndex();
+      return { ...owner, record };
+    }
+
+    it("are split into pages, and readers see every item once", async () => {
+      const server = fakeRecordsServer();
+      const owner = await crowdedChapter(server, 400);
+
+      expect(owner.record.has(contentChapterAddress("JHN", 3, 2))).toBe(true);
+      const pages = owner.customContent.chapterIndex.value?.pages?.["JHN.3"];
+      expect(pages).toBeGreaterThan(1);
+      expect(
+        owner.record.has(contentChapterAddress("JHN", 3, pages! + 1))
+      ).toBe(false);
+
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 3);
+      expect(results).toHaveLength(400);
+      expect(new Set(results.map((r) => r.title)).size).toBe(400);
+    });
+
+    it("shrink back to one page when items are taken off", async () => {
+      const server = fakeRecordsServer();
+      const owner = await crowdedChapter(server, 400);
+      const remaining = owner.customContent.items.value.slice(0, 2);
+      for (const item of owner.customContent.items.value.slice(2)) {
+        await owner.customContent.deleteItem(item.id);
+      }
+
+      expect(
+        [...owner.record.keys()].filter((address) => address.startsWith("ch."))
+      ).toEqual([contentChapterAddress("JHN", 3)]);
+      expect(owner.customContent.chapterIndex.value?.pages).toBeUndefined();
+      const reader = await readerOf(server, owner.customizationId);
+      const results = await discoverContent(reader.discover, "JHN", 3);
+      expect(results.map((r) => r.title).sort()).toEqual(
+        remaining.map((item) => item.title).sort()
+      );
+    });
+  });
+
+  describe("categories", () => {
+    it("moves items of a removed category into Other", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const kids = await owner.customContent.addCategory("Kids");
+      await addSermon(owner.customContent, { categoryIds: [kids.id] });
+      await owner.customContent.removeCategory(kids.id);
+
+      expect(owner.customContent.items.value[0]?.categoryIds).toEqual([]);
+      const reader = await readerOf(server, owner.customizationId);
+      expect(reader.discover.contentTypes.value.map((t) => t.id)).toEqual([
+        customContentTypeId(
+          owner.customContent.recordName.value!,
+          UNCATEGORIZED_ID
+        ),
+      ]);
+      const [result] = await discoverContent(reader.discover, "JHN", 10);
+      expect(result?.contentType).toBe(
+        customContentTypeId(
+          owner.customContent.recordName.value!,
+          UNCATEGORIZED_ID
+        )
+      );
+    });
+  });
+
+  describe("reopening and deleting", () => {
+    it("loads what was saved when the library is opened again", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      await owner.customContent.addCategory("Sermons");
+      await addSermon(owner.customContent);
+      const recordName = owner.customContent.recordName.value!;
+
+      const again = createApp(server, { userId: OWNER });
+      await again.customContent.openLibrary(recordName);
+      expect(again.customContent.status.value).toBe("ready");
+      expect(again.customContent.items.value.map((i) => i.title)).toEqual([
+        "The Good Shepherd",
+      ]);
+      expect(
+        again.customContent.manifest.value?.categories.map((c) => c.name)
+      ).toEqual(["Sermons"]);
+    });
+
+    it("says the library is missing rather than failing when its record is gone", async () => {
+      const server = fakeRecordsServer();
+      const app = createApp(server, { userId: OWNER });
+      await app.customContent.openLibrary("seedbible-content-gone");
+      expect(app.customContent.status.value).toBe("missing");
+    });
+
+    it("closes the library, letting go of the owner's drafts, when they sign out", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      await addSermon(owner.customContent, {}, false);
+
+      owner.login.userId.value = null;
+
+      expect(owner.customContent.status.value).toBe("closed");
+      expect(owner.customContent.items.value).toEqual([]);
+      expect(owner.customContent.manifest.value).toBeNull();
+    });
+
+    it("says so, and keeps the library open to try again, when part of it can't be erased", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      const item = await addSermon(owner.customContent);
+      const recordName = owner.customContent.recordName.value!;
+      server.failErasesTo.add(contentItemAddress(item.id));
+
+      await expect(owner.customContent.deleteLibrary()).rejects.toMatchObject({
+        code: "delete_incomplete",
+      });
+      const saved = server.records.get(OWNER)!.get(owner.customizationId)!;
+      expect(
+        (saved.data as { contentRecordName?: string }).contentRecordName
+      ).toBe(recordName);
+      expect(owner.customContent.status.value).toBe("ready");
+
+      server.failErasesTo.clear();
+      await owner.customContent.deleteLibrary();
+      expect(server.records.get(recordName)?.size).toBe(0);
+      expect(owner.customContent.status.value).toBe("closed");
+    });
+
+    it("erases the library and unlinks it from the Custom Branding", async () => {
+      const server = fakeRecordsServer();
+      const owner = await ownerWithLibrary(server);
+      await addSermon(owner.customContent);
+      const recordName = owner.customContent.recordName.value!;
+
+      await owner.customContent.deleteLibrary();
+
+      expect(server.records.get(recordName)?.size).toBe(0);
+      const saved = server.records.get(OWNER)!.get(owner.customizationId)!;
+      expect(
+        (saved.data as { contentRecordName?: string }).contentRecordName
+      ).toBeUndefined();
+      expect(owner.customContent.status.value).toBe("closed");
+      await waitForCondition(() => owner.discover.providers.value.length === 0);
+    });
+  });
+});

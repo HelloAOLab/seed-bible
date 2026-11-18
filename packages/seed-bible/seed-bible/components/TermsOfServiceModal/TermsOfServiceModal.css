@@ -1,7 +1,13 @@
-/* Terms of service modal --------------------------------------------------- */
+/* Terms of service, privacy policy and code of conduct ----------------------- */
+
+/* Level with the login window, which links to them: drawn in place after it,
+   they land on top of it, and above any window at the end of <body>. */
+.sb-dialog-backdrop:has(> .sb-legal-dialog) {
+  --sb-dialog-layer: calc(var(--sb-layer-modal) + 2);
+}
 
 .sb-tos-content {
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
 }
 
 .sb-tos-content h1,

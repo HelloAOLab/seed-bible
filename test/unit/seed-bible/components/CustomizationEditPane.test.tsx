@@ -6,6 +6,11 @@ import {
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../testUtils/mockI18n");
+  return mockI18nManager();
+});
+
 /**
  * Fakes only the two `customizations` members a tutorial step's `onEnter`
  * actually touches — the same "as unknown as X" pattern

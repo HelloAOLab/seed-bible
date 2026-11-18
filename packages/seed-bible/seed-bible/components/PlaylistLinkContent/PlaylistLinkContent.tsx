@@ -1,7 +1,9 @@
 import "./PlaylistLinkContent.css";
-import { useI18n } from "../../i18n";
+import { useI18n } from "../../i18n/I18nContext";
 import { resolveLinkMedia } from "../../managers/resolveLinkMedia";
-import { safeImageUrl, type LinkPreview } from "../../managers/linkPreview";
+import type { LinkPreview } from "../../managers/linkPreview";
+import { safeImageUrl } from "../../managers/safeImageUrl";
+import { Button } from "../Button/Button";
 
 /**
  * Renders a playlist link item based on what its URL points at (see
@@ -96,14 +98,14 @@ export function PlaylistLinkContent(props: {
       >
         {props.url}
       </a>
-      <a
-        className="sb-settings-save-button sb-play-playlist-open-button"
+      <Button
+        variant="primary"
+        className="sb-play-playlist-open-button"
         href={props.url}
         target="_blank"
-        rel="noopener noreferrer"
       >
         {t("open-link", { defaultValue: "Open" })}
-      </a>
+      </Button>
     </div>
   );
 }

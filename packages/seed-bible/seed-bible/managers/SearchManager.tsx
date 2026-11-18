@@ -134,6 +134,14 @@ export function matchBookReferences(
   });
 }
 
+/** Which page of results to return, and how many to a page. */
+export interface SearchPageOptions {
+  /** From 1. Defaults to the first page. */
+  page?: number;
+  /** Defaults to Typesense's own default of 10. */
+  perPage?: number;
+}
+
 export interface SearchManager {
   /**
    * Searches for verses matching the given text and filters.
@@ -141,12 +149,14 @@ export interface SearchManager {
    * @param translationId The ID of the translation to search within.
    * @param query The search query text.
    * @param filters The filters to apply to the search.
+   * @param options Which page of results to return.
    */
   searchVerses: (
     language: string,
     translationId: string,
     query: string,
-    filters?: SearchFilters
+    filters?: SearchFilters,
+    options?: SearchPageOptions
   ) => Promise<VerseSearchResponse>;
 }
 
@@ -245,7 +255,8 @@ export function createSearchManager(): SearchManager {
     language: string,
     translationId: string,
     text: string,
-    filters?: SearchFilters
+    filters?: SearchFilters,
+    options?: SearchPageOptions
   ): Promise<VerseSearchResponse> => {
     const filterBy = buildVerseFilterBy(translationId, filters);
 
@@ -258,6 +269,8 @@ export function createSearchManager(): SearchManager {
         q: text,
         query_by: ["referenceNormalized", "reference", "text"],
         filter_by: filterBy,
+        page: options?.page,
+        per_page: options?.perPage,
       });
   };
 

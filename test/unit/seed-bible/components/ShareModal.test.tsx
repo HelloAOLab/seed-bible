@@ -61,11 +61,11 @@ describe("ShareModal embed", () => {
   }
 
   function embedCode(): string {
-    return container.querySelector("textarea")?.value ?? "";
+    return document.querySelector("textarea")?.value ?? "";
   }
 
   function clickButton(label: string) {
-    const button = Array.from(container.querySelectorAll("button")).find(
+    const button = Array.from(document.querySelectorAll("button")).find(
       (candidate) => candidate.textContent?.includes(label)
     );
     expect(button).toBeDefined();
@@ -237,7 +237,7 @@ describe("ShareModal embed", () => {
     await act(async () => {
       render(
         <TestHost state={state}>
-          <ModalHost manager={modals} />
+          <ModalHost manager={modals} isMobile={state.app.isMobile} />
         </TestHost>,
         container
       );
@@ -251,7 +251,7 @@ describe("ShareModal embed", () => {
     expect(embedCode()).toContain("app.themeId=system");
     expect(embedCode()).toContain("customization=alice.custom-1");
     expect(embedCode()).toContain("verse=2");
-    expect(container.querySelector("iframe")?.getAttribute("src")).toContain(
+    expect(document.querySelector("iframe")?.getAttribute("src")).toContain(
       "embed=minimal"
     );
   });
@@ -295,7 +295,7 @@ describe("QuickToolbar embed share", () => {
             embedThemes={themes}
             customizationLocator={customizationLocator}
           />
-          <ModalHost manager={state.modals} />
+          <ModalHost manager={state.modals} isMobile={state.app.isMobile} />
         </TestHost>,
         container
       );
@@ -309,7 +309,7 @@ describe("QuickToolbar embed share", () => {
       share!.click();
     });
 
-    const embed = Array.from(container.querySelectorAll("button")).find(
+    const embed = Array.from(document.querySelectorAll("button")).find(
       (button) => button.textContent?.includes("Embed")
     );
     expect(embed).toBeDefined();
@@ -317,12 +317,12 @@ describe("QuickToolbar embed share", () => {
       embed!.click();
     });
 
-    const code = container.querySelector("textarea")?.value ?? "";
+    const code = document.querySelector("textarea")?.value ?? "";
     expect(code).toContain("embed=minimal");
     expect(code).toContain("app.themeId=system");
     expect(code).toContain("customization=alice.custom-1");
     expect(
-      Array.from(container.querySelectorAll("option"), (option) => option.value)
+      Array.from(document.querySelectorAll("option"), (option) => option.value)
     ).toContain("dark");
   });
 });

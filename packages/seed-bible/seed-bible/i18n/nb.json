@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Kopierte lenken til deling av oversettelse",
   "less": "Mindre",
   "swipe-up-more": "Sveip opp for å se mer",
-  "plans": "Planer",
   "reading-plans": "Leseplaner",
   "create-reading-plan": "Lag leseplan",
   "reading-plans-empty": "Du har ingen leseplaner ennå. Opprett en for å komme i gang.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Laster inn oversettelser…",
   "translations-load-failed": "Kunne ikke laste inn hele listen over oversettelser, så noen kan mangle.",
   "verse-of-the-day": "DAGENS VERS",
-  "verse-of-the-day-loading": "Laster inn dagens vers…"
+  "verse-of-the-day-loading": "Laster inn dagens vers…",
+  "delete-bookmark-confirm-title": "Slette bokmerke?",
+  "delete-bookmark-confirm-message": "Slette « {{name}} »?",
+  "scripture-font": "Skriftskrift",
+  "ai-limits-title": "Før du chatter med AI",
+  "ai-limits-intro": "AI kan være et nyttig utgangspunkt, men husk begrensningene:",
+  "ai-limits-mistakes": "Den gjør feil, og kan høres selvsikker ut når den tar feil.",
+  "ai-limits-agreeable": "Den har en tendens til å fortelle deg det du vil høre, og heller mot populære svar.",
+  "ai-limits-scripture": "Det er ikke en pålitelig kilde. Sjekk hva den sier mot Skriften.",
+  "ai-limits-study": "Studer Bibelen selv, og ikke la AI tenke for deg.",
+  "ai-limits-confirm": "Jeg forstår at AI kan gjøre feil og ikke er en erstatning for å studere Bibelen selv.",
+  "friends-playlists-filter": "Vennenes spillelister",
+  "friend-link-social-title": "Legg til {{name}} som venn",
+  "friend-link-meta-description": "{{name}} vil være vennen din på {{brand}}",
+  "friend-link-title": "Legg til {{name}} som venn på {{brand}}"
 }

@@ -42,7 +42,7 @@ export function ReadingPlanOptionsMenu(props: {
     <ContextMenuWithButton
       anchorClassName="sb-rp-card-menu"
       buttonClassName={props.buttonClassName}
-      aria-label={t("reading-plan-options", {
+      label={t("reading-plan-options", {
         defaultValue: "Reading plan options",
       })}
       onClick={(e) => e.stopPropagation()}

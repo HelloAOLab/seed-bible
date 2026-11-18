@@ -2,7 +2,12 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { loadExtensionProjectInfo } from "../lib/project.js";
-import { readIcon, type IconFile } from "../lib/icon.js";
+import {
+  readIcon,
+  readScreenshots,
+  withScreenshotSrcs,
+  type ImageFile,
+} from "../lib/images.js";
 import { runBuild } from "./build.js";
 import {
   bootstrapRecordKey,
@@ -41,6 +46,8 @@ export interface ExtensionSetManifest {
       integrity?: string;
       /** A link to the extension's icon. */
       icon?: string;
+      /** Screenshot links in display order, with optional translation keys. */
+      screenshots?: { src: string; caption?: string }[];
     };
   }>;
 }
@@ -75,9 +82,15 @@ export async function runPublish(
 
   const icon = await readIcon(root, info.meta);
 
+  const screenshots = await readScreenshots(root, info.meta);
+
   if (options.dryRun) {
+    const pendingLinks = ["the bundle URL"];
+    if (icon) pendingLinks.push("the uploaded icon's link");
+    if (screenshots.some(Boolean))
+      pendingLinks.push("uploaded screenshots' links");
     console.log(
-      `[publish] --dry-run: not uploading. Would publish this ExtensionSet (once the bundle URL${icon ? " and the uploaded icon's link" : ""} below are filled in):`
+      `[publish] --dry-run: not uploading. Would publish this ExtensionSet (once ${pendingLinks.join(", ")} below are filled in):`
     );
     console.log(JSON.stringify(manifest, null, 2));
     return 0;
@@ -90,7 +103,8 @@ export async function runPublish(
     recordKey,
     manifest,
     new Uint8Array(bundle),
-    icon
+    icon,
+    screenshots
   );
 
   console.log(`
@@ -111,7 +125,7 @@ To install it, paste that link into Seed Bible's Settings > Extensions >
 }
 
 /**
- * Uploads the bundle and icon, each to its own link, fills those links into
+ * Uploads the bundle and images, each to its own link, fills those links into
  * `manifest`, and writes it where the extension's set lives.
  */
 export async function uploadExtensionSet(
@@ -119,7 +133,8 @@ export async function uploadExtensionSet(
   recordKey: string,
   manifest: ExtensionSetManifest,
   bundle: Uint8Array<ArrayBuffer>,
-  icon: IconFile | null
+  icon: ImageFile | null,
+  screenshots: (ImageFile | null)[] = []
 ): Promise<{ setUrl: string; manifest: ExtensionSetManifest }> {
   const extension = manifest.extensions[0]!;
 
@@ -135,14 +150,23 @@ export async function uploadExtensionSet(
 
   if (icon) {
     console.log("[publish] Uploading icon...");
-    const { fileUrl: iconUrl } = await uploadFile(
-      client,
-      recordKey,
-      icon.bytes,
-      ["publicRead"],
-      icon.mimeType
+    extension.meta.icon = await uploadPublicImage(client, recordKey, icon);
+  }
+
+  const screenshotSrcs: (string | null)[] = [];
+  for (const [index, image] of screenshots.entries()) {
+    if (!image) {
+      screenshotSrcs.push(null);
+      continue;
+    }
+    console.log(`[publish] Uploading screenshot ${index + 1}...`);
+    screenshotSrcs.push(await uploadPublicImage(client, recordKey, image));
+  }
+  if (extension.meta.screenshots) {
+    extension.meta.screenshots = withScreenshotSrcs(
+      extension.meta.screenshots,
+      screenshotSrcs
     );
-    extension.meta.icon = iconUrl;
   }
 
   // A file's URL changes with its contents, so the manifest goes in a data
@@ -156,6 +180,21 @@ export async function uploadExtensionSet(
     manifest
   );
   return { setUrl, manifest };
+}
+
+async function uploadPublicImage(
+  client: RecordsClient,
+  recordKey: string,
+  image: ImageFile
+): Promise<string> {
+  const { fileUrl } = await uploadFile(
+    client,
+    recordKey,
+    image.bytes,
+    ["publicRead"],
+    image.mimeType
+  );
+  return fileUrl;
 }
 
 export const extensionSetAddress = (extensionId: string) =>

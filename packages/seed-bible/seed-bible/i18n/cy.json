@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Copïwyd dolen rhannu cyfieithiad",
   "less": "Llai",
   "swipe-up-more": "Sweipiwch i fyny i weld mwy",
-  "plans": "Cynlluniau",
   "reading-plans": "Cynlluniau darllen",
   "create-reading-plan": "Creu cynllun darllen",
   "reading-plans-empty": "Nid oes gennych unrhyw gynlluniau darllen eto. Crëwch un i ddechrau.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Wrthi'n llwytho cyfieithiadau…",
   "translations-load-failed": "Methwyd llwytho'r rhestr lawn o gyfieithiadau, felly efallai bod rhai ar goll.",
   "verse-of-the-day": "ADNOD Y DYDD",
-  "verse-of-the-day-loading": "Wrthi'n llwytho pennill y dydd…"
+  "verse-of-the-day-loading": "Wrthi'n llwytho pennill y dydd…",
+  "delete-bookmark-confirm-title": "Dileu nod tudalen?",
+  "delete-bookmark-confirm-message": "Dileu \" {{name}} \"?",
+  "scripture-font": "Ffont yr Ysgrythur",
+  "ai-limits-title": "Cyn i chi sgwrsio ag AI",
+  "ai-limits-intro": "Gall deallusrwydd artiffisial fod yn fan cychwyn defnyddiol, ond cofiwch ei derfynau:",
+  "ai-limits-mistakes": "Mae'n gwneud camgymeriadau, a gall swnio'n hyderus pan mae'n anghywir.",
+  "ai-limits-agreeable": "Mae'n tueddu i ddweud wrthych chi beth rydych chi am ei glywed, ac yn pwyso tuag at atebion poblogaidd.",
+  "ai-limits-scripture": "Nid yw'n ffynhonnell ddibynadwy. Gwiriwch beth mae'n ei ddweud yn erbyn yr Ysgrythur.",
+  "ai-limits-study": "Astudiwch y Beibl drosoch eich hun, a pheidiwch â gadael i AI wneud eich meddwl ar eich rhan.",
+  "ai-limits-confirm": "Rwy'n deall y gall deallusrwydd artiffisial wneud camgymeriadau ac nad yw'n lle astudio'r Beibl fy hun.",
+  "friends-playlists-filter": "Rhestrau chwarae ffrindiau",
+  "friend-link-social-title": "Ychwanegu {{name}} fel ffrind",
+  "friend-link-meta-description": "Mae {{name}} eisiau bod yn ffrind i chi ar {{brand}}",
+  "friend-link-title": "Ychwanegu {{name}} fel ffrind ar {{brand}}"
 }

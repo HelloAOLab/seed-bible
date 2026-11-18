@@ -1,5 +1,6 @@
 import { cp, rm, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import ts from "typescript";
 import { scaffoldExtension } from "@packages/create-seed-bible-extension/src/scaffold";
 import {
   checkManifestPermissions,
@@ -85,6 +86,26 @@ describe("a scaffolded extension", () => {
     );
     expect(dependencies["seed-bible"]).toBe("^9.8.7");
     expect(devDependencies["seed-bible-extension-scripts"]).toBe("^9.8.7");
+  });
+
+  it("type-checks a CSS import, as the docs say to write one", async () => {
+    await writeFile(
+      path.join(target, "src/panel.css"),
+      ".panel { margin: 0; }"
+    );
+    const styled = path.join(target, "src/styled.ts");
+    await writeFile(styled, 'import "./panel.css";\nexport {};\n');
+    const config = ts.getParsedCommandLineOfConfigFile(
+      path.join(target, "tsconfig.json"),
+      {},
+      { ...ts.sys, onUnRecoverableConfigFileDiagnostic: () => {} }
+    )!;
+    const program = ts.createProgram(config.fileNames, config.options);
+
+    const problems = ts
+      .getPreEmitDiagnostics(program, program.getSourceFile(styled))
+      .map((d) => ts.flattenDiagnosticMessageText(d.messageText, "\n"));
+    expect(problems).toEqual([]);
   });
 
   it("is ready to host on GitHub Pages or Cloudflare", async () => {

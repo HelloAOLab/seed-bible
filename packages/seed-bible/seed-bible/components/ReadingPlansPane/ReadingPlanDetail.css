@@ -13,7 +13,7 @@
      areas still span the pane and keep their scrollbar at its edge. */
   --rp-column-inset: max(0px, calc((100% - 42rem) / 2));
 
-  --rp-header-radius: 1rem;
+  --rp-header-radius: var(--sb-radius-xl);
 
   /* Lets the header below round its top corners only once the column is
      narrower than the pane, which a media query can't tell. */
@@ -64,13 +64,13 @@
 
 .sb-rpd-subtitle {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
 }
 
 .sb-rpd-section-title {
   margin: 4px 0 0;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
 }
 
@@ -84,7 +84,7 @@
 .sb-rpd-progress-bar {
   flex: 1;
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--rp-border);
   overflow: hidden;
 }
@@ -95,14 +95,14 @@
 
 .sb-rpd-progress-bar-fill {
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--rp-accent);
-  transition: width 0.3s ease;
+  transition: width var(--sb-duration-slow) ease;
 }
 
 .sb-rpd-progress-count {
   flex: none;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   font-weight: 700;
 }
 
@@ -115,9 +115,9 @@
 
 .sb-rpd-chip {
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-reader-background, #fff);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
 }
 
@@ -144,7 +144,7 @@
 .sb-rpd-empty {
   margin: 8px 0;
   text-align: center;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: var(--rp-muted);
 }
 
@@ -168,7 +168,7 @@
   height: 72px;
   padding: 6px;
   border: 1px solid var(--rp-border);
-  border-radius: 14px;
+  border-radius: var(--sb-radius-xl);
   background: transparent;
   color: inherit;
   cursor: pointer;
@@ -184,7 +184,7 @@
 }
 
 .sb-rpd-day-tab-label {
-  font-size: 0.625rem;
+  font-size: var(--sb-font-size-10);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -192,12 +192,13 @@
 }
 
 .sb-rpd-day-tab-num {
-  font-size: 1.25rem;
+  font-size: var(--sb-font-size-20);
   font-weight: 700;
   line-height: 1;
 }
 
 .sb-rpd-day-tab .sb-rpd-day-tab-check {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 16px;
   color: var(--rp-success);
 }
@@ -242,7 +243,7 @@
   flex: none;
   padding: 8px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: transparent;
   cursor: pointer;
 }
@@ -272,7 +273,6 @@
 
 .sb-rpd-reading-expand {
   flex: none;
-  color: var(--rp-muted);
 }
 
 /* One chip per chapter of a multi-chapter reading, so "six chapters into John
@@ -290,11 +290,11 @@
   min-width: 34px;
   padding: 5px 8px;
   border: 1px solid var(--rp-border);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   color: inherit;
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   cursor: pointer;
 }
@@ -318,7 +318,7 @@
   flex: none;
   width: 34px;
   height: 34px;
-  border-radius: 9px;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--rp-accent) 10%, transparent);
   color: var(--rp-accent);
 }
@@ -331,7 +331,7 @@
    a link's host. Already truncated in code, but clipped here too so a long
    unbroken string can't stretch the card. */
 .sb-rpd-reading-preview {
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--rp-muted);
   min-width: 0;
   overflow: hidden;
@@ -346,7 +346,7 @@
   width: 100%;
   padding: 14px;
   border: 1px solid var(--rp-border);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: transparent;
   color: inherit;
   text-align: start;
@@ -384,19 +384,19 @@
 }
 
 .sb-rpd-reading-title {
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
 
 .sb-rpd-reading-meta {
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   color: var(--rp-muted);
 }
 
 /* Reflect card */
 .sb-rpd-reflect {
   padding: 14px;
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: color-mix(in srgb, var(--sb-font-color) 5%, transparent);
 }
 
@@ -404,7 +404,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -417,7 +417,7 @@
 
 .sb-rpd-reflect-text {
   margin: 8px 0 0;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   line-height: 1.5;
 }
 
@@ -435,16 +435,11 @@
   gap: 10px;
 }
 
-.sb-rpd-footer-actions .sb-rp-button {
+.sb-rpd-footer-actions .sb-button {
   flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: auto;
 }
 
-.sb-rpd-footer .sb-rp-button {
+.sb-rpd-footer .sb-button {
   width: 100%;
 }
 
@@ -461,13 +456,13 @@
 .sb-rpd-footer-note {
   margin: 8px 0 0;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: var(--sb-font-size-12);
   color: var(--rp-muted);
 }
 
 .sb-rpd-hero-summary {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
   color: var(--rp-muted);
 }
 
@@ -503,16 +498,16 @@
 
 .sb-rpd-celebration-title {
   margin: 0;
-  font-size: 1.375rem;
+  font-size: var(--sb-font-size-22);
   font-weight: 700;
 }
 
 .sb-rpd-celebration-subtitle {
   margin: 0 0 8px;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   color: var(--rp-muted);
 }
 
-.sb-rpd-celebration .sb-rp-button {
+.sb-rpd-celebration .sb-button {
   min-width: 180px;
 }

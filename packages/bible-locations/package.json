@@ -9,8 +9,5 @@
       "import": "./index.ts"
     }
   },
-  "dependencies": {
-    "seed-bible": "workspace:*"
-  },
   "license": "ISC"
 }

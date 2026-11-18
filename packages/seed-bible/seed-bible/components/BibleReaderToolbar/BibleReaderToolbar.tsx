@@ -1,4 +1,5 @@
 import "./BibleReaderToolbar.inline.css";
+import "../visuallyHidden.inline.css";
 import {
   effect,
   signal,
@@ -11,6 +12,13 @@ import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import {
+  isPlaylistEditorTab,
+  playlistEditorScriptureStep,
+} from "../PlaylistEditor/PlaylistEditorWorkspace";
+import { PlaylistEditorToolbarStack } from "../PlaylistEditor/PlaylistEditorToolbarStack";
+import { PlaylistStepNoteSheet } from "../PlaylistEditor/PlaylistStepNoteSheet";
+import { QuestionAnswersSheet } from "../QuestionAnswers/QuestionAnswersSheet";
+import {
   MAX_CUSTOM_HIGHLIGHT_COLORS,
   UI_SIZE_SCALE_MAP,
 } from "../../managers/SettingsManager";
@@ -19,6 +27,7 @@ import type { BibleReadingSession } from "../../managers/SessionsManager";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import type { BibleReaderToolbarTool } from "../../managers/BibleToolsManager";
 import { ToolActionElement } from "../ToolActionElement";
+import { BottomSheet, type BottomSheetProps } from "../BottomSheet/BottomSheet";
 import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
@@ -31,7 +40,7 @@ import {
   StopIcon,
   TodayIcon,
 } from "../../components/icons";
-import { Fragment, type ComponentChildren } from "preact";
+import { Fragment, type ComponentChildren, type JSX, type Ref } from "preact";
 import { createPortal } from "preact/compat";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import {
@@ -40,6 +49,8 @@ import {
   openSaveModalForLocation,
 } from "../Tabs/Tabs";
 import { BookmarkStackIcon } from "../Bookmarks/Bookmarks";
+import { CustomizableIcon } from "../CustomizableIcon/CustomizableIcon";
+import { SessionGroupBar } from "../SessionGroupBar/SessionGroupBar";
 import { playlistItemLabel } from "../playlistItemLabel";
 import {
   ScriptureNoteSheet,
@@ -64,7 +75,11 @@ import {
   AnnotationCommentMeta,
   annotationLocationLabel,
   openDeleteAnnotationConfirm,
-} from "../DiscoverPane/AnnotationsSection";
+} from "../Discover/AnnotationsSection";
+import {
+  VerseTaggedResultsSections,
+  verseTaggedResultsFor,
+} from "../Discover/DiscoveredResultsSections";
 import {
   ContextMenuWithButton,
   ContextMenuItem,
@@ -78,6 +93,7 @@ import {
   LazyColorPicker,
   preloadColorPicker,
 } from "../ColorPicker/LazyColorPicker";
+import { IconButton } from "../IconButton/IconButton";
 
 /** Shared always-true visibility for Chat when `?chatFirst=true`. */
 const CHAT_FIRST_VISIBLE = signal(true);
@@ -123,11 +139,7 @@ function applyChatFirstDesktopTools(
 }
 
 /** Navigation tools that sit before Today at the start of the desktop toolbar. */
-const LEADING_NAV_TOOL_IDS = new Set([
-  "stop-playing",
-  "previous-chapter",
-  "previous-item",
-]);
+const LEADING_NAV_TOOL_IDS = new Set(["previous-chapter", "previous-item"]);
 
 /** Places in the desktop toolbar's primary group, the More button included. */
 const DESKTOP_PRIMARY_SLOTS = 4;
@@ -148,6 +160,8 @@ function indexOrEnd(index: number, list: readonly unknown[]): number {
  * "Powered by" row) ends flush against the toolbar's top edge.
  */
 const BOTTOM_CHROME_GAP_PX = 48;
+/** Space between the desktop toolbar and the playlist editor's stack above it (CSS too). */
+const PE_TOOLBAR_STACK_GAP_PX = 8;
 
 /**
  * Spawns a Material-style ripple inside the pressed button: a circle centered on
@@ -855,7 +869,7 @@ function VerseToolbarAnnotationGroup(props: {
               {ownAnnotations.has(annotation) ? (
                 <ContextMenuWithButton
                   buttonClassName="sb-annotation-item-menu"
-                  aria-label={t("annotation-options", {
+                  label={t("annotation-options", {
                     defaultValue: "Annotation options",
                   })}
                 >
@@ -898,14 +912,6 @@ function VerseToolbarAnnotationGroup(props: {
 }
 
 /**
- * How far the finger must travel before releasing commits the mobile verse
- * sheet open or closed. A fraction of the content height would make a long
- * note nearly impossible to drag open — the same short movement works for
- * every verse.
- */
-const VERSE_SHEET_SNAP_DISTANCE_PX = 50;
-
-/**
  * Room kept for the handle, reference, and action row until those are
  * measured, so a tall note can't cover the handle on the first frame.
  */
@@ -924,7 +930,7 @@ const VERSE_SHEET_PINNED_MIN_NOTE_ROOM_PX = 48;
  * Registered tools that come right after Highlight and Save on the mobile
  * sheet, in this order, ahead of everything else. With Highlight and Save that
  * makes the collapsed row Highlight, Save, Note, Copy and starts the drawer
- * with Share and Compare, so extension tools (Ask AI, Locations, ...) can't
+ * with Share and Compare, so extension tools (Ask AI, ...) can't
  * push the core actions off the first row however low their priority.
  */
 const VERSE_SHEET_LEADING_TOOL_IDS = [
@@ -995,11 +1001,28 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const readingState = useComputed(
     () => selectedTab.value?.readingState ?? null
   );
+  // What the verse toolbar acts on: the tab's own reading state, or the one
+  // shown beside it (a compare step's second passage) when the user is
+  // working there. Chapter navigation stays with the tab's own.
+  const selectionState = useComputed(() =>
+    selectedTab.value ? tabs.activeReadingState(selectedTab.value) : null
+  );
   const sessionState = useComputed(
     () => selectedTab.value?.sharedSession ?? null
   );
 
   if (!readingState.value) {
+    return null;
+  }
+
+  // On desktop the playlist editor keeps this toolbar only over a scripture
+  // step's page, where moving chapters can re-point the step; its list and
+  // other steps' cards cover the reader.
+  if (
+    !props.state.app.isMobile.value &&
+    isPlaylistEditorTab(props.state, selectedTab.value) &&
+    !playlistEditorScriptureStep(props.state, selectedTab.value)
+  ) {
     return null;
   }
 
@@ -1200,7 +1223,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const verseToolbarTools = useComputed(() => {
     const resolved = toolsManager.getVerseToolbarTools({
-      readingState: readingState.value!,
+      readingState: selectionState.value!,
       sharedSession: sessionState.value,
       selectorState: selector,
       tabs: tabs,
@@ -1243,11 +1266,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   });
 
   const hasVerseSelection = useComputed(
-    () => readingState.value!.selectedVerses.value.length > 0
+    () => selectionState.value!.selectedVerses.value.length > 0
   );
   const isMinimalEmbed = useComputed(
     () => props.state.app.isMinimalEmbed?.value ?? false
   );
+
+  const selectionDiscoveredContent = useComputed(() => {
+    const rs = selectionState.value;
+    if (
+      !rs ||
+      !props.state.app.isMobile.value ||
+      isMinimalEmbed.value ||
+      !settings.settings.value.discoveredContent.showContent
+    ) {
+      return [];
+    }
+    return verseTaggedResultsFor(rs, props.state.discover.contentTypes.value);
+  });
   // A pane fills the whole screen when it's fullscreen, or (on mobile) for any
   // open pane — mobile renders every pane fullscreen. Mirrors the "fills the
   // screen" rule in PanesManager/SeedBibleStateManager. Used to hide the
@@ -1265,7 +1301,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     () =>
       hasVerseSelection.value &&
       !isFullscreenPaneVisible.value &&
-      !props.state.annotations?.isDraftingNewAnnotation.value
+      !props.state.annotations?.isDraftingNewAnnotation.value &&
+      // In the playlist editor, picked verses are a step's passage, applied
+      // from the editor's own pick bar; as on desktop (where this whole
+      // toolbar steps aside), no verse toolbar opens over it. Its "tap
+      // outside clears the selection" would also empty the pick the moment
+      // Apply is touched.
+      !isPlaylistEditorTab(props.state, selectedTab.value)
   );
   const shouldReplaceDefaultToolbar = useComputed(
     () => isSmallScreen.value && isVerseToolbarVisible.value
@@ -1337,12 +1379,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
    */
   const verseSheetDragReveal = useSignal<number | null>(null);
 
-  /**
-   * How far the whole sheet is pushed down by a dismiss drag, in pixels. Only a
-   * downward drag on an already-collapsed sheet moves this; releasing either
-   * dismisses the selection or springs it back to 0.
-   */
-  const verseSheetDismissOffset = useSignal(0);
   /** Runs a verse toolbar action and clears the selection after it succeeds. */
   const handleVerseAction = async (
     action: () => void | Promise<void>,
@@ -1356,7 +1392,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       await action();
 
       if (!preserveSelection) {
-        readingState.value?.clearSelectedVerses();
+        selectionState.value?.clearSelectedVerses();
       }
     } catch (error) {
       console.error("Verse toolbar action failed:", error);
@@ -1384,9 +1420,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   /**
    * Whether the collapsed sheet is hiding something: action cards past the
-   * first row, or notes on the selection. Measured height is not enough —
-   * the overflow row's padding, and a height left behind after that row
-   * unmounts, both read as "more" when the sheet is already showing everything.
+   * first row, or notes or discovered content on the selection. Measured
+   * height is not enough — the overflow row's padding, and a height left
+   * behind after that row unmounts, both read as "more" when the sheet is
+   * already showing everything.
    */
   const verseSheetHasHiddenContent = useComputed(() => {
     if (!isSmallScreen.value) return false;
@@ -1395,8 +1432,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       (showHighlightCard.value ? 1 : 0) +
       (showSaveCard.value ? 1 : 0);
     const annotationCount =
-      readingState.value?.selectionAnnotations.value.length ?? 0;
-    return cardCount > VERSE_SHEET_COLLAPSED_COUNT || annotationCount > 0;
+      selectionState.value?.selectionAnnotations.value.length ?? 0;
+    return (
+      cardCount > VERSE_SHEET_COLLAPSED_COUNT ||
+      annotationCount > 0 ||
+      selectionDiscoveredContent.value.length > 0
+    );
   });
 
   /** Whether there is anything to reveal — no overflow row, nothing to drag to. */
@@ -1601,13 +1642,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       ? props.state.audioPlayback.controllerFor(readingState.value)
       : null
   );
-  // A playing playlist owns the toolbar's transport controls.
-  const desktopPlayback = useComputed(() =>
-    playingPlaylist.value ? null : audioPlayback.value
-  );
 
   const floatingAnchor = useComputed(() =>
-    readingState.value!.selectedVerses.value.reduce<{
+    selectionState.value!.selectedVerses.value.reduce<{
       x: number;
       y: number;
       selectedAt: number;
@@ -1826,36 +1863,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     verseToolbarDrag.current = null;
   };
 
-  /**
-   * Dragging the mobile verse sheet's grab handle.
-   *
-   * The sheet follows the finger: dragging up grows the overflow row a pixel at
-   * a time (never past the viewport), dragging back down shrinks it, and once
-   * the overflow row is fully closed — whether the drag started collapsed or
-   * (after closing it mid-gesture) expanded — continuing to drag down slides the
-   * whole sheet toward the bottom of the screen to dismiss it, all in one
-   * continuous motion rather than requiring a release and a second drag.
-   *
-   * Releasing commits open or closed once the finger has travelled
-   * `VERSE_SHEET_SNAP_DISTANCE_PX` toward that end. Using half the content
-   * height instead would make a long note require a drag longer than the
-   * screen. A half-finished drag animates the rest of the way.
-   *
-   * A press that barely moves is a tap, and toggles.
-   */
-  const VERSE_SHEET_TAP_SLOP = 6;
-  /** How far the sheet must be pushed down before releasing dismisses it. */
-  const VERSE_SHEET_DISMISS_THRESHOLD = 64;
-  const verseSheetDrag = useRef<{
-    pointerId: number;
-    startY: number;
-    startExpanded: boolean;
-    /** Overflow height showing when the drag began: full when expanded, else 0. */
-    startReveal: number;
-    /** Furthest the pointer has travelled, used to tell a tap from a drag. */
-    maxTravel: number;
-  } | null>(null);
-
   /** The overflow row, measured so the reveal has a pixel target to animate to. */
   const stopOverflowMeasure = useRef<(() => void) | null>(null);
   /** The scrolling overflow box (parent of the measured row), so it can be rewound. */
@@ -1929,149 +1936,28 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     scroller.scrollTop = Math.max(0, nextTop);
   };
 
-  const endVerseSheetDrag = (event: PointerEvent): void => {
-    const handle = event.currentTarget as HTMLElement;
-    handle.releasePointerCapture?.(event.pointerId);
-    verseSheetDrag.current = null;
-    verseSheetDragReveal.value = null;
-    verseSheetDismissOffset.value = 0;
-  };
-
-  const handleVerseSheetHandlePointerDown = (event: PointerEvent) => {
-    const handle = event.currentTarget as HTMLElement;
-    handle.setPointerCapture?.(event.pointerId);
-    const expanded = isVerseSheetExpanded.value;
-    // Track the height on screen, not the full note. A note taller than the
-    // viewport would otherwise have to be dragged its whole length before the
-    // sheet moved.
-    const visible = verseSheetVisibleOverflowHeight.value;
-    verseSheetDrag.current = {
-      pointerId: event.pointerId,
-      startY: event.clientY,
-      startExpanded: expanded,
-      startReveal: expanded ? visible : 0,
-      maxTravel: 0,
-    };
-    // Take over the height from the expanded/collapsed state so the first move
-    // continues from where the sheet is now rather than jumping.
-    verseSheetDragReveal.value = expanded ? visible : 0;
-    // Keep the drag from also scrolling the chapter behind the sheet.
-    event.preventDefault();
-  };
-
-  const handleVerseSheetHandlePointerMove = (event: PointerEvent) => {
-    const drag = verseSheetDrag.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-
-    const dy = event.clientY - drag.startY;
-    drag.maxTravel = Math.max(drag.maxTravel, Math.abs(dy));
-
-    const visible = verseSheetVisibleOverflowHeight.value;
-    // Up is negative, so subtracting `dy` grows the reveal as the finger rises.
-    // Cap at the on-screen height so a long note can't drag the handle away.
-    const reveal = Math.min(visible, Math.max(0, drag.startReveal - dy));
-    verseSheetDragReveal.value = reveal;
-
-    // Once the overflow row is fully closed, the rest of the same downward drag
-    // slides the whole sheet away to dismiss. `dy` minus `startReveal` is how far
-    // the finger has moved *past* the point where the row finished closing —
-    // using that (rather than raw `dy`) means the dismiss slide picks up smoothly
-    // from 0 instead of jumping by however much drag it took to close the row,
-    // and it works the same whether the drag started collapsed (startReveal 0) or
-    // expanded (startReveal the on-screen height, not the full note).
-    const distancePastClosed = dy - drag.startReveal;
-    verseSheetDismissOffset.value =
-      reveal === 0 && distancePastClosed > 0 ? distancePastClosed : 0;
-  };
-
-  const handleVerseSheetHandlePointerUp = (event: PointerEvent) => {
-    const drag = verseSheetDrag.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-
-    const dismissOffset = verseSheetDismissOffset.value;
-    const reveal = verseSheetDragReveal.value ?? drag.startReveal;
-    const overflowHeight = verseSheetOverflowHeight.value;
-    const visible = verseSheetVisibleOverflowHeight.value;
-    // A sheet shorter than the snap distance commits when the finger reaches
-    // the end of it — there is no further to drag.
-    const commitDistance = Math.min(VERSE_SHEET_SNAP_DISTANCE_PX, visible);
-    endVerseSheetDrag(event);
-
-    if (drag.maxTravel <= VERSE_SHEET_TAP_SLOP) {
-      // A tap on the handle is the keyboard-free way to toggle, and the only
-      // affordance left now that the sheet has no "More" card.
-      if (overflowHeight > 0) {
-        isVerseSheetExpanded.value = !drag.startExpanded;
-      }
-      return;
-    }
-
-    if (dismissOffset >= VERSE_SHEET_DISMISS_THRESHOLD) {
-      readingState.value?.clearSelectedVerses();
-      return;
-    }
-
-    if (overflowHeight <= 0 || commitDistance <= 0) {
-      isVerseSheetExpanded.value = false;
-      return;
-    }
-
-    if (drag.startExpanded) {
-      const pulledDown = drag.startReveal - reveal;
-      isVerseSheetExpanded.value = pulledDown < commitDistance;
-      return;
-    }
-
-    isVerseSheetExpanded.value = reveal >= commitDistance;
-  };
-
-  const handleVerseSheetHandlePointerCancel = (event: PointerEvent) => {
-    const drag = verseSheetDrag.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    endVerseSheetDrag(event);
-    // An interrupted gesture shouldn't leave the sheet half-committed.
-    isVerseSheetExpanded.value = drag.startExpanded;
-  };
-
   /**
    * Elements inside the mobile sheet that must keep their own tap/scroll
-   * behavior instead of starting the sheet drag: buttons and inputs (so taps
-   * still register as clicks — capturing the pointer on the panel would
-   * otherwise steal their `pointerup`), the horizontal highlight-color
-   * strip (its own swipe gesture would fight the sheet's vertical one), and
-   * the notes once they scroll (a drag there moves the note, not the sheet).
+   * behavior instead of starting the sheet drag, beyond the buttons and inputs
+   * the sheet already skips: the horizontal highlight-color
+   * strip (its own swipe gesture would fight the sheet's vertical one),
+   * discovered content (extension cards often toggle on a plain `div`, which
+   * `button` doesn't cover), and the notes once they scroll (a drag there
+   * moves the note, not the sheet).
    */
   const VERSE_SHEET_DRAG_IGNORE_SELECTOR =
-    "button, input, a, .sb-verse-toolbar-swatches, .sb-verse-toolbar-overflow-scrollable";
+    ".sb-verse-toolbar-swatches, .sb-verse-toolbar-discovered, .sb-verse-toolbar-overflow-scrollable";
 
   /**
-   * Entry point for the whole-panel version of the handle drag: any part of
-   * the collapsed/expanded mobile sheet not covered by the ignore list above
-   * starts the same drag tracked by the handle, so the user doesn't have to
-   * land a thumb precisely on the handle to expand, collapse, or dismiss it.
-   * Not wired up while the highlight picker is showing — that view has no
-   * overflow row to reveal, and its swatch strip already owns horizontal
-   * swipes.
+   * The phone verse sheet's ✕ and Escape: in the highlight colors they go back
+   * to the verse actions, keeping the selection; otherwise they clear it.
    */
-  const handleVerseSheetPanelPointerDown = (event: PointerEvent) => {
-    if (isHighlightPickerOpen.value) return;
-    const target = event.target as HTMLElement | null;
-    if (target?.closest(VERSE_SHEET_DRAG_IGNORE_SELECTOR)) return;
-    handleVerseSheetHandlePointerDown(event);
-  };
-
-  const handleVerseSheetHandleKeyDown = (event: KeyboardEvent) => {
-    if (verseSheetOverflowHeight.value <= 0) return;
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      isVerseSheetExpanded.value = !isVerseSheetExpanded.value;
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      isVerseSheetExpanded.value = true;
-    } else if (event.key === "ArrowDown" || event.key === "Escape") {
-      event.preventDefault();
-      isVerseSheetExpanded.value = false;
+  const leaveVerseSheetStep = () => {
+    if (isHighlightPickerOpen.value) {
+      isHighlightPickerOpen.value = false;
+      return;
     }
+    selectionState.value?.clearSelectedVerses();
   };
 
   // Verse toolbar highlight picker state
@@ -2083,7 +1969,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const applyCustomColor = (color: string) => {
     settings.addCustomHighlightColor(color);
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (!rs) return;
 
     // Confirming a colour is not navigation. Applying the highlight still
@@ -2111,7 +1997,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // session meant the button greyed itself out the moment the session's
   // highlight timer expired, with the saved highlight still on screen.
   const hasAnyHighlighted = useComputed(() => {
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (!rs) return false;
 
     const hasSavedHighlight = rs.selectedVerses.value.some((verse) =>
@@ -2146,7 +2032,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   });
 
   const selectedVersesReference = useComputed(() => {
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (!rs) return "";
     const verses = rs.selectedVerses.value;
     const firstVerse = verses[0];
@@ -2177,12 +2063,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // reading state itself (see `BibleReadingManager.tsx`), which already
   // tracks both the active chapter's annotations and the live selection.
   const selectionAnnotations = useComputed(
-    () => readingState.value?.selectionAnnotations.value ?? []
+    () => selectionState.value?.selectionAnnotations.value ?? []
   );
   // Friends' notes are in the sheet too, so only these get the edit/delete
   // menu. Decided by which list a note came from, as in Discover's list.
   const ownSelectionAnnotations = useComputed(() => {
-    const verse = readingState.value?.selectedVerses.value[0];
+    const verse = selectionState.value?.selectedVerses.value[0];
     return new Set<Annotation>(
       verse
         ? props.state.annotations.getAnnotationsForChapter(
@@ -2194,15 +2080,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   });
 
   // Reset picker and the mobile sheet's expanded state when selection clears.
-  // The drag offsets go too: a sheet dismissed by dragging it down would
-  // otherwise come back for the next selection still pushed off the screen.
+  // The drag reveal goes too, so the next selection starts from rest.
   useEffect(() => {
     if (!hasVerseSelection.value) {
       isHighlightPickerOpen.value = false;
       isVerseSheetExpanded.value = false;
       selectedVerseToolId.value = null;
       verseSheetDragReveal.value = null;
-      verseSheetDismissOffset.value = 0;
     }
   }, [hasVerseSelection.value]);
 
@@ -2211,7 +2095,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // to a specific note (below) opts that selection out of the rewind: in a
   // browser the rewind can run after the jump has already placed the note.
   const verseSheetSelectionKey = useComputed(() => {
-    const verses = readingState.value?.selectedVerses.value ?? [];
+    const verses = selectionState.value?.selectedVerses.value ?? [];
     return verses
       .map(
         (verse) =>
@@ -2248,7 +2132,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // expand the sheet and scroll to that verse's annotation group, then clear
   // it. Mirrors `readingState.scrollToVerse`'s consumer in TabsLayout.tsx.
   useEffect(() => {
-    const rs = readingState.value;
+    const rs = selectionState.value;
     if (!rs) return;
 
     let frame = 0;
@@ -2290,7 +2174,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       cancelAnimationFrame(frame);
       dispose();
     };
-  }, [readingState.value]);
+  }, [selectionState.value]);
 
   // Keep `--sb-reader-bottom-inset` in sync with the open bottom chrome so
   // chapter content / end-of-chapter controls clear it when the toolbar grows
@@ -2314,12 +2198,27 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     // observer's initial callback), so only write on a real change.
     // `--sb-reader-bottom-chrome` is the same without the gap, for things that
     // sit right against the toolbar (the off-screen highlight notices).
-    const write = (chromePx: number) => {
-      const next = `${chromePx + BOTTOM_CHROME_GAP_PX}px`;
+    // `--sb-reader-bottom-tabs` is the part of it that slides off the screen
+    // when the reader is scrolled down (`body.sb-scroll-hide-bars`): the
+    // phone's tab bar, under the chapter pill. Chrome riding on the pill (the
+    // playlist editor's bars) drops by this much with it.
+    const write = (chromePx: number, tabsPx = 0) => {
+      const next = `${chromePx + BOTTOM_CHROME_GAP_PX}px/${tabsPx}px`;
       if (next === lastValue) return;
       lastValue = next;
-      root.style.setProperty("--sb-reader-bottom-inset", next);
+      root.style.setProperty(
+        "--sb-reader-bottom-inset",
+        `${chromePx + BOTTOM_CHROME_GAP_PX}px`
+      );
       root.style.setProperty("--sb-reader-bottom-chrome", `${chromePx}px`);
+      root.style.setProperty("--sb-reader-bottom-tabs", `${tabsPx}px`);
+    };
+
+    // The session group bar also sits outside its host's box (on top of the
+    // nav on mobile, on top of the toolbar on desktop), so it's added on too.
+    const groupBarHeight = (host: HTMLElement) => {
+      const bar = host.querySelector(":scope > .sb-session-group-bar");
+      return bar instanceof HTMLElement ? bar.offsetHeight : 0;
     };
 
     // A playing passage's note sheet rides on top of the floating nav, outside
@@ -2329,7 +2228,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       const noteSheet = nav.querySelector(".sb-scripture-note-sheet");
       return (
         nav.offsetHeight +
-        (noteSheet instanceof HTMLElement ? noteSheet.offsetHeight : 0)
+        (noteSheet instanceof HTMLElement ? noteSheet.offsetHeight : 0) +
+        groupBarHeight(nav)
       );
     };
 
@@ -2349,13 +2249,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       }
       if (!(toolbar instanceof HTMLElement)) return;
 
-      let insetPx = toolbar.offsetHeight;
+      let insetPx = toolbar.offsetHeight + groupBarHeight(toolbar);
       if (nav instanceof HTMLElement) {
         insetPx += navHeight(nav);
-      } else {
-        // Desktop: toolbar floats above the viewport bottom.
-        const bottom = parseFloat(getComputedStyle(toolbar).bottom);
-        if (!Number.isNaN(bottom)) insetPx += bottom;
+        write(insetPx, toolbar.offsetHeight);
+        return;
+      }
+      // Desktop: toolbar floats above the viewport bottom.
+      const bottom = parseFloat(getComputedStyle(toolbar).bottom);
+      if (!Number.isNaN(bottom)) insetPx += bottom;
+      // The playlist editor's banners and note, stacked above it.
+      const stack = toolbar.querySelector(".sb-pe-toolbar-stack");
+      if (stack instanceof HTMLElement) {
+        insetPx += stack.offsetHeight + PE_TOOLBAR_STACK_GAP_PX;
       }
 
       write(insetPx);
@@ -2385,13 +2291,26 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         observer.observe(wrap);
         const toolbar = wrap.querySelector(".sb-reader-toolbar");
         const nav = wrap.querySelector(".sb-reader-floating-nav");
-        if (toolbar instanceof HTMLElement) observer.observe(toolbar);
+        if (toolbar instanceof HTMLElement) {
+          observer.observe(toolbar);
+          const stack = toolbar.querySelector(".sb-pe-toolbar-stack");
+          if (stack instanceof HTMLElement) observer.observe(stack);
+          // The playlist editor's stack comes and goes with its step, and the
+          // desktop group bar with the session.
+          mutationObserver?.observe(toolbar, { childList: true });
+          const groupBar = toolbar.querySelector(
+            ":scope > .sb-session-group-bar"
+          );
+          if (groupBar instanceof HTMLElement) observer.observe(groupBar);
+        }
         if (nav instanceof HTMLElement) {
           observer.observe(nav);
           // The note sheet comes and goes with the playing step, and resizes
           // as it collapses or its note loads.
           const noteSheet = nav.querySelector(".sb-scripture-note-sheet");
           if (noteSheet instanceof HTMLElement) observer.observe(noteSheet);
+          const groupBar = nav.querySelector(":scope > .sb-session-group-bar");
+          if (groupBar instanceof HTMLElement) observer.observe(groupBar);
           mutationObserver?.observe(nav, { childList: true });
         }
         mutationObserver?.observe(wrap, { childList: true });
@@ -2411,6 +2330,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       // Drop the runtime override so the CSS fallback in base.css takes over.
       root.style.removeProperty("--sb-reader-bottom-inset");
       root.style.removeProperty("--sb-reader-bottom-chrome");
+      root.style.removeProperty("--sb-reader-bottom-tabs");
     };
   }, []);
 
@@ -2482,11 +2402,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // way (`.sb-tool-context-menu`), so a tap on one of its options has to be
   // excluded too — otherwise the selection clears before the option's click
   // can run.
-  // Same story for `.sb-footnote-modal-overlay` — the delete-confirmation
-  // modal Delete opens renders as a sibling of the toolbar at the app root
-  // (`ModalHost`), so without this, confirming or cancelling that dialog
-  // would also clear the selection out from under it. The custom colour
-  // picker is the same kind of portal (`.sb-color-picker-layer`).
+  // Same story for dialogs and modal sheets — the delete-confirmation dialog
+  // Delete opens is portaled too (`ModalHost`), so without this, confirming
+  // or cancelling it would also clear the selection out from under it. The
+  // custom colour picker is the same kind of portal (`.sb-color-picker-layer`).
   useEffect(() => {
     if (!isVerseToolbarVisible.value) return;
 
@@ -2502,13 +2421,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       if (target.closest(".sb-pane-shell-detached")) return;
       if (target.closest(".sb-context-menu")) return;
       if (target.closest(".sb-tool-context-menu")) return;
-      if (target.closest(".sb-footnote-modal-overlay")) return;
+      if (
+        target.closest(
+          ".sb-dialog-backdrop, .sb-bottom-sheet-backdrop, .sb-bottom-sheet-modal"
+        )
+      )
+        return;
       // ColorPicker portals to `document.body`, same as the context menu —
       // a pointerdown on the square, hue slider, or backdrop must not read
       // as "outside" and clear the selection out from under the picker.
       if (target.closest(".sb-color-picker-layer, #sb-color-picker-host"))
         return;
-      readingState.value?.clearSelectedVerses();
+      selectionState.value?.clearSelectedVerses();
     };
 
     document.addEventListener("pointerdown", handleDocumentPointerDown);
@@ -2587,6 +2511,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // The "You" tab. Tapping it again while the Profile screen is up closes it,
   // matching how Search and Tabs toggle.
   const openProfileScreen = () => {
+    const fromToday = props.state.today.isOpen.peek();
     if (props.state.isProfileOpen.value) {
       props.state.closeProfile();
       return;
@@ -2597,7 +2522,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     sidebar.closeSettings();
     sidebar.closeSidebar();
     panes.closeAll();
-    props.state.openProfile();
+    props.state.openProfile({ fromToday });
   };
 
   // Chat's unread/typing badges, shown on the More button while chat is
@@ -2652,7 +2577,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           openTodayScreen();
         }}
       >
-        <TodayIcon />
+        <CustomizableIcon id="today">
+          <TodayIcon />
+        </CustomizableIcon>
         <span className="sb-reader-toolbar-button-label">
           {t("today", { defaultValue: "Today" })}
         </span>
@@ -2731,7 +2658,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         >
           <ToolIcon />
           {hideLabel ? (
-            <span className="sr-only">{label}</span>
+            <span className="sb-visually-hidden">{label}</span>
           ) : (
             <span className="sb-reader-toolbar-button-label">{label}</span>
           )}
@@ -2946,7 +2873,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             <MaterialIcon>
               {isAudioPlaying ? "pause" : "play_arrow"}
             </MaterialIcon>
-            <span className="sr-only">{toggleLabel}</span>
+            <span className="sb-visually-hidden">{toggleLabel}</span>
           </button>
         </div>
         {!isAudioPlaying && (
@@ -2958,7 +2885,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               onClick={() => playback.stop()}
             >
               <StopIcon />
-              <span className="sr-only">{stopLabel}</span>
+              <span className="sb-visually-hidden">{stopLabel}</span>
             </button>
           </div>
         )}
@@ -2993,6 +2920,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         >
           {isSmallScreen.value &&
             activeMobileTab.value === "bible" &&
+            // In the playlist editor, chapter nav floats only over a
+            // scripture step's page, where moving chapters can re-point the
+            // step; the list and the other steps' cards cover the reader.
+            (!isPlaylistEditorTab(props.state, selectedTab.value) ||
+              !!playlistEditorScriptureStep(props.state, selectedTab.value)) &&
             (() => {
               const audio =
                 audioPlayTool.value && audioPlayTool.value.visible.value
@@ -3011,11 +2943,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               const PrevIcon = prev?.icon;
               const NextIcon = next?.icon;
 
-              const playback = playing ? null : audioPlayback.value;
+              const playback = audioPlayback.value;
               // While playing, progress runs above the chapter pill where it
               // can be scrubbed; paused, it shrinks to a ring around the play
               // button so the pill area goes back to plain navigation.
               const isScrubbing = !!playback?.isPlaying.value;
+              // A host asking this reader to come back can't wait for the
+              // playlist to finish, so it takes the note sheet's place.
+              const showsGroupBar =
+                !!sessionState.value &&
+                (!playing ||
+                  !!sessionState.value.incomingComeBackRequest.value);
 
               return (
                 <div
@@ -3027,13 +2965,47 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     defaultValue: "Chapter navigation",
                   })}
                 >
-                  {playing && (
+                  {playing && !showsGroupBar && (
                     <ScriptureNoteSheet
                       playing={playing}
                       resolveBookName={resolveBookName}
                     />
                   )}
-                  {!playing && audio && AudioIcon && (
+                  {playing && sessionState.value && !showsGroupBar && (
+                    <QuestionAnswersSheet
+                      session={sessionState.value}
+                      playing={playing}
+                    />
+                  )}
+                  {!playing &&
+                    !showsGroupBar &&
+                    (() => {
+                      // The playlist editor's scripture step keeps its note
+                      // where playback shows one.
+                      const step = playlistEditorScriptureStep(
+                        props.state,
+                        selectedTab.value
+                      );
+                      return step ? (
+                        <PlaylistStepNoteSheet
+                          key={step.index}
+                          state={props.state}
+                          index={step.index}
+                          item={step.item}
+                          resolveBookName={resolveBookName}
+                        />
+                      ) : null;
+                    })()}
+                  {/* Shares the spot above the nav with the note sheets, so
+                      only one of them is ever shown. */}
+                  {showsGroupBar && sessionState.value && (
+                    <SessionGroupBar
+                      session={sessionState.value}
+                      resolveBookName={resolveBookName}
+                      layout="mobile"
+                    />
+                  )}
+                  {audio && AudioIcon && (
                     <div className="sb-reader-floating-nav-play-wrap">
                       <button
                         type="button"
@@ -3048,16 +3020,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         <AudioProgressRing playback={playback} />
                       )}
                     </div>
-                  )}
-                  {playing && (
-                    <button
-                      type="button"
-                      onClick={() => props.state.playlists.stopPlaying()}
-                      className="sb-reader-floating-nav-play"
-                      aria-label={t("stop", { defaultValue: "Stop" })}
-                    >
-                      <StopIcon />
-                    </button>
                   )}
 
                   {(prev || next || selector || playing) && (
@@ -3164,15 +3126,68 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           {!isMinimalEmbed.value && (
             <div
               className={`sb-reader-toolbar${isSmallScreen.value ? " sb-reader-toolbar-mobile-layout" : " sb-reader-toolbar-labeled"}${
-                !isSmallScreen.value && desktopPlayback.value
+                !isSmallScreen.value && audioPlayback.value
                   ? " sb-reader-toolbar-has-audio"
+                  : ""
+              }${
+                !isSmallScreen.value &&
+                sessionState.value?.isAwayFromGroup.value
+                  ? " sb-reader-toolbar-has-group-bar"
                   : ""
               }`}
             >
+              {!isSmallScreen.value && sessionState.value && (
+                <SessionGroupBar
+                  session={sessionState.value}
+                  resolveBookName={resolveBookName}
+                  layout="desktop"
+                />
+              )}
+              {!isSmallScreen.value &&
+                (() => {
+                  // Desktop: a shared session's answers to the playing
+                  // question stack above this toolbar.
+                  const playing = playingPlaylist.value;
+                  const step = playing?.currentItem.value;
+                  return playing &&
+                    sessionState.value &&
+                    step?.type === "html" &&
+                    step.question ? (
+                    <div className="sb-pe-toolbar-stack sb-question-answers-dock">
+                      <QuestionAnswersSheet
+                        session={sessionState.value}
+                        playing={playing}
+                        docked
+                      />
+                    </div>
+                  ) : null;
+                })()}
+              {!isSmallScreen.value &&
+                (() => {
+                  // Desktop: the playlist editor's scripture step stacks its
+                  // banners and its note above this toolbar, as a phone
+                  // stacks them above the chapter pill.
+                  const step = playlistEditorScriptureStep(
+                    props.state,
+                    selectedTab.value
+                  );
+                  return step ? (
+                    <PlaylistEditorToolbarStack
+                      state={props.state}
+                      index={step.index}
+                      item={step.item}
+                      resolveBookName={resolveBookName}
+                    />
+                  ) : null;
+                })()}
               {isSmallScreen.value ? (
                 <>
                   <MobileBottomTab
-                    iconNode={<TodayIcon />}
+                    iconNode={
+                      <CustomizableIcon id="today">
+                        <TodayIcon />
+                      </CustomizableIcon>
+                    }
                     label={t("today", { defaultValue: "Today" })}
                     active={activeMobileTab.value === "today"}
                     onClick={() => {
@@ -3189,11 +3204,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
                   <MobileBottomTab
                     iconNode={
-                      <SeedBibleIcon
-                        size={24}
-                        animated
+                      <CustomizableIcon
+                        id="books"
                         className="sb-reader-toolbar-seed-icon"
-                      />
+                      >
+                        <SeedBibleIcon
+                          size={24}
+                          animated
+                          className="sb-reader-toolbar-seed-icon"
+                        />
+                      </CustomizableIcon>
                     }
                     label={t("bible", { defaultValue: "Bible" })}
                     active={activeMobileTab.value === "bible"}
@@ -3216,7 +3236,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   />
 
                   <MobileBottomTab
-                    iconName="search"
+                    iconNode={
+                      <CustomizableIcon id="search">
+                        <MaterialIcon>search</MaterialIcon>
+                      </CustomizableIcon>
+                    }
                     label={t("search", { defaultValue: "Search" })}
                     active={activeMobileTab.value === "search"}
                     onClick={() => {
@@ -3314,8 +3338,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   {playingPlaylist.value && (
                     <ScriptureNoteShowTab playing={playingPlaylist.value} />
                   )}
-                  {desktopPlayback.value &&
-                    renderDesktopAudioControls(desktopPlayback.value)}
+                  {audioPlayback.value &&
+                    renderDesktopAudioControls(audioPlayback.value)}
                   {(() => {
                     const bar = desktopBarTools.value;
                     // Today leads the primary group, right after the leading
@@ -3354,110 +3378,75 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       )}
 
       {isVerseToolbarVisible.value && verseToolbarTools.value.length > 0 && (
-        <div
-          ref={verseToolbarRef}
-          className={`sb-verse-toolbar${
-            isSmallScreen.value
-              ? ` sb-verse-toolbar-mobile${
-                  // Suppresses the settle animations, so the sheet tracks the
-                  // finger exactly instead of easing towards it.
-                  isVerseSheetDragging.value ? " sb-verse-sheet-dragging" : ""
-                }${
-                  // Lets the notes scroll. The sheet itself must not keep
-                  // `touch-action: none`, or that would block the scroller.
-                  isVerseSheetOverflowScrollable.value
-                    ? " sb-verse-sheet-scrollable"
-                    : ""
-                }`
-              : " sb-verse-toolbar-draggable"
-          }`}
-          style={
-            isSmallScreen.value
-              ? {
-                  transform: verseSheetDismissOffset.value
-                    ? `translateY(${verseSheetDismissOffset.value}px)`
-                    : undefined,
-                }
-              : {
-                  left: `${clampedToolbarLeft.value}px`,
-                  top: `${clampedToolbarTop.value}px`,
-                }
-          }
-          onPointerDown={
-            isSmallScreen.value
-              ? handleVerseSheetPanelPointerDown
-              : handleVerseToolbarPointerDown
-          }
-          onPointerMove={
-            isSmallScreen.value
-              ? handleVerseSheetHandlePointerMove
-              : handleVerseToolbarPointerMove
-          }
-          onPointerUp={
-            isSmallScreen.value
-              ? handleVerseSheetHandlePointerUp
-              : handleVerseToolbarPointerUp
-          }
-          onPointerCancel={
-            isSmallScreen.value
-              ? handleVerseSheetHandlePointerCancel
-              : handleVerseToolbarPointerUp
-          }
+        <VerseToolbarFrame
+          mobile={isSmallScreen.value}
+          floating={{
+            ref: verseToolbarRef,
+            className:
+              "sb-verse-toolbar sb-verse-toolbar-floating sb-verse-toolbar-draggable",
+            style: {
+              left: `${clampedToolbarLeft.value}px`,
+              top: `${clampedToolbarTop.value}px`,
+            },
+            onPointerDown: handleVerseToolbarPointerDown,
+            onPointerMove: handleVerseToolbarPointerMove,
+            onPointerUp: handleVerseToolbarPointerUp,
+            onPointerCancel: handleVerseToolbarPointerUp,
+          }}
+          // Non-modal, with no backdrop: the chapter stays tappable so the
+          // selection can grow while the sheet is up.
+          sheet={{
+            sheetRef: verseToolbarRef,
+            className: `sb-verse-toolbar sb-verse-toolbar-mobile${
+              // Suppresses the settle animations, so the sheet tracks the
+              // finger exactly instead of easing towards it.
+              isVerseSheetDragging.value ? " sb-verse-sheet-dragging" : ""
+            }${
+              // Lets the notes scroll. The sheet itself must not keep
+              // `touch-action: none`, or that would block the scroller.
+              isVerseSheetOverflowScrollable.value
+                ? " sb-verse-sheet-scrollable"
+                : ""
+            }`,
+            label: t("verse-actions", { defaultValue: "Verse actions" }),
+            onClose: () => selectionState.value?.clearSelectedVerses(),
+            onCloseButton: leaveVerseSheetStep,
+            onEscape: leaveVerseSheetStep,
+            closeLabel: isHighlightPickerOpen.value
+              ? t("back", { defaultValue: "Back" })
+              : t("close", { defaultValue: "Close" }),
+            closeIcon: isHighlightPickerOpen.value ? (
+              <MaterialIcon className="rtl-mirror">arrow_back</MaterialIcon>
+            ) : (
+              "close"
+            ),
+            backdrop: false,
+            portal: false,
+            scrollBody: false,
+            dragSurface: "sheet",
+            dragIgnoreSelector: VERSE_SHEET_DRAG_IGNORE_SELECTOR,
+            // The picker has no overflow row to reveal, and its swatch strip
+            // already owns horizontal swipes.
+            dragDisabled: isHighlightPickerOpen.value,
+            expansion: {
+              expanded: isVerseSheetExpanded.value,
+              onExpandedChange: (expanded) => {
+                isVerseSheetExpanded.value = expanded;
+              },
+              canExpand: hasVerseSheetOverflow.value,
+              distance: verseSheetVisibleOverflowHeight.value,
+              onDragReveal: (reveal) => {
+                verseSheetDragReveal.value = reveal;
+              },
+              expandLabel: t("show-more-verse-actions", {
+                defaultValue: "Show more actions",
+              }),
+              collapseLabel: t("show-fewer-verse-actions", {
+                defaultValue: "Show fewer actions",
+              }),
+            },
+          }}
         >
-          {isSmallScreen.value && (
-            <>
-              {/* The drag/tap gesture itself is handled by the panel (see
-                  onPointerDown above), so this only needs to carry the
-                  keyboard-accessible button role: the sheet has no "More"
-                  card any more, so this is the only control that opens the
-                  overflow row for non-pointer users. */}
-              <div
-                className="sb-verse-toolbar-handle-area"
-                role="button"
-                tabIndex={hasVerseSheetOverflow.value ? 0 : -1}
-                aria-expanded={isVerseSheetExpanded.value}
-                aria-label={
-                  isVerseSheetExpanded.value
-                    ? t("show-fewer-verse-actions", {
-                        defaultValue: "Show fewer actions",
-                      })
-                    : t("show-more-verse-actions", {
-                        defaultValue: "Show more actions",
-                      })
-                }
-                onKeyDown={handleVerseSheetHandleKeyDown}
-              >
-                <div className="sb-verse-toolbar-handle" />
-              </div>
-              <button
-                type="button"
-                className="sb-verse-toolbar-close"
-                onClick={() => {
-                  // In highlight-picker mode, close just leaves the picker so the
-                  // user can return to verse actions without losing the selection.
-                  if (isHighlightPickerOpen.value) {
-                    isHighlightPickerOpen.value = false;
-                    return;
-                  }
-                  readingState.value?.clearSelectedVerses();
-                }}
-                aria-label={
-                  isHighlightPickerOpen.value
-                    ? t("back", { defaultValue: "Back" })
-                    : t("close", { defaultValue: "Close" })
-                }
-                title={
-                  isHighlightPickerOpen.value
-                    ? t("back", { defaultValue: "Back" })
-                    : t("close", { defaultValue: "Close" })
-                }
-              >
-                <span className="material-symbols-outlined">
-                  {isHighlightPickerOpen.value ? "arrow_back" : "close"}
-                </span>
-              </button>
-            </>
-          )}
           {(isHighlightPickerOpen.value || isSmallScreen.value) && (
             <div
               className={`sb-verse-toolbar-ref${
@@ -3469,19 +3458,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               {/* Desktop keeps a back chevron next to the reference; mobile
                   matches YouVersion with a centered title only. */}
               {isHighlightPickerOpen.value && !isSmallScreen.value && (
-                <button
-                  type="button"
+                <IconButton
+                  size="sm"
                   className="sb-verse-toolbar-back"
+                  icon="chevron_left"
+                  label={t("back", { defaultValue: "Back" })}
                   onClick={() => {
                     isHighlightPickerOpen.value = false;
                   }}
-                  aria-label={t("back", { defaultValue: "Back" })}
-                  title={t("back", { defaultValue: "Back" })}
-                >
-                  <span className="material-symbols-outlined">
-                    chevron_left
-                  </span>
-                </button>
+                />
               )}
               <span
                 className="sb-verse-toolbar-ref-text"
@@ -3538,7 +3523,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     type="button"
                     className="sb-verse-toolbar-color-button"
                     onClick={() => {
-                      const rs = readingState.value;
+                      const rs = selectionState.value;
                       if (!rs) return;
                       applyHighlightWithSession(
                         rs,
@@ -3589,7 +3574,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         type="button"
                         className="sb-verse-toolbar-color-button"
                         onClick={() => {
-                          const rs = readingState.value;
+                          const rs = selectionState.value;
                           if (!rs) return;
                           applyHighlightWithSession(
                             rs,
@@ -3685,7 +3670,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   className="sb-verse-toolbar-clear"
                   disabled={!hasAnyHighlighted.value}
                   onClick={() => {
-                    const rs = readingState.value;
+                    const rs = selectionState.value;
                     if (!rs) return;
                     const session = sessionState.value;
                     if (
@@ -3849,7 +3834,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 const highlightLabel = t("highlight", {
                   defaultValue: "Highlight",
                 });
-                const rs = readingState.value;
+                const rs = selectionState.value;
                 const selectedVerseNumbers =
                   rs?.selectedVerses.value.map((v) => v.verse.number) ?? [];
                 const verseTarget =
@@ -4075,6 +4060,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                               })}
                             </div>
                           )}
+                          {selectionDiscoveredContent.value.length > 0 && (
+                            <div className="sb-verse-toolbar-discovered">
+                              <VerseTaggedResultsSections
+                                groups={selectionDiscoveredContent.value}
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -4150,8 +4142,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               </span>
             </div>
           )}
-        </div>
+        </VerseToolbarFrame>
       )}
     </>
   );
+}
+
+/**
+ * The verse toolbar's outer box: a BottomSheet on phones, a draggable box
+ * floating over the selection otherwise. Same content either way.
+ */
+function VerseToolbarFrame(props: {
+  mobile: boolean;
+  floating: JSX.HTMLAttributes<HTMLDivElement> & {
+    ref: Ref<HTMLDivElement>;
+  };
+  sheet: Omit<BottomSheetProps, "children">;
+  children: ComponentChildren;
+}) {
+  const { mobile, floating, sheet, children } = props;
+  if (mobile) return <BottomSheet {...sheet}>{children}</BottomSheet>;
+  return <div {...floating}>{children}</div>;
 }

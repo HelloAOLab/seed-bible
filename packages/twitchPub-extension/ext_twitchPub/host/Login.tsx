@@ -1,4 +1,5 @@
 import { type TwitchPubState } from "./interface";
+import { Button } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 
 const Login = (props: { state: TwitchPubState }) => {
@@ -11,8 +12,10 @@ const Login = (props: { state: TwitchPubState }) => {
           onMouseDown={(e) => e.stopPropagation()}
           className="twitchPub-inputGroup"
         >
-          <button
+          <Button
             className="twitchBtn"
+            variant="primary"
+            size="lg"
             onClick={() => getDeviceAuthUrl(props.state)}
             disabled={!twitchConfig.value.clientId.value || loading.value}
           >
@@ -25,7 +28,7 @@ const Login = (props: { state: TwitchPubState }) => {
                   ns: "ext_twitchPub",
                   defaultValue: "Login with Twitch",
                 })}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

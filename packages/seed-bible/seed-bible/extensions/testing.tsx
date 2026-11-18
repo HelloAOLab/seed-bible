@@ -43,10 +43,16 @@ import {
   type SandboxResponse,
   type SandboxSelectedVerse,
   type SandboxState,
+  type SandboxStrings,
   type SandboxToolDefinition,
   type SandboxVerseRef,
 } from "./protocol";
 import type { SandboxExtension } from "./index";
+import {
+  getDefaultI18n,
+  setDefaultI18n,
+  type I18nSource,
+} from "../i18n/I18nContext";
 
 /** Answers one call the stand-in doesn't simulate (or replaces its answer). */
 export type TestAnswer<M extends SandboxMethod> = (
@@ -63,8 +69,25 @@ export interface TestHostOptions {
    * Only `optional` permissions can be requested, as in the app.
    */
   allowRequests?: boolean;
-  /** The app state frames start with; the rest has sensible defaults. */
+  /**
+   * The app state frames start with; the rest has sensible defaults. Set
+   * `language` to see the extension in another language.
+   */
   state?: Partial<SandboxState>;
+  /**
+   * The extension's strings by language, as in the `translations` section of
+   * its `extension.json`, for `sb.i18n.t`. Without them, `state.strings` is
+   * used for the current language.
+   */
+  translations?: Record<string, Record<string, string>>;
+  /**
+   * Seed Bible's own strings by language, for `ns: "seed-bible"` and shared
+   * components. Without them, each call shows its `defaultValue`.
+   *
+   * @example
+   * appTranslations: { en: { close: "Close" }, es: { close: "Cerrar" } }
+   */
+  appTranslations?: Record<string, Record<string, string>>;
   /** The extension's own settings, for `sb.settings.get`. */
   settings?: Record<string, string | number | boolean>;
   /**
@@ -76,7 +99,7 @@ export interface TestHostOptions {
    *
    * @example
    * answers: {
-   *   "bible.chapter": () => ({ verses: [{ number: 1, text: "In the beginning…" }] }),
+   *   "bible.translations": () => [],
    * }
    */
   answers?: { [M in SandboxMethod]?: TestAnswer<M> };
@@ -130,7 +153,10 @@ export interface TestHost {
     id: string,
     options?: { itemId?: string; selection?: SandboxSelectedVerse[] }
   ) => Promise<void>;
-  /** The app's state changes, e.g. the reader moves to another chapter. */
+  /**
+   * The app's state changes, e.g. the reader moves to another chapter. A new
+   * `language` also sends that language's strings, as the app does.
+   */
   setState: (state: Partial<SandboxState>) => Promise<void>;
   /** Asks a Discover provider for results, as the Discover panel does. */
   discover: (
@@ -160,6 +186,13 @@ export interface TestHost {
   /** Closes every channel. Call it at the end of each test. */
   dispose: () => void;
 }
+
+// Every host's frames share this page, and each makes its strings the page's
+// default, as it would in an iframe of its own. The default from before the
+// first live host comes back when the last one is disposed, in any order, so
+// the next test doesn't inherit a disposed host's strings.
+let liveHosts = 0;
+let defaultI18nBeforeHosts: I18nSource | null = null;
 
 const DEFAULT_STATE: SandboxState = {
   themeCss: "",
@@ -204,6 +237,26 @@ export async function createTestHost(
   const optional = options.optional ?? [];
   let granted = expandSandboxPermissions(options.granted ?? []);
   let state: SandboxState = { ...DEFAULT_STATE, ...options.state };
+  if (liveHosts === 0) {
+    defaultI18nBeforeHosts = getDefaultI18n();
+  }
+  liveHosts += 1;
+  let disposed = false;
+  const extensionTranslations = options.translations ?? {
+    [state.language]: state.strings,
+  };
+  const appTranslations = options.appTranslations ?? {};
+  // As the app sends them: the current language, and `en` to fill in.
+  const currentStrings = (): SandboxStrings => {
+    const languages = [...new Set([state.language, "en"])];
+    const byLanguage = (all: Record<string, Record<string, string>>) =>
+      Object.fromEntries(languages.map((lng) => [lng, all[lng] ?? {}]));
+    return {
+      language: state.language,
+      app: byLanguage(appTranslations),
+      extension: byLanguage(extensionTranslations),
+    };
+  };
   const ports: MessagePort[] = [];
   const frames = new Set<MessagePort>();
   let background: MessagePort | null = null;
@@ -263,7 +316,17 @@ export async function createTestHost(
       await settle();
     },
     setState: async (next) => {
+      const languageChanged =
+        next.language !== undefined && next.language !== state.language;
       state = { ...state, ...next };
+      const stringsChanged = !options.translations && next.strings;
+      if (stringsChanged) {
+        extensionTranslations[state.language] = state.strings;
+      }
+      // As the app sends them: the strings first.
+      if (languageChanged || stringsChanged) {
+        broadcast({ type: "strings", strings: currentStrings() });
+      }
       broadcast({ type: "state", state: next });
       await settle();
     },
@@ -303,6 +366,14 @@ export async function createTestHost(
     dispose: () => {
       for (const port of ports) {
         port.close();
+      }
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      liveHosts -= 1;
+      if (liveHosts === 0) {
+        setDefaultI18n(defaultI18nBeforeHosts);
       }
     },
   };
@@ -520,6 +591,7 @@ export async function createTestHost(
       granted: [...granted],
       optional: [...optional],
       state,
+      strings: currentStrings(),
     };
     await extension[SANDBOX_START_KEY](channel.port2, init);
   };

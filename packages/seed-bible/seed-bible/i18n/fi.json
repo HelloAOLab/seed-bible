@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Kopioitu käännöksen jakamislinkki",
   "less": "Vähemmän",
   "swipe-up-more": "Pyyhkäise ylöspäin nähdäksesi lisää",
-  "plans": "Suunnitelmat",
   "reading-plans": "Lukusuunnitelmat",
   "create-reading-plan": "Luo lukusuunnitelma",
   "reading-plans-empty": "Sinulla ei ole vielä lukusuunnitelmia. Luo sellainen aloittaaksesi.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Käännöksiä ladataan…",
   "translations-load-failed": "Käännösten koko luetteloa ei voitu ladata, joten joitakin saattaa puuttua.",
   "verse-of-the-day": "PÄIVÄN JAKE",
-  "verse-of-the-day-loading": "Päivän jaetta ladataan…"
+  "verse-of-the-day-loading": "Päivän jaetta ladataan…",
+  "delete-bookmark-confirm-title": "Poistetaanko kirjanmerkki?",
+  "delete-bookmark-confirm-message": "Poistetaanko \" {{name}} \"?",
+  "scripture-font": "Raamatun fontti",
+  "ai-limits-title": "Ennen kuin keskustelet tekoälyn kanssa",
+  "ai-limits-intro": "Tekoäly voi olla hyödyllinen lähtökohta, mutta pidä mielessä sen rajoitukset:",
+  "ai-limits-mistakes": "Se tekee virheitä ja voi kuulostaa itsevarmalta, kun se on väärässä.",
+  "ai-limits-agreeable": "Se yleensä kertoo sinulle, mitä haluat kuulla, ja kallistuu suosittujen vastausten puoleen.",
+  "ai-limits-scripture": "Se ei ole luotettava lähde. Tarkista, mitä se sanoo Raamatun perusteella.",
+  "ai-limits-study": "Tutki Raamattua itse äläkä anna tekoälyn ajatella puolestasi.",
+  "ai-limits-confirm": "Ymmärrän, että tekoäly voi tehdä virheitä eikä se korvaa Raamatun tutkimista itse.",
+  "friends-playlists-filter": "Ystävien soittolistat",
+  "friend-link-social-title": "Lisää {{name}} ystäväksesi",
+  "friend-link-meta-description": "{{name}} haluaa olla kaverisi {{brand}} -palvelussa",
+  "friend-link-title": "Lisää {{name}} kaveriksi {{brand}} palvelussa"
 }
