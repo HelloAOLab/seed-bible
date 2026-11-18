@@ -19,6 +19,63 @@ export const STATIC_FONT_STYLESHEETS = [
   ICON_FONT_STYLESHEET,
 ] as const;
 
+/** CSS keywords for fonts the device already has; Google Fonts has none of them. */
+const GENERIC_FONT_FAMILIES = new Set([
+  "serif",
+  "sans-serif",
+  "monospace",
+  "cursive",
+  "fantasy",
+  "math",
+  "emoji",
+  "fangsong",
+  "system-ui",
+  "ui-serif",
+  "ui-sans-serif",
+  "ui-monospace",
+  "ui-rounded",
+  "-apple-system",
+  "blinkmacsystemfont",
+  "inherit",
+  "initial",
+  "unset",
+  "revert",
+]);
+
+const STATICALLY_LOADED_FAMILIES = new Set(
+  STATIC_FONT_STYLESHEETS.flatMap((url) =>
+    new URL(url).searchParams
+      .getAll("family")
+      .map((family) => family.split(":")[0]!.toLowerCase())
+  )
+);
+
+/**
+ * The font families named first in `fontStacks` that need a stylesheet of
+ * their own: not a system font keyword (`system-ui`, `serif`, ...) and not
+ * already in `STATIC_FONT_STYLESHEETS`. Each stack's first family is the one
+ * the theme asks for; the rest are fallbacks.
+ */
+export function familiesNeedingCustomFontStylesheet(
+  fontStacks: readonly (string | null | undefined)[]
+): string[] {
+  const names = new Set<string>();
+  for (const stack of fontStacks) {
+    const name = stack
+      ?.split(",")[0]
+      ?.trim()
+      .replace(/^["']|["']$/g, "")
+      .trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (GENERIC_FONT_FAMILIES.has(key) || STATICALLY_LOADED_FAMILIES.has(key)) {
+      continue;
+    }
+    names.add(name);
+  }
+  return [...names];
+}
+
 /**
  * The stylesheet for font families a customization names that aren't in
  * the presets, or null when there are none. The names are already limited to

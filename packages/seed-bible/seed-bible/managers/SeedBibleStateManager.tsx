@@ -146,7 +146,6 @@ import type {
 import {
   createCustomizationsManager,
   CUSTOMIZATION_FONT_FIELDS,
-  CUSTOMIZATION_FONT_PRESETS,
 } from "../managers/CustomizationsManager";
 import type {
   CustomizationsManager,
@@ -230,6 +229,7 @@ import {
 } from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
 import { type AppConfig } from "../app/appConfig";
+import { familiesNeedingCustomFontStylesheet } from "../app/fontStylesheets";
 import {
   createI18nManager,
   getBrandedAppText,
@@ -1416,27 +1416,16 @@ export function createSeedBibleState(
   );
   const themeCssClasses = computed(() => generateThemeCssClasses(theme.value));
 
-  // Presets (statically loaded in app/main.tsx's ExternalResourceDependencies)
-  // plus the built-in themes' own defaults never need a dynamic <link> —
-  // only a manually-typed custom font name does.
-  const ALWAYS_LOADED_FONT_NAMES = new Set([
-    ...CUSTOMIZATION_FONT_PRESETS.map((preset) => preset.name),
-    "Plus Jakarta Sans", // default bookTitle/chapterHeading/verse font in the built-in themes
-  ]);
+  // Only a manually-typed custom font name needs a dynamic <link>; the
+  // presets, the built-in themes' fonts and system fonts never do.
   const FONT_FAMILY_KEYS: ThemeFontFamilyKey[] = CUSTOMIZATION_FONT_FIELDS.map(
     (field) => field.key
   );
   const googleFontFamiliesToLoad = computed<string[]>(() => {
     const vars = theme.value.variables;
-    const names = new Set<string>();
-    for (const key of FONT_FAMILY_KEYS) {
-      const value = vars[key];
-      const name = value?.split(",")[0]?.trim();
-      if (name && !ALWAYS_LOADED_FONT_NAMES.has(name)) {
-        names.add(name);
-      }
-    }
-    return [...names];
+    return familiesNeedingCustomFontStylesheet(
+      FONT_FAMILY_KEYS.map((key) => vars[key])
+    );
   });
 
   const selectedTab = computed(
