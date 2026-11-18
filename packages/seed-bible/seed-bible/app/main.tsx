@@ -336,7 +336,7 @@ function MainContent(props: {
 
         <SharedSessionsToasts state={state} />
 
-        <ModalHost manager={state.modals} />
+        <ModalHost manager={state.modals} isMobile={state.app.isMobile} />
 
         <LoginModal login={state.login} navigation={state.navigation} />
 

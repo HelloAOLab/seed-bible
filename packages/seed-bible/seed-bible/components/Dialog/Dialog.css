@@ -4,13 +4,14 @@
 .sb-dialog-backdrop {
   position: fixed;
   inset: 0;
-  z-index: var(--sb-layer-modal);
+  /* Level with a modal sheet, so whichever opened last is on top. */
+  z-index: calc(var(--sb-layer-modal) + 1);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
   box-sizing: border-box;
-  background: var(--sb-backdrop);
+  background: var(--sb-dialog-backdrop, var(--sb-backdrop));
 }
 
 .sb-dialog {
@@ -59,6 +60,9 @@
 .sb-dialog-body {
   /* Lets the body shrink and scroll inside the dialog's max height, and
    * stretch when the dialog is given a fixed one. */
+  /* Content that has to fill the body (a pinned action row, an embed) sets
+   * --sb-dialog-body-display: flex and grows to fit. */
+  display: var(--sb-dialog-body-display, block);
   flex: 1 1 auto;
   min-height: 0;
   margin-top: 1rem;

@@ -2402,11 +2402,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // way (`.sb-tool-context-menu`), so a tap on one of its options has to be
   // excluded too — otherwise the selection clears before the option's click
   // can run.
-  // Same story for `.sb-footnote-modal-overlay` — the delete-confirmation
-  // modal Delete opens renders as a sibling of the toolbar at the app root
-  // (`ModalHost`), so without this, confirming or cancelling that dialog
-  // would also clear the selection out from under it. The custom colour
-  // picker is the same kind of portal (`.sb-color-picker-layer`).
+  // Same story for dialogs and modal sheets — the delete-confirmation dialog
+  // Delete opens is portaled too (`ModalHost`), so without this, confirming
+  // or cancelling it would also clear the selection out from under it. The
+  // custom colour picker is the same kind of portal (`.sb-color-picker-layer`).
   useEffect(() => {
     if (!isVerseToolbarVisible.value) return;
 
@@ -2422,7 +2421,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       if (target.closest(".sb-pane-shell-detached")) return;
       if (target.closest(".sb-context-menu")) return;
       if (target.closest(".sb-tool-context-menu")) return;
-      if (target.closest(".sb-footnote-modal-overlay")) return;
+      if (
+        target.closest(
+          ".sb-dialog-backdrop, .sb-bottom-sheet-backdrop, .sb-bottom-sheet-modal, .sb-footnote-modal-overlay"
+        )
+      )
+        return;
       // ColorPicker portals to `document.body`, same as the context menu —
       // a pointerdown on the square, hue slider, or backdrop must not read
       // as "outside" and clear the selection out from under the picker.

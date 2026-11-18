@@ -159,6 +159,9 @@
 }
 
 .sb-bottom-sheet-body {
+  /* Content that has to fill the body sets
+   * --sb-bottom-sheet-body-display: flex and grows to fit. */
+  display: var(--sb-bottom-sheet-body-display, block);
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;

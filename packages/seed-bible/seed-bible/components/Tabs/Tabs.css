@@ -874,6 +874,17 @@
 }
 
 /* Shared-session settings modal — ported from develop's Scripture Navigation panel */
+/* The actions bar (End Session / Close) pins to the bottom instead of
+ * scrolling away with the settings above it, so the settings take the
+ * bounded height of the dialog or sheet body around them. */
+.sb-dialog:has(.sb-session-settings) {
+  --sb-dialog-body-display: flex;
+}
+
+.sb-bottom-sheet:has(.sb-session-settings) {
+  --sb-bottom-sheet-body-display: flex;
+}
+
 .sb-session-settings {
   display: flex;
   flex-direction: column;

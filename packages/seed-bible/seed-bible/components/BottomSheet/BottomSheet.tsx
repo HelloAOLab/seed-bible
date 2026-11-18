@@ -65,6 +65,12 @@ export interface BottomSheetProps {
    * back a step should pass the same handler, so Escape goes back too.
    */
   onEscape?: () => void;
+  /**
+   * Whether the user may close it right now (✕, Escape, the backdrop, or
+   * dragging it down). False while it is in the middle of something it
+   * shouldn't be left in. Defaults to true.
+   */
+  dismissible?: boolean;
   closeLabel?: string;
   /**
    * The corner button's icon: a Material Symbols name, or an icon element. An
@@ -131,6 +137,7 @@ export function BottomSheet(props: BottomSheetProps) {
     showClose = true,
     onCloseButton,
     closeIcon = "close",
+    dismissible = true,
     backdrop = true,
     portal = true,
     dragSurface = "handle",
@@ -152,7 +159,10 @@ export function BottomSheet(props: BottomSheetProps) {
   const drag = useRef<DragState | null>(null);
   const dismissOffset = useSignal(0);
   const isDragging = useSignal(false);
-  const overlayDismiss = useOverlayDismiss(onClose);
+  const close = () => {
+    if (dismissible) onClose();
+  };
+  const overlayDismiss = useOverlayDismiss(close);
   // Stable, so Preact doesn't detach and reattach the ref on every render
   // (which happens once per frame during a drag).
   const setSheetEl = useCallback(
@@ -163,7 +173,11 @@ export function BottomSheet(props: BottomSheetProps) {
     [sheetRef]
   );
 
-  const onEscape = props.onEscape ?? onClose;
+  // Escape is taken even when the sheet can't be closed, so it doesn't fall
+  // through to whatever is behind.
+  const onEscape = () => {
+    if (dismissible) (props.onEscape ?? onClose)();
+  };
 
   useModalLayer(sheetEl, { enabled: modal, onEscape });
 
@@ -270,7 +284,7 @@ export function BottomSheet(props: BottomSheetProps) {
     }
 
     if (offset >= DISMISS_THRESHOLD_PX) {
-      onClose();
+      close();
       return;
     }
 
@@ -329,6 +343,7 @@ export function BottomSheet(props: BottomSheetProps) {
       look="tinted"
       icon={closeIcon}
       label={closeLabel}
+      disabled={!dismissible}
       onClick={onCloseButton ?? onClose}
     />
   );
