@@ -30,6 +30,11 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import type { Mock } from "vitest";
 import { pressAndRelease } from "../testUtils/pressAndRelease";
+import {
+  restoreViewport,
+  SIDEWAYS_PHONE,
+  stubViewport,
+} from "../testUtils/stubViewport";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nContext", async () => {
   const { mockI18nContext } = await import("../testUtils/mockI18n");
@@ -99,6 +104,8 @@ describe("BibleSelector", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
+    restoreViewport();
+    vi.unstubAllGlobals();
   });
 
   it("is not displayed when closed", async () => {
@@ -859,6 +866,60 @@ describe("BibleSelector", () => {
     expect(text).toContain("New Testament");
     expect(text).toContain("Apocrypha");
     expect(text).not.toContain("Extrabiblical Writings");
+  });
+
+  // A phone held sideways is wider than the breakpoint but keeps the mobile
+  // layout, which hides the desktop testament menu. The Apocrypha has to stay
+  // reachable from the mobile list instead.
+  it("shows the Apocrypha section on a phone held sideways", async () => {
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture({
+        responses: {
+          [makeUrl("/api/AAB/books.json")]: createResponse({
+            ...aabBooks,
+            books: [
+              ...aabBooks.books,
+              edgeCaseBooks.books.find((book) => book.id === "TOB")!,
+            ],
+          }),
+        },
+      });
+
+    stubViewport(SIDEWAYS_PHONE);
+    state.app.applyViewport();
+    expect(state.app.viewportWidth.value).toBeGreaterThan(MOBILE_BREAKPOINT);
+
+    selectorState.localSelectedTestament.value = 2;
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={vi.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+          app={state.app}
+        />,
+        container
+      );
+    });
+
+    await waitFor(() => Boolean(container.querySelector(".books-container")));
+
+    const text = container.textContent ?? "";
+
+    expect(text).toContain("Old Testament");
+    expect(text).toContain("New Testament");
+    // The mobile list's own section, not the desktop testament menu (which
+    // also says "Apocrypha", but isn't shown in the mobile layout).
+    const sectionTitles = Array.from(
+      container.querySelectorAll(".testament-title"),
+      (title) => title.textContent ?? ""
+    );
+    expect(sectionTitles.some((title) => title.includes("Apocrypha"))).toBe(
+      true
+    );
+    expect(container.querySelector(".dropdown")).toBeNull();
   });
 
   it("desktop Apocrypha filter shows the info button and opens the About Apocrypha popup", async () => {

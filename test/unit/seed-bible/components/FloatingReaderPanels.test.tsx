@@ -18,6 +18,13 @@ import type {
 import type { AIProviderFunctionTool } from "@packages/seed-bible/seed-bible/managers/AIManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
+import {
+  restoreViewport,
+  SIDEWAYS_PHONE,
+  SIDEWAYS_TABLET,
+  stubViewport,
+  type StubbedDevice,
+} from "../testUtils/stubViewport";
 import type { Mock } from "vitest";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -276,6 +283,74 @@ function createMockChatListState(
     },
   } as unknown as SeedBibleState;
 }
+
+// The search panel is a sheet above the bottom bar in the mobile layout and in
+// narrow desktop windows, and a floating panel otherwise. The sheet's own
+// rules are also what let taps reach its search box and results, since the
+// sheet itself passes taps through to the reader.
+describe("FloatingReaderPanels search panel", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    restoreViewport();
+    vi.unstubAllGlobals();
+  });
+
+  async function openSearchOn(device: StubbedDevice): Promise<HTMLElement> {
+    stubViewport(device);
+    const state = await createTestSeedBibleState();
+    state.app.applyViewport();
+    state.sidebar.openSearchPanel();
+    act(() => {
+      render(<FloatingReaderPanels state={state} />, container);
+    });
+    const panel = container.querySelector<HTMLElement>(
+      ".sb-floating-search-panel"
+    );
+    if (!panel) throw new Error("the search panel didn't open");
+    return panel;
+  }
+
+  it("is a sheet on a phone held sideways, wider than any narrow window", async () => {
+    const panel = await openSearchOn(SIDEWAYS_PHONE);
+
+    expect(panel.classList).toContain("sb-floating-search-panel-sheet");
+  });
+
+  it("is a sheet in a narrow desktop window", async () => {
+    const panel = await openSearchOn({
+      width: 700,
+      height: 800,
+      screen: { width: 1920, height: 1080 },
+    });
+
+    expect(panel.classList).toContain("sb-floating-search-panel-sheet");
+  });
+
+  it("floats in a wide desktop window and on a sideways tablet", async () => {
+    expect(
+      (
+        await openSearchOn({
+          width: 1280,
+          height: 800,
+          screen: { width: 1920, height: 1080 },
+        })
+      ).classList
+    ).not.toContain("sb-floating-search-panel-sheet");
+
+    restoreViewport();
+    expect((await openSearchOn(SIDEWAYS_TABLET)).classList).not.toContain(
+      "sb-floating-search-panel-sheet"
+    );
+  });
+});
 
 describe("ChatList", () => {
   let container: HTMLDivElement;

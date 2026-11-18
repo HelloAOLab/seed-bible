@@ -43,6 +43,8 @@ export interface CreateTestSeedBibleStateOptions {
   offlineStore?: OfflineTranslationStore | null;
   /** Deployment config passed through to `createSeedBibleState`. */
   config?: AppConfig;
+  /** Passed through to `createSeedBibleState`: start from the real window. */
+  measureViewport?: boolean;
   /**
    * Whether the app boots on the Today page, as it does in production for a
    * URL with no reading position. Defaults to `false` so the fixture models a
@@ -341,6 +343,7 @@ export async function createTestSeedBibleState(
   const state = createSeedBibleState({
     offlineStore: options.offlineStore,
     config: options.config,
+    measureViewport: options.measureViewport,
     initialPlaylistPageSeed: options.initialPlaylistPageSeed,
     initialReadingPlanPageSeed: options.initialReadingPlanPageSeed,
   });

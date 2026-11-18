@@ -8,7 +8,10 @@ import {
 import { readInjectedConfig } from "../../../../packages/seed-bible/seed-bible/app/appConfig";
 import { readInjectedApiResponseSnapshot } from "../../../../packages/seed-bible/seed-bible/app/apiResponseSeed";
 import { readInjectedCustomizationSeed } from "../../../../packages/seed-bible/seed-bible/app/customizationSeed";
-import { decideHydration } from "../../../../packages/seed-bible/seed-bible/app/hydrationGate";
+import {
+  decideHydration,
+  hasServerRenderedContent,
+} from "../../../../packages/seed-bible/seed-bible/app/hydrationGate";
 import { readInjectedFriendLinkSeed } from "../../../../packages/seed-bible/seed-bible/app/friendLinkSeed";
 
 const TEMPLATE = readFileSync(
@@ -67,6 +70,11 @@ describe("fillNativeShellPlaceholders", () => {
         clientCommit: "abc123",
       })
     ).toEqual({ hydrate: false, reason: "no-ssr-content" });
+    // So the app starts from the real window rather than the phone guess:
+    // an iPad gets the desktop layout from the first draw.
+    expect(
+      hasServerRenderedContent(config, document.getElementById("app")!)
+    ).toBe(false);
     expect(readInjectedApiResponseSnapshot()).toEqual({});
     expect(readInjectedCustomizationSeed()).toBeUndefined();
     expect(readInjectedFriendLinkSeed()).toBeUndefined();
