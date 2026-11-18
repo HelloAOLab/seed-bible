@@ -59,6 +59,7 @@
       "save-blocked-not-loaded": "Couldn't load that game, so nothing was changed.",
       "save-failed": "Couldn't save that game. Try again.",
       "delete-failed": "Couldn't delete that game. Try again.",
+      "share-failed": "Couldn't change sharing for that game. Try again.",
       "load-failed": "Couldn't load your saved games.",
       "you-found-it": "You found it!",
       "guess-count": "{{count}} guesses",

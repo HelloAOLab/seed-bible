@@ -332,22 +332,36 @@ export function toSavedGame(
 
 export type SyncUserResult = "ok" | "error" | "signed_out" | "stale";
 
+export type SavedGamesAction = "save" | "delete" | "share";
+
+const FAILED_KEYS: Record<SavedGamesAction, string> = {
+  save: "save-failed",
+  delete: "delete-failed",
+  share: "share-failed",
+};
+
+const FAILED_MESSAGES: Record<SavedGamesAction, string> = {
+  save: "Couldn't save that game. Try again.",
+  delete: "Couldn't delete that game. Try again.",
+  share: "Couldn't change sharing for that game. Try again.",
+};
+
 export function savedGamesErrorKey(
   error: unknown,
-  action: "save" | "delete"
+  action: SavedGamesAction
 ): string {
   if (error instanceof SavedGamesWriteError) {
     if (error.code === "signed_out") return "sign-in-to-save";
     if (error.code === "not_loaded") return "save-blocked-not-loaded";
     if (error.code === "privacy_blocked") return "share-blocked-privacy";
   }
-  return action === "save" ? "save-failed" : "delete-failed";
+  return FAILED_KEYS[action];
 }
 
 /** English fallback. The panel shows this through the extension's `en` strings. */
 export function savedGamesErrorMessage(
   error: unknown,
-  action: "save" | "delete"
+  action: SavedGamesAction
 ): string {
   if (error instanceof SavedGamesWriteError) {
     if (error.code === "signed_out") return "Sign in to save games";
@@ -358,9 +372,7 @@ export function savedGamesErrorMessage(
       return "Your account's privacy settings don't allow sharing games.";
     }
   }
-  return action === "save"
-    ? "Couldn't save that game. Try again."
-    : "Couldn't delete that game. Try again.";
+  return FAILED_MESSAGES[action];
 }
 
 export async function setGamePrivacy(

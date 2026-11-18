@@ -1236,7 +1236,7 @@ describe("Find the Verse", () => {
 
     expect(toasts).toEqual([]);
     expect(container.textContent).toContain(
-      "Couldn't save that game. Try again."
+      "Couldn't change sharing for that game. Try again."
     );
     expect(
       cardNamed("Youth group").querySelector(".ftv-shared-label")
@@ -1279,6 +1279,26 @@ describe("Find the Verse", () => {
     expect(
       cardNamed("Youth group").querySelector(".ftv-shared-label")
     ).toBeNull();
+  });
+
+  it("keeps a game shared and shows why when Stop sharing fails", async () => {
+    await act(async () => {
+      install([sharingGame("g", "Youth group", true)]);
+      await Promise.resolve();
+    });
+    await openPane();
+    recordData.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+
+    await openMenuOf(cardNamed("Youth group"));
+    await clickMenuItem("Stop sharing");
+
+    expect(container.textContent).toContain(
+      "Couldn't change sharing for that game. Try again."
+    );
+    expect(container.textContent).not.toContain("Couldn't save that game");
+    expect(
+      cardNamed("Youth group").querySelector(".ftv-shared-label")
+    ).not.toBeNull();
   });
 
   function shareLink(gameId: string): string {

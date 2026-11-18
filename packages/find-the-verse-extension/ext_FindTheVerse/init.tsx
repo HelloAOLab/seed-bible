@@ -19,6 +19,7 @@ import {
   savedGamesErrorKey,
   savedGamesErrorMessage,
   sharedGameFromUrl,
+  type SavedGamesAction,
 } from "./gamesStore";
 import { GameCreator } from "./GameCreator";
 import { GamePlayer } from "./GamePlayer";
@@ -79,7 +80,7 @@ function GamePane({
   const phase = game.phase.value;
   const savedGames = game.savedGames.value;
   const { t } = useI18n("find-the-verse-extension");
-  const noticeFor = (error: unknown, action: "save" | "delete") =>
+  const noticeFor = (error: unknown, action: SavedGamesAction) =>
     t(savedGamesErrorKey(error, action), {
       defaultValue: savedGamesErrorMessage(error, action),
     });
@@ -152,7 +153,7 @@ function GamePane({
           onShare={(id, shared) => {
             game.notice.value = null;
             return onShareGame(id, shared).catch((error: unknown) => {
-              game.notice.value = noticeFor(error, "save");
+              game.notice.value = noticeFor(error, "share");
               throw error;
             });
           }}
