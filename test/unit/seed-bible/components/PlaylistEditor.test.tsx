@@ -663,13 +663,13 @@ describe("the playlist editor", () => {
       ).toEqual(["Item settings", "Delete"]);
       click(byText(document.body, ".sb-context-menu-item", "Item settings"));
 
-      const sheet = container.querySelector(".sb-pe-settings-sheet")!;
+      const sheet = document.querySelector(".sb-pe-settings-sheet")!;
       expect(sheet.textContent).toContain("Item settings");
       click(sheet.querySelector('[aria-label="More time"]'));
       expect(items()[0]).toMatchObject({ minutes: 2 });
 
       click(sheet.querySelector('[aria-label="Close"]'));
-      expect(container.querySelector(".sb-pe-settings-sheet")).toBeNull();
+      expect(document.querySelector(".sb-pe-settings-sheet")).toBeNull();
     });
 
     it("has no inline note or step settings on a phone", () => {
@@ -784,7 +784,7 @@ describe("the playlist editor", () => {
     const openDetails = () => {
       openWorkspace(STEPS, -1, true);
       click(container.querySelector(".sb-pe-mobile-title-button"));
-      return container.querySelector(".sb-pe-details-sheet");
+      return document.querySelector(".sb-pe-details-sheet");
     };
 
     it("opens from the playlist's title, with its title, description and cover fields", () => {
@@ -817,11 +817,26 @@ describe("the playlist editor", () => {
     it("closes from its close button and its backdrop, leaving the editor open", () => {
       const sheet = openDetails()!;
       click(sheet.querySelector('[aria-label="Close"]'));
-      expect(container.querySelector(".sb-pe-details-sheet")).toBeNull();
+      expect(document.querySelector(".sb-pe-details-sheet")).toBeNull();
 
       click(container.querySelector(".sb-pe-mobile-title-button"));
-      click(container.querySelector(".sb-pe-sheet-scrim"));
-      expect(container.querySelector(".sb-pe-details-sheet")).toBeNull();
+      const backdrop = document.querySelector(".sb-bottom-sheet-backdrop")!;
+      act(() => {
+        backdrop.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+        backdrop.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expect(document.querySelector(".sb-pe-details-sheet")).toBeNull();
+      expect(state.playlists.editingPlaylist.value).not.toBeNull();
+    });
+
+    it("closes on Escape, leaving the editor open", () => {
+      openDetails();
+      act(() => {
+        document.activeElement!.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+        );
+      });
+      expect(document.querySelector(".sb-pe-details-sheet")).toBeNull();
       expect(state.playlists.editingPlaylist.value).not.toBeNull();
     });
 
@@ -831,7 +846,7 @@ describe("the playlist editor", () => {
 
       openWorkspace(STEPS, -1, true);
 
-      expect(container.querySelector(".sb-pe-details-sheet")).toBeNull();
+      expect(document.querySelector(".sb-pe-details-sheet")).toBeNull();
     });
   });
 
@@ -1365,11 +1380,12 @@ describe("the playlist editor", () => {
           });
         }
 
+        // On a phone they're in a sheet, which renders into <body>.
         expect(
-          container.querySelector('[aria-label="More time"]')
+          document.querySelector('[aria-label="More time"]')
         ).not.toBeNull();
-        expect(container.textContent).not.toContain("Pause for group");
-        expect(container.textContent).not.toContain("Leader only");
+        expect(document.body.textContent).not.toContain("Pause for group");
+        expect(document.body.textContent).not.toContain("Leader only");
       }
     );
 
