@@ -20,6 +20,18 @@ function Layer(props: {
   );
 }
 
+/** A window that puts focus straight into its text field. */
+function FieldLayer() {
+  const ref = useRef<HTMLDivElement>(null);
+  const field = useRef<HTMLInputElement>(null);
+  useModalLayer(ref, { initialFocusRef: field });
+  return (
+    <div ref={ref} tabIndex={-1} data-layer="Form">
+      <input ref={field} aria-label="Email" />
+    </div>
+  );
+}
+
 describe("useModalLayer", () => {
   let opener: HTMLButtonElement;
   let lower: HTMLDivElement;
@@ -120,6 +132,58 @@ describe("useModalLayer", () => {
     });
 
     expect(closeDialog).not.toHaveBeenCalled();
+  });
+
+  describe("scrolling what it focuses into view", () => {
+    // Whether the browser may scroll is all a test can see: JSDOM has no
+    // layout, so the scroll itself only shows in a real browser.
+    function recordFocus() {
+      const calls: Array<{ element: HTMLElement; preventScroll: boolean }> = [];
+      const original = HTMLElement.prototype.focus;
+      const spy = vi
+        .spyOn(HTMLElement.prototype, "focus")
+        .mockImplementation(function (this: HTMLElement, options) {
+          calls.push({
+            element: this,
+            preventScroll: !!options?.preventScroll,
+          });
+          original.call(this, options);
+        });
+      return { calls, restore: () => spy.mockRestore() };
+    }
+
+    it("lets the browser scroll a text field it focuses into view", () => {
+      const focus = recordFocus();
+      open(upper, <FieldLayer />);
+      focus.restore();
+
+      const field = document.querySelector<HTMLElement>(
+        '[aria-label="Email"]'
+      )!;
+      expect(document.activeElement).toBe(field);
+      expect(focus.calls).toEqual([{ element: field, preventScroll: false }]);
+    });
+
+    it("doesn't scroll the page when it focuses the window itself", () => {
+      const focus = recordFocus();
+      open(upper, <Layer name="Dialog" />);
+      focus.restore();
+
+      const dialog = document.querySelector<HTMLElement>(
+        '[data-layer="Dialog"]'
+      )!;
+      expect(focus.calls).toEqual([{ element: dialog, preventScroll: true }]);
+    });
+
+    it("lets the browser scroll the button that opened it back into view", () => {
+      open(upper, <Layer name="Dialog" />);
+      const focus = recordFocus();
+      close(upper);
+      focus.restore();
+
+      expect(document.activeElement).toBe(opener);
+      expect(focus.calls).toEqual([{ element: opener, preventScroll: false }]);
+    });
   });
 
   it("wraps Tab inside the top layer", () => {

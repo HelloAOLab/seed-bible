@@ -38,10 +38,45 @@ let opened = 0;
 const top = () => layers[layers.length - 1];
 const containerOf = (layer: Layer) => layer.container.current ?? layer.element;
 
+/** Something the user presses or changes, as opposed to the window itself. */
+const CONTROL_SELECTOR = [
+  "a[href]",
+  "button",
+  "input",
+  "select",
+  "textarea",
+  '[contenteditable]:not([contenteditable="false"])',
+  ...[
+    "button",
+    "checkbox",
+    "combobox",
+    "link",
+    "menuitem",
+    "menuitemcheckbox",
+    "menuitemradio",
+    "option",
+    "radio",
+    "searchbox",
+    "slider",
+    "spinbutton",
+    "switch",
+    "tab",
+    "textbox",
+  ].map((role) => `[role="${role}"]`),
+].join(", ");
+
+/**
+ * Focusing a window itself doesn't scroll the page, which would jump while
+ * the window is still sliding into place. Focusing a control does: on a phone,
+ * that's what brings a text field up above the keyboard.
+ */
+function moveFocus(element: HTMLElement): void {
+  element.focus({ preventScroll: !element.matches(CONTROL_SELECTOR) });
+}
+
 function focusLayer(layer: Layer): void {
-  (layer.initialFocus?.current ?? containerOf(layer))?.focus({
-    preventScroll: true,
-  });
+  const target = layer.initialFocus?.current ?? containerOf(layer);
+  if (target) moveFocus(target);
 }
 
 function focusEdge(container: HTMLElement, last: boolean): void {
@@ -173,7 +208,7 @@ export function useModalLayer(
         return;
       }
       if (layer.previous?.isConnected) {
-        layer.previous.focus({ preventScroll: true });
+        moveFocus(layer.previous);
       } else {
         const below = top();
         if (below) focusLayer(below);
