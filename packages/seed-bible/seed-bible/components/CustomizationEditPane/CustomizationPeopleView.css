@@ -1,0 +1,88 @@
+.sb-cz-people-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 0;
+  font-size: var(--sb-font-size-14);
+}
+
+.sb-cz-people-intro p {
+  margin: 0;
+}
+
+.sb-cz-people-notes {
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  font-size: var(--sb-font-size-13);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+}
+
+.sb-cz-people-note {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--sb-radius-md);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+  font-size: var(--sb-font-size-13);
+}
+
+.sb-cz-people-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-cz-people-member {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3rem;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- hairline divider */
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-cz-people-member .sb-cz-row-text {
+  overflow-wrap: anywhere;
+}
+
+.sb-cz-people-add {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-cz-people-add-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Stays in view while the editor scrolls: saving is stopped until it's answered. */
+.sb-cz-conflict {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--sb-background-color);
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- hairline divider */
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  font-size: var(--sb-font-size-14);
+}
+
+.sb-cz-conflict p {
+  margin: 0;
+}
+
+.sb-cz-conflict-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

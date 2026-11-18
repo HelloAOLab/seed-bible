@@ -5,6 +5,9 @@ import {
   CUSTOMIZATION_COLOR_FIELDS,
   CUSTOMIZATION_CONTRAST_PAIRS,
   CUSTOMIZATION_MARKER,
+  CustomizationSaveConflictError,
+  CustomizationSharingError,
+  MOVED_CUSTOMIZATION_MARKER,
   getContrastRatio,
   getExtensionAvailability,
   getFontPresetsForField,
@@ -52,6 +55,7 @@ describe("CustomizationsManager", () => {
   let listAllDataByMarkerMock: Mock;
   let recordFileMock: Mock;
   let getDataMock: Mock;
+  let listStudiosMock: Mock;
   let warnSpy: Mock;
   let login: Mocked<LoginManager>;
   let os: CasualOSManager;
@@ -60,6 +64,9 @@ describe("CustomizationsManager", () => {
 
   beforeEach(() => {
     os = CasualOSManager();
+    listStudiosMock = vi
+      .spyOn(os, "listStudios")
+      .mockResolvedValue({ success: true, studios: [] });
     getDataMock = vi.spyOn(os, "getData").mockResolvedValue({
       success: false,
       errorCode: "data_not_found",
@@ -3694,6 +3701,584 @@ describe("CustomizationsManager", () => {
       expect(created.variants[0]?.baseTheme).toBe("dark");
       expect(added.baseTheme).toBe("dark");
       expect(manager.resolveVariantBaseTheme(added).id).toBe("dark");
+    });
+  });
+  describe("shared customizations (CasualOS studios)", () => {
+    /** Data stored per record, the way the records server keeps it. */
+    let records: Map<string, Map<string, { data: unknown; marker?: string }>>;
+    /** Studios the signed-in user is in, with their role. */
+    let studios: {
+      studioId: string;
+      displayName: string;
+      role: "admin" | "member";
+    }[];
+
+    const store = (recordName: string) => {
+      let record = records.get(recordName);
+      if (!record) {
+        record = new Map();
+        records.set(recordName, record);
+      }
+      return record;
+    };
+
+    /** A customization saved in a studio, as another member's save would leave it. */
+    const sharedCustomization = (
+      studioId: string,
+      id: string,
+      updatedAt = 1000
+    ) => {
+      const variant = {
+        id: "variant-1",
+        name: "Light",
+        baseTheme: "light",
+        themes: {},
+        highlightColors: {},
+        createdAt: 1,
+        updatedAt: 1,
+      };
+      return {
+        id,
+        name: "Grace Church",
+        studioId,
+        variants: [variant],
+        defaultVariantId: variant.id,
+        logoUrl: null,
+        icons: {},
+        createdAt: 1,
+        updatedAt,
+        extensionSettings: {},
+        extensionSettingDefaults: {},
+        extensionSensitiveProxies: {},
+      };
+    };
+
+    beforeEach(() => {
+      records = new Map();
+      studios = [];
+      listStudiosMock.mockImplementation(async () => ({
+        success: true,
+        studios: structuredClone(studios),
+      }));
+      getDataMock.mockImplementation(
+        async (recordName: string, address: string) => {
+          const entry = records.get(recordName)?.get(address);
+          return entry
+            ? { success: true, data: structuredClone(entry.data) }
+            : { success: false, errorCode: "data_not_found", errorMessage: "" };
+        }
+      );
+      recordDataMock.mockImplementation(
+        async (
+          recordName: string,
+          address: string,
+          data: unknown,
+          options: { marker?: string }
+        ) => {
+          store(recordName).set(address, {
+            data: structuredClone(data),
+            marker: options.marker,
+          });
+          return { success: true };
+        }
+      );
+      eraseDataMock.mockImplementation(
+        async (recordName: string, address: string) => {
+          const erased = records.get(recordName)?.delete(address);
+          return erased
+            ? { success: true }
+            : { success: false, errorCode: "data_not_found", errorMessage: "" };
+        }
+      );
+      listAllDataByMarkerMock.mockImplementation(
+        async (recordName: string, marker: string) => ({
+          success: true,
+          items: [...(records.get(recordName)?.entries() ?? [])]
+            .filter(([, entry]) => entry.marker === marker)
+            .map(([address, entry]) => ({
+              address,
+              data: structuredClone(entry.data),
+            })),
+        })
+      );
+    });
+
+    const joinStudio = (
+      studioId: string,
+      role: "admin" | "member" = "member"
+    ) => {
+      studios.push({ studioId, displayName: studioId, role });
+    };
+
+    const saveAsAnotherMember = (
+      studioId: string,
+      id: string,
+      updatedAt: number
+    ) => {
+      const current = records.get(studioId)!.get(id)!.data as ReturnType<
+        typeof sharedCustomization
+      >;
+      store(studioId).set(id, {
+        data: { ...current, name: "Renamed by someone else", updatedAt },
+        marker: CUSTOMIZATION_MARKER,
+      });
+    };
+
+    it("load() lists the customizations of every studio the user is in, alongside their own", async () => {
+      const { manager } = createManager();
+      const own = await manager.create();
+      joinStudio("studio-1");
+      store("studio-1").set("customization_shared", {
+        data: sharedCustomization("studio-1", "customization_shared"),
+        marker: CUSTOMIZATION_MARKER,
+      });
+
+      await manager.load();
+
+      expect(manager.customizations.value.map((c) => c.id).sort()).toEqual(
+        [own.id, "customization_shared"].sort()
+      );
+      const shared = manager.customizations.value.find(
+        (c) => c.id === "customization_shared"
+      )!;
+      expect(manager.getStudioRole(shared)).toBe("member");
+    });
+
+    it("load() skips a record in a studio that says it belongs to another studio", async () => {
+      joinStudio("studio-1");
+      store("studio-1").set("customization_stray", {
+        data: sharedCustomization("studio-2", "customization_stray"),
+        marker: CUSTOMIZATION_MARKER,
+      });
+      const { manager } = createManager();
+
+      await manager.load();
+
+      expect(manager.customizations.value).toEqual([]);
+    });
+
+    it("load() still shows the user's own customizations when their studios can't be listed", async () => {
+      const { manager } = createManager();
+      const own = await manager.create();
+      listStudiosMock.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "",
+      });
+
+      await manager.load();
+
+      expect(manager.customizations.value.map((c) => c.id)).toEqual([own.id]);
+    });
+
+    it("saves a shared customization's edits into its studio's record, and links to it there", async () => {
+      joinStudio("studio-1");
+      store("studio-1").set("customization_shared", {
+        data: sharedCustomization("studio-1", "customization_shared"),
+        marker: CUSTOMIZATION_MARKER,
+      });
+      const { manager } = createManager();
+      await manager.load();
+      manager.startEditing("customization_shared");
+
+      manager.updateEditingName("New name");
+      await manager.saveEditingCustomization();
+
+      expect(
+        (
+          records.get("studio-1")!.get("customization_shared")!.data as {
+            name: string;
+          }
+        ).name
+      ).toBe("New name");
+      expect(records.get("user-1")?.has("customization_shared")).toBeFalsy();
+      expect(manager.activeCustomizationLocator.value).toBe(
+        "studio-1.customization_shared"
+      );
+      expect(
+        manager.getShareLink(manager.editingCustomization.value!)
+      ).toContain("customization=studio-1.customization_shared");
+    });
+
+    it("keeps saving a shared draft while nobody else saves it", async () => {
+      joinStudio("studio-1");
+      store("studio-1").set("customization_shared", {
+        data: sharedCustomization("studio-1", "customization_shared"),
+        marker: CUSTOMIZATION_MARKER,
+      });
+      const { manager } = createManager();
+      await manager.load();
+      manager.startEditing("customization_shared");
+
+      manager.updateEditingName("First");
+      await manager.saveEditingCustomization();
+      manager.updateEditingName("Second");
+      await manager.saveEditingCustomization();
+
+      expect(manager.saveConflict.value).toBeNull();
+      expect(
+        (
+          records.get("studio-1")!.get("customization_shared")!.data as {
+            name: string;
+          }
+        ).name
+      ).toBe("Second");
+    });
+
+    it("refuses to save over someone else's newer save, and reports the conflict instead", async () => {
+      joinStudio("studio-1");
+      store("studio-1").set("customization_shared", {
+        data: sharedCustomization("studio-1", "customization_shared"),
+        marker: CUSTOMIZATION_MARKER,
+      });
+      const { manager } = createManager();
+      await manager.load();
+      manager.startEditing("customization_shared");
+      saveAsAnotherMember("studio-1", "customization_shared", 2000);
+
+      manager.updateEditingName("Mine");
+      await expect(manager.saveEditingCustomization()).rejects.toBeInstanceOf(
+        CustomizationSaveConflictError
+      );
+
+      expect(
+        (
+          records.get("studio-1")!.get("customization_shared")!.data as {
+            name: string;
+          }
+        ).name
+      ).toBe("Renamed by someone else");
+      expect(manager.saveConflict.value?.theirs.name).toBe(
+        "Renamed by someone else"
+      );
+      expect(manager.hasUnsavedChanges.value).toBe(true);
+    });
+
+    it("resolveSaveConflict('use-theirs') swaps the draft for the other save", async () => {
+      joinStudio("studio-1");
+      store("studio-1").set("customization_shared", {
+        data: sharedCustomization("studio-1", "customization_shared"),
+        marker: CUSTOMIZATION_MARKER,
+      });
+      const { manager } = createManager();
+      await manager.load();
+      manager.startEditing("customization_shared");
+      saveAsAnotherMember("studio-1", "customization_shared", 2000);
+      manager.updateEditingName("Mine");
+      await manager.saveEditingCustomization().catch(() => undefined);
+
+      await manager.resolveSaveConflict("use-theirs");
+
+      expect(manager.saveConflict.value).toBeNull();
+      expect(manager.editingCustomization.value?.name).toBe(
+        "Renamed by someone else"
+      );
+      expect(manager.hasUnsavedChanges.value).toBe(false);
+      // Later edits build on their copy, so they save without a conflict.
+      manager.updateEditingName("After");
+      await manager.saveEditingCustomization();
+      expect(
+        (
+          records.get("studio-1")!.get("customization_shared")!.data as {
+            name: string;
+          }
+        ).name
+      ).toBe("After");
+    });
+
+    it("resolveSaveConflict('keep-mine') saves the draft over the other save", async () => {
+      joinStudio("studio-1");
+      store("studio-1").set("customization_shared", {
+        data: sharedCustomization("studio-1", "customization_shared"),
+        marker: CUSTOMIZATION_MARKER,
+      });
+      const { manager } = createManager();
+      await manager.load();
+      manager.startEditing("customization_shared");
+      saveAsAnotherMember("studio-1", "customization_shared", 2000);
+      manager.updateEditingName("Mine");
+      await manager.saveEditingCustomization().catch(() => undefined);
+
+      await manager.resolveSaveConflict("keep-mine");
+
+      expect(manager.saveConflict.value).toBeNull();
+      expect(
+        (
+          records.get("studio-1")!.get("customization_shared")!.data as {
+            name: string;
+          }
+        ).name
+      ).toBe("Mine");
+    });
+
+    it("an auto-save that hits a conflict reports it without logging an error", async () => {
+      vi.useFakeTimers();
+      try {
+        joinStudio("studio-1");
+        store("studio-1").set("customization_shared", {
+          data: sharedCustomization("studio-1", "customization_shared"),
+          marker: CUSTOMIZATION_MARKER,
+        });
+        const errorSpy = vi
+          .spyOn(console, "error")
+          .mockImplementation(() => undefined);
+        const { manager } = createManager();
+        await manager.load();
+        manager.startEditing("customization_shared");
+        saveAsAnotherMember("studio-1", "customization_shared", 2000);
+
+        manager.updateEditingName("Mine");
+        await vi.advanceTimersByTimeAsync(5000);
+
+        expect(manager.saveConflict.value).not.toBeNull();
+        expect(errorSpy).not.toHaveBeenCalled();
+        errorSpy.mockRestore();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("doesn't check personal customizations for conflicts", async () => {
+      const { manager } = createManager();
+      const own = await manager.create();
+      manager.startEditing(own.id);
+      getDataMock.mockClear();
+
+      manager.updateEditingName("Renamed");
+      await manager.saveEditingCustomization();
+
+      expect(getDataMock).not.toHaveBeenCalled();
+      expect(manager.saveConflict.value).toBeNull();
+    });
+
+    describe("shareWithOthers()", () => {
+      let createStudioMock: Mock;
+
+      beforeEach(() => {
+        createStudioMock = vi
+          .spyOn(os, "createStudio")
+          .mockResolvedValue({ success: true, studioId: "studio-new" });
+        vi.spyOn(os, "getFileRecordName").mockImplementation(async (url) =>
+          url.startsWith("https://files.example.com/user-1/") ? "user-1" : null
+        );
+        vi.spyOn(os, "readFile").mockResolvedValue(
+          new Blob(["logo"], { type: "image/png" })
+        );
+        recordFileMock.mockImplementation(async (recordName: string) => ({
+          success: true,
+          url: `https://files.example.com/${recordName}/copied.png`,
+        }));
+      });
+
+      it("moves the customization into a new studio, with its own files, and leaves a note at the old address", async () => {
+        const { manager } = createManager();
+        const own = await manager.create();
+        manager.startEditing(own.id);
+        recordFileMock.mockResolvedValueOnce({
+          success: true,
+          url: "https://files.example.com/user-1/logo.png",
+        });
+        await manager.uploadLogo(
+          new File(["logo"], "logo.png", { type: "image/png" })
+        );
+
+        const moved = await manager.shareWithOthers(own.id);
+
+        expect(createStudioMock).toHaveBeenCalledWith(own.name);
+        expect(moved.studioId).toBe("studio-new");
+        expect(moved.logoUrl).toBe(
+          "https://files.example.com/studio-new/copied.png"
+        );
+        const studioCopy = records.get("studio-new")!.get(own.id)!;
+        expect(studioCopy.marker).toBe(CUSTOMIZATION_MARKER);
+        expect((studioCopy.data as { studioId: string }).studioId).toBe(
+          "studio-new"
+        );
+        expect(records.get("user-1")!.get(own.id)).toEqual({
+          data: { movedTo: { recordName: "studio-new", id: own.id } },
+          marker: MOVED_CUSTOMIZATION_MARKER,
+        });
+        expect(manager.editingCustomization.value?.studioId).toBe("studio-new");
+        expect(manager.getStudioRole(moved)).toBe("admin");
+        expect(manager.activeCustomizationLocator.value).toBe(
+          `studio-new.${own.id}`
+        );
+      });
+
+      it("lists the moved customization once after a reload", async () => {
+        const { manager } = createManager();
+        const own = await manager.create();
+        await manager.shareWithOthers(own.id);
+        joinStudio("studio-new", "admin");
+
+        await manager.load();
+
+        expect(manager.customizations.value.map((c) => c.id)).toEqual([own.id]);
+        expect(manager.customizations.value[0]!.studioId).toBe("studio-new");
+      });
+
+      it("keeps a file it can't copy at its old address rather than failing", async () => {
+        vi.mocked(os.readFile).mockRejectedValue(new Error("offline"));
+        const { manager } = createManager();
+        const own = await manager.create();
+        manager.startEditing(own.id);
+        recordFileMock.mockResolvedValueOnce({
+          success: true,
+          url: "https://files.example.com/user-1/logo.png",
+        });
+        await manager.uploadLogo(
+          new File(["logo"], "logo.png", { type: "image/png" })
+        );
+
+        const moved = await manager.shareWithOthers(own.id);
+
+        expect(moved.logoUrl).toBe("https://files.example.com/user-1/logo.png");
+      });
+
+      it("keeps only the original when the note can't be left at the old address", async () => {
+        const { manager } = createManager();
+        const own = await manager.create();
+        recordDataMock.mockImplementation(
+          async (
+            recordName: string,
+            address: string,
+            data: unknown,
+            options: { marker?: string }
+          ) => {
+            if (options.marker === MOVED_CUSTOMIZATION_MARKER) {
+              return {
+                success: false,
+                errorCode: "server_error",
+                errorMessage: "",
+              };
+            }
+            store(recordName).set(address, {
+              data: structuredClone(data),
+              marker: options.marker,
+            });
+            return { success: true };
+          }
+        );
+
+        await expect(manager.shareWithOthers(own.id)).rejects.toBeInstanceOf(
+          CustomizationSharingError
+        );
+
+        expect(records.get("studio-new")?.has(own.id)).toBeFalsy();
+        expect(manager.customizations.value[0]!.studioId).toBeUndefined();
+        expect(records.get("user-1")!.get(own.id)!.marker).toBe(
+          CUSTOMIZATION_MARKER
+        );
+      });
+
+      it("reports a studio that can't be created, and changes nothing", async () => {
+        createStudioMock.mockResolvedValue({
+          success: false,
+          errorCode: "not_authorized",
+          errorMessage: "",
+        });
+        const { manager } = createManager();
+        const own = await manager.create();
+
+        await expect(manager.shareWithOthers(own.id)).rejects.toMatchObject({
+          code: "not_authorized",
+        });
+        expect(manager.customizations.value[0]!.studioId).toBeUndefined();
+      });
+
+      it("a link made before the move opens the studio's copy", async () => {
+        const { manager: owner } = createManager();
+        const own = await owner.create();
+        await owner.shareWithOthers(own.id);
+
+        const viewerNav = createNavigationManager({
+          initialHref: `http://localhost/?customization=user-1.${own.id}`,
+        });
+        const { manager: viewer } = createManager(viewerNav);
+        await viewer.initialCustomizationLoadPromise;
+
+        expect(viewer.linkedCustomization.value?.studioId).toBe("studio-new");
+        expect(viewer.activeCustomizationLocator.value).toBe(
+          `studio-new.${own.id}`
+        );
+      });
+
+      it("follows only one moved note, so two pointing at each other can't loop", async () => {
+        store("a").set("customization_x", {
+          data: { movedTo: { recordName: "b", id: "customization_x" } },
+          marker: MOVED_CUSTOMIZATION_MARKER,
+        });
+        store("b").set("customization_x", {
+          data: { movedTo: { recordName: "a", id: "customization_x" } },
+          marker: MOVED_CUSTOMIZATION_MARKER,
+        });
+        const { manager } = createManager();
+
+        await manager.loadByLocator("a.customization_x");
+
+        expect(manager.linkedCustomization.value).toBeNull();
+        const loopReads = getDataMock.mock.calls.filter(
+          ([recordName]) => recordName === "a" || recordName === "b"
+        );
+        expect(loopReads).toEqual([
+          ["a", "customization_x"],
+          ["b", "customization_x"],
+        ]);
+      });
+    });
+
+    describe("members", () => {
+      it("adds someone by email and reports an unknown email by its code", async () => {
+        const addMock = vi
+          .spyOn(os, "addStudioMember")
+          .mockResolvedValueOnce({ success: true })
+          .mockResolvedValueOnce({
+            success: false,
+            errorCode: "user_not_found",
+            errorMessage: "",
+          });
+        const shared = sharedCustomization("studio-1", "customization_shared");
+        const { manager } = createManager();
+
+        await manager.addMember(shared, "  friend@example.com ", "member");
+        await expect(
+          manager.addMember(shared, "nobody@example.com", "admin")
+        ).rejects.toMatchObject({ code: "user_not_found" });
+
+        expect(addMock).toHaveBeenNthCalledWith(
+          1,
+          "studio-1",
+          "friend@example.com",
+          "member"
+        );
+      });
+
+      it("refuses member changes on a customization that isn't shared", async () => {
+        const addMock = vi.spyOn(os, "addStudioMember");
+        const { manager } = createManager();
+        const own = await manager.create();
+
+        await expect(
+          manager.addMember(own, "friend@example.com", "member")
+        ).rejects.toMatchObject({ code: "not_shared" });
+        expect(addMock).not.toHaveBeenCalled();
+      });
+
+      it("removes someone and surfaces a refusal", async () => {
+        vi.spyOn(os, "removeStudioMember").mockResolvedValue({
+          success: false,
+          errorCode: "not_authorized",
+          errorMessage: "",
+        });
+        const { manager } = createManager();
+
+        await expect(
+          manager.removeMember(
+            sharedCustomization("studio-1", "customization_shared"),
+            "user-2"
+          )
+        ).rejects.toMatchObject({ code: "not_authorized" });
+      });
     });
   });
 });
