@@ -92,11 +92,11 @@ describe("ColorPicker", () => {
 
   // The window size is set against each layout on purpose: the picker follows
   // the app's layout, not the window's width.
-  it("opens as a bottom sheet in the mobile layout, even in a wide window", () => {
+  it("opens as a card above the bottom toolbar in the mobile layout, even in a wide window", () => {
     setup({ isMobile: true });
     open();
 
-    expect(dialog()!.classList).toContain("sb-color-picker-dialog-sheet");
+    expect(dialog()!.classList).toContain("sb-color-picker-dialog-card");
     expect(dialog()!.style.top).toBe("");
     expect(dialog()!.style.left).toBe("");
   });
@@ -110,7 +110,7 @@ describe("ColorPicker", () => {
     setup({ isMobile: false });
     open();
 
-    expect(dialog()!.classList).not.toContain("sb-color-picker-dialog-sheet");
+    expect(dialog()!.classList).not.toContain("sb-color-picker-dialog-card");
     expect(dialog()!.style.top).not.toBe("");
     expect(dialog()!.style.left).not.toBe("");
   });

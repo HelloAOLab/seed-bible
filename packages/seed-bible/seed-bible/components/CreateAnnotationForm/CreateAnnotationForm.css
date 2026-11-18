@@ -58,7 +58,7 @@
 }
 
 /* In a narrow window the quote gets a line of its own. A width query rather
-   than the `data-layout` attribute, because this is about how much room
+   than the `data-sb-app-layout` attribute, because this is about how much room
    there is, not about phone vs. desktop. */
 @media (max-width: 480px) {
   .sb-annotation-verse-quote {

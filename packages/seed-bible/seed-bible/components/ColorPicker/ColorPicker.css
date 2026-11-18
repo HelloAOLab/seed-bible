@@ -63,7 +63,9 @@
   outline: none;
 }
 
-.sb-color-picker-dialog-sheet {
+/* In the mobile layout the picker is a card centered just above the bottom
+   toolbar rather than a popover beside the color it edits. */
+.sb-color-picker-dialog-card {
   left: 50%;
   /* Sit above the verse toolbar / bottom chrome instead of stacking on it. */
   bottom: calc(var(--sb-reader-bottom-inset, 0px) + 0.75rem);
@@ -197,25 +199,25 @@
   gap: 0.5rem;
 }
 
-/* The bottom sheet is for fingers: bigger handles and full-width buttons.
-   `:where()` keeps each rule at the strength it has without the sheet. */
-:where(.sb-color-picker-dialog-sheet) .sb-color-picker-sv {
+/* The phone card is for fingers: bigger handles and full-width buttons.
+   `:where()` keeps each rule at the strength it has without the card. */
+:where(.sb-color-picker-dialog-card) .sb-color-picker-sv {
   aspect-ratio: 1 / 0.85;
 }
 
-:where(.sb-color-picker-dialog-sheet) .sb-color-picker-hue {
+:where(.sb-color-picker-dialog-card) .sb-color-picker-hue {
   height: 1.25rem;
 }
 
-:where(.sb-color-picker-dialog-sheet) .sb-color-picker-hue-thumb,
-:where(.sb-color-picker-dialog-sheet) .sb-color-picker-sv-thumb {
+:where(.sb-color-picker-dialog-card) .sb-color-picker-hue-thumb,
+:where(.sb-color-picker-dialog-card) .sb-color-picker-sv-thumb {
   width: 1.375rem;
   height: 1.375rem;
 }
 
 /* Two classes, to outrank the Button's own size. */
-:where(.sb-color-picker-dialog-sheet) .sb-button.sb-color-picker-cancel,
-:where(.sb-color-picker-dialog-sheet) .sb-button.sb-color-picker-confirm {
+:where(.sb-color-picker-dialog-card) .sb-button.sb-color-picker-cancel,
+:where(.sb-color-picker-dialog-card) .sb-button.sb-color-picker-confirm {
   flex: 1;
   --sb-button-height: 2.75rem;
   --sb-button-font-size: var(--sb-font-size-14);

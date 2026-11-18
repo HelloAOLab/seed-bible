@@ -53,8 +53,8 @@ export interface ColorPickerProps {
   /** Used to position the popover when `showTrigger` is false. */
   anchorRef?: { current: HTMLElement | null };
   /**
-   * The app's `isMobile`. The picker opens as a bottom sheet in the mobile
-   * layout and as a popover beside its anchor otherwise.
+   * The app's `isMobile`. In the mobile layout the picker opens as a card
+   * just above the bottom toolbar; otherwise as a popover beside its anchor.
    */
   isMobile: boolean;
 }
@@ -364,7 +364,7 @@ export function ColorPicker(props: ColorPickerProps) {
             <div
               ref={panelRef}
               className={`sb-color-picker-dialog${
-                isMobile ? " sb-color-picker-dialog-sheet" : ""
+                isMobile ? " sb-color-picker-dialog-card" : ""
               }`}
               style={panelStyle.value}
               role="dialog"

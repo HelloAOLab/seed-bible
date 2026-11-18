@@ -767,14 +767,14 @@
 }
 
 /* The tab's ⋯ shows on the selected tab, on hover, while its menu is open and
-   when the row has keyboard focus. Hidden rather than removed, so the row
-   keeps its height and a click on that spot falls through to the row and
-   selects the tab. Without hover (touch screens, the phone drawer) there'd be
-   no way to reveal it, so it always shows there. The drawer is told apart by
-   width, not `.sb-tabs-sidebar-mobile-open`: that class outlives the drawer
-   when the window is widened with it open. It fades with the row's
-   hover background; `visibility` flips at the start of a fade in and the end
-   of a fade out, so it's never clickable while fully invisible. Save,
+   when the row has keyboard focus. Hidden rather than removed, so the row keeps
+   its height and a click on that spot falls through to the row and selects the
+   tab. Without hover (touch screens, the phone drawer) there'd be no way to
+   reveal it, so it always shows there. The drawer is told apart by the app's
+   layout (`data-sb-app-layout`), not `.sb-tabs-sidebar-mobile-open`: that class
+   outlives the drawer when the window is widened with it open. It fades with
+   the row's hover background; `visibility` flips at the start of a fade in and
+   the end of a fade out, so it's never clickable while fully invisible. Save,
    save folder and bookmark rows follow the same rules; they have no selected
    state. */
 @media (hover: hover) {

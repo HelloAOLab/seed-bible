@@ -527,8 +527,8 @@
 
 /* With room to spare, label and value share a line, which keeps the preview
    short enough for the desktop modal's height cap. A width query rather than
-   the `data-layout` attribute, because this is about how much room there is,
-   not about phone vs. desktop. */
+   the `data-sb-app-layout` attribute, because this is about how much room there
+   is, not about phone vs. desktop. */
 @media (min-width: 481px) {
   .sb-images-preview-details {
     gap: 6px;
