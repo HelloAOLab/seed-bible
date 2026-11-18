@@ -24,6 +24,11 @@
 
 ### 🐛 Fixed
 
+- Keep the mobile layout on a phone turned sideways, instead of switching to the desktop layout.
+  - Tablets, laptops and desktops keep the layout they have today, and a narrow window still gets the mobile one.
+  - An iPad in the native app opens in the desktop layout straight away, instead of starting in the mobile one.
+  - A phone using "Request desktop site" now gets the mobile layout too.
+
 ### 🗑️ Removed
 
 ## v1.18.0 — 2026-11-16
