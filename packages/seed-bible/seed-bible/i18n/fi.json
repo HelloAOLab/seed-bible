@@ -28,22 +28,18 @@
   "searching": "Haetaan...",
   "no-search-results": "Ei vastaavia säkeitä.",
   "open-chapter": "Avaa luku",
-
   "uploading": "Ladataan...",
   "profile-name": "Profiilin nimi",
   "profile-name-placeholder": "esim. Craigin perhe",
-
   "description": "Kuvaus",
   "optional": "(Valinnainen)",
   "description-placeholder": "Kirjoita profiilikuvauksesi...",
   "location": "Sijainti",
   "location-placeholder": "esim. Austin, Texas",
-
   "copied": "Kopioitu",
   "copy": "Kopioida",
   "save-changes": "Tallenna muutokset",
   "sign-out": "Kirjaudu ulos",
-
   "log-in": "Kirjaudu sisään",
   "tanakh": "Tanakh",
   "traditional": "Perinteinen",
@@ -57,7 +53,6 @@
   "scripture-settings": "Raamatun asetukset",
   "scripture-elements": "Raamatun elementit",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Näytä otsikot",
   "show-verse-numbers": "Näytä jaenumerot",
   "show-footnotes": "Näytä alaviitteet",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Ei laajennuksia saatavilla.",
   "install": "Asentaa",
   "uninstall": "Poista",
-
   "custom": "Mukautettu",
   "text-section-bookTitle": "Kirjan otsikkoteksti",
   "text-section-heading": "Otsikkoteksti",
@@ -92,7 +86,6 @@
   "show-selected-items": "Näytä valitut kohteet",
   "show-highlight-colors": "Näytä korostusvärit",
   "show-icon-text": "Näytä kuvakkeen teksti",
-
   "extensions": "Laajennukset",
   "display": "Näyttö",
   "theme-and-text": "Teema ja teksti",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Suurenna pyhien kirjoitusten fonttikokoa",
   "change-line-spacing": "Muuta riviväliä",
   "line-spacing_lineHeight": "Rivinväli: {{lineHeight}}",
-
   "italic": "Kursiivi",
   "underline": "Korostaa",
   "alignment_x": "Tasaus: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Tekstin väri",
   "follow_theme": "Seuraa teemaa",
   "reset-to-default": "Palauta oletusarvot",
-
   "id_highlight-text-color": "{{id}} korostustekstin väri",
   "id_highlight-background-color": "{{id}} korostuksen taustaväri",
   "all-settings-description": "Hienosäädä jokaista tekstiosiota ja mukauta jokaisen teeman väriä.",
@@ -141,7 +132,6 @@
   "old-testament_short": "Jatkoaika",
   "new-testament_short": "NT",
   "apocrypha": "Apokryfikirjat",
-
   "custom-translations": "Mukautetut käännökset",
   "no-translation-results-found": "Ei tuloksia. Haluatko laajentaa hakuasi kattamaan myös osittain valmiit käännökset?",
   "show-all-translations": "Näytä kaikki käännökset",
@@ -159,7 +149,6 @@
   "4-psalms": "4 Psalmia",
   "5-psalms": "5 Psalmia",
   "remove-bookmark": "Poista kirjanmerkki",
-
   "chat": "Chat",
   "today": "Tänään",
   "you": "Sinä",
@@ -169,7 +158,6 @@
   "category-options": "Kansioasetukset",
   "rename": "Nimeä uudelleen",
   "delete": "Poistaa",
-
   "bookmark-options": "Kirjanmerkkiasetukset",
   "new-folder-placeholder": "Kansion nimi",
   "tasks": "Tehtävät",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Samanniminen kansio on jo olemassa.",
   "add-to-new": "Lisää uuteen",
   "save": "Tallentaa",
-
   "apocrypha-info-text": "Varhaiset juutalaiset tai kristilliset yhteisöt eivät koskaan pitäneet mitään tässä osiossa olevista kirjoituksista pyhänä kirjoituksena. Raamattu on erityinen kokoelma kirjoja. Juutalaiset ja kristityt ovat aina olleet yhtä mieltä Vanhasta testamentista, joka on peräisin kiinteästä kokoelmasta pyhiä kirjoituksia, joita juutalaiset kutsuivat Tanakhiksi ja kristityt Vanhaksi testamentiksi. Tanakhin ja Vanhan testamentin sisältö on täsmälleen sama, mutta ne on yleensä järjestetty eri tavalla. Kristityt tunnustavat lisäksi Uuden testamentin, joka kertoo Jeesuksesta, hänen opetuksistaan ​​ja hänen seuraajiensa kirjoituksista. Alla olevat kirjoitukset olivat tunnettuja ja laajalti luettuja Raamatun kirjoitushetkellä, mutta niitä ei koskaan pidetty pyhänä kirjoituksena. Vaikka muinaiset kirjoittajat joskus lainasivat monenlaisia ​​tekstejä, kuten runoilijoita, filosofeja ja muita kirjoituksia, jonkin lainaaminen ei ole sama asia kuin sen pitäminen pyhänä kirjoituksena. Nämä kirjoitukset on sisällytetty tähän vain historialliseen ja kirjalliseen viitteeseen.",
   "seed-bible": "Siemenraamattu",
   "take-photo": "Ota kuva",
   "choose-from-gallery": "Valitse galleriasta",
-
   "crop-your-photo": "Rajaa kuvasi",
   "zoom": "Zoomaus",
   "set-picture": "Aseta kuva",
@@ -211,10 +197,8 @@
   "read-the-bible": "Lue Raamattua",
   "seed-bible-description": "Lue {{bookName}} {{chapterNumber}} Siemenraamatusta",
   "social-title": "Lue {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Lukujen navigointi",
   "tutorial.skip": "Ohita",
-
   "tutorial.back": "Takaisin",
   "tutorial.done": "Tehty",
   "tutorial.next": "Seuraava",
@@ -238,7 +222,6 @@
   "copied-translation-share-link": "Kopioitu käännöksen jakamislinkki",
   "less": "Vähemmän",
   "swipe-up-more": "Pyyhkäise ylöspäin nähdäksesi lisää",
-  "plans": "Suunnitelmat",
   "reading-plans": "Lukusuunnitelmat",
   "create-reading-plan": "Luo lukusuunnitelma",
   "reading-plans-empty": "Sinulla ei ole vielä lukusuunnitelmia. Luo sellainen aloittaaksesi.",
@@ -327,11 +310,9 @@
   "study-notes": "Opiskelumuistiinpanot",
   "content": "Sisältö",
   "untitled-playlist": "Nimetön soittolista",
-
   "discover-annotations-empty": "Sinulla ei ole merkintöjä",
   "discover-cross-references-empty": "Tässä luvussa ei ole ristiviittauksia.",
   "discover-study-notes-empty": "Tähän lukuun ei ole muistiinpanoja.",
-
   "discover-select-tab": "Valitse välilehti löytääksesi aiheeseen liittyvää materiaalia.",
   "create-playlist": "Luoda",
   "playlist-title_placeholder": "Soittolistan otsikko",
@@ -380,12 +361,10 @@
   "delete-playlist-failed": "Soittolistan poistaminen epäonnistui.",
   "collapsed-tab-shared-label": "{{title}} — jaettu istunto, läsnä {{count}}",
   "playlist-add-mode-label": "Tuotetyyppi",
-
   "session-host-reconnected": "Yhdistetty uudelleen istuntoon",
   "session-host-left": "Isäntä lähti — sinut poistettiin istunnosta",
   "drag-to-reorder-playlist-item": "Järjestä vetämällä",
   "saving": "Tallennetaan…",
-
   "unsaved-item-confirm-message": "Olet aloittanut kohteen lisäämisen, jota ei ole vielä lisätty soittolistaan. Mitä haluat tehdä?",
   "discard-and-save": "Hylkää ja tallenna",
   "add-and-save": "Lisää ja tallenna",
@@ -513,7 +492,6 @@
   "reading-plan-preview-reading": "Esikatselu {{reading}}",
   "reading-plan-mark-reading-complete": "Merkitse lukeminen valmiiksi",
   "reading-plan-link-video": "Video",
-
   "reading-plan-mark-passage-complete": "Merkitse {{passage}} luetuksi",
   "reading-plan-read-nudge-title": "Mukavaa luettavaa!",
   "reading-plan-read-nudge-toast": "Merkitse {{passage}} valmiiksi?",
@@ -521,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Lue, hae ja tutki Raamattua verkossa. Ilmaisia ​​käännöksiä monille kielille, korostuksin, muistiinpanoin, kirjanmerkkein ja lukusuunnitelmin.",
   "all": "Kaikki",
-
   "today-bookmarks": "KIRJANMERKIT",
   "today-search-verses": "Hae kirjoja, lukuja, jakeita...",
   "anonymous-greeting": "Tervetuloa!",
   "community": "YHTEISÖ",
   "go-somewhere-new": "MENE JONNEKIN UUTEEN PAIKASTA",
-
   "open-bible": "Avoin Raamattu",
   "personal-greeting": "Tervetuloa, {{name}} !",
   "resume-reading": "JATKA SIINÄ, MISTÄ LÄHETIT",
   "resume-reading-loading": "Ladataan lukuhistoriaasi…",
   "selected-year": "Vuosi: {{year}}",
-
   "theme-light": "Valo",
   "theme-dark": "Tumma",
   "installed-extensions": "Asennettu",
@@ -543,7 +518,6 @@
   "extension-state-installed": "Asennettu",
   "extension-state-downloaded": "Ladattu",
   "extension-state-pending": "Asennetaan…",
-
   "tutorial.stepProgress": "Vaihe {{current}} / {{total}}",
   "tutorial.offlineDownloadTitle": "Napauta säilyttääksesi sen laitteellasi",
   "tutorial.offlineDownloadBody": "Kaikki tällä kuvakkeella merkityt käännökset voidaan tallentaa offline-lukemista varten.",
@@ -577,7 +551,6 @@
   "tutorial.paneLayoutBody": "Valitse tästä asetteluvalikosta, kuinka monta katkelmaa luetaan rinnakkain.",
   "tutorial.addTabTitle": "Avaa lisää kohtia",
   "tutorial.addTabBody": "Lisää uusi välilehti lukeaksesi useita kirjoja tai käännöksiä rinnakkain.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % valmiina - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % valmiina",
   "playlist-history-continue": "Jatkaa",
@@ -636,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} muistiinpanoa tälle luvulle",
   "create-folder": "Luo kansio",
   "edit-bookmark": "Muokkaa kirjanmerkkiä",
-
   "greeting-afternoon": "Hyvää iltapäivää!",
   "greeting-afternoon-named": "Hyvää iltapäivää, {{name}} !",
   "greeting-evening": "Hyvää iltaa!",
@@ -652,32 +624,24 @@
   "ask-ai": "Kysy tekoälystä",
   "unread-mention": "Lukematon maininta",
   "unread-messages": "Lukemattomat viestit: {{count}}",
-
   "scripture-width": "Raamatun leveys",
   "decrease-scripture-width": "Pienennä raamatunkohdan leveyttä",
   "increase-scripture-width": "Suurenna raamatunkohdan leveyttä",
   "annotations": "Merkinnät",
   "discover-content-panel": "Tutustu sisältöön",
   "discover-book-title": "Löydä {{book}}",
-
   "about-title": "Tietoja Seed Biblesta",
   "about-meta-description": "Seed Bible on ilmainen raamattusovellus, joka on rakennettu Raamatun lukemiseen yhdessä perheen, ystävien ja yhteisön kanssa – ilmaiseksi ikuisesti, ei mainoksia tai maksumuureja.",
-
   "about-action-open-passage": "Avaa käytävä",
   "about-action-donate": "Lahjoittaa",
   "about-action-discord": "Liity Discordiin",
   "recent-uploads": "Viimeisimmät lataukset",
-
   "customization-not-found": "Tätä mukautusta ei löytynyt.",
   "customization-name": "Nimi",
   "customization-primaryColor": "Ensisijainen",
-
   "customization-secondaryColor": "Toissijainen",
-
   "customization-tertiaryColor": "Kolmas aste",
-
   "customization-fonts": "Fontit",
-
   "custom-font-option": "Mukautettu…",
   "custom-font-name-placeholder": "Google-fontin nimi",
   "delete-customization": "Poistaa",
@@ -690,10 +654,8 @@
   "extension-availability-available": "Saatavilla",
   "extension-availability-auto-installed": "Automaattisesti asennettu",
   "extension-availability-hidden": "Piilotettu",
-
   "variants": "Teemat",
   "add-variant": "Lisää teema",
-
   "base-theme-description": "Tämän teeman esiasetetut muutokset palautuvat kaikkiin muokkaamattomiin toimintoihin. Omat muokkaustesi säilyvät.",
   "reset-to-base-theme": "Palauta perusteemaan",
   "low-contrast-warning": "{{label}} : kontrasti on vain {{ratio}} :1 — pyri vähintään {{minRatio}} :1:een, jotta teksti pysyy luettavana.",
@@ -739,14 +701,12 @@
   "save-folder-empty": "Ei vielä tallennuksia täällä.",
   "save-options": "Tallennusvaihtoehdot",
   "saves": "Tallennetut",
-
   "hide-saves": "Piilota tallennukset",
   "show-saves": "Näytä tallenteet",
   "save-verses": "Tallentaa",
   "new-save-folder": "Uusi kansio",
   "edit-save": "Muokkaa tallennusta",
   "remove-save-from-all-folders": "Poista kaikista kansioista",
-
   "color-hue": "Värisävy",
   "color-saturation": "Kylläisyys ja kirkkaus",
   "hex-color": "Heksaväri",
@@ -861,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Muotoilueditoria ei voitu ladata. Tässä muistiinpanossa on muotoiluja, jotka katoaisivat, joten sitä ei voi muokata ennen kuin muodostat yhteyden uudelleen.",
   "annotation-text": "Merkintäteksti",
   "notes-for-verse": "Muistiinpanoja säkeeseen {{verse}}",
-
   "configure-extension-defaults": "Oletusarvoisten ohitusten määrittäminen",
-
   "extension-settings-defaults-title": "{{name}} oletusarvoiset ohitukset",
   "no-extension-settings": "Tällä laajennuksella ei ole konfiguroitavia asetuksia.",
   "extension-settings-save-failed": "Asetuksiasi ei voitu tallentaa.",
@@ -872,7 +830,6 @@
   "setting-no-default": "Ei oletusarvoa",
   "override-setting": "Ohita {{name}}",
   "override-setting-label": "Ohittaa",
-
   "discover-choose-filter-hint": "Valitse yllä oleva suodatin nähdäksesi lisää tästä luvusta.",
   "take-a-tour": "Tee kierros",
   "share-reading-plan": "Jaa suunnitelma",
@@ -1056,7 +1013,6 @@
   "my-bookmark-numbered": "Kirjanmerkkini {{number}}",
   "bookmark-move-hint": "Napauta kirjanmerkkiä siirtääksesi sen tähän lukuun.",
   "move-bookmark-here": "Siirrä {{name}} tähän",
-
   "play": "Pelata",
   "pause": "Tauko",
   "audio-playback-position": "Toistokohta",
@@ -1065,7 +1021,6 @@
   "audio-scrub-verse": "Jae {{verse}}",
   "tab-playing-audio": "Äänen toistaminen",
   "collapsed-tab-playing-label": "{{label}} — äänen toistaminen",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} teemaa",
   "customization-theme-count_one": "{{count}} teema",
@@ -1104,7 +1059,6 @@
   "about-community-body": "Usko on tarkoitettu elettäväksi yhdessä. Seed Bible on rakennettu Raamatun lukemiseen perheen, lähimpien ystävien ja kotiseurakunnan kanssa.",
   "discovered-content": "Löydetty sisältö",
   "show-discovered-content": "Näytä löydetty sisältö",
-
   "extension-availability-default": "Oletusarvo ( {{availability}} )",
   "customization-extensions-default": "Oletusarvo muille laajennuksille",
   "customization-extensions-default-hint": "Koskee kaikkia alla olevia laajennuksia, joita et ole asettanut, mukaan lukien myöhemmin lisätyt uudet laajennukset",
@@ -1137,7 +1091,6 @@
   "playlist-scripture-note-return": "Takaisin soittolistaan",
   "playlist-scripture-note-aria": "Huomautus {{passage}}",
   "playlist-scripture-note-progress": "{{current}} / {{total}}",
-
   "unsaved-item-edit-confirm-message": "Olet muuttanut kohdetta, mutta et ole vielä tallentanut muutoksia. Mitä haluat tehdä?",
   "keep-changes-and-save": "Säilytä muutokset ja tallenna",
   "reading-plan-edit-reading": "Muokkaa lukemista",
@@ -1152,7 +1105,6 @@
   "branding": "Brändäys",
   "create-custom-branding-menu-item": "Mukautettu brändäys",
   "your-content-empty-branding": "Luomasi mukautettu brändäys näkyy täällä.",
-
   "extension-consent-from": "Isännältä {{host}}",
   "extension-consent-source-version": "Versio {{version}} · palvelimelta {{host}}",
   "extension-consent-uploader-unnamed": "Siemenraamatun käyttäjä",
@@ -1200,7 +1152,6 @@
   "extension-permission-reading-selection": "Katso, mitkä säkeet valitset",
   "extension-permission-reading-navigate": "Avoimet käytävät",
   "extension-permission-network": "Yhdistä palvelimeen {{host}}",
-
   "extension-consent-not-now": "Ei nyt",
   "extension-consent-nothing-yet": "Toistaiseksi sillä ei ole pääsyä mihinkään tietoihisi.",
   "extension-permission-reading-history": "Katso lukuhistoriasi",
@@ -1238,7 +1189,6 @@
   "extension-capture-cancel": "Peruuttaa",
   "extension-consent-high-risk": "Herkkä",
   "extension-modal-ok": "OK",
-
   "extension-permissions-restart-note": "Muutokset astuvat voimaan välittömästi. {{name}} käynnistyy uudelleen ottaakseen ne käyttöön.",
   "extension-permissions-saved": "Tallennettu. {{name}} käynnistettiin uudelleen uusilla käyttöoikeuksilla.",
   "extension-permissions-failed": "Ei tallennettu. Yritä uudelleen.",
@@ -1276,8 +1226,67 @@
   "session-settings-verse-effects-desc-hosts": "Näytä tehosteet, kun juontaja valitsee säkeistön.",
   "session-settings-verse-effects-desc-everyone": "Näytä tehosteet, kun kuka tahansa valitsee säkeistön.",
   "session-settings-verse-effects-desc-none": "Säkeistövalintatehosteet on poistettu käytöstä kaikilta.",
-
   "account": "Tili",
   "scroll-filters-start": "Vieritä suodattimia alkuun",
-  "scroll-filters-end": "Vieritä suodattimia loppuun"
+  "scroll-filters-end": "Vieritä suodattimia loppuun",
+  "download": "Lataa",
+  "image-details-uploaded": "Ladattu",
+  "image-details-dimensions": "Mitat",
+  "image-details-dimensions-value": "{{width}} × {{height}} pikseliä",
+  "image-details-type": "Tyyppi",
+  "image-details-cover-of": "Kansikuva",
+  "image-details-not-a-cover": "Ei käytetty peitteenä",
+  "delete-customization-confirm-title": "Poistetaanko mukautettu brändäys?",
+  "delete-customization-confirm-message": "Poistetaanko mukautettu brändäys \" {{name}} \"? Tätä ei voi perua.",
+  "delete-customization-failed": "Mukautetun brändäyksen poistaminen epäonnistui.",
+  "delete-variant-confirm-title": "Poistetaanko teema?",
+  "delete-variant-confirm-message": "Poistetaanko teema \" {{name}} \"? Tätä ei voi perua.",
+  "delete-variant-confirm-message-unnamed": "Poistetaanko tämä teema? Tätä ei voi perua.",
+  "delete-variant-failed": "Teemaa ei voitu poistaa.",
+  "delete-highlight-confirm-title": "Poistetaanko kohokohta?",
+  "delete-highlight-confirm-message": "Poistetaanko korostus kohteesta {{reference}} ? Tätä ei voi perua.",
+  "delete-highlight-failed": "Kohokohdan poistaminen epäonnistui.",
+  "delete-annotation-on-confirm-message": "Poistetaanko merkintä kohteesta {{reference}} ? Tätä ei voi perua.",
+  "remove-from-folder": "Poista kansiosta",
+  "save-folders": "{{folders}}",
+  "delete-save-confirm-title": "Poistetaanko tallennus?",
+  "delete-save-confirm-message": "Poistetaanko tallennus {{reference}} ? Tätä ei voi perua.",
+  "delete-save-confirm-message-folders": "Poistetaanko {{reference}} -tiedoston tallennus {{folders}} -kansiosta? Tätä ei voi perua.",
+  "delete-save-failed": "Tallennusta ei voitu poistaa.",
+  "delete-save-folder-confirm-title": "Poistetaanko kansio?",
+  "delete-save-folder-confirm-message": "Poistetaanko kansio \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Myös tässä kansiossa olevat {{count}} tallennusta poistetaan.",
+  "delete-save-folder-confirm-deletes_one": "Myös tässä kansiossa olevat tallennukset poistetaan.",
+  "delete-save-folder-confirm-deletes_other": "Myös tässä kansiossa olevat {{count}} tallennusta poistetaan.",
+  "delete-save-folder-confirm-keeps": "Muissa kansioissa olevat {{count}} tallennusta pysyvät siellä.",
+  "delete-save-folder-confirm-keeps_one": "Tallennus, joka on myös toisessa kansiossa, pysyy siellä.",
+  "delete-save-folder-confirm-keeps_other": "Muissa kansioissa olevat {{count}} tallennusta pysyvät siellä.",
+  "cant-be-undone": "Tätä ei voi perua.",
+  "delete-save-folder-failed": "Kansiota ei voitu poistaa.",
+  "download-image-failed": "Kuvan lataaminen epäonnistui.",
+  "session-settings-verse-effects-hosts-only": "Vain isännille",
+  "session-settings-verse-effects-everyone": "Kaikki",
+  "session-settings-verse-effects-none": "Ei mitään",
+  "loading-books": "Kirjoja ladataan…",
+  "books-load-failed": "Kirjojen lataaminen epäonnistui. Tarkista yhteytesi ja yritä uudelleen.",
+  "loading-translation": "Ladataan {{name}} …",
+  "translation-load-failed": "{{name}} ei voitu ladata.",
+  "loading-translations": "Käännöksiä ladataan…",
+  "translations-load-failed": "Käännösten koko luetteloa ei voitu ladata, joten joitakin saattaa puuttua.",
+  "verse-of-the-day": "PÄIVÄN JAKE",
+  "verse-of-the-day-loading": "Päivän jaetta ladataan…",
+  "delete-bookmark-confirm-title": "Poistetaanko kirjanmerkki?",
+  "delete-bookmark-confirm-message": "Poistetaanko \" {{name}} \"?",
+  "scripture-font": "Raamatun fontti",
+  "ai-limits-title": "Ennen kuin keskustelet tekoälyn kanssa",
+  "ai-limits-intro": "Tekoäly voi olla hyödyllinen lähtökohta, mutta pidä mielessä sen rajoitukset:",
+  "ai-limits-mistakes": "Se tekee virheitä ja voi kuulostaa itsevarmalta, kun se on väärässä.",
+  "ai-limits-agreeable": "Se yleensä kertoo sinulle, mitä haluat kuulla, ja kallistuu suosittujen vastausten puoleen.",
+  "ai-limits-scripture": "Se ei ole luotettava lähde. Tarkista, mitä se sanoo Raamatun perusteella.",
+  "ai-limits-study": "Tutki Raamattua itse äläkä anna tekoälyn ajatella puolestasi.",
+  "ai-limits-confirm": "Ymmärrän, että tekoäly voi tehdä virheitä eikä se korvaa Raamatun tutkimista itse.",
+  "friends-playlists-filter": "Ystävien soittolistat",
+  "friend-link-social-title": "Lisää {{name}} ystäväksesi",
+  "friend-link-meta-description": "{{name}} haluaa olla kaverisi {{brand}} -palvelussa",
+  "friend-link-title": "Lisää {{name}} kaveriksi {{brand}} palvelussa"
 }

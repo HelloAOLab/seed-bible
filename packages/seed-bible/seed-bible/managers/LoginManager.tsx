@@ -1,4 +1,11 @@
-import { batch, computed, effect, signal, type Signal } from "@preact/signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import * as z from "zod/v4";
 import type { CasualOSManager, UserInfo } from "./OsManager";
 import type { SessionInvalidatedEvent } from "./SessionGuard";
@@ -121,6 +128,13 @@ export interface LoginManager {
   hydrateLocalConfig: () => void;
 
   /**
+   * `false` until `hydrateLocalConfig` has run. Anything that changes what
+   * the page shows based on device storage waits for this, so the client's
+   * first render matches the server's, which can't see that storage.
+   */
+  isLocalConfigHydrated: ReadonlySignal<boolean>;
+
+  /**
    * The promise that resolves with the user's profile information once it has loaded.
    * Null if the user is not logged in.
    */
@@ -237,8 +251,8 @@ const LOCAL_CONFIG_STORAGE_KEY = "sb-profile-config-local";
 // there's no fixed schema to validate this free-form bag against, so a
 // size/shape sanity check is the next best thing to keep corrupt data from
 // becoming durable account state.
-const MAX_LOCAL_CONFIG_JSON_LENGTH = 50_000;
-const MAX_LOCAL_CONFIG_KEYS = 100;
+export const MAX_LOCAL_CONFIG_JSON_LENGTH = 50_000;
+export const MAX_LOCAL_CONFIG_KEYS = 100;
 
 function readCachedProfile(userId: string): UserProfile | null {
   if (typeof localStorage === "undefined") {
@@ -685,8 +699,12 @@ export function createLoginManager({
    * window before this runs isn't clobbered by the (now-stale) disk
    * snapshot for that same key.
    */
+  const isLocalConfigHydrated = signal(false);
   const hydrateLocalConfig = () => {
-    localConfig.value = { ...readLocalConfig(), ...localConfig.value };
+    batch(() => {
+      localConfig.value = { ...readLocalConfig(), ...localConfig.value };
+      isLocalConfigHydrated.value = true;
+    });
   };
 
   const getUserProfile = async (userId: string): Promise<UserProfile> => {
@@ -1385,6 +1403,7 @@ export function createLoginManager({
     cachedProfile,
     localConfig,
     hydrateLocalConfig,
+    isLocalConfigHydrated,
     // Exposed as a getter so external readers see the promise assigned by the
     // profile-loading effect below. A plain property would capture the value
     // at construction time (null), which stays null after a fresh login and

@@ -5,10 +5,17 @@
  * Bible page, and reaches the app only by messages to the host's broker
  * (`managers/ExtensionSandboxManager.tsx`), which checks each one against the
  * permissions the user granted. It is bundled into every extension, so it
- * must not import anything from the app.
+ * must not import anything from the app except `i18n/I18nContext`, which is
+ * kept small for it (`extensionBundleImports.test.ts` checks).
  */
 import { effect, signal, type ReadonlySignal } from "@preact/signals";
 import { render, type ComponentChild } from "preact";
+import {
+  createFixedI18n,
+  I18nProvider,
+  setDefaultI18n,
+  type I18nResources,
+} from "../i18n/I18nContext";
 import {
   SANDBOX_START_KEY,
   type SandboxCapture,
@@ -17,6 +24,18 @@ import {
   type SandboxDiscoverRequest,
   type SandboxDiscoverResult,
   type SandboxErrorCode,
+  type SandboxBook,
+  type SandboxChapter,
+  type SandboxCommentary,
+  type SandboxCommentaryBook,
+  type SandboxCommentaryChapter,
+  type SandboxCommentaryProfile,
+  type SandboxDataset,
+  type SandboxDatasetBook,
+  type SandboxDatasetChapter,
+  type SandboxSearchQuery,
+  type SandboxSearchResults,
+  type SandboxTranslation,
   type SandboxHighlight,
   type SandboxHostRequestKind,
   type SandboxNote,
@@ -37,6 +56,7 @@ import {
   type SandboxSelectedVerse,
   type SandboxSharedSession,
   type SandboxState,
+  type SandboxStrings,
   type SandboxTitle,
   type SandboxToolDefinition,
   type SandboxToolItem,
@@ -46,6 +66,23 @@ import {
 } from "./protocol";
 
 export type {
+  SandboxBook,
+  SandboxChapter,
+  SandboxChapterContent,
+  SandboxChapterRef,
+  SandboxCommentary,
+  SandboxCommentaryBook,
+  SandboxCommentaryChapter,
+  SandboxCommentaryProfile,
+  SandboxDataset,
+  SandboxDatasetBook,
+  SandboxDatasetChapter,
+  SandboxDatasetReference,
+  SandboxFootnote,
+  SandboxSearchQuery,
+  SandboxSearchResult,
+  SandboxSearchResults,
+  SandboxTranslation,
   SandboxChatMessage,
   SandboxChatRequest,
   SandboxDiscoverRequest,
@@ -74,6 +111,9 @@ export type {
   SandboxVerseRef,
 };
 export { SANDBOX_PERMISSIONS, SANDBOX_PERMISSION_INFO } from "./protocol";
+// The same hook shared components use, from the module kept small for
+// extensions. `seed-bible/i18n` has it too, but brings every locale with it.
+export { useI18n } from "../i18n/I18nContext";
 
 /**
  * Why a call to Seed Bible failed. Every `sb.*` promise rejects with one of
@@ -258,25 +298,35 @@ export interface SandboxContext {
       permissions: SandboxPermission | SandboxPermission[]
     ) => Promise<boolean>;
   };
-  /** The extension's own translations, from `extension.json`. */
+  /** Translations, through the translator the app itself uses: i18next. */
   i18n: {
     /** The app's current language code, like `"en"` or `"es"`. */
     language: ReadonlySignal<string>;
     /** The current language's text direction. Already set on `<html>`. */
     direction: ReadonlySignal<"ltr" | "rtl">;
     /**
-     * Looks `key` up in this extension's own `extension.json` translations
-     * for the current language (falling back to `en`, then `defaultValue`,
-     * then `key`), and fills `{{name}}` placeholders from `values`.
+     * i18next's `t`, reading this extension's own `extension.json` strings
+     * unless `options.ns` names another set: `"seed-bible"` for the app's
+     * own. Options are i18next's: `defaultValue`, `count` for plurals, and
+     * the values for `{{name}}` placeholders. In a view, `useI18n(sb.extensionId)`
+     * gives the same `t`.
      *
      * @example
-     * sb.i18n.t("found", "Found {{count}} verses", { count: 3 });
+     * sb.i18n.t("found", { defaultValue: "Found {{count}} verses", count: 3 });
+     * sb.i18n.t("close", { ns: "seed-bible", defaultValue: "Close" });
      */
-    t: (
-      key: string,
-      defaultValue?: string,
-      values?: Record<string, string | number>
-    ) => string;
+    t: {
+      (key: string, options?: Record<string, unknown>): string;
+      /**
+       * The form from before `t` was i18next's, still supported: the
+       * default text, then the placeholder values.
+       */
+      (
+        key: string,
+        defaultValue?: string,
+        values?: Record<string, string | number>
+      ): string;
+    };
   };
   /** The app itself. */
   app: {
@@ -393,14 +443,31 @@ export interface SandboxContext {
    * participant's `id` is that person's `identity` in this extension.
    */
   identity: ReadonlySignal<string | null>;
-  /** Public Bible text. Needs no permission. */
+  /**
+   * Public Bible text, commentaries and datasets from the
+   * [Free Use Bible API](https://bible.helloao.org). Needs no permission.
+   *
+   * Translations the user has downloaded are read from their device, so
+   * with no connection `translations`, `books` and `chapter` still answer
+   * for those. Commentaries and datasets always need a connection. A call
+   * that can't be answered rejects with `unavailable`.
+   */
   bible: {
     /**
-     * Each verse of a chapter as plain text (no section headings). Rejects
-     * with `unavailable` if the translation or chapter can't be loaded.
+     * Every translation the user can pick from. Offline, the ones the app
+     * already knows about, with `downloaded` marking those that can be read.
+     */
+    translations: () => Promise<SandboxTranslation[]>;
+    /** A translation's books, in its order. */
+    books: (ref: {
+      translationId: string;
+    }) => Promise<{ translation: SandboxTranslation; books: SandboxBook[] }>;
+    /**
+     * A chapter: each verse as plain text in `verses`, and headings, breaks
+     * and footnotes in `content` and `footnotes` for laying it out.
      *
      * @example
-     * const { verses } = await sb.bible.chapter({
+     * const { verses, next } = await sb.bible.chapter({
      *   translationId: "BSB",
      *   bookId: "JHN",
      *   chapter: 3,
@@ -410,7 +477,62 @@ export interface SandboxContext {
       translationId: string;
       bookId: string;
       chapter: number;
-    }) => Promise<{ verses: { number: number; text: string }[] }>;
+    }) => Promise<SandboxChapter>;
+    /** Every commentary available. */
+    commentaries: () => Promise<SandboxCommentary[]>;
+    /** The books a commentary covers. */
+    commentaryBooks: (ref: { commentaryId: string }) => Promise<{
+      commentary: SandboxCommentary;
+      books: SandboxCommentaryBook[];
+    }>;
+    /** A commentary's notes on a chapter. */
+    commentaryChapter: (ref: {
+      commentaryId: string;
+      bookId: string;
+      chapter: number;
+    }) => Promise<SandboxCommentaryChapter>;
+    /** A commentary's articles about people, places and topics. */
+    commentaryProfiles: (ref: {
+      commentaryId: string;
+    }) => Promise<SandboxCommentaryProfile[]>;
+    /** One of those articles, as paragraphs of plain text. */
+    commentaryProfile: (ref: {
+      commentaryId: string;
+      profileId: string;
+    }) => Promise<SandboxCommentaryProfile & { content: string[] }>;
+    /**
+     * Finds verses in a translation by words or by reference, a page at a
+     * time, best match first. Needs a connection.
+     *
+     * @example
+     * const { results, found } = await sb.bible.search({
+     *   translationId: "BSB",
+     *   query: "living water",
+     *   bookId: "JHN",
+     * });
+     */
+    search: (query: SandboxSearchQuery) => Promise<SandboxSearchResults>;
+    /** Every dataset available, such as cross-references. */
+    datasets: () => Promise<SandboxDataset[]>;
+    /** The books a dataset covers. */
+    datasetBooks: (ref: {
+      datasetId: string;
+    }) => Promise<{ dataset: SandboxDataset; books: SandboxDatasetBook[] }>;
+    /**
+     * A dataset's entries for a chapter.
+     *
+     * @example
+     * const { verses } = await sb.bible.datasetChapter({
+     *   datasetId: "open-cross-ref",
+     *   bookId: "JHN",
+     *   chapter: 3,
+     * });
+     */
+    datasetChapter: (ref: {
+      datasetId: string;
+      bookId: string;
+      chapter: number;
+    }) => Promise<SandboxDatasetChapter>;
   };
   /** Reading needs `highlights:read`; adding and removing, `highlights:write`. */
   highlights: {
@@ -746,8 +868,9 @@ export interface SandboxExtensionDefinition {
   /**
    * The UI for each pane, dialog or settings panel the extension shows, by
    * name. Each renders in its own frame, with the app's theme and fonts
-   * applied, and is destroyed when it closes. Styles must come from the
-   * bundle (inline, or CSS imported with `?inline`).
+   * applied, and is destroyed when it closes. CSS the extension imports, and
+   * the shared components' own, is in the bundle `seed-bible-extension-scripts`
+   * builds, and is on the page before any view renders.
    */
   views?: Record<string, (props: SandboxViewProps) => ComponentChild>;
 }
@@ -765,15 +888,26 @@ interface ToolHandlers {
 const toBlob = (capture: SandboxCapture | null) =>
   capture ? new Blob([capture.bytes], { type: capture.type }) : null;
 
-function interpolate(
-  text: string,
-  values: Record<string, string | number> | undefined
-): string {
-  if (!values) {
-    return text;
-  }
-  return text.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, name: string) =>
-    name in values ? String(values[name]) : match
+/**
+ * The frame's strings, filed the way the app's i18next files them: the app's
+ * under `seed-bible`, the extension's under its id.
+ */
+function toResources(
+  extensionId: string,
+  strings: SandboxStrings
+): I18nResources {
+  const languages = new Set([
+    ...Object.keys(strings.app),
+    ...Object.keys(strings.extension),
+  ]);
+  return Object.fromEntries(
+    [...languages].map((language) => [
+      language,
+      {
+        "seed-bible": strings.app[language] ?? {},
+        [extensionId]: strings.extension[language] ?? {},
+      },
+    ])
   );
 }
 
@@ -785,7 +919,9 @@ function applyDocumentState(state: SandboxState) {
   if (!style) {
     style = document.createElement("style");
     style.id = "sb-theme";
-    document.head.appendChild(style);
+    // First, so the extension's own CSS, which its bundle adds before this
+    // runs, can override the page background and font set here.
+    document.head.prepend(style);
   }
   style.textContent = `:root {\n${state.themeCss}\n}\nhtml, body { margin: 0; background: var(--sb-background); color: var(--sb-font-color); font-family: var(--sb-font-family, system-ui, sans-serif); }`;
   const wanted = new Set(state.fontStylesheets);
@@ -813,6 +949,39 @@ function applyDocumentState(state: SandboxState) {
  */
 export function createSandboxClient(port: MessagePort, init: SandboxInit) {
   const state = signal<SandboxState>(init.state);
+  // A host older than this SDK sends only the extension's own strings.
+  const initialStrings: SandboxStrings = init.strings ?? {
+    language: init.state.language,
+    app: {},
+    extension: { [init.state.language]: init.state.strings },
+  };
+  const translations = createFixedI18n(
+    initialStrings.language,
+    toResources(init.extensionId, initialStrings)
+  );
+  // So shared components, and `useI18n()` in the extension's own views, use
+  // these strings too.
+  setDefaultI18n(translations.source);
+  const translate = (
+    key: string,
+    options?: string | Record<string, unknown>,
+    values?: Record<string, string | number>
+  ): string => {
+    // Read only to subscribe a component that calls this, so it redraws in a
+    // new language, or when strings arrive late.
+    void translations.source.revision?.value;
+    // `t(key, "Default text", values)`, from before `t` was i18next's. Its
+    // values only ever filled in placeholders, so they go in `replace`, where
+    // one named like an option (`lng`, `ns`) can't change the lookup.
+    const i18nextOptions: Record<string, unknown> | undefined =
+      typeof options === "string" || values
+        ? { defaultValue: options, count: values?.count, replace: values }
+        : options;
+    return translations.source.i18n.t(key, {
+      ...i18nextOptions,
+      ns: i18nextOptions?.ns ?? init.extensionId,
+    });
+  };
   const granted = signal<readonly SandboxPermission[]>(init.granted);
   const pending = new Map<
     number,
@@ -895,9 +1064,26 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
       void call("pong", {}).catch(() => {});
     } else if (message.type === "permissions") {
       granted.value = message.granted;
+    } else if (message.type === "strings") {
+      translations.set(
+        message.strings.language,
+        toResources(init.extensionId, message.strings)
+      );
     } else if (message.type === "state") {
-      state.value = { ...state.value, ...message.state };
-      applyDocumentState(state.value);
+      const next = { ...state.value, ...message.state };
+      // Strings first, so nothing sees the new language without them.
+      if (!init.strings && message.state.strings) {
+        translations.set(
+          next.language,
+          toResources(init.extensionId, {
+            language: next.language,
+            app: {},
+            extension: { [next.language]: next.strings },
+          })
+        );
+      }
+      state.value = next;
+      applyDocumentState(next);
     } else if (message.name === "tool.select") {
       const handlers = toolHandlers.get(message.toolId);
       runHandler(
@@ -1083,8 +1269,7 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     i18n: {
       language,
       direction,
-      t: (key, defaultValue, values) =>
-        interpolate(state.value.strings[key] ?? defaultValue ?? key, values),
+      t: translate,
     },
     app: {
       isMobile,
@@ -1120,7 +1305,18 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     },
     identity,
     bible: {
+      translations: () => call("bible.translations", {}),
+      books: (ref) => call("bible.books", ref),
       chapter: (ref) => call("bible.chapter", ref),
+      commentaries: () => call("bible.commentaries", {}),
+      commentaryBooks: (ref) => call("bible.commentaryBooks", ref),
+      commentaryChapter: (ref) => call("bible.commentaryChapter", ref),
+      commentaryProfiles: (ref) => call("bible.commentaryProfiles", ref),
+      commentaryProfile: (ref) => call("bible.commentaryProfile", ref),
+      search: (query) => call("bible.search", query),
+      datasets: () => call("bible.datasets", {}),
+      datasetBooks: (ref) => call("bible.datasetBooks", ref),
+      datasetChapter: (ref) => call("bible.datasetChapter", ref),
     },
     highlights: {
       colors: () => call("highlights.colors", {}),
@@ -1230,7 +1426,7 @@ export function createSandboxClient(port: MessagePort, init: SandboxInit) {
     },
   };
 
-  return { sb, call };
+  return { sb, call, i18n: translations.source };
 }
 
 /**
@@ -1256,7 +1452,7 @@ export function defineExtension(
   definition: SandboxExtensionDefinition
 ): SandboxExtension {
   const start = async (port: MessagePort, init: SandboxInit) => {
-    const { sb, call } = createSandboxClient(port, init);
+    const { sb, call, i18n } = createSandboxClient(port, init);
     if (init.mode.kind === "view") {
       const { view, surface, paneId, props } = init.mode;
       const View = definition.views?.[view];
@@ -1268,8 +1464,12 @@ export function defineExtension(
         return;
       }
       try {
+        // Its own frame's strings, even where frames share a page, as the
+        // testing helpers' do; the default only covers roots of its own.
         render(
-          <View sb={sb} props={props} surface={surface} paneId={paneId} />,
+          <I18nProvider i18n={i18n}>
+            <View sb={sb} props={props} surface={surface} paneId={paneId} />
+          </I18nProvider>,
           root
         );
       } catch (err) {

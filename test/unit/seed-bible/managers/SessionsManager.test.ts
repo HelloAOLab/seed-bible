@@ -1,8 +1,14 @@
 import { batch, effect, signal } from "@preact/signals";
 import {
+  COME_BACK_REQUEST_COOLDOWN_MS,
+  countSessionPeople,
+  GROUP_MOVE_GRACE_MS,
   createSessionsManager,
   getUserAnimalVisual,
+  isConnectedUserHost,
+  resolveViewingAreaVisibility,
   type BibleReadingSession,
+  type SessionOptions,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import {
   createBibleReadingState,
@@ -23,6 +29,10 @@ import {
 } from "@packages/seed-bible/seed-bible/i18n";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { createBibleReadingExtensionManager } from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
+import {
+  createDiscoverManager,
+  type DiscoverManager,
+} from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 
 vi.mock("@packages/seed-bible/seed-bible/managers/BibleReadingManager", () => ({
   createBibleReadingState: vi.fn(),
@@ -140,6 +150,9 @@ function createMockReadingState() {
   const chapterNumber = signal<number>(1);
   const scrollToVerse = signal<number | null>(null);
   const visibleVerseRange = signal<VisibleVerseRange | null>(null);
+  const visibleAreas = signal<ReadonlyMap<string, VisibleVerseRange>>(
+    new Map()
+  );
   const chapterData = signal<any>(null);
   const decorations = signal<VerseDecoration[]>([]);
 
@@ -202,6 +215,7 @@ function createMockReadingState() {
     chapterNumber,
     scrollToVerse,
     visibleVerseRange,
+    visibleAreas,
     chapterData,
     decorations,
     translationBooks: signal<any>(null),
@@ -356,12 +370,15 @@ describe("SessionsManager", () => {
   let mockReadingPositionsMap: ReturnType<typeof createMockSharedMap>;
   let mockExtensionsMap: ReturnType<typeof createMockSharedMap>;
   let mockAudioMap: ReturnType<typeof createMockSharedMap>;
+  let mockQuestionAnswersMap: ReturnType<typeof createMockSharedMap>;
+  let mockComeBackRequestsMap: ReturnType<typeof createMockSharedMap>;
   let mockHighlightsManager: {
     getChapterHighlights: Mock;
   };
   let uuidCount = 0;
   let uuid: Mock;
   let i18n: I18nManager;
+  let discoverManager: DiscoverManager;
 
   let os: CasualOSManager;
   let clearBranchDeviceCacheSpy: Mock;
@@ -395,6 +412,8 @@ describe("SessionsManager", () => {
     mockReadingPositionsMap = createMockSharedMap();
     mockExtensionsMap = createMockSharedMap();
     mockAudioMap = createMockSharedMap();
+    mockQuestionAnswersMap = createMockSharedMap();
+    mockComeBackRequestsMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
     mockStatusUpdated = createMockStatusUpdatedObservable();
     mockDocument = {
@@ -421,6 +440,14 @@ describe("SessionsManager", () => {
 
         if (name === "audio_playback") {
           return mockAudioMap;
+        }
+
+        if (name === "question_answers") {
+          return mockQuestionAnswersMap;
+        }
+
+        if (name === "come_back_requests") {
+          return mockComeBackRequestsMap;
         }
 
         return mockMap;
@@ -456,6 +483,7 @@ describe("SessionsManager", () => {
       getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
     };
     i18n = createI18nManager(createNavigationManager(), ["en"]);
+    discoverManager = createDiscoverManager();
 
     (createBibleReadingState as Mock).mockImplementation(() =>
       createMockReadingState()
@@ -473,7 +501,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.createSession();
 
@@ -492,7 +521,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
 
     const session = await manager.createSession();
@@ -509,6 +539,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     });
   });
 
@@ -518,7 +549,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
 
     await manager.createSession({
@@ -539,6 +571,7 @@ describe("SessionsManager", () => {
         initialChapterNumber: 21,
         isShared: true,
       },
+      discoverManager,
       undefined,
       undefined,
       undefined
@@ -551,7 +584,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
 
     await manager.createSession({
@@ -574,7 +608,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
 
     await manager.createSession();
@@ -588,7 +623,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -606,7 +642,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
 
     await manager.joinSession("group-abc", {
@@ -625,6 +662,7 @@ describe("SessionsManager", () => {
         initialChapterNumber: 10,
         isShared: true,
       },
+      discoverManager,
       undefined,
       undefined,
       undefined
@@ -648,7 +686,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
 
     const session = await manager.joinSession("group-abc", {
@@ -663,6 +702,7 @@ describe("SessionsManager", () => {
       expect.anything(),
       expect.anything(),
       { isShared: true },
+      discoverManager,
       undefined,
       undefined,
       undefined
@@ -684,7 +724,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
 
     const session = await manager.joinSession("group-abc");
@@ -707,6 +748,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     });
   });
 
@@ -727,7 +769,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
 
     const session = await manager.joinSession("group-abc");
@@ -741,6 +784,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     });
     expect(mockOptionsMap.set).not.toHaveBeenCalled();
   });
@@ -751,7 +795,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -781,6 +826,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "everyone",
+      viewingAreaVisibility: "auto",
     });
   });
   it("updateOptions(newOptions) updates verse selection effect visibility", async () => {
@@ -789,7 +835,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
 
     const session = await manager.joinSession("group-abc");
@@ -818,7 +865,8 @@ describe("SessionsManager", () => {
         mockDataManager as any,
         mockLoginManager as any,
         mockHighlightsManager as any,
-        i18n
+        i18n,
+        discoverManager
       );
 
       const session = await manager.joinSession("group-abc");
@@ -869,7 +917,8 @@ describe("SessionsManager", () => {
         mockDataManager as any,
         mockLoginManager as any,
         mockHighlightsManager as any,
-        i18n
+        i18n,
+        discoverManager
       );
 
       const session = await manager.joinSession("group-abc");
@@ -885,7 +934,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
 
     const session = await manager.joinSession("group-abc");
@@ -909,13 +959,180 @@ describe("SessionsManager", () => {
     );
   });
 
+  describe("viewing area visibility", () => {
+    it.each([
+      ["default", "auto", 3, "everyone"],
+      ["default", "auto", 4, "hosts-only"],
+      ["default", "auto", 5, "hosts-only"],
+      ["default", undefined, 1, "everyone"],
+      ["default", "everyone", 10, "everyone"],
+      ["default", "hosts-only", 1, "hosts-only"],
+      ["everyone", "hosts-only", 10, "hosts-only"],
+      ["hosts-only", "everyone", 2, "hosts-only"],
+      ["everyone", "auto", 8, "everyone"],
+      ["hosts-only", "auto", 2, "hosts-only"],
+    ] as const)(
+      "preference %s with session %s and %i people shows %s",
+      (preference, sessionVisibility, count, expected) => {
+        expect(
+          resolveViewingAreaVisibility(sessionVisibility, count, preference)
+        ).toBe(expected);
+      }
+    );
+
+    it("shows everyone when hosts only would apply but no host is connected", () => {
+      expect(resolveViewingAreaVisibility("auto", 6, "default", false)).toBe(
+        "everyone"
+      );
+      expect(
+        resolveViewingAreaVisibility("hosts-only", 2, "everyone", false)
+      ).toBe("everyone");
+      expect(
+        resolveViewingAreaVisibility("hosts-only", 6, "default", true)
+      ).toBe("hosts-only");
+    });
+
+    it("counts one person with two tabs as one person, and each signed-out guest separately", () => {
+      expect(
+        countSessionPeople([
+          { userId: "ada", connectionId: "laptop" },
+          { userId: "ada", connectionId: "phone" },
+          { userId: null, connectionId: "guest" },
+          { userId: null, connectionId: "guest-2" },
+        ])
+      ).toBe(3);
+    });
+
+    it("recognizes a host by user id and a co-host by connection id", () => {
+      const options = {
+        hostUserId: "host",
+        coHostUserIds: ["co-connection"],
+      } as SessionOptions;
+
+      expect(
+        isConnectedUserHost(options, {
+          userId: "host",
+          connectionId: "other",
+        })
+      ).toBe(true);
+      expect(
+        isConnectedUserHost(options, {
+          userId: "someone",
+          connectionId: "co-connection",
+        })
+      ).toBe(true);
+      expect(
+        isConnectedUserHost(options, {
+          userId: "guest",
+          connectionId: "guest-connection",
+        })
+      ).toBe(false);
+    });
+
+    it("createSession() stores automatic viewing areas", async () => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n,
+        discoverManager
+      );
+
+      const session = await manager.createSession();
+
+      expect(mockOptionsMap.set).toHaveBeenCalledWith(
+        "viewingAreaVisibility",
+        "auto"
+      );
+      expect(session.options.value.viewingAreaVisibility).toBe("auto");
+    });
+
+    it.each(["auto", "everyone", "hosts-only"] as const)(
+      "loads viewing area visibility %s from shared options",
+      async (visibility) => {
+        mockOptionsMap = createMockSharedMap({
+          viewingAreaVisibility: visibility,
+        });
+        mockDocument.getMap.mockImplementation((name: string) => {
+          if (name === "options") return mockOptionsMap;
+          if (name === "decorations") return mockDecorationsMap;
+          if (name === "user_profiles") return mockUserProfilesMap;
+          if (name === "reading_positions") return mockReadingPositionsMap;
+          if (name === "reading_extensions") return mockExtensionsMap;
+          return mockMap;
+        });
+
+        const manager = createSessionsManager(
+          os,
+          mockDataManager as any,
+          mockLoginManager as any,
+          mockHighlightsManager as any,
+          i18n,
+          discoverManager
+        );
+        const session = await manager.joinSession("group-abc");
+
+        expect(session.options.value.viewingAreaVisibility).toBe(visibility);
+      }
+    );
+
+    it("falls back to automatic when the stored viewing area visibility is unrecognized", async () => {
+      mockOptionsMap = createMockSharedMap({
+        viewingAreaVisibility: "all",
+      });
+      mockDocument.getMap.mockImplementation((name: string) => {
+        if (name === "options") return mockOptionsMap;
+        return mockMap;
+      });
+
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n,
+        discoverManager
+      );
+      const session = await manager.joinSession("group-abc");
+
+      expect(session.options.value.viewingAreaVisibility).toBe("auto");
+    });
+
+    it("updateOptions writes viewing area visibility without clearing the other options", async () => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n,
+        discoverManager
+      );
+      const session = await manager.joinSession("group-abc");
+      mockOptionsMap.setEmitOnSet(true);
+
+      session.updateOptions({ viewingAreaVisibility: "hosts-only" });
+
+      expect(mockOptionsMap.set).toHaveBeenCalledWith(
+        "viewingAreaVisibility",
+        "hosts-only"
+      );
+      expect(session.options.value.viewingAreaVisibility).toBe("hosts-only");
+      expect(session.options.value.verseSelectionEffectVisibility).toBe(
+        "hosts-only"
+      );
+      expect(session.options.value.shareTranslation).toBe(false);
+    });
+  });
+
   it("updateOptions(newOptions) writes options to the shared options map", async () => {
     const manager = createSessionsManager(
       os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -938,6 +1155,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     });
   });
 
@@ -949,7 +1167,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -983,7 +1202,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1008,13 +1228,418 @@ describe("SessionsManager", () => {
     });
   });
 
+  describe("being away from the group", () => {
+    /**
+     * Joins a session whose group is on John 3, as a reader who may not move
+     * the group (only "conn-allowed" can).
+     */
+    async function joinAsFollower() {
+      mockMap = createMockSharedMap({
+        translationId: "BSB",
+        bookId: "JHN",
+        chapterNumber: 3,
+      });
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n,
+        discoverManager
+      );
+      const session = await manager.joinSession("group-abc");
+      mockOptionsMap.setEmitOnSet(true);
+      session.updateOptions({
+        allowedNavigators: ["conn-allowed"],
+        hostUserId: "host-user",
+      });
+      await waitFor(
+        () => session.options.value.allowedNavigators?.[0] === "conn-allowed"
+      );
+      return session;
+    }
+
+    /** A request addressed to this reader arriving from `fromUserId`. */
+    function receiveComeBackRequest(id: string, fromUserId = "host-user") {
+      mockComeBackRequestsMap.set(os.connectionId, {
+        id,
+        fromConnectionId: "conn-host",
+        fromUserId,
+        sentAtMs: Date.now(),
+      });
+      mockComeBackRequestsMap.emitChange();
+    }
+
+    function wanderOff(session: BibleReadingSession) {
+      session.readingState.bookId.value = "ROM";
+      session.readingState.chapterNumber.value = 8;
+    }
+
+    it("shows a host's request to a follower who is away until they say not now", async () => {
+      const session = await joinAsFollower();
+      wanderOff(session);
+
+      receiveComeBackRequest("request-1");
+      expect(session.incomingComeBackRequest.value).toMatchObject({
+        id: "request-1",
+        fromUserId: "host-user",
+      });
+
+      session.dismissComeBackRequest();
+      expect(session.incomingComeBackRequest.value).toBeNull();
+
+      // Asking again is a new request, so it shows again.
+      receiveComeBackRequest("request-2");
+      expect(session.incomingComeBackRequest.value?.id).toBe("request-2");
+    });
+
+    it("answers the request by rejoining the group", async () => {
+      const session = await joinAsFollower();
+      wanderOff(session);
+      receiveComeBackRequest("request-1");
+
+      await session.rejoinGroup();
+
+      expect(session.readingState.bookId.value).toBe("JHN");
+      expect(session.incomingComeBackRequest.value).toBeNull();
+      // Wandering off again doesn't bring the answered request back.
+      wanderOff(session);
+      expect(session.incomingComeBackRequest.value).toBeNull();
+    });
+
+    it("ignores a request from someone who isn't a host", async () => {
+      const session = await joinAsFollower();
+      wanderOff(session);
+
+      receiveComeBackRequest("request-1", "someone-else");
+
+      expect(session.incomingComeBackRequest.value).toBeNull();
+    });
+
+    it("drops a request that arrives while the follower is with the group", async () => {
+      const session = await joinAsFollower();
+
+      receiveComeBackRequest("request-1");
+      wanderOff(session);
+
+      expect(session.incomingComeBackRequest.value).toBeNull();
+    });
+
+    it("ignores a request that was waiting before the follower joined", async () => {
+      mockComeBackRequestsMap = createMockSharedMap({
+        [os.connectionId]: {
+          id: "old-request",
+          fromConnectionId: "conn-host",
+          fromUserId: "host-user",
+          sentAtMs: Date.now() - 60_000,
+        },
+      });
+      const session = await joinAsFollower();
+      wanderOff(session);
+
+      expect(session.incomingComeBackRequest.value).toBeNull();
+    });
+
+    it("lets a host ask a participant to come back", async () => {
+      const session = await joinAsFollower();
+      session.updateOptions({ hostUserId: os.connectionId });
+      await waitFor(() => session.options.value.hostUserId === os.connectionId);
+
+      session.askToComeBack("conn-peer");
+
+      expect(mockComeBackRequestsMap.set).toHaveBeenCalledWith(
+        "conn-peer",
+        expect.objectContaining({
+          fromConnectionId: os.connectionId,
+          id: expect.any(String),
+          sentAtMs: expect.any(Number),
+        })
+      );
+    });
+
+    /**
+     * Joins as the host of a group on John 3, with two followers: Ana on John
+     * 3 with the group and Priya off on Psalm 23.
+     */
+    async function joinAsHostWithFollowers() {
+      const session = await joinAsFollower();
+      session.updateOptions({ hostUserId: os.connectionId });
+      await waitFor(() => session.options.value.hostUserId === os.connectionId);
+      for (const connectionId of ["conn-ana", "conn-priya"]) {
+        mockRemoteClients.emit({
+          type: "client_connected",
+          isSelf: false,
+          client: { connectionId, userId: null },
+        });
+      }
+      await waitFor(() => session.connectedUsers.value.length === 2);
+      moveParticipant("conn-ana", "JHN", 3);
+      moveParticipant("conn-priya", "PSA", 23);
+      return session;
+    }
+
+    function moveParticipant(
+      connectionId: string,
+      bookId: string,
+      chapterNumber: number
+    ) {
+      mockReadingPositionsMap.set(connectionId, { bookId, chapterNumber });
+      mockReadingPositionsMap.emitChange();
+    }
+
+    function moveGroup(chapterNumber: number) {
+      mockMap.set("chapterNumber", chapterNumber);
+      mockMap.emitChange();
+    }
+
+    const awayIds = (session: BibleReadingSession) =>
+      [...session.participantsAwayFromGroup.value].sort();
+
+    it("doesn't count followers as away while they catch up with the group's move", async () => {
+      const session = await joinAsHostWithFollowers();
+      expect(awayIds(session)).toEqual(["conn-priya"]);
+
+      vi.useFakeTimers();
+      try {
+        moveGroup(4);
+
+        // Ana's reader hasn't reported chapter 4 yet.
+        expect(session.groupPosition.value.chapterNumber).toBe(4);
+        expect(awayIds(session)).toEqual(["conn-priya"]);
+
+        moveParticipant("conn-ana", "JHN", 4);
+        vi.advanceTimersByTime(GROUP_MOVE_GRACE_MS);
+        expect(awayIds(session)).toEqual(["conn-priya"]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("keeps a follower a page or two behind with the group while the host turns several pages", async () => {
+      const session = await joinAsHostWithFollowers();
+
+      vi.useFakeTimers();
+      try {
+        moveGroup(4);
+        vi.advanceTimersByTime(GROUP_MOVE_GRACE_MS - 1000);
+        moveGroup(5);
+        vi.advanceTimersByTime(GROUP_MOVE_GRACE_MS - 1000);
+
+        expect(awayIds(session)).toEqual(["conn-priya"]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("counts a follower as away once the group has moved on without them", async () => {
+      const session = await joinAsHostWithFollowers();
+
+      vi.useFakeTimers();
+      try {
+        moveGroup(4);
+        vi.advanceTimersByTime(GROUP_MOVE_GRACE_MS);
+
+        expect(awayIds(session)).toEqual(["conn-ana", "conn-priya"]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("counts a follower who heads somewhere else right after the group moves as away at once", async () => {
+      const session = await joinAsHostWithFollowers();
+
+      moveGroup(4);
+      moveParticipant("conn-ana", "ROM", 8);
+
+      expect(awayIds(session)).toEqual(["conn-ana", "conn-priya"]);
+    });
+
+    it("never counts a peer who may move the group as away", async () => {
+      const session = await joinAsHostWithFollowers();
+
+      session.updateOptions({ allowedNavigators: ["conn-priya"] });
+      await waitFor(
+        () => session.options.value.allowedNavigators?.[0] === "conn-priya"
+      );
+
+      expect(awayIds(session)).toEqual([]);
+    });
+
+    it("counts this reader as away by the same rule as their own group bar", async () => {
+      const session = await joinAsFollower();
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: true,
+        client: { connectionId: os.connectionId, userId: null },
+      });
+      await waitFor(() => session.connectedUsers.value.length === 1);
+
+      wanderOff(session);
+
+      expect(session.isAwayFromGroup.value).toBe(true);
+      expect(awayIds(session)).toEqual([os.connectionId]);
+    });
+
+    function receiveRequestFor(connectionId: string, sentAtMs: number) {
+      mockComeBackRequestsMap.set(connectionId, {
+        id: `request-${sentAtMs}`,
+        fromConnectionId: "conn-cohost",
+        fromUserId: "host-user",
+        sentAtMs,
+      });
+      mockComeBackRequestsMap.emitChange();
+    }
+
+    it.each([
+      ["behind", -20_000],
+      ["ahead of", 60_000],
+    ])(
+      "waits 30 seconds to ask again even when the sender's clock runs %s ours",
+      async (_direction, senderClockOffsetMs) => {
+        const session = await joinAsFollower();
+
+        vi.useFakeTimers();
+        try {
+          receiveRequestFor("conn-priya", Date.now() + senderClockOffsetMs);
+          expect(session.comeBackCooldownRemainingMs("conn-priya")).toBe(
+            COME_BACK_REQUEST_COOLDOWN_MS
+          );
+
+          vi.advanceTimersByTime(COME_BACK_REQUEST_COOLDOWN_MS - 1000);
+          expect(session.comeBackCooldownRemainingMs("conn-priya")).toBe(1000);
+
+          vi.advanceTimersByTime(1000);
+          expect(session.comeBackCooldownRemainingMs("conn-priya")).toBe(0);
+        } finally {
+          vi.useRealTimers();
+        }
+      }
+    );
+
+    it("starts the wait to ask again as soon as this host asks", async () => {
+      const session = await joinAsHostWithFollowers();
+      mockComeBackRequestsMap.setEmitOnSet(true);
+
+      session.askToComeBack("conn-priya");
+
+      expect(session.comeBackCooldownRemainingMs("conn-priya")).toBeGreaterThan(
+        COME_BACK_REQUEST_COOLDOWN_MS - 1000
+      );
+      expect(session.comeBackCooldownRemainingMs("conn-ana")).toBe(0);
+    });
+
+    it("lets hosts ask again straight away about a request sent before they joined", async () => {
+      mockComeBackRequestsMap = createMockSharedMap({
+        "conn-priya": {
+          id: "old-request",
+          fromConnectionId: "conn-cohost",
+          fromUserId: "host-user",
+          // Looks fresh by the sender's clock, which can't be trusted.
+          sentAtMs: Date.now(),
+        },
+      });
+      const session = await joinAsFollower();
+
+      expect(session.comeBackCooldownRemainingMs("conn-priya")).toBe(0);
+    });
+
+    it("doesn't let someone who isn't a host ask anyone to come back", async () => {
+      const session = await joinAsFollower();
+
+      session.askToComeBack("conn-peer");
+
+      expect(mockComeBackRequestsMap.set).not.toHaveBeenCalled();
+    });
+
+    it("reports a follower who reads another chapter as away, and rejoin takes them back", async () => {
+      const session = await joinAsFollower();
+      expect(session.readingState.bookId.value).toBe("JHN");
+      expect(session.isAwayFromGroup.value).toBe(false);
+
+      session.readingState.bookId.value = "ROM";
+      session.readingState.chapterNumber.value = 8;
+
+      expect(session.isAwayFromGroup.value).toBe(true);
+      expect(session.groupPosition.value).toMatchObject({
+        bookId: "JHN",
+        chapterNumber: 3,
+      });
+
+      await session.rejoinGroup();
+
+      expect(session.readingState.bookId.value).toBe("JHN");
+      expect(session.readingState.chapterNumber.value).toBe(3);
+      expect(session.isAwayFromGroup.value).toBe(false);
+    });
+
+    it("never reports someone who may navigate as away", async () => {
+      mockMap = createMockSharedMap({
+        translationId: "BSB",
+        bookId: "JHN",
+        chapterNumber: 3,
+      });
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n,
+        discoverManager
+      );
+      const session = await manager.joinSession("group-abc");
+
+      session.readingState.bookId.value = "ROM";
+      session.readingState.chapterNumber.value = 8;
+
+      expect(session.isAwayFromGroup.value).toBe(false);
+    });
+
+    it("follows the group's position as the hosts move it", async () => {
+      const session = await joinAsFollower();
+
+      mockMap.set("chapterNumber", 4);
+      mockMap.emitChange();
+
+      expect(session.groupPosition.value).toMatchObject({
+        bookId: "JHN",
+        chapterNumber: 4,
+      });
+      await waitFor(() => session.readingState.chapterNumber.value === 4);
+    });
+
+    it("doesn't report a follower as away while the hosts' new chapter is still loading", async () => {
+      const session = await joinAsFollower();
+      const load = deferred<void>();
+      const select = session.readingState
+        .selectTranslationAndChapter as unknown as Mock;
+      const realSelect = select.getMockImplementation()!;
+      select.mockImplementationOnce(async (...args: unknown[]) => {
+        await load.promise;
+        return realSelect(...args);
+      });
+
+      mockMap.set("chapterNumber", 4);
+      mockMap.emitChange();
+
+      // The group has moved on but this reader is still on chapter 3.
+      expect(session.groupPosition.value.chapterNumber).toBe(4);
+      expect(session.readingState.chapterNumber.value).toBe(3);
+      expect(session.isAwayFromGroup.value).toBe(false);
+
+      load.resolve();
+      await waitFor(() => session.readingState.chapterNumber.value === 4);
+      expect(session.isAwayFromGroup.value).toBe(false);
+    });
+  });
+
   it("syncs local decorations to the shared decorations map", async () => {
     const manager = createSessionsManager(
       os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1054,7 +1679,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1088,7 +1714,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1133,7 +1760,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1167,7 +1795,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1231,7 +1860,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1279,7 +1909,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1328,7 +1959,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1373,7 +2005,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1422,7 +2055,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1451,7 +2085,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1470,7 +2105,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1495,7 +2131,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1523,7 +2160,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1555,7 +2193,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = (await manager.joinSession(
       "group-abc"
@@ -1593,7 +2232,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = (await manager.joinSession(
       "group-abc"
@@ -1655,7 +2295,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = (await manager.joinSession(
       "group-abc"
@@ -1703,7 +2344,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
     (session.readingState.selectTranslationAndChapter as Mock).mockReturnValue(
@@ -1749,7 +2391,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1816,7 +2459,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1874,7 +2518,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1889,7 +2534,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1914,7 +2560,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1937,7 +2584,8 @@ describe("SessionsManager", () => {
         mockDataManager as any,
         mockLoginManager as any,
         mockHighlightsManager as any,
-        i18n
+        i18n,
+        discoverManager
       );
       return manager.joinSession("group-abc");
     }
@@ -2033,7 +2681,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -2115,7 +2764,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -2158,13 +2808,121 @@ describe("SessionsManager", () => {
     );
   });
 
+  describe("answers to a playlist's question steps", () => {
+    const join = async () => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n,
+        discoverManager
+      );
+      return manager.joinSession("group-abc");
+    };
+    const peerAnswer = (overrides: Record<string, unknown> = {}) => ({
+      stepKey: "p1#2",
+      authorId: "user-maria",
+      text: "In the waiting room.",
+      updatedAtMs: 100,
+      name: "Maria",
+      pictureUrl: null,
+      visual: { color: "#3b6fb6", defaultIcon: "pets", colorName: "blue" },
+      ...overrides,
+    });
+
+    it("shares this participant's answer under their name, and takes it back when blanked", async () => {
+      mockLoginManager.userId.value = "user-me";
+      mockLoginManager.profile.value = { name: "Kal" };
+      mockQuestionAnswersMap.setEmitOnSet(true);
+      const session = await join();
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: true,
+        client: { connectionId: "test-config-bot-id", userId: "user-me" },
+      });
+      await waitFor(() => session.currentUser.value?.profile != null);
+
+      session.setQuestionAnswer("p1#2", "  A neighbour drove me to work.  ");
+
+      expect(session.questionAnswers.value).toEqual([
+        expect.objectContaining({
+          stepKey: "p1#2",
+          authorId: "user-me",
+          text: "A neighbour drove me to work.",
+          name: session.currentUser.value!.profile!.name,
+        }),
+      ]);
+      expect(mockQuestionAnswersMap.get("p1#2|user-me")).toEqual(
+        expect.objectContaining({ text: "A neighbour drove me to work." })
+      );
+
+      // Sharing again replaces it rather than adding a second.
+      session.setQuestionAnswer("p1#2", "Changed my mind.");
+      expect(session.questionAnswers.value.map((a) => a.text)).toEqual([
+        "Changed my mind.",
+      ]);
+
+      session.setQuestionAnswer("p1#2", "   ");
+      expect(session.questionAnswers.value).toEqual([]);
+      expect(mockQuestionAnswersMap.get("p1#2|user-me")).toBeUndefined();
+    });
+
+    it("shows a late joiner the answers already given, oldest first", async () => {
+      mockQuestionAnswersMap.set(
+        "p1#2|user-daniel",
+        peerAnswer({
+          authorId: "user-daniel",
+          name: "Daniel",
+          updatedAtMs: 300,
+        })
+      );
+      mockQuestionAnswersMap.set("p1#2|user-maria", peerAnswer());
+
+      const session = await join();
+
+      expect(session.questionAnswers.value.map((a) => a.name)).toEqual([
+        "Maria",
+        "Daniel",
+      ]);
+    });
+
+    it("picks up answers peers share later", async () => {
+      const session = await join();
+
+      mockQuestionAnswersMap.set("p1#2|user-maria", peerAnswer());
+      mockQuestionAnswersMap.emitChange();
+
+      expect(session.questionAnswers.value.map((a) => a.text)).toEqual([
+        "In the waiting room.",
+      ]);
+    });
+
+    it("ignores a malformed answer, one filed under someone else's name, and a picture that isn't a web address", async () => {
+      mockQuestionAnswersMap.set("p1#2|user-x", { stepKey: "p1#2" });
+      // Claims to be Maria's but sits under another author's key.
+      mockQuestionAnswersMap.set("p1#2|user-daniel", peerAnswer());
+      mockQuestionAnswersMap.set(
+        "p1#3|user-maria",
+        peerAnswer({ stepKey: "p1#3", pictureUrl: "javascript:alert(1)" })
+      );
+
+      const session = await join();
+
+      expect(session.questionAnswers.value).toEqual([
+        expect.objectContaining({ stepKey: "p1#3", pictureUrl: null }),
+      ]);
+    });
+  });
+
   it("exposes each participant's own broadcast position, not the session's", async () => {
     const manager = createSessionsManager(
       os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -2199,7 +2957,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -2227,7 +2986,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -2266,7 +3026,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -2290,7 +3051,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -2308,6 +3070,72 @@ describe("SessionsManager", () => {
     });
   });
 
+  it("publishes what else is on screen, like a playlist note's paragraphs, alongside the chapter", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n,
+      discoverManager
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await flushPublishDebounce();
+    mockReadingPositionsMap.set.mockClear();
+
+    session.readingState.visibleAreas.value = new Map([
+      ["step-2", { first: 1, last: 3 }],
+    ]);
+    await flushRangePublishDebounce();
+
+    expect(mockReadingPositionsMap.set).toHaveBeenCalledWith(os.connectionId, {
+      bookId: "GEN",
+      chapterNumber: 1,
+      areas: { "step-2": { first: 1, last: 3 } },
+    });
+  });
+
+  it("reads where a participant is in what else they have on screen, skipping anything malformed", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n,
+      discoverManager
+    );
+    const session = await manager.joinSession("group-abc");
+    mockRemoteClients.emit({
+      type: "client_connected",
+      isSelf: false,
+      client: { connectionId: "conn-1", userId: "user-1" },
+    });
+    await waitFor(() => session.connectedUsers.value.length === 1);
+
+    mockReadingPositionsMap.set("conn-1", {
+      bookId: "GEN",
+      chapterNumber: 1,
+      firstVerse: 2,
+      lastVerse: 4,
+      areas: {
+        "step-2": { first: 2, last: 5 },
+        "step-2-second": { first: 9, last: 3 },
+        "step-2-note": "nonsense",
+      },
+    });
+    mockReadingPositionsMap.emitChange();
+    await waitFor(() => session.participantPositions.value.has("conn-1"));
+
+    expect(session.participantPositions.value.get("conn-1")).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      firstVerse: 2,
+      lastVerse: 4,
+      areas: { "step-2": { first: 2, last: 5 } },
+    });
+  });
+
   // Scrolling changes the range continuously, so a settled scroll has to leave
   // one entry in a document that never shrinks — not one per verse it passed.
   it("publishes one entry for a scroll that passes several verses", async () => {
@@ -2316,7 +3144,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -2350,7 +3179,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -2394,7 +3224,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
     await flushPublishDebounce();
@@ -2437,7 +3268,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -2473,7 +3305,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -2512,7 +3345,8 @@ describe("SessionsManager", () => {
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any,
-      i18n
+      i18n,
+      discoverManager
     );
     const session = await manager.joinSession("group-abc");
 
@@ -2548,6 +3382,7 @@ describe("SessionsManager", () => {
         mockLoginManager as any,
         mockHighlightsManager as any,
         i18n,
+        discoverManager,
         registry
       );
     }
@@ -2681,7 +3516,8 @@ describe("SessionsManager", () => {
         mockDataManager as any,
         mockLoginManager as any,
         mockHighlightsManager as any,
-        i18n
+        i18n,
+        discoverManager
       );
     }
 

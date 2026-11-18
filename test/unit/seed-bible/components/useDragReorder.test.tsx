@@ -148,6 +148,70 @@ describe("useDragReorder", () => {
     expect(onReorder).toHaveBeenNthCalledWith(2, 1, 2);
   });
 
+  it("keeps the row under the pointer, moving one place per row dragged", () => {
+    const onReorder = vi.fn();
+    act(() => {
+      render(<Harness itemCount={6} onReorder={onReorder} />, container);
+    });
+
+    act(() => {
+      handle(0).dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          pointerId: 1,
+          clientY: 0,
+        })
+      );
+      // A real drag reports many small moves on its way down one row.
+      for (let y = 5; y <= ROW_HEIGHT; y += 5) {
+        window.dispatchEvent(
+          new PointerEvent("pointermove", { pointerId: 1, clientY: y })
+        );
+      }
+    });
+
+    expect(onReorder.mock.calls).toEqual([[0, 1]]);
+  });
+
+  it("counts the gap between rows as part of a row", () => {
+    const onReorder = vi.fn();
+    act(() => {
+      render(<Harness itemCount={6} onReorder={onReorder} />, container);
+    });
+    // Rows 40px tall with a 10px gap: each starts 50px below the last.
+    const rectSpy = vi
+      .spyOn(HTMLLIElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLLIElement) {
+        const index = Array.from(this.parentElement!.children).indexOf(this);
+        return { top: index * 50 } as DOMRect;
+      });
+
+    try {
+      act(() => {
+        handle(0).dispatchEvent(
+          new PointerEvent("pointerdown", {
+            bubbles: true,
+            pointerId: 1,
+            clientY: 0,
+          })
+        );
+        for (let y = 5; y <= 100; y += 5) {
+          window.dispatchEvent(
+            new PointerEvent("pointermove", { pointerId: 1, clientY: y })
+          );
+        }
+      });
+    } finally {
+      rectSpy.mockRestore();
+    }
+
+    // Two rows' worth: two places, not the five a 40px row would give.
+    expect(onReorder.mock.calls).toEqual([
+      [0, 1],
+      [1, 2],
+    ]);
+  });
+
   it("ignores pointermove events from an unrelated pointer", () => {
     const onReorder = vi.fn();
     act(() => {

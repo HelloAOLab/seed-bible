@@ -2,6 +2,7 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { PlayPlaylistView } from "@packages/seed-bible/seed-bible/components/PlayPlaylistView/PlayPlaylistView";
+import { PlaylistPagePane } from "@packages/seed-bible/seed-bible/components/PlaylistPagePane/PlaylistPagePane";
 import {
   createPlayingState,
   type Playlist,
@@ -47,19 +48,27 @@ function verseItem(
 
 function createMockPlaylists(
   playing: ReturnType<typeof createPlayingState> | null,
-  authorName: string | null = null
+  authorName: string | null = null,
+  openingPlayback = false,
+  isMobile = false
 ): {
   playlists: PlaylistManager;
   goBackFromPlayingView: ReturnType<typeof vi.fn>;
+  openQueueItem: ReturnType<typeof vi.fn>;
 } {
   const goBackFromPlayingView = vi.fn();
+  const openQueueItem = vi.fn();
   return {
     playlists: {
       playing: signal(playing),
       playingAuthorName: signal(authorName),
+      openingPlayback: signal(openingPlayback),
+      isMobile: signal(isMobile),
       goBackFromPlayingView,
+      openQueueItem,
     } as unknown as PlaylistManager,
     goBackFromPlayingView,
+    openQueueItem,
   };
 }
 
@@ -120,8 +129,78 @@ describe("PlayPlaylistView", () => {
     expect(container.querySelector(".sb-play-playlist")).toBeNull();
   });
 
-  // The playlist title and back button now live in the pane header
-  // (`DiscoverPaneTitle`), covered by the DiscoverPane test suite.
+  describe("header", () => {
+    function renderView(playlists: PlaylistManager) {
+      act(() => {
+        render(
+          <PlayPlaylistView
+            playlists={playlists}
+            tabs={createMockTabs()}
+            modals={modals}
+            state={state}
+          />,
+          container
+        );
+      });
+    }
+
+    it("shows the playing playlist's title, and leaves the playlist from the back button", () => {
+      const { playlists, goBackFromPlayingView } = createMockPlaylists(
+        createPlayingState([createPlaylist({ title: "Evening Reading" })])
+      );
+      renderView(playlists);
+
+      expect(
+        container.querySelector(".sb-playlist-page-title")?.textContent
+      ).toBe("Evening Reading");
+
+      act(() => {
+        container
+          .querySelector(".sb-playlist-page-back")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expect(goBackFromPlayingView).toHaveBeenCalledTimes(1);
+    });
+
+    it("falls back to 'Untitled playlist'", () => {
+      const { playlists } = createMockPlaylists(
+        createPlayingState([createPlaylist({ title: null })])
+      );
+      renderView(playlists);
+
+      expect(
+        container.querySelector(".sb-playlist-page-title")?.textContent
+      ).toBe("Untitled playlist");
+    });
+
+    it("shows a spinner while the playlist is still opening", () => {
+      const playing = createPlayingState([createPlaylist()]);
+      renderView(createMockPlaylists(playing).playlists);
+      expect(
+        container.querySelector(".sb-playlist-page-header .sb-spinner")
+      ).toBeNull();
+
+      renderView(createMockPlaylists(playing, null, true).playlists);
+      expect(
+        container.querySelector(".sb-playlist-page-header .sb-spinner")
+      ).not.toBeNull();
+    });
+
+    it("has no close button; the back button is the way out", () => {
+      renderView(
+        createMockPlaylists(createPlayingState([createPlaylist()])).playlists
+      );
+
+      expect(
+        container.querySelector(".sb-discover-panel-header-close")
+      ).toBeNull();
+      expect(
+        container
+          .querySelector(".sb-playlist-page-back")
+          ?.getAttribute("aria-label")
+      ).toBe("Close playlist");
+    });
+  });
 
   it("renders one queue item per item and marks the current one", () => {
     const playlist = createPlaylist({
@@ -150,17 +229,138 @@ describe("PlayPlaylistView", () => {
       container.querySelectorAll(".sb-play-playlist-item")
     );
     expect(items).toHaveLength(2);
-    expect(items[0]?.classList.contains("sb-play-playlist-item--current")).toBe(
+    expect(items[0]?.classList.contains("sb-playlist-step-row--current")).toBe(
       true
     );
-    expect(items[1]?.classList.contains("sb-play-playlist-item--current")).toBe(
+    expect(items[1]?.classList.contains("sb-playlist-step-row--current")).toBe(
       false
     );
     expect(
       items[0]
-        ?.querySelector(".sb-play-playlist-item-button")
+        ?.querySelector(".sb-playlist-step-row-button")
         ?.getAttribute("aria-current")
     ).toBe("true");
+  });
+
+  it("says how many items the playlist has and about how long they take, as its page does", () => {
+    const playlist = createPlaylist({
+      items: [
+        verseItem({ ref: { bookId: "GEN", chapter: 1 }, minutes: 4 }),
+        verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+        { type: "html", html: "<p>Pray</p>" },
+      ],
+    });
+    const { playlists } = createMockPlaylists(createPlayingState([playlist]));
+
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={playlists}
+          tabs={createMockTabs()}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-playlist-page-count")?.textContent
+    ).toBe("3 items · ~6 min");
+  });
+
+  it("describes the playlist exactly as its own page does", () => {
+    const playlist = createPlaylist({
+      title: "Evening Reading",
+      description: "Psalms for the end of the day.",
+      heroImageUrl: "https://example.com/cover.jpg",
+      items: [
+        verseItem({ ref: { bookId: "PSA", chapter: 4 }, minutes: 3 }),
+        { type: "html", html: "<p>Pray</p>" },
+      ],
+    });
+    /** What a reader sees of the overview, leaving out the playing list's own controls. */
+    const describe = () => ({
+      title: container.querySelector(".sb-playlist-page-title")?.textContent,
+      cover: container.querySelector("img")?.getAttribute("src"),
+      author: container.querySelector(".sb-playlist-page-author")?.textContent,
+      description: container.querySelector(".sb-playlist-page-description")
+        ?.textContent,
+      count: container.querySelector(".sb-playlist-page-count")?.textContent,
+      items: [...container.querySelectorAll(".sb-playlist-page-item")].map(
+        (row) => ({
+          icon: row.querySelector(".sb-discover-item-icon")?.textContent,
+          title: row.querySelector(".sb-discover-item-title")?.textContent,
+          minutes: row.querySelector(".sb-playlist-page-item-minutes")
+            ?.textContent,
+        })
+      ),
+    });
+
+    act(() => {
+      render(
+        <PlaylistPagePane
+          playlist={playlist}
+          authorName="Ruth"
+          resolveBookName={(bookId) => bookId}
+          onStart={() => {}}
+          onBack={() => {}}
+          onShare={() => {}}
+        />,
+        container
+      );
+    });
+    const page = describe();
+
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={
+            createMockPlaylists(createPlayingState([playlist]), "Ruth")
+              .playlists
+          }
+          tabs={createMockTabs()}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(describe()).toEqual(page);
+    expect(page.count).toBe("2 items · ~4 min");
+  });
+
+  it("ends each step's row with its time estimate, a minute where its author gave none", () => {
+    const playlist = createPlaylist({
+      items: [
+        verseItem({ ref: { bookId: "GEN", chapter: 1 }, minutes: 4 }),
+        verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+      ],
+    });
+    const { playlists } = createMockPlaylists(createPlayingState([playlist]));
+
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={playlists}
+          tabs={createMockTabs()}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const rows = container.querySelectorAll(".sb-play-playlist-item");
+    expect(
+      rows[0]?.querySelector(".sb-playlist-page-item-minutes")?.textContent
+    ).toBe("4 min");
+    expect(
+      rows[1]?.querySelector(".sb-playlist-page-item-minutes")?.textContent
+    ).toBe("1 min");
+    // Never what kind of step it is.
+    expect(rows[0]?.textContent).toBe("drag_indicatorGEN 14 min");
   });
 
   it("shows a cover banner when the playing playlist has a hero image", () => {
@@ -216,10 +416,10 @@ describe("PlayPlaylistView", () => {
     });
 
     expect(
-      container.querySelector(".sb-play-playlist-author")?.textContent
+      container.querySelector(".sb-playlist-page-author")?.textContent
     ).toBe("By Ruth");
     expect(
-      container.querySelector(".sb-play-playlist-description")?.textContent
+      container.querySelector(".sb-playlist-page-description")?.textContent
     ).toContain("Verses about the love of Jesus.");
   });
 
@@ -239,7 +439,8 @@ describe("PlayPlaylistView", () => {
       );
     });
 
-    expect(container.querySelector(".sb-play-playlist-about")).toBeNull();
+    expect(container.querySelector(".sb-playlist-page-author")).toBeNull();
+    expect(container.querySelector(".sb-playlist-page-description")).toBeNull();
   });
 
   it("hides the cover when the playlist has no image", () => {
@@ -288,7 +489,7 @@ describe("PlayPlaylistView", () => {
 
     expect(
       container.querySelector(
-        ".sb-play-playlist-item-button .sb-discover-item-title"
+        ".sb-playlist-step-row-button .sb-discover-item-title"
       )?.textContent
     ).toBe("Genesis 1:1");
   });
@@ -321,29 +522,28 @@ describe("PlayPlaylistView", () => {
 
     const labels = Array.from(
       container.querySelectorAll(
-        ".sb-play-playlist-item-button .sb-discover-item-title"
+        ".sb-playlist-step-row-button .sb-discover-item-title"
       )
     ).map((label) => label.textContent);
     expect(labels).toEqual(["Genesis 1:1 · In the beginning", "Genesis 1:2"]);
   });
 
-  it("clicking a queue item jumps playback to that item", () => {
+  it("opens the clicked queue item, including the one already playing", () => {
     const playlist = createPlaylist({
       items: [
-        verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+        { type: "html", title: "Intro", html: "<p>Intro</p>" },
         verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
         verseItem({ ref: { bookId: "GEN", chapter: 3 } }),
       ],
     });
     const playing = createPlayingState([playlist]);
-    const { playlists } = createMockPlaylists(playing);
-    const tabs = createMockTabs();
+    const { playlists, openQueueItem } = createMockPlaylists(playing);
 
     act(() => {
       render(
         <PlayPlaylistView
           playlists={playlists}
-          tabs={tabs}
+          tabs={createMockTabs()}
           modals={modals}
           state={state}
         />,
@@ -351,56 +551,27 @@ describe("PlayPlaylistView", () => {
       );
     });
 
-    const buttons = container.querySelectorAll(".sb-play-playlist-item-button");
+    const buttons = container.querySelectorAll(".sb-playlist-step-row-button");
     act(() => {
       buttons[2]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(playing.currentIndex.value).toBe(2);
-  });
-
-  it("clicking the current queue item reopens it", () => {
-    const playlist = createPlaylist({
-      items: [
-        { type: "html", title: "Intro", html: "<p>Intro</p>" },
-        verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
-      ],
-    });
-    const playing = createPlayingState([playlist]);
-    const showCurrentItem = vi.fn();
-    const jumpTo = vi.spyOn(playing, "jumpTo");
-    const { playlists } = createMockPlaylists(playing);
-    playlists.showCurrentItem = showCurrentItem;
-    const tabs = createMockTabs();
-
-    act(() => {
-      render(
-        <PlayPlaylistView
-          playlists={playlists}
-          tabs={tabs}
-          modals={modals}
-          state={state}
-        />,
-        container
-      );
-    });
-
-    const buttons = container.querySelectorAll(".sb-play-playlist-item-button");
-    act(() => {
       buttons[0]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    expect(showCurrentItem).toHaveBeenCalledTimes(1);
-    expect(jumpTo).not.toHaveBeenCalled();
-    expect(playing.currentIndex.value).toBe(0);
+    expect(openQueueItem.mock.calls).toEqual([[2], [0]]);
   });
 
-  it("shows a leading icon per item type", () => {
+  it("shows a leading icon per kind of step", () => {
     const playlist = createPlaylist({
       items: [
         verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+        verseItem({
+          ref: { bookId: "GEN", chapter: 1 },
+          compare: { ref: { bookId: "JHN", chapter: 1 } },
+        }),
+        { type: "link", url: "https://youtu.be/abc" },
         { type: "link", url: "https://example.com" },
         { type: "html", html: "<p>hi</p>" },
+        { type: "html", html: "<p>Why?</p>", question: {} },
       ],
     });
     const playing = createPlayingState([playlist]);
@@ -419,10 +590,22 @@ describe("PlayPlaylistView", () => {
       );
     });
 
+    // Scripture and compare steps have the app's own icon.
     const icons = Array.from(
       container.querySelectorAll(".sb-discover-item-icon")
-    ).map((el) => el.textContent);
-    expect(icons).toEqual(["menu_book", "link", "notes"]);
+    ).map((el) =>
+      el.classList.contains("sb-playlist-step-icon-scripture")
+        ? "seed-bible"
+        : el.textContent
+    );
+    expect(icons).toEqual([
+      "seed-bible",
+      "seed-bible",
+      "videocam",
+      "link",
+      "description",
+      "help",
+    ]);
   });
 
   describe("drag to reorder", () => {
@@ -520,11 +703,11 @@ describe("PlayPlaylistView", () => {
         container.querySelectorAll(".sb-play-playlist-item")
       );
       expect(
-        items[1]?.classList.contains("sb-play-playlist-item--current")
+        items[1]?.classList.contains("sb-playlist-step-row--current")
       ).toBe(true);
     });
 
-    it("clicking a queue item still jumps playback with the drag handle present", () => {
+    it("clicking a queue item still opens it with the drag handle present", () => {
       const playlist = createPlaylist({
         items: [
           verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
@@ -532,7 +715,7 @@ describe("PlayPlaylistView", () => {
         ],
       });
       const playing = createPlayingState([playlist]);
-      const { playlists } = createMockPlaylists(playing);
+      const { playlists, openQueueItem } = createMockPlaylists(playing);
       const tabs = createMockTabs();
 
       act(() => {
@@ -548,13 +731,86 @@ describe("PlayPlaylistView", () => {
       });
 
       const buttons = container.querySelectorAll(
-        ".sb-play-playlist-item-button"
+        ".sb-playlist-step-row-button"
       );
       act(() => {
         buttons[1]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
 
-      expect(playing.currentIndex.value).toBe(1);
+      expect(openQueueItem).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe("Continue Reading button", () => {
+    function renderView(playlists: PlaylistManager) {
+      act(() => {
+        render(
+          <PlayPlaylistView
+            playlists={playlists}
+            tabs={createMockTabs()}
+            modals={modals}
+            state={state}
+          />,
+          container
+        );
+      });
+    }
+
+    function startButton(): HTMLButtonElement | null {
+      return container.querySelector<HTMLButtonElement>(
+        ".sb-playlist-page-start"
+      );
+    }
+
+    const twoSteps = () =>
+      createPlaylist({
+        items: [
+          verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+          verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+        ],
+      });
+
+    it("on a phone, sits below the list and opens the current step", () => {
+      const playing = createPlayingState([twoSteps()]);
+      playing.currentIndex.value = 1;
+      const { playlists, openQueueItem } = createMockPlaylists(
+        playing,
+        null,
+        false,
+        true
+      );
+      renderView(playlists);
+
+      const button = startButton();
+      expect(button?.textContent).toBe("Continue Reading");
+      // Outside the scrolling list, so it stays put while the list scrolls.
+      expect(button?.closest(".sb-playlist-page-body")).toBeNull();
+
+      act(() => {
+        button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expect(openQueueItem).toHaveBeenCalledWith(1);
+    });
+
+    it("is not shown on wider screens, where the step is already beside the list", () => {
+      const { playlists } = createMockPlaylists(
+        createPlayingState([twoSteps()])
+      );
+      renderView(playlists);
+
+      expect(startButton()).toBeNull();
+    });
+
+    it("is not shown when the playlist has no steps", () => {
+      const { playlists } = createMockPlaylists(
+        createPlayingState([createPlaylist({ items: [] })]),
+        null,
+        false,
+        true
+      );
+      renderView(playlists);
+
+      expect(startButton()).toBeNull();
     });
   });
 });

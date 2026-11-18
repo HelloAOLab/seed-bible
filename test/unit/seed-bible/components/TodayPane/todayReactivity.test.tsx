@@ -126,6 +126,7 @@ describe("Today screen reactivity", () => {
       translationBooksMap: signal(new Map()),
       getDefaultTranslation: () => "KJV",
       getVerseText: async () => "In the beginning",
+      getVerseOfTheDay: async () => null,
       getTranslationBooks: async () => ({ books: [] }) as never,
       searchVerses: async () => [],
       communityMembers: signal(["u1"]),

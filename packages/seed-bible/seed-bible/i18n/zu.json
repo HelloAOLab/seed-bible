@@ -28,22 +28,18 @@
   "searching": "Iyasesha...",
   "no-search-results": "Awekho amavesi afanayo.",
   "open-chapter": "Vula isahluko",
-
   "uploading": "Iyalayisha...",
   "profile-name": "Igama lephrofayela",
   "profile-name-placeholder": "isibonelo umndeni wakwaCraig",
-
   "description": "Incazelo",
   "optional": "(Ongakukhetha)",
   "description-placeholder": "Faka incazelo yephrofayela yakho...",
   "location": "Indawo",
   "location-placeholder": "isib. Austin,TX",
-
   "copied": "Kukopishiwe",
   "copy": "Kopisha",
   "save-changes": "Londoloza izinguquko",
   "sign-out": "Phuma ngemvume",
-
   "log-in": "Ngena ngemvume",
   "tanakh": "I-Tanakh",
   "traditional": "Yendabuko",
@@ -57,7 +53,6 @@
   "scripture-settings": "Izilungiselelo zemiBhalo",
   "scripture-elements": "Izakhi zemiBhalo",
   "scripture-settings-font-size-example": "A",
-
   "show-headings": "Bonisa izihloko",
   "show-verse-numbers": "Khombisa izinombolo zamavesi",
   "show-footnotes": "Bonisa imibhalo yaphansi",
@@ -71,7 +66,6 @@
   "no-extensions-available": "Azikho izandiso ezitholakalayo.",
   "install": "Faka",
   "uninstall": "Khipha",
-
   "custom": "Ngokwezifiso",
   "text-section-bookTitle": "Umbhalo Wesihloko Sencwadi",
   "text-section-heading": "Umbhalo Wesihloko",
@@ -92,7 +86,6 @@
   "show-selected-items": "Bonisa izinto ezikhethiwe",
   "show-highlight-colors": "Bonisa imibala evelele",
   "show-icon-text": "Bonisa umbhalo wesithonjana",
-
   "extensions": "Izandiso",
   "display": "Isibonisi",
   "theme-and-text": "Itimu nombhalo",
@@ -116,7 +109,6 @@
   "increase-scripture-font-size": "Khulisa usayizi wefonti yombhalo",
   "change-line-spacing": "Shintsha isikhala somugqa",
   "line-spacing_lineHeight": "Isikhala somugqa: {{lineHeight}}",
-
   "italic": "Okwesi-ithalikhi",
   "underline": "Dwebela ngaphansi",
   "alignment_x": "Ukuqondanisa: {{alignment}}",
@@ -125,7 +117,6 @@
   "text_color": "Umbala wombhalo",
   "follow_theme": "Landela itimu",
   "reset-to-default": "Setha kabusha kube okuzenzakalelayo",
-
   "id_highlight-text-color": "{{id}} gqamisa umbala wombhalo",
   "id_highlight-background-color": "umbala wangemuva ogqanyisiwe we {{id}}",
   "all-settings-description": "Lungisa kahle yonke ingxenye yombhalo bese uhlela umbala wetimu ngayinye ngendlela oyifisayo.",
@@ -141,7 +132,6 @@
   "old-testament_short": "I-OT",
   "new-testament_short": "I-NT",
   "apocrypha": "I-Apocrypha",
-
   "custom-translations": "Ukuhumusha okwenziwe ngokwezifiso",
   "no-translation-results-found": "Akukho miphumela etholakele. Ungathanda ukwandisa usesho lwakho ukuze lufake nokuhumusha okuphelele ngokwengxenye?",
   "show-all-translations": "Bonisa zonke izinguqulo",
@@ -159,7 +149,6 @@
   "4-psalms": "AmaHubo 4",
   "5-psalms": "AmaHubo 5",
   "remove-bookmark": "Susa ibhukhimakhi",
-
   "chat": "Ingxoxo",
   "today": "Namuhla",
   "you": "Wena",
@@ -169,7 +158,6 @@
   "category-options": "Izinketho zefolda",
   "rename": "Qamba kabusha",
   "delete": "Susa",
-
   "bookmark-options": "Izinketho zokubhukhimakhi",
   "new-folder-placeholder": "Igama lefolda",
   "tasks": "Imisebenzi",
@@ -180,12 +168,10 @@
   "folder-name-taken": "Ifolda enalelo gama isivele ikhona.",
   "add-to-new": "Engeza kokusha",
   "save": "Londoloza",
-
   "apocrypha-info-text": "Akukho mibhalo ekulesi sigaba eyake yabhekwa njengemiBhalo yimiphakathi yamaJuda noma yamaKristu. IBhayibheli liyiqoqo elithile lezincwadi. AmaJuda namaKristu bebelokhu bevumelana ngeTestamente Elidala, elivela eqoqweni eliqinile lemibhalo engcwele abantu bamaJuda abayibiza ngokuthi iTanakh namaKristu ayibiza ngokuthi iTestamente Elidala. Okuqukethwe yiTanakh neTestamente Elidala kufana ncamashi, kodwa kuvame ukuhlelwa ngendlela ehlukile. AmaKristu futhi ayaqaphela iTestamente Elisha, elilandisa indaba kaJesu, izimfundiso zakhe, kanye nemibhalo yabalandeli bakhe. Imibhalo engezansi yayaziwa futhi ifundwa kabanzi ngesikhathi iBhayibheli libhalwa, kodwa ayizange iphathwe njengemiBhalo. Ngenkathi abalobi basendulo ngezinye izikhathi becaphuna imibhalo ehlukahlukene ehlanganisa izimbongi, izazi zefilosofi, kanye neminye imibhalo, ukucaphuna okuthile akufani nokukuphatha njengemiBhalo. Le mibhalo ifakiwe lapha ukuze kubhekiselwe kuyo emlandweni nasezincwadini kuphela.",
   "seed-bible": "Imbewu yeBhayibheli",
   "take-photo": "Thatha isithombe",
   "choose-from-gallery": "Khetha kugalari",
-
   "crop-your-photo": "Nciphisa isithombe sakho",
   "zoom": "Sondeza",
   "set-picture": "Setha isithombe",
@@ -211,10 +197,8 @@
   "read-the-bible": "Funda iBhayibheli",
   "seed-bible-description": "Funda u {{bookName}} {{chapterNumber}} eBhayibhelini leMbewu",
   "social-title": "Funda {{bookName}} {{chapterNumber}}",
-
   "chapter-navigation": "Ukuzulazula kwesahluko",
   "tutorial.skip": "Yeqa",
-
   "tutorial.back": "Emuva",
   "tutorial.done": "Kuqediwe",
   "tutorial.next": "Olandelayo",
@@ -238,7 +222,6 @@
   "copied-translation-share-link": "Isixhumanisi sokwabelana ngokuhumusha esikopishiwe",
   "less": "Ngaphansi",
   "swipe-up-more": "Swayiphela phezulu ukuze ubuke okwengeziwe",
-  "plans": "Amacebo",
   "reading-plans": "Izinhlelo zokufunda",
   "create-reading-plan": "Dala uhlelo lokufunda",
   "reading-plans-empty": "Awunazo izinhlelo zokufunda okwamanje. Dala eyodwa ukuze uqalise.",
@@ -327,11 +310,9 @@
   "study-notes": "Amanothi okufunda",
   "content": "Okuqukethwe",
   "untitled-playlist": "Uhlu lokudlalayo olungenasihloko",
-
   "discover-annotations-empty": "Awunazo izichasiselo",
   "discover-cross-references-empty": "Azikho izinkomba ezihambisanayo zalesi sahluko.",
   "discover-study-notes-empty": "Awekho amanothi okufunda alesi sahluko.",
-
   "discover-select-tab": "Khetha ithebhu ukuthola izinto ezihlobene.",
   "create-playlist": "Dala",
   "playlist-title_placeholder": "Isihloko sohlu lokudlalayo",
@@ -380,12 +361,10 @@
   "delete-playlist-failed": "Ayikwazanga ukususa uhlu lwadlalwayo.",
   "collapsed-tab-shared-label": "{{title}} — iseshini eyabiwe, {{count}} ikhona",
   "playlist-add-mode-label": "Uhlobo lwento",
-
   "session-host-reconnected": "Kuxhunywe kabusha esimisweni",
   "session-host-left": "Umphathi uhambile — ususiwe esimisweni",
   "drag-to-reorder-playlist-item": "Hudula ukuze uhlele kabusha",
   "saving": "Kuyalondolozwa…",
-
   "unsaved-item-confirm-message": "Uqale ukungeza into engakangezwa ohlwini lokudlala. Yini ongathanda ukuyenza?",
   "discard-and-save": "Lahla futhi ulondoloze",
   "add-and-save": "Ngeza futhi ulondoloze",
@@ -513,7 +492,6 @@
   "reading-plan-preview-reading": "Buka kuqala {{reading}}",
   "reading-plan-mark-reading-complete": "Maka ukufunda kuqediwe",
   "reading-plan-link-video": "Ividiyo",
-
   "reading-plan-mark-passage-complete": "Maka i {{passage}} njengefundiwe",
   "reading-plan-read-nudge-title": "Ukufunda okuhle!",
   "reading-plan-read-nudge-toast": "Maka {{passage}} iqediwe?",
@@ -521,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "Funda, sesha, futhi utadishe iBhayibheli ku-inthanethi. Izinguqulo zamahhala ngezilimi eziningi, ezineziqongo ezinhle, amanothi, amabhukhimakhi, kanye nezinhlelo zokufunda.",
   "all": "Konke",
-
   "today-bookmarks": "AMABHUKU",
   "today-search-verses": "Sesha izincwadi, izahluko, amavesi....",
   "anonymous-greeting": "Siyakwamukela!",
   "community": "UMPHAKATHI",
   "go-somewhere-new": "HAMBA ESINYE ISIKHATHI ESISHA",
-
   "open-bible": "Vula iBhayibheli",
   "personal-greeting": "Siyakwamukela, {{name}} !",
   "resume-reading": "QHUBEKA LAPHO USHIYE KHONA",
   "resume-reading-loading": "Ilayisha umlando wakho wokufunda…",
   "selected-year": "Unyaka: {{year}}",
-
   "theme-light": "Ukukhanya",
   "theme-dark": "Okumnyama",
   "installed-extensions": "Kufakiwe",
@@ -543,7 +518,6 @@
   "extension-state-installed": "Kufakiwe",
   "extension-state-downloaded": "Kulandiwe",
   "extension-state-pending": "Iyafaka…",
-
   "tutorial.stepProgress": "Isinyathelo {{current}} se- {{total}}",
   "tutorial.offlineDownloadTitle": "Thepha ukuze uyigcine kudivayisi yakho",
   "tutorial.offlineDownloadBody": "Noma yikuphi ukuhumusha okunalesi sithonjana kungagcinwa ukuze kufundwe ku-inthanethi.",
@@ -577,7 +551,6 @@
   "tutorial.paneLayoutBody": "Khetha ukuthi zingaki izindima okufanele uzifunde eceleni kule menyu yesakhiwo.",
   "tutorial.addTabTitle": "Vula izindima ezengeziwe",
   "tutorial.addTabBody": "Engeza ithebhu entsha ukuze ufunde izincwadi eziningana noma izinguqulo eceleni.",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % kuqediwe - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % ephelele",
   "playlist-history-continue": "Qhubeka",
@@ -636,7 +609,6 @@
   "chapter-notes-count_other": "amanothi angu {{count}} alesi sahluko",
   "create-folder": "Dala ifolda",
   "edit-bookmark": "Hlela ibhukhimakhi",
-
   "greeting-afternoon": "Sawubona!",
   "greeting-afternoon-named": "Sawubona ntambama, {{name}} !",
   "greeting-evening": "Sawubona!",
@@ -652,32 +624,24 @@
   "ask-ai": "Buza i-AI",
   "unread-mention": "Okungafundwanga okukhulunywe ngakho",
   "unread-messages": "Imiyalezo engakafundwa: {{count}}",
-
   "scripture-width": "Ububanzi BemiBhalo",
   "decrease-scripture-width": "Nciphisa ububanzi bombhalo",
   "increase-scripture-width": "Khulisa ububanzi bombhalo",
   "annotations": "Izichasiselo",
   "discover-content-panel": "Thola okuqukethwe",
   "discover-book-title": "Thola {{book}}",
-
   "about-title": "Mayelana neMbewu yeBhayibheli",
   "about-meta-description": "I-Seed Bible uhlelo lokusebenza lweBhayibheli lwamahhala olwakhelwe ukufunda imiBhalo nomndeni wakho, abangani, kanye nomphakathi — mahhala kuze kube phakade, akukho zikhangiso noma izindonga zokukhokha.",
-
   "about-action-open-passage": "Vula isiqephu",
   "about-action-donate": "Nikela",
   "about-action-discord": "Joyina i-Discord",
   "recent-uploads": "Okulayishiwe kwakamuva",
-
   "customization-not-found": "Lokhu kuhlela ngokwezifiso akutholakalanga.",
   "customization-name": "Igama",
   "customization-primaryColor": "Okuyinhloko",
-
   "customization-secondaryColor": "Okwesibili",
-
   "customization-tertiaryColor": "Isifundo Esiphezulu",
-
   "customization-fonts": "Amafonti",
-
   "custom-font-option": "Ngokwezifiso…",
   "custom-font-name-placeholder": "Igama lefonti ye-Google",
   "delete-customization": "Susa",
@@ -690,10 +654,8 @@
   "extension-availability-available": "Kuyatholakala",
   "extension-availability-auto-installed": "Kufakwe ngokuzenzakalela",
   "extension-availability-hidden": "Kufihliwe",
-
   "variants": "Amatimu",
   "add-variant": "Engeza itimu",
-
   "base-theme-description": "Izinguquko ezisethwe kabusha le timu zibuyela kunoma yini ongazange uyihlele ngokwezifiso. Ukuhlela kwakho kuyagcinwa.",
   "reset-to-base-theme": "Setha kabusha kusihloko esiyisisekelo",
   "low-contrast-warning": "{{label}} : umehluko umane nje ungu- {{ratio}} :1 — hlose okungenani u- {{minRatio}} :1 ukuze umbhalo uhlale ufundeka.",
@@ -739,14 +701,12 @@
   "save-folder-empty": "Akukho ukulondolozwa lapha okwamanje.",
   "save-options": "Londoloza izinketho",
   "saves": "Ukulondoloza",
-
   "hide-saves": "Fihla okulondoloziwe",
   "show-saves": "Bonisa ukulondolozwa",
   "save-verses": "Londoloza",
   "new-save-folder": "Ifolda entsha",
   "edit-save": "Hlela ukulondoloza",
   "remove-save-from-all-folders": "Susa kuwo wonke amafolda",
-
   "color-hue": "Umbala oluhlaza okwesibhakabhaka",
   "color-saturation": "Ukugcwala nokukhanya",
   "hex-color": "Umbala we-hex",
@@ -861,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "Umhleli wokufometha akakwazanga ukulayisha. Leli nothi linokufometha okuzolahleka, ngakho-ke alikwazi ukuhlelwa uze uxhume kabusha.",
   "annotation-text": "Umbhalo wesichasiselo",
   "notes-for-verse": "Amanothi evesi {{verse}}",
-
   "configure-extension-defaults": "Lungiselela ukushintshwa okuzenzakalelayo",
-
   "extension-settings-defaults-title": "Ukushintsha okuzenzakalelayo kwe {{name}}",
   "no-extension-settings": "Lesi sandiso asinazo izilungiselelo ezingalungiselelwa.",
   "extension-settings-save-failed": "Ayikwazanga ukulondoloza izilungiselelo zakho.",
@@ -872,7 +830,6 @@
   "setting-no-default": "Akukho okuzenzakalelayo",
   "override-setting": "Susa {{name}}",
   "override-setting-label": "Ukukhipha",
-
   "discover-choose-filter-hint": "Khetha isihlungi esingenhla ukuze ubone okwengeziwe kulesi sahluko.",
   "take-a-tour": "Thatha uhambo",
   "share-reading-plan": "Uhlelo lokwabelana",
@@ -1056,7 +1013,6 @@
   "my-bookmark-numbered": "Ibhukumaka lami {{number}}",
   "bookmark-move-hint": "Thepha ibhukhimakhi ukuze uyihambise kulesi sahluko.",
   "move-bookmark-here": "Thutha u {{name}} lapha",
-
   "play": "Dlala",
   "pause": "Misa isikhashana",
   "audio-playback-position": "Indawo yokudlala",
@@ -1065,7 +1021,6 @@
   "audio-scrub-verse": "Ivesi {{verse}}",
   "tab-playing-audio": "Ukudlala umsindo",
   "collapsed-tab-playing-label": "{{label}} — idlala umsindo",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "izingqikithi ezingu {{count}}",
   "customization-theme-count_one": "itimu engu {{count}}",
@@ -1104,7 +1059,6 @@
   "about-community-body": "Ukholo luhloselwe ukuphilwa ndawonye. I-Seed Bible yakhelwe ukufunda imiBhalo nomndeni wakho, abangane bakho abaseduze, kanye nesonto lakho lasekhaya.",
   "discovered-content": "Okuqukethwe Okutholiwe",
   "show-discovered-content": "Bonisa okuqukethwe okutholiwe",
-
   "extension-availability-default": "Okuzenzakalelayo ( {{availability}} )",
   "customization-extensions-default": "Okuzenzakalelayo kwezinye izandiso",
   "customization-extensions-default-hint": "Kusebenza kuzo zonke izandiso ongazibekanga ngezansi, kufaka phakathi ezintsha ezingezwe kamuva",
@@ -1137,7 +1091,6 @@
   "playlist-scripture-note-return": "Buyela ohlwini lokudlalayo",
   "playlist-scripture-note-aria": "Inothi ku- {{passage}}",
   "playlist-scripture-note-progress": "{{current}} kwangu- {{total}}",
-
   "unsaved-item-edit-confirm-message": "Ushintshe into kodwa awukazilondolozi lezo zinguquko. Ungathanda ukwenzani?",
   "keep-changes-and-save": "Gcina izinguquko bese wonga",
   "reading-plan-edit-reading": "Hlela ukufunda",
@@ -1152,7 +1105,6 @@
   "branding": "Ukwakha uphawu",
   "create-custom-branding-menu-item": "Umkhiqizo Owenziwe Ngokwezifiso",
   "your-content-empty-branding": "Umkhiqizo Owenziwe Ngokwezifiso owudalayo uzovela lapha.",
-
   "extension-consent-from": "Kusukela ku {{host}}",
   "extension-consent-source-version": "Inguqulo {{version}} · kusuka ku {{host}}",
   "extension-consent-uploader-unnamed": "Umsebenzisi WeBhayibheli Lembewu",
@@ -1200,7 +1152,6 @@
   "extension-permission-reading-selection": "Bona ukuthi yimaphi amavesi owakhethayo",
   "extension-permission-reading-navigate": "Vula amaphasi",
   "extension-permission-network": "Xhuma ku- {{host}}",
-
   "extension-consent-not-now": "Hhayi manje",
   "extension-consent-nothing-yet": "Okwamanje, ngeke ikwazi ukufinyelela kunoma yiluphi ulwazi lwakho.",
   "extension-permission-reading-history": "Bona umlando wakho wokufunda",
@@ -1238,7 +1189,6 @@
   "extension-capture-cancel": "Khansela",
   "extension-consent-high-risk": "Kuyazwela",
   "extension-modal-ok": "KULUNGILE",
-
   "extension-permissions-restart-note": "Izinguquko ziqala ukusebenza ngokushesha. {{name}} iqala kabusha ukuze izithathe.",
   "extension-permissions-saved": "Kulondoloziwe. {{name}} iqalise kabusha ngezimvume ezintsha.",
   "extension-permissions-failed": "Lokho akugcinanga. Zama futhi.",
@@ -1276,8 +1226,67 @@
   "session-settings-verse-effects-desc-hosts": "Bonisa imiphumela uma umninikhaya ekhetha ivesi.",
   "session-settings-verse-effects-desc-everyone": "Bonisa imiphumela uma noma ubani ekhetha ivesi.",
   "session-settings-verse-effects-desc-none": "Imiphumela yokukhetha amavesi ivaliwe kuwo wonke umuntu.",
-
   "account": "I-akhawunti",
   "scroll-filters-start": "Skrola izihlungi uye ekuqaleni",
-  "scroll-filters-end": "Skrola izihlungi ziye ekugcineni"
+  "scroll-filters-end": "Skrola izihlungi ziye ekugcineni",
+  "download": "Landa",
+  "image-details-uploaded": "Kulayishiwe",
+  "image-details-dimensions": "Ubukhulu",
+  "image-details-dimensions-value": "{{width}} × {{height}} iphikseli",
+  "image-details-type": "Uhlobo",
+  "image-details-cover-of": "Isembozo se",
+  "image-details-not-a-cover": "Ayisetshenziswa njengesembozo",
+  "delete-customization-confirm-title": "Susa ibhrendi ngokwezifiso?",
+  "delete-customization-confirm-message": "Susa ibhrendi ngokwezifiso \" {{name}} \"? Lokhu akukwazi ukuhlehliswa.",
+  "delete-customization-failed": "Ayikwazanga ukususa i-Custom Branding.",
+  "delete-variant-confirm-title": "Susa itimu?",
+  "delete-variant-confirm-message": "Susa itimu \" {{name}} \"? Lokhu akukwazi ukuhlehliswa.",
+  "delete-variant-confirm-message-unnamed": "Susa le timu? Lokhu akukwazi ukuhlehliswa.",
+  "delete-variant-failed": "Ayikwazanga ukususa itimu.",
+  "delete-highlight-confirm-title": "Susa okuvelele?",
+  "delete-highlight-confirm-message": "Susa okuvelele ku {{reference}} ? Lokhu akukwazi ukuhlehliswa.",
+  "delete-highlight-failed": "Ayikwazanga ukususa okuvelele.",
+  "delete-annotation-on-confirm-message": "Susa isichasiselo ku {{reference}} ? Lokhu akukwazi ukuhlehliswa.",
+  "remove-from-folder": "Susa kufolda",
+  "save-folders": "Kumafolda angu {{folders}}",
+  "delete-save-confirm-title": "Susa ukulondoloza?",
+  "delete-save-confirm-message": "Susa ukulondoloza kwe {{reference}} ? Lokhu akukwazi ukuhlehliswa.",
+  "delete-save-confirm-message-folders": "Susa ukulondoloza kwe {{reference}} kusuka ku {{folders}} ? Lokhu akukwazi ukuhlehliswa.",
+  "delete-save-failed": "Ayikwazanga ukususa ukulondoloza.",
+  "delete-save-folder-confirm-title": "Susa ifolda?",
+  "delete-save-folder-confirm-message": "Susa ifolda ethi \" {{name}} \"?",
+  "delete-save-folder-confirm-deletes": "Ukulondolozwa okungu {{count}} okukule folda kuphela kuzosuswa nakho.",
+  "delete-save-folder-confirm-deletes_one": "Ukulondolozwa okukuleli folda kuphela kuzosuswa nakho.",
+  "delete-save-folder-confirm-deletes_other": "Ukulondolozwa okungu {{count}} okukule folda kuphela kuzosuswa nakho.",
+  "delete-save-folder-confirm-keeps": "Ama-save angu {{count}} akwamanye amafolda azohlala lapho.",
+  "delete-save-folder-confirm-keeps_one": "Ukulondolozwa okukwenye ifolda kuzohlala lapho.",
+  "delete-save-folder-confirm-keeps_other": "Ama-save angu {{count}} akwamanye amafolda azohlala lapho.",
+  "cant-be-undone": "Lokhu akukwazi ukuhlehliswa.",
+  "delete-save-folder-failed": "Ayikwazanga ukususa ifolda.",
+  "download-image-failed": "Ayikwazanga ukulanda isithombe.",
+  "session-settings-verse-effects-hosts-only": "Ababungazi kuphela",
+  "session-settings-verse-effects-everyone": "Wonke umuntu",
+  "session-settings-verse-effects-none": "Akukho",
+  "loading-books": "Ilayisha izincwadi…",
+  "books-load-failed": "Izincwadi azikwazanga ukulayishwa. Hlola uxhumano lwakho bese uzama futhi.",
+  "loading-translation": "Ilayisha {{name}} …",
+  "translation-load-failed": "{{name}} ayikwazanga ukulayishwa.",
+  "loading-translations": "Ilayisha ukuhumusha…",
+  "translations-load-failed": "Ayikwazanga ukulayisha uhlu oluphelele lwezinguqulo, ngakho ezinye kungenzeka ukuthi azikho.",
+  "verse-of-the-day": "Ivesi Losuku",
+  "verse-of-the-day-loading": "Ilayisha ivesi losuku...",
+  "delete-bookmark-confirm-title": "Susa ibhukhimakhi?",
+  "delete-bookmark-confirm-message": "Susa \" {{name}} \"?",
+  "scripture-font": "Ifonti Yombhalo",
+  "ai-limits-title": "Ngaphambi kokuthi uxoxe ne-AI",
+  "ai-limits-intro": "I-AI ingaba yindawo yokuqala ewusizo, kodwa khumbula imikhawulo yayo:",
+  "ai-limits-mistakes": "Iyawenza amaphutha, futhi ingazwakala iqiniseka uma ingalungile.",
+  "ai-limits-agreeable": "Kuvame ukukutshela lokho ofuna ukukuzwa, futhi kuthambekele ezimpendulweni ezidumile.",
+  "ai-limits-scripture": "Akuyona imithombo ethembekile. Hlola ukuthi ithini uma iqhathaniswa nemiBhalo.",
+  "ai-limits-study": "Zifundele iBhayibheli, ungavumeli i-AI ikucabangele.",
+  "ai-limits-confirm": "Ngiyaqonda ukuthi i-AI ingenza amaphutha futhi ayithathi indawo yokufunda iBhayibheli mina.",
+  "friends-playlists-filter": "Uhlu lwadlalwayo lwabangani",
+  "friend-link-social-title": "Engeza u {{name}} njengomngane",
+  "friend-link-meta-description": "{{name}} ufuna ukuba umngane wakho ku {{brand}}",
+  "friend-link-title": "Engeza u {{name}} njengomngane ku {{brand}}"
 }

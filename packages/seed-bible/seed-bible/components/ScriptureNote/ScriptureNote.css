@@ -5,7 +5,7 @@
    modals (500 and up). */
 .sb-scripture-note-layer {
   position: fixed;
-  z-index: 450;
+  z-index: calc(var(--sb-layer-popover) - 50);
   pointer-events: none;
   font-family: var(--sb-font-family);
   /* The popover's background matches the page, and a shadow vanishes on a
@@ -28,10 +28,10 @@
   max-height: calc(100% - 2rem);
   padding: 1rem 1.125rem;
   border: 1px solid var(--sb-scripture-note-edge);
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  box-shadow: 0 16px 40px #00000040;
+  box-shadow: var(--sb-shadow-popover);
   pointer-events: auto;
 }
 
@@ -75,7 +75,7 @@
   margin: 0;
   min-width: 0;
   font-family: system-ui, sans-serif;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   font-weight: 700;
   line-height: 1.25;
   overflow: hidden;
@@ -100,32 +100,10 @@
 .sb-scripture-note-passage {
   overflow: hidden;
   font-family: system-ui, sans-serif;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   opacity: 0.65;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.sb-scripture-note-hide {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.25rem;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--sb-font-color);
-  opacity: 0.7;
-  cursor: pointer;
-}
-
-.sb-scripture-note-hide:hover {
-  opacity: 1;
-}
-
-.sb-scripture-note-hide .material-symbols-outlined {
-  font-size: 1.125rem;
 }
 
 /* The note scrolls on its own so a long one never pushes the actions off. */
@@ -156,7 +134,7 @@
   flex: 1 1 auto;
   text-align: center;
   font-family: system-ui, sans-serif;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   opacity: 0.6;
 }
 
@@ -185,12 +163,12 @@
   padding-inline: 0.875rem 0.625rem;
   border: var(--sb-reader-toolbar-border);
   border-bottom: none;
-  border-radius: 0.75rem 0.75rem 0 0;
+  border-radius: var(--sb-radius-lg) var(--sb-radius-lg) 0 0;
   background: var(--sb-reader-toolbar-background);
   color: var(--sb-reader-toolbar-font-color);
-  box-shadow: 0 -4px 12px #00000014;
+  box-shadow: var(--sb-shadow-sheet);
   font-family: var(--sb-reader-toolbar-font-family);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -217,10 +195,10 @@
   flex-direction: column;
   max-height: 40vh;
   border-top: 1px solid var(--sb-divider-color);
-  border-radius: 1rem 1rem 0 0;
+  border-radius: var(--sb-radius-xl) var(--sb-radius-xl) 0 0;
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  box-shadow: 0 -6px 20px #00000026;
+  box-shadow: var(--sb-shadow-sheet);
   font-family: var(--sb-font-family);
 }
 
@@ -280,11 +258,11 @@ div.sb-scripture-note-sheet-header {
   gap: 0.375rem;
   padding: 0.375rem 0.75rem;
   border: 1px solid var(--sb-primary-color);
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: transparent;
   color: var(--sb-primary-color);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   cursor: pointer;
 }

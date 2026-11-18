@@ -23,7 +23,9 @@ Always name the repository in the path (`repos/HelloAOLab/seed-bible/...`), neve
 | Clone pr-test-plans                    | `git clone --depth 1 https://github.com/HelloAOLab/pr-test-plans.git ../pr-test-plans`                                                                                                                                                                                                                        |
 | Get the PR's code                      | `git fetch origin pull/<n>/head` then `git worktree add --detach ../seed-bible-pr-<n> FETCH_HEAD`                                                                                                                                                                                                             |
 
-Write comment bodies to a file and pass them with `-F body=@file`. That avoids shell-quoting problems with backticks and quotes.
+Write comment bodies to a file with the Write tool (not a heredoc or `echo`) and pass them with `-F body=@file`. That avoids shell-quoting problems with backticks and quotes.
+
+Run each post or update as its own command: don't chain it with `&&` or `;`, and don't pipe it into `jq` or anything else. The routine environment's permission rules let those `gh api` calls skip the auto mode permission check, but a combined command is checked part by part, so the other part sends the whole command to the check, which can block the post.
 
 **Not possible from a routine:** hiding or minimizing comments (GraphQL-only). The code review collapses its own earlier reviews by editing them instead (see its step 5).
 

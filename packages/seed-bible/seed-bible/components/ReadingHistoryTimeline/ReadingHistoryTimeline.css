@@ -53,7 +53,7 @@
 
 .reading-history-timeline-label {
   font-family: system-ui;
-  font-size: 12px;
+  font-size: var(--sb-font-size-12);
   color: var(--sb-font-color);
 }
 
@@ -88,7 +88,7 @@
 
 .reading-history-timeline-footer > .legend > span:first-child,
 .reading-history-timeline-footer > .legend > span:last-child {
-  font-size: 12px;
+  font-size: var(--sb-font-size-12);
 }
 
 .reading-history-timeline-footer > .legend > span:nth-of-type(2),
@@ -102,7 +102,7 @@
 }
 
 .reading-history-timeline-footer > .year-selector {
-  font-size: 12px;
+  font-size: var(--sb-font-size-12);
   position: relative;
 }
 
@@ -124,6 +124,7 @@
   > .year-selector
   > .year-selector-label
   > span:nth-of-type(2) {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 16px;
 }
 
@@ -138,7 +139,7 @@
   align-items: center;
   background-color: var(--sb-background);
   color: var(--sb-reader-font-color);
-  border-radius: 4px;
+  border-radius: var(--sb-radius-xs);
   border: solid 1px var(--sb-divider-color);
   padding: 4px;
   gap: 4px;

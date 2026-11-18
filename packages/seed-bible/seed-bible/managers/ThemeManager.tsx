@@ -1,11 +1,11 @@
 import {
-  batch,
   computed,
   effect,
   signal,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
+import { withMetricFallback } from "../app/fontFallbacks";
 import { isMinimalEmbedUrl } from "./EmbedMode";
 import type { SettingsManager } from "./SettingsManager";
 
@@ -20,6 +20,19 @@ export interface BibleThemeVariables {
 
   linkColor: string;
   linkVisitedColor: string;
+
+  /**
+   * The color of destructive actions: a filled "End session" or "Delete"
+   * button, and the red text of "Log out" or "Uninstall". Defaults to red
+   * when unset.
+   */
+  dangerColor?: string | null;
+
+  /**
+   * Text drawn on a `dangerColor` surface, such as the label of a filled
+   * delete button.
+   */
+  dangerFontColor?: string | null;
 
   /**
    * The background color for the entire app. This is used as the background for the body element, so it will be visible in areas that don't have a specific background set (e.g. when a pane is detached or when there are gaps between panes). It should generally match the readerBackground color to create a seamless look, but can be set to a different color if desired.
@@ -314,6 +327,13 @@ export interface BibleThemeVariables {
   toolbarIconInvert?: string | null;
 
   /**
+   * CSS `filter` applied to a map's base imagery (`@seed-bible/maps`). Tile
+   * servers draw one light map, so a dark theme dims and inverts it to sit
+   * with the rest of the page; `none` shows the tiles as drawn.
+   */
+  mapTileFilter?: string | null;
+
+  /**
    * Background for popover surfaces — context menus, tab menus, sidebar
    * search results, dropdown panels. Should generally be opaque and have
    * good contrast against the menu's text color in both themes.
@@ -446,10 +466,12 @@ function sanitizeCssValue(value: string): string {
 export function generateThemeCssVariables(variables: BibleTheme): string {
   const cssVariables = Object.entries(variables.variables)
     .filter(([, value]) => value !== undefined && value !== null)
-    .map(
-      ([key, value]) =>
-        `--sb-${toKebabCase(key)}: ${sanitizeCssValue(String(value))};`
-    )
+    .map(([key, value]) => {
+      const css = sanitizeCssValue(String(value));
+      return `--sb-${toKebabCase(key)}: ${
+        /fontfamily$/i.test(key) ? withMetricFallback(css) : css
+      };`;
+    })
     .join("\n");
 
   const highlightColorVariables = Object.entries(variables.highlightColors)
@@ -589,6 +611,9 @@ export const LIGHT_THEME: BibleTheme = {
     linkColor: "#e07b4c",
     linkVisitedColor: "#8d5a6b",
 
+    dangerColor: "#dc2626",
+    dangerFontColor: "#fff",
+
     background: "#f8fafc",
 
     sidebarBackground: "transparent",
@@ -626,29 +651,29 @@ export const LIGHT_THEME: BibleTheme = {
     readerToolbarBottom: "1.125rem",
     readerToolbarGap: "0.25rem",
     readerToolbarPadding: "1px 0.3125rem",
-    readerToolbarBorderRadius: "1.25rem",
+    readerToolbarBorderRadius: "var(--sb-radius-2xl)",
     readerToolbarBackground: "#ffffff",
     readerToolbarBorder: "1px solid #00000024",
     readerToolbarBoxShadow:
       "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
-    readerToolbarZIndex: "99",
+    readerToolbarZIndex: "calc(var(--sb-layer-chrome) - 1)",
     readerToolbarHeight: "auto",
 
     readerToolbarFloatingButtonTop: "-4.25rem",
     readerToolbarFloatingButtonWidth: "3rem",
     readerToolbarFloatingButtonHeight: "3rem",
     readerToolbarFloatingButtonBorder: "1px solid #00000024",
-    readerToolbarFloatingButtonBorderRadius: "62.4375rem",
+    readerToolbarFloatingButtonBorderRadius: "var(--sb-radius-full)",
     readerToolbarFloatingButtonBackground: "#ffffff",
     readerToolbarFloatingButtonFontColor: "#333",
     readerToolbarFloatingButtonBoxShadow: "0 10px 24px #0000001a",
 
     verseToolbarGap: "0.125rem",
     verseToolbarPadding: "0.25rem 0.5rem",
-    verseToolbarBorderRadius: "0.625rem",
+    verseToolbarBorderRadius: "var(--sb-radius-md)",
     verseToolbarBorder: "1px solid var(--sb-divider-color)",
     verseToolbarBoxShadow: "0 26px 10px var(--sb-shadow-color)",
-    verseToolbarZIndex: "100",
+    verseToolbarZIndex: "var(--sb-layer-chrome)",
     verseToolbarMinHeight: "0",
 
     readerToolbarMobileLayoutHeight: "auto",
@@ -657,7 +682,7 @@ export const LIGHT_THEME: BibleTheme = {
     readerToolbarMobileLayoutItemSize: "2.75rem",
     readerToolbarMobileLayoutCenterButtonWidth: "5.4375rem",
     readerToolbarMobileLayoutCenterButtonHeight: "2.625rem",
-    readerToolbarMobileLayoutButtonBorderRadius: "2.5rem",
+    readerToolbarMobileLayoutButtonBorderRadius: "var(--sb-radius-full)",
 
     readerToolbarFloatingButtonSideOffset: "1rem",
 
@@ -668,6 +693,7 @@ export const LIGHT_THEME: BibleTheme = {
     menuFontColor: "#333",
 
     toolbarIconInvert: "0",
+    mapTileFilter: "none",
 
     readerToolbarFontColor: "#333",
     readerToolbarFontFamily: "system-ui, sans-serif",
@@ -773,16 +799,19 @@ export const DARK_THEME: BibleTheme = {
   id: "dark",
   name: "Dark",
   variables: {
-    primaryColor: "#e07b4c",
+    primaryColor: "#f5f5f5",
     primaryFontColor: "#111111",
 
-    secondaryColor: "#433228",
+    secondaryColor: "#2a2a2a",
     secondaryFontColor: "#f5f5f5",
 
     tertiaryColor: "#1c1c1c",
 
-    linkColor: "#e07b4c",
-    linkVisitedColor: "#d99bb0",
+    linkColor: "#f5f5f5",
+    linkVisitedColor: "#a3a3a3",
+
+    dangerColor: "#f87171",
+    dangerFontColor: "#111111",
 
     background: "#0a0a0a",
 
@@ -821,27 +850,27 @@ export const DARK_THEME: BibleTheme = {
     readerToolbarBottom: "1.125rem",
     readerToolbarGap: "0.25rem",
     readerToolbarPadding: "1px 0.3125rem",
-    readerToolbarBorderRadius: "1.25rem",
+    readerToolbarBorderRadius: "var(--sb-radius-2xl)",
     readerToolbarBackground: "#181818",
     readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.1)",
     readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.5)",
-    readerToolbarZIndex: "99",
+    readerToolbarZIndex: "calc(var(--sb-layer-chrome) - 1)",
     readerToolbarHeight: "auto",
     readerToolbarFloatingButtonTop: "-4.25rem",
     readerToolbarFloatingButtonWidth: "3rem",
     readerToolbarFloatingButtonHeight: "3rem",
     readerToolbarFloatingButtonBorder: "1px solid rgba(255, 255, 255, 0.1)",
-    readerToolbarFloatingButtonBorderRadius: "62.4375rem",
+    readerToolbarFloatingButtonBorderRadius: "var(--sb-radius-full)",
     readerToolbarFloatingButtonBackground: "#181818",
     readerToolbarFloatingButtonFontColor: "#e6e6e6",
     readerToolbarFloatingButtonBoxShadow: "0 10px 24px rgba(0, 0, 0, 0.5)",
 
     verseToolbarGap: "0.125rem",
     verseToolbarPadding: "0.25rem 0.5rem",
-    verseToolbarBorderRadius: "0.625rem",
+    verseToolbarBorderRadius: "var(--sb-radius-md)",
     verseToolbarBorder: "1px solid var(--sb-divider-color)",
     verseToolbarBoxShadow: "0 26px 10px var(--sb-shadow-color)",
-    verseToolbarZIndex: "100",
+    verseToolbarZIndex: "var(--sb-layer-chrome)",
     verseToolbarMinHeight: "0",
 
     readerToolbarMobileLayoutHeight: "auto",
@@ -850,7 +879,7 @@ export const DARK_THEME: BibleTheme = {
     readerToolbarMobileLayoutItemSize: "2.75rem",
     readerToolbarMobileLayoutCenterButtonWidth: "5.4375rem",
     readerToolbarMobileLayoutCenterButtonHeight: "2.625rem",
-    readerToolbarMobileLayoutButtonBorderRadius: "2.5rem",
+    readerToolbarMobileLayoutButtonBorderRadius: "var(--sb-radius-full)",
 
     readerToolbarFloatingButtonSideOffset: "1rem",
 
@@ -861,6 +890,8 @@ export const DARK_THEME: BibleTheme = {
     menuFontColor: "#e6e6e6",
 
     toolbarIconInvert: "1",
+    mapTileFilter:
+      "invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9)",
 
     readerToolbarFontColor: "#e6e6e6",
     readerToolbarFontFamily: "system-ui, sans-serif",
@@ -1018,6 +1049,8 @@ export type ThemeColorKey =
   | "tertiaryColor"
   | "linkColor"
   | "linkVisitedColor"
+  | "dangerColor"
+  | "dangerFontColor"
   | "background"
   | "fontColor"
   | "sidebarBackground"
@@ -1060,6 +1093,8 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
       { key: "tertiaryColor", label: "Tertiary" },
       { key: "linkColor", label: "Link" },
       { key: "linkVisitedColor", label: "Visited link" },
+      { key: "dangerColor", label: "Danger" },
+      { key: "dangerFontColor", label: "Danger text" },
     ],
   },
   {
@@ -1192,9 +1227,9 @@ export function applyHighlightOverrides(
 
 /**
  * Filters a raw, already-decoded color-override record down to the keys the
- * customization UI actually exposes. `SettingsManager` stores/decodes the
- * raw `Record<string, string>` (it doesn't know about `ThemeColorKey`); this
- * is the theme-domain validation layered on top of that generic storage.
+ * customization UI actually exposes. A stored variant's colors decode to a
+ * plain `Record<string, string>` (storage doesn't know about
+ * `ThemeColorKey`); this is the theme-domain validation layered on top.
  */
 export function filterValidColorOverrides(
   raw: Record<string, string>
@@ -1231,8 +1266,7 @@ const THEME_FONT_FAMILY_KEYS: ThemeFontFamilyKey[] = [
 /**
  * Same purpose as `filterValidColorOverrides`, scoped to font-family keys.
  * Kept as its own function (rather than folded into `filterValidColorOverrides`)
- * so it isn't accidentally reachable from the app's own color-only
- * "Customize colors" feature, which only ever narrows against `ThemeColorKey`.
+ * so callers that only accept colors keep narrowing against `ThemeColorKey`.
  */
 export function filterValidFontFamilyOverrides(
   raw: Record<string, string>
@@ -1247,26 +1281,12 @@ export function filterValidFontFamilyOverrides(
   return overrides;
 }
 
-function applyOverrides(
-  theme: BibleTheme,
-  overrides: ThemeOverrides
-): BibleTheme {
-  const anyOverrides = Object.keys(overrides).length > 0;
-  if (!anyOverrides) {
-    return theme;
-  }
-  return {
-    ...theme,
-    variables: { ...theme.variables, ...overrides },
-  };
-}
-
 export interface ThemeManager {
   themes: Signal<BibleTheme[]>;
   selectedThemeId: ReadonlySignal<string>;
-  /** Effective theme = preset with custom overrides applied. */
+  /** The user's own theme: the preset for `selectedThemeId`. */
   currentTheme: ReadonlySignal<BibleTheme>;
-  /** The base preset for `selectedThemeId`, without custom overrides. */
+  /** The preset for `selectedThemeId`; the same signal as `currentTheme`. */
   basePresetTheme: ReadonlySignal<BibleTheme>;
   /**
    * The device's color scheme, tracked whatever theme is selected, so a
@@ -1280,40 +1300,7 @@ export interface ThemeManager {
    * until then. Repeat calls are no-ops.
    */
   hydrateSystemColorScheme: () => void;
-  /** User color overrides layered on top of the selected preset. */
-  customOverrides: ReadonlySignal<ThemeOverrides>;
-  /** User highlight color overrides layered on top of the preset highlights. */
-  customHighlightOverrides: ReadonlySignal<HighlightOverrides>;
   setTheme: (themeId: string) => void;
-  setCustomColor: (key: ThemeColorKey, value: string) => void;
-  resetCustomColor: (key: ThemeColorKey) => void;
-  resetAllCustomColors: () => void;
-  setHighlightColor: (
-    colorId: string,
-    patch: Partial<ThemeHighlightColor>
-  ) => void;
-  resetHighlightColor: (colorId: string) => void;
-  resetAllHighlightColors: () => void;
-  /**
-   * Live, non-committing preview of a theme color — reflected in
-   * `currentTheme` (and the injected `--sb-*` CSS) immediately, but never
-   * written to `settings`. Meant to be called on a `ColorPicker`'s
-   * `onPreview` while the user drags; `setCustomColor` clears any pending
-   * preview for the same key once the color is actually committed.
-   */
-  previewCustomColor: (key: ThemeColorKey, value: string) => void;
-  /** Discards a pending `previewCustomColor`, e.g. on the picker's `onCancel`. */
-  clearPreviewCustomColor: (key: ThemeColorKey) => void;
-  /** Same as `previewCustomColor`, for one field of a highlight color. */
-  previewHighlightColor: (
-    colorId: string,
-    patch: Partial<ThemeHighlightColor>
-  ) => void;
-  /** Discards a pending `previewHighlightColor` field, e.g. on `onCancel`. */
-  clearPreviewHighlightField: (
-    colorId: string,
-    field: keyof ThemeHighlightColor
-  ) => void;
 }
 
 export function createTheme(
@@ -1330,22 +1317,6 @@ export function createTheme(
   const hydrateSystemColorScheme = watchSystemColorScheme(prefersDarkScheme);
 
   const selectedThemeId = computed(() => settings.settings.value.themeId);
-  const customOverrides = computed(() =>
-    filterValidColorOverrides(settings.settings.value.customTheme)
-  );
-  const customHighlightOverrides = computed(
-    () => settings.settings.value.customHighlights
-  );
-
-  /**
-   * In-memory-only overrides from an open `ColorPicker`'s live drag. Never
-   * read from or written to `settings`, so there is nothing to undo on
-   * reload — a picker's `onCancel` (or the next commit for the same key)
-   * simply clears the entry and `currentTheme` falls back to
-   * `customOverrides`/`customHighlightOverrides`.
-   */
-  const previewOverrides = signal<ThemeOverrides>({});
-  const previewHighlightOverrides = signal<HighlightOverrides>({});
 
   const basePresetTheme = computed<BibleTheme>(() => {
     if (selectedThemeId.value === SYSTEM_THEME_ID) {
@@ -1361,25 +1332,13 @@ export function createTheme(
     );
   });
 
-  const currentTheme = computed<BibleTheme>(() => {
-    const withColorOverrides = applyOverrides(
-      applyOverrides(basePresetTheme.value, customOverrides.value),
-      previewOverrides.value
-    );
-    return applyHighlightOverrides(
-      applyHighlightOverrides(
-        withColorOverrides,
-        customHighlightOverrides.value
-      ),
-      previewHighlightOverrides.value
-    );
-  });
+  const currentTheme = basePresetTheme;
 
   const themeStyleText = computed(() =>
     composeThemeStyleText(currentTheme.value)
   );
 
-  // Writes the active theme (preset + custom overrides) directly to a
+  // Writes the active theme preset directly to a
   // <head> <style> tag, entirely outside the Preact tree. This is a plain
   // @preact/signals `effect()`, not `useEffect` — it runs synchronously the
   // moment `createTheme()` is called (during `createSeedBibleState()`,
@@ -1452,103 +1411,7 @@ export function createTheme(
     ) {
       return;
     }
-    // Picking a theme drops per-section text colors. Tied to this call, not
-    // the resolved preset, so a device flip under System never wipes a saved
-    // color (`resetTextColors` writes through to the profile).
-    if (themeId !== selectedThemeId.value) {
-      settings.resetTextColors();
-    }
     settings.setThemeId(themeId);
-  };
-
-  const writeOverrides = (next: ThemeOverrides) => {
-    settings.setCustomTheme(next);
-  };
-
-  const previewCustomColor = (key: ThemeColorKey, value: string) => {
-    previewOverrides.value = { ...previewOverrides.value, [key]: value };
-  };
-
-  const clearPreviewCustomColor = (key: ThemeColorKey) => {
-    if (!(key in previewOverrides.value)) return;
-    const next = { ...previewOverrides.value };
-    delete next[key];
-    previewOverrides.value = next;
-  };
-
-  const setCustomColor = (key: ThemeColorKey, value: string) => {
-    batch(() => {
-      writeOverrides({ ...customOverrides.value, [key]: value });
-      clearPreviewCustomColor(key);
-    });
-  };
-
-  const resetCustomColor = (key: ThemeColorKey) => {
-    const next = { ...customOverrides.value };
-    delete next[key];
-    writeOverrides(next);
-  };
-
-  const resetAllCustomColors = () => {
-    writeOverrides({});
-  };
-
-  const writeHighlightOverrides = (next: HighlightOverrides) => {
-    settings.setCustomHighlights(next);
-  };
-
-  const previewHighlightColor = (
-    colorId: string,
-    patch: Partial<ThemeHighlightColor>
-  ) => {
-    const existing = previewHighlightOverrides.value[colorId] ?? {};
-    previewHighlightOverrides.value = {
-      ...previewHighlightOverrides.value,
-      [colorId]: { ...existing, ...patch },
-    };
-  };
-
-  const clearPreviewHighlightField = (
-    colorId: string,
-    field: keyof ThemeHighlightColor
-  ) => {
-    const existing = previewHighlightOverrides.value[colorId];
-    if (!existing || !(field in existing)) return;
-    const next = { ...previewHighlightOverrides.value };
-    const { [field]: _removed, ...rest } = existing;
-    if (Object.keys(rest).length === 0) {
-      delete next[colorId];
-    } else {
-      next[colorId] = rest;
-    }
-    previewHighlightOverrides.value = next;
-  };
-
-  const setHighlightColor = (
-    colorId: string,
-    patch: Partial<ThemeHighlightColor>
-  ) => {
-    batch(() => {
-      const current = customHighlightOverrides.value;
-      const existing = current[colorId] ?? {};
-      writeHighlightOverrides({
-        ...current,
-        [colorId]: { ...existing, ...patch },
-      });
-      for (const field of Object.keys(patch) as (keyof ThemeHighlightColor)[]) {
-        clearPreviewHighlightField(colorId, field);
-      }
-    });
-  };
-
-  const resetHighlightColor = (colorId: string) => {
-    const next = { ...customHighlightOverrides.value };
-    delete next[colorId];
-    writeHighlightOverrides(next);
-  };
-
-  const resetAllHighlightColors = () => {
-    writeHighlightOverrides({});
   };
 
   return {
@@ -1558,18 +1421,6 @@ export function createTheme(
     basePresetTheme,
     prefersDarkScheme,
     hydrateSystemColorScheme,
-    customOverrides,
-    customHighlightOverrides,
     setTheme,
-    setCustomColor,
-    resetCustomColor,
-    resetAllCustomColors,
-    setHighlightColor,
-    resetHighlightColor,
-    resetAllHighlightColors,
-    previewCustomColor,
-    clearPreviewCustomColor,
-    previewHighlightColor,
-    clearPreviewHighlightField,
   };
 }

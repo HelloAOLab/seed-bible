@@ -34,7 +34,10 @@ describe("openConfirmDeleteModal", () => {
     toast = vi.fn();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Running deletes are tracked outside the modal, so one a test left
+    // unfinished would disable Delete in the tests after it.
+    await finishTheDelete();
     render(null, container);
     container.remove();
   });
@@ -100,6 +103,63 @@ describe("openConfirmDeleteModal", () => {
 
     expect(toast).not.toHaveBeenCalled();
     expect(modals.modals.value.some((m) => m.id === MODAL_ID)).toBe(false);
+  });
+
+  it("covers the button with a spinner while the delete is running", async () => {
+    const { deleteButton } = openAndRender();
+    const spinner = () => deleteButton.querySelector(".sb-spinner");
+    expect(spinner()).toBeNull();
+
+    act(() => {
+      click(deleteButton);
+    });
+
+    expect(spinner()).not.toBeNull();
+    expect(deleteButton.getAttribute("aria-busy")).toBe("true");
+    // The trash can and label stay under the spinner, so the button keeps
+    // its size and still says what's running.
+    expect(deleteButton.querySelector(".sb-button-icon")?.textContent).toBe(
+      "delete"
+    );
+    expect(deleteButton.querySelector(".sb-button-label")?.textContent).toMatch(
+      /delete/i
+    );
+
+    await finishTheDelete();
+
+    expect(modals.modals.value.some((m) => m.id === MODAL_ID)).toBe(false);
+  });
+
+  it("can't be closed with its X or backdrop while the delete is running", async () => {
+    const { deleteButton } = openAndRender();
+    const isOpen = () => modals.modals.value.some((m) => m.id === MODAL_ID);
+
+    act(() => {
+      click(deleteButton);
+    });
+    // What the X button and the backdrop do.
+    act(() => {
+      modals.dismissModal(MODAL_ID);
+    });
+    expect(isOpen()).toBe(true);
+
+    await finishTheDelete();
+
+    expect(isOpen()).toBe(false);
+  });
+
+  it("goes back to the trash can when the delete fails", async () => {
+    onConfirm = vi.fn(() => Promise.reject(new Error("offline")));
+    const { deleteButton } = openAndRender();
+
+    await act(async () => {
+      click(deleteButton);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(toast).toHaveBeenCalledWith("Couldn't delete the thing.");
+    expect(deleteButton.querySelector(".sb-spinner")).toBeNull();
   });
 
   it("deletes once when the modal is closed and reopened while the first delete is running", async () => {

@@ -1,0 +1,23 @@
+/* Info banner shown atop the notes section while annotations are routed
+   through a `recordOverride` instead of the signed-in account's own record
+   (see `AnnotationOverrideBanner`). */
+.sb-annotation-override-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: var(--sb-radius-md);
+  background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+  font-size: var(--sb-font-size-13);
+}
+
+.sb-annotation-override-banner-text {
+  flex: 1;
+}
+
+.sb-annotation-override-banner-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}

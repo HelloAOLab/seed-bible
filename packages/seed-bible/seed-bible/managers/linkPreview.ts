@@ -1,10 +1,10 @@
 import { z } from "zod";
 import type { PlaylistItemData } from "./PlaylistManager";
+import { safeImageUrl } from "./safeImageUrl";
 
 // Caps keep a page with an enormous og:description from bloating every saved
 // playlist and reading plan that links to it.
 const MAX_TEXT_LENGTH = 1000;
-const MAX_URL_LENGTH = 2048;
 
 /**
  * The parts of a page's link preview (its Open Graph tags) that are stored on
@@ -19,6 +19,8 @@ export const LinkPreviewSchema = z.object({
   imageUrl: z.string().optional(),
   imageAlt: z.string().optional(),
   siteName: z.string().optional(),
+  /** Who made it: a video's uploader, say. */
+  author: z.string().optional(),
 });
 
 export type LinkPreview = z.infer<typeof LinkPreviewSchema>;
@@ -30,26 +32,16 @@ export interface LinkPreviewResponse {
   imageUrl?: string;
   imageAlt?: string;
   siteName?: string;
+  /**
+   * The page's tags, by name: YouTube's oEmbed fields (`author_name`) for a
+   * YouTube video, the page's meta tags (`author`) for anything else.
+   */
+  meta?: Record<string, string>;
 }
 
 function cleanText(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
   return trimmed ? trimmed.slice(0, MAX_TEXT_LENGTH) : undefined;
-}
-
-/** The URL when it is an http(s) image URL that can safely go in `<img src>`. */
-export function safeImageUrl(value: string | undefined): string | undefined {
-  if (!value || value.length > MAX_URL_LENGTH) {
-    return undefined;
-  }
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" || url.protocol === "http:"
-      ? url.toString()
-      : undefined;
-  } catch {
-    return undefined;
-  }
 }
 
 /**
@@ -63,6 +55,7 @@ export function toLinkPreview(data: LinkPreviewResponse): LinkPreview | null {
     imageUrl: safeImageUrl(data.imageUrl),
     imageAlt: cleanText(data.imageAlt),
     siteName: cleanText(data.siteName),
+    author: cleanText(data.meta?.author_name ?? data.meta?.author),
   };
   if (!preview.title && !preview.description && !preview.imageUrl) {
     return null;

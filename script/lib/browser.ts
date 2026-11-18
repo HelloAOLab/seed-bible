@@ -322,7 +322,6 @@ export const DEFAULT_EXTENSIONS = [
   "seed-bible",
   // "seed-bible-refresh-example-extension",
   "geo-importer-extension",
-  "locations-extension",
   "Bible Visualization Utils",
   "Scripture Map",
   "twitchSub-extension",

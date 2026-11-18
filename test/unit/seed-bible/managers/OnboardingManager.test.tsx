@@ -91,4 +91,24 @@ describe("createOnboardingManager", () => {
       vi.unstubAllGlobals();
     }
   });
+
+  it("never offers the install prompt inside the native iOS/Android apps", () => {
+    // The native build injects a config with `publicOrigin`; the website never does.
+    const config = document.createElement("script");
+    config.id = "app-config";
+    config.type = "application/json";
+    config.textContent = JSON.stringify({
+      publicOrigin: "https://seedbible.org",
+    });
+    document.body.appendChild(config);
+
+    try {
+      const onboarding = createOnboardingManager(createLogin());
+
+      expect(onboarding.installed.value).toBe(true);
+      expect(onboarding.installAvailable.value).toBe(false);
+    } finally {
+      config.remove();
+    }
+  });
 });

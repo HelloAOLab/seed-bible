@@ -4,7 +4,7 @@ import { forwardRef } from "preact/compat";
 import { useI18n } from "../../i18n/I18nManager";
 import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
+import { DiscoverSection } from "../Discover/DiscoverSection";
 import {
   ScriptureItemInput,
   type ScriptureItemInputHandle,
@@ -14,6 +14,7 @@ import {
   type TextItemInputHandle,
 } from "../TextItemInput/TextItemInput";
 import { LinkItemInput, type LinkItemInputHandle } from "../LinkItemInput";
+import { Button } from "../Button/Button";
 
 interface PlaylistItemInputProps {
   books: TranslationBook[];
@@ -169,13 +170,12 @@ export const PlaylistItemInput = forwardRef<
       )}
 
       {isEditing ? (
-        <button
-          type="button"
-          className="sb-reading-plans-back sb-playlist-cancel-edit"
+        <Button
+          className="sb-playlist-cancel-edit"
           onClick={() => onCancelEdit?.()}
         >
           {t("cancel", { defaultValue: "Cancel" })}
-        </button>
+        </Button>
       ) : null}
     </DiscoverSection>
   );

@@ -20,11 +20,12 @@ import {
   type LoginManager,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
-import type {
-  ReaderTab,
-  TabsManager,
+import {
+  createAttachedReadingStates,
+  type ReaderTab,
+  type TabsManager,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
-import { computed, effect, signal } from "@preact/signals";
+import { computed, effect, signal, type Signal } from "@preact/signals";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
 import {
   createFriendReadLimiter,
@@ -82,6 +83,7 @@ function createMockTabsManager(
   return {
     tabs: signal(tab ? [tab, ...moreTabs] : []),
     selectedTabId: signal(tab?.id ?? null),
+    ...createAttachedReadingStates(),
   } as unknown as TabsManager;
 }
 
@@ -122,6 +124,7 @@ describe("AnnotationsManager", () => {
       cachedProfile: signal(null),
       localConfig: signal({}),
       hydrateLocalConfig: vi.fn(),
+      isLocalConfigHydrated: signal(false),
       profilePromise: null,
       isProfileLoading: signal(false),
       isSavingProfile: signal(false),
@@ -1355,6 +1358,44 @@ describe("AnnotationsManager", () => {
       expect(draft?.verseNumbers).toBeNull();
       expect(draft?.data).toMatchObject({ type: "comment", html: "" });
       expect(discover.view.value).toBe("create_annotation");
+    });
+
+    it("targets the passage shown beside the tab's own when its verses are selected, as in a compare step", async () => {
+      tab = createMockTab({
+        bookId: "GEN",
+        chapterNumber: 1,
+        selectedVerses: [
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 1 } },
+        ],
+      });
+      tabs = createMockTabsManager(tab);
+      const second = createMockTab({
+        bookId: "JHN",
+        chapterNumber: 1,
+        selectedVerses: [
+          { bookId: "JHN", chapterNumber: 1, verse: { number: 3 } },
+        ],
+      }).readingState;
+      tabs.attachReadingState(tab, second);
+      const manager = createManager();
+
+      await manager.createNewAnnotation();
+
+      expect(manager.editingAnnotation.value).toMatchObject({
+        bookId: "JHN",
+        chapterNumber: 1,
+        verseNumber: 3,
+      });
+
+      // Selecting in the tab's own passage moves the draft back to it.
+      (tab.readingState.selectedVerses as Signal<unknown[]>).value = [
+        { bookId: "GEN", chapterNumber: 1, verse: { number: 2 } },
+      ];
+      expect(manager.editingAnnotation.value).toMatchObject({
+        bookId: "GEN",
+        chapterNumber: 1,
+        verseNumber: 2,
+      });
     });
 
     it("pre-fills verse targeting from the reader's current text selection", async () => {

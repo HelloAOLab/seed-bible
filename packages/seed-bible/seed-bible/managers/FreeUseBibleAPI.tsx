@@ -1,3 +1,8 @@
+import {
+  pickVerseOfTheDay,
+  type PickVerseOfTheDayOptions,
+} from "./verseOfTheDay";
+
 export interface AvailableTranslations {
   /**
    * The list of translations.
@@ -811,7 +816,7 @@ export interface CommentaryBooks {
   books: CommentaryBook[];
 }
 
-interface CommentaryBook {
+export interface CommentaryBook {
   /**
    * The ID of the book.
    * Matches the ID of the corresponding book in the Bible (GEN, EXO, etc.).
@@ -917,7 +922,7 @@ export interface CommentaryBookChapter {
   chapter: CommentaryChapterData;
 }
 
-interface CommentaryChapterData {
+export interface CommentaryChapterData {
   /**
    * The number of the chapter.
    */
@@ -977,7 +982,7 @@ interface VerseRef {
   endVerse?: number;
 }
 
-interface CommentaryProfile {
+export interface CommentaryProfile {
   /**
    * The ID of the profile.
    */
@@ -1121,7 +1126,7 @@ export interface DatasetBooks {
   books: DatasetBook[];
 }
 
-interface DatasetBook {
+export interface DatasetBook {
   /**
    * The ID of the book.
    * Matches the ID of the corresponding book in the Bible (GEN, EXO, etc.).
@@ -1208,7 +1213,7 @@ export interface DatasetBookChapter {
   chapter: DatasetChapterData;
 }
 
-interface DatasetChapterData {
+export interface DatasetChapterData {
   /**
    * The number of the chapter.
    */
@@ -1220,7 +1225,7 @@ interface DatasetChapterData {
   content: DatasetVerse[];
 }
 
-interface DatasetVerse {
+export interface DatasetVerse {
   /**
    * The number of the verse.
    */
@@ -1234,7 +1239,7 @@ interface DatasetVerse {
   references: DatasetReference[];
 }
 
-interface DatasetReference {
+export interface DatasetReference {
   /**
    * The ID of the book that is being referenced.
    */
@@ -1260,6 +1265,97 @@ interface DatasetReference {
    * The relevence score for the reference.
    */
   score?: number;
+}
+
+/**
+ * Every verse in a dataset whose verses have categories, such as
+ * "verse-of-the-day". Maps to the `/api/d/:datasetId/verses.json` endpoint.
+ */
+export interface DatasetVerses {
+  /**
+   * The dataset information for the verses.
+   */
+  dataset: Dataset;
+
+  /**
+   * Every verse (or short passage) in the dataset, with its categories, in canonical order.
+   */
+  verses: DatasetCategorizedVerse[];
+
+  /**
+   * The holidays that have their own verses. On a holiday, the verse of the
+   * day is one of the verses in the holiday's category, and those verses
+   * aren't used on other days. Omitted if the dataset has no holidays.
+   */
+  holidays?: DatasetVersesHoliday[];
+}
+
+export interface DatasetCategorizedVerse {
+  /**
+   * The USFM ID of the book. e.g. "JHN"
+   */
+  book: string;
+
+  /**
+   * The chapter number.
+   */
+  chapter: number;
+
+  /**
+   * The verse number. If `endVerse` is present, then this is the verse that the passage starts at.
+   */
+  verse: number;
+
+  /**
+   * The verse that the passage ends at. Omitted if the entry is a single verse.
+   */
+  endVerse?: number;
+
+  /**
+   * The IDs of the categories that the verse belongs to, most relevant first.
+   */
+  categories: string[];
+
+  /**
+   * The first year that the verse can be the verse of the day. Omitted if the verse has always been in the list.
+   */
+  addedIn?: number;
+
+  /**
+   * The first year that the verse can no longer be the verse of the day. Omitted if the verse hasn't been removed.
+   */
+  removedIn?: number;
+}
+
+/**
+ * A holiday that has its own verses. It either falls on the same `month` and
+ * `day` every year, or lists its `dates`.
+ */
+export interface DatasetVersesHoliday {
+  /**
+   * The ID of the holiday's category, such as "christmas".
+   */
+  id: string;
+
+  /**
+   * The English name of the holiday, such as "Christmas".
+   */
+  name: string;
+
+  /**
+   * The month of a holiday that falls on the same date every year (1 for January).
+   */
+  month?: number;
+
+  /**
+   * The day of the month of a holiday that falls on the same date every year.
+   */
+  day?: number;
+
+  /**
+   * The dates (`YYYY-MM-DD`) of a holiday whose date changes every year, such as Resurrection Sunday.
+   */
+  dates?: string[];
 }
 
 export const FREE_USE_BIBLE_API_ENDPOINT = "https://bible.helloao.org/";
@@ -1583,6 +1679,162 @@ export class FreeUseBibleAPI {
     options?: ApiRequestOptions
   ): Promise<AudioTimings> {
     return this._getJson<AudioTimings>(link, endpoint, options);
+  }
+
+  /** Gets the commentaries the API offers. */
+  async getAvailableCommentaries(
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<AvailableCommentaries> {
+    return this._getJson<AvailableCommentaries>(
+      "api/available_commentaries.json",
+      endpoint,
+      options
+    );
+  }
+
+  async getCommentaryBooks(
+    commentary: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<CommentaryBooks> {
+    return this._getJson<CommentaryBooks>(
+      `api/c/${encodeURIComponent(commentary)}/books.json`,
+      endpoint,
+      options
+    );
+  }
+
+  async getCommentaryBookChapter(
+    commentary: string,
+    book: string,
+    chapter: number | string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<CommentaryBookChapter> {
+    return this._getJson<CommentaryBookChapter>(
+      `api/c/${encodeURIComponent(commentary)}/${encodeURIComponent(
+        book
+      )}/${encodeURIComponent(String(chapter))}.json`,
+      endpoint,
+      options
+    );
+  }
+
+  /** The commentary's articles about people, places and topics. */
+  async getCommentaryProfiles(
+    commentary: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<CommentaryProfiles> {
+    return this._getJson<CommentaryProfiles>(
+      `api/c/${encodeURIComponent(commentary)}/profiles.json`,
+      endpoint,
+      options
+    );
+  }
+
+  async getCommentaryProfile(
+    commentary: string,
+    profile: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<CommentaryProfileContent> {
+    return this._getJson<CommentaryProfileContent>(
+      `api/c/${encodeURIComponent(commentary)}/profiles/${encodeURIComponent(
+        profile
+      )}.json`,
+      endpoint,
+      options
+    );
+  }
+
+  /** Gets the datasets (such as cross-references) the API offers. */
+  async getAvailableDatasets(
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<AvailableDatasets> {
+    return this._getJson<AvailableDatasets>(
+      "api/available_datasets.json",
+      endpoint,
+      options
+    );
+  }
+
+  async getDatasetBooks(
+    dataset: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<DatasetBooks> {
+    return this._getJson<DatasetBooks>(
+      `api/d/${encodeURIComponent(dataset)}/books.json`,
+      endpoint,
+      options
+    );
+  }
+
+  async getDatasetBookChapter(
+    dataset: string,
+    book: string,
+    chapter: number | string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<DatasetBookChapter> {
+    return this._getJson<DatasetBookChapter>(
+      `api/d/${encodeURIComponent(dataset)}/${encodeURIComponent(
+        book
+      )}/${encodeURIComponent(String(chapter))}.json`,
+      endpoint,
+      options
+    );
+  }
+
+  /**
+   * Gets every verse in a dataset whose verses have categories, such as
+   * "verse-of-the-day".
+   */
+  async getDatasetVerses(
+    dataset: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<DatasetVerses> {
+    const encodedDataset = encodeURIComponent(dataset);
+    return this._getJson<DatasetVerses>(
+      `api/d/${encodedDataset}/verses.json`,
+      endpoint,
+      options
+    );
+  }
+
+  /**
+   * Gets the verse of the day for a date from the "verse-of-the-day" dataset.
+   * The same date always gives the same verse. See {@link pickVerseOfTheDay}
+   * for how the verse is picked.
+   *
+   * @param date A `YYYY-MM-DD` string, or a `Date` (its local calendar date is
+   * used). Defaults to today.
+   * @param options A `seed` gives a different (but equally valid) order, and a
+   * `category` only picks from that category. The dataset's own holidays are
+   * used unless other `holidays` are given.
+   * @returns The verse's reference and categories, or null if the dataset has
+   * no verses to pick from.
+   */
+  async getVerseOfTheDay(
+    date: Date | string = new Date(),
+    options: PickVerseOfTheDayOptions & { dataset?: string } = {},
+    endpoint?: string,
+    requestOptions?: ApiRequestOptions
+  ): Promise<DatasetCategorizedVerse | null> {
+    const { dataset = "verse-of-the-day", ...pickOptions } = options;
+    const verses = await this.getDatasetVerses(
+      dataset,
+      endpoint,
+      requestOptions
+    );
+    return pickVerseOfTheDay(verses.verses, date, {
+      holidays: verses.holidays,
+      ...pickOptions,
+    });
   }
 
   private _getJson<T>(

@@ -22,22 +22,18 @@
   "clear-search": "ንጹር ምድላይ",
   "searching": "ምድላይ...",
   "no-search-results": "ዝሰማማዕ ጥቕስታት የለን።",
-
   "uploading": "ኣብ ምጽዓን...",
   "profile-name": "ስም ፕሮፋይል",
   "profile-name-placeholder": "ንኣብነት ስድራቤት ክሬግ",
-
   "description": "መግለፂ",
   "optional": "(ዘይናይግድን)",
   "description-placeholder": "መግለጺ ፕሮፋይልኩም ኣእትዉ...",
   "location": "ኣንፈት",
   "location-placeholder": "ንኣብነት Austin,TX",
-
   "copied": "ተቐዲሑ",
   "copy": "ቅዳሕ",
   "save-changes": "ለውጢ ምዕቃብ",
   "sign-out": "ውረዱ",
-
   "log-in": "እቶ",
   "session-settings": "ቅጥዕታት ክፍለ ግዜ",
   "shared-session-click-to-join": "is sharing — ንምጽንባር ጠውቑ",
@@ -53,12 +49,10 @@
   "display-and-theme-description": "ቴማ ምረጽ እሞ ቅዱሳት መጻሕፍትን ናይ ተጠቃሚ መርበብን ብኸመይ ከም ዝረኣዩ ኣቃንዮ።",
   "scripture-settings": "ቅዱሳት መጻሕፍቲ ቅጥዕታት",
   "scripture-settings-font-size-example": "ሓደ",
-
   "all-settings": "ኩሉ ቅጥዕታት",
   "no-extensions-available": "ዝኾነ መናውሒ የለን።",
   "install": "ምግጣም",
   "uninstall": "Uninstall ምግባር",
-
   "custom": "ቅቡል ልምዲ",
   "text-section-bookTitle": "ኣርእስቲ መጽሓፍ ጽሑፍ",
   "text-section-heading": "ኣርእስቲ ጽሑፍ",
@@ -79,7 +73,6 @@
   "show-selected-items": "ዝተመርጹ ነገራት ኣርእዩ",
   "show-highlight-colors": "ናይ ምድማቕ ሕብርታት ኣርእዩ",
   "show-icon-text": "ናይ ምልክት ጽሑፍ ኣርእዩ",
-
   "extensions": "መናውሒታት",
   "display": "ኣጫውት",
   "keep-screen-awake": "ስክሪን ንቑሕ ይኹን",
@@ -101,7 +94,6 @@
   "increase-scripture-font-size": "ቅዱሳት መጻሕፍቲ ቅርጺ ፊደላት ምውሳኽ",
   "change-line-spacing": "ናይ መስመር ርሕቀት ምቕያር",
   "line-spacing_lineHeight": "መስመር ርሕቀት: {{lineHeight}}",
-
   "italic": "ሰያፍ ጽሑፍ",
   "underline": "ስርዝ ድልዝ ግበር",
   "alignment_x": "ኣሰላልፋ {{alignment}}",
@@ -110,7 +102,6 @@
   "text_color": "ሕብሪ ጽሑፍ",
   "follow_theme": "ቴማ ተኸተሉ።",
   "reset-to-default": "ናብ ነባሪ ምምላስ",
-
   "id_highlight-text-color": "{{id}} ሕብሪ ጽሑፍ ምድማቕ",
   "id_highlight-background-color": "{{id}} ሕብሪ ድሕረ ባይታ ኣጉልሕ",
   "all-settings-description": "ነፍሲ ወከፍ ክፍሊ ጽሑፍ ጽቡቕ ጌርካ ኣመዓራርዮን ነፍሲ ወከፍ ሕብሪ ቴማ ኣመዓራርዮን።",
@@ -126,7 +117,6 @@
   "old-testament_short": "ኦ.ቲ",
   "new-testament_short": "NT",
   "apocrypha": "ኣፖክሪፋ",
-
   "custom-translations": "ብሕታዊ ትርጉማት",
   "no-translation-results-found": "ውጽኢት ኣይተረኽበን። ምድላይካ ኣስፊሕካ ብኸፊል ምሉእ ትርጉማት እውን ከተካትት ትደሊ ዲኻ?",
   "show-all-translations": "ኩሉ ትርጉማት ኣርእዩ",
@@ -138,7 +128,6 @@
   "complete-translations": "ምሉእ ትርጉማት",
   "all-translations": "ኩሉ ትርጉማት",
   "popular-translations": "ህቡባት ትርጉማት",
-
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 መዝሙር መዝሙር",
   "2-psalms": "2 መዝሙር መዝሙር",
@@ -160,7 +149,6 @@
   "go-to-all-settings": "ናብ ኩሉ ቅጥዕታት ኪድ",
   "more": "ቡዙሕ",
   "remove-bookmark": "ዕልባት ኣወግድ",
-
   "chat": "ፀወታ",
   "today": "ሎምዓንቲ",
   "you": "ንስኻ",
@@ -170,7 +158,6 @@
   "category-options": "ናይ ኣቃፊራ ኣማራጺታት",
   "rename": "ዳግማይ ስም ምቕያር",
   "delete": "ምድምሳስ",
-
   "bookmark-options": "ናይ ዕልባት ኣማራጺታት",
   "new-folder-placeholder": "ስም ኣቃፊራ",
   "tasks": "ዕማማት",
@@ -182,11 +169,9 @@
   "folder-name-taken": "ድሮ እቲ ስም ዘለዎ ማህደር ኣሎ።",
   "add-to-new": "ኣብ ሓድሽ ወስኽ",
   "save": "ምቑጣብ",
-
   "seed-bible": "ዘርኢ መጽሓፍ ቅዱስ",
   "take-photo": "ስእሊ ውሰድ",
   "choose-from-gallery": "ካብ ጋለሪ ምረጽ",
-
   "crop-your-photo": "ስእልኻ ቆሪጽካ ምውጻእ",
   "zoom": "ዙም ምግባር",
   "set-picture": "ስእሊ ኣቐምጥ",
@@ -212,10 +197,8 @@
   "read-the-bible": "መጽሓፍ ቅዱስ ኣንብብ",
   "seed-bible-description": "{{bookName}} {{chapterNumber}} ኣብ መጽሓፍ መጽሓፍ ዘርኢ ኣንብብ",
   "social-title": "{{bookName}} {{chapterNumber}} ኣንብብ",
-
   "chapter-navigation": "ምዕራፍ ምድህሳስ",
   "tutorial.skip": "ዝለል",
-
   "tutorial.back": "ዝባን",
   "tutorial.done": "ምውዳእ",
   "tutorial.next": "ቀፃሊ",
@@ -239,7 +222,6 @@
   "copied-translation-share-link": "ዝተቐድሐ ትርጉም ሼር ሊንክ",
   "less": "ዝወሓደ",
   "swipe-up-more": "ተወሳኺ ንምርኣይ ንላዕሊ ስዋይፕ ግበር",
-  "plans": "መደባት",
   "reading-plans": "መደባት ንባብ",
   "create-reading-plan": "መደብ ንባብ ምፍጣር",
   "reading-plans-empty": "ክሳብ ሕጂ ዝኾነ ናይ ንባብ መደብ የብልካን። ንኽትጅምር ሓደ ፍጠር።",
@@ -328,11 +310,9 @@
   "study-notes": "መጽናዕታዊ መዘኻኸሪታት",
   "content": "ትሕዝቶ",
   "untitled-playlist": "ኣርእስቲ ዘይብሉ ዝርዝር ደርፍታት",
-
   "discover-annotations-empty": "ዝኾነ መግለጺታት የብልካን።",
   "discover-cross-references-empty": "ነዚ ምዕራፍ ዝኸውን መስቀላዊ መወከሲ የለን።",
   "discover-study-notes-empty": "ነዚ ምዕራፍ እዚ ዝምልከት መጽናዕታዊ መዘኻኸሪ የለን።",
-
   "discover-select-tab": "ተዛማዲ ንዋት ንምርካብ ሓደ ትብ ምረጽ።",
   "create-playlist": "ፍጠር",
   "playlist-title_placeholder": "ኣርእስቲ ዝርዝር ደርፍታት",
@@ -381,12 +361,10 @@
   "delete-playlist-failed": "ነቲ ዝርዝር ደርፍታት ክድምስሶ ኣይከኣለን።",
   "collapsed-tab-shared-label": "{{title}} — ዝተኻፈለ ክፍለ ግዜ፣ {{count}} ኣሎ።",
   "playlist-add-mode-label": "ዓይነት ኣቕሓ",
-
   "session-host-reconnected": "ምስቲ ክፍለ ግዜ ዳግማይ ተተሓሒዙ",
   "session-host-left": "እቲ ኣአንጋዲ ከደ — ካብቲ ክፍለ ግዜ ተኣልዩ።",
   "drag-to-reorder-playlist-item": "ንምስራዕ ጎትት",
   "saving": "የቐምጥ ኣሎ…",
-
   "unsaved-item-confirm-message": "ናብ ፕለይሊስት ገና ዘይተወሰኸ ኣቕሓ ክትውስኽ ጀሚርካ ኣለኻ። እንታይ ክትገብር ደሊኻ?",
   "discard-and-save": "ስረዝ እሞ ኣቐምጥ",
   "add-and-save": "ወስኽ እሞ ኣቐምጥ",
@@ -514,7 +492,6 @@
   "reading-plan-preview-reading": "ቅድመ ምርኢት {{reading}}",
   "reading-plan-mark-reading-complete": "ማርክ ንባብ ምሉእ",
   "reading-plan-link-video": "ቪዲዮ",
-
   "reading-plan-mark-passage-complete": "{{passage}} ከም ዝተነበበ ምልክት ግበር",
   "reading-plan-read-nudge-title": "ደስ ዝብል ንባብ!",
   "reading-plan-read-nudge-toast": "ምልክት {{passage}} ምሉእ ድዩ?",
@@ -522,19 +499,16 @@
   "chapter-meta-description": "{{bookName}} {{chapterNumber}} ( {{translationName}} ): {{excerpt}}",
   "app-meta-description": "ኣብ ኢንተርነት መጽሓፍ ቅዱስ ኣንብብ፡ ድለዮ፡ ኣጽንዕ። ብብዙሕ ቋንቋታት ነጻ ትርጉማት፣ ምስ ድምቀት፣ መዘኻኸሪታት፣ ዕልባታትን መደባት ንባብን።",
   "all": "ኩሎም",
-
   "today-bookmarks": "ምልክታት መጽሓፍ",
   "today-search-verses": "መጽሓፍቲ፡ ምዕራፍ፡ ጥቕስታት ድለዩ....",
   "anonymous-greeting": "እንኳዕ ደሓን መፁ!",
   "community": "ማሕበረሰብ",
   "go-somewhere-new": "ሓድሽ ቦታ ኪድ",
-
   "open-bible": "መጽሓፍ ቅዱስ ክፈት",
   "personal-greeting": "እንቋዕ ደሓን መጻእካ {{name}} !",
   "resume-reading": "ኣብቲ ዝወጻእካሉ ቦታ ቀጽል",
   "resume-reading-loading": "ታሪኽ ንባብካ ኣብ ምጽዓን...",
   "selected-year": "ዓመት {{year}}",
-
   "theme-light": "ብርሃን",
   "theme-dark": "ፀልማት",
   "installed-extensions": "ተተኺሉ ኣሎ።",
@@ -544,7 +518,6 @@
   "extension-state-installed": "ተተኺሉ ኣሎ።",
   "extension-state-downloaded": "ዳውንሎድ ተገይሩሉ።",
   "extension-state-pending": "ምትካል...",
-
   "tutorial.stepProgress": "ስጉምቲ {{current}} ናይ {{total}}",
   "tutorial.offlineDownloadTitle": "ኣብ መሳርሒኻ ንኽትጸንሕ ጠውቕ",
   "tutorial.offlineDownloadBody": "ዝኾነ በዚ ምልክት ዘለዎ ትርጉም ካብ መስመር ወጻኢ ንባብ ክቕመጥ ይኽእል።",
@@ -578,7 +551,6 @@
   "tutorial.paneLayoutBody": "ካብዚ ኣቀማምጣ ዝርዝር ክንደይ ክፍልታት ጎኒ ንጎኒ ከተንብብ ከም ዘለካ ምረጽ።",
   "tutorial.addTabTitle": "ተወሳኺ ክፍልታት ክፈት",
   "tutorial.addTabBody": "ሓያሎ መጻሕፍቲ ወይ ትርጉማት ጎኒ ንጎኒ ንምንባብ ሓድሽ ትብ ወስኽ።",
-
   "playlist-history-session-summary": "{{time}} - {{percent}} % ተዛዚሙ - {{item}}",
   "playlist-history-session-summary-no-item": "{{time}} - {{percent}} % ተዛዚሙ",
   "playlist-history-continue": "ቀፃሊ",
@@ -637,7 +609,6 @@
   "chapter-notes-count_other": "{{count}} መዘኻኸሪታት ነዚ ምዕራፍ",
   "create-folder": "ማህደር ምፍጣር",
   "edit-bookmark": "ዕልባ ኣርትዕ",
-
   "greeting-afternoon": "ከመይ ውዒሎም!",
   "greeting-afternoon-named": "ሰናይ ድሕሪ ቀትሪ {{name}} !",
   "greeting-evening": "ከመይ ኣምሽዮም!",
@@ -653,32 +624,24 @@
   "ask-ai": "AI ሕተትዎ።",
   "unread-mention": "ዘይተነበበ ምጥቃስ",
   "unread-messages": "ዘይተነበቡ መልእኽትታት {{count}}",
-
   "scripture-width": "ስፍሓት ቅዱሳት መጻሕፍቲ",
   "decrease-scripture-width": "ስፍሓት ቅዱሳት መጻሕፍቲ ምጉዳል",
   "increase-scripture-width": "ስፍሓት ቅዱሳት መጻሕፍቲ ምውሳኽ",
   "annotations": "መግለጺታት (annotations)",
   "discover-content-panel": "ትሕዝቶ ርኸብ",
   "discover-book-title": "{{book}} ርኸብዎ።",
-
   "about-title": "ብዛዕባ ዘርኢ መጽሓፍ ቅዱስ",
   "about-meta-description": "ዘርኢ መጽሓፍ ቅዱስ ምስ ስድራቤትካን ኣዕሩኽትኻን ማሕበረሰብካን ብሓባር ቅዱሳት መጻሕፍቲ ንምንባብ ዝተሃንጸ ነጻ መጽሓፍ ቅዱስ ኣፕ እዩ — ንዘልኣለም ነጻ፣ መወዓውዒ ወይ መንደቕ ክፍሊት የለን።",
-
   "about-action-open-passage": "ሓደ ክፍሊ ክፈት",
   "about-action-donate": "ምልጋስ",
   "about-action-discord": "ናብ ዲስኮርድ ተጸንበሩ",
   "recent-uploads": "ኣብ ቀረባ እዋን ዝተሰቐሉ።",
-
   "customization-not-found": "እዚ ምምዕርራይ እዚ ክርከብ ኣይከኣለን።",
   "customization-name": "ሽም",
   "customization-primaryColor": "ቀዳማይ",
-
   "customization-secondaryColor": "ካልኣይ ደረጃ",
-
   "customization-tertiaryColor": "ሳልሳይ ደረጃ",
-
   "customization-fonts": "ቅርጺ ፊደላት",
-
   "custom-font-option": "ቅቡል ልምዲ…",
   "custom-font-name-placeholder": "Google Font ዝብል ስም",
   "delete-customization": "ምድምሳስ",
@@ -691,10 +654,8 @@
   "extension-availability-available": "ቅሩብ",
   "extension-availability-auto-installed": "ብኣውቶማቲክ ዝተተኽለ",
   "extension-availability-hidden": "ሕቡእ",
-
   "variants": "ቴማታት",
   "add-variant": "ቴማ ወስኹሉ።",
-
   "base-theme-description": "ነዚ ቴማ ቅድመ-ምድላው ዝገበሩ ለውጥታት ንዝኾነ ዘይገበርካዮ ነገር ተመሊሶም ይወድቁ። ናይ ባዕልኻ ኣርትዖት ይዕቀብ።",
   "reset-to-base-theme": "ናብ መሰረት ቴማ ዳግማይ ምትካል",
   "low-contrast-warning": "{{label}} : ንጽጽር {{ratio}} :1 ጥራይ እዩ — ጽሑፍ ተነባቢ ኮይኑ ክጸንሕ እንተወሓደ {{minRatio}} :1 ዕላማ ግበር።",
@@ -740,14 +701,12 @@
   "save-folder-empty": "ኣብዚ ገና ዝኾነ ምድሓን የለን።",
   "save-options": "ኣማራጺታት ምዕቃብ",
   "saves": "ይዕቅብ",
-
   "hide-saves": "ምሕባእ ምድሓን",
   "show-saves": "ሳቭስ ኣርኢ",
   "save-verses": "ምቑጣብ",
   "new-save-folder": "ሓድሽ ማህደር",
   "edit-save": "ኣርትዖት ምዕቃብ",
   "remove-save-from-all-folders": "ካብ ኩሉ ማህደር ኣውጽእዎ።",
-
   "color-hue": "ሁው",
   "color-saturation": "ምጽጋብን ድምቀትን",
   "hex-color": "ሄክስ ሕብሪ",
@@ -862,9 +821,7 @@
   "annotation-editor-unavailable-read-only": "እቲ ናይ ቅርጺ ኣርታዒ ክጽዕን ኣይከኣለን። እዚ መዘኻኸሪ እዚ ምጠፍአ ቅርጺ ኣለዎ፣ ስለዚ ዳግማይ ክሳብ ዘይተራኸብካ ክእረም ኣይክእልን እዩ።",
   "annotation-text": "ጽሑፍ መግለጺ",
   "notes-for-verse": "መተሓሳሰቢ ንጥቕሲ {{verse}}",
-
   "configure-extension-defaults": "ነባሪ ምግዳፍ ምውቃር",
-
   "extension-settings-defaults-title": "{{name}} ነባሪ ምግዳፍ",
   "no-extension-settings": "እዚ መቐጸልታ እዚ ዝውነን ቅጥዕታት የብሉን።",
   "extension-settings-save-failed": "ቅጥዕታትካ ክዕቅብ ኣይከኣለን።",
@@ -873,7 +830,6 @@
   "setting-no-default": "ነባሪ የለን",
   "override-setting": "{{name}} ምግዳፍ።",
   "override-setting-label": "ምግዳፍ",
-
   "discover-choose-filter-hint": "ካብዚ ምዕራፍ ተወሳኺ ንምርኣይ ኣብ ላዕሊ ዘሎ ፍልተር ምረጽ።",
   "take-a-tour": "ዑደት ግበር",
   "share-reading-plan": "ትልሚ ሼር ምግባር",
@@ -1057,7 +1013,6 @@
   "my-bookmark-numbered": "ዕልባየይ {{number}}",
   "bookmark-move-hint": "ናብዚ ምዕራፍ ንምግዓዝ ንሓደ ዕልባት ጠውቕ።",
   "move-bookmark-here": "{{name}} ኣብዚ ኣግዕዝ",
-
   "play": "ተፃወት",
   "pause": "ጠጠው ምባል",
   "audio-playback-position": "ናይ ምጽዋት ቦታ",
@@ -1066,7 +1021,6 @@
   "audio-scrub-verse": "ጥቕሲ {{verse}}",
   "tab-playing-audio": "ድምጺ ምጽዋት",
   "collapsed-tab-playing-label": "{{label}} — ድምጺ ምጽዋት",
-
   "customization-card-summary": "{{themes}} · {{translation}}",
   "customization-theme-count": "{{count}} ቴማታት",
   "customization-theme-count_one": "{{count}} ዝብል ቴማ",
@@ -1105,7 +1059,6 @@
   "about-community-body": "እምነት ሓቢርካ ክትነብር እዩ ተባሂሉ። መጽሓፍ ቅዱስ ዘርኢ ምስ ስድራኻን ናይ ቀረባ ኣዕሩኽትኻን ምስ ናይ ገዛኻ ቤተ ክርስቲያንን ቅዱሳት መጻሕፍቲ ንምንባብ ዝተሃንጸ እዩ።",
   "discovered-content": "ዝተረኽበ ትሕዝቶ",
   "show-discovered-content": "ዝተረኽበ ትሕዝቶ ኣርእዩ",
-
   "extension-availability-default": "ነባሪ ( {{availability}} )",
   "customization-extensions-default": "ንኻልኦት መናውሒታት ነባሪ",
   "customization-extensions-default-hint": "ኣብ ነፍሲ ወከፍ ኣብ ታሕቲ ዘየቐመጥካዮ መቐጸልታ ይምልከት፣ ድሒሮም ዝተወሰኹ ሓደስቲ ሓዊስካ",
@@ -1138,7 +1091,6 @@
   "playlist-scripture-note-return": "ናብ ዝርዝር ደርፍታት ንመለስ",
   "playlist-scripture-note-aria": "መተሓሳሰቢ ኣብ {{passage}}",
   "playlist-scripture-note-progress": "{{current}} ናይ {{total}}",
-
   "unsaved-item-edit-confirm-message": "ሓደ ኣቕሓ ቀይርካ ኣለኻ ግን ነቶም ለውጥታት ክሳብ ሕጂ ኣይዓቀብካዮምን። እንታይ ክትገብር ምደለኻ፧",
   "keep-changes-and-save": "ለውጢ ኣቐምጦን ዕቅቦን።",
   "reading-plan-edit-reading": "ንባብ ኣርትዕ",
@@ -1153,7 +1105,6 @@
   "branding": "ምልክት ንግዲ (branding)",
   "create-custom-branding-menu-item": "ብሕታዊ ምልክት ምግባር",
   "your-content-empty-branding": "ትፈጥሮ Custom Branding ኣብዚ ክረአ እዩ።",
-
   "extension-consent-from": "ካብ {{host}}",
   "extension-consent-source-version": "ስሪት {{version}} · ካብ {{host}}",
   "extension-consent-uploader-unnamed": "ሓደ ተጠቃሚ መጽሓፍ ቅዱስ ዘርኢ",
@@ -1201,7 +1152,6 @@
   "extension-permission-reading-selection": "ኣየኖት ጥቕስታት ከም እትመርጽ ርአ",
   "extension-permission-reading-navigate": "ክፉት ክፍልታት",
   "extension-permission-network": "ምስ {{host}} ምትእስሳር።",
-
   "extension-consent-not-now": "ሕጂ ኣይከውንን",
   "extension-consent-nothing-yet": "ንሕጂ ግን ዝኾነ ሓበሬታኻ ኣይክረክብን እዩ።",
   "extension-permission-reading-history": "ታሪኽ ንባብካ ርአ",
@@ -1239,7 +1189,6 @@
   "extension-capture-cancel": "ሰርዝ",
   "extension-consent-high-risk": "ኣብ ቀረባ ዘሎ",
   "extension-modal-ok": "እሺ",
-
   "extension-permissions-restart-note": "ለውጢ ብኡንብኡ ኣብ ግብሪ ይውዕል። {{name}} ንኽወስዶም ዳግማይ ይጅምር።",
   "extension-permissions-saved": "ተዓቂቡ ኣሎ። {{name}} ብሓድሽ ፍቓድ ዳግማይ ተጀሚሩ።",
   "extension-permissions-failed": "እዚ ኣየድሓነን። እንደገና ፈትን።",
@@ -1277,8 +1226,67 @@
   "session-settings-verse-effects-desc-hosts": "ሓደ ኣአንጋዲ ጥቕሲ ክመርጽ ከሎ ውጽኢት ኣርኢ።",
   "session-settings-verse-effects-desc-everyone": "ዝኾነ ሰብ ጥቕሲ ክመርጽ ከሎ ውጽኢት ኣርእዩ።",
   "session-settings-verse-effects-desc-none": "ውጽኢት ምምራጽ ጥቕሲ ንኹሉ ሰብ ተዓጽዩ ኣሎ።",
-
   "account": "ኣካውንት",
   "scroll-filters-start": "ፍልትራት ናብ ምጅማር ገጹ ስክሮል ግበሩ",
-  "scroll-filters-end": "ፍልትራት ናብ መወዳእታ ገጹ ስክሮል ግበሩ"
+  "scroll-filters-end": "ፍልትራት ናብ መወዳእታ ገጹ ስክሮል ግበሩ",
+  "download": "ምውራድ",
+  "image-details-uploaded": "ተሰቒሉ ኣሎ።",
+  "image-details-dimensions": "መለክዒታት",
+  "image-details-dimensions-value": "{{width}} × {{height}} px",
+  "image-details-type": "ዓይነት",
+  "image-details-cover-of": "ሽፋን ናይ...",
+  "image-details-not-a-cover": "ከም መሸፈኒ ዘይጥቀመሉ",
+  "delete-customization-confirm-title": "Custom Branding ምድምሳስ?",
+  "delete-customization-confirm-message": "ብሕታዊ ምልክት ምድምሳስ \" {{name}} \"? እዚ ክምለስ ኣይክእልን እዩ።",
+  "delete-customization-failed": "ነቲ Custom Branding ክድምስሶ ኣይከኣለን።",
+  "delete-variant-confirm-title": "ቴማ ምድምሳስ?",
+  "delete-variant-confirm-message": "ቴማ \" {{name}} \" ምድምሳስ? እዚ ክምለስ ኣይክእልን እዩ።",
+  "delete-variant-confirm-message-unnamed": "ነዚ ቴማ ምድምሳስ? እዚ ክምለስ ኣይክእልን እዩ።",
+  "delete-variant-failed": "ቴማ ክድምስሶ ኣይከኣለን።",
+  "delete-highlight-confirm-title": "ምድምሳስ ድምቀት?",
+  "delete-highlight-confirm-message": "ኣብ {{reference}} ዘሎ ድምቀት ደምስሶ ? እዚ ክምለስ ኣይክእልን እዩ።",
+  "delete-highlight-failed": "ነቲ ድምቀት ክድምስሶ ኣይከኣለን።",
+  "delete-annotation-on-confirm-message": "ኣብ {{reference}} ዘሎ መግለጺ ምድምሳስ ? እዚ ክምለስ ኣይክእልን እዩ።",
+  "remove-from-folder": "ካብ ማህደር ኣውጽእዎ።",
+  "save-folders": "ኣብ {{folders}}",
+  "delete-save-confirm-title": "ምድምሳስ ምዕቃብ?",
+  "delete-save-confirm-message": "ምድምሳስ ምዕቃብ ን {{reference}} ? እዚ ክምለስ ኣይክእልን እዩ።",
+  "delete-save-confirm-message-folders": "Save for {{reference}} ካብ {{folders}} ምድምሳስ ? እዚ ክምለስ ኣይክእልን እዩ።",
+  "delete-save-failed": "ነቲ ዝተዓቀበ ክድምስሶ ኣይከኣለን።",
+  "delete-save-folder-confirm-title": "ፎልደር ምድምሳስ?",
+  "delete-save-folder-confirm-message": "\" {{name}} \" ዝብል ኣቃፊራ ምድምሳስ?",
+  "delete-save-folder-confirm-deletes": "እቶም ኣብዚ ማህደር ጥራይ ዘለዉ {{count}} saves እውን ክስረዙ እዮም።",
+  "delete-save-folder-confirm-deletes_one": "ኣብዚ ፎልደር ጥራይ ዘሎ save ውን ክስረዝ እዩ።",
+  "delete-save-folder-confirm-deletes_other": "እቶም ኣብዚ ማህደር ጥራይ ዘለዉ {{count}} saves እውን ክስረዙ እዮም።",
+  "delete-save-folder-confirm-keeps": "እቶም ኣብ ካልኦት ኣቃፊራታት እውን ዘለዉ {{count}} saves ኣብኡ ክጸንሑ እዮም።",
+  "delete-save-folder-confirm-keeps_one": "እቲ ኣብ ካልእ ፎልደር እውን ዘሎ save ኣብኡ ክጸንሕ እዩ።",
+  "delete-save-folder-confirm-keeps_other": "እቶም ኣብ ካልኦት ኣቃፊራታት እውን ዘለዉ {{count}} saves ኣብኡ ክጸንሑ እዮም።",
+  "cant-be-undone": "እዚ ክምለስ ኣይክእልን እዩ።",
+  "delete-save-folder-failed": "ነቲ ማህደር ክድምስሶ ኣይከኣለን።",
+  "download-image-failed": "ምስሊ ከውርድ ኣይከኣለን።",
+  "session-settings-verse-effects-hosts-only": "ኣአንገድቲ ጥራይ",
+  "session-settings-verse-effects-everyone": "ኩሉሰብ",
+  "session-settings-verse-effects-none": "ዋላ ሓደ",
+  "loading-books": "መጽሓፍቲ ኣብ ምጽዓን...",
+  "books-load-failed": "እቶም መጻሕፍቲ ክጽዕኑ ኣይከኣሉን። ርክብካ መርምር እሞ እንደገና ፈትን።",
+  "loading-translation": "{{name}} ይጽዕን ኣሎ ...",
+  "translation-load-failed": "{{name}} ክጽዓን ኣይከኣለን።",
+  "loading-translations": "ትርጉማት ኣብ ምጽዓን...",
+  "translations-load-failed": "ምሉእ ዝርዝር ትርጉማት ክጽዕን ስለዘይከኣለ፡ ገሊኡ ክጎድል ይኽእል እዩ።",
+  "verse-of-the-day": "ጥቕሲ ናይቲ መዓልቲ",
+  "verse-of-the-day-loading": "ጥቕሲ ናይቲ መዓልቲ ኣብ ምጽዓን...",
+  "delete-bookmark-confirm-title": "ዕልባት ምድምሳስ?",
+  "delete-bookmark-confirm-message": "\" {{name}} \" ምድምሳስ?",
+  "scripture-font": "ቅዱሳት መጻሕፍቲ ቅርጺ",
+  "ai-limits-title": "ቅድሚ ምስ AI ምዝርራብካ",
+  "ai-limits-intro": "AI ሓጋዚ መበገሲ ክኸውን ይኽእል እዩ፣ ግን ደረቱ ኣብ ግምት ኣእትው፤",
+  "ai-limits-mistakes": "ጌጋታት ይገብር፣ ጌጋ ኣብ ዝኾነሉ እዋን ድማ ርእሰ ተኣማንነት ዘለዎ ክስማዕ ይኽእል።",
+  "ai-limits-agreeable": "ክትሰምዖ እትደሊ ክነግረካ ዝፍትን ኮይኑ፡ ናብ ህቡብ መልስታት ይጽጋዕ።",
+  "ai-limits-scripture": "ዘተኣማምን ምንጪ ኣይኮነን። እንታይ ከም ዝብል ኣንጻር ቅዱሳት መጻሕፍቲ መርምሩ።",
+  "ai-limits-study": "መጽሓፍ ቅዱስ ንባዕልኻ ኣጽንዕ፡ AI ድማ ኣተሓሳስባኻ ክገብረልካ ኣይትፍቀደሉ።",
+  "ai-limits-confirm": "AI ክጋገ ከም ዝኽእልን ንባዕለይ መጽሓፍ ቅዱስ ምጽናዕ መተካእታ ከም ዘይኮነን ይርዳኣኒ።",
+  "friends-playlists-filter": "ናይ ፈተውቲ ዝርዝር ደርፍታት",
+  "friend-link-social-title": "{{name}} ከም ዓርኪ ወስኸሉ።",
+  "friend-link-meta-description": "{{name}} ኣብ {{brand}} ዓርክኻ ክኸውን ይደሊ።",
+  "friend-link-title": "{{name}} ከም ዓርኪ ኣብ {{brand}} ወስኽ።"
 }

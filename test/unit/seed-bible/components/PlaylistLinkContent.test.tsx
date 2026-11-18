@@ -2,9 +2,9 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { PlaylistLinkContent } from "@packages/seed-bible/seed-bible/components/PlaylistLinkContent/PlaylistLinkContent";
 
-vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const { mockI18nManager } = await import("../testUtils/mockI18n");
-  return mockI18nManager();
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nContext", async () => {
+  const { mockI18nContext } = await import("../testUtils/mockI18n");
+  return mockI18nContext();
 });
 
 describe("PlaylistLinkContent", () => {

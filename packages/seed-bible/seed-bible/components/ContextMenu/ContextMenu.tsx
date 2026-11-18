@@ -1,8 +1,11 @@
 import "./ContextMenu.css";
 import { signal, useSignal } from "@preact/signals";
 import {
+  type ComponentChild,
   type ComponentChildren,
   type ComponentProps,
+  type JSX,
+  type Ref,
   type Signalish,
 } from "preact";
 import type { MutableRef } from "preact/hooks";
@@ -13,6 +16,11 @@ import {
 
 import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import { createPortal } from "preact/compat";
+import {
+  IconButton,
+  type IconButtonLook,
+  type IconButtonSize,
+} from "../IconButton/IconButton";
 
 /** Gap between the anchor and the menu, in px (matches the old 0.375rem). */
 const MENU_GAP_PX = 6;
@@ -118,25 +126,66 @@ export function ContextMenuItem({
   );
 }
 
+/**
+ * What a menu's own button needs so it opens the menu: spread it onto a
+ * `Button` (which takes `buttonRef`), or onto a `<button>` with
+ * `ref={buttonRef}`.
+ */
+export type ContextMenuTriggerProps = {
+  buttonRef: Ref<HTMLButtonElement>;
+  className: string;
+  disabled?: boolean;
+  "aria-haspopup": "menu";
+  "aria-expanded": boolean;
+  onClick: (event: JSX.TargetedMouseEvent<HTMLButtonElement>) => void;
+  onKeyDown: (event: JSX.TargetedKeyboardEvent<HTMLButtonElement>) => void;
+};
+
+export type ContextMenuWithButtonProps = {
+  children: ComponentChildren;
+  anchorClassName?: string;
+  menuClassName?: string;
+  /** Extra classes for the button that opens the menu, for placement. */
+  buttonClassName?: string;
+  disabled?: boolean;
+  /** Runs before the menu opens or closes; `preventDefault()` keeps it as it is. */
+  onClick?: (event: JSX.TargetedMouseEvent<HTMLButtonElement>) => void;
+  onKeyDown?: (event: JSX.TargetedKeyboardEvent<HTMLButtonElement>) => void;
+} & (
+  | {
+      /** What the menu is for, for screen readers and the tooltip: "Bookmark options". */
+      label: string;
+      /** A Material Symbols name or an icon element. Defaults to ⋮ (`more_vert`). */
+      icon?: string | ComponentChild;
+      /** IconButton's size; sm (28px) by default, for a row's ⋮. */
+      size?: IconButtonSize;
+      look?: IconButtonLook;
+      trigger?: undefined;
+    }
+  | {
+      /**
+       * Draws the button yourself, for a menu opened from text or a row (a
+       * "+ Create" pill) rather than an icon. Spread the props onto it.
+       */
+      trigger: (props: ContextMenuTriggerProps) => ComponentChild;
+      label?: undefined;
+      icon?: undefined;
+      size?: undefined;
+      look?: undefined;
+    }
+);
+
+/** A menu opened by its own button: an IconButton (⋮ by default), or a button you draw with `trigger`. */
 export function ContextMenuWithButton({
   children,
   anchorClassName,
   buttonClassName,
   menuClassName,
-  iconClassName,
-  className,
+  disabled,
   onClick,
   onKeyDown,
-  icon = "more_vert",
-  ...props
-}: {
-  children: ComponentChildren;
-  anchorClassName?: string;
-  buttonClassName?: string;
-  menuClassName?: string;
-  iconClassName?: string;
-  icon?: string | ComponentChildren;
-} & ComponentProps<"button">) {
+  ...button
+}: ContextMenuWithButtonProps) {
   const menuId = useSignal("");
   const menuStyle = useSignal<ComponentProps<"div">["style"]>(undefined);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -241,56 +290,49 @@ export function ContextMenuWithButton({
 
   const getMenuContainer = () => menuRef.current;
 
-  const iconContent =
-    typeof icon === "string" ? (
-      <span
-        className={joinClassNames(
-          "material-symbols-outlined",
-          "sb-context-more-icon",
-          iconClassName
-        )}
-      >
-        {icon}
-      </span>
-    ) : (
-      icon
-    );
+  const triggerProps: ContextMenuTriggerProps = {
+    buttonRef: triggerRef,
+    // `sb-context-menu-button` styles nothing; it's how code and tests find
+    // the button that opens a menu.
+    className: joinClassNames("sb-context-menu-button", buttonClassName),
+    disabled,
+    "aria-haspopup": "menu",
+    "aria-expanded": currentIsOpen,
+    onClick: (event) => {
+      onClick?.(event);
+      if (event.defaultPrevented) {
+        return;
+      }
+      setIsOpen(!currentIsOpen);
+      event.preventDefault();
+    },
+    onKeyDown: (event) => {
+      onKeyDown?.(event);
+      if (event.defaultPrevented) return;
+      handleMenuTriggerKeyDown(event, {
+        isOpen: currentIsOpen,
+        open: () => setIsOpen(true),
+        getMenuContainer,
+      });
+    },
+  };
 
   return (
     <div
       ref={anchorRef}
       className={joinClassNames("sb-context-menu-anchor", anchorClassName)}
     >
-      <button
-        ref={triggerRef}
-        className={joinClassNames(
-          "sb-context-menu-button",
-          buttonClassName,
-          className
-        )}
-        aria-haspopup="menu"
-        aria-expanded={currentIsOpen}
-        onClick={(event) => {
-          onClick?.(event);
-          if (event.defaultPrevented) {
-            return;
-          }
-          setIsOpen(!currentIsOpen);
-          event.preventDefault();
-        }}
-        onKeyDown={(event) => {
-          onKeyDown?.(event);
-          if (event.defaultPrevented) return;
-          handleMenuTriggerKeyDown(event, {
-            isOpen: currentIsOpen,
-            open: () => setIsOpen(true),
-            getMenuContainer,
-          });
-        }}
-        {...props}
-      >
-        {iconContent}
-      </button>
+      {button.trigger ? (
+        button.trigger(triggerProps)
+      ) : (
+        <IconButton
+          {...triggerProps}
+          icon={button.icon ?? "more_vert"}
+          label={button.label}
+          size={button.size ?? "sm"}
+          look={button.look}
+        />
+      )}
       {currentIsOpen &&
         createPortal(
           <ContextMenu

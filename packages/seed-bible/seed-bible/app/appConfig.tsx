@@ -55,6 +55,15 @@ export interface AppConfig {
   branding?: BrandingConfig;
 
   /**
+   * Origin to put in links meant for other people (share links, invites,
+   * links saved into notes), e.g. "https://seedbible.org". Absent on the
+   * website, whose own origin already works for everyone. Set by the native
+   * app build, whose own origin (`https://localhost`, `capacitor://localhost`)
+   * only exists on that device. See `app/publicLinks.ts`.
+   */
+  publicOrigin?: string;
+
+  /**
    * The exact request path (including deployment prefix and query string)
    * the SSR `render()` call that produced this HTML was invoked with — i.e.
    * `RenderOptions.path` in `entry-ssr.tsx`. The client's hydration gate

@@ -25,4 +25,13 @@ describe("playlistItemIcon", () => {
     };
     expect(playlistItemIcon(item)).toBe("notes");
   });
+
+  it("returns the question mark icon for a question", () => {
+    const item: Playlist["items"][number] = {
+      type: "html",
+      html: "<p>Why?</p>",
+      question: {},
+    };
+    expect(playlistItemIcon(item)).toBe("help");
+  });
 });
