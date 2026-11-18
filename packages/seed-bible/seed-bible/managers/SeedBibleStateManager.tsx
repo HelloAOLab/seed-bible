@@ -4338,9 +4338,9 @@ export function createSeedBibleState(
       buildCustomizationTutorialSteps(state, created.defaultVariantId)
     );
   };
-  // Both land in the plans pane, opened the way the Profile card opens it,
-  // and then drill straight into the plan so the user doesn't have
-  // to find it in the list a second time.
+  // All three land in the plans pane, opened the way the Profile card opens
+  // it, and then go straight to what the user picked (a plan, or the editor
+  // on a new one) so they don't have to find it in the list.
   const openReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
     if (!openReadingPlansFromScreen(openYourContent)) {
       return;

@@ -1787,14 +1787,14 @@ describe("YourContentPane", () => {
     ]);
   });
 
-  it("leaves Custom Branding out of the Create menu when signed out", () => {
+  // Both save to the user's account, which a signed-out user doesn't have.
+  it("leaves Reading Plan and Custom Branding out of the Create menu when signed out", () => {
     const { state } = createState({ userId: null });
     renderPane(state);
     openCreateMenu();
 
     expect(menuItems().map((item) => item.textContent)).toEqual([
       "queue_musicPlaylist",
-      "menu_bookReading Plan",
     ]);
   });
 
