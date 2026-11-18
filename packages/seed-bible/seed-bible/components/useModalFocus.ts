@@ -51,7 +51,9 @@ function focusEdge(container: HTMLElement, last: boolean): void {
 }
 
 function handleLayerKeyDown(layer: Layer, event: KeyboardEvent): void {
-  if (event.defaultPrevented) return;
+  // A key that's part of typing with an input method (Japanese, Chinese,
+  // Korean): Escape there cancels the word being composed, not the window.
+  if (event.defaultPrevented || event.isComposing) return;
   const current = top();
   const container = current && containerOf(current);
   if (!current || !container) return;

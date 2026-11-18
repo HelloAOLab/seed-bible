@@ -103,6 +103,25 @@ describe("useModalLayer", () => {
     expect(closePanel).not.toHaveBeenCalled();
   });
 
+  it("leaves alone an Escape that cancels a word being composed", () => {
+    const closeDialog = vi.fn();
+    open(upper, <Layer name="Dialog" onEscape={closeDialog} />);
+    button("Dialog first").focus();
+
+    act(() => {
+      document.activeElement!.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Escape",
+          isComposing: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(closeDialog).not.toHaveBeenCalled();
+  });
+
   it("wraps Tab inside the top layer", () => {
     open(upper, <Layer name="Dialog" />);
     button("Dialog last").focus();
