@@ -1170,6 +1170,37 @@ describe("Find the Verse", () => {
     ).not.toBeNull();
   });
 
+  it.each([
+    [
+      "the browser refuses the copy",
+      () => {
+        stubClipboard().mockRejectedValue(new Error("NotAllowedError"));
+      },
+    ],
+    ["the page has no clipboard (plain http)", () => undefined],
+  ])(
+    "shares a game but says the link wasn't copied when %s",
+    async (_, setUpClipboard) => {
+      setUpClipboard();
+      await act(async () => {
+        install([sharingGame("g", "Youth group", false)]);
+        await Promise.resolve();
+      });
+      await openPane();
+
+      await openMenuOf(cardNamed("Youth group"));
+      await clickMenuItem("Share");
+
+      expect(recordData.mock.calls.at(-1)?.[3]).toEqual({
+        marker: PUBLIC_GAME_MARKER,
+      });
+      expect(
+        cardNamed("Youth group").querySelector(".ftv-shared-label")
+      ).not.toBeNull();
+      expect(toasts).toEqual(["Couldn't copy the link"]);
+    }
+  );
+
   it("shares a link to the public site from the native apps", async () => {
     startUrl = "capacitor://localhost/";
     publicOrigin = "https://seedbible.org";
