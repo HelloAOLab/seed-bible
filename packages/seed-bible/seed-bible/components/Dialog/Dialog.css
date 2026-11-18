@@ -4,8 +4,11 @@
 .sb-dialog-backdrop {
   position: fixed;
   inset: 0;
-  /* Level with a modal sheet, so whichever opened last is on top. */
-  z-index: calc(var(--sb-layer-modal) + 1);
+  /* Level with a modal sheet, so whichever is later on the page is on top;
+   * windows that go to the end of <body> get there in the order they open.
+   * One drawn in place inside the app sets --sb-dialog-layer to stay above
+   * them. */
+  z-index: var(--sb-dialog-layer, calc(var(--sb-layer-modal) + 1));
   display: flex;
   align-items: center;
   justify-content: center;

@@ -87,7 +87,12 @@ export function TermsOfServiceModal({
   return (
     // Drawn in place, not at the end of <body>: a `?terms=open` link has
     // the server draw it, and the first render here has to match that.
-    <Dialog title={title} onClose={onClose} portal={false}>
+    <Dialog
+      className="sb-legal-dialog"
+      title={title}
+      onClose={onClose}
+      portal={false}
+    >
       <div
         className="sb-tos-content"
         dangerouslySetInnerHTML={{

@@ -1,3 +1,4 @@
+import "../TermsOfServiceModal/TermsOfServiceModal.css";
 import { useEffect } from "preact/hooks";
 import { signal } from "@preact/signals";
 import type { i18n as I18nInstance } from "i18next";
@@ -86,7 +87,12 @@ export function CodeOfConductModal({
   return (
     // Drawn in place, not at the end of <body>: a `?conduct=open` link has
     // the server draw it, and the first render here has to match that.
-    <Dialog title={title} onClose={onClose} portal={false}>
+    <Dialog
+      className="sb-legal-dialog"
+      title={title}
+      onClose={onClose}
+      portal={false}
+    >
       <div
         className="sb-tos-content"
         dangerouslySetInnerHTML={{

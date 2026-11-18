@@ -4,6 +4,13 @@
   --sb-dialog-width: min(26.25rem, 100%);
 }
 
+/* Drawn in place inside the app, so on the dialogs' own level it would sit
+   under any window opened at the end of <body>, even one opened before it
+   (when a session ends with a window open). */
+.sb-dialog-backdrop:has(> .sb-login-modal) {
+  --sb-dialog-layer: calc(var(--sb-layer-modal) + 2);
+}
+
 .sb-login-modal-body {
   display: flex;
   flex-direction: column;
