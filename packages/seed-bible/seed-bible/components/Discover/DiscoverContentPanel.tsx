@@ -906,7 +906,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
             friends={state.friends}
             playlists={state.playlists}
             modals={state.modals}
-            toast={state.app.toast}
+            app={state.app}
           />
         )}
 
