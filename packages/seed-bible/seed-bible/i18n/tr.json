@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Kopyalanan çeviri paylaşım bağlantısı",
   "less": "Az",
   "swipe-up-more": "Daha fazlasını görmek için yukarı kaydırın.",
-  "plans": "Planlar",
   "reading-plans": "Okuma planları",
   "create-reading-plan": "Okuma planı oluşturun",
   "reading-plans-empty": "Henüz bir okuma planınız yok. Başlamak için bir tane oluşturun.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Çeviriler yükleniyor…",
   "translations-load-failed": "Çevirilerin tam listesi yüklenemedi, bu nedenle bazıları eksik olabilir.",
   "verse-of-the-day": "GÜNÜN AYETİ",
-  "verse-of-the-day-loading": "Günün ayeti yükleniyor…"
+  "verse-of-the-day-loading": "Günün ayeti yükleniyor…",
+  "delete-bookmark-confirm-title": "Yer işaretini silmek mi istiyorsunuz?",
+  "delete-bookmark-confirm-message": "\" {{name}} \" silinsin mi?",
+  "scripture-font": "Kutsal Yazı Tipi",
+  "ai-limits-title": "Yapay zekayla sohbet etmeden önce",
+  "ai-limits-intro": "Yapay zekâ faydalı bir başlangıç ​​noktası olabilir, ancak sınırlarını da aklınızda bulundurun:",
+  "ai-limits-mistakes": "Hatalar yapar ve yanlış olduğunda kendinden emin bir şekilde konuşabilir.",
+  "ai-limits-agreeable": "Genellikle duymak istediğiniz şeyleri söyler ve popüler cevaplara yönelir.",
+  "ai-limits-scripture": "Güvenilir bir kaynak değil. İçindekileri Kutsal Kitap'la karşılaştırın.",
+  "ai-limits-study": "Kutsal Kitabı kendiniz inceleyin ve yapay zekanın sizin yerinize düşünmesine izin vermeyin.",
+  "ai-limits-confirm": "Yapay zekanın hata yapabileceğini ve Kutsal Kitabı bizzat incelemenin yerini tutamayacağını anlıyorum.",
+  "friends-playlists-filter": "Arkadaşların çalma listeleri",
+  "friend-link-social-title": "{{name}} i arkadaş olarak ekle",
+  "friend-link-meta-description": "{{name}} {{brand}} 'da senin arkadaşın olmak istiyor.",
+  "friend-link-title": "{{ {{brand}} {{name}} }}'i arkadaş olarak ekleyin"
 }

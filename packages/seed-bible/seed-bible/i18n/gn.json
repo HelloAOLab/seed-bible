@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Ojekopia traducción compartir enlace",
   "less": "Mbovy",
   "swipe-up-more": "Emoinge yvate gotyo rehecha hag̃ua hetave mba’e",
-  "plans": "Umi plan rehegua",
   "reading-plans": "Umi plan de lectura rehegua",
   "create-reading-plan": "Ojapo plan de lectura rehegua",
   "reading-plans-empty": "Ndereguerekói gueteri mba'eveichagua plan de lectura. Ejapo peteĩ reñepyrũ hag̃ua.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Ojekarga umi ñe'ẽasa...",
   "translations-load-failed": "Ndaikatúi ojekarga pe lista completa umi traduksión rehegua, upévare ikatu oĩ ofaltáva.",
   "verse-of-the-day": "VERSIÓN DEL DÍA rehegua",
-  "verse-of-the-day-loading": "Ojekargávo pe versículo ára rehegua..."
+  "verse-of-the-day-loading": "Ojekargávo pe versículo ára rehegua...",
+  "delete-bookmark-confirm-title": "¿Embogue pe marcador?",
+  "delete-bookmark-confirm-message": "¿Ombogue \" {{name}} \"?",
+  "scripture-font": "Escritura Fuente",
+  "ai-limits-title": "Reñemongeta mboyve AI ndive",
+  "ai-limits-intro": "AI ikatu ha’e peteĩ punto ñepyrũrã oipytyvõva, ha katu eñongatu ne akãme umi límite orekóva:",
+  "ai-limits-mistakes": "Ojavy, ha ikatu ipu ojeroviaha ivaíramo.",
+  "ai-limits-agreeable": "Omombe’u jepi ndéve pe rehenduséva, ha oñeinclina umi respuesta popular gotyo.",
+  "ai-limits-scripture": "Ndaha’éi peteĩ fuente ojeroviakuaáva. Ejesareko mba’épa he’i Escritura-kuéra rehe.",
+  "ai-limits-study": "Estudia la Biblia ndete voi, ha ani reheja AI ojapo nderehehápe ne pensamiénto.",
+  "ai-limits-confirm": "Añetehápe AI ikatuha ojavy ha ndahaʼeiha peteĩ sustituto astudia hag̃ua la Biblia che voi.",
+  "friends-playlists-filter": "Angirûnguéra lista de reproducción",
+  "friend-link-social-title": "Emoĩ {{name}} angirũramo",
+  "friend-link-meta-description": "{{name}} ha’ese ne angirũ {{brand}} pe.",
+  "friend-link-title": "Emoĩ {{name}} angirũramo {{brand}} pe."
 }

@@ -37,6 +37,8 @@ import { ReadingPlanDetail } from "./ReadingPlanDetail";
 import { ReadingPlanOptionsMenu } from "./ReadingPlanOptionsMenu";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 interface ReadingPlansPaneProps {
   readingPlans: ReadingPlansManager;
@@ -76,6 +78,11 @@ interface ReadingPlansPaneProps {
   toast?: (message: string) => void;
   /** Lets a plan's Share open the share sheet rather than only copy its link. */
   app?: AppState;
+  /**
+   * Returns to the screen that opened the pane, when leaving a plan that screen
+   * opened directly. The same callback the header's back button gets.
+   */
+  onBack?: () => void;
 }
 
 type ReadingPlansView = "list" | "edit" | "detail";
@@ -232,15 +239,21 @@ export async function openReadingPlanEditor(
 }
 
 /**
- * Opens the editor on a new plan. An in-flight draft is resumed rather than
+ * Opens the editor on a new plan. An in-flight new plan is resumed rather than
  * thrown away — the user may have stepped out of the editor to go read and add
- * a passage from the verse toolbar.
+ * a passage from the verse toolbar. An edit to a published plan is not: the
+ * user asked for a new plan, and the published copy is untouched until saved.
+ *
+ * Exported for the same reason as {@link openReadingPlanDetail}.
  */
-function openPlanCreate(readingPlans: ReadingPlansManager) {
-  if (!readingPlans.editingReadingPlan.peek()) {
+export function openPlanCreate(
+  readingPlans: ReadingPlansManager,
+  options: OpenPlanOptions = {}
+) {
+  if (!readingPlans.editingReadingPlan.peek()?.isNew) {
     readingPlans.startEditingReadingPlan();
   }
-  readingPlansView.value = "edit";
+  showPlan("edit", options);
 }
 
 /**
@@ -256,6 +269,19 @@ function backToPlansList(readingPlans: ReadingPlansManager) {
     void readingPlans.selectReadingPlanProgress(null);
   }
   showPlansList();
+}
+
+/**
+ * Leaves a plan or the editor through `leave`, which shows the list. When
+ * another screen opened the pane straight onto that plan, the user never saw
+ * the list, so `onBack` then takes them back to that screen instead.
+ */
+function leavePlan(onBack: (() => void) | undefined, leave: () => void) {
+  const leavesPane = !!onBack && planBackLeavesPane.peek();
+  leave();
+  if (leavesPane) {
+    onBack();
+  }
 }
 
 /**
@@ -316,22 +342,18 @@ export function ReadingPlansPaneLeading(props: {
     return null;
   }
   return (
-    <button
-      type="button"
-      className="sb-pane-header-button sb-rp-pane-back"
+    <IconButton
+      className="sb-rp-pane-back"
+      icon="arrow_back"
+      label={t("back", { defaultValue: "Back" })}
       onClick={() => {
-        if (!onList) {
-          backToPlansList(readingPlans);
-        }
-        if (leavesPane) {
-          onBack();
+        if (onList) {
+          onBack?.();
+        } else {
+          leavePlan(onBack, () => backToPlansList(readingPlans));
         }
       }}
-      aria-label={t("back", { defaultValue: "Back" })}
-      title={t("back", { defaultValue: "Back" })}
-    >
-      <MaterialIcon>arrow_back</MaterialIcon>
-    </button>
+    />
   );
 }
 
@@ -344,8 +366,11 @@ export function ReadingPlansPaneActions(props: {
     return null;
   }
   return (
-    <button
-      type="button"
+    <Button
+      variant="primary"
+      size="sm"
+      shape="pill"
+      icon="add"
       className="sb-reading-plans-create"
       onClick={() => openPlanCreate(props.readingPlans)}
       aria-label={t("create-reading-plan", {
@@ -353,8 +378,8 @@ export function ReadingPlansPaneActions(props: {
       })}
       title={t("create-reading-plan", { defaultValue: "Create reading plan" })}
     >
-      + {t("create-menu", { defaultValue: "Create" })}
-    </button>
+      {t("create-menu", { defaultValue: "Create" })}
+    </Button>
   );
 }
 
@@ -378,6 +403,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
     onPlayReadings,
     toast,
     app,
+    onBack,
   } = props;
   // The view outlives this component, so closing the pane to go read and add a
   // passage brings the user back to the editor they were in, not to the list.
@@ -415,8 +441,8 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
         os={os}
         login={login}
         gallery={gallery}
-        onCancel={() => backToPlansList(readingPlans)}
-        onSaved={closeEditor}
+        onCancel={() => leavePlan(onBack, () => backToPlansList(readingPlans))}
+        onSaved={() => leavePlan(onBack, closeEditor)}
       />
     );
   }
@@ -695,11 +721,11 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                           </span>
                         </span>
                       </button>
-                      <button
-                        type="button"
-                        className={`sb-rp-restart${
-                          confirming ? " sb-rp-restart-danger" : ""
-                        }`}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        tone={confirming ? "danger" : "neutral"}
+                        className="sb-rp-restart"
                         onClick={() => {
                           if (!confirming) {
                             setConfirmDeleteId(planId);
@@ -716,7 +742,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                           : t("reading-plan-discard-draft", {
                               defaultValue: "Discard",
                             })}
-                      </button>
+                      </Button>
                     </div>
                   );
                 })}
@@ -857,15 +883,16 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                             </span>
                           </span>
                         </button>
-                        <button
-                          type="button"
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="sb-rp-restart"
                           onClick={() => onRestart(row.meta)}
                         >
                           {t("reading-plan-restart", {
                             defaultValue: "Restart",
                           })}
-                        </button>
+                        </Button>
                         {optionsMenu(row)}
                       </div>
                       <PlanLoadError planId={row.planId} />

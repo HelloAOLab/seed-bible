@@ -1,5 +1,6 @@
 import {
   defineExtension,
+  type SandboxChapter,
   type SandboxContext,
 } from "@packages/seed-bible/seed-bible/extensions";
 import { createTestHost } from "@packages/seed-bible/seed-bible/extensions/testing";
@@ -189,13 +190,19 @@ describe("createTestHost", () => {
       message: expect.stringContaining("answers"),
     });
 
+    const chapter: SandboxChapter = {
+      translationId: "BSB",
+      bookId: "JHN",
+      chapter: 1,
+      verses: [{ number: 1, text: "Hi" }],
+      content: [{ type: "verse", number: 1, text: "Hi", footnotes: [] }],
+      footnotes: [],
+      next: { bookId: "JHN", chapter: 2 },
+      previous: null,
+    };
     const answered = await start(
       defineExtension({ main: (s) => void (sb = s) }),
-      {
-        answers: {
-          "bible.chapter": () => ({ verses: [{ number: 1, text: "Hi" }] }),
-        },
-      }
+      { answers: { "bible.chapter": () => chapter } }
     );
     await answered.ready;
     expect(
@@ -204,7 +211,7 @@ describe("createTestHost", () => {
         bookId: "JHN",
         chapter: 1,
       })
-    ).toEqual({ verses: [{ number: 1, text: "Hi" }] });
+    ).toEqual(chapter);
     expect(answered.calls.map((call) => call.method)).toEqual([
       "bible.chapter",
     ]);

@@ -7,13 +7,13 @@
   height: 1.625rem;
   padding: 0;
   border: none;
-  border-radius: 62.4375rem;
+  border-radius: var(--sb-radius-full);
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--sb-duration-fast) ease,
+    color var(--sb-duration-fast) ease;
 }
 
 .sb-search-clear-button:hover {

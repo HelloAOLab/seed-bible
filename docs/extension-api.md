@@ -101,9 +101,11 @@ Each view component receives:
 | `surface` | `"pane"` \| `"modal"` \| `"settings"` | Where it's being shown.                                                |
 | `paneId`  | `string`                              | The pane's id (for a dialog or settings panel, an id for that).        |
 
-**Theme, fonts and language are applied for you.** Each frame's `<html>` gets the user's `lang` and `dir`, the app's fonts are loaded, and every `--sb-*` CSS variable of the active theme is defined, so `color: var(--sb-font-color)` and `background: var(--sb-background)` match the app and follow it when the user switches to dark mode. The page background and text color are already set this way.
+**Theme, fonts and language are applied for you.** Each frame's `<html>` gets the user's `lang` and `dir`, the app's fonts are loaded, and every `--sb-*` CSS variable of the active theme is defined, so `color: var(--sb-font-color)` and `background: var(--sb-background)` match the app and follow it when the user switches to dark mode. The page background and text color are already set this way, and your own CSS can override them.
 
-**Styles must be in your bundle**, as inline `style` props or CSS imported with `?inline` and put in a `<style>` element. The frame can't load a separate stylesheet file.
+**Import CSS as usual.** The frame can't load a separate stylesheet file, so `seed-bible-extension-scripts` puts every CSS file your code imports (`import "./panel.css"`) inside the bundle, and adds it to the frame's page before your code runs. Inline `style` props work too.
+
+**Seed Bible's shared components bring their own styles.** Import them from `seed-bible/components` (`Button`, `CloseButton`, `BottomSheet` and the rest) and they look the way they do in the app, in the user's theme.
 
 ```tsx
 export default defineExtension({
@@ -121,7 +123,9 @@ export default defineExtension({
     });
   },
   views: {
-    hello: ({ sb }) => <p>{sb.i18n.t("greeting", "Hello!")}</p>,
+    hello: ({ sb }) => (
+      <p>{sb.i18n.t("greeting", { defaultValue: "Hello!" })}</p>
+    ),
   },
 });
 ```
@@ -167,23 +171,53 @@ When the user turns an optional permission off in Settings, your extension is re
 
 ### `sb.i18n`
 
-Your extension's own translations, from the `translations` section of `extension.json`.
+Translations, through [i18next](https://www.i18next.com), the translator Seed Bible itself uses. `t` is i18next's own `t`, so [its documentation](https://www.i18next.com/translation-function/essentials) applies as it stands. The one difference: it reads your extension's strings unless you name another set.
 
 ```ts
 i18n: {
   language: ReadonlySignal<string>;           // e.g. "en", "es"
   direction: ReadonlySignal<"ltr" | "rtl">;
-  t(key: string, defaultValue?: string, values?: Record<string, string | number>): string;
+  t(key: string, options?: Record<string, unknown>): string;
 };
 ```
 
-`t` looks `key` up in the strings for the current language, falls back to `en`, then to `defaultValue`, then to the key itself. It fills `{{name}}` placeholders from `values`:
+**Your own strings** come from the `translations` section of `extension.json`. `t` looks `key` up in the current language, falls back to `en`, then to `defaultValue`, then to the key itself. The other options fill in `{{name}}` placeholders:
 
 ```ts
-sb.i18n.t("verses-found", "Found {{count}} verses", { count: 3 });
+sb.i18n.t("verses-found", { defaultValue: "Found {{count}} verses", count: 3 });
 ```
 
-`t` is synchronous and reads the current language each time, so calling it inside a component re-renders it in the new language when the user switches.
+**Plurals.** With a `count`, a `key_one` or `key_other` string wins over `key`, picked by the language's rules:
+
+```json
+"verses-found_one": "Found {{count}} verse",
+"verses-found_other": "Found {{count}} verses"
+```
+
+**Seed Bible's own strings** are the `seed-bible` set, so a button can say "Close" the way the app does, in every language the app has:
+
+```ts
+sb.i18n.t("close", { ns: "seed-bible", defaultValue: "Close" });
+```
+
+Always pass `defaultValue` for these. Seed Bible's keys aren't part of this API: one can be renamed or removed, and your extension then shows `defaultValue` instead of the bare key. The two sets never mix: without `ns`, `t` only reads your strings, even when a key exists only in Seed Bible's.
+
+**In a view**, the `useI18n` hook gives the same `t`: `useI18n(sb.extensionId)` for your strings, and `useI18n()` for Seed Bible's. Seed Bible's shared components use the same hook, so they show the user's language too.
+
+```tsx
+import { useI18n, type SandboxViewProps } from "seed-bible/extensions";
+
+function Toolbar({ sb }: SandboxViewProps) {
+  const { t } = useI18n(sb.extensionId);
+  return <p>{t("verses-found", { count: 3 })}</p>;
+}
+```
+
+`t` reads the current language each time, so calling it inside a component re-renders it in the new language when the user switches.
+
+An older form, `sb.i18n.t(key, "Default text", values)`, still works, for extensions written before `t` became i18next's. The hook's `t` only takes the options form.
+
+**Keys can't contain `:`.** The translator reads `a:b` as the key `b` in a set of strings named `a`, so the string is never found. A `.` is fine. Inside a string, `$t(other-key)` is replaced with that key's text.
 
 ### `sb.app`
 
@@ -397,16 +431,75 @@ reading: {
 
 ### `sb.bible`
 
-Public Bible text. No permission needed.
+Public Bible text, commentaries and datasets from the [Free Use Bible API](https://bible.helloao.org). No permission needed.
 
 ```ts
 bible: {
+  // Translations
+  translations(): Promise<SandboxTranslation[]>;
+  books(ref: { translationId: string }):
+    Promise<{ translation: SandboxTranslation; books: SandboxBook[] }>;
   chapter(ref: { translationId: string; bookId: string; chapter: number }):
-    Promise<{ verses: { number: number; text: string }[] }>;
+    Promise<SandboxChapter>;
+
+  // Search
+  search(query: SandboxSearchQuery): Promise<SandboxSearchResults>;
+
+  // Commentaries
+  commentaries(): Promise<SandboxCommentary[]>;
+  commentaryBooks(ref: { commentaryId: string }):
+    Promise<{ commentary: SandboxCommentary; books: SandboxCommentaryBook[] }>;
+  commentaryChapter(ref: { commentaryId: string; bookId: string; chapter: number }):
+    Promise<SandboxCommentaryChapter>;
+  commentaryProfiles(ref: { commentaryId: string }): Promise<SandboxCommentaryProfile[]>;
+  commentaryProfile(ref: { commentaryId: string; profileId: string }):
+    Promise<SandboxCommentaryProfile & { content: string[] }>;
+
+  // Datasets, such as cross-references
+  datasets(): Promise<SandboxDataset[]>;
+  datasetBooks(ref: { datasetId: string }):
+    Promise<{ dataset: SandboxDataset; books: SandboxDatasetBook[] }>;
+  datasetChapter(ref: { datasetId: string; bookId: string; chapter: number }):
+    Promise<SandboxDatasetChapter>;
 };
 ```
 
-Returns each verse of the chapter as plain text. Only verses are included, not section headings. Rejects with `unavailable` if the chapter can't be loaded (an unknown translation, or a book that translation doesn't have).
+**Translations.** `translations()` lists every translation the user can pick from. `books()` lists a translation's books in its own order, and `chapter()` loads one chapter:
+
+- `verses` is each verse as plain text, without headings. Use it when you only need the words.
+- `content` is the chapter in reading order: `heading`, `lineBreak` (a paragraph or stanza break), `hebrewSubtitle` (a psalm's superscription) and `verse` pieces. Use it to lay the chapter out. Each verse and subtitle lists the ids of its `footnotes`, so you know where to put each footnote's mark.
+- `next` and `previous` are the chapters either side, crossing into the next or previous book (`{ bookId: "EXO", chapter: 1 }` after Genesis 50). They're null at either end of the Bible.
+
+```ts
+const { books } = await sb.bible.books({ translationId: "BSB" });
+const ref = { bookId: books[0].id, chapter: books[0].firstChapterNumber };
+const chapter = await sb.bible.chapter({ translationId: "BSB", ...ref });
+// Read on: chapter.next is where the next call goes.
+```
+
+**Search.** `search()` finds verses in one translation, by words (`"living water"`) or by reference (`"John 4:10"`), best match first. Narrow it to a book with `bookId`, and to one chapter of that book with `chapter`. Results come a page at a time: `perPage` (1–50, default 10) to a page, and `page` from 1. `found` is how many verses match in all, so `Math.ceil(found / perPage)` is the number of pages.
+
+```ts
+const { results, found } = await sb.bible.search({
+  translationId: "BSB",
+  query: "living water",
+  bookId: "JHN",
+});
+for (const { reference, text } of results) console.log(reference, text);
+```
+
+An empty query, or a `chapter` without a `bookId`, is refused with `invalid_request`.
+
+**Offline.** Translations the user has downloaded are read from their device, so with no connection:
+
+- `translations()` still answers, with the translations the app already knows about. Each has `downloaded: true` if it can be read now.
+- `books()` and `chapter()` work for downloaded translations, and reject with `unavailable` for anything else.
+- Search runs on Seed Bible's search server, so it rejects with `unavailable`, even for downloaded translations.
+- Commentaries and datasets can't be downloaded, so those calls reject with `unavailable` (unless the same thing was already loaded this session).
+
+**Commentaries** have notes on chapters and verses (`commentaryChapter`), and some have articles about people, places and topics (`commentaryProfiles`, then `commentaryProfile` for one article's paragraphs). **Datasets** are verse-level data; `open-cross-ref` is cross-references. `datasetChapter` lists each verse that has entries, with the passages it points to (each with a relevance `score` when the dataset has one).
+
+Every call rejects with `unavailable` if what it asks for can't be loaded: offline, or an id or chapter that doesn't exist. Ids that can't be ids (`"../x"`) are refused with `invalid_request` before anything is fetched.
 
 ### `sb.history`
 
@@ -751,6 +844,173 @@ interface SandboxPlayback {
 }
 ```
 
+The `sb.bible` types:
+
+```ts
+interface SandboxTranslation {
+  id: string; // "BSB"
+  name: string; // In its own language
+  englishName: string;
+  shortName: string;
+  language: string; // ISO 639-3, like "eng"
+  languageName: string | null;
+  languageEnglishName: string | null;
+  textDirection: "ltr" | "rtl";
+  website: string;
+  licenseUrl: string;
+  licenseNotice: string | null; // Show it with the text when it's set
+  numberOfBooks: number;
+  totalNumberOfChapters: number;
+  totalNumberOfVerses: number;
+  downloaded: boolean; // Readable with no connection
+}
+
+interface SandboxBook {
+  id: string; // "JHN"
+  name: string;
+  commonName: string;
+  title: string | null;
+  order: number;
+  numberOfChapters: number;
+  firstChapterNumber: number;
+  lastChapterNumber: number;
+  totalNumberOfVerses: number;
+  isApocryphal: boolean;
+}
+
+interface SandboxChapterRef {
+  bookId: string;
+  chapter: number;
+}
+
+interface SandboxChapter {
+  translationId: string;
+  bookId: string;
+  chapter: number;
+  verses: { number: number; text: string }[];
+  content: SandboxChapterContent[];
+  footnotes: SandboxFootnote[];
+  next: SandboxChapterRef | null;
+  previous: SandboxChapterRef | null;
+}
+
+type SandboxChapterContent =
+  | { type: "heading"; text: string }
+  | { type: "lineBreak" }
+  | { type: "hebrewSubtitle"; text: string; footnotes: number[] }
+  | { type: "verse"; number: number; text: string; footnotes: number[] };
+
+interface SandboxFootnote {
+  id: number;
+  text: string;
+  caller: string | null; // The mark to show, like "a"; "+" means any
+  verse: number | null;
+}
+
+interface SandboxSearchQuery {
+  translationId: string;
+  query: string; // 1–200 characters
+  bookId?: string;
+  chapter?: number; // Needs bookId
+  page?: number; // From 1
+  perPage?: number; // 1–50, default 10
+}
+
+interface SandboxSearchResults {
+  results: SandboxSearchResult[]; // Best match first
+  found: number; // Matches across every page
+  page: number;
+}
+
+interface SandboxSearchResult {
+  translationId: string;
+  bookId: string;
+  chapter: number;
+  verse: number;
+  text: string;
+  reference: string; // "John 3:16"
+}
+
+interface SandboxCommentary {
+  id: string; // "adam-clarke"
+  name: string;
+  englishName: string;
+  language: string;
+  languageName: string | null;
+  languageEnglishName: string | null;
+  textDirection: "ltr" | "rtl";
+  website: string;
+  licenseUrl: string;
+  numberOfBooks: number;
+  totalNumberOfChapters: number;
+  totalNumberOfVerses: number;
+}
+
+interface SandboxCommentaryBook {
+  id: string;
+  name: string;
+  commonName: string;
+  order: number;
+  introduction: string | null;
+  numberOfChapters: number;
+  firstChapterNumber: number | null;
+  lastChapterNumber: number | null;
+  totalNumberOfVerses: number;
+}
+
+interface SandboxCommentaryChapter {
+  commentaryId: string;
+  bookId: string;
+  chapter: number;
+  introduction: string | null;
+  verses: { number: number; text: string }[];
+  next: SandboxChapterRef | null;
+  previous: SandboxChapterRef | null;
+}
+
+interface SandboxCommentaryProfile {
+  id: string;
+  subject: string;
+  reference: SandboxReference | null;
+}
+
+interface SandboxDataset {
+  id: string; // "open-cross-ref"
+  name: string;
+  englishName: string;
+  language: string;
+  languageName: string | null;
+  languageEnglishName: string | null;
+  textDirection: "ltr" | "rtl";
+  website: string;
+  licenseUrl: string;
+  numberOfBooks: number;
+  totalNumberOfChapters: number;
+  totalNumberOfVerses: number;
+  totalNumberOfReferences: number;
+}
+
+interface SandboxDatasetBook {
+  id: string;
+  order: number;
+  numberOfChapters: number;
+  firstChapterNumber: number;
+  lastChapterNumber: number | null;
+  totalNumberOfVerses: number;
+  totalNumberOfReferences: number;
+}
+
+interface SandboxDatasetChapter {
+  datasetId: string;
+  bookId: string;
+  chapter: number;
+  verses: {
+    verse: number;
+    references: (SandboxReference & { score?: number })[];
+  }[];
+}
+```
+
 ---
 
 ## 5. Errors
@@ -785,7 +1045,9 @@ try {
   await sb.notes.create({ bookId: "JHN", chapter: 3, text: "…" });
 } catch (err) {
   if (err instanceof SandboxError && err.code === "unavailable") {
-    void sb.app.toast(sb.i18n.t("sign-in-to-save", "Sign in to save notes."));
+    void sb.app.toast(
+      sb.i18n.t("sign-in-to-save", { defaultValue: "Sign in to save notes." })
+    );
   } else {
     throw err;
   }
@@ -907,7 +1169,7 @@ The manifest sits at the root of your project. `seed-bible-extension-scripts` va
 | `network`             | Every host your frames may contact (`fetch`, images, media, fonts), as bare hosts like `api.example.com` or `example.com:8443`. Everything else is blocked. Can't be optional.                                                                                                                                                |
 | `settings`            | Settings the user can change on your extension's Settings tab. See below.                                                                                                                                                                                                                                                     |
 | `sensitive`           | Destinations for sensitive settings. See below.                                                                                                                                                                                                                                                                               |
-| `translations`        | Strings by language code. `title` and `description` name your extension in the app; other keys are yours for `sb.i18n.t` and `{ key }` titles. `en` is the fallback.                                                                                                                                                          |
+| `translations`        | Strings by language code. `title` and `description` name your extension in the app; other keys are yours for `sb.i18n.t` and `{ key }` titles, with `_one` and `_other` forms for [plurals](#sbi18n). Keys can't contain `:`. `en` is the fallback.                                                                           |
 
 **A manifest that names a permission this version of Seed Bible doesn't know won't install**, rather than install without it. A sandboxed extension can't declare `dependencies`, and `autoinstall` is ignored: it's never installed without the user being asked.
 
@@ -959,23 +1221,30 @@ function createTestHost(
 
 **`TestHostOptions`:**
 
-| Option          | Default            | What it does                                                                                                          |
-| --------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `granted`       | `[]`               | Permissions granted from the start, as if required by the manifest.                                                   |
-| `optional`      | `[]`               | What the manifest lists under `optionalPermissions`.                                                                  |
-| `allowRequests` | `true`             | How the "user" answers `sb.permissions.request`. `false` declines.                                                    |
-| `state`         | sensible defaults  | The app state frames start with: `position`, `selection`, `language`, `identity`, `session`, `isMobile`, `strings`, … |
-| `settings`      | `{}`               | Values for `sb.settings.get`.                                                                                         |
-| `answers`       | none               | Answers for calls the stand-in doesn't simulate, or replacements for ones it does. See below.                         |
-| `extensionId`   | `"test-extension"` | The value of `sb.extensionId`.                                                                                        |
+| Option            | Default                                  | What it does                                                                                                                          |
+| ----------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `granted`         | `[]`                                     | Permissions granted from the start, as if required by the manifest.                                                                   |
+| `optional`        | `[]`                                     | What the manifest lists under `optionalPermissions`.                                                                                  |
+| `allowRequests`   | `true`                                   | How the "user" answers `sb.permissions.request`. `false` declines.                                                                    |
+| `state`           | sensible defaults                        | The app state frames start with: `position`, `selection`, `language`, `identity`, `session`, `isMobile`, …                            |
+| `translations`    | `state.strings`, for its `language` only | Your strings by language, as in the `translations` section of `extension.json`. Pass `extension.json`'s own to test what users see.   |
+| `appTranslations` | none                                     | Seed Bible's own strings by language, for `ns: "seed-bible"` and shared components. Without them, each call shows its `defaultValue`. |
+| `settings`        | `{}`                                     | Values for `sb.settings.get`.                                                                                                         |
+| `answers`         | none                                     | Answers for calls the stand-in doesn't simulate, or replacements for ones it does. See below.                                         |
+| `extensionId`     | `"test-extension"`                       | The value of `sb.extensionId`.                                                                                                        |
 
 **What the stand-in simulates:** tools, panes and portals, toasts, `sb.reading.open`, storage, settings, the clipboard, Discover and chat provider registration, and permission requests. Everything else (Bible text, highlights, notes, saves, history, profile, friends, audio, devices, modals, sensitive requests) needs an answer in `answers`, keyed by the protocol's method name. Without one, the call fails with a message telling you which method to answer:
 
 ```ts
 const host = await createTestHost(extension, {
   answers: {
-    "bible.chapter": () => ({
-      verses: [{ number: 16, text: "For God so loved…" }],
+    "bible.datasetChapter": () => ({
+      datasetId: "open-cross-ref",
+      bookId: "JHN",
+      chapter: 3,
+      verses: [
+        { verse: 16, references: [{ bookId: "ROM", chapter: 5, verse: 8 }] },
+      ],
     }),
     "highlights.list": () => [{ verse: 16, colorId: "yellow" }],
   },
@@ -987,26 +1256,26 @@ The method name is the `sb` path without the `sb.`: `sb.notes.create` is `"notes
 
 **`TestHost`** records what your extension did and lets you act as the user:
 
-| Member                                                        | What it is                                                                                           |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `ready`                                                       | Settles when `main` has finished; rejects with its error.                                            |
-| `tools`                                                       | Registered tools by id, with their current definition (title, icon, `visible`, `disabled`, `items`). |
-| `panes`                                                       | Open panes and portals by pane id: `{ paneId, view, options }`. `view` is `null` for a portal.       |
-| `toasts`                                                      | Every toast message, in order.                                                                       |
-| `opened`                                                      | Every `sb.reading.open` reference.                                                                   |
-| `storage`                                                     | The extension's storage, as a `Map`.                                                                 |
-| `clipboard`                                                   | Everything copied.                                                                                   |
-| `calls`                                                       | Every call that passed the permission check, as `{ method, params }`.                                |
-| `requests`                                                    | Every permission prompt the user would have seen, with the answer.                                   |
-| `discoverProviders`, `chatProviders`                          | The ids of registered providers.                                                                     |
-| `granted()`                                                   | What's granted now, implied permissions included.                                                    |
-| `selectTool(id, { itemId?, selection? })`                     | Selects a tool (or a submenu item) and waits for its handler.                                        |
-| `setState(partialState)`                                      | Changes the app state, e.g. moves the reader with `{ position }`.                                    |
-| `discover(providerId, request)`                               | Asks a Discover provider for results.                                                                |
-| `chat(providerId, request)`                                   | Asks a chat provider for its reply.                                                                  |
-| `renderView(view, { props?, surface?, paneId?, container? })` | Renders a view into the test's document with its own `sb`; returns the element.                      |
-| `flush()`                                                     | Waits until every message already sent between the extension and the stand-in has arrived.           |
-| `dispose()`                                                   | Closes everything. Call it after each test.                                                          |
+| Member                                                        | What it is                                                                                                                              |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `ready`                                                       | Settles when `main` has finished; rejects with its error.                                                                               |
+| `tools`                                                       | Registered tools by id, with their current definition (title, icon, `visible`, `disabled`, `items`).                                    |
+| `panes`                                                       | Open panes and portals by pane id: `{ paneId, view, options }`. `view` is `null` for a portal.                                          |
+| `toasts`                                                      | Every toast message, in order.                                                                                                          |
+| `opened`                                                      | Every `sb.reading.open` reference.                                                                                                      |
+| `storage`                                                     | The extension's storage, as a `Map`.                                                                                                    |
+| `clipboard`                                                   | Everything copied.                                                                                                                      |
+| `calls`                                                       | Every call that passed the permission check, as `{ method, params }`.                                                                   |
+| `requests`                                                    | Every permission prompt the user would have seen, with the answer.                                                                      |
+| `discoverProviders`, `chatProviders`                          | The ids of registered providers.                                                                                                        |
+| `granted()`                                                   | What's granted now, implied permissions included.                                                                                       |
+| `selectTool(id, { itemId?, selection? })`                     | Selects a tool (or a submenu item) and waits for its handler.                                                                           |
+| `setState(partialState)`                                      | Changes the app state, e.g. moves the reader with `{ position }`. A new `language` also sends that language's strings, as the app does. |
+| `discover(providerId, request)`                               | Asks a Discover provider for results.                                                                                                   |
+| `chat(providerId, request)`                                   | Asks a chat provider for its reply.                                                                                                     |
+| `renderView(view, { props?, surface?, paneId?, container? })` | Renders a view into the test's document with its own `sb`; returns the element.                                                         |
+| `flush()`                                                     | Waits until every message already sent between the extension and the stand-in has arrived.                                              |
+| `dispose()`                                                   | Closes everything. Call it after each test.                                                                                             |
 
 In the stand-in, every call counts as a user interaction, so a test doesn't have to simulate clicks to use calls marked **Needs interaction**.
 

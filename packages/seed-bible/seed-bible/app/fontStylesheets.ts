@@ -14,6 +14,8 @@ export const STATIC_FONT_STYLESHEETS = [
   "https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap",
   // Only reached when someone picks one of these in the font settings.
   "https://fonts.googleapis.com/css2?family=Roboto&family=Open+Sans&family=Playfair+Display&family=Cormorant+Garamond&display=swap",
+  // The playlist editor's; their files are only fetched once it's open.
+  "https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&family=Figtree:wght@400;500;600;700&family=Literata&display=swap",
   ICON_FONT_STYLESHEET,
 ] as const;
 

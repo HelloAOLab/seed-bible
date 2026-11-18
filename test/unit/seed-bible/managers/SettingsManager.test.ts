@@ -14,35 +14,7 @@ import {
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { TranslationWithLanguage } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
-import { signal } from "@preact/signals";
-
-/**
- * Minimal LoginManager stand-in. `updateProfile` optimistically updates the
- * `profile` signal the same way the real manager does, which is what
- * SettingsManager's profile-language effect and profile/localConfig fallback
- * reads subscribe to.
- */
-function makeFakeLogin(initialProfile: UserProfile | null): LoginManager {
-  const userId = signal<string | null>(initialProfile ? "user-1" : null);
-  const profile = signal<UserProfile | null>(initialProfile);
-  const localConfig = signal<Record<string, unknown>>({});
-  const isLocalConfigHydrated = signal(false);
-  return {
-    userId,
-    profile,
-    cachedProfile: signal<UserProfile | null>(null),
-    isLocalConfigHydrated,
-    hydrateLocalConfig: () => {
-      isLocalConfigHydrated.value = true;
-    },
-    localConfig,
-    profilePromise: Promise.resolve(initialProfile),
-    updateProfile: (newData: Partial<UserProfile>) => {
-      if (!profile.value) return;
-      profile.value = { ...profile.value, ...newData };
-    },
-  } as unknown as LoginManager;
-}
+import { makeFakeLogin } from "./testUtils/fakeLogin";
 
 function profileWithLang(lang: string): UserProfile {
   return { name: "Test", config: { lang } } as unknown as UserProfile;
@@ -177,9 +149,10 @@ describe("SettingsManager language handling", () => {
   });
 });
 
-// The agreement reached on PR #1444 for how the incoming `?lang=` URL
-// parameter interacts with the account's saved language:
-//   1. Signed in WITH a saved language  -> profile overrides the URL param.
+// How the incoming `?lang=` URL parameter interacts with the account's saved
+// language. PR #1444 originally let a saved language override the URL param;
+// issue #1978 reversed case 1 so the menus match the link's translation:
+//   1. Signed in WITH a saved language  -> use the URL param.
 //   2. Signed in WITHOUT a saved language -> use the URL param.
 //   3. Not signed in                      -> use the URL param.
 // And in every case, merely loading a `?lang=` URL must never overwrite the
@@ -210,14 +183,14 @@ describe("SettingsManager initial load with ?lang= URL parameter", () => {
     });
   }
 
-  // Case 1: the saved profile language wins over the URL param, and the URL
-  // param is NOT written back to the profile (Kal's reported bug).
-  it("lets a saved profile language override the URL param without overwriting the profile", async () => {
+  // Case 1: the URL param wins over the saved profile language, and is NOT
+  // written back to the profile (Kal's reported bug, from PR #1444).
+  it("keeps the URL param over a saved profile language without overwriting the profile", async () => {
     const nav = navWithLang("de");
     const i18n = createI18nManager(nav, []);
     // Ensure i18n has settled on the URL language ("de") before the
-    // profile-apply effect first runs, so the override is exercised
-    // deterministically regardless of test order (i18next is a singleton).
+    // profile-apply effect first runs, so a wrongly applied override would
+    // show deterministically regardless of test order (i18next is a singleton).
     await i18n.ready;
 
     const login = makeFakeLogin(profileWithLang("en"));
@@ -226,15 +199,15 @@ describe("SettingsManager initial load with ?lang= URL parameter", () => {
 
     await settle();
 
-    // Profile "en" wins over URL "de" ...
-    expect(i18n.i18n.language).toBe("en");
+    // URL "de" wins over profile "en" ...
+    expect(i18n.i18n.language).toBe("de");
     // ... and the saved language is untouched.
     expect(getProfileLang(login)).toBe("en");
   });
 
   // Case 1, async: the profile loads a moment after boot (real login flow).
-  // Reproduces Kal's exact steps — the URL language shows first, then the
-  // profile language replaces it, and the profile is never overwritten.
+  // The URL language shows first and stays after the profile loads, and the
+  // profile is never overwritten.
   it("does not overwrite the profile when the profile loads after a ?lang= boot", async () => {
     const nav = navWithLang("de");
     const i18n = createI18nManager(nav, []);
@@ -253,8 +226,8 @@ describe("SettingsManager initial load with ?lang= URL parameter", () => {
     login.profile.value = profileWithLang("en");
     await settle();
 
-    // Profile overrides the URL language ...
-    expect(i18n.i18n.language).toBe("en");
+    // The URL language is kept ...
+    expect(i18n.i18n.language).toBe("de");
     // ... and critically, the profile is still "en", not the URL's "de".
     expect(getProfileLang(login)).toBe("en");
   });
@@ -393,6 +366,8 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(settings.settings.value.discoveredContent.showContent).toBe(false);
     expect(login.localConfig.value.discoveredContent).toEqual({
       showContent: false,
+      showInSharedSessions: false,
+      sharedSessionHintSeen: false,
     });
   });
 
@@ -408,6 +383,22 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     expect(settings.settings.value.discoveredContent.showContent).toBe(false);
     expect((login.profile.value as any)?.config?.discoveredContent).toEqual({
       showContent: false,
+      showInSharedSessions: false,
+      sharedSessionHintSeen: false,
+    });
+  });
+
+  it("reads discoveredContent saved before the shared-session fields existed with them off", () => {
+    const login = makeFakeLogin({
+      name: "Test",
+      config: { discoveredContent: { showContent: false } },
+    } as unknown as UserProfile);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    expect(settings.settings.value.discoveredContent).toEqual({
+      showContent: false,
+      showInSharedSessions: false,
+      sharedSessionHintSeen: false,
     });
   });
 
@@ -429,6 +420,26 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     settings.resetToDefaults();
 
     expect(settings.settings.value.verseSelectionEffects).toBe("default");
+  });
+
+  it("setViewingAreaIndicators persists to login.localConfig when anonymous", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setViewingAreaIndicators("hosts-only");
+
+    expect(settings.settings.value.viewingAreaIndicators).toBe("hosts-only");
+    expect(login.localConfig.value.viewingAreaIndicators).toBe("hosts-only");
+  });
+
+  it("resetToDefaults resets viewing area indicators to default", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setViewingAreaIndicators("everyone");
+    settings.resetToDefaults();
+
+    expect(settings.settings.value.viewingAreaIndicators).toBe("default");
   });
 
   it("preserves verse selection effects after a simulated page refresh", () => {

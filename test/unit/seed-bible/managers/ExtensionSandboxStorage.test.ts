@@ -6,7 +6,7 @@ import {
   type SandboxStorage,
   type SandboxStorageRecords,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionSandboxStorage";
-import { SandboxBrokerError } from "@packages/seed-bible/seed-bible/managers/ExtensionSandboxServices";
+import { SandboxBrokerError } from "@packages/seed-bible/seed-bible/managers/ExtensionSandboxErrors";
 
 /**
  * Stands in for the CasualOS records server: one shared "account" store

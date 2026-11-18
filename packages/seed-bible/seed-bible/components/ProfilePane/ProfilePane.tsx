@@ -6,7 +6,6 @@ import {
   latestReadingPlanProgress,
   summarizeCalendar,
 } from "../../managers/ReadingPlansManager";
-import { FEATURE_KEY_READING_PLANS } from "../../managers/FeaturesManager";
 import type { PlaylistPlayHistory } from "../../managers/PlaylistManager";
 import {
   isPlaylistPlayHistoryComplete,
@@ -19,6 +18,8 @@ import { Spinner } from "../Spinner/Spinner";
 import { useI18n } from "../../i18n";
 import { friendsRowSubtitle } from "../FriendsPane/FriendsPane";
 import "./ProfilePane.css";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 export const PROFILE_PANE_ID = "profile-screen-pane";
 
@@ -128,15 +129,12 @@ function findActivePlan(state: SeedBibleState): ActivePlanSummary | null {
 export function ProfileBackButton(props: { onBack: () => void }) {
   const { t } = useI18n();
   return (
-    <button
-      type="button"
-      className="sb-pane-header-button sb-profile-pane-back"
+    <IconButton
+      className="sb-profile-pane-back"
+      icon="arrow_back"
+      label={t("back", { defaultValue: "Back" })}
       onClick={props.onBack}
-      aria-label={t("back", { defaultValue: "Back" })}
-      title={t("back", { defaultValue: "Back" })}
-    >
-      <MaterialIcon>arrow_back</MaterialIcon>
-    </button>
+    />
   );
 }
 
@@ -438,17 +436,23 @@ export function ProfilePane(props: ProfileScreenProps) {
     onOpenPlaylistHistory,
     onContinuePlaylist,
   } = props;
-  const { login, features } = state;
+  const { login } = state;
   const { t } = useI18n();
-
   const userId = login.userId.value;
   const profile = login.profile.value;
   const displayName = getSelfDisplayName(state, t);
   const description = profile?.description ?? null;
-  const plansEnabled = features.isFeatureEnabled(
-    FEATURE_KEY_READING_PLANS
-  ).value;
+  const handleSignIn = async () => {
+    try {
+      const user = await login.login();
 
+      if (user && state.isProfileOpen.peek()) {
+        state.restoreProfileReturnTarget();
+      }
+    } catch (error) {
+      console.error("Sign-in failed:", error);
+    }
+  };
   if (!userId) {
     return (
       <div className="sb-profile-screen">
@@ -463,13 +467,15 @@ export function ProfilePane(props: ProfileScreenProps) {
                   "Sign in to keep your highlights, notes and plans on every device.",
               })}
             </p>
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="lg"
+              shape="pill"
               className="sb-profile-signin"
-              onClick={() => void login.login()}
+              onClick={() => void handleSignIn()}
             >
               {t("log-in", { defaultValue: "Log in" })}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -485,15 +491,12 @@ export function ProfilePane(props: ProfileScreenProps) {
            * labelled button, so the card stays about the person. The inset is
            * logical, which puts the pencil top-left under an RTL language.
            */}
-          <button
-            type="button"
+          <IconButton
             className="sb-profile-card-edit"
+            icon="edit"
+            label={t("edit-profile", { defaultValue: "Edit profile" })}
             onClick={onEditProfile}
-            aria-label={t("edit-profile", { defaultValue: "Edit profile" })}
-            title={t("edit-profile", { defaultValue: "Edit profile" })}
-          >
-            <MaterialIcon>edit</MaterialIcon>
-          </button>
+          />
 
           <ProfileAvatarButton state={state} onEdit={onEditPicture} />
 
@@ -519,9 +522,7 @@ export function ProfilePane(props: ProfileScreenProps) {
           <ProfileContactLine state={state} />
         </div>
 
-        {plansEnabled ? (
-          <ReadingPlansCard state={state} onOpen={onOpenReadingPlans} />
-        ) : null}
+        <ReadingPlansCard state={state} onOpen={onOpenReadingPlans} />
 
         {state.playlists.userPlaylistHistory.value.length > 0 ? (
           <PlaylistHistoryCard
@@ -547,14 +548,15 @@ export function ProfilePane(props: ProfileScreenProps) {
           onClick={props.onOpenFriends}
         />
 
-        <button
-          type="button"
+        <Button
+          tone="danger"
+          size="lg"
+          icon="logout"
           className="sb-profile-logout"
           onClick={() => void login.logout()}
         >
-          <span className="material-symbols-outlined">logout</span>
           {t("sign-out", { defaultValue: "Sign out" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

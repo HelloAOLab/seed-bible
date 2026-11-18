@@ -1,7 +1,7 @@
 import { render } from "preact";
 import type { Mock } from "vitest";
 import { act } from "preact/test-utils";
-import { PlaylistRow } from "@packages/seed-bible/seed-bible/components/DiscoverPane/PlaylistRow";
+import { PlaylistRow } from "@packages/seed-bible/seed-bible/components/Discover/PlaylistRow";
 import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
 import { ToastHost } from "@packages/seed-bible/seed-bible/components/ToastHost/ToastHost";
 import type { Playlist } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
@@ -53,7 +53,7 @@ describe("sharing a playlist", () => {
                 onPlay={onPlay}
               />
             </ul>
-            <ModalHost manager={state.modals} />
+            <ModalHost manager={state.modals} isMobile={state.app.isMobile} />
             <ToastHost app={state.app} />
           </>
         </TestHost>,
@@ -100,14 +100,16 @@ describe("sharing a playlist", () => {
   it("shows a QR code of the playlist link", async () => {
     await openShareSheet();
     await waitFor(() =>
-      Boolean(container.querySelector(".sb-session-qr-code img"))
+      Boolean(document.body.querySelector(".sb-session-qr-code img"))
     );
 
-    expect(container.querySelector(".sb-session-qr")?.textContent).toContain(
-      "Opens this playlist on their phone."
-    );
     expect(
-      container.querySelector(".sb-session-qr-code img")?.getAttribute("alt")
+      document.body.querySelector(".sb-session-qr")?.textContent
+    ).toContain("Opens this playlist on their phone.");
+    expect(
+      document.body
+        .querySelector(".sb-session-qr-code img")
+        ?.getAttribute("alt")
     ).toBe("QR code to open this playlist");
   });
 
@@ -123,7 +125,7 @@ describe("sharing a playlist", () => {
     );
     await waitFor(() =>
       Boolean(
-        container
+        document.body
           .querySelector(".sb-toast")
           ?.textContent?.includes("Playlist URL copied to clipboard")
       )
@@ -142,7 +144,7 @@ describe("sharing a playlist", () => {
 
     await waitFor(() =>
       Boolean(
-        container
+        document.body
           .querySelector(".sb-toast")
           ?.textContent?.includes("Couldn't copy the playlist link")
       )
@@ -159,7 +161,8 @@ describe("sharing a playlist", () => {
     });
 
     await waitFor(() => writeText.mock.calls.length > 0);
-    expect(onPlay).toHaveBeenCalledWith(PLAYLIST);
+    expect(state.playlists.playing.value).not.toBeNull();
+    expect(onPlay).not.toHaveBeenCalled();
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining("sessionId=playlist-session")
     );
@@ -177,7 +180,7 @@ describe("sharing a playlist", () => {
     });
 
     await waitFor(() => shareActions().length === 0);
-    expect(onPlay).not.toHaveBeenCalled();
+    expect(state.playlists.playing.value).toBeNull();
     expect(writeText).not.toHaveBeenCalled();
   });
 });

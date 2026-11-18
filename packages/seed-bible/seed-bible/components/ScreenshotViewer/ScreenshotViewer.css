@@ -1,0 +1,38 @@
+.sb-screenshot-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--sb-layer-prompt);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+}
+
+.sb-screenshot-viewer-controls,
+.sb-screenshot-viewer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sb-screenshot-viewer-image {
+  display: block;
+  justify-self: center;
+  align-self: center;
+  max-width: 100%;
+  max-height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  touch-action: pan-y pinch-zoom;
+}
+
+.sb-screenshot-viewer-caption {
+  flex: 1;
+  text-align: center;
+  overflow-wrap: anywhere;
+  max-height: 25vh;
+  overflow-y: auto;
+}

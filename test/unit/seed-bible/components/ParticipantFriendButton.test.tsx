@@ -46,9 +46,7 @@ describe("ParticipantFriendButton", () => {
   /** What a button shows, leaving out the spinner while it works. */
   const visibleLabel = (el: Element) => {
     const copy = el.cloneNode(true) as Element;
-    copy
-      .querySelectorAll(".sb-friends-busy-spinner")
-      .forEach((spinner) => spinner.remove());
+    copy.querySelectorAll(".sb-spinner").forEach((spinner) => spinner.remove());
     return copy.textContent;
   };
   const button = (label: string) =>
@@ -147,6 +145,67 @@ describe("ParticipantFriendButton", () => {
     expect(toast).toHaveBeenCalledWith("You're now friends with Ada.");
   });
 
+  it("names the person it sends a request to by their profile, not their name in the session", async () => {
+    await renderButton(ADA_ID, "Pastor John");
+
+    act(() => button("Add friend")!.click());
+    await settle();
+
+    expect(toast).toHaveBeenCalledWith("Friend request sent to Ada.");
+  });
+
+  it("sends the request without waiting for their profile", async () => {
+    await renderButton(ADA_ID, "Pastor John");
+    let answer!: (profile: { name: string }) => void;
+    vi.mocked(state.login.getPublicProfile).mockReturnValueOnce(
+      new Promise((resolve) => (answer = resolve))
+    );
+
+    act(() => button("Add friend")!.click());
+    for (let i = 0; i < 5; i++) {
+      await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+    }
+    expect(server.rows).toMatchObject([
+      { requestingUserId: ME, targetUserId: ADA_ID, status: "requested" },
+    ]);
+    expect(toast).not.toHaveBeenCalled();
+
+    await act(async () => answer({ name: "Ada" }));
+    await settle();
+    expect(toast).toHaveBeenCalledWith("Friend request sent to Ada.");
+  });
+
+  it("still sends the request when their profile can't be read", async () => {
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await renderButton(ADA_ID, "Pastor John");
+    vi.mocked(state.login.getPublicProfile).mockRejectedValueOnce(
+      new Error("offline")
+    );
+
+    act(() => button("Add friend")!.click());
+    await settle();
+
+    expect(server.rows).toMatchObject([
+      { requestingUserId: ME, targetUserId: ADA_ID, status: "requested" },
+    ]);
+    expect(toast).toHaveBeenCalledWith(
+      `Friend request sent to User ${ADA_ID.slice(0, 8)}.`
+    );
+    consoleWarn.mockRestore();
+  });
+
+  // Same wording as answering from the Friends screen or the profile card.
+  it("says when a request expired before it was accepted", async () => {
+    const request = server.requestFrom(ADA_ID);
+    await renderButton(ADA_ID);
+    request.expireTimeMs = Date.now() - 1;
+
+    act(() => button("Accept")!.click());
+    await settle();
+
+    expect(toast).toHaveBeenCalledWith("That request has expired.");
+  });
+
   it("says so when sending fails, and can be pressed again", async () => {
     const consoleError = vi
       .spyOn(console, "error")
@@ -237,11 +296,28 @@ describe("ParticipantFriendButton", () => {
           })),
         ]),
         updateOptions: vi.fn(),
+        readingState: {
+          bookId: signal("GEN"),
+          chapterNumber: signal(1),
+          visibleVerseRange: signal(null),
+          translationBooks: signal(null),
+        },
+        groupPosition: signal({
+          translationId: null,
+          bookId: "GEN",
+          chapterNumber: 1,
+          scrollToVerse: null,
+        }),
+        participantPositions: signal(new Map()),
+        participantsAwayFromGroup: signal(new Set()),
+        comeBackRequests: signal(new Map()),
+        comeBackCooldownRemainingMs: () => 0,
       } as unknown as BibleReadingSession;
       await friends.refresh();
       openSessionSettingsModal(state, session);
       act(() => render(modalContent!(), container));
       await settle();
+      return session;
     };
 
     it("lets a participant who isn't the host add people as friends", async () => {
@@ -269,6 +345,42 @@ describe("ParticipantFriendButton", () => {
 
       expect(button("Add friend")).toBeDefined();
       expect(button("Make co-host")).toBeDefined();
+    });
+
+    const viewingAreaButton = (label: string) => {
+      const group = container.querySelector('[aria-label="Viewing areas"]');
+      return Array.from(group?.querySelectorAll("button") ?? []).find(
+        (el) => visibleLabel(el) === label
+      ) as HTMLButtonElement | undefined;
+    };
+
+    it("lets the host choose whose viewing areas are shown", async () => {
+      const session = await openSettings(ME);
+
+      expect(viewingAreaButton("Automatic")!.getAttribute("aria-pressed")).toBe(
+        "true"
+      );
+      expect(text()).toContain(
+        "Show everyone's place when fewer than 4 people are here"
+      );
+
+      act(() => viewingAreaButton("Hosts only")!.click());
+
+      expect(session.updateOptions).toHaveBeenCalledWith({
+        viewingAreaVisibility: "hosts-only",
+      });
+    });
+
+    it("shows the viewing-area choice to someone who is not the host, without letting them change it", async () => {
+      const session = await openSettings(ADA_ID);
+
+      expect(viewingAreaButton("Automatic")!.disabled).toBe(true);
+      expect(viewingAreaButton("Everyone")!.disabled).toBe(true);
+      expect(viewingAreaButton("Hosts only")!.disabled).toBe(true);
+
+      act(() => viewingAreaButton("Everyone")!.click());
+
+      expect(session.updateOptions).not.toHaveBeenCalled();
     });
   });
 });

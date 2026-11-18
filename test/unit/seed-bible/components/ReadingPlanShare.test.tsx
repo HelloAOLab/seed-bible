@@ -43,7 +43,7 @@ describe("sharing a reading plan", () => {
               app={state.app}
               toast={state.app.toast}
             />
-            <ModalHost manager={state.modals} />
+            <ModalHost manager={state.modals} isMobile={state.app.isMobile} />
             <ToastHost app={state.app} />
           </>
         </TestHost>,
@@ -90,14 +90,16 @@ describe("sharing a reading plan", () => {
   it("shows a QR code of the reading plan link", async () => {
     await openShareSheet();
     await waitFor(() =>
-      Boolean(container.querySelector(".sb-session-qr-code img"))
+      Boolean(document.body.querySelector(".sb-session-qr-code img"))
     );
 
-    expect(container.querySelector(".sb-session-qr")?.textContent).toContain(
-      "Opens this reading plan on their phone."
-    );
     expect(
-      container.querySelector(".sb-session-qr-code img")?.getAttribute("alt")
+      document.body.querySelector(".sb-session-qr")?.textContent
+    ).toContain("Opens this reading plan on their phone.");
+    expect(
+      document.body
+        .querySelector(".sb-session-qr-code img")
+        ?.getAttribute("alt")
     ).toBe("QR code to open this reading plan");
   });
 
@@ -113,7 +115,7 @@ describe("sharing a reading plan", () => {
     );
     await waitFor(() =>
       Boolean(
-        container
+        document.body
           .querySelector(".sb-toast")
           ?.textContent?.includes("Reading plan URL copied to clipboard")
       )
@@ -132,7 +134,7 @@ describe("sharing a reading plan", () => {
 
     await waitFor(() =>
       Boolean(
-        container
+        document.body
           .querySelector(".sb-toast")
           ?.textContent?.includes("Couldn't copy the reading plan link")
       )

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { ExtensionProjectMeta } from "./project.js";
-import type { IconFile } from "./icon.js";
+import { withScreenshotSrcs, type ImageFile } from "./images.js";
 
 export const SET_FILE = "extension-set.json";
 export const DEFAULT_APP_URL = "https://seedbible.org/";
@@ -14,7 +14,9 @@ export interface SitePackageOptions {
   bundle: Uint8Array;
   meta: ExtensionProjectMeta;
   /** The icon `meta.icon` names, when it's a file in the project. */
-  icon?: IconFile | null;
+  icon?: ImageFile | null;
+  /** Local screenshot files, in manifest order; null keeps the existing link. */
+  screenshots?: (ImageFile | null)[];
   /** The Seed Bible the install page sends people to. */
   appUrl?: string;
 }
@@ -40,15 +42,16 @@ export async function writeSitePackage(
   const digest = createHash("sha384").update(bundle).digest();
   const bundleFile = `${meta.id}-${digest.toString("hex").slice(0, 12)}.js`;
   const { icon } = options;
-  const iconFile = icon
-    ? `icon-${createHash("sha256").update(icon.bytes).digest("hex").slice(0, 12)}${icon.extension}`
-    : null;
+  const iconFile = icon ? hashedName("icon", icon) : null;
   // An icon given as a link stays where it is, in the set and on the page.
   const iconUrl = iconFile
     ? `./${iconFile}`
     : typeof meta.icon === "string" && /^https:\/\//i.test(meta.icon)
       ? meta.icon
       : null;
+  const screenshotFiles = (options.screenshots ?? []).map((image) =>
+    image ? hashedName("screenshot", image) : null
+  );
   const set = {
     id: meta.id,
     extensions: [
@@ -57,6 +60,12 @@ export async function writeSitePackage(
         meta: {
           ...meta,
           ...(iconFile && { icon: `./${iconFile}` }),
+          ...(meta.screenshots && {
+            screenshots: withScreenshotSrcs(
+              meta.screenshots,
+              screenshotFiles.map((name) => (name ? `./${name}` : null))
+            ),
+          }),
           integrity: `sha384-${digest.toString("base64")}`,
         },
       },
@@ -73,10 +82,22 @@ export async function writeSitePackage(
     _headers: HEADERS,
     ".nojekyll": "",
   };
+  for (const [index, image] of (options.screenshots ?? []).entries()) {
+    const name = screenshotFiles[index];
+    if (image && name) files[name] = image.bytes;
+  }
   for (const [name, content] of Object.entries(files)) {
     await writeFile(path.join(outDir, name), content);
   }
   return { files: Object.keys(files) };
+}
+
+function hashedName(prefix: string, image: ImageFile): string {
+  const hash = createHash("sha256")
+    .update(image.bytes)
+    .digest("hex")
+    .slice(0, 12);
+  return `${prefix}-${hash}${image.extension}`;
 }
 
 // Seed Bible fetches the manifest and bundle from its own page, so they
@@ -92,6 +113,9 @@ const HEADERS = `/${SET_FILE}
   Cache-Control: public, max-age=31536000, immutable
 
 /icon-*
+  Cache-Control: public, max-age=31536000, immutable
+
+/screenshot-*
   Cache-Control: public, max-age=31536000, immutable
 `;
 

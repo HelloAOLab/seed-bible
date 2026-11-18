@@ -222,7 +222,6 @@
   "copied-translation-share-link": "Kopeeritud tõlke jagamise link",
   "less": "Vähem",
   "swipe-up-more": "Rohkemate piltide nägemiseks libista üles",
-  "plans": "Plaanid",
   "reading-plans": "Lugemisplaanid",
   "create-reading-plan": "Loo lugemisplaan",
   "reading-plans-empty": "Sul pole veel lugemisplaane. Alustamiseks loo üks.",
@@ -1275,5 +1274,19 @@
   "loading-translations": "Tõlgete laadimine…",
   "translations-load-failed": "Täieliku tõlgete loendi laadimine ebaõnnestus, seega mõned võivad puududa.",
   "verse-of-the-day": "PÄEVA VÄLJ",
-  "verse-of-the-day-loading": "Päeva salmi laadimine…"
+  "verse-of-the-day-loading": "Päeva salmi laadimine…",
+  "delete-bookmark-confirm-title": "Kas kustutada järjehoidja?",
+  "delete-bookmark-confirm-message": "Kustutada \" {{name}} \"?",
+  "scripture-font": "Pühakirja font",
+  "ai-limits-title": "Enne tehisintellektiga vestlemist",
+  "ai-limits-intro": "Tehisintellekt võib olla kasulik alguspunkt, aga pidage meeles selle piiranguid:",
+  "ai-limits-mistakes": "See teeb vigu ja võib kõlada enesekindlalt, kui see eksib.",
+  "ai-limits-agreeable": "See kipub sulle ütlema seda, mida sa kuulda tahad, ja kaldub populaarsete vastuste poole.",
+  "ai-limits-scripture": "See pole usaldusväärne allikas. Võrdle seal öeldut Pühakirjaga.",
+  "ai-limits-study": "Uuri Piiblit ise ja ära lase tehisintellektil sinu eest mõelda.",
+  "ai-limits-confirm": "Ma saan aru, et tehisintellekt võib vigu teha ja see ei asenda ise Piibli uurimist.",
+  "friends-playlists-filter": "Sõprade esitusloendid",
+  "friend-link-social-title": "Lisa {{name}} sõbraks",
+  "friend-link-meta-description": "{{name}} tahab olla sinu sõber {{brand}}",
+  "friend-link-title": "Lisa {{name}} sõbraks {{brand}}"
 }

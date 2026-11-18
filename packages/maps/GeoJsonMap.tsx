@@ -1,0 +1,391 @@
+import "./GeoJsonMap.css";
+import { useSignal } from "@preact/signals";
+import { useEffect, useRef } from "preact/hooks";
+import type { ComponentChildren } from "preact";
+import type { Map as LeafletMap } from "leaflet";
+import type {
+  Feature,
+  FeatureCollection,
+  GeoJsonObject,
+  GeometryCollection,
+} from "geojson";
+import { MaterialIcon, Skeleton } from "seed-bible/components";
+import { useI18n } from "seed-bible/i18n";
+import {
+  leafletLoader,
+  MAP_TILE_SOURCE,
+  type LeafletLoader,
+  type LeafletModule,
+  type MapTileSource,
+} from "./leaflet";
+import { addMapTranslations } from "./translations";
+
+/** How far in a lone point is shown: a town and the country around it. */
+export const POINT_ZOOM = 10;
+
+/** Where the map rests when the data holds nothing it can place. */
+const DEFAULT_VIEW = { center: [31.5, 35] as [number, number], zoom: 6 };
+
+const POINT_TYPES = new Set(["Point", "MultiPoint"]);
+const LINE_TYPES = new Set(["LineString", "MultiLineString"]);
+
+/** A feature drawn for a closer look, which the opening view doesn't frame. */
+function isDetail(feature: Feature | undefined): boolean {
+  return feature?.properties?.mapDetail === true;
+}
+
+/**
+ * Whether the data holds anything besides points that the view frames: an
+ * outline or a line.
+ */
+function hasShape(data: GeoJsonObject): boolean {
+  switch (data.type) {
+    case "FeatureCollection":
+      return (data as FeatureCollection).features.some(hasShape);
+    case "Feature": {
+      const feature = data as Feature;
+      return (
+        feature.geometry !== null &&
+        !isDetail(feature) &&
+        hasShape(feature.geometry)
+      );
+    }
+    case "GeometryCollection":
+      return (data as GeometryCollection).geometries.some(hasShape);
+    default:
+      return !POINT_TYPES.has(data.type);
+  }
+}
+
+interface DrawOptions {
+  tileSource: MapTileSource;
+  data: GeoJsonObject;
+  label?: string;
+  attribution?: readonly string[];
+  inline: boolean;
+  still: boolean;
+}
+
+function hasArea(size: { x: number; y: number }): boolean {
+  return size.x > 0 && size.y > 0;
+}
+
+/**
+ * Removes a Leaflet map. Leaflet 1.9 waits about 40ms after a wheel event
+ * before zooming, and doesn't cancel that wait when the map is removed: a map
+ * closed mid-scroll would then try to zoom a map that's gone, and throw.
+ */
+function removeMap(map: LeafletMap) {
+  const wheel = map.scrollWheelZoom as unknown as {
+    _timer?: ReturnType<typeof setTimeout>;
+  };
+  clearTimeout(wheel._timer);
+  map.remove();
+}
+
+interface DrawnMap {
+  map: LeafletMap;
+  /** Moves the view back to the data, as it was first shown. */
+  fit: () => void;
+  /** Whether the map is a still preview, which touch can't move. */
+  isStill: boolean;
+}
+
+/**
+ * Builds the Leaflet map in `container`. Throws for data Leaflet can't read.
+ *
+ * Points are circles rather than Leaflet's default pin: the pin is an image
+ * Leaflet finds by guessing its own script's URL, which a bundled build breaks.
+ */
+function drawMap(
+  L: LeafletModule,
+  container: HTMLElement,
+  options: DrawOptions
+): DrawnMap {
+  const {
+    tileSource,
+    data,
+    label,
+    attribution = [],
+    inline,
+    still: isStill,
+  } = options;
+  // An inline map sits in scrolling content, so the wheel scrolls past it.
+  const map = L.map(container, {
+    scrollWheelZoom: !inline,
+    dragging: !isStill,
+    touchZoom: !isStill,
+    doubleClickZoom: !isStill,
+    zoomControl: !isStill,
+  });
+
+  try {
+    L.tileLayer(tileSource.url, {
+      attribution: tileSource.attribution,
+      maxZoom: tileSource.maxZoom,
+    }).addTo(map);
+    // Drops Leaflet's own "Leaflet" link, leaving just the credits the base
+    // map and data require.
+    map.attributionControl.setPrefix(false);
+    for (const credit of attribution) {
+      map.attributionControl.addAttribution(credit);
+    }
+
+    // What the opening view frames: everything but the details.
+    const framed = L.featureGroup();
+    const layer = L.geoJSON(data, {
+      // Applied to the point circles too, overriding any class they're made with.
+      style: (feature) => {
+        const shade: unknown = feature?.properties?.mapShade;
+        if (typeof shade === "number") {
+          return {
+            className: "sb-geojson-map-shade",
+            stroke: false,
+            fillOpacity: shade,
+          };
+        }
+        const type = feature?.geometry?.type ?? "";
+        return {
+          className: POINT_TYPES.has(type)
+            ? "sb-geojson-map-point"
+            : LINE_TYPES.has(type)
+              ? "sb-geojson-map-line"
+              : isDetail(feature)
+                ? "sb-geojson-map-detail"
+                : "sb-geojson-map-shape",
+        };
+      },
+      pointToLayer: (_feature, latlng) => L.circleMarker(latlng, { radius: 7 }),
+      onEachFeature: (feature, featureLayer) => {
+        if (!isDetail(feature)) {
+          framed.addLayer(featureLayer);
+        }
+      },
+    }).addTo(map);
+
+    const framedBounds = framed.getBounds();
+    const bounds = framedBounds.isValid() ? framedBounds : layer.getBounds();
+    // An outline fills the view, however small. Points alone stop at a town
+    // and the country around it, so there's something to place them by.
+    const maxZoom = hasShape(data) ? tileSource.maxZoom : POINT_ZOOM;
+    // Fits to the data's bounds rather than restoring a saved view: the
+    // container may have been resized since, which changes the zoom needed.
+    const fit = () => {
+      if (!bounds.isValid()) {
+        map.setView(DEFAULT_VIEW.center, DEFAULT_VIEW.zoom);
+      } else if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
+        map.setView(bounds.getCenter(), POINT_ZOOM);
+      } else {
+        map.fitBounds(bounds, { padding: [24, 24], maxZoom });
+      }
+    };
+    fit();
+
+    if (label && bounds.isValid()) {
+      // An element, not a string: Leaflet would read a string as HTML.
+      const text = document.createElement("span");
+      text.textContent = label;
+      map.openTooltip(text, bounds.getCenter(), {
+        permanent: true,
+        direction: "top",
+        offset: [0, -8],
+        className: "sb-geojson-map-label",
+      });
+    }
+    return { map, fit, isStill };
+  } catch (error) {
+    removeMap(map);
+    throw error;
+  }
+}
+
+/**
+ * GeoJSON drawn over the app's base map, with Leaflet.
+ *
+ * Fills its parent. Leaflet downloads the first time any map shows (a
+ * placeholder holds its space meanwhile); after that maps open at once.
+ */
+export function GeoJsonMap(props: {
+  /** In standard `[longitude, latitude]` order. */
+  data: GeoJsonObject;
+  /**
+   * The place's name, labelled on the map. A full map also takes it as its
+   * accessible name; an inline one leaves naming to what it sits in.
+   */
+  label?: string;
+  /** Credits for the data, as HTML, shown beside the base map's. */
+  attribution?: readonly string[];
+  /**
+   * For a map sitting in scrolling content, such as a card: scrolling and
+   * swiping pass over it instead of moving the map.
+   */
+  inline?: boolean;
+  /**
+   * A still preview: no dragging, zooming or zoom buttons. For an inline map
+   * on a phone, where a finger on it should scroll the page, and a pinch only
+   * half works (the page takes the first finger).
+   */
+  still?: boolean;
+  /** Called when a still map is tapped, such as to open a full map. */
+  onTap?: () => void;
+  /** Buttons for the map's top corner, stacked above its recenter button. */
+  controls?: ComponentChildren;
+  className?: string;
+  /** Where Leaflet comes from. For tests; every map shares one by default. */
+  loader?: LeafletLoader;
+}) {
+  const {
+    data,
+    label,
+    attribution,
+    inline = false,
+    still = false,
+    onTap,
+    controls,
+    className,
+    loader = leafletLoader,
+  } = props;
+  addMapTranslations();
+  const { t } = useI18n();
+  const container = useRef<HTMLDivElement>(null);
+  // Read when tapped, so a caller passing a fresh function each render
+  // doesn't redraw the map.
+  const tapHandler = useRef(onTap);
+  tapHandler.current = onTap;
+  const isInvalid = useSignal(false);
+  /** Re-fits the drawn map to its data; null until a map is drawn. */
+  const recenter = useSignal<(() => void) | null>(null);
+  const L = loader.leaflet.value;
+  const status = loader.status.value;
+
+  useEffect(() => {
+    void loader.load().catch(() => undefined);
+  }, [loader]);
+
+  // Joined so a caller passing a fresh array each render doesn't redraw.
+  const credits = attribution?.join("\n") ?? "";
+
+  useEffect(() => {
+    const element = container.current;
+    if (!L || !element) {
+      return;
+    }
+
+    let drawn: DrawnMap;
+    try {
+      drawn = drawMap(L, element, {
+        tileSource: MAP_TILE_SOURCE,
+        data,
+        label,
+        attribution: credits ? credits.split("\n") : [],
+        inline,
+        still,
+      });
+      isInvalid.value = false;
+      if (drawn.isStill) {
+        drawn.map.on("click", () => tapHandler.current?.());
+      } else {
+        recenter.value = drawn.fit;
+      }
+    } catch (error) {
+      console.error("Failed to draw map data", error);
+      isInvalid.value = true;
+      return;
+    }
+
+    // Leaflet measures its container once; floating panes resize freely. A map
+    // drawn before its box had a size couldn't fit its data, and Leaflet falls
+    // back to the closest zoom allowed, far too close for a region or island,
+    // so the first real size re-fits it. The reader can't have moved a map
+    // they couldn't see yet.
+    let hasSize = hasArea(drawn.map.getSize());
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => {
+            drawn.map.invalidateSize();
+            if (!hasSize && hasArea(drawn.map.getSize())) {
+              hasSize = true;
+              drawn.fit();
+            }
+          });
+    observer?.observe(element);
+
+    return () => {
+      observer?.disconnect();
+      recenter.value = null;
+      removeMap(drawn.map);
+    };
+  }, [L, data, label, credits, inline, still]);
+
+  const classes = ["sb-geojson-map", className].filter(Boolean).join(" ");
+  // An inline map sits in something that already names it (a card), and a
+  // landmark for every expanded card would crowd the page's landmark list.
+  const isLandmark = Boolean(label) && !inline;
+
+  return (
+    <div
+      className={classes}
+      role={isLandmark ? "region" : undefined}
+      aria-label={isLandmark ? label : undefined}
+    >
+      <div ref={container} className="sb-geojson-map-canvas" />
+      {controls || recenter.value ? (
+        <div className="sb-geojson-map-controls">
+          {controls}
+          {recenter.value ? (
+            <button
+              type="button"
+              className="sb-geojson-map-control sb-geojson-map-recenter"
+              title={t("recenter", {
+                ns: "maps",
+                defaultValue: "Back to the place",
+              })}
+              aria-label={t("recenter", {
+                ns: "maps",
+                defaultValue: "Back to the place",
+              })}
+              onClick={() => recenter.value?.()}
+            >
+              <MaterialIcon>my_location</MaterialIcon>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {!L && status !== "failed" ? (
+        <Skeleton
+          shape="block"
+          width="100%"
+          height="100%"
+          radius="0"
+          className="sb-geojson-map-overlay"
+        />
+      ) : null}
+      {status === "failed" ? (
+        <div className="sb-geojson-map-overlay sb-geojson-map-message">
+          <span>
+            {t("failed-to-load", {
+              ns: "maps",
+              defaultValue: "The map couldn't load.",
+            })}
+          </span>
+          <button
+            type="button"
+            className="sb-geojson-map-retry"
+            onClick={() => void loader.load().catch(() => undefined)}
+          >
+            {t("try-again", { defaultValue: "Try again" })}
+          </button>
+        </div>
+      ) : null}
+      {isInvalid.value ? (
+        <p className="sb-geojson-map-overlay sb-geojson-map-message">
+          {t("place-unavailable", {
+            ns: "maps",
+            defaultValue: "This place can't be shown on the map.",
+          })}
+        </p>
+      ) : null}
+    </div>
+  );
+}

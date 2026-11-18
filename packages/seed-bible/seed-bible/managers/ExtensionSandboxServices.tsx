@@ -9,7 +9,6 @@ import type { Annotation, AnnotationsManager } from "./AnnotationsManager";
 import type { Save, SavesManager } from "./SavesManager";
 import type { ReadingHistoryManager } from "./ReadingHistoryManager";
 import type { LoginManager } from "./LoginManager";
-import type { BibleDataManager } from "./BibleDataManager";
 import type {
   DiscoverManager,
   DiscoverReference,
@@ -19,9 +18,13 @@ import type { ChatParticipant, ChatsManager } from "./ChatsManager";
 import type { ModalManager } from "./ModalManager";
 import type { ExtensionSettingsManager } from "./ExtensionSettingsManager";
 import { SensitiveSettingsError } from "./ExtensionSensitiveSettings";
-import { extractContentText } from "./ChapterText";
-import type { ChapterVerse } from "./FreeUseBibleAPI";
+import {
+  createSandboxBible,
+  type SandboxBibleData,
+} from "./ExtensionSandboxBible";
+import { SandboxBrokerError } from "./ExtensionSandboxErrors";
 import type { FriendsManager } from "./FriendsManager";
+import type { SearchManager } from "./SearchManager";
 import type { AppState } from "./SeedBibleStateManager";
 import {
   createSandboxAudio,
@@ -37,7 +40,6 @@ import {
 } from "./ExtensionSandboxCapture";
 import type {
   SandboxDiscoverResult,
-  SandboxErrorCode,
   SandboxHostEvent,
   SandboxHostRequestKind,
   SandboxHostRequests,
@@ -48,16 +50,7 @@ import type {
   SandboxReference,
   SandboxState,
 } from "../extensions/protocol";
-
-/** A refusal the broker sends back to the frame as-is. */
-export class SandboxBrokerError extends Error {
-  constructor(
-    readonly code: SandboxErrorCode,
-    message: string
-  ) {
-    super(message);
-  }
-}
+import { Button } from "../components/Button/Button";
 
 /**
  * An id for a person that's stable per extension but reveals neither: the
@@ -90,10 +83,9 @@ export interface SandboxServicesContext {
   saves: Pick<SavesManager, "saves" | "addSave" | "removeSave">;
   readingHistory: Pick<ReadingHistoryManager, "getReadingEvents">;
   login: Pick<LoginManager, "userId" | "profile">;
-  bibleData: Pick<
-    BibleDataManager,
-    "getTranslationBookChapter" | "getAudioTimings"
-  >;
+  bibleData: SandboxBibleData &
+    Pick<SandboxAudioContext["bibleData"], "getAudioTimings">;
+  search: Pick<SearchManager, "searchVerses">;
   discover: Pick<DiscoverManager, "registerDiscoverProvider">;
   chats: Pick<ChatsManager, "registerProvider" | "chats">;
   modals: Pick<ModalManager, "openModal" | "closeModal">;
@@ -167,11 +159,14 @@ const DEFAULT_RECORDING_SECONDS = 60;
 const MAX_RECORDING_SECONDS = 300;
 
 const bookIdSchema = z.string().regex(/^[A-Z0-9]{3}$/);
-const translationIdSchema = z.string().regex(/^[A-Za-z0-9_.-]{1,64}$/);
 const chapterSchema = z.number().int().min(1).max(200);
 const verseSchema = z.number().int().min(1).max(200);
 const versesSchema = z.array(verseSchema).min(1).max(200);
 const idSchema = z.string().regex(/^[A-Za-z0-9_.-]{1,64}$/);
+// An id that goes into a Bible API address. Starting with a letter or digit
+// rules out "." and "..", which would move up a folder in that address.
+const apiIdSchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/);
+const translationIdSchema = apiIdSchema;
 const chapterRefSchema = z.object({
   translationId: translationIdSchema,
   bookId: bookIdSchema,
@@ -278,7 +273,50 @@ export const SANDBOX_SERVICE_SPECS: Partial<
       ),
   },
   "profile.get": { schema: z.object({}) },
+  "bible.translations": { schema: z.object({}) },
+  "bible.books": { schema: z.object({ translationId: translationIdSchema }) },
   "bible.chapter": { schema: chapterRefSchema },
+  "bible.commentaries": { schema: z.object({}) },
+  "bible.commentaryBooks": { schema: z.object({ commentaryId: apiIdSchema }) },
+  "bible.commentaryChapter": {
+    schema: z.object({
+      commentaryId: apiIdSchema,
+      bookId: bookIdSchema,
+      chapter: chapterSchema,
+    }),
+  },
+  "bible.commentaryProfiles": {
+    schema: z.object({ commentaryId: apiIdSchema }),
+  },
+  "bible.commentaryProfile": {
+    schema: z.object({
+      commentaryId: apiIdSchema,
+      profileId: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/),
+    }),
+  },
+  "bible.search": {
+    schema: z
+      .object({
+        translationId: translationIdSchema,
+        query: z.string().trim().min(1).max(200),
+        bookId: bookIdSchema.optional(),
+        chapter: chapterSchema.optional(),
+        page: z.number().int().min(1).max(100).optional(),
+        perPage: z.number().int().min(1).max(50).optional(),
+      })
+      .refine(({ bookId, chapter }) => chapter === undefined || bookId, {
+        message: "Give a `bookId` to search one chapter.",
+      }),
+  },
+  "bible.datasets": { schema: z.object({}) },
+  "bible.datasetBooks": { schema: z.object({ datasetId: apiIdSchema }) },
+  "bible.datasetChapter": {
+    schema: z.object({
+      datasetId: apiIdSchema,
+      bookId: bookIdSchema,
+      chapter: chapterSchema,
+    }),
+  },
   "discover.register": {
     schema: z.object({
       id: idSchema,
@@ -473,13 +511,15 @@ function SandboxMessage({
     <div className="sb-confirm-delete">
       <p className="sb-confirm-delete-message">{message}</p>
       <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="lg"
+          shape="pill"
           className="sb-extension-consent-allow"
           onClick={onClose}
         >
           {t("extension-modal-ok")}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -875,30 +915,10 @@ export function createSandboxServices(
         : null;
     },
 
-    "bible.chapter": async (params) => {
-      const { translationId, bookId, chapter } =
-        params as Params<"bible.chapter">;
-      try {
-        const data = await context.bibleData.getTranslationBookChapter(
-          translationId,
-          bookId,
-          chapter
-        );
-        return {
-          verses: data.chapter.content
-            .filter((item): item is ChapterVerse => item.type === "verse")
-            .map((verse) => ({
-              number: verse.number,
-              text: extractContentText(verse.content),
-            })),
-        };
-      } catch {
-        throw new SandboxBrokerError(
-          "unavailable",
-          `Couldn't load ${translationId} ${bookId} ${chapter}.`
-        );
-      }
-    },
+    ...(createSandboxBible(
+      context.bibleData,
+      context.search
+    ) as SandboxServices["handlers"]),
 
     "discover.register": (params) => {
       const { id, title, description } = params as Params<"discover.register">;

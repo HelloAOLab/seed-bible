@@ -32,7 +32,7 @@ describe("TermsOfServiceModal", () => {
       );
     });
 
-    expect(container.querySelector(".sb-tos-modal")).toBeNull();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 
   it("loads and renders the real terms of service text when opened", async () => {
@@ -61,5 +61,35 @@ describe("TermsOfServiceModal", () => {
     expect(content?.textContent).toContain(
       "AO Lab Web Services Terms of Service"
     );
+  });
+
+  it("is a dialog named by its title that closes on Escape", async () => {
+    const state = await createTestSeedBibleState();
+    const onClose = vi.fn();
+
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <TermsOfServiceModal isOpen={true} onClose={onClose} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const dialog = container.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    const titleId = dialog.getAttribute("aria-labelledby")!;
+    expect(document.getElementById(titleId)?.textContent).toBe(
+      "Terms of service"
+    );
+    expect(dialog.contains(document.activeElement)).toBe(true);
+
+    act(() => {
+      dialog.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

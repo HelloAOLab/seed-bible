@@ -393,6 +393,29 @@ describe("ExtensionInitalizer", () => {
     ).toEqual({ version: 2 });
   });
 
+  it("runAsExtension() rejects a registration under another extension's id without replacing that extension", () => {
+    initializer.setupExtensionContext(context);
+    initializer.registerExtension({
+      id: "ext.victim",
+      init: () => ({ owner: "victim" }),
+    });
+
+    expect(() =>
+      initializer.runAsExtension("ext.impostor", () => {
+        initializer.registerExtension({
+          id: "ext.victim",
+          init: () => ({ owner: "impostor" }),
+        });
+      })
+    ).toThrow(
+      "Extension 'ext.impostor' tried to register as 'ext.victim'. Check the id passed to registerExtension()."
+    );
+
+    expect(initializer.getExtensionExports("ext.victim")).toEqual({
+      owner: "victim",
+    });
+  });
+
   it("undoes what a failed init already set up, so each retry starts clean", () => {
     let liveSubscriptions = 0;
     let shouldFail = true;
@@ -1611,6 +1634,76 @@ describe("createExtensionManager", () => {
     ).toBe(false);
   });
 
+  it("loadExtension() fails, without replacing the other extension or saving the install, when an extension registers under another extension's id", async () => {
+    const manager = createExtensionManager(login);
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const victimRegistration = { id: "ext.victim", init: () => ({}) };
+    registerExtension(victimRegistration);
+
+    const loaded = await manager.loadExtension({
+      import: () =>
+        Promise.resolve({
+          default: () => {
+            registerExtension({ id: "ext.impostor", init: () => ({}) });
+            registerExtension({ id: "ext.victim", init: () => ({}) });
+          },
+        }),
+      meta: {
+        id: "ext.impostor",
+        translations: { en: { title: "Impostor", description: "x" } },
+      },
+    });
+
+    expect(loaded).toBe(false);
+    const entries = manager.getExtensions();
+    expect(entries.find((e) => e.id === "ext.victim")?.registration).toBe(
+      victimRegistration
+    );
+    expect(entries.find((e) => e.id === "ext.impostor")?.installed).toBe(false);
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual([]);
+    expect(errorSpy).toHaveBeenCalledWith(
+      "Failed to install extension:",
+      "ext.impostor",
+      expect.objectContaining({
+        message:
+          "Extension 'ext.impostor' tried to register as 'ext.victim'. Check the id passed to registerExtension().",
+      })
+    );
+  });
+
+  it("loadExtension() fails, without saving the install, when an extension finishes without registering", async () => {
+    const manager = createExtensionManager(login);
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    const loaded = await manager.loadExtension({
+      import: () => Promise.resolve({ default: () => undefined }),
+      meta: {
+        id: "ext.never-registers",
+        translations: { en: { title: "Never registers", description: "x" } },
+      },
+    });
+
+    expect(loaded).toBe(false);
+    expect(
+      manager.getExtensions().find((e) => e.id === "ext.never-registers")
+        ?.installed
+    ).toBe(false);
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual([]);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Failed to install extension 'ext.never-registers': it finished without registering."
+      )
+    );
+  });
+
   it("getAllExtensionsAsSet() returns undefined and warns when there are no extension packages", () => {
     const manager = createExtensionManager(login);
     const warnSpy = vi
@@ -1818,9 +1911,10 @@ describe("createExtensionManager", () => {
    * Builds an `import()`-style extension module whose resolution is
    * controlled by the caller via `resolve()`, instead of resolving as soon
    * as it's awaited. Useful for deterministically interleaving an
-   * extension's install with other async work in a test.
+   * extension's install with other async work in a test. Its default export
+   * registers `id`, like a real extension's does.
    */
-  function createDeferredExtensionModule(): {
+  function createDeferredExtensionModule(id: string): {
     promise: Promise<unknown>;
     resolve: () => void;
   } {
@@ -1830,7 +1924,12 @@ describe("createExtensionManager", () => {
     });
     return {
       promise,
-      resolve: () => resolvePromise({ default: vi.fn() }),
+      resolve: () =>
+        resolvePromise({
+          default: vi.fn(() => {
+            registerExtension({ id, init: () => ({}) });
+          }),
+        }),
     };
   }
 
@@ -2179,8 +2278,8 @@ describe("createExtensionManager", () => {
     // deferred promise, so each one's install resolves under direct,
     // synchronous test control instead of racing real
     // dynamic-import/module-mock timing.
-    const moduleA = createDeferredExtensionModule();
-    const moduleB = createDeferredExtensionModule();
+    const moduleA = createDeferredExtensionModule("ext.spam-a");
+    const moduleB = createDeferredExtensionModule("ext.spam-b");
     const extensionA = {
       import: () => moduleA.promise,
       meta: {

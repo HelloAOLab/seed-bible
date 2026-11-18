@@ -1,3 +1,4 @@
+import { MAX_SCREENSHOTS } from "../extensions/mediaLimits";
 import { effect, signal, type ReadonlySignal } from "@preact/signals";
 import type { ComponentChildren } from "preact";
 import { orderBy, union } from "es-toolkit";
@@ -177,6 +178,13 @@ export interface ExtensionMeta {
    * and only an https: link (or http://localhost while developing) is kept.
    */
   icon?: string;
+
+  /**
+   * Links to images showing the extension, with optional translation keys for
+   * captions. In a fetched `ExtensionSet` they may be relative to the set,
+   * and only https: links (or http://localhost while developing) are kept.
+   */
+  screenshots?: { src: string; caption?: string }[];
 }
 
 /**
@@ -331,8 +339,27 @@ export class ExtensionInitalizer {
   private extensionExports = new Map<string, object>();
   private initializedExtensionIds = new Set<string>();
   private extensionContext: SeedBibleState | null = null;
+  private expectedRegistrationId: string | null = null;
 
   constructor() {}
+
+  /**
+   * Runs `run` (an extension's entry point) and rejects any
+   * `registerExtension()` call it makes under an id other than `id`, before
+   * that registration can replace another extension's. Only calls made
+   * synchronously inside `run` are checked: several extensions install
+   * concurrently, so an expectation held across an `await` would be checked
+   * against whichever extension happened to run last.
+   */
+  runAsExtension<T>(id: string, run: () => T): T {
+    const previous = this.expectedRegistrationId;
+    this.expectedRegistrationId = id;
+    try {
+      return run();
+    } finally {
+      this.expectedRegistrationId = previous;
+    }
+  }
 
   isExtensionRegistered(id: string): boolean {
     return this.registeredExtensions.has(id);
@@ -363,6 +390,13 @@ export class ExtensionInitalizer {
     if (typeof extension.init !== "function") {
       throw new Error(
         "registerExtension() requires an init(context) function."
+      );
+    }
+
+    const expectedId = this.expectedRegistrationId;
+    if (expectedId !== null && extension.id !== expectedId) {
+      throw new Error(
+        `Extension '${expectedId}' tried to register as '${extension.id}'. Check the id passed to registerExtension().`
       );
     }
 
@@ -723,21 +757,41 @@ export function isExtensionSetUrl(value: string): boolean {
   }
 }
 
-/**
- * `meta` with its icon resolved against the set it came from, or without
- * one when it isn't a link Seed Bible will show.
- */
-function withResolvedIcon(meta: ExtensionMeta, setUrl: string): ExtensionMeta {
-  const { icon, ...rest } = meta;
-  if (typeof icon !== "string") {
-    return rest;
+function withResolvedMedia(meta: ExtensionMeta, setUrl: string): ExtensionMeta {
+  const { icon, screenshots, ...rest } = meta;
+  const result: ExtensionMeta = { ...rest };
+  const resolve = (src: string): string | undefined => {
+    try {
+      const resolved = new URL(src, setUrl).href;
+      return isExtensionSetUrl(resolved) ? resolved : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  if (typeof icon === "string") {
+    const resolved = resolve(icon);
+    if (resolved) {
+      result.icon = resolved;
+    }
   }
-  try {
-    const resolved = new URL(icon, setUrl).href;
-    return isExtensionSetUrl(resolved) ? { ...rest, icon: resolved } : rest;
-  } catch {
-    return rest;
+  if (
+    Array.isArray(screenshots) &&
+    screenshots.every(
+      (entry) =>
+        typeof entry === "object" &&
+        entry !== null &&
+        typeof entry.src === "string" &&
+        (entry.caption === undefined || typeof entry.caption === "string")
+    )
+  ) {
+    result.screenshots = screenshots
+      .flatMap((entry) => {
+        const src = resolve(entry.src);
+        return src ? [{ ...entry, src }] : [];
+      })
+      .slice(0, MAX_SCREENSHOTS);
   }
+  return result;
 }
 
 /**
@@ -928,6 +982,41 @@ export function createExtensionManager(
   const knownExtensionsSetsByExtensionId = new Map<string, ExtensionSet>();
   const installedExtensionIds = new Set<string>();
   const pendingInstallations = new Map<string, Promise<boolean>>();
+  const fullTranslations = new WeakMap<
+    object,
+    Promise<ExtensionMeta["translations"]>
+  >();
+
+  /** Loads all caption and UI translations without installing the extension. */
+  const loadExtensionTranslations = (
+    extension: Extension
+  ): Promise<ExtensionMeta["translations"]> => {
+    const id = extension.meta.id;
+    const source =
+      extension.loadFullTranslations ?? extension.meta.translations;
+    const cached = fullTranslations.get(source);
+    if (cached) {
+      return cached;
+    }
+
+    const pending = Promise.resolve()
+      .then(() =>
+        extension.loadFullTranslations
+          ? extension.loadFullTranslations()
+          : extension.meta.translations
+      )
+      .then((translations) => {
+        addTranslations(id, translations);
+        return translations;
+      });
+    fullTranslations.set(source, pending);
+    pending.catch(() => {
+      if (fullTranslations.get(source) === pending) {
+        fullTranslations.delete(source);
+      }
+    });
+    return pending;
+  };
   // The extension ids an active customization wants installed (see
   // `reconcileInstalledExtensions`), or null when none is active. While set,
   // the viewer's own defaults and saved extensions are left alone.
@@ -1914,10 +2003,7 @@ export function createExtensionManager(
       installStack.add(extensionId);
 
       if (isSandboxedExtension(uploaded)) {
-        const translations = uploaded.loadFullTranslations
-          ? await uploaded.loadFullTranslations()
-          : uploaded.meta.translations;
-        addTranslations(extensionId, translations);
+        const translations = await loadExtensionTranslations(uploaded);
         const installed = await installSandboxedExtension(
           uploaded,
           translations
@@ -1958,10 +2044,7 @@ export function createExtensionManager(
         }
       }
 
-      const translations = uploaded.loadFullTranslations
-        ? await uploaded.loadFullTranslations()
-        : uploaded.meta.translations;
-      addTranslations(uploaded.meta.id, translations);
+      await loadExtensionTranslations(uploaded);
 
       if ("import" in uploaded && uploaded.import) {
         try {
@@ -1973,8 +2056,18 @@ export function createExtensionManager(
             installStack.delete(extensionId);
             return false;
           }
-          await mod.default();
+          const initializer = ExtensionInitalizer.getInstance();
+          await initializer.runAsExtension(extensionId, () => mod.default());
+          if (!initializer.isExtensionRegistered(extensionId)) {
+            console.error(
+              `Failed to install extension '${extensionId}': it finished without registering. Its default export must call registerExtension({ id: '${extensionId}', ... }).`
+            );
+            installStack.delete(extensionId);
+            return false;
+          }
         } catch (err) {
+          // It may have registered under its own id before failing.
+          unregisterExtension(extensionId);
           installStack.delete(extensionId);
           console.error("Failed to install extension:", extensionId, err);
           return false;
@@ -2078,7 +2171,7 @@ export function createExtensionManager(
         return null;
       }
 
-      // A bundle's (and an icon's) URL may be relative to the set, so a
+      // Bundle and media URLs may be relative to the set, so a
       // folder from `seed-bible-extension-scripts package` works wherever
       // it's hosted.
       const set = withSourcedIds({
@@ -2088,7 +2181,7 @@ export function createExtensionManager(
             ? {
                 ...extension,
                 url: new URL(extension.url, url).href,
-                meta: withResolvedIcon(extension.meta, url),
+                meta: withResolvedMedia(extension.meta, url),
               }
             : extension
         ),
@@ -2468,6 +2561,7 @@ export function createExtensionManager(
     loadSavedExtensions,
     loadExtensionSet,
     loadExtension,
+    loadExtensionTranslations,
     unloadExtension,
     discoverExtensionSet,
     reconcileInstalledExtensions,

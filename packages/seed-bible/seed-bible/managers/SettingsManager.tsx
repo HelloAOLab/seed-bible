@@ -10,6 +10,7 @@ import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
 import { isMinimalEmbedUrl } from "./EmbedMode";
 import { SYSTEM_THEME_ID } from "./ThemeManager";
+import type { ViewingAreaPreference } from "./SessionsManager";
 import { parseNumber } from "./Utils";
 import { CUSTOMIZATION_FONT_PRESETS } from "./CustomizationsManager";
 
@@ -91,12 +92,29 @@ export interface ScriptureElementsBehavior {
 
 export interface DiscoveredContentBehavior {
   showContent: boolean;
+  /**
+   * Whether discovered content shows in shared sessions too. It is personal —
+   * only the reader sees it — so sessions hide it unless this is on.
+   */
+  showInSharedSessions: boolean;
+  /**
+   * Whether the reader has acknowledged the hint that only they can see
+   * discovered content in a shared session.
+   */
+  sharedSessionHintSeen: boolean;
 }
 
 export const VERSE_LINE_HEIGHT_OPTIONS: number[] = [1.5, 1.7, 2, 2.5];
 export const DEFAULT_VERSE_LINE_HEIGHT = 1.7;
 
 export type VerseSelectionEffects = "default" | "enabled" | "disabled";
+
+/**
+ * Whose viewing-area bars this person wants to see. "default" follows the
+ * session. "hosts-only" hides other bars on this screen. "everyone" follows
+ * a session that is showing everyone, and does not widen a hosts-only one.
+ */
+export type ViewingAreaIndicators = ViewingAreaPreference;
 
 export interface AppSettings {
   fontSize: TextSize;
@@ -130,6 +148,11 @@ export interface AppSettings {
    */
   discoverContentPanelInline: boolean;
   verseSelectionEffects?: VerseSelectionEffects;
+  /**
+   * Whose viewing-area bars this person sees in a shared session. See
+   * `ViewingAreaIndicators`.
+   */
+  viewingAreaIndicators?: ViewingAreaIndicators;
 }
 
 export const DEFAULT_SCRIPTURE_WIDTH = 68; // ch
@@ -171,6 +194,7 @@ const TAG_SCRIPTURE_WIDTH = "app.scriptureWidth";
 const TAG_THEME_ID = "app.themeId";
 const TAG_DISCOVER_CONTENT_PANEL_INLINE = "app.discoverContentPanelInline";
 const TAG_VERSE_SELECTION_EFFECTS = "app.verseSelectionEffects";
+const TAG_VIEWING_AREA_INDICATORS = "app.viewingAreaIndicators";
 
 // Profile.config keys are stored unprefixed.
 const PROFILE_FONT_SIZE = "fontSize";
@@ -190,6 +214,7 @@ const PROFILE_SCRIPTURE_WIDTH = "scriptureWidth";
 const PROFILE_THEME_ID = "themeId";
 const PROFILE_DISCOVER_CONTENT_PANEL_INLINE = "discoverContentPanelInline";
 const PROFILE_VERSE_SELECTION_EFFECTS = "verseSelectionEffects";
+const PROFILE_VIEWING_AREA_INDICATORS = "viewingAreaIndicators";
 
 const DEFAULT_SELECTION_UI: SelectionUIBehavior = {
   showSelectedItems: true,
@@ -207,6 +232,8 @@ const DEFAULT_SCRIPTURE_ELEMENTS: ScriptureElementsBehavior = {
 
 const DEFAULT_DISCOVERED_CONTENT: DiscoveredContentBehavior = {
   showContent: true,
+  showInSharedSessions: false,
+  sharedSessionHintSeen: false,
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -226,6 +253,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   themeId: SYSTEM_THEME_ID,
   discoverContentPanelInline: true,
   verseSelectionEffects: "default",
+  viewingAreaIndicators: "default",
 };
 
 function parseCustomHighlightColors(value: unknown): string[] {
@@ -284,6 +312,15 @@ function parseVerseSelectionEffects(
   fallback: VerseSelectionEffects
 ): VerseSelectionEffects {
   return value === "default" || value === "enabled" || value === "disabled"
+    ? value
+    : fallback;
+}
+
+function parseViewingAreaIndicators(
+  value: unknown,
+  fallback: ViewingAreaIndicators
+): ViewingAreaIndicators {
+  return value === "default" || value === "everyone" || value === "hosts-only"
     ? value
     : fallback;
 }
@@ -407,6 +444,14 @@ function parseDiscoveredContent(
       typeof obj.showContent === "boolean"
         ? obj.showContent
         : fallback.showContent,
+    showInSharedSessions:
+      typeof obj.showInSharedSessions === "boolean"
+        ? obj.showInSharedSessions
+        : fallback.showInSharedSessions,
+    sharedSessionHintSeen:
+      typeof obj.sharedSessionHintSeen === "boolean"
+        ? obj.sharedSessionHintSeen
+        : fallback.sharedSessionHintSeen,
   };
 }
 
@@ -488,6 +533,7 @@ export interface SettingsManager {
   setDiscoverContentPanelInline: (discoverContentPanelInline: boolean) => void;
   setFontOverride: (value: AppSettings["fontOverride"]) => void;
   setVerseSelectionEffects: (value: VerseSelectionEffects) => void;
+  setViewingAreaIndicators: (value: ViewingAreaIndicators) => void;
 }
 
 export function createSettings(
@@ -621,6 +667,10 @@ export function createSettings(
         read(PROFILE_VERSE_SELECTION_EFFECTS, TAG_VERSE_SELECTION_EFFECTS),
         DEFAULT_SETTINGS.verseSelectionEffects ?? "default"
       ),
+      viewingAreaIndicators: parseViewingAreaIndicators(
+        read(PROFILE_VIEWING_AREA_INDICATORS, TAG_VIEWING_AREA_INDICATORS),
+        DEFAULT_SETTINGS.viewingAreaIndicators ?? "default"
+      ),
       keepScreenAwake: parseBoolean(
         read(PROFILE_KEEP_AWAKE, TAG_KEEP_AWAKE),
         DEFAULT_SETTINGS.keepScreenAwake
@@ -698,7 +748,18 @@ export function createSettings(
   // effect, and the profile's still-unsaved previous language would revert
   // `i18n.language` (leaving only `?translation=` applied). Only read
   // `login.profile` here so the effect subscribes to the profile alone.
+  //
+  // A `?lang=` link the visitor arrived on wins over the saved language for
+  // the whole session, matching how `TabsManager` keeps the link's translation
+  // over the saved one — otherwise the menus would revert while the text
+  // stayed in the link's language. Read from the frozen arrival snapshot
+  // because the reader rewrites the live URL into its canonical path.
+  const hadExplicitInitialUrlLanguage =
+    !!navigation.initialUrl.searchParams.get("lang");
   effect(() => {
+    if (hadExplicitInitialUrlLanguage) {
+      return;
+    }
     const profileLanguage = getProfileConfigValue(login.profile.value, "lang");
     const nextLanguage =
       typeof profileLanguage === "string" && profileLanguage.trim().length > 0
@@ -766,6 +827,17 @@ export function createSettings(
     sessionOverrides[TAG_VERSE_SELECTION_EFFECTS] = value;
 
     saveProfileConfigValue(login, PROFILE_VERSE_SELECTION_EFFECTS, value);
+  };
+
+  const setViewingAreaIndicators = (value: ViewingAreaIndicators) => {
+    settings.value = {
+      ...settings.value,
+      viewingAreaIndicators: value,
+    };
+
+    sessionOverrides[TAG_VIEWING_AREA_INDICATORS] = value;
+
+    saveProfileConfigValue(login, PROFILE_VIEWING_AREA_INDICATORS, value);
   };
 
   const setVerseLineHeight = (lineHeight: number) => {
@@ -882,6 +954,8 @@ export function createSettings(
     sessionOverrides[TAG_FONT_OVERRIDE] = NO_FONT_OVERRIDE;
     sessionOverrides[TAG_VERSE_SELECTION_EFFECTS] =
       DEFAULT_SETTINGS.verseSelectionEffects ?? "default";
+    sessionOverrides[TAG_VIEWING_AREA_INDICATORS] =
+      DEFAULT_SETTINGS.viewingAreaIndicators ?? "default";
 
     saveProfileConfigValue(login, PROFILE_FONT_SIZE, DEFAULT_SETTINGS.fontSize);
     saveProfileConfigValue(
@@ -919,6 +993,11 @@ export function createSettings(
       login,
       PROFILE_VERSE_SELECTION_EFFECTS,
       DEFAULT_SETTINGS.verseSelectionEffects ?? "default"
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_VIEWING_AREA_INDICATORS,
+      DEFAULT_SETTINGS.viewingAreaIndicators ?? "default"
     );
     saveProfileConfigValue(
       login,
@@ -983,9 +1062,10 @@ export function createSettings(
   };
 
   // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`
-  // (see app/styles/base.css). Chrome sized in `rem` tracks this; reader text keeps its
-  // own font-size knob (`.sb-bible-reader` carries `.sb-font-size-*`), so it
-  // stays independent without the old root-`zoom` + counter-zoom hack.
+  // (see app/styles/base.inline.css). Chrome sized in `rem` tracks this; reader
+  // text keeps its own font-size knob (`.sb-bible-reader` carries
+  // `.sb-reader-font-size-*`), so it stays independent without the old
+  // root-`zoom` + counter-zoom hack.
   const skipUiScaleWrite = skipFirstWriteAfterEarlyConfig();
   effect(() => {
     if (typeof document === "undefined") {
@@ -1013,8 +1093,8 @@ export function createSettings(
   });
 
   // The early-config script sizes the reader through a CSS rule keyed on
-  // `EARLY_CONFIG_ATTR` instead of the `.sb-font-size-*` class (which doesn't
-  // exist yet); once the real settings are in, the class takes over again.
+  // `EARLY_CONFIG_ATTR` instead of the `.sb-reader-font-size-*` class (which
+  // doesn't exist yet); once the real settings are in, the class takes over again.
   const skipFontSizeWrite = skipFirstWriteAfterEarlyConfig();
   effect(() => {
     if (typeof document === "undefined") return;
@@ -1118,5 +1198,6 @@ export function createSettings(
     setDiscoverContentPanelInline,
     setFontOverride,
     setVerseSelectionEffects,
+    setViewingAreaIndicators,
   };
 }

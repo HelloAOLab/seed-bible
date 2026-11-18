@@ -1,0 +1,17 @@
+/* Hidden on screen but still read by screen readers, and still focusable if
+   it's a control: a label that only makes sense spoken, or a native input
+   that a styled element stands in for. Import this file wherever the class
+   is used, so it comes along wherever that code goes, a sandboxed frame
+   included. `.inline` puts it in the app's first paint, since the reader's
+   toolbars use it: their labels never flash on screen while the page loads. */
+.sb-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

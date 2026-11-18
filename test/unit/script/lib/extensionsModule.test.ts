@@ -7,6 +7,7 @@ import {
   trimMeta,
   RESOLVED_LOCALE_PREFIX,
   type DiscoveredExtension,
+  type ExtensionMetaFile,
 } from "../../../../script/lib/extensionsModule";
 
 const apologist: DiscoveredExtension = {
@@ -71,6 +72,44 @@ describe("trimMeta", () => {
   it("omits dependencies, autoinstall and settings when absent rather than emitting undefined", () => {
     const trimmed = trimMeta({ id: "ext_X", translations: {} });
     expect(Object.keys(trimmed).sort()).toEqual(["id", "translations"]);
+  });
+
+  it("keeps media and only the English caption strings needed by the page", () => {
+    const meta: ExtensionMetaFile = {
+      ...apologist.meta,
+      icon: "icon.svg",
+      screenshots: [
+        { src: "one.png", caption: "overview" },
+        { src: "two.webp" },
+      ],
+      translations: {
+        en: {
+          title: "Example",
+          description: "Example",
+          overview: "Overview",
+          private: "Deferred",
+        },
+        es: { title: "Ejemplo", description: "Ejemplo", overview: "Vista" },
+      },
+    };
+    expect(trimMeta(meta)).toEqual({
+      id: meta.id,
+      autoinstall: true,
+      icon: "icon.svg",
+      screenshots: meta.screenshots,
+      translations: {
+        en: { title: "Example", description: "Example", overview: "Overview" },
+      },
+    });
+    expect(
+      generateLocaleModuleSource([{ ...apologist, meta }], "es")
+    ).not.toContain("Vista");
+  });
+
+  it("keeps an explicitly empty screenshot list", () => {
+    expect(
+      trimMeta({ ...apologist.meta, screenshots: [] }).screenshots
+    ).toEqual([]);
   });
 
   it("degrades to the id when an extension has no English block", () => {
@@ -239,6 +278,77 @@ describe("generateEntryModuleSource for the SSR build", () => {
     );
     expect(module.default.loadListTranslations).toEqual({});
   });
+});
+
+describe("generated media assets", () => {
+  it.each([false, true])(
+    "imports media with safe literals (serverBuild: %s)",
+    async (serverBuild) => {
+      const icon = 'icon"\\\u2028.svg';
+      const caption = 'caption"\u2029';
+      const meta: ExtensionMetaFile = {
+        ...apologist.meta,
+        icon,
+        screenshots: [{ src: "shots/one.png", caption }, { src: "two.webp" }],
+        translations: {
+          en: {
+            title: 'Title "quoted"',
+            description: "Description",
+            [caption]: 'Look "here"\u2028',
+            deferred: "Do not inline",
+          },
+          es: { title: "Ejemplo", description: "Ejemplo", [caption]: "Vista" },
+        },
+      };
+      const source = generateEntryModuleSource(
+        [
+          { ...apologist, meta },
+          { ...bonfire, meta: { ...bonfire.meta, icon: "other.svg" } },
+        ],
+        "seed-bible",
+        { serverBuild }
+      );
+      const specifier = JSON.stringify(
+        `${apologist.importBase}/${icon}?url`
+      ).replace(/\u2028/g, "\\u2028");
+      expect(source).toContain(`import asset_0 from ${specifier};`);
+      expect(source).toContain(
+        'import asset_1 from "@packages/apologist-extension/shots/one.png?url";'
+      );
+      expect(source).toContain(
+        'import asset_2 from "@packages/apologist-extension/two.webp?url";'
+      );
+      expect(source).toContain(
+        'import asset_3 from "@packages/bonfire-extension/other.svg?url";'
+      );
+      expect(source).toContain('"icon":asset_0');
+      expect(source).not.toContain("Do not inline");
+      expect(source).not.toContain("Vista");
+      expect(source).not.toContain("\u2028");
+      expect(source).not.toContain("\u2029");
+
+      // Substitute the public paths Vite supplies, then evaluate the generated JS.
+      const runnable = source.replace(
+        /^import (asset_\d+) from .*;$/gm,
+        (_, identifier: string) =>
+          `const ${identifier} = "/assets/${identifier}";`
+      );
+      const module = (await import(
+        `data:text/javascript,${encodeURIComponent(runnable)}`
+      )) as {
+        default: { extensions: { meta: ExtensionMetaFile }[] };
+      };
+      expect(module.default.extensions[0]!.meta).toEqual({
+        ...trimMeta(meta),
+        icon: "/assets/asset_0",
+        screenshots: [
+          { src: "/assets/asset_1", caption },
+          { src: "/assets/asset_2" },
+        ],
+      });
+      expect(module.default.extensions[1]!.meta.icon).toBe("/assets/asset_3");
+    }
+  );
 });
 
 describe("parseLocaleModuleId", () => {

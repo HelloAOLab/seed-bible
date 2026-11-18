@@ -1,0 +1,235 @@
+{
+  "en": {
+    "failed-to-load": "The map couldn't load.",
+    "place-unavailable": "This place can't be shown on the map.",
+    "recenter": "Back to the place"
+  },
+  "af": {
+    "place-unavailable": "Hierdie plek kan nie op die kaart gewys word nie."
+  },
+  "am": {
+    "place-unavailable": "ይህ ቦታ በካርታው ላይ ሊታይ አይችልም።"
+  },
+  "ar": {
+    "place-unavailable": "لا يمكن إظهار هذا المكان على الخريطة."
+  },
+  "az": {
+    "place-unavailable": "Bu yer xəritədə göstərilə bilməz."
+  },
+  "be": {
+    "place-unavailable": "Гэтае месца немагчыма паказаць на карце."
+  },
+  "bg": {
+    "place-unavailable": "Това място не може да бъде показано на картата."
+  },
+  "bn": {
+    "place-unavailable": "এই স্থানটি মানচিত্রে দেখানো যাচ্ছে না।"
+  },
+  "bs": {
+    "place-unavailable": "Ovo mjesto se ne može prikazati na mapi."
+  },
+  "ca": {
+    "place-unavailable": "Aquest lloc no es pot mostrar al mapa."
+  },
+  "cs": {
+    "place-unavailable": "Toto místo nelze zobrazit na mapě."
+  },
+  "cy": {
+    "place-unavailable": "Ni ellir dangos y lle hwn ar y map."
+  },
+  "da": {
+    "place-unavailable": "Dette sted kan ikke vises på kortet."
+  },
+  "de": {
+    "place-unavailable": "Dieser Ort kann auf der Karte nicht angezeigt werden."
+  },
+  "el": {
+    "place-unavailable": "Αυτό το μέρος δεν μπορεί να εμφανιστεί στον χάρτη."
+  },
+  "es": {
+    "place-unavailable": "Este lugar no se puede mostrar en el mapa."
+  },
+  "et": {
+    "place-unavailable": "Seda kohta ei saa kaardil kuvada."
+  },
+  "fa": {
+    "place-unavailable": "این مکان روی نقشه قابل نمایش نیست."
+  },
+  "fi": {
+    "place-unavailable": "Tätä paikkaa ei voida näyttää kartalla."
+  },
+  "fil": {
+    "place-unavailable": "Hindi maipapakita ang lugar na ito sa mapa."
+  },
+  "fr": {
+    "place-unavailable": "Cet endroit ne peut pas être indiqué sur la carte."
+  },
+  "fy": {
+    "place-unavailable": "Dizze plak kin net op 'e kaart werjûn wurde."
+  },
+  "gl": {
+    "place-unavailable": "Este lugar non se pode mostrar no mapa."
+  },
+  "gn": {
+    "place-unavailable": "Ko tenda ndaikatúi ojehechauka pe mápape."
+  },
+  "gu": {
+    "place-unavailable": "આ સ્થળ નકશા પર બતાવી શકાતું નથી."
+  },
+  "he": {
+    "place-unavailable": "לא ניתן להציג את המקום הזה על המפה."
+  },
+  "hi": {
+    "place-unavailable": "इस स्थान को मानचित्र पर नहीं दिखाया जा सकता है।"
+  },
+  "hr": {
+    "place-unavailable": "Ovo mjesto se ne može prikazati na karti."
+  },
+  "hu": {
+    "place-unavailable": "Ez a hely nem jeleníthető meg a térképen."
+  },
+  "ind": {
+    "place-unavailable": "Tempat ini tidak dapat ditampilkan di peta."
+  },
+  "is": {
+    "place-unavailable": "Þennan stað er ekki hægt að sýna á kortinu."
+  },
+  "it": {
+    "place-unavailable": "Questo luogo non può essere visualizzato sulla mappa."
+  },
+  "iw": {
+    "place-unavailable": "לא ניתן להציג את המקום הזה על המפה."
+  },
+  "ja": {
+    "place-unavailable": "この場所は地図上に表示できません。"
+  },
+  "ka": {
+    "place-unavailable": "ეს ადგილი რუკაზე ვერ გამოჩნდება."
+  },
+  "km": {
+    "place-unavailable": "កន្លែងនេះមិនអាចបង្ហាញនៅលើផែនទីបានទេ។"
+  },
+  "kn": {
+    "place-unavailable": "ಈ ಸ್ಥಳವನ್ನು ನಕ್ಷೆಯಲ್ಲಿ ತೋರಿಸಲಾಗುವುದಿಲ್ಲ."
+  },
+  "ko": {
+    "place-unavailable": "이곳은 지도에 표시될 수 없습니다."
+  },
+  "ky": {
+    "place-unavailable": "Бул жерди картада көрсөтүү мүмкүн эмес."
+  },
+  "ln": {
+    "place-unavailable": "Esika oyo ekoki kolakisa na carte te."
+  },
+  "lo": {
+    "place-unavailable": "ບໍ່ສາມາດສະແດງສະຖານທີ່ນີ້ຢູ່ໃນແຜນທີ່ໄດ້."
+  },
+  "lt": {
+    "place-unavailable": "Šios vietos negalima rodyti žemėlapyje."
+  },
+  "lv": {
+    "place-unavailable": "Šo vietu nevar parādīt kartē."
+  },
+  "mk": {
+    "place-unavailable": "Ова место не може да се прикаже на мапата."
+  },
+  "ml": {
+    "place-unavailable": "ഈ സ്ഥലം മാപ്പിൽ കാണിക്കാൻ കഴിയില്ല."
+  },
+  "mn": {
+    "place-unavailable": "Энэ газрыг газрын зураг дээр харуулах боломжгүй."
+  },
+  "mr": {
+    "place-unavailable": "हे ठिकाण नकाशावर दाखवता येणार नाही."
+  },
+  "ms": {
+    "place-unavailable": "Tempat ini tidak dapat ditunjukkan pada peta."
+  },
+  "my": {
+    "place-unavailable": "ဒီနေရာကို မြေပုံမှာ မပြနိုင်ပါ။"
+  },
+  "nb": {
+    "place-unavailable": "Dette stedet kan ikke vises på kartet."
+  },
+  "ne": {
+    "place-unavailable": "यो ठाउँ नक्सामा देखाउन सकिँदैन।"
+  },
+  "nl": {
+    "place-unavailable": "Deze locatie kan niet op de kaart worden weergegeven."
+  },
+  "no": {
+    "place-unavailable": "Dette stedet kan ikke vises på kartet."
+  },
+  "pa": {
+    "place-unavailable": "ਇਹ ਜਗ੍ਹਾ ਨਕਸ਼ੇ 'ਤੇ ਨਹੀਂ ਦਿਖਾਈ ਜਾ ਸਕਦੀ।"
+  },
+  "pl": {
+    "place-unavailable": "Tego miejsca nie można pokazać na mapie."
+  },
+  "ps": {
+    "place-unavailable": "دا ځای په نقشه کې نشي ښودل کیدی."
+  },
+  "pt": {
+    "place-unavailable": "Este local não pode ser mostrado no mapa."
+  },
+  "ro": {
+    "place-unavailable": "Acest loc nu poate fi afișat pe hartă."
+  },
+  "ru": {
+    "place-unavailable": "Это место невозможно отобразить на карте."
+  },
+  "sk": {
+    "place-unavailable": "Toto miesto sa nedá zobraziť na mape."
+  },
+  "sl": {
+    "place-unavailable": "Tega kraja ni mogoče prikazati na zemljevidu."
+  },
+  "sq": {
+    "place-unavailable": "Ky vend nuk mund të shfaqet në hartë."
+  },
+  "sv": {
+    "place-unavailable": "Den här platsen kan inte visas på kartan."
+  },
+  "sw": {
+    "place-unavailable": "Mahali hapa hapawezi kuonyeshwa kwenye ramani."
+  },
+  "ta": {
+    "place-unavailable": "இந்த இடத்தை வரைபடத்தில் காட்ட முடியாது."
+  },
+  "te": {
+    "place-unavailable": "ఈ ప్రదేశాన్ని పటంలో చూపించలేము."
+  },
+  "th": {
+    "place-unavailable": "สถานที่นี้ไม่สามารถแสดงบนแผนที่ได้"
+  },
+  "ti": {
+    "place-unavailable": "እዚ ቦታ ኣብ ካርታ ክርአ ኣይክእልን እዩ።"
+  },
+  "tl": {
+    "place-unavailable": "Hindi maipapakita ang lugar na ito sa mapa."
+  },
+  "tr": {
+    "place-unavailable": "Bu yer haritada gösterilemiyor."
+  },
+  "ug": {
+    "place-unavailable": "بۇ يەرنى خەرىتىدە كۆرسىتىشكە بولمايدۇ."
+  },
+  "uk": {
+    "place-unavailable": "Це місце не можна показати на карті."
+  },
+  "ur": {
+    "place-unavailable": "یہ جگہ نقشے پر نہیں دکھائی جا سکتی ہے۔"
+  },
+  "uz": {
+    "place-unavailable": "Bu joyni xaritada ko'rsatib bo'lmaydi."
+  },
+  "vi": {
+    "place-unavailable": "Địa điểm này không hiển thị trên bản đồ."
+  },
+  "zh": {
+    "place-unavailable": "地图上找不到这个地方。"
+  },
+  "zu": {
+    "place-unavailable": "Le ndawo ayikwazi ukuboniswa kumephu."
+  }
+}

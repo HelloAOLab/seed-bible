@@ -3,6 +3,7 @@ import { useEffect } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { OfflineTranslationsManager } from "../../managers/OfflineTranslationsManager";
 import { useOverlayDismiss } from "../useOverlayDismiss";
+import { Button } from "../Button/Button";
 
 /**
  * Offers to update the downloaded translation the reader is currently in, once
@@ -109,21 +110,25 @@ export function OfflineUpdatePrompt({
           })}
         </p>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="lg"
+          shape="pill"
           className="sb-offline-prompt-btn sb-offline-prompt-btn-primary"
           onClick={() => void update()}
         >
           {t("updatePrompt.update", { defaultValue: "Update" })}
-        </button>
+        </Button>
 
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="lg"
+          shape="pill"
           className="sb-offline-prompt-btn sb-offline-prompt-btn-secondary"
           onClick={() => offline.dismissUpdatePrompt()}
         >
           {t("updatePrompt.notNow", { defaultValue: "Not now" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

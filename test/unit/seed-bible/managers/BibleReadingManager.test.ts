@@ -6,6 +6,8 @@ import {
   previousPosition,
   resolveChapterInBook,
   NAVIGATION_COALESCE_MS,
+  DISCOVERY_IDLE_TIMEOUT_MS,
+  DISCOVERY_LOADER_DELAY_MS,
   type BibleReadingState,
   type VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -36,6 +38,13 @@ import { effect, signal } from "@preact/signals";
 import type { Mock } from "vitest";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
+import {
+  createSettings,
+  type SettingsManager,
+} from "@packages/seed-bible/seed-bible/managers/SettingsManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { makeFakeLogin } from "./testUtils/fakeLogin";
 import {
   createDiscoverManager,
   type DiscoverContext,
@@ -3307,6 +3316,116 @@ describe("createBibleReadingState", () => {
       expect(state.discoveredStudyNotes.value).toEqual([]);
     });
 
+    describe("isDiscovering and showDiscoveryLoader", () => {
+      // A provider for Genesis 1 that answers only when the test says so.
+      function deferredProvider(id: string) {
+        let answer: (results: DiscoverResult[]) => void = () => {};
+        const provider = {
+          id,
+          title: id,
+          description: id,
+          discover: () =>
+            new Promise<DiscoverResult[]>((resolve) => {
+              answer = resolve;
+            }),
+        };
+        const result: DiscoverResult = {
+          type: "content",
+          title: `From ${id}`,
+          description: "desc",
+          reference: { book: "GEN", chapter: 1, verse: 1 },
+        };
+        return { provider, answer: () => answer([result]) };
+      }
+
+      // Loads the chapter with real timers, then switches to fake ones before
+      // a provider registers, so the discovery it starts runs on them.
+      async function loadThenFakeTimers() {
+        const discoverManager = createDiscoverManager();
+        setWebResponses(createReadingManagerResponseMap());
+        const state = createRawBibleReadingState(
+          createDataManager(),
+          createHighlightsManagerMock() as any,
+          createI18nManager(createNavigationManager(), ["en"]),
+          {},
+          discoverManager
+        );
+        await waitForInitialLoad(state);
+        await waitFor(() => !state.isDiscovering.value);
+        vi.useFakeTimers();
+        return { state, discoverManager };
+      }
+
+      afterEach(() => {
+        vi.clearAllTimers();
+        vi.useRealTimers();
+      });
+
+      it("discovers until every provider has answered, showing the loader only past the delay", async () => {
+        const { state, discoverManager } = await loadThenFakeTimers();
+        const slow = deferredProvider("slow");
+
+        discoverManager.registerDiscoverProvider(slow.provider);
+
+        expect(state.isDiscovering.value).toBe(true);
+        await vi.advanceTimersByTimeAsync(DISCOVERY_LOADER_DELAY_MS - 1);
+        expect(state.showDiscoveryLoader.value).toBe(false);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(state.showDiscoveryLoader.value).toBe(true);
+
+        slow.answer();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(state.isDiscovering.value).toBe(false);
+        expect(state.showDiscoveryLoader.value).toBe(false);
+        expect(state.discoveredContent.value).toHaveLength(1);
+      });
+
+      it("never shows the loader when every provider answers within the delay", async () => {
+        const { state, discoverManager } = await loadThenFakeTimers();
+        const quick = deferredProvider("quick");
+
+        discoverManager.registerDiscoverProvider(quick.provider);
+        await vi.advanceTimersByTimeAsync(DISCOVERY_LOADER_DELAY_MS / 2);
+        quick.answer();
+        await vi.advanceTimersByTimeAsync(DISCOVERY_LOADER_DELAY_MS);
+
+        expect(state.isDiscovering.value).toBe(false);
+        expect(state.showDiscoveryLoader.value).toBe(false);
+      });
+
+      it("gives up once no provider has answered for the idle timeout, and a late answer doesn't bring the loader back", async () => {
+        const { state, discoverManager } = await loadThenFakeTimers();
+        const first = deferredProvider("first");
+        const late = deferredProvider("late");
+
+        discoverManager.registerDiscoverProvider(first.provider);
+        discoverManager.registerDiscoverProvider(late.provider);
+        await vi.advanceTimersByTimeAsync(DISCOVERY_IDLE_TIMEOUT_MS - 1000);
+        first.answer();
+        await vi.advanceTimersByTimeAsync(0);
+
+        // The answer restarted the wait.
+        await vi.advanceTimersByTimeAsync(DISCOVERY_IDLE_TIMEOUT_MS - 1);
+        expect(state.isDiscovering.value).toBe(true);
+        expect(state.showDiscoveryLoader.value).toBe(true);
+        await vi.advanceTimersByTimeAsync(1);
+        expect(state.isDiscovering.value).toBe(false);
+        expect(state.showDiscoveryLoader.value).toBe(false);
+
+        late.answer();
+        await vi.advanceTimersByTimeAsync(DISCOVERY_IDLE_TIMEOUT_MS);
+
+        expect(
+          state.discoveredContent.value.flatMap((group) =>
+            group.results.map((result) => result.title)
+          )
+        ).toEqual(["From first", "From late"]);
+        expect(state.isDiscovering.value).toBe(false);
+        expect(state.showDiscoveryLoader.value).toBe(false);
+      });
+    });
+
     it("signals reset when chapter changes", async () => {
       const responses = createReadingManagerResponseMap();
       const discoverManager = createDiscoverManagerMock([
@@ -3344,6 +3463,138 @@ describe("createBibleReadingState", () => {
       expect(state.discoveredStudyNotes.value).toEqual([]);
       expect(state.discoveredCrossReferences.value).toEqual([]);
       expect(state.discoveredContent.value).toEqual([]);
+    });
+  });
+
+  describe("discovered content in shared sessions", () => {
+    const genesisOneContent = () => ({
+      id: "provider",
+      title: "Provider",
+      description: "One result for Genesis 1.",
+      discover: () => [
+        {
+          type: "content" as const,
+          title: "Overview",
+          description: "desc",
+          reference: { book: "GEN", chapter: 1, verse: 1 },
+        },
+      ],
+    });
+
+    async function createReadingState(options: {
+      isShared: boolean;
+      settings: SettingsManager;
+    }) {
+      const discoverManager = createDiscoverManager();
+      discoverManager.registerDiscoverProvider(genesisOneContent());
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        { isShared: options.isShared },
+        discoverManager,
+        undefined,
+        undefined,
+        options.settings
+      );
+      await waitForInitialLoad(state);
+      return state;
+    }
+
+    function createSettingsManager() {
+      return createSettings(
+        CasualOSManager(),
+        makeFakeLogin({ name: "Test", config: {} } as unknown as UserProfile),
+        createNavigationManager({ initialHref: "http://localhost:3000/" })
+      );
+    }
+
+    it("hides discovered content in a session and reports it as hidden", async () => {
+      const state = await createReadingState({
+        isShared: true,
+        settings: createSettingsManager(),
+      });
+
+      await waitFor(() => state.hasHiddenDiscoveredContent.value);
+      expect(state.discoveredContent.value).toEqual([]);
+      expect(state.showSharedSessionHint.value).toBe(false);
+    });
+
+    it("shows it after Turn on, and keeps it on for future sessions", async () => {
+      const settings = createSettingsManager();
+      const state = await createReadingState({ isShared: true, settings });
+      await waitFor(() => state.hasHiddenDiscoveredContent.value);
+
+      state.turnOnDiscoveredContent();
+
+      expect(
+        state.discoveredContent.value.flatMap((group) =>
+          group.results.map((result) => result.title)
+        )
+      ).toEqual(["Overview"]);
+      expect(state.hasHiddenDiscoveredContent.value).toBe(false);
+      expect(
+        settings.settings.value.discoveredContent.showInSharedSessions
+      ).toBe(true);
+
+      const nextSession = await createReadingState({
+        isShared: true,
+        settings,
+      });
+      await waitFor(() => nextSession.discoveredContent.value.length > 0);
+      expect(nextSession.hasHiddenDiscoveredContent.value).toBe(false);
+    });
+
+    it("hides it again when the setting is turned off mid-session", async () => {
+      const settings = createSettingsManager();
+      settings.setDiscoveredContent({ showInSharedSessions: true });
+      const state = await createReadingState({ isShared: true, settings });
+      await waitFor(() => state.discoveredContent.value.length > 0);
+
+      settings.setDiscoveredContent({ showInSharedSessions: false });
+
+      expect(state.discoveredContent.value).toEqual([]);
+      expect(state.hasHiddenDiscoveredContent.value).toBe(true);
+    });
+
+    it("shows the hint once discovered content is on screen, until it is acknowledged", async () => {
+      const settings = createSettingsManager();
+      settings.setDiscoveredContent({ showInSharedSessions: true });
+      const state = await createReadingState({ isShared: true, settings });
+      await waitFor(() => state.discoveredContent.value.length > 0);
+
+      expect(state.showSharedSessionHint.value).toBe(true);
+
+      state.dismissSharedSessionHint();
+
+      expect(state.showSharedSessionHint.value).toBe(false);
+      const nextSession = await createReadingState({
+        isShared: true,
+        settings,
+      });
+      await waitFor(() => nextSession.discoveredContent.value.length > 0);
+      expect(nextSession.showSharedSessionHint.value).toBe(false);
+    });
+
+    it("leaves reading outside a session alone: content shows and there is no hint", async () => {
+      const state = await createReadingState({
+        isShared: false,
+        settings: createSettingsManager(),
+      });
+
+      await waitFor(() => state.discoveredContent.value.length > 0);
+      expect(state.hasHiddenDiscoveredContent.value).toBe(false);
+      expect(state.showSharedSessionHint.value).toBe(false);
+    });
+
+    it("keeps a session's inline-panel toggle out of the user's settings", async () => {
+      const settings = createSettingsManager();
+      const state = await createReadingState({ isShared: true, settings });
+
+      state.discoverContentPanelInline.value = false;
+
+      expect(settings.settings.value.discoverContentPanelInline).toBe(true);
     });
   });
 

@@ -2,12 +2,16 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import {
+  ReadingPlansPane,
   ReadingPlansPaneLeading,
+  openPlanCreate,
   openReadingPlanDetail,
+  openReadingPlanEditor,
 } from "@packages/seed-bible/seed-bible/components/ReadingPlansPane/ReadingPlansPane";
 import {
   createReadingPlan,
   type ReadingPlan,
+  type ReadingPlanDraft,
   type ReadingPlansManager,
 } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
 import { openReadingPlansPane } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
@@ -144,5 +148,271 @@ describe("reading plans pane back button", () => {
     act(() => backButton()!.click());
 
     expect(onBack).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The plan editor's own Cancel and Save buttons leave the same way the header's
+ * back button does: to the screen that opened the plan directly, if one did.
+ */
+describe("reading plan editor footer", () => {
+  let container: HTMLDivElement;
+  let readingPlan: ReadingPlan;
+  let readingPlans: ReadingPlansManager;
+  let finishEditingReadingPlan: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+    readingPlan = createReadingPlan("record-1", "author-1", "plan-1", NOW_MS, {
+      title: "Gospel of John",
+      description: null,
+      status: "complete",
+      sessions: [
+        {
+          id: "s1",
+          title: null,
+          readings: [
+            {
+              id: "r1",
+              item: { type: "bible-verse", ref: { bookId: "JHN", chapter: 1 } },
+            },
+          ],
+        },
+      ],
+    });
+    const editingReadingPlan = signal<ReadingPlanDraft | null>({
+      plan: readingPlan,
+      selectedSessionIndex: 0,
+      persisted: true,
+      isNew: false,
+    });
+    finishEditingReadingPlan = vi.fn(async () => {});
+    readingPlans = {
+      editingReadingPlan,
+      editingReadingPlanSaving: signal(false),
+      editingReadingPlanSaveError: signal(null),
+      selectEditingPlanSession: vi.fn(),
+      finishEditingReadingPlan,
+      cancelEditingReadingPlan: vi.fn(() => {
+        editingReadingPlan.value = null;
+      }),
+      userReadingPlans: signal([]),
+      fullReadingPlans: signal([]),
+      userReadingPlanProgresses: signal([]),
+      selectReadingPlan: vi.fn(async () => readingPlan),
+      selectReadingPlanProgress: vi.fn(async () => {}),
+    } as unknown as ReadingPlansManager;
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  async function renderEditor(
+    onBack: () => void,
+    options: { fromAnotherScreen?: boolean }
+  ) {
+    await act(async () => {
+      await openReadingPlanEditor(readingPlans, readingPlan, options);
+    });
+    act(() => {
+      render(
+        <ReadingPlansPane
+          readingPlans={readingPlans}
+          books={[]}
+          modals={createModalManager()}
+          onBack={onBack}
+        />,
+        container
+      );
+    });
+  }
+
+  function footerButton(label: string) {
+    const button = Array.from(container.querySelectorAll("button")).find((el) =>
+      el.textContent?.includes(label)
+    );
+    if (!button) throw new Error(`No "${label}" button.`);
+    return button;
+  }
+
+  it("returns to the screen that opened the plan when Cancel is pressed", async () => {
+    const onBack = vi.fn();
+    await renderEditor(onBack, { fromAnotherScreen: true });
+
+    act(() => footerButton("Cancel").click());
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("goes back to the list on Cancel when the plan was opened from the list", async () => {
+    const onBack = vi.fn();
+    await renderEditor(onBack, {});
+
+    act(() => footerButton("Cancel").click());
+
+    expect(onBack).not.toHaveBeenCalled();
+  });
+
+  it("returns to the screen that opened the plan once Save has saved", async () => {
+    const onBack = vi.fn();
+    await renderEditor(onBack, { fromAnotherScreen: true });
+
+    await act(async () => footerButton("Save changes").click());
+
+    expect(finishEditingReadingPlan).toHaveBeenCalledTimes(1);
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("stays in the editor when Save fails", async () => {
+    const onBack = vi.fn();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    finishEditingReadingPlan.mockRejectedValue(new Error("offline"));
+    await renderEditor(onBack, { fromAnotherScreen: true });
+
+    await act(async () => footerButton("Save changes").click());
+
+    expect(onBack).not.toHaveBeenCalled();
+    // Back out so the shared view doesn't leak into the next test.
+    act(() => footerButton("Cancel").click());
+  });
+});
+
+/**
+ * "Create → Reading Plan" on Your content opens the editor on a new plan from
+ * outside the plans pane, so back returns to Your content rather than the list.
+ */
+describe("creating a plan from another screen", () => {
+  let container: HTMLDivElement;
+  let editingReadingPlan: ReturnType<typeof signal<ReadingPlanDraft | null>>;
+  let readingPlans: ReadingPlansManager;
+
+  const draftOf = (plan: ReadingPlan, isNew: boolean): ReadingPlanDraft => ({
+    plan,
+    selectedSessionIndex: 0,
+    persisted: true,
+    isNew,
+  });
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+    editingReadingPlan = signal<ReadingPlanDraft | null>(null);
+    readingPlans = {
+      editingReadingPlan,
+      editingReadingPlanSaving: signal(false),
+      editingReadingPlanSaveError: signal(null),
+      startEditingReadingPlan: vi.fn(() => {
+        editingReadingPlan.value = {
+          ...draftOf(
+            createReadingPlan("user-1", "user-1", "plan-new", NOW_MS, {
+              status: "draft",
+            }),
+            true
+          ),
+          persisted: false,
+        };
+      }),
+      cancelEditingReadingPlan: vi.fn(() => {
+        editingReadingPlan.value = null;
+      }),
+      selectEditingPlanSession: vi.fn(),
+      userReadingPlans: signal([]),
+      fullReadingPlans: signal([]),
+      userReadingPlanProgresses: signal([]),
+      selectReadingPlan: vi.fn(async () => null),
+      selectReadingPlanProgress: vi.fn(async () => {}),
+    } as unknown as ReadingPlansManager;
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  function openCreate(onBack: () => void) {
+    act(() => {
+      openPlanCreate(readingPlans, { fromAnotherScreen: true });
+    });
+    act(() => {
+      render(
+        <>
+          <ReadingPlansPaneLeading
+            readingPlans={readingPlans}
+            onBack={onBack}
+          />
+          <ReadingPlansPane
+            readingPlans={readingPlans}
+            books={[]}
+            modals={createModalManager()}
+            onBack={onBack}
+          />
+        </>,
+        container
+      );
+    });
+  }
+
+  const nameInput = () =>
+    container.querySelector<HTMLInputElement>(".sb-rp-text-input");
+  const buttonLabels = () =>
+    Array.from(container.querySelectorAll("button")).map(
+      (el) => el.textContent
+    );
+
+  function goBack() {
+    const back = container.querySelector<HTMLButtonElement>(".sb-rp-pane-back");
+    if (!back) throw new Error("No back button.");
+    act(() => back.click());
+  }
+
+  it("opens the editor on a new plan and goes back to the screen that opened it", () => {
+    const onBack = vi.fn();
+    openCreate(onBack);
+
+    expect(nameInput()?.value).toBe("");
+    expect(buttonLabels()).toContain("Create plan");
+
+    goBack();
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("starts a new plan rather than reopening a published plan left in the editor", () => {
+    // Editing a published plan, then closing the pane with its X, leaves the
+    // plan in the editor.
+    editingReadingPlan.value = draftOf(
+      createReadingPlan("user-1", "user-1", "plan-1", NOW_MS, {
+        title: "Gospel of John",
+        status: "complete",
+      }),
+      false
+    );
+    const onBack = vi.fn();
+    openCreate(onBack);
+
+    expect(nameInput()?.value).toBe("");
+    expect(buttonLabels()).toContain("Create plan");
+    expect(buttonLabels()).not.toContain("Save changes");
+    goBack();
+  });
+
+  it("picks a new plan that is still in the editor back up", () => {
+    editingReadingPlan.value = draftOf(
+      createReadingPlan("user-1", "user-1", "plan-2", NOW_MS, {
+        title: "Resume test",
+        status: "draft",
+      }),
+      true
+    );
+    const onBack = vi.fn();
+    openCreate(onBack);
+
+    expect(nameInput()?.value).toBe("Resume test");
+    goBack();
   });
 });

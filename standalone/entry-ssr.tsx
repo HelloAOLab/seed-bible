@@ -22,7 +22,15 @@ import {
   splitPathSegments,
   stripBasePath,
 } from "@packages/seed-bible/seed-bible/managers/ReadingUrlPath";
-import { getPreferredSupportedLanguage } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import {
+  getPreferredSupportedLanguage,
+  getUrlLanguage,
+  i18n,
+} from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import { loadTermsOfService } from "@packages/seed-bible/seed-bible/components/TermsOfServiceModal/TermsOfServiceModal";
+import { loadPrivacyPolicy } from "@packages/seed-bible/seed-bible/components/PrivacyPolicyModal/PrivacyPolicyModal";
+import { loadCodeOfConduct } from "@packages/seed-bible/seed-bible/components/CodeOfConductModal/CodeOfConductModal";
+import { getTodayPageRedirect } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import {
   composeThemeStyleText,
   THEME_PRESET_STYLE_TEXT,
@@ -547,6 +555,29 @@ export function acceptLanguageRedirect(
 }
 
 /**
+ * Redirects a URL that should show the Today screen — a bare "/", or any URL
+ * carrying the legacy `?today=open` — to the Today page, "/{lang}/today", so
+ * the server renders Today itself rather than the reader for the client to
+ * cover a moment later. The language comes from the URL when it names one,
+ * else from `Accept-Language`, which is why the answer is a 302 that varies
+ * on it. See `shouldRedirectToTodayPage` for the URLs that stay put.
+ */
+export function todayPageRedirect(
+  path: string,
+  basePath: string,
+  acceptedLanguages: string[]
+): string | null {
+  const url = new URL(path, "http://ssr.local");
+  return getTodayPageRedirect(
+    url,
+    basePath,
+    getUrlLanguage(url, basePath) ??
+      getPreferredSupportedLanguage(acceptedLanguages) ??
+      DEFAULT_UI_LANGUAGE
+  );
+}
+
+/**
  * Server-side renders the app to a complete HTML document.
  *
  * Verse content is part of that document, not filled in later: the reader
@@ -590,6 +621,21 @@ export async function render(
   if (languageRedirectTo) {
     return {
       redirectTo: languageRedirectTo,
+      redirectStatus: 302,
+      vary: "Accept-Language",
+    };
+  }
+
+  // After the reading-path redirects, which fold a legacy `?book=` (or a
+  // path missing its language) into a full reading path first.
+  const todayRedirectTo = todayPageRedirect(
+    options.path,
+    injectedConfig.basePath,
+    injectedConfig.acceptedLanguages
+  );
+  if (todayRedirectTo) {
+    return {
+      redirectTo: todayRedirectTo,
       redirectStatus: 302,
       vary: "Accept-Language",
     };
@@ -680,8 +726,8 @@ async function renderState(
       "ssr.wait.chapter",
       state.app.selectedTab.value?.readingState.chapterDataPromise
     ),
-    // So the title, meta and modal describe a shared playlist or reading
-    // plan link's content. Awaited here with the chapter, not suspended on
+    // So the title, meta and modal describe a shared playlist, reading
+    // plan or friend link's content. Awaited here with the chapter, not suspended on
     // during the render, for the reason above.
     timer.wait(
       "ssr.wait.playlistPage",
@@ -691,6 +737,10 @@ async function renderState(
       "ssr.wait.readingPlanPage",
       state.readingPlans.initialReadingPlanPageLoadPromise
     ),
+    timer.wait(
+      "ssr.wait.friendLinkPreview",
+      state.friendLinkPreview.initialLoadPromise
+    ),
   ]);
   // A reload mid-playlist names only its step, not the chapter; the reader
   // moves there once the playlist has loaded, so wait for that too before
@@ -698,6 +748,18 @@ async function renderState(
   await timer.wait(
     "ssr.wait.playlistPlayback",
     state.playlists.initialPlaybackPromise
+  );
+
+  // A `?terms=open` style link opens a legal window, whose text loads on
+  // demand. Load it before rendering, for the same reason as the waits above.
+  const language = state.i18n.language.value;
+  await timer.wait(
+    "ssr.wait.legalText",
+    Promise.all([
+      state.isTermsOpen.value && loadTermsOfService(i18n, language),
+      state.isPrivacyOpen.value && loadPrivacyPolicy(i18n, language),
+      state.isCodeOfConductOpen.value && loadCodeOfConduct(i18n, language),
+    ])
   );
 
   const appHtml = await timer.step("ssr.renderToString", () =>
@@ -724,6 +786,7 @@ async function renderState(
       <meta property="og:title" content={state.app.socialTitle.value} />
       <meta property="og:description" content={state.app.description.value} />
       <meta property="og:url" content={state.app.canonicalUrl.value} />
+      {state.app.noIndex.value && <meta name="robots" content="noindex" />}
       <meta property="og:site_name" content={state.app.siteName.value} />
       {/* Only emitted for a shared playlist with a cover image, or when a
           customization with an uploaded logo is active (see
@@ -822,6 +885,9 @@ async function renderState(
   const readingPlanPageSeedJson = escapeForScript(
     JSON.stringify(state.readingPlans.getReadingPlanPageSeed())
   );
+  const friendLinkSeedJson = escapeForScript(
+    JSON.stringify(state.friendLinkPreview.getSeed())
+  );
 
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
@@ -836,6 +902,7 @@ async function renderState(
     ["<!-- CUSTOMIZATION_JSON -->", customizationSeedJson],
     ["<!-- PLAYLIST_PAGE_JSON -->", playlistPageSeedJson],
     ["<!-- READING_PLAN_PAGE_JSON -->", readingPlanPageSeedJson],
+    ["<!-- FRIEND_LINK_JSON -->", friendLinkSeedJson],
     ["<!-- APP_HTML -->", appHtml],
   ];
 
