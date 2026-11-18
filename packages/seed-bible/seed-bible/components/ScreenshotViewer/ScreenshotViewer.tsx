@@ -6,7 +6,7 @@ import { useI18n } from "../../i18n/I18nContext";
 import { CloseButton } from "../CloseButton/CloseButton";
 import { IconButton } from "../IconButton/IconButton";
 import { useOverlayDismiss } from "../useOverlayDismiss";
-import { trapTabKey, useModalFocus } from "../useModalFocus";
+import { useModalLayer } from "../useModalFocus";
 
 const SWIPE_MIN_PX = 40;
 
@@ -58,7 +58,12 @@ export function ScreenshotViewer({
   const pointer = useRef<{ id: number; x: number; y: number } | null>(null);
   const overlayDismiss = useOverlayDismiss(onClose);
 
-  useModalFocus(dialog, closeButton, true, true);
+  useModalLayer(dialog, {
+    enabled: !!screenshot,
+    initialFocusRef: closeButton,
+    containFocus: true,
+    onEscape: onClose,
+  });
 
   const move = (step: number) => {
     const next = screenshots[index + step];
@@ -82,22 +87,12 @@ export function ScreenshotViewer({
 
   const onKeyDown = (event: KeyboardEvent) => {
     switch (event.key) {
-      case "Escape":
-        event.preventDefault();
-        event.stopPropagation();
-        onClose();
-        break;
       case "ArrowLeft":
       case "ArrowRight":
         event.preventDefault();
         event.stopPropagation();
         moveVisually(event.key === "ArrowRight");
         break;
-      case "Tab": {
-        const container = dialog.current;
-        if (container) trapTabKey(event, container);
-        break;
-      }
     }
   };
 
