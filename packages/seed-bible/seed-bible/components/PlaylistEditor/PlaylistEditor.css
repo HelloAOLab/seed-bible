@@ -1469,6 +1469,9 @@ body.sb-scroll-hide-bars .sb-pe-workspace--mobile .sb-pe-mobile-bottom {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  /* Room for a focused field's outline (2px, 2px out), which the scrolling
+     body around these fields would otherwise cut off at the sides. */
+  padding: 0 4px 4px;
   font-family: var(--pe-font-ui);
 
   /* The cover at the size the shared playlist page shows it, so the sheet
