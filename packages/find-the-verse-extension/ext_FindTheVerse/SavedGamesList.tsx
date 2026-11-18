@@ -84,13 +84,22 @@ function SavedGameCard({
 
   const share = async () => {
     if (!shareUrl) return;
+    let copied = true;
     try {
       await navigator.clipboard.writeText(shareUrl);
-      await onShare(true);
-      toast(t("link-copied", { defaultValue: "Link copied" }));
     } catch {
-      // GamePane already shows the error in the panel notice.
+      copied = false;
     }
+    try {
+      await onShare(true);
+    } catch {
+      return; // GamePane shows the share error in the panel notice.
+    }
+    toast(
+      copied
+        ? t("link-copied", { defaultValue: "Link copied" })
+        : t("copy-link-failed", { defaultValue: "Couldn't copy the link" })
+    );
   };
 
   const stopSharing = () =>
