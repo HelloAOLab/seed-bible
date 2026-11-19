@@ -863,10 +863,10 @@ export function createTabs(
       // switch while on it — would immediately replace the address bar with
       // a reading URL, since a reading tab always exists underneath.
       //
-      // `leaveStaticPage` is the escape hatch: a genuine tab-focus change (the
-      // user picked a different tab, or navigated via search) should win over
-      // this guard and take the user back to the reader — see the tab-focus
-      // effect below, the only caller that ever passes it.
+      // A tab's own moves never replace such a page. Only two callers pass
+      // `leaveStaticPage` to override this guard and return to the reader: a
+      // genuine tab-focus change (see the tab-focus effect below) and the
+      // public `leaveStaticPage()`.
       if (
         !pathOverride &&
         !options.leaveStaticPage &&
@@ -953,7 +953,8 @@ export function createTabs(
   // position signals): tears down the previous tab's subscription, and commits
   // a `replace` so the URL reflects the newly-focused tab without adding a
   // history entry. Real navigations within the tab arrive via `onNavigate` and
-  // push a single entry each.
+  // push a single entry each, except while a page with its own address is
+  // showing: a tab's own moves never replace it, so they write nothing.
   let hasFocusedTabBefore = false;
   effect(() => {
     const readingState = selectedTab.value?.readingState;
@@ -968,12 +969,17 @@ export function createTabs(
     // tab, or navigated via search — so it should leave a static page for the
     // position now being shown instead of leaving it stuck behind the URL.
     // Restoring the saved tabs is the exception: it is the tail end of mount,
-    // not a navigation, so it must not count as a focus change either.
-    //
-    // Only this focus commit leaves the page. The tab's own moves afterwards
-    // still respect the guard: the playlist editor keeps a page's URL while
-    // it moves the reader behind it, and must not lose it to that move.
-    const leaveStaticPage = hasFocusedTabBefore && !restoringStoredTabs;
+    // not a navigation, so it must not count as a focus change either. So is
+    // the playlist editor, which stays open over whichever tab is selected
+    // (it moves that tab to the open step) and reads its screen from the
+    // address, so writing the new tab's chapter there would close it.
+    const leaveStaticPage =
+      hasFocusedTabBefore &&
+      !restoringStoredTabs &&
+      !parsePlaylistPagePath(
+        navigation.currentUrl.peek().pathname,
+        navigation.basePath
+      )?.edit;
 
     const dispose = readingState.onNavigate((options) =>
       commitSelectedTabToUrl(options)
