@@ -204,6 +204,7 @@ function createMockState(
       friends: signal(friendPlaylists.map((entry) => entry.friend)),
       friendIds: signal(friendPlaylists.map((entry) => entry.friend.userId)),
       hasLoaded: signal(true),
+      isLoading: signal(false),
     },
     annotations: {
       getAnnotationsForChapter: vi.fn(() =>
@@ -1763,8 +1764,12 @@ describe("DiscoverContentPanel", () => {
           ),
         });
         const friendsLoaded = signal(options.friendsLoaded);
-        Object.assign(state.friends, { hasLoaded: friendsLoaded });
-        return { tab, state, notes, friendsLoaded };
+        const friendsLoading = signal(!options.friendsLoaded);
+        Object.assign(state.friends, {
+          hasLoaded: friendsLoaded,
+          isLoading: friendsLoading,
+        });
+        return { tab, state, notes, friendsLoaded, friendsLoading };
       }
 
       const settle = () =>
@@ -1823,6 +1828,40 @@ describe("DiscoverContentPanel", () => {
 
           expect(state.discover.scrollToVerse.value).toBeNull();
           expect(isHighlighted()).toBe(true);
+        } finally {
+          frames.restore();
+        }
+      });
+
+      it("is dropped once the friends list couldn't be read, so a note added later doesn't flash", async () => {
+        const { tab, state, notes, friendsLoading } = setUpEmptyChapter({
+          friendsLoaded: false,
+        });
+        const frames = queueFrames();
+        scrollIntoView.mockClear();
+
+        try {
+          renderFull(tab, state);
+          act(() => {
+            state.discover.scrollToVerse.value = target(tab.id);
+          });
+          await settle();
+          expect(state.discover.scrollToVerse.value).not.toBeNull();
+
+          act(() => {
+            friendsLoading.value = false;
+          });
+          await settle();
+
+          expect(state.discover.scrollToVerse.value).toBeNull();
+
+          act(() => {
+            notes.value = [verse7];
+          });
+          frames.flush();
+
+          expect(isHighlighted()).toBe(false);
+          expect(scrollIntoView).not.toHaveBeenCalled();
         } finally {
           frames.restore();
         }

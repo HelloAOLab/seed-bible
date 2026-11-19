@@ -712,9 +712,13 @@ export function AnnotationsSection(props: {
       // arrive, and the group can be found then. Once every list has loaded
       // without it, the target is dropped, or it would fire whenever a note
       // later lands on that verse. A friends list still being read counts as
-      // loading, since an empty one would hide the friend's note.
+      // loading, since an empty one would hide the friend's note; one whose
+      // read failed doesn't, or the target would wait until a later refresh.
       if (!group) {
-        const friendsKnown = friends.hasLoaded.value || !login.userId.value;
+        const friendsKnown =
+          friends.hasLoaded.value ||
+          !login.userId.value ||
+          !friends.isLoading.value;
         if (friendsKnown && settlingTarget !== target) {
           settlingTarget = target;
           void annotations

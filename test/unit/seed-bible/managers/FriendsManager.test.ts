@@ -88,6 +88,23 @@ describe("FriendsManager", () => {
       });
     });
 
+    it("is loading as soon as someone signs in, so the lists are never read as known but empty", async () => {
+      userId.value = null;
+      const friends = create();
+      const seenUnknownButIdle: boolean[] = [];
+      const stop = effect(() => {
+        seenUnknownButIdle.push(
+          !!userId.value && !friends.hasLoaded.value && !friends.isLoading.value
+        );
+      });
+
+      userId.value = ME;
+      await loaded(friends, () => expect(friends.hasLoaded.value).toBe(true));
+      stop();
+
+      expect(seenUnknownButIdle).not.toContain(true);
+    });
+
     it("leaves out requests that were answered, expired, or aren't friend requests", async () => {
       server.requestFrom("ada", { status: "rejected" });
       server.requestFrom("bob", { expireTimeMs: Date.now() - 1 });
