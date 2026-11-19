@@ -10,8 +10,11 @@ interface DragState {
   startClientY: number;
 }
 
-interface UseDragReorderOptions {
+/** What `useDragReorder` takes. */
+export interface UseDragReorderOptions {
+  /** How many rows the list has. */
   itemCount: number;
+  /** Moves the row at `from` to `to`. Called each time a dragged row passes another. */
   onReorder: (from: number, to: number) => void;
 }
 
