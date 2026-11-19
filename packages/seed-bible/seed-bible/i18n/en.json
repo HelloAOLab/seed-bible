@@ -825,6 +825,7 @@
   "cant-be-undone": "This can't be undone.",
   "delete-save-folder-failed": "Couldn't delete the folder.",
   "save-chapter": "Save chapter",
+  "save-failed": "Couldn't save. Please try again.",
   "save-folder-empty": "No saves here yet.",
   "save-options": "Save options",
   "saves": "Saves",

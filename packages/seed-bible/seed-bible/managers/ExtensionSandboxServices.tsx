@@ -872,10 +872,21 @@ export function createSandboxServices(
         params as Params<"saves.add">;
       // Checked first: `addSave` would otherwise prompt the user to sign in.
       requireSignedIn();
-      await context.saves.addSave(translationId, bookId, chapter, {
-        verse,
-        categories,
-      });
+      const saved = await context.saves.addSave(
+        translationId,
+        bookId,
+        chapter,
+        {
+          verse,
+          categories,
+        }
+      );
+      if (!saved) {
+        throw new SandboxBrokerError(
+          "unavailable",
+          "Couldn't save: the user's saves couldn't be loaded."
+        );
+      }
       return null;
     },
 
