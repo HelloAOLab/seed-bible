@@ -116,6 +116,23 @@ describe("createDatabaseConnection()", () => {
     expect(opened).toHaveLength(2);
   });
 
+  it("shares one new connection when several calls find the old one closing", async () => {
+    const opened = installFakeIndexedDb();
+    const connection = createDatabaseConnection("db", 1, () => {});
+    await connection.transaction("store", "readonly");
+
+    // A frozen tab waking up loads a chapter, highlights and notes at once.
+    firstConnection(opened).closing = true;
+    const transactions = await Promise.all([
+      connection.transaction("store", "readonly"),
+      connection.transaction("store", "readonly"),
+      connection.transaction("store", "readwrite"),
+    ]);
+
+    expect(transactions).toEqual([{ db: 2 }, { db: 2 }, { db: 2 }]);
+    expect(opened).toHaveLength(2);
+  });
+
   it("passes on errors that aren't about a closing connection", async () => {
     const opened = installFakeIndexedDb();
     const connection = createDatabaseConnection("db", 1, () => {});

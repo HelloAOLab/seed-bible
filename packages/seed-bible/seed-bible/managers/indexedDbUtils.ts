@@ -57,6 +57,10 @@ export interface DatabaseConnection {
  * background or its storage being cleared. A store that kept using the dead
  * handle would fail every call afterward with "The database connection is
  * closing", so a closed connection is forgotten and the next call reopens.
+ *
+ * Only starting a transaction is retried. A transaction already running when
+ * the connection closes is aborted by the browser and its caller sees the
+ * error; retrying a half-finished write blindly could apply it twice.
  */
 export function createDatabaseConnection(
   name: string,
