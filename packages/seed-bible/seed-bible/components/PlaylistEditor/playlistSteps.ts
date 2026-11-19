@@ -102,7 +102,7 @@ export function playlistStepLabel(
     case "compare":
       return (
         (item.type === "bible-verse" && item.noteTitle?.trim()) ||
-        t("playlist-step-compare-label", { defaultValue: "Compare verses" })
+        playlistItemLabel(item, t, resolveBookName)
       );
     case "question":
     case "note": {

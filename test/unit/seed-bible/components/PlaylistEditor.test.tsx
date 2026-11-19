@@ -206,6 +206,21 @@ describe("the playlist editor", () => {
       ).toBe("Word made flesh");
     });
 
+    it("names an untitled compare step by the passages it compares", () => {
+      openPanel([
+        {
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 1 },
+          compare: { ref: { bookId: "EXO", chapter: 2 } },
+        },
+      ]);
+
+      expect(
+        container.querySelector(".sb-pe-step .sb-discover-item-title")!
+          .textContent
+      ).toBe("Compare Genesis 1 to Exodus 2");
+    });
+
     it("opens a step when its row is clicked", () => {
       openPanel();
 
