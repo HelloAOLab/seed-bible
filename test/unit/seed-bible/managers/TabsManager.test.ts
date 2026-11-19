@@ -1920,6 +1920,60 @@ describe("createTabs", () => {
     expect(new URL(window.location.href).pathname).toBe("/en/NIV/matthew/1");
   });
 
+  // Regression: only the focus change itself leaves the page. A tab focused
+  // after mount used to carry that permission into every later move of its
+  // own, so once the user had switched tabs, the reader moving behind the
+  // playlist editor (whose page has its own URL) wrote the reading path over
+  // the editor's and closed it.
+  it("keeps a static page's URL when a tab focused after mount moves on its own", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/en/NIV/matthew/1");
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 1,
+          },
+          {
+            id: "tab-2",
+            translationId: "AAB",
+            bookId: "GEN",
+            chapterNumber: 1,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "split-2v",
+        slotTabIds: ["tab-1", "tab-2"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+    manager.hydrateStoredTabs();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    manager.selectTab("tab-2");
+    await waitFor(
+      () => new URL(window.location.href).pathname === "/en/AAB/genesis/1"
+    );
+
+    navigation.push("/en/about");
+    const tab = manager.tabs.value.find(
+      (candidate) => candidate.id === "tab-2"
+    )!;
+    await tab.readingState.selectTranslationAndChapter("NIV", "MAT", 1);
+
+    expect(tab.readingState.bookId.value).toBe("MAT");
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+  });
+
   // `leaveStaticPage()` is the public escape hatch for callers outside the
   // tab-focus effect itself (e.g. the About page's pane closing) that need
   // to force the same "leave a static page" commit on demand, rather than

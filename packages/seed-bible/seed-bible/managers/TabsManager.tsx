@@ -969,10 +969,14 @@ export function createTabs(
     // position now being shown instead of leaving it stuck behind the URL.
     // Restoring the saved tabs is the exception: it is the tail end of mount,
     // not a navigation, so it must not count as a focus change either.
+    //
+    // Only this focus commit leaves the page. The tab's own moves afterwards
+    // still respect the guard: the playlist editor keeps a page's URL while
+    // it moves the reader behind it, and must not lose it to that move.
     const leaveStaticPage = hasFocusedTabBefore && !restoringStoredTabs;
 
     const dispose = readingState.onNavigate((options) =>
-      commitSelectedTabToUrl({ ...options, leaveStaticPage })
+      commitSelectedTabToUrl(options)
     );
     commitSelectedTabToUrl({ replace: true, leaveStaticPage });
     hasFocusedTabBefore = true;
