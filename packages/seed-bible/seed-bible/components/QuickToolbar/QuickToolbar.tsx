@@ -1,5 +1,6 @@
 import "./QuickToolbar.inline.css";
 import "./QuickToolbar.css";
+import "../visuallyHidden.inline.css";
 import type { ToolsManager } from "../../managers/BibleToolsManager";
 import { IconButton } from "../IconButton/IconButton";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
@@ -110,7 +111,7 @@ export function QuickToolbar(props: QuickToolbarProps) {
                 title={title}
               >
                 <ToolIcon />
-                <span className="sr-only">{title}</span>
+                <span className="sb-visually-hidden">{title}</span>
               </button>
             ) : (
               <IconButton

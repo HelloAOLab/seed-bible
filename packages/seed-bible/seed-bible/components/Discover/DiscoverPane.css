@@ -171,14 +171,17 @@
 /* The ⋮ follows the sidebar tab rows' rules (see Tabs.css): shown on hover,
    keyboard focus or while its menu is open, always on touch and phone
    widths, fading in and out with `visibility` flipped at the visible end. */
-@media (hover: hover) and (min-width: 481px) {
-  .sb-annotation-item > .sb-context-menu-anchor {
+@media (hover: hover) {
+  :where(html:not([data-sb-app-layout="mobile"]))
+    .sb-annotation-item
+    > .sb-context-menu-anchor {
     transition:
       opacity var(--sb-duration-fast) ease,
       visibility 0s;
   }
 
-  .sb-annotation-item:not(:hover, :has(:focus-visible))
+  :where(html:not([data-sb-app-layout="mobile"]))
+    .sb-annotation-item:not(:hover, :has(:focus-visible))
     > .sb-context-menu-anchor:not(:has([aria-expanded="true"])) {
     visibility: hidden;
     opacity: 0;

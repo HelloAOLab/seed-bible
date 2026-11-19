@@ -41,10 +41,8 @@
    (it's centred across the whole window, see ReadingPlanEditor.css), so leave
    room to scroll the last plan clear of it. On phones the pane already stops
    above it (see PaneLayout.css). */
-@media (min-width: 481px) {
-  .sb-reading-plans-scroll {
-    padding-bottom: var(--sb-reader-bottom-inset, 6rem);
-  }
+:where(html:not([data-sb-app-layout="mobile"])) .sb-reading-plans-scroll {
+  padding-bottom: var(--sb-reader-bottom-inset, 6rem);
 }
 
 /* Today hero */

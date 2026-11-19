@@ -62,18 +62,17 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
 
-/* The embed step needs room for the preview. The modal frame lives
- * outside this component, so the wider size is selected from here.
- * The content area becomes a flex column so the Copy footer can stay
- * pinned while the preview and code scroll above it. */
-.sb-footnote-modal:has(.sb-share-embed) {
-  width: min(40rem, 100%);
+/* The embed step needs room for the preview. The dialog or sheet around it
+ * lives outside this component, so the wider size is selected from here.
+ * The body becomes a flex container so the Copy footer can stay pinned while
+ * the preview and code scroll above it. */
+.sb-dialog:has(.sb-share-embed) {
+  --sb-dialog-width: min(40rem, 100%);
+  --sb-dialog-body-display: flex;
 }
 
-.sb-footnote-modal:has(.sb-share-embed) .sb-footnote-modal-content {
-  flex: 1;
-  display: flex;
-  min-height: 0;
+.sb-bottom-sheet:has(.sb-share-embed) {
+  --sb-bottom-sheet-body-display: flex;
 }
 
 .sb-share-embed {

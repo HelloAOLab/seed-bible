@@ -7,6 +7,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import ts from "typescript";
 
 // A sandboxed extension's build packs everything it imports into one file, so
 // whatever the SDK imports, every extension carries, and whatever
@@ -151,6 +152,62 @@ describe.each(ENTRIES)("$name", ({ file, reaches }) => {
     // Guards the check above against quietly reading nothing.
     const names = [...importGraph(entry).keys()].map(toName);
     expect(names).toEqual(expect.arrayContaining(reaches));
+  });
+});
+
+describe("seed-bible/components", () => {
+  // The app's global utility classes (`flex-between`, `flex-col`, ...) live
+  // in a stylesheet only the app loads, so a sandboxed frame never gets them.
+  // A shared component using one looks right in the app and broken in an
+  // extension: it needs a rule of its own in its own CSS file.
+  const utilityClasses = [
+    ...readFileSync(
+      path.join(appDir, "app/styles/utilities.inline.css"),
+      "utf-8"
+    ).matchAll(/^\.([a-z][\w-]*)/gm),
+  ].map((match) => match[1]!);
+
+  it("doesn't use the app's global utility classes", () => {
+    const utilities = new Set(utilityClasses);
+    const problems: string[] = [];
+    for (const file of importGraph(
+      path.join(appDir, "components/index.tsx")
+    ).keys()) {
+      if (!/\.tsx?$/.test(file)) continue;
+      const source = ts.createSourceFile(
+        file,
+        readFileSync(file, "utf-8"),
+        ts.ScriptTarget.Latest,
+        true,
+        file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+      );
+      // Every string, wherever it's used: a class name kept in a variable
+      // first ends up on an element just the same.
+      const visit = (node: ts.Node) => {
+        if (
+          ts.isStringLiteral(node) ||
+          ts.isNoSubstitutionTemplateLiteral(node) ||
+          ts.isTemplateHead(node) ||
+          ts.isTemplateMiddle(node) ||
+          ts.isTemplateTail(node)
+        ) {
+          for (const word of node.text.split(/\s+/)) {
+            if (!utilities.has(word)) continue;
+            const { line } = source.getLineAndCharacterOfPosition(
+              node.getStart(source)
+            );
+            problems.push(`${toName(file)}:${line + 1} uses .${word}`);
+          }
+        }
+        ts.forEachChild(node, visit);
+      };
+      visit(source);
+    }
+
+    expect(utilityClasses).toEqual(
+      expect.arrayContaining(["flex-between", "flex-col"])
+    );
+    expect(problems).toEqual([]);
   });
 });
 

@@ -40,6 +40,7 @@ describe("ColorPicker", () => {
       onChange: (hex: string) => void;
       onPreview: (hex: string) => void;
       onCancel: () => void;
+      isMobile: boolean;
     }> = {}
   ) {
     const onChange = vi.fn(overrides.onChange);
@@ -53,6 +54,7 @@ describe("ColorPicker", () => {
           onPreview={onPreview}
           onCancel={onCancel}
           ariaLabel="Pick a color"
+          isMobile={overrides.isMobile ?? false}
         />,
         container
       );
@@ -87,6 +89,31 @@ describe("ColorPicker", () => {
       trigger().dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
   }
+
+  // The window size is set against each layout on purpose: the picker follows
+  // the app's layout, not the window's width.
+  it("opens as a card above the bottom toolbar in the mobile layout, even in a wide window", () => {
+    setup({ isMobile: true });
+    open();
+
+    expect(dialog()!.classList).toContain("sb-color-picker-dialog-card");
+    expect(dialog()!.style.top).toBe("");
+    expect(dialog()!.style.left).toBe("");
+  });
+
+  it("opens as a popover beside its trigger in the desktop layout, even in a narrow window", () => {
+    Object.defineProperty(window, "innerWidth", {
+      value: 400,
+      writable: true,
+      configurable: true,
+    });
+    setup({ isMobile: false });
+    open();
+
+    expect(dialog()!.classList).not.toContain("sb-color-picker-dialog-card");
+    expect(dialog()!.style.top).not.toBe("");
+    expect(dialog()!.style.left).not.toBe("");
+  });
 
   it("does not open until the trigger is clicked", () => {
     setup();

@@ -158,6 +158,12 @@ export default defineConfig(({ isSsrBuild, mode }) => ({
     __ASSET_BASE_URL__: JSON.stringify(assetBaseUrl),
 
     __BRANDING_CONFIG__: JSON.stringify(brandingConfig),
+
+    // The record holding which extensions are verified (see
+    // `managers/ExtensionReviewsManager.tsx`).
+    __EXTENSION_REVIEWS_RECORD__: JSON.stringify(
+      process.env.EXTENSION_REVIEWS_RECORD_NAME?.trim() || null
+    ),
   },
 
   plugins: [
@@ -225,12 +231,18 @@ export default defineConfig(({ isSsrBuild, mode }) => ({
               ],
               start_url: "/",
               display: "standalone",
-              // Splash/default only. Keep in sync with LIGHT_THEME
-              // `background` in ThemeManager. The installed app's live
-              // status bar is driven by <meta name="theme-color">, which
-              // ThemeManager updates to the active theme.
+              // The splash screen. Keep in sync with LIGHT_THEME `background`
+              // in ThemeManager.
               background_color: "#f8fafc",
-              theme_color: "#f8fafc",
+              // The installed Android app's bottom navigation strip. Chrome
+              // paints it from this alone: the page's theme-color meta and
+              // color-scheme don't reach it, installed apps aren't drawn
+              // edge to edge, and there's no dark-mode variant, so one color
+              // serves every theme. DARK_THEME's `background`, because a dark
+              // strip under Light reads as a frame, while a white one under
+              // Dark is a bright band. (The top status bar does follow
+              // <meta name="theme-color">, kept in sync by ThemeManager.)
+              theme_color: "#0a0a0a",
               icons: [
                 {
                   src: "https://favicon.ao.bot/pwa/pwa-192x192.png",
