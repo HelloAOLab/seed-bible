@@ -749,10 +749,7 @@ export const CUSTOMIZATION_FONT_PRESETS: CustomizationFontPreset[] = [
 export function getFontPresetsForField(
   key: ThemeFontFamilyKey
 ): CustomizationFontPreset[] {
-  return [
-    { name: "Default", value: LIGHT_THEME_FONT_DEFAULTS[key] },
-    ...CUSTOMIZATION_FONT_PRESETS,
-  ];
+  return [{ name: "Default", value: "default" }, ...CUSTOMIZATION_FONT_PRESETS];
 }
 
 /**
@@ -801,17 +798,34 @@ function buildVariant(
  * `variant.themes`/`highlightColors` should never be read as if either were
  * a complete theme on their own.
  */
+function resolveFontOverrides(themes: ThemeOverrides): ThemeOverrides {
+  const resolved = { ...themes };
+
+  for (const key of Object.keys(resolved) as ThemeFontFamilyKey[]) {
+    if (resolved[key] === "default") {
+      resolved[key] = LIGHT_THEME_FONT_DEFAULTS[key];
+    }
+  }
+
+  return resolved;
+}
 export function buildBibleThemeFromCustomizationTheme(
   variant: CustomizationThemeVariant,
   basePreset: BibleTheme
 ): BibleTheme {
+  const fontOverrides = resolveFontOverrides(variant.themes);
+
   const withVariables =
     Object.keys(variant.themes).length === 0
       ? basePreset
       : {
           ...basePreset,
-          variables: { ...basePreset.variables, ...variant.themes },
+          variables: {
+            ...basePreset.variables,
+            ...fontOverrides,
+          },
         };
+
   return applyHighlightOverrides(withVariables, variant.highlightColors);
 }
 

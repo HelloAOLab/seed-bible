@@ -1947,6 +1947,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
               variantId={variant.id}
               fieldKey={field.key}
               value={resolvedTheme.variables[field.key] ?? ""}
+              selectedValue={variant.themes[field.key]}
               isOverridden={variant.themes[field.key] !== undefined}
               label={t(`customization-${field.key}`, {
                 defaultValue: field.label,
@@ -2256,6 +2257,7 @@ function CustomizationFontFieldRow(props: {
   variantId: string;
   fieldKey: ThemeFontFamilyKey;
   value: string;
+  selectedValue?: string;
   isOverridden: boolean;
   label: string;
   customizations: CustomizationsManager;
@@ -2266,8 +2268,9 @@ function CustomizationFontFieldRow(props: {
   const forcedCustom = useSignal(false);
 
   const fieldPresets = getFontPresetsForField(fieldKey);
-  const matchedPreset = value
-    ? fieldPresets.find((p) => p.value === value)
+
+  const matchedPreset = props.selectedValue
+    ? fieldPresets.find((p) => p.value === props.selectedValue)
     : fieldPresets[0];
   // A stored value that doesn't match any preset is a real custom font
   // (e.g. reopening an editor that already has one saved) — show custom

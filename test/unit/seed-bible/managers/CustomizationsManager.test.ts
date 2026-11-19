@@ -796,7 +796,7 @@ describe("CustomizationsManager", () => {
     );
     expect(chapterHeadingPresets[0]).toEqual({
       name: "Default",
-      value: "Plus Jakarta Sans, sans-serif",
+      value: "default",
     });
     expect(chapterHeadingPresets.slice(1)).toEqual([
       { name: "Newsreader", value: "Newsreader, serif" },
@@ -811,11 +811,11 @@ describe("CustomizationsManager", () => {
     // Different fields have different Light-theme defaults.
     expect(getFontPresetsForField("fontFamily")[0]).toEqual({
       name: "Default",
-      value: "system-ui, sans-serif",
+      value: "default",
     });
     expect(getFontPresetsForField("bookTitleFontFamily")[0]).toEqual({
       name: "Default",
-      value: "Newsreader, serif",
+      value: "default",
     });
   });
 
