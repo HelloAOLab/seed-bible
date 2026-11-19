@@ -1,0 +1,72 @@
+/* Where the panel sits is BibleReader's call (see BibleReader.inline.css);
+   these rules only draw the card itself. It matches the compact Discover
+   panel it stacks above on desktop. */
+.sb-inline-video {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--sb-reader-background);
+  box-shadow:
+    0 0 0 1px var(--sb-divider-color),
+    var(--sb-shadow-raised);
+  border-radius: var(--sb-radius-xl);
+}
+
+.sb-inline-video-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sb-inline-video-heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sb-inline-video-title {
+  font-size: var(--sb-font-size-14);
+  font-weight: 600;
+  color: var(--sb-font-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-inline-video-author {
+  font-size: var(--sb-font-size-12);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-inline-video-close {
+  flex-shrink: 0;
+}
+
+.sb-inline-video-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--sb-radius-md);
+  background: #000;
+}
+
+.sb-inline-video-player {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.sb-inline-video-link {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}

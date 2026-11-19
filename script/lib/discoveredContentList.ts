@@ -25,6 +25,8 @@ export interface DiscoveredContentItem {
   url: string;
   imageUrl: string;
   references: DiscoveredContentReference[];
+  /** Plays the video beside the scripture instead of in a modal. Only written when on. */
+  playInline?: boolean;
 }
 
 export interface BuildDiscoveredContentListResult {
@@ -39,6 +41,13 @@ const REQUIRED_COLUMNS = [
   "URL",
   "Description",
 ] as const;
+
+/**
+ * Optional "Play Inline" column: a ticked Google Sheets checkbox exports as
+ * `TRUE`; anything else, or no column at all, leaves the video in a modal.
+ */
+const PLAY_INLINE_COLUMN = "Play Inline";
+const PLAY_INLINE_VALUES = new Set(["true", "yes", "y", "x", "1"]);
 
 /**
  * A minimal RFC 4180 CSV parser: quoted fields (with embedded commas,
@@ -167,7 +176,8 @@ function defaultFetchLinkPreview(url: string) {
 
 /**
  * Parses a "Seed Bible Discover Content Master List" CSV export (columns:
- * Name, Author, Bible Reference, URL, Description) into the flat item list
+ * Name, Author, Bible Reference, URL, Description, and optionally Play
+ * Inline) into the flat item list
  * the default content extension's discover provider reads. Rows that are
  * missing required data, or whose "Bible Reference" cell can't be resolved
  * to at least one book, are skipped and reported in `warnings` rather than
@@ -197,6 +207,10 @@ export async function buildDiscoveredContentList(
 
   const cell = (row: string[], column: (typeof REQUIRED_COLUMNS)[number]) =>
     (row[columnIndexes.get(column)!] ?? "").trim();
+  const playInlineIndex = findColumnIndex(header, PLAY_INLINE_COLUMN);
+  const playsInline = (row: string[]) =>
+    playInlineIndex !== -1 &&
+    PLAY_INLINE_VALUES.has((row[playInlineIndex] ?? "").trim().toLowerCase());
 
   const items: DiscoveredContentItem[] = [];
   const usedIds = new Set<string>();
@@ -299,6 +313,7 @@ export async function buildDiscoveredContentList(
       url: cell(row, "URL"),
       imageUrl,
       references,
+      ...(playsInline(row) ? { playInline: true } : {}),
     });
   }
 

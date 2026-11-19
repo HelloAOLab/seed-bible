@@ -488,7 +488,11 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
     tabs: { selectedTabId: signal(""), ...createAttachedReadingStates() },
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
-    discover: { scrollToVerse: signal(null), view: signal(null) },
+    discover: {
+      scrollToVerse: signal(null),
+      view: signal(null),
+      inlineVideo: signal(null),
+    },
     playlists: {
       playing: signal(null),
       openingPlayback: signal(false),
@@ -3224,6 +3228,155 @@ describe("BibleReader", () => {
     expect(panel()).toBeNull();
   });
 
+  /**
+   * Renders a reader for `tab-1` with a discovered cross reference (so the
+   * compact discover panel shows) and a real DiscoverManager, so tests can
+   * play and close an inline video the way an extension would.
+   */
+  function renderReaderWithInlineVideo(options: {
+    compact: boolean;
+    selectedTabId?: string;
+  }) {
+    const { selectorState, readingState } = createFixture();
+    (readingState as any).discoveredCrossReferences = signal([
+      {
+        providerId: "p1",
+        results: [
+          {
+            type: "cross-reference",
+            reference: { chapter: 1, bookData: { name: "Genesis" } },
+            crossReference: {
+              chapter: 5,
+              verse: 3,
+              bookData: { commonName: "Exodus", name: "Exodus" },
+            },
+          },
+        ],
+      },
+    ]);
+    const slot: TabSlot = {
+      id: "slot-1",
+      tab: { id: "tab-1", readingState } as any,
+    };
+    const discover = createDiscoverManager();
+    const base = createMobileState();
+    const state = {
+      ...base,
+      app: {
+        ...base.app,
+        isMobile: signal(options.compact),
+        isCompactReader: signal(options.compact),
+      },
+      tabs: {
+        ...base.tabs,
+        selectedTabId: signal(options.selectedTabId ?? "tab-1"),
+      },
+      discover,
+    } as any as SeedBibleState;
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const player = () => container.querySelector(".sb-inline-video");
+    return { discover, player };
+  }
+
+  const inlineVideo = {
+    id: "video-1",
+    title: "Genesis Overview",
+    author: "Bible Project",
+    url: "https://www.youtube.com/watch?v=abc123",
+  };
+
+  it("plays an inline video beside the scripture, above the compact discover panel, until it's closed", () => {
+    const { discover, player } = renderReaderWithInlineVideo({
+      compact: false,
+    });
+    const discoverPanel = container.querySelector(
+      ".sb-bible-reader-discover-panel"
+    );
+    expect(discoverPanel).not.toBeNull();
+    expect(player()).toBeNull();
+
+    act(() => discover.playInline(inlineVideo));
+
+    const sideColumn = container.querySelector(
+      ".sb-bible-reader-content > .sb-bible-reader-side-column"
+    );
+    expect(sideColumn?.firstElementChild).toBe(player());
+    expect(player()?.textContent).toContain("Genesis Overview");
+    expect(player()?.textContent).toContain("Bible Project");
+    expect(player()?.querySelector("iframe")?.getAttribute("src")).toBe(
+      "https://www.youtube.com/embed/abc123?autoplay=1"
+    );
+    // The panel the reader had open stays the same element, so its filter
+    // and scroll position survive the video opening.
+    expect(sideColumn?.lastElementChild).toBe(discoverPanel);
+
+    const close = player()?.querySelector(
+      'button[aria-label="Close video"]'
+    ) as HTMLButtonElement;
+    act(() => close.click());
+
+    expect(player()).toBeNull();
+    expect(discover.inlineVideo.value).toBeNull();
+    expect(container.querySelector(".sb-bible-reader-discover-panel")).toBe(
+      discoverPanel
+    );
+  });
+
+  it("plays a direct video file inline in a video element", () => {
+    const { discover, player } = renderReaderWithInlineVideo({
+      compact: false,
+    });
+
+    act(() =>
+      discover.playInline({
+        ...inlineVideo,
+        url: "https://example.com/genesis.mp4",
+      })
+    );
+
+    expect(player()?.querySelector("video")?.getAttribute("src")).toBe(
+      "https://example.com/genesis.mp4"
+    );
+  });
+
+  it("doesn't play the inline video in a reader whose tab isn't selected", () => {
+    const { discover, player } = renderReaderWithInlineVideo({
+      compact: false,
+      selectedTabId: "tab-2",
+    });
+
+    act(() => discover.playInline(inlineVideo));
+
+    expect(player()).toBeNull();
+  });
+
+  it("puts the inline video above the chapter on a phone without remounting the swipe viewport", () => {
+    const { discover, player } = renderReaderWithInlineVideo({
+      compact: true,
+    });
+    const viewport = container.querySelector(".sb-reader-swipe-viewport");
+    expect(viewport).not.toBeNull();
+
+    act(() => discover.playInline(inlineVideo));
+
+    const body = container.querySelector(".sb-reader-mobile-body");
+    expect(body?.firstElementChild?.contains(player())).toBe(true);
+    expect(viewport?.contains(player())).toBe(false);
+    expect(container.querySelector(".sb-reader-swipe-viewport")).toBe(viewport);
+  });
+
   it("clicking the mobile header notes button targets the earliest annotated verse in the compact discover panel", () => {
     const { slot, selectorState, readingState } = createFixture();
     const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
@@ -5940,7 +6093,7 @@ describe("BibleReader", () => {
       },
       tools: createBibleToolsManager(testBranding),
       tabs: { selectedTabId: signal(""), ...createAttachedReadingStates() },
-      discover: { scrollToVerse: signal(null) },
+      discover: { scrollToVerse: signal(null), inlineVideo: signal(null) },
       playlists: {
         playing: signal(null),
         openingPlayback: signal(false),
@@ -7027,6 +7180,7 @@ describe("BibleReader — compact embed header", () => {
         discover: {
           scrollToVerse: signal(null),
           contentTypes: signal([]),
+          inlineVideo: signal(null),
         },
       } as any as SeedBibleState;
     };

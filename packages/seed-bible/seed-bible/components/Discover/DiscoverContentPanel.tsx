@@ -149,6 +149,15 @@ function usePanelViewportMeasures() {
       attributes: true,
       attributeFilter: ["style"],
     });
+    // An inline video above the panel publishes its height on their shared
+    // column, which moves the panel's sticky `top` down by that much.
+    const sideColumn = panel.closest(".sb-bible-reader-side-column");
+    if (sideColumn) {
+      insetObserver?.observe(sideColumn, {
+        attributes: true,
+        attributeFilter: ["style"],
+      });
+    }
     window.addEventListener("resize", scheduleMeasure);
     scheduleMeasure();
 

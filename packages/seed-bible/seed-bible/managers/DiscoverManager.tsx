@@ -129,6 +129,20 @@ export interface DiscoverScrollTarget {
   verseNumber: number;
 }
 
+/**
+ * A video the reader chose to watch beside the scripture instead of in a
+ * modal. See {@link DiscoverManager.playInline}.
+ */
+export interface DiscoverInlineVideo {
+  /** Identifies the video; playing the same id again leaves the player as is. */
+  id: string;
+  title: string;
+  /** A YouTube or Vimeo watch link, or a direct video file. */
+  url: string;
+  /** Shown under the title, e.g. "Bible Project". */
+  author?: string;
+}
+
 export interface DiscoverManager {
   /**
    * Adds a provider, replacing any earlier one with the same `id`. Returns a
@@ -184,6 +198,20 @@ export interface DiscoverManager {
    * by the annotations section to scroll to that verse's group, then cleared.
    */
   scrollToVerse: Signal<DiscoverScrollTarget | null>;
+
+  /**
+   * The video playing in the reader's inline player, or null when none is.
+   * It stays open across chapter changes until the reader closes it.
+   */
+  inlineVideo: ReadonlySignal<DiscoverInlineVideo | null>;
+  /**
+   * Plays a video in the reader instead of a modal: beside the scripture on
+   * wide screens and phones held sideways, above it on phones held upright.
+   * Replaces whatever video was playing there.
+   */
+  playInline: (video: DiscoverInlineVideo) => void;
+  /** Closes the inline player. */
+  closeInlineVideo: () => void;
 }
 
 /** How many distinct chapters (including UI locale) stay cached per session. */
@@ -249,6 +277,7 @@ export function createDiscoverManager(): DiscoverManager {
   const view = signal<DiscoverView>(null);
   const isDiscoverOpen = computed(() => !!view.value);
   const scrollToVerse = signal<DiscoverScrollTarget | null>(null);
+  const inlineVideo = signal<DiscoverInlineVideo | null>(null);
   // One answer per provider per chapter. Later registrations and a return
   // visit reuse it; a failed lookup is dropped so the next visit can retry.
   // `chapterOrder` is oldest first and caps how many chapter keys we keep,
@@ -373,6 +402,15 @@ export function createDiscoverManager(): DiscoverManager {
     isDiscoverOpen,
     resolveActualView,
     scrollToVerse,
+
+    inlineVideo,
+    playInline(video: DiscoverInlineVideo) {
+      if (inlineVideo.peek()?.id === video.id) return;
+      inlineVideo.value = video;
+    },
+    closeInlineVideo() {
+      inlineVideo.value = null;
+    },
 
     async *discover(
       context: DiscoverContext

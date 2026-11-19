@@ -722,3 +722,37 @@ describe("registerContentType", () => {
     expect(manager.contentTypes.value).toEqual([replacement]);
   });
 });
+
+describe("inline video", () => {
+  const video = {
+    id: "video-1",
+    title: "Genesis Overview",
+    url: "https://youtu.be/abc123",
+  };
+
+  it("has no video playing until one is played", () => {
+    const manager = createDiscoverManager();
+
+    expect(manager.inlineVideo.value).toBeNull();
+  });
+
+  it("plays a video and closes it again", () => {
+    const manager = createDiscoverManager();
+
+    manager.playInline(video);
+    expect(manager.inlineVideo.value).toEqual(video);
+
+    manager.closeInlineVideo();
+    expect(manager.inlineVideo.value).toBeNull();
+  });
+
+  it("replaces the playing video with a different one", () => {
+    const manager = createDiscoverManager();
+    const other = { ...video, id: "video-2", title: "Exodus Overview" };
+
+    manager.playInline(video);
+    manager.playInline(other);
+
+    expect(manager.inlineVideo.value).toEqual(other);
+  });
+});
