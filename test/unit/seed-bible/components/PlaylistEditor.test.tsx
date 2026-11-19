@@ -190,6 +190,22 @@ describe("the playlist editor", () => {
       );
     });
 
+    it("names a titled compare step by its title once, with no note tag after it", () => {
+      openPanel([
+        {
+          type: "bible-verse",
+          ref: { bookId: "JHN", chapter: 1 },
+          compare: { ref: { bookId: "REV", chapter: 1 } },
+          noteTitle: "Word made flesh",
+        },
+      ]);
+
+      expect(
+        container.querySelector(".sb-pe-step .sb-discover-item-title")!
+          .textContent
+      ).toBe("Word made flesh");
+    });
+
     it("opens a step when its row is clicked", () => {
       openPanel();
 

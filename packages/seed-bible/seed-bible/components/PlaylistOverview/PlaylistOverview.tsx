@@ -163,12 +163,19 @@ export function PlaylistOverviewItemContent(props: {
 }) {
   const { item } = props;
   const { t } = useI18n();
+  // A compare step's note title is its name, so it replaces the name rather
+  // than following it as a note tag.
+  const compareTitle =
+    (item.type === "bible-verse" && item.compare && item.noteTitle?.trim()) ||
+    null;
   return (
     <>
       <PlaylistStepIcon item={item} />
       <span className="sb-discover-item-title" dir="auto">
-        {props.label ?? playlistItemLabel(item, t, props.resolveBookName)}
-        <PlaylistItemNoteTag item={item} />
+        {props.label ??
+          compareTitle ??
+          playlistItemLabel(item, t, props.resolveBookName)}
+        {compareTitle == null ? <PlaylistItemNoteTag item={item} /> : null}
       </span>
       <span className="sb-playlist-page-item-minutes">
         {t("playlist-editor-minutes", {
