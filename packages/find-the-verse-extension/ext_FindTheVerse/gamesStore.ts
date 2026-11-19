@@ -192,8 +192,10 @@ export async function loadGames(
     return currGames;
   };
   try {
-    const privateResults = await loadByMarker(PRIVATE_GAME_MARKER);
-    const publicResults = await loadByMarker(PUBLIC_GAME_MARKER);
+    const [privateResults, publicResults] = await Promise.all([
+      loadByMarker(PRIVATE_GAME_MARKER),
+      loadByMarker(PUBLIC_GAME_MARKER),
+    ]);
     games.push(...privateResults, ...publicResults);
   } catch {
     return { status: "error" };
