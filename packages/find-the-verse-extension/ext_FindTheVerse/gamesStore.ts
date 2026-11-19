@@ -35,11 +35,12 @@ export function sharedGameUrl(
   creatorId: string,
   gameId: string
 ): string {
-  const url = new URL(`${navigation.basePath}/`, navigation.currentUrl.peek());
-  url.searchParams.set(SHARED_GAME_CREATOR_PARAM, creatorId);
-  url.searchParams.set(SHARED_GAME_PARAM, gameId);
-  url.searchParams.set("autoinstall-find-the-verse-extension", "true");
-  return navigation.toShareableUrl(url).toString();
+  const link = navigation.linkToBareRoot({
+    [SHARED_GAME_CREATOR_PARAM]: creatorId,
+    [SHARED_GAME_PARAM]: gameId,
+    "autoinstall-find-the-verse-extension": "true",
+  });
+  return navigation.toShareableUrl(link).toString();
 }
 
 /** The game a share link points at, or null when `url` isn't one. */

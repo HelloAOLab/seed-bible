@@ -14,7 +14,10 @@ import {
   PUBLIC_GAME_MARKER,
 } from "@packages/find-the-verse-extension/ext_FindTheVerse/gamesStore";
 import type { SavedGame } from "@packages/find-the-verse-extension/ext_FindTheVerse/types";
-import { toShareableUrl } from "@packages/seed-bible/seed-bible/app/publicLinks";
+import {
+  createNavigationManager,
+  type NavigationManager,
+} from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../seed-bible/testUtils/mockI18n");
@@ -189,7 +192,7 @@ describe("Find the Verse", () => {
   let preferredTranslation: string;
   let toasts: string[];
   let startUrl: string;
-  let publicOrigin: string | undefined;
+  let navigation: NavigationManager | null;
   let readCreatorGame: ReturnType<
     typeof vi.fn<(address: string) => Promise<unknown>>
   >;
@@ -200,6 +203,7 @@ describe("Find the Verse", () => {
   function install(games: SavedGame[] = [], active: Reading = reading) {
     recordData = vi.fn(async () => ({ success: true }));
     toasts = [];
+    navigation = createNavigationManager({ initialHref: startUrl });
     tabs = signal<Tab[]>([
       { id: "tab-1", readingState: active, sharedSession: null },
     ]);
@@ -214,11 +218,7 @@ describe("Find the Verse", () => {
         userId: signal(games.length > 0 ? "user-1" : null),
         getPublicProfile: creatorProfile,
       },
-      navigation: {
-        basePath: "",
-        currentUrl: signal(new URL(startUrl)),
-        toShareableUrl: (url: URL) => toShareableUrl(url, { publicOrigin }),
-      },
+      navigation,
       os: {
         listDataByMarker: vi.fn(async (_record: string, marker: string) => {
           const listed = games.filter((game) => markerOf(game) === marker);
@@ -378,7 +378,7 @@ describe("Find the Verse", () => {
     newTabReading = () => createReading();
     preferredTranslation = "WEB";
     startUrl = "https://seedbible.test/";
-    publicOrigin = undefined;
+    navigation = null;
     readCreatorGame = vi.fn(async () => ({
       success: false,
       errorCode: "data_not_found",
@@ -390,6 +390,8 @@ describe("Find the Verse", () => {
     unregisterExtension("find-the-verse-extension");
     render(null, container);
     container.remove();
+    navigation?.dispose();
+    document.getElementById("app-config")?.remove();
     vi.restoreAllMocks();
     delete (navigator as { clipboard?: unknown }).clipboard;
   });
@@ -1145,6 +1147,7 @@ describe("Find the Verse", () => {
   });
 
   it("shares a game, copies its link, and marks its card", async () => {
+    startUrl = "https://seedbible.test/en/BSB/JHN/3?panel=notes";
     const writeText = stubClipboard();
     await act(async () => {
       install([sharingGame("g", "Youth group", false)]);
@@ -1156,6 +1159,8 @@ describe("Find the Verse", () => {
     await clickMenuItem("Share");
 
     const link = new URL(writeText.mock.calls[0]?.[0] as string);
+    expect(link.pathname).toBe("/");
+    expect(link.searchParams.get("panel")).toBeNull();
     expect(link.searchParams.get("findTheVerseCreator")).toBe("user-1");
     expect(link.searchParams.get("findTheVerseGame")).toBe("g");
     expect(link.searchParams.get("autoinstall-find-the-verse-extension")).toBe(
@@ -1203,7 +1208,13 @@ describe("Find the Verse", () => {
 
   it("shares a link to the public site from the native apps", async () => {
     startUrl = "capacitor://localhost/";
-    publicOrigin = "https://seedbible.org";
+    const appConfig = document.createElement("script");
+    appConfig.type = "application/json";
+    appConfig.id = "app-config";
+    appConfig.textContent = JSON.stringify({
+      publicOrigin: "https://seedbible.org",
+    });
+    document.head.appendChild(appConfig);
     const writeText = stubClipboard();
     await act(async () => {
       install([sharingGame("g", "Youth group", false)]);
