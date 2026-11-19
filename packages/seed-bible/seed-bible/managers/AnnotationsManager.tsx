@@ -1386,10 +1386,13 @@ export function createAnnotationsManager(
         getOrCreateEntry(userId, bookId, chapterNumber, true),
       ]),
     ];
+    // Same reason as in `isAnnotationVisible`: callers may not have this
+    // chapter on screen, so a friend's copy is otherwise never read again.
     await Promise.all(
-      sources.map(([recordId, entry]) =>
-        ensureLoaded(recordId, bookId, chapterNumber, entry)
-      )
+      sources.map(([recordId, entry]) => {
+        refreshFriendEntry(entry);
+        return ensureLoaded(recordId, bookId, chapterNumber, entry);
+      })
     );
     if (sources.some(([, entry]) => entry.loadFailed)) {
       return null;

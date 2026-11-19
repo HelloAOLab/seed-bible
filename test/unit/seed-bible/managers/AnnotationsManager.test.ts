@@ -1292,6 +1292,93 @@ describe("AnnotationsManager", () => {
           await manager.loadVisibleAnnotationsForChapter("GEN", 1)
         ).toBeNull();
       });
+
+      describe("with a friend's chapter read earlier", () => {
+        const START = Date.UTC(2026, 10, 1);
+        const replyIds = (notes: Annotation[] | null) =>
+          notes
+            ?.filter((a) => a.data.replyTo)
+            .map((a) => a.id)
+            .sort();
+
+        beforeEach(() => {
+          vi.useFakeTimers({ toFake: ["Date"] });
+          vi.setSystemTime(START);
+        });
+
+        afterEach(() => {
+          vi.useRealTimers();
+        });
+
+        it("includes a reply a friend added once that copy is over 30 seconds old", async () => {
+          const byUser = {
+            "user-1": [createCommentAnnotation({ id: "my-note" })],
+            "friend-user": [reply("first-reply", "my-note")],
+          };
+          mockChapterNotes(byUser);
+          const manager = createManagerWithFriend();
+          expect(
+            replyIds(await manager.loadVisibleAnnotationsForChapter("GEN", 1))
+          ).toEqual(["first-reply"]);
+
+          byUser["friend-user"] = [
+            reply("first-reply", "my-note"),
+            reply("second-reply", "my-note"),
+          ];
+          vi.setSystemTime(START + 31_000);
+
+          expect(
+            replyIds(await manager.loadVisibleAnnotationsForChapter("GEN", 1))
+          ).toEqual(["first-reply", "second-reply"]);
+        });
+
+        it("tries a friend's read that failed again on the next load", async () => {
+          const errorSpy = vi
+            .spyOn(console, "error")
+            .mockImplementation(() => {});
+          let friendReadFails = true;
+          listDataByMarkerMock.mockImplementation(
+            async (
+              recordName: string,
+              _marker: string,
+              lastAddress?: string
+            ) => {
+              if (lastAddress) {
+                return { success: true, items: [] };
+              }
+              if (recordName === "friend-user") {
+                return friendReadFails
+                  ? { success: false, errorCode: "server_error" }
+                  : {
+                      success: true,
+                      items: [
+                        {
+                          address: "friend-reply",
+                          data: reply("friend-reply", "my-note"),
+                        },
+                      ],
+                    };
+              }
+              const mine = createCommentAnnotation({ id: "my-note" });
+              return {
+                success: true,
+                items: [{ address: mine.id, data: mine }],
+              };
+            }
+          );
+          const manager = createManagerWithFriend();
+          expect(
+            await manager.loadVisibleAnnotationsForChapter("GEN", 1)
+          ).toBeNull();
+
+          friendReadFails = false;
+
+          expect(
+            replyIds(await manager.loadVisibleAnnotationsForChapter("GEN", 1))
+          ).toEqual(["friend-reply"]);
+          errorSpy.mockRestore();
+        });
+      });
     });
 
     describe("isAnnotationVisible", () => {
