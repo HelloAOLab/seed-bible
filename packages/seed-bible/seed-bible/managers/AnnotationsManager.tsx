@@ -1829,7 +1829,11 @@ export function createAnnotationsManager(
     const recordId = effectiveRecordId();
     await deleteAnnotation(annotation.id);
     removeFromCache(annotation, recordId);
-    if (editingAnnotation.peek()?.id === annotation.id) {
+    const editing = editingAnnotation.peek();
+    if (
+      editing?.id === annotation.id ||
+      editing?.data.replyTo === annotation.id
+    ) {
       cancelEditingAnnotation();
     }
   };

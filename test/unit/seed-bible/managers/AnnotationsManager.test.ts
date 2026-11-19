@@ -2424,6 +2424,37 @@ describe("AnnotationsManager", () => {
       expect(discover.view.value).toBeNull();
     });
 
+    it("closes a reply being written to the deleted note", async () => {
+      const manager = createManager();
+      const note = createCommentAnnotation({
+        id: "note",
+        data: { type: "comment", html: "<p>Note</p>", userId: "user-1" },
+      });
+      await manager.createReply(note);
+      expect(manager.editingAnnotation.value?.data.replyTo).toBe("note");
+
+      await manager.deleteAnnotationAndRefresh(note);
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(discover.view.value).toBeNull();
+    });
+
+    it("keeps a reply open when a different note is deleted", async () => {
+      const manager = createManager();
+      await manager.createReply(
+        createCommentAnnotation({
+          id: "note",
+          data: { type: "comment", html: "<p>Note</p>", userId: "user-1" },
+        })
+      );
+
+      await manager.deleteAnnotationAndRefresh(
+        createCommentAnnotation({ id: "other" })
+      );
+
+      expect(manager.editingAnnotation.value?.data.replyTo).toBe("note");
+    });
+
     it("does not close discover when the user navigated away from the editor before deleting", async () => {
       // Reproduce: open a note for editing (editor opens in Discover), then
       // navigate Discover away from the editor (view becomes "discover"), then
