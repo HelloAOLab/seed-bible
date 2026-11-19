@@ -4428,7 +4428,7 @@ export function BibleReader(props: BibleReaderProps) {
                   dir="auto"
                 >
                   {stepPage
-                    ? playlistStepPageTitle(stepPage)
+                    ? playlistStepPageTitle(stepPage, t)
                     : comparePageTitle}
                 </h2>
               ) : (
