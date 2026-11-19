@@ -519,22 +519,28 @@ describe("createNavigationManager history state", () => {
 
     // WebKit reports every navigation in the iOS app (a `capacitor://` page)
     // as not interceptable, and `intercept()` then throws a SecurityError.
-    it("leaves alone a navigation the browser says can't be intercepted", () => {
-      const api = installNavigationApi();
-      const navigation = createNavigationManager();
-      navigation.push("/genesis/1");
+    it.each(["push", "replace"])(
+      "leaves alone a %s the browser says can't be intercepted",
+      (navigationType) => {
+        const api = installNavigationApi();
+        const navigation = createNavigationManager();
+        navigation.push("/genesis/1");
 
-      const intercepted = api.dispatch(
-        new URL("/exodus/2", navigation.currentUrl.peek().href).href,
-        "push",
-        false
-      );
+        const intercepted = api.dispatch(
+          new URL("/exodus/2", navigation.currentUrl.peek().href).href,
+          navigationType,
+          false
+        );
 
-      expect(api.thrown).toEqual([]);
-      expect(intercepted).toBe(false);
+        expect(api.thrown).toEqual([]);
+        expect(intercepted).toBe(false);
+        // The browser carries out this navigation itself, so the app must
+        // not announce it as if it had already happened in place.
+        expect(navigation.currentUrl.peek().pathname).toBe("/genesis/1");
 
-      navigation.dispose();
-      api.remove();
-    });
+        navigation.dispose();
+        api.remove();
+      }
+    );
   });
 });
