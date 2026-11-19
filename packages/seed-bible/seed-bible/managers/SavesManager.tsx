@@ -391,13 +391,18 @@ export interface SavesManager {
    * Requires the user to be logged in; will trigger login otherwise.
    * Defaults to the default category when none is provided. Pass `verse` to
    * scope the save to a single verse or `[start, end]` range.
+   *
+   * Resolves `true` when the location is saved afterwards (including when it
+   * already was), and `false` when nothing could be saved: the user didn't
+   * sign in, or their stored saves couldn't be loaded (offline, say). Rejects
+   * when the write itself fails.
    */
   addSave: (
     translationId: string,
     bookId: string,
     chapterNumber: number,
     options?: { verse?: SaveVerse; categories?: readonly string[] }
-  ) => Promise<void>;
+  ) => Promise<boolean>;
 
   /** Removes a specific save by id, from every category it belongs to. */
   removeSave: (id: string) => Promise<void>;
@@ -545,23 +550,20 @@ export function createSavesManager(
     // The legacy record is fetched even when `saves` exists, purely so
     // `reportLegacyDivergence` can run. Both reads go out together, so the
     // extra address costs a request but no added latency.
-    let currentData: Awaited<ReturnType<typeof os.getData>>;
-    let legacyData: Awaited<ReturnType<typeof os.getData>>;
-    try {
-      [currentData, legacyData] = await Promise.all([
-        os.getData(userId, STORAGE_ADDRESS),
-        os.getData(userId, LEGACY_SAVES_ADDRESS),
-      ]);
-    } catch (error) {
-      // A request that never got an answer (offline, dropped connection) is
-      // handled like a failed read below: leave the user unloaded so
-      // `ensureLoaded` retries on their next action.
-      console.warn(
-        "Could not reach the saves records; leaving saves untouched until the next load.",
-        error
-      );
-      return;
-    }
+    //
+    // A request that never got an answer (offline, a dropped connection)
+    // rejects instead of returning a failure. Each is caught on its own and
+    // read as `undefined`, which `readRecord` reports as an error — so a
+    // dropped legacy read can't hold back a `saves` record that did arrive.
+    const read = (address: string) =>
+      os.getData(userId, address).catch((error: unknown) => {
+        console.warn(`Could not reach the ${address} record:`, error);
+        return undefined;
+      });
+    const [currentData, legacyData] = await Promise.all([
+      read(STORAGE_ADDRESS),
+      read(LEGACY_SAVES_ADDRESS),
+    ]);
     if (loadedUserId.value !== userId && login.userId.value !== userId) {
       return;
     }
@@ -872,12 +874,12 @@ export function createSavesManager(
       await login.login();
     }
     if (!login.userId.value) {
-      return;
+      return false;
     }
-    if (!(await ensureLoaded())) return;
+    if (!(await ensureLoaded())) return false;
     const verse = options?.verse;
     if (isLocationSaved(translationId, bookId, chapterNumber, verse)) {
-      return;
+      return true;
     }
     const categoryNames = normalizeSaveCategories(options?.categories ?? []);
     const newSave: Save = {
@@ -902,6 +904,7 @@ export function createSavesManager(
     }
     expandedCategories.value = nextExpanded;
     await commit(nextSaves, nextCategories);
+    return true;
   };
 
   const removeSave: SavesManager["removeSave"] = async (id) => {

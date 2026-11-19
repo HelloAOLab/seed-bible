@@ -533,6 +533,46 @@ describe("SavesManager", () => {
       }
     });
 
+    it("still shows the saves when only the legacy request gets no answer", async () => {
+      // The legacy read is only there for a telemetry check. A dropped
+      // connection on it must not hold back the `saves` record that arrived.
+      getDataMock.mockImplementation(
+        async (_userId: string, address: string) => {
+          if (address === "bookmarks") {
+            throw new TypeError("Failed to fetch");
+          }
+          return {
+            success: true,
+            data: {
+              saves: [createSave({ id: "already-filed" })],
+              categories: [{ name: DEFAULT_SAVE_CATEGORY }],
+            },
+          };
+        }
+      );
+
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+
+      expect(manager.saves.value.map((save) => save.id)).toEqual([
+        "already-filed",
+      ]);
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("reports that nothing was saved while the saves still can't load", async () => {
+      // Still offline when the user saves: the retry fails too. The caller
+      // has to be told, or it closes the save window as if it worked.
+      getDataMock.mockRejectedValue(new TypeError("Failed to fetch"));
+
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+
+      await expect(manager.addSave("BSB", "JHN", 3)).resolves.toBe(false);
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(manager.isLocationSaved("BSB", "JHN", 3)).toBe(false);
+    });
+
     it("waits rather than starting fresh when the legacy read fails", async () => {
       // Neither address answered usefully, so whether there is a legacy record
       // to copy forward is still unknown. Applying an empty list here would
