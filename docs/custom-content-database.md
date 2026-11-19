@@ -25,7 +25,7 @@ Owners with a website full of content don't even need the links: they enter the 
 
 **Non-goals (v1)**
 
-- Several people editing the same library (only the Customization owner edits).
+- Several people editing the same library, beyond what sharing the Customization through a studio gives (see §4.1).
 - Hosting the content itself. We store links and metadata; the video or article stays where it is.
 - Full-text search across the library (the chapter index is for lookup by chapter, not search).
 - Translating category names into other languages (they're shown as the owner typed them).
@@ -50,6 +50,8 @@ Owners with a website full of content don't even need the links: they enter the 
 ### 4.1 Where things are stored
 
 Each Customization's content gets **its own CasualOS record**, created when the owner presses "Create content library" and owned by them. Its name is generated, e.g. `seedbible-content-{uuid}`. The Customization record itself stays where it is today, in the owner's personal record (`recordName` = their user id).
+
+**Shared Customizations.** A Customization shared from the editor's People screen moves into a CasualOS studio: the Customization record, its files and its proxies live in the record named after the studio, and every studio member can edit them. A library created after that is created in the studio too (`createStudioRecord`), which only studio admins ("Managers") may do; studio members ("Editors") can then edit it. A library created before the share stays owned by the person who created it, since CasualOS can't hand a record over to a studio, so only they can change it.
 
 Why a separate record rather than the owner's personal one:
 

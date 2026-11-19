@@ -41,7 +41,31 @@ export function fakeRecordsServer() {
     beforeWrite: async (_address: string): Promise<void> => undefined,
   };
 
+  /** The studio that owns each studio-owned record. */
+  const studioOwners = new Map<string, string>();
+
   function attach(os: CasualOSManager) {
+    let studioCount = 0;
+    vi.spyOn(os, "createStudio").mockImplementation(async () => {
+      const studioId = `studio-${++studioCount}`;
+      records.set(studioId, new Map());
+      studioOwners.set(studioId, studioId);
+      return { success: true, studioId };
+    });
+    vi.spyOn(os, "createStudioRecord").mockImplementation(
+      async (recordName, studioId) => {
+        if (records.has(recordName)) {
+          return {
+            success: false,
+            errorCode: "record_already_exists",
+            errorMessage: "exists",
+          } as never;
+        }
+        records.set(recordName, new Map());
+        studioOwners.set(recordName, studioId);
+        return { success: true } as never;
+      }
+    );
     vi.spyOn(os, "createRecord").mockImplementation(async (recordName) => {
       if (failNextCreate.code) {
         const errorCode = failNextCreate.code;
@@ -122,6 +146,10 @@ export function fakeRecordsServer() {
       }
       return { success: true, recordName: recordKey, address } as never;
     });
+    vi.spyOn(os, "listStudios").mockResolvedValue({
+      success: true,
+      studios: [],
+    });
     vi.spyOn(os, "listAllDataByMarker").mockImplementation(
       async (recordName, marker) => ({
         success: true,
@@ -137,6 +165,7 @@ export function fakeRecordsServer() {
 
   return {
     records,
+    studioOwners,
     attach,
     failNextCreate,
     failWritesTo,
