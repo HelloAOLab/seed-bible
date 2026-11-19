@@ -67,7 +67,7 @@
 .sb-annotation-replies {
   display: flex;
   gap: 0;
-  padding-left: 14px;
+  padding-inline-start: 14px;
 }
 
 .sb-annotation-replies-border {
