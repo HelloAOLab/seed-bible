@@ -1,4 +1,4 @@
-import { signal } from "@preact/signals";
+import { signal, useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
 import type {
   ModalContentProps,
@@ -14,10 +14,24 @@ export interface ConfirmDeleteModalOptions {
   title: TranslatableTitle;
   /** Built when the modal renders, so it can name the thing being deleted. */
   message: (t: Translate) => string;
-  /** Erases the thing. A rejection is reported with `failedMessage`. */
-  onConfirm: () => Promise<void>;
+  /**
+   * Erases the thing, given whether `checkbox` was ticked (false without
+   * one). A rejection is reported with `failedMessage`. Resolves to a message
+   * when only part of it could be erased, which is shown the same way.
+   */
+  onConfirm: (checked: boolean) => Promise<void | ((t: Translate) => string)>;
   failedMessage: (t: Translate) => string;
   toast?: (message: string) => void;
+  /** A way forward other than deleting, shown between Cancel and Delete. Closes the modal first. */
+  secondaryAction?: {
+    label: (t: Translate) => string;
+    onSelect: () => void;
+  };
+  /** Something to delete along with it or not, asked below the message. */
+  checkbox?: {
+    label: (t: Translate) => string;
+    initiallyChecked: boolean;
+  };
 }
 
 /**
@@ -43,9 +57,19 @@ function ConfirmDeleteModalContent(
     onClose: () => void;
   }
 ) {
-  const { id, message, onConfirm, failedMessage, toast, onClose } = props;
+  const {
+    id,
+    message,
+    onConfirm,
+    failedMessage,
+    toast,
+    secondaryAction,
+    checkbox,
+    onClose,
+  } = props;
   const { t } = useI18n();
   const isDeleting = deletingIds.value.has(id);
+  const checked = useSignal(checkbox?.initiallyChecked ?? false);
 
   const confirm = async () => {
     if (deletingIds.peek().has(id)) {
@@ -53,7 +77,10 @@ function ConfirmDeleteModalContent(
     }
     setDeleting(id, true);
     try {
-      await onConfirm();
+      const partialFailure = await onConfirm(!!checkbox && checked.peek());
+      if (partialFailure) {
+        toast?.(partialFailure(t));
+      }
     } catch (error) {
       console.error("Delete failed:", error);
       toast?.(failedMessage(t));
@@ -66,6 +93,19 @@ function ConfirmDeleteModalContent(
   return (
     <div className="sb-confirm-delete">
       <p className="sb-confirm-delete-message">{message(t)}</p>
+      {checkbox ? (
+        <label className="sb-confirm-delete-option">
+          <input
+            type="checkbox"
+            checked={checked.value}
+            disabled={isDeleting}
+            onChange={(event) => {
+              checked.value = event.currentTarget.checked;
+            }}
+          />
+          <span>{checkbox.label(t)}</span>
+        </label>
+      ) : null}
       <div className="sb-confirm-delete-actions">
         <Button
           variant="secondary"
@@ -75,6 +115,19 @@ function ConfirmDeleteModalContent(
         >
           {t("cancel")}
         </Button>
+        {secondaryAction ? (
+          <Button
+            variant="secondary"
+            className="sb-confirm-delete-secondary"
+            onClick={() => {
+              onClose();
+              secondaryAction.onSelect();
+            }}
+            disabled={isDeleting}
+          >
+            {secondaryAction.label(t)}
+          </Button>
+        ) : null}
         <Button
           variant="primary"
           tone="danger"

@@ -17,6 +17,7 @@ import {
   createTodayManager,
   getTodayPageRedirect,
   isTodayPagePath,
+  openTodayAnnotationThread,
   openTodayPassage,
   shouldRedirectToTodayPage,
   type TodayManager,
@@ -1094,6 +1095,7 @@ export function createSeedBibleState(
     {
       confirmAdoption: (owner) => askToAdopt(owner, "notes"),
       friendIds: friends.friendIds,
+      friendsLoaded: friends.hasLoaded,
       friendReads,
     }
   );
@@ -4334,6 +4336,11 @@ export function createSeedBibleState(
     closeProfile();
     openTodayPassage(state, today, target);
   };
+  const openAnnotationThreadFromContent = (annotation: Annotation) => {
+    closeYourContent();
+    closeProfile();
+    openTodayAnnotationThread(state, today, annotation);
+  };
   // One history entry for closing these screens and opening the playlist, so
   // Back returns straight to them.
   const playPlaylistFromContent = (playlist: Playlist) =>
@@ -4431,6 +4438,7 @@ export function createSeedBibleState(
     <YourContentPane
       state={state}
       onOpenPassage={openPassageFromContent}
+      onOpenAnnotationThread={openAnnotationThreadFromContent}
       onPlayPlaylist={playPlaylistFromContent}
       onEditPlaylist={editPlaylistFromContent}
       onEditAnnotation={editAnnotationFromContent}

@@ -191,6 +191,13 @@ interface StateOptions {
   customizations?: SeedBibleCustomization[];
   /** `null` for a signed-out reader. */
   userId?: string | null;
+  /** Profile names by user id, as the records server would return them. */
+  profileNames?: Record<string, string>;
+  /**
+   * A chapter's visible notes once loaded, or null when they couldn't all be
+   * read. Defaults to null.
+   */
+  visibleChapterNotes?: Annotation[] | null;
   unhighlightError?: Error;
   /** Verse wording per highlight key, as the manager would have read it back. */
   highlightVerseText?: Record<string, string>;
@@ -198,6 +205,8 @@ interface StateOptions {
   status?: ContentLoadStatus;
   /** Makes the server delete fail, so the optimistic removal has to roll back. */
   deleteError?: Error;
+  /** Replies the server fails to delete after deleting their note. */
+  failingReplies?: Annotation[];
   /** Full plans; the screen reads them as the list and as the loaded plans. */
   readingPlans?: ReadingPlan[];
   readingPlanProgresses?: ReadingPlanProgress[];
@@ -243,6 +252,9 @@ function createState(options: StateOptions = {}) {
   const removeSave = vi.fn(async (_id: string) => {});
   const login = {
     userId: signal(options.userId === undefined ? "user-1" : options.userId),
+    getUserProfile: vi.fn(async (userId: string) => ({
+      name: options.profileNames?.[userId],
+    })),
   };
   // Bookmarks run on the real manager; the records server under it is the
   // one boundary faked.
@@ -307,11 +319,14 @@ function createState(options: StateOptions = {}) {
       throw options.unhighlightError;
     }
   });
-  const deleteAnnotationAndRefresh = vi.fn(async () => {
-    if (options.deleteError) {
-      throw options.deleteError;
+  const deleteAnnotationAndReplies = vi.fn(
+    async (_annotation: Annotation, _replies: readonly Annotation[]) => {
+      if (options.deleteError) {
+        throw options.deleteError;
+      }
+      return options.failingReplies ?? [];
     }
-  });
+  );
   const deleteReadingPlan = vi.fn(async (_plan: unknown) => {
     if (options.deleteReadingPlanError) {
       throw options.deleteReadingPlanError;
@@ -411,7 +426,18 @@ function createState(options: StateOptions = {}) {
     },
     modals: { openModal, closeModal },
     app: { toast },
-    annotations: { deleteAnnotationAndRefresh },
+    annotations: {
+      deleteAnnotationAndReplies,
+      loadVisibleAnnotationsForChapter: vi.fn(
+        async () => options.visibleChapterNotes ?? null
+      ),
+      isAnnotationVisible: vi.fn(
+        async (_bookId: string, _chapter: number, annotationId: string) =>
+          options.visibleChapterNotes
+            ? options.visibleChapterNotes.some((a) => a.id === annotationId)
+            : null
+      ),
+    },
     readingPlans: {
       userReadingPlans: signal(options.readingPlans ?? []),
       fullReadingPlans: signal(
@@ -453,7 +479,7 @@ function createState(options: StateOptions = {}) {
     load,
     removeAnnotation,
     restoreAnnotation,
-    deleteAnnotationAndRefresh,
+    deleteAnnotationAndReplies,
     deleteReadingPlan,
     openModal,
     toast,
@@ -495,6 +521,7 @@ function photo(
 describe("YourContentPane", () => {
   let container: HTMLDivElement;
   let onOpenPassage: Mock<(target: unknown) => void>;
+  let onOpenAnnotationThread: Mock<(annotation: unknown) => void>;
   let onPlayPlaylist: Mock<(playlist: unknown) => void>;
   let onEditPlaylist: Mock<(playlist: unknown) => void>;
   let onEditAnnotation: Mock<(annotation: unknown) => void>;
@@ -509,6 +536,7 @@ describe("YourContentPane", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     onOpenPassage = vi.fn((_target: unknown) => {});
+    onOpenAnnotationThread = vi.fn((_annotation: unknown) => {});
     onPlayPlaylist = vi.fn((_playlist: unknown) => {});
     onEditPlaylist = vi.fn((_playlist: unknown) => {});
     onEditAnnotation = vi.fn((_annotation: unknown) => {});
@@ -531,6 +559,7 @@ describe("YourContentPane", () => {
         <YourContentPane
           state={state}
           onOpenPassage={onOpenPassage}
+          onOpenAnnotationThread={onOpenAnnotationThread}
           onPlayPlaylist={onPlayPlaylist}
           onEditPlaylist={onEditPlaylist}
           onEditAnnotation={onEditAnnotation}
@@ -1922,17 +1951,154 @@ describe("YourContentPane", () => {
     });
   });
 
-  // Once confirmed, deleting hides the card immediately rather than waiting
-  // on the server — a note that stays on screen after "Delete" reads as a
-  // failure.
-  it("asks before deleting an annotation, then removes it from the list and the record", async () => {
-    const target = annotation("a", "<p>note</p>");
-    const { state, removeAnnotation, deleteAnnotationAndRefresh, openModal } =
-      createState({
-        annotations: [target],
-      });
-    renderPane(state);
+  describe("replies", () => {
+    function reply(replyToUserId: string): Annotation {
+      const base = annotation("r", "<p>Agreed</p>", 5);
+      return {
+        ...base,
+        data: { ...base.data, replyTo: "parent", replyToUserId },
+      } as Annotation;
+    }
 
+    const metaText = () =>
+      container.querySelector(".sb-content-annotation-meta")?.textContent;
+
+    it("says whose note a reply answers", async () => {
+      const { state } = createState({
+        annotations: [reply("ana-id")],
+        profileNames: { "ana-id": "Ana" },
+      });
+      renderPane(state);
+
+      await vi.waitFor(() => expect(metaText()).toContain("Reply to Ana"));
+    });
+
+    it("says just Reply when it answers the user's own note", async () => {
+      const { state } = createState({
+        annotations: [reply("user-1")],
+        profileNames: { "user-1": "Me" },
+      });
+      renderPane(state);
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(metaText()).toContain("Reply");
+      expect(metaText()).not.toContain("Reply to");
+    });
+
+    it("leaves a note that isn't a reply unlabelled", () => {
+      const { state } = createState({
+        annotations: [annotation("a", "<p>note</p>")],
+      });
+      renderPane(state);
+
+      expect(
+        container.querySelector(".sb-content-annotation-reply-to")
+      ).toBeNull();
+    });
+
+    async function clickQuote() {
+      await act(async () => {
+        (
+          container.querySelector(".sb-content-quote") as HTMLButtonElement
+        ).click();
+      });
+    }
+
+    const parent = annotation("parent", "<p>The note</p>", 5);
+
+    it("opens a reply under the note it answers, instead of only its passage", async () => {
+      const target = reply("ana-id");
+      const { state, openModal } = createState({
+        annotations: [target],
+        visibleChapterNotes: [parent, target],
+      });
+      renderPane(state);
+
+      await clickQuote();
+
+      expect(onOpenAnnotationThread).toHaveBeenCalledWith(target);
+      expect(onOpenPassage).not.toHaveBeenCalled();
+      expect(openModal).not.toHaveBeenCalled();
+    });
+
+    it("opens the reply as usual when the chapter's notes couldn't all be read", async () => {
+      const target = reply("ana-id");
+      const { state, openModal } = createState({
+        annotations: [target],
+        visibleChapterNotes: null,
+      });
+      renderPane(state);
+
+      await clickQuote();
+
+      expect(onOpenAnnotationThread).toHaveBeenCalledWith(target);
+      expect(openModal).not.toHaveBeenCalled();
+    });
+
+    describe("whose note is no longer shown", () => {
+      it("says so instead of opening it, and offers to delete it", async () => {
+        const target = reply("ana-id");
+        const {
+          state,
+          openModal,
+          removeAnnotation,
+          deleteAnnotationAndReplies,
+        } = createState({ annotations: [target], visibleChapterNotes: [] });
+        renderPane(state);
+
+        await clickQuote();
+
+        expect(onOpenAnnotationThread).not.toHaveBeenCalled();
+        const dialog = renderOpenedModal(openModal);
+        expect(dialog.textContent).toContain(
+          "The note this reply answered isn't available anymore."
+        );
+
+        await confirmDelete(dialog);
+
+        expect(removeAnnotation).toHaveBeenCalledWith("r");
+        expect(deleteAnnotationAndReplies).toHaveBeenCalledWith(target, []);
+      });
+
+      it("can open its chapter instead, without Discover", async () => {
+        const { state, openModal, deleteAnnotationAndReplies } = createState({
+          annotations: [reply("ana-id")],
+          visibleChapterNotes: [],
+        });
+        renderPane(state);
+
+        await clickQuote();
+        const dialog = renderOpenedModal(openModal);
+        const openChapter = dialog.querySelector<HTMLButtonElement>(
+          ".sb-confirm-delete-secondary"
+        )!;
+        expect(openChapter.textContent).toBe("Open chapter");
+        // Cancel is found by its own class in tests across the app.
+        expect(
+          dialog.querySelectorAll(".sb-session-settings-cancel")
+        ).toHaveLength(1);
+        act(() => {
+          openChapter.click();
+        });
+
+        expect(onOpenPassage).toHaveBeenCalledWith({
+          bookId: "GEN",
+          chapter: 1,
+          verse: 5,
+        });
+        expect(onOpenAnnotationThread).not.toHaveBeenCalled();
+        expect(deleteAnnotationAndReplies).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  /**
+   * Picks Delete from the first annotation card's menu, and waits for its
+   * confirmation, which first counts the note's replies.
+   */
+  async function chooseAnnotationDelete() {
     act(() => {
       (
         container.querySelector(".sb-content-kebab") as HTMLButtonElement
@@ -1941,9 +2107,23 @@ describe("YourContentPane", () => {
     const deleteItem = Array.from(
       document.querySelectorAll(".sb-context-menu-item")
     ).find((el) => el.textContent?.includes("Delete")) as HTMLButtonElement;
-    act(() => {
+    await act(async () => {
       deleteItem.click();
     });
+  }
+
+  // Once confirmed, deleting hides the card immediately rather than waiting
+  // on the server — a note that stays on screen after "Delete" reads as a
+  // failure.
+  it("asks before deleting an annotation, then removes it from the list and the record", async () => {
+    const target = annotation("a", "<p>note</p>");
+    const { state, removeAnnotation, deleteAnnotationAndReplies, openModal } =
+      createState({
+        annotations: [target],
+      });
+    renderPane(state);
+
+    await chooseAnnotationDelete();
 
     expect(removeAnnotation).not.toHaveBeenCalled();
     const dialog = renderOpenedModal(openModal);
@@ -1954,7 +2134,78 @@ describe("YourContentPane", () => {
     await confirmDelete(dialog);
 
     expect(removeAnnotation).toHaveBeenCalledWith("a");
-    expect(deleteAnnotationAndRefresh).toHaveBeenCalledWith(target);
+    expect(deleteAnnotationAndReplies).toHaveBeenCalledWith(target, []);
+  });
+
+  describe("deleting a note with replies", () => {
+    const note = annotation("a", "<p>note</p>");
+    function replyTo(id: string, html: string, userId: string): Annotation {
+      const base = annotation(id, html);
+      return {
+        ...base,
+        data: { ...base.data, replyTo: "a", userId },
+      } as Annotation;
+    }
+    const myReply = replyTo("my-reply", "<p>Mine</p>", "user-1");
+    const friendReply = replyTo("friend-reply", "<p>A friend's</p>", "ana-id");
+
+    it("counts every reply, friends' too, and deletes your own with the note", async () => {
+      const { state, openModal, removeAnnotation, deleteAnnotationAndReplies } =
+        createState({
+          annotations: [note, myReply],
+          visibleChapterNotes: [note, myReply, friendReply],
+        });
+      renderPane(state);
+
+      await chooseAnnotationDelete();
+      const dialog = renderOpenedModal(openModal);
+      expect(dialog.textContent).toContain(
+        "It has 2 replies, which will no longer be shown."
+      );
+      expect(
+        dialog.querySelector<HTMLInputElement>(
+          ".sb-confirm-delete-option input"
+        )?.checked
+      ).toBe(true);
+
+      await confirmDelete(dialog);
+
+      expect(deleteAnnotationAndReplies).toHaveBeenCalledWith(note, [myReply]);
+      expect(removeAnnotation).toHaveBeenCalledWith("a");
+      expect(removeAnnotation).toHaveBeenCalledWith("my-reply");
+    });
+
+    it("counts only your own replies when the chapter's notes couldn't be read", async () => {
+      const { state, openModal } = createState({
+        annotations: [note, myReply],
+        visibleChapterNotes: null,
+      });
+      renderPane(state);
+
+      await chooseAnnotationDelete();
+
+      expect(renderOpenedModal(openModal).textContent).toContain(
+        "It has 1 reply, which will no longer be shown."
+      );
+    });
+
+    it("puts back a reply that couldn't be deleted, and says so", async () => {
+      const { state, openModal, restoreAnnotation, toast } = createState({
+        annotations: [note, myReply],
+        visibleChapterNotes: [note, myReply],
+        failingReplies: [myReply],
+      });
+      renderPane(state);
+
+      await chooseAnnotationDelete();
+      await confirmDelete(renderOpenedModal(openModal));
+
+      expect(restoreAnnotation).toHaveBeenCalledWith(myReply);
+      expect(restoreAnnotation).not.toHaveBeenCalledWith(note);
+      expect(toast).toHaveBeenCalledWith(
+        "The annotation was deleted, but your reply couldn't be."
+      );
+    });
   });
 
   // A chip for a section with nothing in it used to render nothing at all:
@@ -2006,17 +2257,7 @@ describe("YourContentPane", () => {
       .mockImplementation(() => {});
     renderPane(state);
 
-    act(() => {
-      (
-        container.querySelector(".sb-content-kebab") as HTMLButtonElement
-      ).click();
-    });
-    const deleteItem = Array.from(
-      document.querySelectorAll(".sb-context-menu-item")
-    ).find((el) => el.textContent?.includes("Delete")) as HTMLButtonElement;
-    act(() => {
-      deleteItem.click();
-    });
+    await chooseAnnotationDelete();
     await confirmDelete(renderOpenedModal(openModal));
 
     expect(removeAnnotation).toHaveBeenCalledWith("a");
@@ -2366,6 +2607,7 @@ describe("YourContentPane save options", () => {
         <YourContentPane
           state={created.state}
           onOpenPassage={vi.fn()}
+          onOpenAnnotationThread={vi.fn()}
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
@@ -2464,6 +2706,7 @@ describe("YourContentPane save options", () => {
         <YourContentPane
           state={created.state}
           onOpenPassage={vi.fn()}
+          onOpenAnnotationThread={vi.fn()}
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
@@ -2494,6 +2737,7 @@ describe("YourContentPane save options", () => {
         <YourContentPane
           state={created.state}
           onOpenPassage={vi.fn()}
+          onOpenAnnotationThread={vi.fn()}
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
@@ -2528,6 +2772,7 @@ describe("YourContentPane save options", () => {
         <YourContentPane
           state={created.state}
           onOpenPassage={onOpenPassage}
+          onOpenAnnotationThread={vi.fn()}
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
@@ -2573,6 +2818,7 @@ describe("YourContentPane clearing a highlight", () => {
         <YourContentPane
           state={created.state}
           onOpenPassage={vi.fn()}
+          onOpenAnnotationThread={vi.fn()}
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}
@@ -2668,6 +2914,7 @@ describe("YourContentPane clearing a highlight", () => {
         <YourContentPane
           state={created.state}
           onOpenPassage={onOpenPassage}
+          onOpenAnnotationThread={vi.fn()}
           onPlayPlaylist={vi.fn()}
           onEditPlaylist={vi.fn()}
           onEditAnnotation={vi.fn()}

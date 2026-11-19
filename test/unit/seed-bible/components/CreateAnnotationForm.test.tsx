@@ -7,6 +7,7 @@ import type {
   AnnotationsManager,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { TabsManager } from "@packages/seed-bible/seed-bible/managers/TabsManager";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -31,6 +32,9 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
 
 vi.mock("@packages/seed-bible/seed-bible/managers/Sanitization", () => ({
   sanitize: vi.fn(async (html: string) => html),
+  setSafeHtml: vi.fn(async (html: string, element: HTMLElement) => {
+    element.innerHTML = html;
+  }),
 }));
 
 /**
@@ -158,6 +162,13 @@ function createMockTabsManager(
   } as unknown as TabsManager;
 }
 
+function createMockLoginManager(): LoginManager {
+  return {
+    userId: signal<string | null>(null),
+    getUserProfile: vi.fn().mockResolvedValue({}),
+  } as unknown as LoginManager;
+}
+
 describe("CreateAnnotationForm", () => {
   let container: HTMLDivElement;
 
@@ -186,6 +197,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={vi.fn()}
         />,
         container
@@ -194,6 +206,93 @@ describe("CreateAnnotationForm", () => {
     });
 
     expect(container.innerHTML).toBe("");
+  });
+
+  describe("replying", () => {
+    const reply = createAnnotation({
+      id: "reply-draft",
+      verseNumber: 2,
+      data: {
+        type: "comment",
+        html: "",
+        replyTo: "parent",
+        userId: "user-1",
+      },
+    });
+    const parentBy = (userId: string) =>
+      createAnnotation({
+        id: "parent",
+        verseNumber: 2,
+        data: { type: "comment", html: "<p>The parent note</p>", userId },
+      });
+
+    async function renderReply(visibleNotes: Annotation[], draft = reply) {
+      const mock = createMockAnnotationsManager(draft);
+      Object.assign(mock.annotations, {
+        visibleAnnotationsForChapter: () => visibleNotes,
+      });
+      const login = {
+        userId: signal<string | null>("user-1"),
+        getUserProfile: vi.fn().mockResolvedValue({ name: "Ana" }),
+      } as unknown as LoginManager;
+      await act(async () => {
+        render(
+          <CreateAnnotationForm
+            annotations={mock.annotations}
+            tabs={createMockTabsManager(createChapterData())}
+            toast={vi.fn()}
+            onClose={vi.fn()}
+            login={login}
+          />,
+          container
+        );
+        await flushLazyLoad();
+      });
+    }
+
+    const headerTitle = () =>
+      container.querySelector(".sb-discover-panel-header .sb-discover-title")
+        ?.textContent;
+
+    it("names the author of the note being answered, and shows that note", async () => {
+      await renderReply([parentBy("friend-user")]);
+
+      expect(headerTitle()).toBe("Reply to Ana");
+      const preview = container.querySelector(".sb-reply-parent-preview");
+      expect(
+        preview?.querySelector(".sb-annotation-item-preview")?.textContent
+      ).toBe("The parent note");
+      expect(
+        preview?.querySelector(".sb-annotation-comment-author-name")
+          ?.textContent
+      ).toBe("Ana");
+      expect(
+        container.querySelector(".sb-settings-save-button")?.textContent
+      ).toBe("Reply");
+    });
+
+    it("is just 'Reply' when answering your own note", async () => {
+      await renderReply([parentBy("user-1")]);
+
+      expect(headerTitle()).toBe("Reply");
+    });
+
+    it("is just 'Reply', with nothing quoted, when the note being answered is no longer shown", async () => {
+      await renderReply([]);
+
+      expect(headerTitle()).toBe("Reply");
+      expect(container.querySelector(".sb-reply-parent-preview")).toBeNull();
+    });
+
+    it("names the author the reply itself records when the note being answered isn't loaded", async () => {
+      await renderReply([], {
+        ...reply,
+        data: { ...reply.data, replyToUserId: "friend-user" },
+      });
+
+      expect(headerTitle()).toBe("Reply to Ana");
+      expect(container.querySelector(".sb-reply-parent-preview")).toBeNull();
+    });
   });
 
   describe("header", () => {
@@ -210,6 +309,7 @@ describe("CreateAnnotationForm", () => {
           <CreateAnnotationForm
             annotations={mock.annotations}
             tabs={tabs}
+            login={createMockLoginManager()}
             toast={vi.fn()}
             onClose={onClose}
           />,
@@ -312,6 +412,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={vi.fn()}
         />,
         container
@@ -342,6 +443,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={toast}
         />,
         container
@@ -379,6 +481,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={vi.fn()}
         />,
         container
@@ -408,6 +511,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={vi.fn()}
         />,
         container
@@ -435,6 +539,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={vi.fn()}
         />,
         container
@@ -460,6 +565,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={vi.fn()}
         />,
         container
@@ -482,6 +588,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={toast}
         />,
         container
@@ -518,6 +625,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={toast}
         />,
         container
@@ -546,6 +654,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={toast}
         />,
         container
@@ -583,6 +692,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={toast}
         />,
         container
@@ -620,6 +730,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={vi.fn()}
         />,
         container
@@ -649,6 +760,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={vi.fn()}
         />,
         container
@@ -673,6 +785,7 @@ describe("CreateAnnotationForm", () => {
           onClose={vi.fn()}
           annotations={annotations}
           tabs={tabs}
+          login={createMockLoginManager()}
           toast={vi.fn()}
         />,
         container

@@ -115,6 +115,33 @@ export interface AnnotationsManager {
     chapterNumber: number
   ) => Annotation[];
 
+  /**
+   * The same notes as `visibleAnnotationsForChapter`, once every list they
+   * come from has finished loading. Resolves to null when any of those lists
+   * couldn't be read (offline, say), or while the friends list itself hasn't
+   * loaded: a note missing from the result is then not known to be gone, only
+   * unseen.
+   */
+  loadVisibleAnnotationsForChapter: (
+    bookId: string,
+    chapterNumber: number
+  ) => Promise<Annotation[] | null>;
+
+  /**
+   * Whether a note (not a reply) by `authorId` is among the chapter's notes
+   * the signed-in user sees, reading only that author's list instead of every
+   * friend's. A note by someone who isn't the user or a friend isn't seen.
+   * Resolves to null when it can't tell: that list couldn't be read, or the
+   * friends list hasn't loaded yet for a note that isn't the user's own.
+   * Without an `authorId`, falls back to `loadVisibleAnnotationsForChapter`.
+   */
+  isAnnotationVisible: (
+    bookId: string,
+    chapterNumber: number,
+    annotationId: string,
+    authorId: string | null | undefined
+  ) => Promise<boolean | null>;
+
   /** The annotation currently being created/edited in the pane, or null. */
   editingAnnotation: Signal<Annotation | null>;
 
@@ -129,6 +156,30 @@ export interface AnnotationsManager {
    * declined, or when there is no active chapter to attach to.
    */
   createNewAnnotation: () => Promise<void>;
+
+  /**
+   * Starts a reply to `parent` and switches the pane to the create/edit view.
+   * The draft covers the same verses as `parent` and is saved wherever the
+   * user's own notes go, not in the parent author's record. Replies are one
+   * level deep: replying to a reply answers the note at the top of its
+   * thread instead. Unlike `createNewAnnotation`, the draft ignores the
+   * reader's selection and the active tab, so it stays on the parent's
+   * verses while the user moves around. Offers a sign-in the same way
+   * `createNewAnnotation` does, and is a no-op (with a console warning) when
+   * there is still nowhere to save the reply. Unfolds the thread it answers,
+   * so the reply is in view once the composer closes.
+   */
+  createReply: (parent: Annotation) => Promise<void>;
+
+  /**
+   * Ids of the notes whose replies are unfolded in the notes lists. Held here
+   * rather than in the list, which is rebuilt every time the composer closes
+   * and would otherwise fold every thread back up.
+   */
+  readonly openThreadIds: ReadonlySignal<ReadonlySet<string>>;
+
+  /** Unfolds or folds the replies under the note `threadId`. */
+  setThreadOpen: (threadId: string, open: boolean) => void;
 
   /**
    * Opens an existing annotation for editing: sets `editingAnnotation` to a
@@ -158,6 +209,18 @@ export interface AnnotationsManager {
    * draft if it was the one being edited. Rethrows on failure.
    */
   deleteAnnotationAndRefresh: (annotation: Annotation) => Promise<void>;
+
+  /**
+   * Deletes a note the way `deleteAnnotationAndRefresh` does, then `replies`:
+   * the signed-in user's own replies to it, which would otherwise be left
+   * hidden with nothing to hang from. The note goes first, so a note that
+   * couldn't be deleted rejects with every reply left in place. A reply that
+   * then fails is left as it was, and resolves among the ones returned.
+   */
+  deleteAnnotationAndReplies: (
+    annotation: Annotation,
+    replies: readonly Annotation[]
+  ) => Promise<Annotation[]>;
 
   /**
    * Saves an annotation (upsert) and updates the chapter cache, so it shows
@@ -190,6 +253,12 @@ export const commentAnnotationSchema = z.object({
   type: z.literal("comment"),
   html: z.string(),
   replyTo: z.string().nullable().optional(),
+  /**
+   * Who wrote the note `replyTo` points at. Kept on the reply so it can say
+   * whom it answers without loading that note, which sits in someone else's
+   * record.
+   */
+  replyToUserId: z.string().nullable().optional(),
   createdAtMs: z.number().nullable().optional(),
   updatedAtMs: z.number().nullable().optional(),
   userProfilePicture: z.string().nullable().optional(),
@@ -504,6 +573,10 @@ export function sortAnnotations(annotations: Annotation[]): Annotation[] {
  * A chapter's notes as the signed-in user sees them: their own plus each
  * friend's. Reading this during a render subscribes to every one of those
  * lists, so the caller updates as friends' notes arrive.
+ *
+ * A reply is left out unless the note it answers is in the list too: a
+ * friend's reply to someone who isn't the user's friend, or to a note that
+ * was deleted, has nothing to hang from.
  */
 export function visibleChapterAnnotations(
   annotations: Pick<
@@ -514,14 +587,20 @@ export function visibleChapterAnnotations(
   bookId: string,
   chapterNumber: number
 ): Annotation[] {
-  return sortAnnotations([
+  const all = [
     ...annotations.getAnnotationsForChapter(bookId, chapterNumber).value,
     ...friendIds.flatMap(
       (userId) =>
         annotations.getUserAnnotationsForChapter(userId, bookId, chapterNumber)
           .value
     ),
-  ]);
+  ];
+  const threadRootIds = new Set(
+    all.filter((a) => !a.data.replyTo).map((a) => a.id)
+  );
+  return sortAnnotations(
+    all.filter((a) => !a.data.replyTo || threadRootIds.has(a.data.replyTo))
+  );
 }
 
 type AnnotationsEntry = {
@@ -595,11 +674,43 @@ export interface CreateAnnotationsManagerOptions {
    */
   friendIds?: ReadonlySignal<readonly string[]>;
   /**
+   * Whether `friendIds` has been read for the signed-in account. Until it
+   * has, an empty list means "not known yet" rather than "no friends".
+   * Omitted means the list is always taken as read.
+   */
+  friendsLoaded?: ReadonlySignal<boolean>;
+  /**
    * Limits how many friends' chapters are read at once. Shared with the other
    * managers that read friends' content, so one limit covers them all.
    * Omitted means a limit of this manager's own.
    */
   friendReads?: FriendReadLimiter;
+}
+
+/** A note plus the replies written to it, oldest first. */
+export interface AnnotationReplyThread {
+  annotation: Annotation;
+  replies: Annotation[];
+}
+
+/**
+ * Splits a verse-range group into threads: each note that isn't a reply,
+ * with the replies to it hung underneath. Keeps the group's order for both
+ * notes and replies. A reply whose note isn't in the group is dropped.
+ */
+export function buildThreads(group: AnnotationGroup): AnnotationReplyThread[] {
+  const threads = new Map<string, AnnotationReplyThread>();
+  for (const annotation of group.annotations) {
+    if (!annotation.data.replyTo && !threads.has(annotation.id)) {
+      threads.set(annotation.id, { annotation, replies: [] });
+    }
+  }
+  for (const reply of group.annotations) {
+    if (reply.data.replyTo) {
+      threads.get(reply.data.replyTo)?.replies.push(reply);
+    }
+  }
+  return Array.from(threads.values());
 }
 
 /**
@@ -1256,6 +1367,89 @@ export function createAnnotationsManager(
     return view;
   };
 
+  const friendsListLoaded = () =>
+    untracked(() => options.friendsLoaded?.value ?? true);
+
+  const loadVisibleAnnotationsForChapter = async (
+    bookId: string,
+    chapterNumber: number
+  ): Promise<Annotation[] | null> => {
+    if (!friendsListLoaded()) {
+      return null;
+    }
+    const friendIds = untracked(() => options.friendIds?.value ?? []);
+    const ownRecordId = untracked(effectiveRecordId);
+    const sources: [string, AnnotationsEntry][] = [
+      [ownRecordId, getOrCreateEntry(ownRecordId, bookId, chapterNumber)],
+      ...friendIds.map((userId): [string, AnnotationsEntry] => [
+        userId,
+        getOrCreateEntry(userId, bookId, chapterNumber, true),
+      ]),
+    ];
+    // Same reason as in `isAnnotationVisible`: callers may not have this
+    // chapter on screen, so a friend's copy is otherwise never read again.
+    await Promise.all(
+      sources.map(([recordId, entry]) => {
+        refreshFriendEntry(entry);
+        return ensureLoaded(recordId, bookId, chapterNumber, entry);
+      })
+    );
+    if (sources.some(([, entry]) => entry.loadFailed)) {
+      return null;
+    }
+    return untracked(() =>
+      visibleChapterAnnotations(manager, friendIds, bookId, chapterNumber)
+    );
+  };
+
+  const isAnnotationVisible = async (
+    bookId: string,
+    chapterNumber: number,
+    annotationId: string,
+    authorId: string | null | undefined
+  ): Promise<boolean | null> => {
+    if (!authorId) {
+      const visible = await loadVisibleAnnotationsForChapter(
+        bookId,
+        chapterNumber
+      );
+      return visible ? visible.some((a) => a.id === annotationId) : null;
+    }
+
+    let recordId: string;
+    let readAsAccount = false;
+    if (authorId === untracked(() => login.userId.value)) {
+      recordId = untracked(effectiveRecordId);
+    } else {
+      if (!friendsListLoaded()) {
+        return null;
+      }
+      if (!untracked(() => options.friendIds?.value ?? []).includes(authorId)) {
+        return false;
+      }
+      recordId = authorId;
+      readAsAccount = true;
+    }
+
+    const entry = getOrCreateEntry(
+      recordId,
+      bookId,
+      chapterNumber,
+      readAsAccount
+    );
+    // A friend's chapter is otherwise only read again while it's on screen,
+    // and this check runs from another screen: without this, a copy read
+    // long ago (or a read that failed) would answer for good.
+    refreshFriendEntry(entry);
+    await ensureLoaded(recordId, bookId, chapterNumber, entry);
+    if (entry.loadFailed) {
+      return null;
+    }
+    return entry.data
+      .peek()
+      .some((a) => a.id === annotationId && !a.data.replyTo);
+  };
+
   const upsertIntoCache = (annotation: Annotation, recordId?: string): void => {
     const cacheRecordId = recordId ?? effectiveRecordId();
     const entry = getOrCreateEntry(
@@ -1370,6 +1564,22 @@ export function createAnnotationsManager(
   // is a docked panel, not a modal).
   const draftTabId = signal<string | null>(null);
 
+  const openThreadIds = signal<ReadonlySet<string>>(new Set());
+
+  const setThreadOpen = (threadId: string, open: boolean): void => {
+    const current = openThreadIds.peek();
+    if (current.has(threadId) === open) {
+      return;
+    }
+    const next = new Set(current);
+    if (open) {
+      next.add(threadId);
+    } else {
+      next.delete(threadId);
+    }
+    openThreadIds.value = next;
+  };
+
   // The discover view underneath the editor, captured when it opens. Save and
   // cancel put this back so a note started from the reader returns to the
   // chapter, and a note opened from the notes list returns to that list.
@@ -1414,7 +1624,7 @@ export function createAnnotationsManager(
     const tab = tabId
       ? (tabs.tabs.value.find((t) => t.id === tabId) ?? null)
       : null;
-    if (!current || !tab) {
+    if (!current || !!current.data.replyTo || !tab) {
       return;
     }
     // The passage the user is working in, which in a compare step can be
@@ -1453,7 +1663,9 @@ export function createAnnotationsManager(
     }
   });
 
-  const createNewAnnotation = async (): Promise<void> => {
+  const resolveNewNoteAuthor = async (): Promise<{
+    userId: string | null;
+  } | null> => {
     let userId = login.userId.value;
 
     // Offer a sign-in, but don't insist on one: with a local store the note is
@@ -1469,6 +1681,15 @@ export function createAnnotationsManager(
     // No account, no record override, and nowhere local to put it: nothing
     // can be written.
     if (!userId && !recordOverride && !store) {
+      return null;
+    }
+    return { userId };
+  };
+
+  const createNewAnnotation = async (): Promise<void> => {
+    const author = await resolveNewNoteAuthor();
+
+    if (!author) {
       console.warn("Cannot create an annotation while signed out.");
       return;
     }
@@ -1497,7 +1718,54 @@ export function createAnnotationsManager(
       data: {
         type: "comment",
         html: "",
-        userId,
+        userId: author.userId,
+        createdAtMs: now,
+        updatedAtMs: now,
+      },
+    });
+    rememberViewBeforeEditing();
+    discover.view.value = "create_annotation";
+  };
+
+  const createReply = async (parent: Annotation): Promise<void> => {
+    const {
+      id,
+      bookId,
+      chapterNumber,
+      verseNumber,
+      endVerseNumber,
+      verseNumbers,
+      data: { replyTo, replyToUserId, userId },
+    } = parent;
+
+    const author = await resolveNewNoteAuthor();
+
+    if (!author) {
+      console.warn("Cannot create an annotation while signed out.");
+      return;
+    }
+
+    const now = Date.now();
+    const threadId = replyTo ?? id;
+    const threadAuthorId = replyTo ? replyToUserId : userId;
+
+    isDraftingNewAnnotation.value = true;
+    draftTabId.value = null;
+    setThreadOpen(threadId, true);
+
+    editingAnnotation.value = annotationSchema.parse({
+      id: `annotation_${uuid()}`,
+      bookId,
+      chapterNumber,
+      verseNumber,
+      endVerseNumber,
+      verseNumbers,
+      data: {
+        type: "comment",
+        html: "",
+        userId: author.userId,
+        replyTo: threadId,
+        replyToUserId: threadAuthorId,
         createdAtMs: now,
         updatedAtMs: now,
       },
@@ -1564,9 +1832,31 @@ export function createAnnotationsManager(
     const recordId = effectiveRecordId();
     await deleteAnnotation(annotation.id);
     removeFromCache(annotation, recordId);
-    if (editingAnnotation.peek()?.id === annotation.id) {
+    const editing = editingAnnotation.peek();
+    if (
+      editing?.id === annotation.id ||
+      editing?.data.replyTo === annotation.id
+    ) {
       cancelEditingAnnotation();
     }
+  };
+
+  const deleteAnnotationAndReplies = async (
+    annotation: Annotation,
+    replies: readonly Annotation[]
+  ): Promise<Annotation[]> => {
+    await deleteAnnotationAndRefresh(annotation);
+    const results = await Promise.allSettled(
+      replies.map((reply) => deleteAnnotationAndRefresh(reply))
+    );
+    return replies.filter((reply, index) => {
+      const result = results[index];
+      if (result?.status !== "rejected") {
+        return false;
+      }
+      console.error(`Couldn't delete the reply ${reply.id}:`, result.reason);
+      return true;
+    });
   };
 
   const manager: AnnotationsManager = {
@@ -1585,12 +1875,18 @@ export function createAnnotationsManager(
         bookId,
         chapterNumber
       ),
+    loadVisibleAnnotationsForChapter,
+    isAnnotationVisible,
     editingAnnotation,
     createNewAnnotation,
+    createReply,
+    openThreadIds: computed(() => openThreadIds.value),
+    setThreadOpen,
     editAnnotation,
     saveEditingAnnotation,
     cancelEditingAnnotation,
     deleteAnnotationAndRefresh,
+    deleteAnnotationAndReplies,
     isDraftingNewAnnotation: computed(() => isDraftingNewAnnotation.value),
     hasRecordOverride: !!recordOverride,
     sync,
