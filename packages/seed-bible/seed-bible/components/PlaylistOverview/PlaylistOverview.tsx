@@ -8,6 +8,7 @@ import { MaterialIcon, SeedBibleIcon } from "../icons";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { PlaylistItemNoteTag } from "../PlaylistItemNoteTag/PlaylistItemNoteTag";
 import {
+  compareStepTitle,
   playlistStepKind,
   playlistStepMinutes,
   playlistTotalMinutes,
@@ -153,7 +154,8 @@ export function PlaylistStepIcon(props: { item: PlaylistItemData }) {
 
 /**
  * What a row of steps shows for one: its icon, name (with any note's title),
- * and its time estimate at the row's end.
+ * and its time estimate at the row's end. A titled compare step's note title
+ * is its name, so it isn't repeated after it.
  */
 export function PlaylistOverviewItemContent(props: {
   item: PlaylistItemData;
@@ -163,19 +165,17 @@ export function PlaylistOverviewItemContent(props: {
 }) {
   const { item } = props;
   const { t } = useI18n();
-  // A compare step's note title is its name, so it replaces the name rather
-  // than following it as a note tag.
-  const compareTitle =
-    (item.type === "bible-verse" && item.compare && item.noteTitle?.trim()) ||
-    null;
+  const compareTitle = compareStepTitle(item);
+  const name =
+    props.label ??
+    compareTitle ??
+    playlistItemLabel(item, t, props.resolveBookName);
   return (
     <>
       <PlaylistStepIcon item={item} />
       <span className="sb-discover-item-title" dir="auto">
-        {props.label ??
-          compareTitle ??
-          playlistItemLabel(item, t, props.resolveBookName)}
-        {compareTitle == null ? <PlaylistItemNoteTag item={item} /> : null}
+        {name}
+        {name !== compareTitle ? <PlaylistItemNoteTag item={item} /> : null}
       </span>
       <span className="sb-playlist-page-item-minutes">
         {t("playlist-editor-minutes", {

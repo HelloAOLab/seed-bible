@@ -89,6 +89,17 @@ function htmlToText(html: string): string {
     .trim();
 }
 
+/**
+ * A compare step's custom title, which is stored as its note title and names
+ * the step; null for any other step or an untitled compare.
+ */
+export function compareStepTitle(item: PlaylistItemData): string | null {
+  return (
+    (item.type === "bible-verse" && item.compare && item.noteTitle?.trim()) ||
+    null
+  );
+}
+
 /** A step's name in the step list. */
 export function playlistStepLabel(
   item: PlaylistItemData,
@@ -101,8 +112,7 @@ export function playlistStepLabel(
       return playlistItemLabel(item, t, resolveBookName);
     case "compare":
       return (
-        (item.type === "bible-verse" && item.noteTitle?.trim()) ||
-        playlistItemLabel(item, t, resolveBookName)
+        compareStepTitle(item) ?? playlistItemLabel(item, t, resolveBookName)
       );
     case "question":
     case "note": {

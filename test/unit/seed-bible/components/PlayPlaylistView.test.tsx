@@ -3,6 +3,7 @@ import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { PlayPlaylistView } from "@packages/seed-bible/seed-bible/components/PlayPlaylistView/PlayPlaylistView";
 import { PlaylistPagePane } from "@packages/seed-bible/seed-bible/components/PlaylistPagePane/PlaylistPagePane";
+import { PlaylistStepRow } from "@packages/seed-bible/seed-bible/components/PlaylistOverview/PlaylistOverview";
 import {
   createPlayingState,
   type Playlist,
@@ -558,6 +559,29 @@ describe("PlayPlaylistView", () => {
         ".sb-playlist-step-row-button .sb-discover-item-title"
       )!.textContent
     ).toBe("Two creation accounts");
+  });
+
+  it("keeps a titled compare step's title after a row label that isn't it", () => {
+    act(() => {
+      render(
+        <ul>
+          <PlaylistStepRow
+            item={verseItem({
+              ref: { bookId: "GEN", chapter: 1 },
+              compare: { ref: { bookId: "GEN", chapter: 2 } },
+              noteTitle: "Two creation accounts",
+            })}
+            resolveBookName={(id) => id}
+            label="Draft step"
+          />
+        </ul>,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-discover-item-title")!.textContent
+    ).toBe("Draft step · Two creation accounts");
   });
 
   it("opens the clicked queue item, including the one already playing", () => {
