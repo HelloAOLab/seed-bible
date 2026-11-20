@@ -110,25 +110,10 @@
   line-height: 1.55;
 }
 
-.sb-extension-info-install {
-  min-height: 3rem;
-  border: none;
-  border-radius: var(--sb-radius-full);
-  background: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
-  color: var(--sb-primary-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-16);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-extension-info-install:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), #000000 35%);
-}
-
-.sb-extension-info-install:disabled {
-  cursor: progress;
-  opacity: 0.7;
+/* Darkened like the consent dialog's Allow, so the Light theme's white label
+   on orange passes 4.5:1. Two classes, to outrank the Button's own accent. */
+.sb-button.sb-extension-info-install {
+  --sb-button-accent: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
 }
 
 .sb-extension-info-section {
@@ -168,20 +153,6 @@
 
 .sb-extension-info-uninstall {
   align-self: flex-start;
-  min-height: 2.75rem;
-  padding: 0 1.125rem;
-  border: 1px solid color-mix(in srgb, #c62828, transparent 65%);
-  border-radius: var(--sb-radius-full);
-  background: transparent;
-  color: color-mix(in srgb, #c62828, var(--sb-font-color) 20%);
-  font-family: inherit;
-  font-size: var(--sb-font-size-15);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-extension-info-uninstall:hover {
-  background: color-mix(in srgb, #c62828, transparent 90%);
 }
 
 .sb-extension-info-abilities,
@@ -256,11 +227,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
-}
-
-.sb-extension-info-wide .sb-extension-info-install {
-  min-height: 3.25rem;
-  font-size: var(--sb-font-size-16);
 }
 
 .sb-extension-info-install-note {

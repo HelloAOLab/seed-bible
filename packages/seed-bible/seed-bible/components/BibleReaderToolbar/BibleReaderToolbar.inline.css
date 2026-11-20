@@ -943,30 +943,6 @@
   transform: scale(0.95);
 }
 
-.sb-verse-toolbar-back {
-  width: 1.5rem;
-  height: 1.5rem;
-  padding: 0;
-  flex: none;
-  border: none;
-  background: transparent;
-  color: var(--sb-font-color);
-  cursor: pointer;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color var(--sb-duration-fast) ease;
-}
-
-.sb-verse-toolbar-back:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-}
-
-.sb-verse-toolbar-back .material-symbols-outlined {
-  font-size: 1.25rem;
-}
-
 /* Add / Clear: equal-width labelled pills in the action row under the grid. */
 .sb-verse-toolbar-plus,
 .sb-verse-toolbar-clear {
@@ -1022,7 +998,6 @@
   cursor: default;
 }
 
-.sb-verse-toolbar-back .material-symbols-outlined,
 .sb-verse-toolbar-plus .material-symbols-outlined,
 .sb-verse-toolbar-clear .material-symbols-outlined,
 .sb-verse-toolbar-highlight-trigger .material-symbols-outlined {
@@ -1312,7 +1287,7 @@
 /* No click-to-navigate here (unlike DiscoverPane's row, which jumps to the
    verse on click) — the row itself isn't a button, so the pointer cursor
    DiscoverPane's clickable row uses isn't appropriate. The edit/delete menu
-   button inside still gets its own cursor via `.sb-context-menu-button`. */
+   button inside is an IconButton, with its own cursor. */
 .sb-verse-toolbar-annotations .sb-annotation-item {
   cursor: default;
 }
@@ -1342,33 +1317,13 @@
   flex: none;
 }
 
-/* Small dismiss button pinned to the top-right corner of the mobile sheet. */
-.sb-verse-toolbar-close {
+/* Pinned to the top-right corner of the mobile sheet. Two classes, to
+   outrank IconButton's own `position`. */
+.sb-icon-button.sb-verse-toolbar-close {
   position: absolute;
   top: 0.625rem;
   right: 0.75rem;
-  width: 1.875rem;
-  height: 1.875rem;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-  color: var(--sb-font-color);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color var(--sb-duration-fast) ease;
   z-index: 1;
-}
-
-.sb-verse-toolbar-close:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
-}
-
-.sb-verse-toolbar-close .material-symbols-outlined {
-  font-size: 1.25rem;
-  line-height: 1;
 }
 
 /* "Swipe up to see more" at the foot of the sheet — the affordance that replaced

@@ -115,25 +115,9 @@
   margin-top: 16px;
 }
 
-.ftv-celebration-sound {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.sb-button.ftv-celebration-sound {
   margin-top: 10px;
-  padding: 4px 8px;
-  border: none;
-  border-radius: var(--sb-radius-sm);
-  background: transparent;
-  color: var(--sb-font-color, #333);
-  opacity: 0.7;
-  font-size: var(--sb-font-size-13);
-  cursor: pointer;
 }
-
-.ftv-celebration-sound .material-symbols-outlined {
-  font-size: 1.1rem;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .ftv-confetti {
     display: none;

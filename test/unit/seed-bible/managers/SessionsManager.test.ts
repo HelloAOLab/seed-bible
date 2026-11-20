@@ -1,10 +1,14 @@
 import { batch, effect, signal } from "@preact/signals";
 import {
   COME_BACK_REQUEST_COOLDOWN_MS,
+  countSessionPeople,
   GROUP_MOVE_GRACE_MS,
   createSessionsManager,
   getUserAnimalVisual,
+  isConnectedUserHost,
+  resolveViewingAreaVisibility,
   type BibleReadingSession,
+  type SessionOptions,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import {
   createBibleReadingState,
@@ -521,6 +525,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     });
   });
 
@@ -719,6 +724,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     });
   });
 
@@ -753,6 +759,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     });
     expect(mockOptionsMap.set).not.toHaveBeenCalled();
   });
@@ -793,6 +800,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "everyone",
+      viewingAreaVisibility: "auto",
     });
   });
   it("updateOptions(newOptions) updates verse selection effect visibility", async () => {
@@ -921,6 +929,168 @@ describe("SessionsManager", () => {
     );
   });
 
+  describe("viewing area visibility", () => {
+    it.each([
+      ["default", "auto", 3, "everyone"],
+      ["default", "auto", 4, "hosts-only"],
+      ["default", "auto", 5, "hosts-only"],
+      ["default", undefined, 1, "everyone"],
+      ["default", "everyone", 10, "everyone"],
+      ["default", "hosts-only", 1, "hosts-only"],
+      ["everyone", "hosts-only", 10, "hosts-only"],
+      ["hosts-only", "everyone", 2, "hosts-only"],
+      ["everyone", "auto", 8, "everyone"],
+      ["hosts-only", "auto", 2, "hosts-only"],
+    ] as const)(
+      "preference %s with session %s and %i people shows %s",
+      (preference, sessionVisibility, count, expected) => {
+        expect(
+          resolveViewingAreaVisibility(sessionVisibility, count, preference)
+        ).toBe(expected);
+      }
+    );
+
+    it("shows everyone when hosts only would apply but no host is connected", () => {
+      expect(resolveViewingAreaVisibility("auto", 6, "default", false)).toBe(
+        "everyone"
+      );
+      expect(
+        resolveViewingAreaVisibility("hosts-only", 2, "everyone", false)
+      ).toBe("everyone");
+      expect(
+        resolveViewingAreaVisibility("hosts-only", 6, "default", true)
+      ).toBe("hosts-only");
+    });
+
+    it("counts one person with two tabs as one person, and each signed-out guest separately", () => {
+      expect(
+        countSessionPeople([
+          { userId: "ada", connectionId: "laptop" },
+          { userId: "ada", connectionId: "phone" },
+          { userId: null, connectionId: "guest" },
+          { userId: null, connectionId: "guest-2" },
+        ])
+      ).toBe(3);
+    });
+
+    it("recognizes a host by user id and a co-host by connection id", () => {
+      const options = {
+        hostUserId: "host",
+        coHostUserIds: ["co-connection"],
+      } as SessionOptions;
+
+      expect(
+        isConnectedUserHost(options, {
+          userId: "host",
+          connectionId: "other",
+        })
+      ).toBe(true);
+      expect(
+        isConnectedUserHost(options, {
+          userId: "someone",
+          connectionId: "co-connection",
+        })
+      ).toBe(true);
+      expect(
+        isConnectedUserHost(options, {
+          userId: "guest",
+          connectionId: "guest-connection",
+        })
+      ).toBe(false);
+    });
+
+    it("createSession() stores automatic viewing areas", async () => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+
+      const session = await manager.createSession();
+
+      expect(mockOptionsMap.set).toHaveBeenCalledWith(
+        "viewingAreaVisibility",
+        "auto"
+      );
+      expect(session.options.value.viewingAreaVisibility).toBe("auto");
+    });
+
+    it.each(["auto", "everyone", "hosts-only"] as const)(
+      "loads viewing area visibility %s from shared options",
+      async (visibility) => {
+        mockOptionsMap = createMockSharedMap({
+          viewingAreaVisibility: visibility,
+        });
+        mockDocument.getMap.mockImplementation((name: string) => {
+          if (name === "options") return mockOptionsMap;
+          if (name === "decorations") return mockDecorationsMap;
+          if (name === "user_profiles") return mockUserProfilesMap;
+          if (name === "reading_positions") return mockReadingPositionsMap;
+          if (name === "reading_extensions") return mockExtensionsMap;
+          return mockMap;
+        });
+
+        const manager = createSessionsManager(
+          os,
+          mockDataManager as any,
+          mockLoginManager as any,
+          mockHighlightsManager as any,
+          i18n
+        );
+        const session = await manager.joinSession("group-abc");
+
+        expect(session.options.value.viewingAreaVisibility).toBe(visibility);
+      }
+    );
+
+    it("falls back to automatic when the stored viewing area visibility is unrecognized", async () => {
+      mockOptionsMap = createMockSharedMap({
+        viewingAreaVisibility: "all",
+      });
+      mockDocument.getMap.mockImplementation((name: string) => {
+        if (name === "options") return mockOptionsMap;
+        return mockMap;
+      });
+
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      const session = await manager.joinSession("group-abc");
+
+      expect(session.options.value.viewingAreaVisibility).toBe("auto");
+    });
+
+    it("updateOptions writes viewing area visibility without clearing the other options", async () => {
+      const manager = createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n
+      );
+      const session = await manager.joinSession("group-abc");
+      mockOptionsMap.setEmitOnSet(true);
+
+      session.updateOptions({ viewingAreaVisibility: "hosts-only" });
+
+      expect(mockOptionsMap.set).toHaveBeenCalledWith(
+        "viewingAreaVisibility",
+        "hosts-only"
+      );
+      expect(session.options.value.viewingAreaVisibility).toBe("hosts-only");
+      expect(session.options.value.verseSelectionEffectVisibility).toBe(
+        "hosts-only"
+      );
+      expect(session.options.value.shareTranslation).toBe(false);
+    });
+  });
+
   it("updateOptions(newOptions) writes options to the shared options map", async () => {
     const manager = createSessionsManager(
       os,
@@ -950,6 +1120,7 @@ describe("SessionsManager", () => {
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     });
   });
 

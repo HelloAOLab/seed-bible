@@ -8,6 +8,7 @@ import { MaterialIcon } from "../icons";
 import { useOverlayDismiss } from "../useOverlayDismiss";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import type { LoginManager } from "../../managers/LoginManager";
+import { Button } from "../Button/Button";
 
 type LoginStep = "email" | "code";
 
@@ -354,23 +355,26 @@ export function LoginModal({
               )}
 
               <div className="sb-login-actions sb-login-actions-row">
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="lg"
                   className="sb-login-secondary"
                   onClick={cancel}
                   disabled={isSubmitting.value}
                 >
                   {t("cancel", { defaultValue: "Cancel" })}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  variant="primary"
+                  size="lg"
                   className="sb-login-submit"
-                  disabled={isSubmitting.value}
+                  loading={isSubmitting.value}
                 >
                   {isSubmitting.value
                     ? t("login-verifying", { defaultValue: "Verifying…" })
                     : t("login-confirm-code", { defaultValue: "Confirm code" })}
-                </button>
+                </Button>
               </div>
             </form>
           ) : (
@@ -429,15 +433,17 @@ export function LoginModal({
               )}
 
               <div className="sb-login-actions">
-                <button
+                <Button
                   type="submit"
+                  variant="primary"
+                  size="lg"
                   className="sb-login-submit"
-                  disabled={isSubmitting.value}
+                  loading={isSubmitting.value}
                 >
                   {isSubmitting.value
                     ? t("login-sending", { defaultValue: "Sending…" })
                     : t("log-in", { defaultValue: "Log in" })}
-                </button>
+                </Button>
               </div>
             </form>
           )}

@@ -22,6 +22,19 @@ export interface BibleThemeVariables {
   linkVisitedColor: string;
 
   /**
+   * The color of destructive actions: a filled "End session" or "Delete"
+   * button, and the red text of "Log out" or "Uninstall". Defaults to red
+   * when unset.
+   */
+  dangerColor?: string | null;
+
+  /**
+   * Text drawn on a `dangerColor` surface, such as the label of a filled
+   * delete button.
+   */
+  dangerFontColor?: string | null;
+
+  /**
    * The background color for the entire app. This is used as the background for the body element, so it will be visible in areas that don't have a specific background set (e.g. when a pane is detached or when there are gaps between panes). It should generally match the readerBackground color to create a seamless look, but can be set to a different color if desired.
    */
   background: string;
@@ -598,6 +611,9 @@ export const LIGHT_THEME: BibleTheme = {
     linkColor: "#e07b4c",
     linkVisitedColor: "#8d5a6b",
 
+    dangerColor: "#dc2626",
+    dangerFontColor: "#fff",
+
     background: "#f8fafc",
 
     sidebarBackground: "transparent",
@@ -793,6 +809,9 @@ export const DARK_THEME: BibleTheme = {
 
     linkColor: "#f5f5f5",
     linkVisitedColor: "#a3a3a3",
+
+    dangerColor: "#f87171",
+    dangerFontColor: "#111111",
 
     background: "#0a0a0a",
 
@@ -1030,6 +1049,8 @@ export type ThemeColorKey =
   | "tertiaryColor"
   | "linkColor"
   | "linkVisitedColor"
+  | "dangerColor"
+  | "dangerFontColor"
   | "background"
   | "fontColor"
   | "sidebarBackground"
@@ -1072,6 +1093,8 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
       { key: "tertiaryColor", label: "Tertiary" },
       { key: "linkColor", label: "Link" },
       { key: "linkVisitedColor", label: "Visited link" },
+      { key: "dangerColor", label: "Danger" },
+      { key: "dangerFontColor", label: "Danger text" },
     ],
   },
   {
