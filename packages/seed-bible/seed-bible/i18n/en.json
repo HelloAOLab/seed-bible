@@ -639,6 +639,7 @@
   "chat-tool-used": "{{name}} used {{count}} tools",
   "chat-tool-used_one": "{{name}} used a tool",
   "chat-tool-used_other": "{{name}} used {{count}} tools",
+  "chat-tool-used-named": "{{name}} used {{tool}}",
   "ai-context-button-label": "Active AI context",
   "ai-context-tool-count": "{{count}} tools",
   "annotation-conflict-title": "This note changed in two places",
