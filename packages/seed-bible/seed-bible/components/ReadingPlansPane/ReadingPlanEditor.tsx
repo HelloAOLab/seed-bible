@@ -38,6 +38,7 @@ import { playlistItemLabel } from "../playlistItemLabel";
 import { readingItemIcon, readingPreviewText } from "./readingPreview";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
+import { CheckboxIndicator } from "../Checkbox/Checkbox";
 
 interface ReadingPlanEditorProps {
   readingPlans: ReadingPlansManager;
@@ -456,9 +457,11 @@ function CadencesSection(props: CadencesSectionProps) {
               disabled={selected && lastSelected}
               onChange={() => onToggle(option.id)}
             />
-            <span className="sb-rp-choice-box" aria-hidden="true">
-              {selected && <MaterialIcon>check</MaterialIcon>}
-            </span>
+            <CheckboxIndicator
+              className="sb-rp-choice-box"
+              checked={selected}
+              disabled={selected && lastSelected}
+            />
             <span className="sb-rp-choice-text">
               <span className="sb-rp-choice-title">
                 {cadenceOptionLabel(option, t)}

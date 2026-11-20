@@ -47,6 +47,8 @@ export { AddExtensionFromLink } from "./useExtensionCatalog";
 import { ExtensionTile } from "../ExtensionConsentModal/ExtensionConsentModal";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
+import { SettingRow } from "../SettingRow/SettingRow";
+import { Switch } from "../Switch/Switch";
 
 function FlagImg({ cc }: { cc: string }) {
   return (
@@ -572,162 +574,111 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           {t("scripture-elements", { defaultValue: "Scripture elements" })}
         </h3>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-scripture-headings"
-          >
-            {t("show-headings", { defaultValue: "Show headings" })}
-          </label>
-          <input
-            id="sb-show-scripture-headings"
-            type="checkbox"
+        <SettingRow
+          label={t("show-headings", { defaultValue: "Show headings" })}
+        >
+          <Switch
             checked={current.scriptureElements.showHeadings}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setScriptureElements({
-                showHeadings: (event.currentTarget as HTMLInputElement).checked,
+                showHeadings: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-scripture-verse-numbers"
-          >
-            {t("show-verse-numbers", { defaultValue: "Show verse numbers" })}
-          </label>
-          <input
-            id="sb-show-scripture-verse-numbers"
-            type="checkbox"
+        <SettingRow
+          label={t("show-verse-numbers", {
+            defaultValue: "Show verse numbers",
+          })}
+        >
+          <Switch
             checked={current.scriptureElements.showVerseNumbers}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setScriptureElements({
-                showVerseNumbers: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showVerseNumbers: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-scripture-footnotes"
-          >
-            {t("show-footnotes", { defaultValue: "Show footnotes" })}
-          </label>
-          <input
-            id="sb-show-scripture-footnotes"
-            type="checkbox"
+        <SettingRow
+          label={t("show-footnotes", { defaultValue: "Show footnotes" })}
+        >
+          <Switch
             checked={current.scriptureElements.showFootnotes}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setScriptureElements({
-                showFootnotes: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showFootnotes: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-scripture-highlights"
-          >
-            {t("show-highlights", { defaultValue: "Show highlights" })}
-          </label>
-          <input
-            id="sb-show-scripture-highlights"
-            type="checkbox"
+        <SettingRow
+          label={t("show-highlights", { defaultValue: "Show highlights" })}
+        >
+          <Switch
             checked={current.scriptureElements.showHighlights}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setScriptureElements({
-                showHighlights: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showHighlights: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-red-lettering"
-          >
-            {t("show-red-lettering", { defaultValue: "Show red lettering" })}
-          </label>
-          <input
-            id="sb-show-red-lettering"
-            type="checkbox"
+        <SettingRow
+          label={t("show-red-lettering", {
+            defaultValue: "Show red lettering",
+          })}
+        >
+          <Switch
             checked={current.scriptureElements.showRedLettering}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setScriptureElements({
-                showRedLettering: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showRedLettering: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
         <h3 className="sb-settings-subheading">
           {t("discovered-content", { defaultValue: "Discovered Content" })}
         </h3>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-discovered-content"
-          >
-            {t("show-discovered-content", {
-              defaultValue: "Show discovered content",
-            })}
-          </label>
-          <input
-            id="sb-show-discovered-content"
-            type="checkbox"
+        <SettingRow
+          label={t("show-discovered-content", {
+            defaultValue: "Show discovered content",
+          })}
+        >
+          <Switch
             checked={current.discoveredContent.showContent}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setDiscoveredContent({
-                showContent: (event.currentTarget as HTMLInputElement).checked,
+                showContent: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <div className="sb-settings-toggle-text">
-            <label
-              className="sb-settings-toggle-label"
-              htmlFor="sb-show-discovered-content-in-sessions"
-            >
-              {t("show-discovered-content-in-sessions", {
-                defaultValue: "Show in shared sessions",
-              })}
-            </label>
-            <p
-              id="sb-show-discovered-content-in-sessions-description"
-              className="sb-settings-toggle-description"
-            >
-              {t("show-discovered-content-in-sessions-description", {
-                defaultValue: "Only you see it. Others in the session won't.",
-              })}
-            </p>
-          </div>
-          <input
-            id="sb-show-discovered-content-in-sessions"
-            type="checkbox"
-            aria-describedby="sb-show-discovered-content-in-sessions-description"
+        <SettingRow
+          label={t("show-discovered-content-in-sessions", {
+            defaultValue: "Show in shared sessions",
+          })}
+          description={t("show-discovered-content-in-sessions-description", {
+            defaultValue: "Only you see it. Others in the session won't.",
+          })}
+        >
+          <Switch
             checked={current.discoveredContent.showInSharedSessions}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setDiscoveredContent({
-                showInSharedSessions: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showInSharedSessions: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
         <h3 className="sb-settings-subheading">
           {t("session", { defaultValue: "Session" })}
         </h3>
@@ -860,110 +811,76 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             </option>
           </select>
         </div>
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-keep-screen-awake"
-          >
-            {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
-          </label>
-          <input
-            id="sb-keep-screen-awake"
-            type="checkbox"
+        <SettingRow
+          label={t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
+        >
+          <Switch
             checked={current.keepScreenAwake}
-            onChange={(event: Event) => {
-              settings.setKeepScreenAwake(
-                (event.currentTarget as HTMLInputElement).checked
-              );
+            onToggled={(checked) => {
+              settings.setKeepScreenAwake(checked);
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-ask-to-switch-ui-language"
-          >
-            {t("ask-to-switch-ui-language", {
-              defaultValue: "Offer to switch language with translation",
-            })}
-          </label>
-          <input
-            id="sb-ask-to-switch-ui-language"
-            type="checkbox"
+        <SettingRow
+          label={t("ask-to-switch-ui-language", {
+            defaultValue: "Offer to switch language with translation",
+          })}
+        >
+          <Switch
             checked={current.askToSwitchUiLanguage}
-            onChange={(event: Event) => {
-              settings.setAskToSwitchUiLanguage(
-                (event.currentTarget as HTMLInputElement).checked
-              );
+            onToggled={(checked) => {
+              settings.setAskToSwitchUiLanguage(checked);
             }}
           />
-        </div>
+        </SettingRow>
 
         <h3 className="sb-settings-subheading">
           {t("selection-ui", { defaultValue: "Selection UI" })}
         </h3>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-selected-items"
-          >
-            {t("show-selected-items", { defaultValue: "Show selected items" })}
-          </label>
-          <input
-            id="sb-show-selected-items"
-            type="checkbox"
+        <SettingRow
+          label={t("show-selected-items", {
+            defaultValue: "Show selected items",
+          })}
+        >
+          <Switch
             checked={current.selectionUI.showSelectedItems}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setSelectionUI({
-                showSelectedItems: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showSelectedItems: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-highlight-colors"
-          >
-            {t("show-highlight-colors", {
-              defaultValue: "Show highlight colors",
-            })}
-          </label>
-          <input
-            id="sb-show-highlight-colors"
-            type="checkbox"
+        <SettingRow
+          label={t("show-highlight-colors", {
+            defaultValue: "Show highlight colors",
+          })}
+        >
+          <Switch
             checked={current.selectionUI.showHighlightColors}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setSelectionUI({
-                showHighlightColors: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showHighlightColors: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-icon-text"
-          >
-            {t("show-icon-text", { defaultValue: "Show icon text" })}
-          </label>
-          <input
-            id="sb-show-icon-text"
-            type="checkbox"
+        <SettingRow
+          label={t("show-icon-text", { defaultValue: "Show icon text" })}
+        >
+          <Switch
             checked={current.selectionUI.showIconText}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setSelectionUI({
-                showIconText: (event.currentTarget as HTMLInputElement).checked,
+                showIconText: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
       </section>
     </div>
   );

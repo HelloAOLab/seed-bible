@@ -113,26 +113,8 @@
 }
 
 .sb-login-terms {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.625rem;
   font-size: var(--sb-font-size-14);
-  line-height: 1.4;
   color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
-  cursor: pointer;
-}
-
-.sb-login-terms-checkbox {
-  margin: 0;
-  width: 1.125rem;
-  height: 1.125rem;
-  flex-shrink: 0;
-  accent-color: var(--sb-primary-color);
-  cursor: pointer;
-}
-
-.sb-login-terms-text {
-  flex: 1;
 }
 
 .sb-login-link {

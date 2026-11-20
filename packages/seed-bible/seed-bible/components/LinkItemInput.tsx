@@ -3,6 +3,7 @@ import { forwardRef } from "preact/compat";
 import { useI18n } from "../i18n/I18nManager";
 import type { PlaylistItemData } from "../managers/PlaylistManager";
 import { Button } from "./Button/Button";
+import { Checkbox } from "./Checkbox/Checkbox";
 
 interface LinkItemInputProps {
   onAdd: (item: PlaylistItemData) => void;
@@ -119,20 +120,14 @@ export const LinkItemInput = forwardRef<
         />
       </div>
       <div className="sb-playlist-add-row sb-playlist-add-link-controls">
-        <label className="sb-playlist-embed-toggle">
-          <input
-            type="checkbox"
-            checked={embed}
-            onChange={(event: Event) => {
-              setEmbed((event.currentTarget as HTMLInputElement).checked);
-            }}
-          />
-          <span>
-            {t("playlist-add-link-embed", {
-              defaultValue: "Embed this link",
-            })}
-          </span>
-        </label>
+        <Checkbox
+          className="sb-playlist-embed-toggle"
+          label={t("playlist-add-link-embed", {
+            defaultValue: "Embed this link",
+          })}
+          checked={embed}
+          onToggled={setEmbed}
+        />
         <Button
           variant="primary"
           className="sb-settings-save-button"

@@ -8,6 +8,7 @@ import { MaterialIcon } from "../icons";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import { Button } from "../Button/Button";
+import { Checkbox } from "../Checkbox/Checkbox";
 import { Dialog } from "../Dialog/Dialog";
 
 type LoginStep = "email" | "code";
@@ -387,32 +388,28 @@ export function LoginModal({
               />
             </div>
 
-            <label className="sb-login-terms" htmlFor="sb-login-terms">
-              <input
-                id="sb-login-terms"
-                className="sb-login-terms-checkbox"
-                type="checkbox"
-                checked={agreed.value}
-                disabled={isSubmitting.value}
-                onChange={(event: Event) => {
-                  agreed.value = (
-                    event.currentTarget as HTMLInputElement
-                  ).checked;
-                }}
-              />
-              <span className="sb-login-terms-text">
-                {t("login-agree-prefix", { defaultValue: "I agree to the" })}{" "}
-                <a
-                  className="sb-login-link"
-                  href={termsOfServiceLink}
-                  onClick={(event: MouseEvent) => event.stopPropagation()}
-                >
-                  {t("terms-of-service", {
-                    defaultValue: "Terms of service",
-                  })}
-                </a>
-              </span>
-            </label>
+            <Checkbox
+              className="sb-login-terms"
+              checked={agreed.value}
+              disabled={isSubmitting.value}
+              onToggled={(checked) => {
+                agreed.value = checked;
+              }}
+              label={
+                <>
+                  {t("login-agree-prefix", { defaultValue: "I agree to the" })}{" "}
+                  <a
+                    className="sb-login-link"
+                    href={termsOfServiceLink}
+                    onClick={(event: MouseEvent) => event.stopPropagation()}
+                  >
+                    {t("terms-of-service", {
+                      defaultValue: "Terms of service",
+                    })}
+                  </a>
+                </>
+              }
+            />
 
             {error.value && (
               <p className="sb-login-error" role="alert">

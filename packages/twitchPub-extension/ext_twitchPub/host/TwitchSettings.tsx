@@ -1,6 +1,6 @@
 import { type TwitchPubState } from "./interface";
 import { useState, useRef, useEffect } from "preact/hooks";
-import { Button } from "seed-bible/components";
+import { Button, Switch } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 
 const TwitchSettings = (props: { state: TwitchPubState }) => {
@@ -31,10 +31,12 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
           <div className="twitchPub-content">
             <div className="twitchPub-settings-item">
               <span className="twitchPub-settings-label">
-                {t("twitchSettings.broadcastTranslationEvents", {
-                  ns: "ext_twitchPub",
-                  defaultValue: "Broadcast translation events",
-                })}
+                <label htmlFor="twitchPub-translationToggle">
+                  {t("twitchSettings.broadcastTranslationEvents", {
+                    ns: "ext_twitchPub",
+                    defaultValue: "Broadcast translation events",
+                  })}
+                </label>
                 <InfoTooltip
                   text={t("twitchSettings.broadcastTranslationEventsTooltip", {
                     ns: "ext_twitchPub",
@@ -51,15 +53,17 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                     enabled: value,
                   })
                 }
-                id={"translationToggle"}
+                id="twitchPub-translationToggle"
               />
             </div>
             <div className="twitchPub-settings-item">
               <span className="twitchPub-settings-label">
-                {t("twitchSettings.broadcastHighlightEvents", {
-                  ns: "ext_twitchPub",
-                  defaultValue: "Broadcast highlight events",
-                })}
+                <label htmlFor="twitchPub-highlightToggle">
+                  {t("twitchSettings.broadcastHighlightEvents", {
+                    ns: "ext_twitchPub",
+                    defaultValue: "Broadcast highlight events",
+                  })}
+                </label>
                 <InfoTooltip
                   text={t("twitchSettings.broadcastHighlightEventsTooltip", {
                     ns: "ext_twitchPub",
@@ -76,15 +80,17 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                     enabled: value,
                   })
                 }
-                id={"highlightToggle"}
+                id="twitchPub-highlightToggle"
               />
             </div>
             <div className="twitchPub-settings-item">
               <span className="twitchPub-settings-label">
-                {t("twitchSettings.broadcastAiFollowEvents", {
-                  ns: "ext_twitchPub",
-                  defaultValue: "Broadcast verse reference events",
-                })}
+                <label htmlFor="twitchPub-aiFollowToggle">
+                  {t("twitchSettings.broadcastAiFollowEvents", {
+                    ns: "ext_twitchPub",
+                    defaultValue: "Broadcast verse reference events",
+                  })}
+                </label>
                 <InfoTooltip
                   text={t("twitchSettings.broadcastAiFollowEventsTooltip", {
                     ns: "ext_twitchPub",
@@ -101,7 +107,7 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                     enabled: value,
                   })
                 }
-                id={"aiFollowToggle"}
+                id="twitchPub-aiFollowToggle"
               />
             </div>
             <div className="twitchPub-settings-item">
@@ -299,43 +305,17 @@ const ToggleBtn = ({
 }: {
   toggle: boolean;
   setToggle: (value: boolean) => void;
+  /** Its `<label>` points at this id. */
   id: string;
 }) => {
   return (
-    <>
-      <style>
-        {toggle
-          ? `
-            .track-${id} {
-                background: var(--sb-primary-color);
-            }
-            .thumb-${id} {
-                transform: translateX(23px);
-            }
-        `
-          : ``}
-      </style>
-      <div
-        className="toggle-wrapper"
-        onMouseDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-      >
-        <label className="toggle">
-          <input
-            type="checkbox"
-            checked={toggle}
-            id={id}
-            onChange={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setToggle(!toggle);
-            }}
-          />
-          <span className={`track-${id} track`}></span>
-          <span className={`thumb-${id} thumb`}></span>
-        </label>
-      </div>
-    </>
+    <div
+      className="toggle-wrapper"
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
+      <Switch id={id} checked={toggle} onToggled={setToggle} />
+    </div>
   );
 };
 
