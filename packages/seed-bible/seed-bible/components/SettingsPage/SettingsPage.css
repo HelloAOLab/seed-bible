@@ -114,39 +114,6 @@
   line-height: 1.25;
 }
 
-.sb-pill-toggle {
-  display: inline-block;
-  width: 2.75rem;
-  height: 1.5rem;
-  border-radius: var(--sb-radius-lg);
-  background-color: color-mix(in srgb, var(--sb-font-color), transparent 78%);
-  position: relative;
-  flex-shrink: 0;
-  transition: background-color var(--sb-duration-base) ease;
-}
-
-.sb-pill-toggle::before {
-  content: "";
-  position: absolute;
-  top: 0.125rem;
-  left: 0.125rem;
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 50%;
-  background-color: #fff;
-  box-shadow: var(--sb-shadow-raised);
-  transition: left var(--sb-duration-base) ease;
-}
-
-.sb-pill-toggle.is-on {
-  background-color: var(--sb-primary-color);
-}
-
-.sb-pill-toggle.is-on::before {
-  left: 1.375rem;
-  background-color: var(--sb-primary-font-color);
-}
-
 .sb-extension-add-link {
   display: flex;
   flex-direction: column;

@@ -52,13 +52,21 @@
     background-color var(--sb-duration-base) ease;
 }
 
-.sb-switch:checked {
+.sb-switch:checked,
+.sb-switch-on {
   background-color: var(--sb-switch-on-track);
 }
 
-.sb-switch:checked::before {
+.sb-switch:checked::before,
+.sb-switch-on::before {
   inset-inline-start: 1.375rem;
   background-color: var(--sb-switch-on-knob);
+}
+
+/* The look-only `SwitchIndicator`: its menu item takes the clicks. */
+.sb-switch-indicator {
+  display: inline-block;
+  cursor: inherit;
 }
 
 .sb-switch:focus-visible {

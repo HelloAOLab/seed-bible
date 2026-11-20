@@ -1,7 +1,10 @@
 import { render } from "preact";
 import { useState } from "preact/hooks";
 import { act } from "preact/test-utils";
-import { Switch } from "@packages/seed-bible/seed-bible/components/Switch/Switch";
+import {
+  Switch,
+  SwitchIndicator,
+} from "@packages/seed-bible/seed-bible/components/Switch/Switch";
 import { SettingRow } from "@packages/seed-bible/seed-bible/components/SettingRow/SettingRow";
 
 describe("Switch", () => {
@@ -79,6 +82,34 @@ describe("Switch", () => {
     act(() => theSwitch().click());
     expect(onToggled).not.toHaveBeenCalled();
     expect(theSwitch().checked).toBe(false);
+  });
+});
+
+describe("SwitchIndicator", () => {
+  it("draws the switch for a menu item without adding a second control for screen readers", () => {
+    const container = document.createElement("div");
+    act(() => {
+      render(
+        <button type="button" role="menuitemcheckbox" aria-checked="true">
+          Keep screen awake <SwitchIndicator on />
+        </button>,
+        container
+      );
+    });
+
+    const indicator = container.querySelector(".sb-switch")!;
+    expect(indicator.tagName).toBe("SPAN");
+    expect(indicator.getAttribute("aria-hidden")).toBe("true");
+    expect(indicator.classList.contains("sb-switch-on")).toBe(true);
+    expect(container.querySelector('input, [role="switch"]')).toBeNull();
+
+    act(() => {
+      render(<SwitchIndicator on={false} />, container);
+    });
+    expect(
+      container.querySelector(".sb-switch")!.classList.contains("sb-switch-on")
+    ).toBe(false);
+    render(null, container);
   });
 });
 

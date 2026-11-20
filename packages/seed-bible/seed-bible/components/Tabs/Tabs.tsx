@@ -80,6 +80,9 @@ import {
 import { CloseButton } from "../CloseButton/CloseButton";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
+import { SettingRow } from "../SettingRow/SettingRow";
+import { Checkbox } from "../Checkbox/Checkbox";
+import { Switch, SwitchIndicator } from "../Switch/Switch";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -300,69 +303,53 @@ function SessionSettingsModalContent(props: {
             })}
           </div>
 
-          <div className="sb-session-settings-row">
-            <label
-              className="sb-session-settings-label"
-              htmlFor="sb-session-only-host-navigate"
-            >
-              {t("session-settings-host-only_navigate", {
-                defaultValue: "Only host can navigate",
-              })}
-            </label>
-            <input
-              id="sb-session-only-host-navigate"
-              type="checkbox"
+          <SettingRow
+            label={t("session-settings-host-only_navigate", {
+              defaultValue: "Only host can navigate",
+            })}
+            description={
+              onlyHostNavigate
+                ? t("session-settings-navigate-desc_host", {
+                    defaultValue:
+                      "Only the host can change the passage for everyone.",
+                  })
+                : t("session-settings-navigate-desc_all", {
+                    defaultValue:
+                      "Everyone in the session can change the passage.",
+                  })
+            }
+          >
+            <Switch
               checked={onlyHostNavigate}
               disabled={!isHost}
-              onChange={(event: Event) => {
-                setNavigatorsOnlyHost(
-                  (event.currentTarget as HTMLInputElement).checked
-                );
+              onToggled={(checked) => {
+                setNavigatorsOnlyHost(checked);
               }}
             />
-          </div>
-          <p className="sb-session-settings-description">
-            {onlyHostNavigate
-              ? t("session-settings-navigate-desc_host", {
-                  defaultValue:
-                    "Only the host can change the passage for everyone.",
-                })
-              : t("session-settings-navigate-desc_all", {
-                  defaultValue:
-                    "Everyone in the session can change the passage.",
-                })}
-          </p>
+          </SettingRow>
 
-          <div className="sb-session-settings-row">
-            <label
-              className="sb-session-settings-label"
-              htmlFor="sb-session-only-host-highlight"
-            >
-              {t("session-settings-host-only_highlight", {
-                defaultValue: "Only host can highlight",
-              })}
-            </label>
-            <input
-              id="sb-session-only-host-highlight"
-              type="checkbox"
+          <SettingRow
+            label={t("session-settings-host-only_highlight", {
+              defaultValue: "Only host can highlight",
+            })}
+            description={
+              onlyHostHighlight
+                ? t("session-settings-highlight-desc_host", {
+                    defaultValue: "Only the host can highlight for everyone.",
+                  })
+                : t("session-settings-highlight-desc_all", {
+                    defaultValue: "Everyone in the session can highlight.",
+                  })
+            }
+          >
+            <Switch
               checked={onlyHostHighlight}
               disabled={!isHost}
-              onChange={(event: Event) => {
-                setDecoratorsOnlyHost(
-                  (event.currentTarget as HTMLInputElement).checked
-                );
+              onToggled={(checked) => {
+                setDecoratorsOnlyHost(checked);
               }}
             />
-          </div>
-          <p className="sb-session-settings-description">
-            {onlyHostHighlight
-              ? t("session-settings-highlight-desc_host", {
-                  defaultValue: "Only the host can highlight for everyone.",
-                })
-              : t("session-settings-highlight-desc_all", {
-                  defaultValue: "Everyone in the session can highlight.",
-                })}
-          </p>
+          </SettingRow>
 
           <div className="sb-session-settings-duration">
             <div className="sb-session-settings-duration-title">
@@ -545,38 +532,30 @@ function SessionSettingsModalContent(props: {
             {t("session-settings-section-sharing", { defaultValue: "Sharing" })}
           </div>
 
-          <div className="sb-session-settings-row">
-            <label
-              className="sb-session-settings-label"
-              htmlFor="sb-session-share-translation"
-            >
-              {t("session-settings-share-translation", {
-                defaultValue: "Share translation",
-              })}
-            </label>
-            <input
-              id="sb-session-share-translation"
-              type="checkbox"
+          <SettingRow
+            label={t("session-settings-share-translation", {
+              defaultValue: "Share translation",
+            })}
+            description={
+              shareTranslation
+                ? t("session-settings-share-translation-desc_shared", {
+                    defaultValue:
+                      "Everyone reads the same translation. Changing it updates it for everyone.",
+                  })
+                : t("session-settings-share-translation-desc_unique", {
+                    defaultValue:
+                      "Each person keeps their own translation. Changing yours won't affect others.",
+                  })
+            }
+          >
+            <Switch
               checked={shareTranslation}
               disabled={!isHost}
-              onChange={(event: Event) => {
-                setShareTranslation(
-                  (event.currentTarget as HTMLInputElement).checked
-                );
+              onToggled={(checked) => {
+                setShareTranslation(checked);
               }}
             />
-          </div>
-          <p className="sb-session-settings-description">
-            {shareTranslation
-              ? t("session-settings-share-translation-desc_shared", {
-                  defaultValue:
-                    "Everyone reads the same translation. Changing it updates it for everyone.",
-                })
-              : t("session-settings-share-translation-desc_unique", {
-                  defaultValue:
-                    "Each person keeps their own translation. Changing yours won't affect others.",
-                })}
-          </p>
+          </SettingRow>
         </div>
 
         {participants.length > 0 && (
@@ -779,22 +758,16 @@ function SessionCloseConfirmModalContent(props: {
       ) : (
         <>
           {candidates.length > 0 && (
-            <label className="sb-session-close-confirm-dontshow">
-              <input
-                type="checkbox"
-                checked={dontShowAgain.value}
-                onChange={(event: Event) => {
-                  dontShowAgain.value = (
-                    event.currentTarget as HTMLInputElement
-                  ).checked;
-                }}
-              />
-              <span>
-                {t("dont-show-again", {
-                  defaultValue: "Don't show this again",
-                })}
-              </span>
-            </label>
+            <Checkbox
+              className="sb-session-close-confirm-dontshow"
+              label={t("dont-show-again", {
+                defaultValue: "Don't show this again",
+              })}
+              checked={dontShowAgain.value}
+              onToggled={(checked) => {
+                dontShowAgain.value = checked;
+              }}
+            />
           )}
           <div className="sb-session-close-confirm-actions">
             {candidates.length > 0 && (
@@ -1133,10 +1106,7 @@ export function TabsHeader(props: TabsHeaderProps) {
                   })}
                 </span>
               </span>
-              <span
-                className={`sb-pill-toggle${isAwake ? " is-on" : ""}`}
-                aria-hidden="true"
-              />
+              <SwitchIndicator on={isAwake} />
             </ContextMenuItem>
             {/* <ContextMenuItem
               onClick={() => {

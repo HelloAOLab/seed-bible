@@ -55,3 +55,35 @@ export function Switch({
     />
   );
 }
+
+/**
+ * A switch drawn for show only, inside a control that does the switching
+ * itself, such as a menu item with `role="menuitemcheckbox"` (a real switch
+ * can't go inside another control). Hidden from screen readers, so that
+ * control has to say whether it's on.
+ */
+export function SwitchIndicator({
+  on,
+  className,
+  class: classAttribute,
+}: {
+  on: boolean;
+  /** Extra classes, for placement. `class` and `className` both work. */
+  className?: string;
+  class?: string;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={[
+        "sb-switch",
+        "sb-switch-indicator",
+        on && "sb-switch-on",
+        className,
+        classAttribute,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    />
+  );
+}

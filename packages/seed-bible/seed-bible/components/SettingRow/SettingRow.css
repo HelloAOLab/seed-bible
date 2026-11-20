@@ -2,13 +2,13 @@
    `--sb-setting-row-padding` sets the space around it, for a list whose rows
    sit closer or further apart. */
 .sb-setting-row {
-  --sb-setting-row-padding: 0.375rem 0.25rem;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: var(--sb-setting-row-padding);
+  /* The default is a fallback rather than set here, so a list can set the
+     property on itself or on the row without depending on stylesheet order. */
+  padding: var(--sb-setting-row-padding, 0.375rem 0.25rem);
 }
 
 .sb-setting-row-text {
