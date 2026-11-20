@@ -1,7 +1,10 @@
 import { render } from "preact";
 import { useState } from "preact/hooks";
 import { act } from "preact/test-utils";
-import { Checkbox } from "@packages/seed-bible/seed-bible/components/Checkbox/Checkbox";
+import {
+  Checkbox,
+  CheckboxIndicator,
+} from "@packages/seed-bible/seed-bible/components/Checkbox/Checkbox";
 
 describe("Checkbox", () => {
   let container: HTMLDivElement;
@@ -148,5 +151,69 @@ describe("Checkbox", () => {
     });
 
     expect(box().indeterminate).toBe(true);
+  });
+});
+
+describe("CheckboxIndicator", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  function Card(props: {
+    checked: boolean;
+    indeterminate?: boolean;
+    disabled?: boolean;
+  }) {
+    return (
+      <label>
+        <input type="checkbox" checked={props.checked} onChange={() => {}} />
+        <CheckboxIndicator {...props} />
+        Weekdays
+      </label>
+    );
+  }
+
+  const indicator = () => container.querySelector("span.sb-checkbox-input")!;
+
+  it("draws the box inside a card without adding a second checkbox for screen readers", () => {
+    act(() => {
+      render(<Card checked />, container);
+    });
+
+    expect(indicator().getAttribute("aria-hidden")).toBe("true");
+    expect(container.querySelectorAll("input")).toHaveLength(1);
+    expect(container.querySelector("input")!.labels?.[0]?.textContent).toBe(
+      "Weekdays"
+    );
+  });
+
+  it("shows ticked, partly ticked and dimmed as its card says", () => {
+    const state = () =>
+      ["sb-checkbox-on", "sb-checkbox-mixed", "sb-checkbox-indicator-disabled"]
+        .filter((name) => indicator().classList.contains(name))
+        .join(" ");
+
+    act(() => {
+      render(<Card checked={false} />, container);
+    });
+    expect(state()).toBe("");
+
+    act(() => {
+      render(<Card checked disabled />, container);
+    });
+    expect(state()).toBe("sb-checkbox-on sb-checkbox-indicator-disabled");
+
+    act(() => {
+      render(<Card checked={false} indeterminate />, container);
+    });
+    expect(state()).toBe("sb-checkbox-mixed");
   });
 });

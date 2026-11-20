@@ -81,3 +81,42 @@ export function Checkbox({
     </label>
   );
 }
+
+/**
+ * The checkbox's box drawn for show only, inside a control that does the
+ * ticking itself, such as a selectable card with its own (visually hidden)
+ * checkbox. Hidden from screen readers, so that control has to say whether
+ * it's ticked. Like `SwitchIndicator` for `Switch`.
+ */
+export function CheckboxIndicator({
+  checked,
+  indeterminate = false,
+  disabled = false,
+  className,
+  class: classAttribute,
+}: {
+  checked: boolean;
+  /** Some but not all of what it stands for are ticked: shows a dash. */
+  indeterminate?: boolean;
+  /** Dims the box, for a choice that can't be changed right now. */
+  disabled?: boolean;
+  /** Extra classes, for placement. `class` and `className` both work. */
+  className?: string;
+  class?: string;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={[
+        "sb-checkbox-input",
+        "sb-checkbox-indicator",
+        indeterminate ? "sb-checkbox-mixed" : checked && "sb-checkbox-on",
+        disabled && "sb-checkbox-indicator-disabled",
+        className,
+        classAttribute,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    />
+  );
+}
