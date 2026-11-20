@@ -42,10 +42,14 @@ export interface WordStudyState {
   reset(): void;
 }
 
+/** The part of a pane's state its header's back button needs. */
+export type LexiconNavigation = Pick<WordStudyState, "lexiconStack" | "back">;
+
 export function createWordStudyState(): WordStudyState {
   const verses = signal<StudiedVerse[]>([]);
   // Kept across openings, unlike the rest: a reader who prefers English order
-  // shouldn't have to pick it again for every verse.
+  // shouldn't have to pick it again for every verse. The chapter view shares
+  // it for the same reason.
   const order = signal<WordOrder>("original");
   const lexiconStack = signal<string[]>([]);
 

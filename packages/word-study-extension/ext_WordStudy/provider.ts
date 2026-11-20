@@ -2,42 +2,15 @@ import type { BibleDataManager } from "@packages/seed-bible/seed-bible/managers/
 import {
   ApiRequestError,
   type Dataset,
-  type DatasetBooks,
-  type DatasetLexiconEntry,
   type InterlinearBookChapter,
+  type InterlinearVerse,
   type InterlinearWord,
   type LexiconEntry,
 } from "seed-bible/managers";
-import {
-  createCachedReader,
-  createIndexedDbRecordStore,
-  type LoadResult,
-  type RecordStore,
-} from "./cache";
 import { parseStrongsId } from "./strongs";
 
 export const INTERLINEAR_DATASET_ID = "bsb-interlinear";
 export const LEXICON_DATASET_ID = "stepbible-lexicon";
-
-export const WORD_STUDY_DB_NAME = "seed-bible-word-study";
-
-/**
- * How long a fetched chapter or lexicon entry is served before it is fetched
- * again. Both datasets are static apart from the odd correction, and the API
- * only promises freshness for a day, so thirty days matches the Theographic
- * cache: useful, while still letting fixes through.
- */
-export const WORD_STUDY_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-
-/** How long a 404 is remembered: the API's own one day. */
-export const WORD_STUDY_NOT_FOUND_TTL_MS = 24 * 60 * 60 * 1000;
-
-/**
- * How long an expired record stays on the device as the offline answer. A
- * year: a reader who studied a passage once should still be able to study it
- * on a plane months later.
- */
-export const WORD_STUDY_KEEP_STALE_MS = 365 * 24 * 60 * 60 * 1000;
 
 /** The original words of one verse, or why there are none. */
 export type VerseWordsResult =
@@ -46,9 +19,23 @@ export type VerseWordsResult =
   | { status: "book-unavailable" }
   /**
    * The book is covered but not this verse: a chapter or verse the reader's
-   * translation numbers differently from the BSB, such as Malachi 4.
+   * translation numbers differently from the BSB, such as Malachi 3:19 in a
+   * translation that follows the Hebrew numbering (the BSB's Malachi 4:1).
    */
   | { status: "verse-unavailable" }
+  /** Couldn't be fetched (offline, a server error) and nothing is cached. */
+  | { status: "error"; error: unknown };
+
+/** Every verse of one chapter, or why there are none. */
+export type ChapterWordsResult =
+  | { status: "ok"; verses: InterlinearVerse[]; dataset: Dataset }
+  /** The interlinear doesn't cover the book, such as the deuterocanon. */
+  | { status: "book-unavailable" }
+  /**
+   * The book is covered but not this chapter, such as Joel 4 in a
+   * translation that follows the Hebrew numbering (the BSB's Joel 3).
+   */
+  | { status: "chapter-unavailable" }
   /** Couldn't be fetched (offline, a server error) and nothing is cached. */
   | { status: "error"; error: unknown };
 
@@ -63,6 +50,8 @@ export interface WordStudyProvider {
     chapter: number,
     verse: number
   ): Promise<VerseWordsResult>;
+  /** Every verse of a chapter, from the same download `getVerseWords` uses. */
+  getChapterWords(book: string, chapter: number): Promise<ChapterWordsResult>;
   /**
    * The lexicon entry for a Strong's number. Takes the extended form too
    * ("H0430G"), reading the entry it belongs to ("H0430").
@@ -70,108 +59,89 @@ export interface WordStudyProvider {
   getLexiconEntry(strongsId: string): Promise<LexiconEntryResult>;
 }
 
-/** The API calls the provider makes: the only thing tests replace. */
+/** The app's dataset calls the provider makes. */
 export type WordStudySource = Pick<
   BibleDataManager,
   "getDatasetBookChapter" | "getDatasetBooks" | "getDatasetLexiconEntry"
 >;
 
-class NotFoundError extends Error {
-  constructor(readonly key: string) {
-    super(`Nothing at ${key}.`);
-    this.name = "NotFoundError";
-  }
-}
-
-/** Turns an API call into a cache load, reading a 404 as "nothing there". */
-async function loadFromApi(call: () => Promise<unknown>): Promise<LoadResult> {
-  try {
-    return { found: true, value: await call() };
-  } catch (error) {
-    if (error instanceof ApiRequestError && error.status === 404) {
-      return { found: false };
-    }
-    throw error;
-  }
-}
-
-/** Creates the IndexedDB cache, or null where IndexedDB is unavailable. */
-export function createIndexedDbWordStudyStore(): RecordStore | null {
-  return createIndexedDbRecordStore(WORD_STUDY_DB_NAME);
+/** Whether the API answered "no such file", live or remembered by the app. */
+function isNotFound(error: unknown): boolean {
+  return error instanceof ApiRequestError && error.status === 404;
 }
 
 /**
- * Reads the interlinear and lexicon datasets, keeping what it fetches on the
- * device. Records are keyed by API path.
+ * Reads the interlinear and lexicon datasets. The app keeps what it downloads
+ * on the device (`BibleDataManager`'s `getDataset*`), so a later visit, or one
+ * made offline, is answered without the network.
  *
  * Only what a reader asks for is downloaded: one interlinear chapter per
  * chapter studied (every verse in it is then answered from that one file),
  * and one lexicon entry per word opened. The lexicon's ~2 MB index is never
  * fetched.
  */
-export function createWordStudyProvider(options: {
-  source: WordStudySource;
-  store: RecordStore | null;
-}): WordStudyProvider {
-  const { source } = options;
-  const reader = createCachedReader({
-    store: options.store,
-    ttlMs: WORD_STUDY_CACHE_TTL_MS,
-    notFoundTtlMs: WORD_STUDY_NOT_FOUND_TTL_MS,
-    keepStaleForMs: WORD_STUDY_KEEP_STALE_MS,
-    notFoundError: (key) => new NotFoundError(key),
-  });
-
-  const readChapter = (book: string, chapter: number) =>
-    reader.read<InterlinearBookChapter>(
-      `/api/d/${INTERLINEAR_DATASET_ID}/${book}/${chapter}.json`,
-      () =>
-        loadFromApi(() =>
-          source.getDatasetBookChapter(INTERLINEAR_DATASET_ID, book, chapter)
-        )
-    );
-
-  const readBooks = () =>
-    reader.read<DatasetBooks>(
-      `/api/d/${INTERLINEAR_DATASET_ID}/books.json`,
-      () => loadFromApi(() => source.getDatasetBooks(INTERLINEAR_DATASET_ID))
-    );
-
+export function createWordStudyProvider(
+  source: WordStudySource
+): WordStudyProvider {
   /**
    * Why a chapter the interlinear doesn't have is missing. Only asked after a
    * 404, so the usual path never fetches the book list. When the list can't
-   * be read either, "this verse" is the answer that is never wrong.
+   * be read either, "this chapter" is the answer that is never wrong.
    */
   const whyMissing = async (
     book: string
-  ): Promise<"book-unavailable" | "verse-unavailable"> => {
+  ): Promise<"book-unavailable" | "chapter-unavailable"> => {
     try {
-      const { books } = await readBooks();
+      const { books } = await source.getDatasetBooks(INTERLINEAR_DATASET_ID);
       return books.some((entry) => entry.id === book)
-        ? "verse-unavailable"
+        ? "chapter-unavailable"
         : "book-unavailable";
     } catch {
-      return "verse-unavailable";
+      return "chapter-unavailable";
     }
   };
 
+  const getChapterWords = async (
+    book: string,
+    chapter: number
+  ): Promise<ChapterWordsResult> => {
+    let data: InterlinearBookChapter;
+    try {
+      data = await source.getDatasetBookChapter(
+        INTERLINEAR_DATASET_ID,
+        book,
+        chapter
+      );
+    } catch (error) {
+      if (isNotFound(error)) {
+        return { status: await whyMissing(book) };
+      }
+      return { status: "error", error };
+    }
+    return {
+      status: "ok",
+      verses: data.chapter.content,
+      dataset: data.dataset,
+    };
+  };
+
   return {
+    getChapterWords,
+
     async getVerseWords(book, chapter, verse) {
-      let data: InterlinearBookChapter;
-      try {
-        data = await readChapter(book, chapter);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          return { status: await whyMissing(book) };
-        }
-        return { status: "error", error };
+      const result = await getChapterWords(book, chapter);
+      if (result.status === "chapter-unavailable") {
+        return { status: "verse-unavailable" };
+      }
+      if (result.status !== "ok") {
+        return result;
       }
 
-      const found = data.chapter.content.find((entry) => entry.verse === verse);
+      const found = result.verses.find((entry) => entry.verse === verse);
       if (!found || found.words.length === 0) {
         return { status: "verse-unavailable" };
       }
-      return { status: "ok", words: found.words, dataset: data.dataset };
+      return { status: "ok", words: found.words, dataset: result.dataset };
     },
 
     async getLexiconEntry(strongsId) {
@@ -181,16 +151,13 @@ export function createWordStudyProvider(options: {
       }
 
       try {
-        const data = await reader.read<DatasetLexiconEntry>(
-          `/api/d/${LEXICON_DATASET_ID}/lexicon/${id.entryId}.json`,
-          () =>
-            loadFromApi(() =>
-              source.getDatasetLexiconEntry(LEXICON_DATASET_ID, id.entryId)
-            )
+        const data = await source.getDatasetLexiconEntry(
+          LEXICON_DATASET_ID,
+          id.entryId
         );
         return { status: "ok", entry: data.entry, dataset: data.dataset };
       } catch (error) {
-        if (error instanceof NotFoundError) {
+        if (isNotFound(error)) {
           return { status: "not-found" };
         }
         return { status: "error", error };

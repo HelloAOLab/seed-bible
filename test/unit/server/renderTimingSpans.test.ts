@@ -2,6 +2,7 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { SpanKind, SpanStatusCode } from "@opentelemetry/api";
 import { InMemorySpanExporter } from "@opentelemetry/sdk-trace-base";
@@ -20,10 +21,11 @@ import {
   type Telemetry,
 } from "../../../server/telemetry";
 
-const TIMINGS_MODULE = path.resolve(
-  import.meta.dirname,
-  "../../../standalone/ssrRenderTimings.ts"
-);
+// A file:// URL rather than a path: on Windows, Node's ESM loader reads an
+// absolute path's drive letter ("C:") as a URL scheme and refuses it.
+const TIMINGS_MODULE = pathToFileURL(
+  path.resolve(import.meta.dirname, "../../../standalone/ssrRenderTimings.ts")
+).href;
 
 // A stand-in SSR bundle that times its waits with the real render timer, run
 // in a real worker thread the way a deployed build's server.mjs is. Production
@@ -83,7 +85,8 @@ describe("render timings from the SSR worker", () => {
   });
 
   afterAll(async () => {
-    worker.retire();
+    // Unset when starting the worker failed; that failure is the one to show.
+    worker?.retire();
     await rm(dir, { recursive: true, force: true });
   });
 

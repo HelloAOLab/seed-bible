@@ -30,6 +30,11 @@ import {
   type OfflineTranslationsManager,
 } from "../managers/OfflineTranslationsManager";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
+import {
+  createDatasetCache,
+  createIndexedDbDatasetStore,
+  type OfflineDatasetStore,
+} from "./OfflineDatasetStore";
 import { exactTranslationBook, normalizeBookName } from "./bookNameMatch";
 import { isVerseReferenceInBounds } from "./verseReferenceBounds";
 import {
@@ -203,6 +208,11 @@ export interface BibleDataManager {
     options?: ApiRequestOptions
   ) => Promise<CommentaryProfileContent>;
   getDatasets: (options?: ApiRequestOptions) => Promise<Dataset[]>;
+  /**
+   * The `getDataset*` reads below are kept on the device (see
+   * `OfflineDatasetStore`): served from there for thirty days, and past that
+   * whenever the network can't be reached. A 404 is remembered for a day.
+   */
   getDatasetBooks: (
     datasetId: string,
     options?: ApiRequestOptions
@@ -1057,6 +1067,11 @@ export interface CreateBibleDataManagerOptions {
    */
   offlineStore?: OfflineTranslationStore | null;
   /**
+   * Where dataset files are kept between visits. Defaults to IndexedDB; tests
+   * pass an in-memory store, and null fetches every time.
+   */
+  datasetStore?: OfflineDatasetStore | null;
+  /**
    * Cache shared across `getTranslations()` calls, keyed by endpoint. Omit
    * this everywhere except the SSR host — see `TranslationsCache`'s doc
    * comment for why.
@@ -1446,8 +1461,22 @@ export function createBibleDataManager(
   const getDatasets = async (options?: ApiRequestOptions) =>
     (await api.getAvailableDatasets(defaultEndpoint, options)).datasets;
 
+  const datasetCache = createDatasetCache(
+    options.datasetStore === undefined
+      ? createIndexedDbDatasetStore()
+      : options.datasetStore
+  );
+
+  /** Keyed by endpoint too, so a dev endpoint's files never answer for prod's. */
+  const datasetKey = (...parts: (string | number)[]) =>
+    JSON.stringify([defaultEndpoint, ...parts]);
+
   const getDatasetBooks = (datasetId: string, options?: ApiRequestOptions) =>
-    api.getDatasetBooks(datasetId, defaultEndpoint, options);
+    datasetCache.read(
+      datasetKey(datasetId, "books"),
+      () => api.getDatasetBooks(datasetId, defaultEndpoint, options),
+      options
+    );
 
   const getDatasetBookChapter = <D extends string>(
     datasetId: D,
@@ -1455,11 +1484,16 @@ export function createBibleDataManager(
     chapter: number,
     options?: ApiRequestOptions
   ) =>
-    api.getDatasetBookChapter(
-      datasetId,
-      book,
-      chapter,
-      defaultEndpoint,
+    datasetCache.read(
+      datasetKey(datasetId, "chapter", book, chapter),
+      () =>
+        api.getDatasetBookChapter(
+          datasetId,
+          book,
+          chapter,
+          defaultEndpoint,
+          options
+        ),
       options
     );
 
@@ -1467,7 +1501,12 @@ export function createBibleDataManager(
     datasetId: string,
     id: string,
     options?: ApiRequestOptions
-  ) => api.getDatasetLexiconEntry(datasetId, id, defaultEndpoint, options);
+  ) =>
+    datasetCache.read(
+      datasetKey(datasetId, "lexicon", id),
+      () => api.getDatasetLexiconEntry(datasetId, id, defaultEndpoint, options),
+      options
+    );
 
   const buildTranslationId = (translationId: string) => {
     const endpoint = getTranslationEndpointInfo(translationId);

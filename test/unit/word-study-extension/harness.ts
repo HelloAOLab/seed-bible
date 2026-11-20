@@ -1,7 +1,7 @@
 import type { Mock } from "vitest";
 import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
-import type { RecordStore } from "@packages/word-study-extension/ext_WordStudy/cache";
+import type { OfflineDatasetStore } from "@packages/seed-bible/seed-bible/managers/OfflineDatasetStore";
 import { createWordStudyProvider } from "@packages/word-study-extension/ext_WordStudy/provider";
 
 export const ENDPOINT = "https://bible.example/";
@@ -59,9 +59,12 @@ export function hang(fetchMock: Mock) {
  * A provider as one page load sees it: its own API client (so nothing is
  * remembered in memory from an earlier "visit") over the given device store.
  */
-export function createProvider(store: RecordStore | null) {
-  const source = createBibleDataManager(new FreeUseBibleAPI(ENDPOINT));
-  return createWordStudyProvider({ source, store });
+export function createProvider(store: OfflineDatasetStore | null) {
+  return createWordStudyProvider(
+    createBibleDataManager(new FreeUseBibleAPI(ENDPOINT), {
+      datasetStore: store,
+    })
+  );
 }
 
 /** Polls `condition`, yielding to pending work between checks. */

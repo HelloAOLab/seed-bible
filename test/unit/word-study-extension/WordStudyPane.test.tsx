@@ -1,6 +1,6 @@
 import { render, type ComponentChild } from "preact";
 import { act } from "preact/test-utils";
-import { createInMemoryRecordStore } from "@packages/word-study-extension/ext_WordStudy/cache";
+import { createInMemoryDatasetStore } from "@packages/seed-bible/seed-bible/managers/OfflineDatasetStore";
 import type { StudiedVerse } from "@packages/word-study-extension/ext_WordStudy/wordStudyState";
 import { G3056, GEN_1, INTERLINEAR_BOOKS, JHN_1 } from "./fixtures";
 import {
@@ -72,7 +72,7 @@ function openPane(verses: StudiedVerse[]) {
       <WordStudyPaneTitle state={state} />
       <WordStudyPaneLeading state={state} />
       <WordStudyPane
-        provider={createProvider(createInMemoryRecordStore())}
+        provider={createProvider(createInMemoryDatasetStore())}
         state={state}
         onReferenceClick={onReferenceClick}
       />

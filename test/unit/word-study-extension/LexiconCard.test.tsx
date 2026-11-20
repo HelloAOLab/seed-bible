@@ -1,6 +1,6 @@
 import { render, type ComponentChild } from "preact";
 import { act } from "preact/test-utils";
-import { createInMemoryRecordStore } from "@packages/word-study-extension/ext_WordStudy/cache";
+import { createInMemoryDatasetStore } from "@packages/seed-bible/seed-bible/managers/OfflineDatasetStore";
 import type { DatasetLexiconEntry } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { G3056, H0430 } from "./fixtures";
 import {
@@ -54,7 +54,7 @@ function showCard(strongsId: string) {
   const onReferenceClick = vi.fn();
   const container = mount(
     <LexiconCard
-      provider={createProvider(createInMemoryRecordStore())}
+      provider={createProvider(createInMemoryDatasetStore())}
       strongsId={strongsId}
       onOpenStrongs={onOpenStrongs}
       onReferenceClick={onReferenceClick}

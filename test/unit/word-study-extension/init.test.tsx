@@ -11,25 +11,43 @@ import {
   unregisterExtension,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import { ENDPOINT, useFetchMock } from "./harness";
+import { createSettings } from "./settings";
 
 const { default: initWordStudyExtension } =
   await import("@packages/word-study-extension/ext_WordStudy/init");
 const { WORD_STUDY_PANE_ID } =
   await import("@packages/word-study-extension/ext_WordStudy/wordStudyState");
+const { CHAPTER_INTERLINEAR_PANE_ID } =
+  await import("@packages/word-study-extension/ext_WordStudy/chapterInterlinear");
 
 useFetchMock();
 
 function createContext() {
   const tools = createBibleToolsManager();
   const panes = createPanes();
+  const readingState = {
+    translationBooks: signal({ books: [{ id: "JHN", name: "John" }] }),
+    selectedVerses: signal<BibleSelectedVerse[]>([]),
+    visibleVerseRange: signal({ first: 5, last: 9 }),
+  };
   const context = {
     tools,
     panes,
     bibleData: createBibleDataManager(new FreeUseBibleAPI(ENDPOINT)),
-    app: { openVerseReference: vi.fn().mockResolvedValue(undefined) },
+    extensionSettings: createSettings({ isSignedIn: false }),
+    app: {
+      openVerseReference: vi.fn().mockResolvedValue(undefined),
+      currentReadingState: signal({
+        translationId: "BSB",
+        bookId: "JHN",
+        chapterNumber: 1,
+        tab: { readingState },
+      }),
+    },
   } as unknown as SeedBibleState;
   const register = vi.spyOn(tools, "registerVerseToolbarTool");
-  return { context, tools, panes, register };
+  const registerToolbar = vi.spyOn(tools, "registerToolbarTool");
+  return { context, tools, panes, register, registerToolbar };
 }
 
 function install() {
@@ -104,5 +122,36 @@ describe("initWordStudyExtension", () => {
     initWordStudyExtension();
 
     expect(hasWordStudyTool(tools)).toBe(true);
+  });
+
+  it("adds an Interlinear tool that opens and closes the chapter view", () => {
+    const { registerToolbar, tools, panes } = install();
+    expect(tools.listToolbarTools().map((tool) => tool.id)).toContain(
+      "word-study-interlinear"
+    );
+    const tool = registerToolbar.mock.calls[0]![0];
+
+    tool.onSelect?.({} as BibleToolContext);
+
+    expect(panes.panes.value.map((pane) => pane.id)).toEqual([
+      CHAPTER_INTERLINEAR_PANE_ID,
+    ]);
+    expect(panes.panes.value[0]?.placement).toBe("side");
+
+    tool.onSelect?.({} as BibleToolContext);
+
+    expect(panes.panes.value).toEqual([]);
+  });
+
+  it("removes the Interlinear tool and closes its view when uninstalled", () => {
+    const { registerToolbar, tools, panes } = install();
+    registerToolbar.mock.calls[0]![0].onSelect?.({} as BibleToolContext);
+
+    unregisterExtension("word-study-extension");
+
+    expect(tools.listToolbarTools().map((tool) => tool.id)).not.toContain(
+      "word-study-interlinear"
+    );
+    expect(panes.panes.value).toEqual([]);
   });
 });

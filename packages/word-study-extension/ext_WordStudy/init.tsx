@@ -1,12 +1,22 @@
+import { computed } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import type { BibleToolContext } from "seed-bible/managers";
 import { MaterialIcon } from "seed-bible/components";
 import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import {
-  createIndexedDbWordStudyStore,
-  createWordStudyProvider,
-  type WordStudyProvider,
-} from "./provider";
+  CHAPTER_INTERLINEAR_PANE_ID,
+  chapterPositionOf,
+  createChapterInterlinearState,
+  createInterlinearLines,
+  readerVerseOf,
+  type ChapterInterlinearState,
+  type InterlinearLines,
+} from "./chapterInterlinear";
+import {
+  ChapterInterlinearPane,
+  ChapterInterlinearTitle,
+} from "./ChapterInterlinearPane";
+import { createWordStudyProvider, type WordStudyProvider } from "./provider";
 import {
   WordStudyPane,
   WordStudyPaneLeading,
@@ -71,14 +81,75 @@ export function openWordStudyPane(
   });
 }
 
+function InterlinearIcon() {
+  return <MaterialIcon>auto_stories</MaterialIcon>;
+}
+
+/**
+ * Opens the chapter interlinear on the reader's chapter, scrolled to where the
+ * reader is. Closes it instead when it's already open, like a toggle.
+ */
+export function toggleChapterInterlinear(
+  context: SeedBibleState,
+  state: ChapterInterlinearState,
+  provider: WordStudyProvider,
+  lines: InterlinearLines
+) {
+  if (context.panes.closePane(CHAPTER_INTERLINEAR_PANE_ID)) {
+    return;
+  }
+
+  const position = computed(() =>
+    chapterPositionOf(context.app.currentReadingState.value)
+  );
+  state.lexiconStack.value = [];
+  state.scrollToVerse.value = readerVerseOf(
+    context.app.currentReadingState.peek()
+  );
+
+  context.panes.openPane({
+    id: CHAPTER_INTERLINEAR_PANE_ID,
+    placement: "side",
+    title: () => <ChapterInterlinearTitle state={state} position={position} />,
+    leading: () => <WordStudyPaneLeading state={state} />,
+    icon: InterlinearIcon,
+    component: () => (
+      <ChapterInterlinearPane
+        provider={provider}
+        state={state}
+        position={position}
+        lines={lines}
+        onReferenceClick={(ref) => openReference(context, ref)}
+      />
+    ),
+    onClose: () => state.reset(),
+  });
+}
+
 export default function initWordStudyExtension() {
   registerExtension({
     id: WORD_STUDY_EXTENSION_ID,
     init: function* (context: SeedBibleState) {
       const state = createWordStudyState();
-      const provider = createWordStudyProvider({
-        source: context.bibleData,
-        store: createIndexedDbWordStudyStore(),
+      const chapterState = createChapterInterlinearState(state.order);
+      const lines = createInterlinearLines(
+        WORD_STUDY_EXTENSION_ID,
+        context.extensionSettings
+      );
+      const provider = createWordStudyProvider(context.bibleData);
+
+      yield context.tools.registerToolbarTool({
+        id: "word-study-interlinear",
+        // After Find the Verse (320).
+        priority: 330,
+        title: {
+          key: "interlinear",
+          defaultValue: "Interlinear",
+          ns: "word-study-extension",
+        },
+        icon: InterlinearIcon,
+        onSelect: () =>
+          toggleChapterInterlinear(context, chapterState, provider, lines),
       });
 
       yield context.tools.registerVerseToolbarTool({
@@ -101,7 +172,9 @@ export default function initWordStudyExtension() {
 
       yield () => {
         context.panes.closePane(WORD_STUDY_PANE_ID);
+        context.panes.closePane(CHAPTER_INTERLINEAR_PANE_ID);
         state.reset();
+        chapterState.reset();
       };
     },
   });

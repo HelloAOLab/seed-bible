@@ -1,5 +1,5 @@
 import "./WordStudy.css";
-import { useSignal } from "@preact/signals";
+import { useSignal, type Signal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import {
   MaterialIcon,
@@ -18,6 +18,7 @@ import {
   isRightToLeft,
   languageTag,
   sortWords,
+  type LexiconNavigation,
   type StudiedVerse,
   type WordOrder,
   type WordStudyState,
@@ -60,7 +61,7 @@ export function WordStudyPaneTitle(props: { state: WordStudyState }) {
  * The back button, shown at the start of the pane header while a lexicon card
  * is open. Back steps through the entries opened, then to the word list.
  */
-export function WordStudyPaneLeading(props: { state: WordStudyState }) {
+export function WordStudyPaneLeading(props: { state: LexiconNavigation }) {
   const { state } = props;
   const { t } = useI18n("word-study-extension");
 
@@ -103,7 +104,7 @@ export function WordStudyPane(props: WordStudyPaneProps) {
       {/* Hidden rather than unmounted under a card, so Back returns to the
           same scroll position without reloading anything. */}
       <div className="sb-word-study-scroll" hidden={openEntry !== undefined}>
-        <WordOrderToggle state={state} />
+        <WordOrderToggle order={state.order} />
         {state.verses.value.map((verse) => (
           <VerseWords
             key={`${verse.bookId}-${verse.chapter}-${verse.verse}`}
@@ -137,10 +138,10 @@ export function WordStudyPane(props: WordStudyPaneProps) {
   );
 }
 
-function WordOrderToggle(props: { state: WordStudyState }) {
-  const { state } = props;
+/** Switches between the original language's word order and the English one. */
+export function WordOrderToggle(props: { order: Signal<WordOrder> }) {
   const { t } = useI18n("word-study-extension");
-  const current = state.order.value;
+  const current = props.order.value;
 
   const option = (order: WordOrder, label: string) => (
     <button
@@ -148,7 +149,7 @@ function WordOrderToggle(props: { state: WordStudyState }) {
       className="sb-word-study-order-option"
       aria-pressed={current === order}
       onClick={() => {
-        state.order.value = order;
+        props.order.value = order;
       }}
     >
       {label}

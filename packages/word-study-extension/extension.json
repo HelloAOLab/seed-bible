@@ -1,6 +1,24 @@
 {
   "id": "word-study-extension",
   "autoinstall": false,
+  "settings": {
+    "showTransliteration": {
+      "type": "boolean",
+      "default": true
+    },
+    "showGloss": {
+      "type": "boolean",
+      "default": true
+    },
+    "showStrongs": {
+      "type": "boolean",
+      "default": true
+    },
+    "showParsing": {
+      "type": "boolean",
+      "default": true
+    }
+  },
   "translations": {
     "en": {
       "title": "Word Study",
@@ -29,7 +47,26 @@
       "other-senses": "Other senses",
       "lexicon-attribution-prefix": "Definitions:",
       "lexicon-attribution-source": "STEPBible.org / Tyndale House, Cambridge",
-      "lexicon-attribution-license": "CC BY 4.0"
+      "lexicon-attribution-license": "CC BY 4.0",
+      "interlinear": "Interlinear",
+      "no-chapter": "Open a chapter to read it in the original language.",
+      "loading-chapter": "Loading the chapter's original words",
+      "chapter-unavailable": "Word study isn't available for this chapter.",
+      "chapter-load-failed": "Couldn't load this chapter's original words. Check your connection and try again.",
+      "show-lines": "Lines to show",
+      "line-transliteration": "Transliteration",
+      "line-gloss": "Gloss",
+      "line-strongs": "Strong's",
+      "line-parsing": "Parsing",
+      "verse-label": "Verse {{verse}}",
+      "setting-showTransliteration-title": "Show transliteration",
+      "setting-showTransliteration-description": "Show how each word sounds, in English letters, under it in the Interlinear view.",
+      "setting-showGloss-title": "Show gloss",
+      "setting-showGloss-description": "Show each word's English meaning under it in the Interlinear view.",
+      "setting-showStrongs-title": "Show Strong's numbers",
+      "setting-showStrongs-description": "Show each word's Strong's number under it in the Interlinear view.",
+      "setting-showParsing-title": "Show parsing",
+      "setting-showParsing-description": "Show each word's grammar code under it in the Interlinear view."
     }
   }
 }

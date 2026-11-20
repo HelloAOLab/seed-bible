@@ -11,7 +11,13 @@
   color: var(--sb-font-color);
 }
 
+/* `position: relative` makes this the containing block for the absolutely
+   positioned `.sr-only` labels inside it. Otherwise they position against the
+   pane shell outside this scroller, so they aren't clipped here: labels far
+   down a long list stick out below the pane and give the pane body a second
+   scrollbar. */
 .sb-word-study-scroll {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -151,7 +157,8 @@
 /* A font stack that carries Hebrew vowel points and cantillation marks, from
    fonts readers commonly have installed; nothing is downloaded for it. */
 .sb-word-study-original,
-.sb-word-study-lemma {
+.sb-word-study-lemma,
+.sb-interlinear-original {
   font-family:
     "SBL Hebrew", "Ezra SIL", "Noto Serif Hebrew", "SBL Greek", "Gentium Plus",
     "Times New Roman", var(--sb-verse-font-family), serif;
@@ -331,6 +338,135 @@
 
 .sb-word-study-outline-marker {
   font-weight: 700;
+}
+
+/* Chapter interlinear view. */
+
+.sb-interlinear-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-interlinear-lines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sb-interlinear-line-toggle {
+  padding: 4px 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.sb-interlinear-line-toggle[aria-pressed="true"] {
+  border-color: var(--sb-primary-color);
+  color: var(--sb-link-color);
+}
+
+.sb-interlinear-chapter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Long chapters (Psalm 119 has about 2,400 words) skip rendering the verses
+   that are off screen; the browser keeps an estimated height for each so the
+   scrollbar stays steady. */
+.sb-interlinear-verse {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 160px;
+}
+
+.sb-interlinear-verse-number {
+  flex: 0 0 auto;
+  min-width: 1.5em;
+  padding-top: 0.4em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-interlinear-words {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-interlinear-word-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 3rem;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+}
+
+.sb-interlinear-word-main--link {
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sb-interlinear-word-main--link:hover {
+    border-color: var(--sb-divider-color);
+  }
+}
+
+.sb-interlinear-word-main--link:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 1px;
+}
+
+.sb-interlinear-original {
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+.sb-interlinear-transliteration {
+  font-size: 0.75rem;
+  font-style: italic;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-interlinear-gloss {
+  font-size: 0.8125rem;
+}
+
+.sb-interlinear-strongs,
+.sb-interlinear-parsing {
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.sb-interlinear-strongs {
+  color: var(--sb-link-color);
+}
+
+.sb-interlinear-parsing {
+  font-family: ui-monospace, monospace;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
 .sb-word-study-strongs-link {
