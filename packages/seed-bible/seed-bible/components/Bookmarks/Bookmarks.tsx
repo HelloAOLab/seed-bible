@@ -468,22 +468,27 @@ export function bookmarkButtonLabel(
   });
 }
 
-const BOOKMARK_COLOR_LABEL_DEFAULTS: Record<BookmarkColorId, string> = {
-  orange: "Orange",
-  red: "Red",
-  yellow: "Yellow",
-  green: "Green",
-  blue: "Blue",
-  purple: "Purple",
-  black: "Black",
-  gray: "Gray",
-  white: "White",
-};
-
 function bookmarkColorLabel(t: Translate, colorId: BookmarkColorId): string {
-  return t(`bookmark-color-${colorId}`, {
-    defaultValue: BOOKMARK_COLOR_LABEL_DEFAULTS[colorId],
-  });
+  switch (colorId) {
+    case "orange":
+      return t("bookmark-color-orange", { defaultValue: "Orange" });
+    case "red":
+      return t("bookmark-color-red", { defaultValue: "Red" });
+    case "yellow":
+      return t("bookmark-color-yellow", { defaultValue: "Yellow" });
+    case "green":
+      return t("bookmark-color-green", { defaultValue: "Green" });
+    case "blue":
+      return t("bookmark-color-blue", { defaultValue: "Blue" });
+    case "purple":
+      return t("bookmark-color-purple", { defaultValue: "Purple" });
+    case "black":
+      return t("bookmark-color-black", { defaultValue: "Black" });
+    case "gray":
+      return t("bookmark-color-gray", { defaultValue: "Gray" });
+    case "white":
+      return t("bookmark-color-white", { defaultValue: "White" });
+  }
 }
 
 /** Longest name the form accepts — enough for "Sermon prep, week 3". */

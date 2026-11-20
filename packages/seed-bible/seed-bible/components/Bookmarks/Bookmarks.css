@@ -108,7 +108,7 @@
 }
 
 .sb-bookmark-form-color-selected {
-  border-color: currentColor;
+  border-color: color-mix(in srgb, currentColor 65%, var(--sb-font-color));
 }
 
 .sb-bookmark-form-color:focus-visible {
