@@ -13,6 +13,7 @@ import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/S
 import { SIDEBAR_COLLAPSED_STORAGE_KEY } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
 import {
   decideHydration,
+  hasServerRenderedContent,
   decideStartupHydration,
 } from "@packages/seed-bible/seed-bible/app/hydrationGate";
 import { waitForInitialChapterLoads } from "@packages/seed-bible/seed-bible/app/initialChapterLoadWait";
@@ -688,6 +689,43 @@ describe("client hydration", () => {
       clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "no-ssr-content" });
+  });
+
+  // Decides, before the app state exists, whether the first draw can use the
+  // real window rather than the server's phone/desktop guess.
+  describe("hasServerRenderedContent", () => {
+    it("is true for markup the server rendered for this page", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<div>Verse 1</div>";
+
+      expect(
+        hasServerRenderedContent(
+          { ...DEFAULT_APP_CONFIG, renderedForPath: "/en/AAB/genesis/1" },
+          container
+        )
+      ).toBe(true);
+    });
+
+    it("is false for a shell whose markup was never filled in", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<!-- APP_HTML -->";
+
+      expect(
+        hasServerRenderedContent(
+          { ...DEFAULT_APP_CONFIG, renderedForPath: "/" },
+          container
+        )
+      ).toBe(false);
+    });
+
+    it("is false for a config that never went through a real render()", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<div>some stale build-time snapshot</div>";
+
+      expect(hasServerRenderedContent(DEFAULT_APP_CONFIG, container)).toBe(
+        false
+      );
+    });
   });
 
   it("declines to hydrate when the SSR HTML was rendered by a different commit's bundle", () => {

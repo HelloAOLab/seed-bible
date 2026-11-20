@@ -249,39 +249,6 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
 }
 
-/* Search is a bottom-anchored sheet on mobile: the input sits just above the
-   5-tab bar and results grow upward. It is capped to the *small* viewport
-   height (`svh`, which excludes the Android address bar) and anchored to the
-   bottom rather than `top: 0`, so the top results can never be pushed behind
-   the browser chrome (the old full-screen `top: 0` overlay anchored to the
-   taller layout viewport, hiding the first results until the bar collapsed).
-   Keeping it off the top of the screen also leaves the reader above the sheet
-   visible and tappable, so the app never feels frozen — tapping a reader
-   control closes search (via the outside-tap handler) and activates it. */
-:where(html[data-sb-app-layout="mobile"]) .sb-floating-search-panel {
-  left: 0;
-  right: 0;
-  top: auto;
-  bottom: 4.5rem;
-  transform: none;
-  width: 100%;
-  max-width: 100%;
-  max-height: calc(
-    100svh - 4.5rem - env(safe-area-inset-top, 0px) -
-      env(safe-area-inset-bottom, 0px) - 0.75rem
-  );
-  border-radius: 0;
-  border: none;
-  box-shadow: none;
-  padding: calc(env(safe-area-inset-top, 0px) + 0.875rem) 1rem 0.875rem;
-  background: transparent;
-  gap: 0.875rem;
-  animation: none;
-  /* Empty areas of the sheet let taps fall through to the reader; the input
-     row and results below re-enable pointer events. */
-  pointer-events: none;
-}
-
 .sb-floating-chat-members-menu {
   min-width: 13.75rem;
 }
@@ -641,69 +608,73 @@
   }
 }
 
+/* Search is a bottom-anchored sheet in the mobile layout and in narrow
+   desktop windows (`-sheet`, set by FloatingSearchPanel): the input sits just
+   above the bottom bar and results grow upward. It is capped to the *small*
+   viewport height (`svh`, which excludes the Android address bar) and
+   anchored to the bottom rather than `top: 0`, so the top results can never
+   be pushed behind the browser chrome (the old full-screen `top: 0` overlay
+   anchored to the taller layout viewport, hiding the first results until the
+   bar collapsed). Keeping it off the top of the screen also leaves the reader
+   above the sheet visible and tappable, so the app never feels frozen —
+   tapping a reader control closes search (via the outside-tap handler) and
+   activates it. A class rather than a width query, because a phone held
+   sideways is wider than any width that would also leave out tablets. */
+.sb-floating-search-panel-sheet {
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 4.5rem;
+  transform: none;
+  width: 100%;
+  max-width: 100%;
+  max-height: calc(
+    100svh - 4.5rem - env(safe-area-inset-top, 0px) -
+      env(safe-area-inset-bottom, 0px) - 0.75rem
+  );
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  padding: calc(env(safe-area-inset-top, 0px) + 0.875rem) 1rem 0.875rem;
+  background: transparent;
+  gap: 0.875rem;
+  animation: none;
+  /* Empty areas of the sheet let taps fall through to the reader; the input
+     row and results below re-enable pointer events. */
+  pointer-events: none;
+}
+
+/* Only paint a backdrop once results (or status) are showing — while the
+   panel is just the input, keep it transparent over the reader. `:where()`
+   keeps it as strong as the rule above, which it follows. */
+:where(.sb-floating-search-panel-sheet).sb-floating-search-panel-expanded {
+  background: var(--sb-background);
+}
+
+.sb-floating-search-panel-sheet .sb-floating-search-input-wrap,
+.sb-floating-search-panel-sheet .sb-floating-search-results {
+  pointer-events: auto;
+}
+
+/* Fill the sheet so its empty space belongs to the (interactive) results
+   container rather than the pass-through backdrop. */
+.sb-floating-search-panel-sheet .sb-floating-search-results {
+  flex: 1 1 auto;
+}
+
+.sb-floating-search-panel-sheet .sb-floating-search-input-wrap {
+  margin-top: auto;
+  box-shadow:
+    0 0 0 1px var(--sb-divider-color),
+    var(--sb-shadow-raised);
+}
+
+/* No hover on touch — keep the action icon visible on each card. */
+:where(.sb-floating-search-panel-sheet) .sb-floating-search-result-action {
+  opacity: 1;
+}
+
 @media (max-width: 768px) {
-  /* Search is a bottom-anchored sheet on mobile: the input sits just above the
-     5-tab bar and results grow upward. It is capped to the *small* viewport
-     height (`svh`, which excludes the Android address bar) and anchored to the
-     bottom rather than `top: 0`, so the top results can never be pushed behind
-     the browser chrome (the old full-screen `top: 0` overlay anchored to the
-     taller layout viewport, hiding the first results until the bar collapsed).
-     Keeping it off the top of the screen also leaves the reader above the sheet
-     visible and tappable, so the app never feels frozen — tapping a reader
-     control closes search (via the outside-tap handler) and activates it. */
-  .sb-floating-search-panel {
-    left: 0;
-    right: 0;
-    top: auto;
-    bottom: 4.5rem;
-    transform: none;
-    width: 100%;
-    max-width: 100%;
-    max-height: calc(
-      100svh - 4.5rem - env(safe-area-inset-top, 0px) -
-        env(safe-area-inset-bottom, 0px) - 0.75rem
-    );
-    border-radius: 0;
-    border: none;
-    box-shadow: none;
-    padding: calc(env(safe-area-inset-top, 0px) + 0.875rem) 1rem 0.875rem;
-    background: transparent;
-    gap: 0.875rem;
-    animation: none;
-    /* Empty areas of the sheet let taps fall through to the reader; the input
-       row and results below re-enable pointer events. */
-    pointer-events: none;
-  }
-
-  /* Only paint a backdrop once results (or status) are showing — while the
-     panel is just the input, keep it transparent over the reader. */
-  .sb-floating-search-panel-expanded {
-    background: var(--sb-background);
-  }
-
-  .sb-floating-search-panel .sb-floating-search-input-wrap,
-  .sb-floating-search-panel .sb-floating-search-results {
-    pointer-events: auto;
-  }
-
-  /* Fill the sheet so its empty space belongs to the (interactive) results
-     container rather than the pass-through backdrop. */
-  .sb-floating-search-panel .sb-floating-search-results {
-    flex: 1 1 auto;
-  }
-
-  .sb-floating-search-panel .sb-floating-search-input-wrap {
-    margin-top: auto;
-    box-shadow:
-      0 0 0 1px var(--sb-divider-color),
-      var(--sb-shadow-raised);
-  }
-
-  /* No hover on touch — keep the action icon visible on each card. */
-  .sb-floating-search-result-action {
-    opacity: 1;
-  }
-
   /* Tablets still float the chat above the reader toolbar. Phones override
      this below so the sheet meets the tab bar instead of hovering over it. */
   .sb-floating-chat-panel {

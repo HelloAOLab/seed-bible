@@ -488,11 +488,15 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
       searchResults.value.length > 0 ||
       (!searchLoading.value && searchResults.value.length === 0));
 
+  // A bottom sheet in the mobile layout and in narrow desktop windows; a
+  // floating panel otherwise.
+  const asSheet = state.app.isMobile.value || state.app.isCompactDesktop.value;
+
   return (
     <div
       className={`sb-floating-search-panel${
-        showResultsArea ? " sb-floating-search-panel-expanded" : ""
-      }`}
+        asSheet ? " sb-floating-search-panel-sheet" : ""
+      }${showResultsArea ? " sb-floating-search-panel-expanded" : ""}`}
       role="dialog"
       aria-label={t("search", { defaultValue: "Search" })}
     >
