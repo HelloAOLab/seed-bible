@@ -1,6 +1,4 @@
-import "../visuallyHidden.inline.css";
 import { useSignal } from "@preact/signals";
-import { MaterialIcon } from "../icons";
 import {
   numberFieldLimits,
   settingValueSatisfiesDefinition,
@@ -9,6 +7,8 @@ import {
 } from "../../managers/ExtensionManager";
 import type { I18nHook } from "../../i18n/I18nManager";
 import { IconButton } from "../IconButton/IconButton";
+import { Checkbox } from "../Checkbox/Checkbox";
+import { Switch } from "../Switch/Switch";
 
 function NumberSettingInput(props: {
   id: string;
@@ -175,29 +175,16 @@ export function ExtensionSettingsForm(props: {
         // checkbox every field stores one.
         const overridden = overriding ? overriding.isOverridden(key) : true;
         const overrideNode = overriding ? (
-          <label className="sb-settings-field-override">
-            {/* The real checkbox stays for keyboard and screen readers; the
-                Material glyph beside it is what's actually seen. */}
-            <input
-              type="checkbox"
-              className="sb-settings-field-override-input sb-visually-hidden"
-              checked={overridden}
-              aria-label={t("override-setting", {
-                defaultValue: "Override {{name}}",
-                name: title,
-              })}
-              onChange={(event: Event) =>
-                overriding.onOverrideChange(
-                  key,
-                  (event.currentTarget as HTMLInputElement).checked
-                )
-              }
-            />
-            <MaterialIcon className="sb-settings-field-override-icon">
-              {overridden ? "check_box" : "check_box_outline_blank"}
-            </MaterialIcon>
-            {t("override-setting-label", { defaultValue: "Override" })}
-          </label>
+          <Checkbox
+            className="sb-settings-field-override"
+            label={t("override-setting-label", { defaultValue: "Override" })}
+            aria-label={t("override-setting", {
+              defaultValue: "Override {{name}}",
+              name: title,
+            })}
+            checked={overridden}
+            onToggled={(checked) => overriding.onOverrideChange(key, checked)}
+          />
         ) : null;
         const defaultValue = getDefault?.(key);
         const defaultNode =
@@ -232,7 +219,7 @@ export function ExtensionSettingsForm(props: {
           <div className="sb-settings-field-row" key={key}>
             {definition.type === "boolean" ? (
               <>
-                <div className="sb-settings-toggle-row">
+                <div className="sb-settings-field-switch-row">
                   <div className="sb-settings-field-title-row">
                     <label
                       className="sb-settings-field-label"
@@ -243,16 +230,10 @@ export function ExtensionSettingsForm(props: {
                     {resetNode}
                   </div>
                   {overridden && (
-                    <input
+                    <Switch
                       id={fieldId}
-                      type="checkbox"
                       checked={Boolean(value)}
-                      onChange={(event: Event) =>
-                        onChange(
-                          key,
-                          (event.currentTarget as HTMLInputElement).checked
-                        )
-                      }
+                      onToggled={(checked) => onChange(key, checked)}
                     />
                   )}
                 </div>
