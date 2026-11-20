@@ -62,6 +62,31 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
   let speech: FakeSpeechSynthesis;
 
   beforeEach(async () => {
+    // jsdom normally provides localStorage; some Node builds leave it unset.
+    if (typeof localStorage === "undefined" || !localStorage) {
+      const store = new Map<string, string>();
+      const memoryStorage = {
+        getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+        setItem: (key: string, value: string) => {
+          store.set(key, String(value));
+        },
+        removeItem: (key: string) => {
+          store.delete(key);
+        },
+        clear: () => {
+          store.clear();
+        },
+        key: (index: number) => [...store.keys()][index] ?? null,
+        get length() {
+          return store.size;
+        },
+      };
+      vi.stubGlobal("localStorage", memoryStorage);
+      Object.defineProperty(window, "localStorage", {
+        value: memoryStorage,
+        configurable: true,
+      });
+    }
     localStorage.clear();
     // Before the state is built: the manager reads these globals once.
     speech = installSpeech([{ lang: "en-US", name: "English" }]);

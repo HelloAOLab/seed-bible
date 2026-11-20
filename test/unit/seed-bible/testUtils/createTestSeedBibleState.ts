@@ -262,9 +262,13 @@ if (typeof afterEach === "function") {
  * would otherwise be restored into a later test's editor.
  */
 export function forgetPlaylistDrafts(): void {
-  for (const key of Object.keys(window.localStorage)) {
+  const storage = window.localStorage;
+  if (!storage) {
+    return;
+  }
+  for (const key of Object.keys(storage)) {
     if (key.startsWith("sb-playlist-draft:")) {
-      window.localStorage.removeItem(key);
+      storage.removeItem(key);
     }
   }
 }
