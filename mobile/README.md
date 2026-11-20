@@ -80,7 +80,13 @@ Each platform needs its signing secrets for this:
 
 Until a platform's secrets are set, its signed builds come out as check builds instead, with a warning. The run still passes.
 
-The builds are attached to the workflow run as artifacts; uploading them to the stores is still manual.
+The builds are attached to the workflow run as artifacts. The iOS build is also uploaded to App Store Connect, where it shows up in TestFlight once Apple has processed it, if these secrets are set (from an App Store Connect **Team** key, under Users and Access → Integrations → App Store Connect API, with the App Manager role):
+
+- `APP_STORE_CONNECT_API_KEY_ID`: the key's Key ID.
+- `APP_STORE_CONNECT_API_ISSUER_ID`: the Issuer ID shown above the list of keys.
+- `APP_STORE_CONNECT_API_KEY`: the contents of the downloaded `.p8` file, pasted as they are.
+
+Without them the run still passes, with a warning that nothing was uploaded. Uploading the Android release build to Google Play is still manual.
 
 **Version numbers:** the version people see is `packages/seed-bible/package.json`'s version. The build number is the workflow's run number. Both stores refuse an upload whose build number isn't higher than the last one. If the run number ever starts over (for example, the workflow file is renamed), set the `NATIVE_BUILD_NUMBER_OFFSET` repository variable to push the numbers back up.
 

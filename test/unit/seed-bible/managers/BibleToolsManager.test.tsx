@@ -143,6 +143,8 @@ function createQuickToolContext(
       discoverContentPanelInline: signal(
         overrides.discoverContentPanelInline ?? true
       ),
+      hasHiddenDiscoveredContent: signal(false),
+      userDismissedHiddenContentWarning: signal(false),
     } as any,
     playlists: {
       playing: signal(null),
@@ -1932,6 +1934,8 @@ describe("createBibleToolsManager", () => {
           discoveredCrossReferences: signal([]),
           discoveredStudyNotes: signal([]),
           discoveredContent: signal([]),
+          hasHiddenDiscoveredContent: signal(false),
+          userDismissedHiddenContentWarning: signal(false),
         } as any,
         playlists: {
           playing: signal(null),

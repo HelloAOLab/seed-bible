@@ -126,18 +126,16 @@
   font-weight: 600;
 }
 
-@media (max-width: 480px) {
-  .sb-language-picker-overlay {
-    background: rgba(0, 0, 0, 0.3);
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-language-picker-overlay {
+  background: var(--sb-backdrop);
+}
 
-  .sb-language-picker-menu {
-    position: fixed;
-    left: 0.75rem;
-    right: 0.75rem;
-    top: auto;
-    bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
-    min-width: 0;
-    max-height: min(50dvh, 22.5rem);
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-language-picker-menu {
+  position: fixed;
+  left: 0.75rem;
+  right: 0.75rem;
+  top: auto;
+  bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
+  min-width: 0;
+  max-height: min(50dvh, 22.5rem);
 }

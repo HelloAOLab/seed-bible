@@ -3,6 +3,7 @@ import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { FriendPlaylistsSection } from "@packages/seed-bible/seed-bible/components/Discover/FriendPlaylistsSection";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
+import type { AppState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   createDiscoverManager,
   type DiscoverManager,
@@ -21,7 +22,6 @@ import type { TabsManager } from "@packages/seed-bible/seed-bible/managers/TabsM
 import type { Friend } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
-import type { Mock } from "vitest";
 import { createRealFriendContent } from "../testUtils/realFriendContent";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -131,14 +131,17 @@ describe("FriendPlaylistsSection", () => {
       discover,
     });
     const playlists = createRealPlaylists(content.os, content.login, discover);
-    const toast = vi.fn();
+    const modals = createModalManager();
+    // The share sheet itself is covered by PlaylistShare.test.tsx; here only
+    // that Share opens it is checked, which needs no more of the app.
+    const app = { toast: vi.fn() } as unknown as AppState;
     act(() => {
       render(
         <FriendPlaylistsSection
           friends={content.friends}
           playlists={playlists}
-          modals={createModalManager()}
-          toast={toast}
+          modals={modals}
+          app={app}
         />,
         container
       );
@@ -153,7 +156,7 @@ describe("FriendPlaylistsSection", () => {
       }
     });
     await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
-    return { ...content, playlists, toast };
+    return { ...content, playlists, modals };
   };
 
   it("lists each friend's playlists under their name, leaving out friends with none", async () => {
@@ -202,7 +205,7 @@ describe("FriendPlaylistsSection", () => {
   });
 
   it("shares a friend's playlist, and offers nothing to edit or delete it", async () => {
-    const { playlists, toast } = await renderWithFriends([ada], {
+    const { modals } = await renderWithFriends([ada], {
       ada: [createPlaylist({ id: "p1", recordName: "ada" })],
     });
     const items = openRowMenu();
@@ -214,31 +217,11 @@ describe("FriendPlaylistsSection", () => {
       items[0]!.click();
     });
 
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      playlists.getPlaylistUrl(playlists.getUserPlaylists("ada").value[0]!)
-    );
-    expect(toast).toHaveBeenCalledWith("Playlist URL copied to clipboard");
-  });
-
-  it("says so when sharing a friend's playlist can't copy the link", async () => {
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
-    (navigator.clipboard.writeText as Mock).mockRejectedValueOnce(
-      new Error("denied")
-    );
-    const { toast } = await renderWithFriends([ada], {
-      ada: [createPlaylist({ id: "p1", recordName: "ada" })],
-    });
-
-    const items = openRowMenu();
-    await act(async () => {
-      items[0]!.click();
-    });
-
-    expect(toast).toHaveBeenCalledWith("Couldn't copy the playlist link");
-    expect(toast).not.toHaveBeenCalledWith("Playlist URL copied to clipboard");
-    consoleError.mockRestore();
+    // The share sheet opens rather than the link being copied outright.
+    expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
+    expect(modals.modals.value.map((m) => m.id)).toEqual([
+      "share-playlist-ada-p1",
+    ]);
   });
 
   it("shows a friend's playlist cover, as your own playlists do", async () => {

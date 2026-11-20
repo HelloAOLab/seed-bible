@@ -4,7 +4,10 @@ import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import { Sidebar } from "@packages/seed-bible/seed-bible/components/Tabs/Tabs";
 import type { ModalRegistration } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
+import {
+  createTestSeedBibleState,
+  waitFor,
+} from "../testUtils/createTestSeedBibleState";
 import { TestHost } from "./TestHost";
 
 vi.mock("../i18n/I18nManager", () => ({
@@ -255,6 +258,53 @@ describe("mobile saves screen", () => {
       expect(state.saves.saves.value[0]!.categories).toEqual(["Sermon prep"]);
       expect(state.saves.saves.value).toHaveLength(1);
       expect(state.saves.saves.value[0]!.id).toBe(saveId);
+    });
+
+    it("keeps the picker open and says so when the saves can't load", async () => {
+      // Offline: the load fails, and so does the retry the Save button makes.
+      // Only the saves read fails, so other records read at sign-in don't
+      // muddy the test. Signing in again is what makes the load run against
+      // this mock; the one in `beforeEach` has already succeeded.
+      vi.spyOn(state.os, "getData").mockImplementation(
+        async (_recordName: string, address: string) => {
+          if (address === "saves") {
+            throw new TypeError("Failed to fetch");
+          }
+          return {
+            success: false,
+            errorCode: "data_not_found",
+            errorMessage: "Data not found",
+          };
+        }
+      );
+      await act(async () => {
+        const sessionKey = state.os.sessionKey.value;
+        state.os.sessionKey.value = null;
+        state.os.sessionKey.value = sessionKey;
+      });
+      const openModal = vi.spyOn(state.modals, "openModal");
+      const closeModal = vi.spyOn(state.modals, "closeModal");
+      const toast = vi.spyOn(state.app, "toast");
+      await openTabsList();
+
+      await act(async () => {
+        rowSaveButton()!.click();
+      });
+      const picker = renderModalContent(openModal.mock.calls[0]![0]);
+      await act(async () => {
+        picker
+          .querySelector<HTMLButtonElement>(".sb-save-picker-save")!
+          .click();
+      });
+      // The Save button retries the load before giving up.
+      await act(async () => {
+        await waitFor(() => toast.mock.calls.length > 0);
+      });
+
+      expect(toast).toHaveBeenCalledWith("Couldn't save. Please try again.");
+      expect(closeModal).not.toHaveBeenCalled();
+      expect(state.saves.saves.value).toEqual([]);
+      expect(state.os.recordData).not.toHaveBeenCalled();
     });
 
     /** The star renders as an SVG, so "filled" is its fill, not a font axis. */

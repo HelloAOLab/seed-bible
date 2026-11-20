@@ -28,13 +28,19 @@ export function useScrollToTopOnMount(ref: RefObject<HTMLElement>): void {
 
 /**
  * The title a note, question or video step shows at the top of its page, or
- * null when it has none to show.
+ * null when it has none to show. A question without its own title is headed
+ * "Question".
  */
-export function playlistStepPageTitle(item: PageItem): string | null {
+export function playlistStepPageTitle(
+  item: PageItem,
+  t: ReturnType<typeof useI18n>["t"]
+): string | null {
   return (
     item.title?.trim() ||
     (item.type === "link" ? item.preview?.title?.trim() : undefined) ||
-    null
+    (item.type === "html" && item.question
+      ? t("playlist-step-question", { defaultValue: "Question" })
+      : null)
   );
 }
 
@@ -54,7 +60,8 @@ export function PlaylistStepPage(props: {
   wrapBody?: (body: ComponentChild) => ComponentChild;
 }) {
   const { item, showTitle, wrapBody = (body) => body } = props;
-  const title = showTitle ? playlistStepPageTitle(item) : null;
+  const { t } = useI18n();
+  const title = showTitle ? playlistStepPageTitle(item, t) : null;
   const ref = useRef<HTMLElement>(null);
   useScrollToTopOnMount(ref);
   return (

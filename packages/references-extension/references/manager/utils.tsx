@@ -1,7 +1,9 @@
 import axios from "axios";
 import {
+  createDatabaseConnection,
   requestToPromise,
   transactionToPromise,
+  type DatabaseConnection,
 } from "@packages/seed-bible/seed-bible/managers/indexedDbUtils";
 import type { BibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import type {
@@ -32,70 +34,51 @@ const DOWNLOAD_CONCURRENCY = 20;
 const chapterReferencesKey = (bookId: string, chapter: number) =>
   `references.${bookId}.${chapter}`;
 
-let databasePromise: Promise<IDBDatabase> | null = null;
+let connection: DatabaseConnection | null = null;
 
-const openReferencesDatabase = (): Promise<IDBDatabase> | null => {
+const referencesConnection = (): DatabaseConnection | null => {
   if (typeof indexedDB === "undefined") {
     return null;
   }
 
-  if (databasePromise) {
-    return databasePromise;
-  }
-
-  databasePromise = new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(REFERENCES_DB_NAME, REFERENCES_DB_VERSION);
-
-    request.onupgradeneeded = () => {
-      const database = request.result;
+  connection ??= createDatabaseConnection(
+    REFERENCES_DB_NAME,
+    REFERENCES_DB_VERSION,
+    (database) => {
       if (database.objectStoreNames.contains(REFERENCES_STORE)) {
         database.deleteObjectStore(REFERENCES_STORE);
       }
       database.createObjectStore(REFERENCES_STORE, { keyPath: "key" });
-    };
-
-    request.onsuccess = () => {
-      const database = request.result;
-      database.onversionchange = () => {
-        database.close();
-        databasePromise = null;
-      };
-      resolve(database);
-    };
-
-    request.onerror = () =>
-      reject(
-        request.error ?? new Error("Failed to open the references database.")
-      );
-    request.onblocked = () =>
-      reject(new Error("References database upgrade blocked by another tab."));
-  }).catch((error: unknown) => {
-    databasePromise = null;
-    throw error;
-  });
-
-  return databasePromise;
+    }
+  );
+  return connection;
 };
 
 const saveInIndexedDB = async (key: string, data: unknown): Promise<void> => {
-  const database = await openReferencesDatabase();
-  if (!database) {
+  const references = referencesConnection();
+  if (!references) {
     return;
   }
 
   const entry: CacheEntry = { key, data };
-  const transaction = database.transaction(REFERENCES_STORE, "readwrite");
+  const transaction = await references.transaction(
+    REFERENCES_STORE,
+    "readwrite"
+  );
   transaction.objectStore(REFERENCES_STORE).put(entry);
   await transactionToPromise(transaction);
 };
 
 const getFromIndexedDB = async <T,>(key: string): Promise<T | null> => {
-  const database = await openReferencesDatabase();
-  if (!database) {
+  const references = referencesConnection();
+  if (!references) {
     return null;
   }
 
-  const transaction = database.transaction(REFERENCES_STORE, "readonly");
+  const transaction = await references.transaction(
+    REFERENCES_STORE,
+    "readonly"
+  );
   const entry = (await requestToPromise(
     transaction.objectStore(REFERENCES_STORE).get(key)
   )) as CacheEntry | undefined;

@@ -1,11 +1,12 @@
 import "./shareModal.css";
-import { useEffect, useState } from "preact/hooks";
+import { useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import {
   SessionQRCode,
   openSessionQRCodeModal,
+  type QRCodeKind,
 } from "../SessionQRCode/SessionQRCode";
 import {
   buildEmbedIframeHtml,
@@ -24,7 +25,7 @@ import {
 import { Button } from "../Button/Button";
 
 export interface ShareModalProps {
-  /** Called when the sheet should close (Cancel or Escape). */
+  /** Called when the sheet should close (Cancel). */
   onClose?: () => void;
   /** Copy a shareable link to the clipboard. */
   onShareLink?: () => void;
@@ -45,6 +46,15 @@ export interface ShareModalProps {
   themes?: { readonly value: readonly EmbedThemeChoice[] };
   /** Active customization locator (`recordName.id`), if the viewer is in one. */
   customizationLocator?: { readonly value: string | null };
+  /**
+   * A link to show as a QR code when there's no session to show one for.
+   */
+  linkQRCode?: { url: string; kind: QRCodeKind };
+  /**
+   * Runs after "Start and share session" creates the session (and selects
+   * its tab), before the invite link is copied.
+   */
+  onSessionStarted?: (session: BibleReadingSession) => void;
 }
 
 function embedThemeLabel(
@@ -71,18 +81,6 @@ export const ShareModal = (props: ShareModalProps) => {
   const sessionActive = props.session !== null;
   // A partner-site embed shares a link to the passage, not a live session.
   const hideSharedSession = props.app.isMinimalEmbed.value;
-
-  const close = () => props.onClose?.();
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        close();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
 
   const canShareVia =
     typeof navigator !== "undefined" && typeof navigator.share === "function";
@@ -198,6 +196,7 @@ export const ShareModal = (props: ShareModalProps) => {
           onClick: async () => {
             try {
               const session = await props.app.createSharedSession();
+              props.onSessionStarted?.(session);
               await copySessionLink(session);
             } catch (error) {
               console.error("Failed to start and share a session.", error);
@@ -299,12 +298,18 @@ export const ShareModal = (props: ShareModalProps) => {
           </button>
         ))}
       </div>
-      {props.session && (
+      {props.session ? (
         <SessionQRCode
           url={getSessionUrl(props.session).href}
           modals={props.modals}
         />
-      )}
+      ) : props.linkQRCode ? (
+        <SessionQRCode
+          url={props.linkQRCode.url}
+          kind={props.linkQRCode.kind}
+          modals={props.modals}
+        />
+      ) : null}
     </div>
   );
 };

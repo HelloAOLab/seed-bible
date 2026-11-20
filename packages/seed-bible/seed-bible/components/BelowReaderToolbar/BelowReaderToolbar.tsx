@@ -1,5 +1,6 @@
 import "./BelowReaderToolbar.inline.css";
 import "./BelowReaderToolbar.css";
+import "../visuallyHidden.inline.css";
 import { type ToolsManager } from "../../managers/BibleToolsManager";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
@@ -107,7 +108,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
               title={title}
             >
               <ToolIcon />
-              <span className="sr-only">{title}</span>
+              <span className="sb-visually-hidden">{title}</span>
             </button>
             {hasMenuItems && selectedToolId === tool.id && (
               <div

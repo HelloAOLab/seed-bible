@@ -50,7 +50,11 @@
  * can name one falls back to talking to that document directly.
  */
 
-import { requestToPromise, transactionToPromise } from "./indexedDbUtils";
+import {
+  createDatabaseConnection,
+  requestToPromise,
+  transactionToPromise,
+} from "./indexedDbUtils";
 import type { ReadingEvent } from "./ReadingHistoryManager";
 
 export const READING_HISTORY_DB_NAME = "seed-bible-reading-history";
@@ -364,66 +368,32 @@ export function createIndexedDbReadingHistoryStore(): OfflineReadingHistoryStore
     return null;
   }
 
-  let databasePromise: Promise<IDBDatabase> | null = null;
-
-  const openDatabase = (): Promise<IDBDatabase> => {
-    if (databasePromise) {
-      return databasePromise;
+  const connection = createDatabaseConnection(
+    READING_HISTORY_DB_NAME,
+    READING_HISTORY_DB_VERSION,
+    (database) => {
+      if (!database.objectStoreNames.contains(EVENTS_STORE)) {
+        const events = database.createObjectStore(EVENTS_STORE, {
+          keyPath: "key",
+        });
+        events.createIndex(CHAPTER_INDEX, [
+          "userId",
+          "year",
+          "bookId",
+          "chapter",
+        ]);
+        // IndexedDB skips records whose indexed value is null, so this index
+        // contains exactly the rows the year document still needs.
+        events.createIndex(PENDING_INDEX, ["userId", "pendingOp"]);
+        events.createIndex(WINDOW_INDEX, ["userId", "start"]);
+      }
     }
-
-    databasePromise = new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open(
-        READING_HISTORY_DB_NAME,
-        READING_HISTORY_DB_VERSION
-      );
-
-      request.onupgradeneeded = () => {
-        const database = request.result;
-        if (!database.objectStoreNames.contains(EVENTS_STORE)) {
-          const events = database.createObjectStore(EVENTS_STORE, {
-            keyPath: "key",
-          });
-          events.createIndex(CHAPTER_INDEX, [
-            "userId",
-            "year",
-            "bookId",
-            "chapter",
-          ]);
-          // IndexedDB skips records whose indexed value is null, so this index
-          // contains exactly the rows the year document still needs.
-          events.createIndex(PENDING_INDEX, ["userId", "pendingOp"]);
-          events.createIndex(WINDOW_INDEX, ["userId", "start"]);
-        }
-      };
-
-      request.onsuccess = () => {
-        const database = request.result;
-        // A version change from another tab invalidates this handle; drop the
-        // cached promise so the next call reopens instead of using a dead one.
-        database.onversionchange = () => {
-          database.close();
-          databasePromise = null;
-        };
-        resolve(database);
-      };
-
-      request.onerror = () =>
-        reject(request.error ?? new Error("Failed to open IndexedDB."));
-      request.onblocked = () =>
-        reject(new Error("IndexedDB upgrade blocked by another tab."));
-    }).catch((error: unknown) => {
-      databasePromise = null;
-      throw error;
-    });
-
-    return databasePromise;
-  };
+  );
 
   const recordReadingSpan = async (
     input: RecordReadingSpanInput
   ): Promise<StoredReadingEvent> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(EVENTS_STORE, "readwrite");
+    const transaction = await connection.transaction(EVENTS_STORE, "readwrite");
     const store = transaction.objectStore(EVENTS_STORE);
 
     // Read inside the same read-write transaction as the write, so a second
@@ -448,8 +418,7 @@ export function createIndexedDbReadingHistoryStore(): OfflineReadingHistoryStore
     startTime: number,
     endTime: number
   ): Promise<StoredReadingEvent[]> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(EVENTS_STORE, "readonly");
+    const transaction = await connection.transaction(EVENTS_STORE, "readonly");
     const rows = (await requestToPromise(
       transaction
         .objectStore(EVENTS_STORE)
@@ -462,8 +431,7 @@ export function createIndexedDbReadingHistoryStore(): OfflineReadingHistoryStore
   };
 
   const listPending = async (userId: string): Promise<StoredReadingEvent[]> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(EVENTS_STORE, "readonly");
+    const transaction = await connection.transaction(EVENTS_STORE, "readonly");
     const rows = (await requestToPromise(
       transaction
         .objectStore(EVENTS_STORE)
@@ -479,8 +447,7 @@ export function createIndexedDbReadingHistoryStore(): OfflineReadingHistoryStore
     if (events.length === 0) {
       return;
     }
-    const database = await openDatabase();
-    const transaction = database.transaction(EVENTS_STORE, "readwrite");
+    const transaction = await connection.transaction(EVENTS_STORE, "readwrite");
     const store = transaction.objectStore(EVENTS_STORE);
 
     for (const event of events) {
@@ -499,8 +466,7 @@ export function createIndexedDbReadingHistoryStore(): OfflineReadingHistoryStore
     userId: string,
     oldestEndSeconds: number
   ): Promise<void> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(EVENTS_STORE, "readwrite");
+    const transaction = await connection.transaction(EVENTS_STORE, "readwrite");
     const store = transaction.objectStore(EVENTS_STORE);
 
     // An event's `end` is never before its `start`, so bounding the scan by
@@ -522,8 +488,7 @@ export function createIndexedDbReadingHistoryStore(): OfflineReadingHistoryStore
   };
 
   const clearSynced = async (userId: string): Promise<void> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(EVENTS_STORE, "readwrite");
+    const transaction = await connection.transaction(EVENTS_STORE, "readwrite");
     const store = transaction.objectStore(EVENTS_STORE);
     const rows = (await requestToPromise(
       store

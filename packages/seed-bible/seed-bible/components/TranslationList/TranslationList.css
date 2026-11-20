@@ -18,6 +18,8 @@
 
 /* Collapsible language header row. */
 .sb-translation-list-language {
+  display: flex;
+  justify-content: space-between;
   padding: 0.3125rem 0.625rem;
   cursor: pointer;
   border-radius: var(--sb-radius-sm);
@@ -35,6 +37,10 @@
 
 .sb-translation-list-language:active {
   background: var(--sb-divider-color);
+}
+
+.sb-language-english-name {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
 
 .sb-translation-list-chevron {
@@ -104,10 +110,17 @@
 }
 
 .sb-translation-list-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
   flex: 0 0 auto;
 }
 
 .translation-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.625rem;
   margin-bottom: 0.3125rem;
   width: 100%;
   padding: 0.3125rem;
@@ -116,6 +129,9 @@
 }
 
 .translation-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
   width: 100%;
   font-weight: bold;
   font-size: var(--sb-font-size-14);
@@ -164,10 +180,8 @@
 
 /* Inside the reader's modal the list fills the remaining height instead of
    using its own fixed height. */
-@media only screen and (max-width: 480px) {
-  .modal .sb-translation-list {
-    height: calc(100% - 1.25rem);
-  }
+:where(html[data-sb-app-layout="mobile"]) .modal .sb-translation-list {
+  height: calc(100% - 1.25rem);
 }
 
 /* ─── View-mode (catalog filter) menu ─────────────────────────────────────── */

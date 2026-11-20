@@ -120,7 +120,7 @@ describe("LoginModal backdrop", () => {
       );
     });
     const overlay = container.querySelector<HTMLElement>(
-      ".sb-footnote-modal-overlay"
+      ".sb-dialog-backdrop"
     )!;
     const emailInput = container.querySelector<HTMLElement>(
       ".sb-login-modal input[type=email]"
@@ -146,5 +146,26 @@ describe("LoginModal backdrop", () => {
 
     expect(state.login.isLoginOpen.value).toBe(true);
     expect(container.querySelector(".sb-login-modal")).not.toBeNull();
+  });
+
+  it("is a dialog named by its title, with focus in the email field", async () => {
+    const { emailInput } = await renderOpenLogin();
+
+    const dialog = container.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    expect(dialog.getAttribute("aria-label")).toBe("Login to your account");
+    expect(document.activeElement).toBe(emailInput);
+  });
+
+  it("closes on Escape", async () => {
+    const { state, emailInput } = await renderOpenLogin();
+
+    act(() => {
+      emailInput.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    await vi.waitFor(() => expect(state.login.isLoginOpen.value).toBe(false));
   });
 });

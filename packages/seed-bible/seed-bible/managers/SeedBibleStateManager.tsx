@@ -34,13 +34,19 @@ import {
 } from "../components/SharedPageModal/SharedPageModal";
 import { PlaylistPagePane } from "../components/PlaylistPagePane/PlaylistPagePane";
 import { PlaylistFinishedPane } from "../components/PlaylistFinishedPane/PlaylistFinishedPane";
-import { openDeletePlaylistConfirm } from "../components/Discover/PlaylistRow";
+import {
+  openDeletePlaylistConfirm,
+  openPlaylistShareModal,
+} from "../components/Discover/PlaylistRow";
 import {
   buildSharedPagePath,
   parseSharedPagePath,
   type SharedPageKind,
 } from "../managers/SharedPagePath";
-import type { PlaylistPageSeed } from "../managers/PlaylistManager";
+import type {
+  FinishedPlaylist,
+  PlaylistPageSeed,
+} from "../managers/PlaylistManager";
 import {
   averageSessionMinutes,
   type ReadingPlanPageSeed,
@@ -80,6 +86,7 @@ import {
 import {
   openReadingPlanDetail,
   openReadingPlanEditor,
+  openPlanCreate,
 } from "../components/ReadingPlansPane/ReadingPlansPane";
 import {
   FRIENDS_PANE_ID,
@@ -106,7 +113,6 @@ import {
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import {
   createBibleToolsManager,
-  openShareModal,
   openReadingPlansPane,
   READING_PLANS_PANE_ID,
 } from "../managers/BibleToolsManager";
@@ -144,6 +150,11 @@ import type {
   ThemeFontFamilyKey,
 } from "../managers/ThemeManager";
 import {
+  createCustomContentManager,
+  type CustomContentManager,
+} from "../managers/CustomContentManager";
+import { createContentImportClient } from "../managers/customContent/importClient";
+import {
   createCustomizationsManager,
   CUSTOMIZATION_FONT_FIELDS,
   CUSTOMIZATION_FONT_PRESETS,
@@ -171,6 +182,10 @@ import {
   setupExtensionContext,
   type ExtensionManager,
 } from "../managers/ExtensionManager";
+import {
+  createExtensionReviewsManager,
+  type ExtensionReviewsManager,
+} from "../managers/ExtensionReviewsManager";
 import {
   createExtensionSettingsManager,
   type ExtensionSettingsManager,
@@ -230,6 +245,7 @@ import {
 } from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
 import { type AppConfig } from "../app/appConfig";
+import { LAYOUT_ATTRIBUTE, layoutAttribute } from "../app/layoutAttribute";
 import {
   createI18nManager,
   getBrandedAppText,
@@ -269,9 +285,9 @@ type SearchManager = ReturnType<typeof createSearchManager>;
 /**
  * App-wide mobile breakpoint, in pixels. Viewports at or below this width use
  * the mobile layout (drawer sidebar, mobile header, full-screen selector);
- * above it the docked desktop layout applies. This is the single source of
- * truth for the JS side — the matching `@media (max-width: 480px)` /
- * `(min-width: 481px)` rules in components/Tabs/Tabs.css must be kept in sync by hand.
+ * above it the docked desktop layout applies. Styles don't repeat this
+ * number: they read `isMobile` through the `data-sb-app-layout` attribute on
+ * `<html>` (see `app/layoutAttribute.ts`).
  */
 export const MOBILE_BREAKPOINT = 480;
 
@@ -283,7 +299,7 @@ export const PLAYLIST_EDITOR_COMPACT_BREAKPOINT = 768;
  * {@link MOBILE_BREAKPOINT} but at or below this width the screen is too narrow
  * to dock a 320px sidebar beside the reader, so an *expanded* sidebar floats
  * over the reader instead of splitting the layout row. Kept in sync with the
- * matching `@media (min-width: 481px) and (max-width: 768px)` rules in
+ * matching `@media (max-width: 768px)` desktop-layout rule in
  * components/Tabs/Tabs.css by hand.
  */
 export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
@@ -616,6 +632,8 @@ export interface SeedBibleState {
   readingPlans: ReadingPlansManager;
   /** Discover manager for contextual content providers. */
   discover: DiscoverManager;
+  /** Customization content libraries: the editor's open library, and Discover for the active one. */
+  customContent: CustomContentManager;
   /** The Today screen: its open state and the data its cards read. */
   today: TodayManager;
   /**
@@ -643,6 +661,8 @@ export interface SeedBibleState {
   app: AppState;
   /** Extension loading and runtime manager. */
   extensions: ExtensionManager;
+  /** Which extensions are verified, and verifying them for admins. */
+  extensionReviews: ExtensionReviewsManager;
   /** Per-viewer values for extensions' declared settings, resolved against the active Customization's defaults. */
   extensionSettings: ExtensionSettingsManager;
 
@@ -993,6 +1013,21 @@ export function createSeedBibleState(
   const chats = createChatsManager(login, i18n, selectedTabTranslationBooks);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
+  const contentImportUrl = import.meta.env.VITE_CONTENT_IMPORT_URL;
+  const customContent = createCustomContentManager({
+    os,
+    login,
+    customizations,
+    discover,
+    modals,
+    chats,
+    // Set at build time; without it bulk import is off and publishing
+    // happens in the browser.
+    importService:
+      typeof contentImportUrl === "string" && contentImportUrl
+        ? createContentImportClient(contentImportUrl)
+        : null,
+  });
   const readingExtensions = createBibleReadingExtensionManager();
   const tabs = createTabs(
     navigation,
@@ -1035,6 +1070,17 @@ export function createSeedBibleState(
   const viewportWidth = signal(renderedAsMobile ? MOBILE_BREAKPOINT : 1000);
   const viewportHeight = signal(renderedAsMobile ? 800 : 1000);
   const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
+  // Hydration never touches `<html>`, so this is what keeps the stylesheet's
+  // layout in step once the real viewport is measured.
+  const disposeLayoutAttribute = effect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+    document.documentElement.setAttribute(
+      LAYOUT_ATTRIBUTE,
+      layoutAttribute(isMobile.value)
+    );
+  });
 
   const annotationRecordKey =
     navigation.currentUrl.value.searchParams.get("annotationRecordKey") ??
@@ -1062,16 +1108,24 @@ export function createSeedBibleState(
     login,
     highlights,
     i18n,
+    discover,
     readingExtensions,
-    () => annotations
+    () => annotations,
+    settings
   );
+  const extensionReviews = createExtensionReviewsManager(os, login);
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
     requestSandboxConsent: (request) =>
-      openExtensionConsentModal(modals, request, {
-        userId: login.userId,
-        friends,
-      }),
+      openExtensionConsentModal(
+        modals,
+        request,
+        {
+          userId: login.userId,
+          friends,
+        },
+        extensionReviews
+      ),
     records: os,
     fileRecords: os,
   });
@@ -3770,6 +3824,7 @@ export function createSeedBibleState(
       login,
       gallery,
       toast,
+      app: state.app,
     });
     showReadingPlanDetailView();
   });
@@ -3858,9 +3913,11 @@ export function createSeedBibleState(
     navigation,
     i18n,
     discover,
+    customContent,
     today,
     readingExtensions,
     extensions,
+    extensionReviews,
     extensionSettings,
     readingPlans,
     playlists,
@@ -3909,6 +3966,7 @@ export function createSeedBibleState(
       }
       i18n.dispose();
       disposeReadingTicker();
+      disposeLayoutAttribute();
     },
     app: {
       createSharedSession: handleCreateSharedSession,
@@ -4175,6 +4233,7 @@ export function createSeedBibleState(
       login,
       gallery,
       toast,
+      app: state.app,
       onBack: () => {
         panes.closePane(READING_PLANS_PANE_ID);
         reopen();
@@ -4338,9 +4397,9 @@ export function createSeedBibleState(
       buildCustomizationTutorialSteps(state, created.defaultVariantId)
     );
   };
-  // Both land in the plans pane, opened the way the Profile card opens it,
-  // and then drill straight into the plan so the user doesn't have
-  // to find it in the list a second time.
+  // All three land in the plans pane, opened the way the Profile card opens
+  // it, and then go straight to what the user picked (a plan, or the editor
+  // on a new one) so they don't have to find it in the list.
   const openReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
     if (!openReadingPlansFromScreen(openYourContent)) {
       return;
@@ -4363,6 +4422,12 @@ export function createSeedBibleState(
     }
     void openReadingPlanEditor(readingPlans, plan, { fromAnotherScreen: true });
   };
+  const createReadingPlanFromContent = () => {
+    if (!openReadingPlansFromScreen(openYourContent)) {
+      return;
+    }
+    openPlanCreate(readingPlans, { fromAnotherScreen: true });
+  };
   const renderYourContentPane = () => (
     <YourContentPane
       state={state}
@@ -4373,6 +4438,7 @@ export function createSeedBibleState(
       onCreatePlaylist={createPlaylistFromContent}
       onOpenReadingPlan={openReadingPlanFromContent}
       onEditReadingPlan={editReadingPlanFromContent}
+      onCreateReadingPlan={createReadingPlanFromContent}
       onEditCustomization={editCustomizationFromContent}
       onCreateCustomization={() => void createCustomizationFromContent()}
     />
@@ -4613,20 +4679,8 @@ export function createSeedBibleState(
     );
   };
 
-  const sharePlaylist = (
-    playlist: Parameters<typeof playlists.getPlaylistUrl>[0]
-  ) =>
-    openShareModal(
-      {
-        modals,
-        app: state.app,
-        toast: state.app.toast,
-        sharedSession: selectedTab.peek()?.sharedSession ?? null,
-        embedThemes: state.theme.themes,
-        customizationLocator: state.customizations.activeCustomizationLocator,
-      },
-      new URL(playlists.getPlaylistUrl(playlist))
-    );
+  const sharePlaylist = (playlist: FinishedPlaylist) =>
+    openPlaylistShareModal({ playlist, playlists, modals, app: state.app });
 
   const renderPlaylistFinishedPane = () => {
     const playlist = playlists.finishedPlaylist.value;

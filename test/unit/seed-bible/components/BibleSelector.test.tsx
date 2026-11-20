@@ -31,9 +31,9 @@ import {
 import type { Mock } from "vitest";
 import { pressAndRelease } from "../testUtils/pressAndRelease";
 
-vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const { mockI18nManager } = await import("../testUtils/mockI18n");
-  return mockI18nManager();
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nContext", async () => {
+  const { mockI18nContext } = await import("../testUtils/mockI18n");
+  return mockI18nContext();
 });
 
 type SelectorFixture = {
@@ -1187,6 +1187,38 @@ describe("BibleSelector translation selector", () => {
     expect(optionTexts.some((t) => t.includes("aab"))).toBe(true);
     // The Spanish group should remain collapsed
     expect(optionTexts.some((t) => t.includes("rvr"))).toBe(false);
+  });
+
+  it("offers no translation switch while picking a chapter", async () => {
+    const { selectorState, bibleDataManager, state, slot } =
+      await createSelectorFixture({ open: false });
+    const renderSelector = () =>
+      render(
+        <BibleSelector
+          isOpen={selectorState.isOpen.value}
+          onClose={vi.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+          app={state.app}
+        />,
+        container
+      );
+
+    await act(async () => {
+      await selectorState.setOpen(true, slot, { onChapterPick: vi.fn() });
+    });
+    act(renderSelector);
+    expect(container.querySelector(".sb-selector-overlay.open")).not.toBeNull();
+    expect(container.querySelector(".sidebar-translation-selector")).toBeNull();
+
+    await act(async () => {
+      await selectorState.setOpen(false);
+      await selectorState.setOpen(true, slot);
+    });
+    act(renderSelector);
+    expect(
+      container.querySelector(".sidebar-translation-selector")
+    ).not.toBeNull();
   });
 
   it("allows opening translation selector and searching translations by name", async () => {

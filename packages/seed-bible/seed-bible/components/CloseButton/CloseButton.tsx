@@ -5,12 +5,13 @@ import {
   type IconButtonProps,
   type IconButtonSize,
 } from "../IconButton/IconButton";
-import { useOptionalI18n } from "../../i18n";
+import { useI18n } from "../../i18n/I18nContext";
 
 export type CloseButtonSize = IconButtonSize;
 export type CloseButtonLook = IconButtonLook;
 
-type CloseButtonProps = Omit<
+/** What `CloseButton` takes: an `IconButton`'s props, minus the icon. */
+export type CloseButtonProps = Omit<
   IconButtonProps,
   "icon" | "label" | "pressed" | "onClick"
 > & {
@@ -32,10 +33,8 @@ export function CloseButton({
   class: classAttribute,
   ...rest
 }: CloseButtonProps) {
-  // Optional, so an extension rendering into its own root (no I18nProvider)
-  // still gets a working button.
-  const i18n = useOptionalI18n();
-  const name = label ?? i18n?.t("close", { defaultValue: "Close" }) ?? "Close";
+  const { t } = useI18n();
+  const name = label ?? t("close", { defaultValue: "Close" });
   return (
     <IconButton
       {...rest}
