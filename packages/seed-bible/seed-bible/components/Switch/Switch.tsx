@@ -24,7 +24,8 @@ export type SwitchProps = Omit<
  *
  * It has no text of its own. Inside a `SettingRow` it's named by the row's
  * label; anywhere else, give it an `aria-label`, or an `id` that a `<label>`
- * points at.
+ * points at. Inside a row it always takes the row's id, so the label can't
+ * end up pointing at nothing; to choose the id, pass `controlId` to the row.
  */
 export function Switch({
   checked,
@@ -43,7 +44,7 @@ export function Switch({
       ref={inputRef}
       type="checkbox"
       role="switch"
-      id={id ?? row?.controlId}
+      id={row?.controlId ?? id}
       aria-describedby={describedBy ?? row?.descriptionId}
       className={["sb-switch", className, classAttribute]
         .filter(Boolean)

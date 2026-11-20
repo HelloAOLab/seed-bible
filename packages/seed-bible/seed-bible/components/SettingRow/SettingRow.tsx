@@ -11,8 +11,9 @@ export type SettingRowProps = {
   /** The control, at the row's end: usually a `Switch`, or a select or a button. */
   children: ComponentChildren;
   /**
-   * The control's id, when it isn't a `Switch` (which picks up the row's
-   * own): give the control this same id so the label points at it.
+   * The control's id. A `Switch` takes it from the row (in place of an `id`
+   * of its own), so set it here to choose the switch's id. Any other control
+   * has to be given this same id, so the label points at it.
    */
   controlId?: string;
   /** Extra classes, for placement. `class` and `className` both work. */

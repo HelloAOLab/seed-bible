@@ -190,6 +190,35 @@ describe("SettingRow", () => {
     ).toBe(false);
   });
 
+  it("keeps a switch named by its row's label when the switch is given its own id", () => {
+    const onToggled = vi.fn();
+    act(() => {
+      render(
+        <SettingRow label="Show headings">
+          <Switch id="headings" checked={false} onToggled={onToggled} />
+        </SettingRow>,
+        container
+      );
+    });
+
+    const headings = switchNamed("Show headings");
+    act(() => headings.labels![0]!.click());
+    expect(onToggled).toHaveBeenCalledWith(true);
+  });
+
+  it("gives the switch the id set on its row", () => {
+    act(() => {
+      render(
+        <SettingRow label="Show headings" controlId="sb-show-headings">
+          <Switch checked={false} onToggled={() => {}} />
+        </SettingRow>,
+        container
+      );
+    });
+
+    expect(switchNamed("Show headings").id).toBe("sb-show-headings");
+  });
+
   it("points its label at a control that isn't a switch, by the id given", () => {
     act(() => {
       render(
