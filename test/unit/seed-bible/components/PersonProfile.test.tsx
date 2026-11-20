@@ -66,8 +66,12 @@ describe("person profile card", () => {
       .forEach((hidden) => hidden.remove());
     return copy.textContent;
   };
+  // Friendship actions only — the always-on "Copy" for the user ID sits
+  // outside `.sb-confirm-delete-actions` and isn't part of these assertions.
   const buttonLabels = (root: ParentNode = container) =>
-    Array.from(root.querySelectorAll("button")).map(visibleLabel);
+    Array.from(root.querySelectorAll(".sb-confirm-delete-actions button")).map(
+      visibleLabel
+    );
   const button = (label: string, root: ParentNode = container) =>
     Array.from(root.querySelectorAll("button")).find(
       (el) => visibleLabel(el) === label
@@ -508,7 +512,9 @@ describe("person profile card", () => {
       new Error("offline")
     );
     await openCard(ADA_ID);
-    expect(text()).toContain(`User ${ADA_ID.slice(0, 8)}`);
+    // No name yet → Color + Icon from the avatar keyed on their userId.
+    expect(text()).toContain("Rose Grass (Anonymous)");
+    expect(text()).toContain(ADA_ID);
 
     // Their request brings their profile into the lists.
     server.requestFrom(ADA_ID);
@@ -516,7 +522,7 @@ describe("person profile card", () => {
     await settle();
 
     expect(text()).toContain("Ada wants to be friends.");
-    expect(text()).not.toContain(`User ${ADA_ID.slice(0, 8)}`);
+    expect(text()).not.toContain("Rose Grass (Anonymous)");
     consoleWarn.mockRestore();
   });
 

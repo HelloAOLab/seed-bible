@@ -59,7 +59,11 @@ import {
 import type { ComponentChildren } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
-import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
+import {
+  displayNameOf,
+  trimmedOrNull,
+  visualAnonymousLabel,
+} from "../../managers/Utils";
 import { useAppConfig } from "../../app/appConfig";
 import { SessionQRCode } from "../SessionQRCode/SessionQRCode";
 import {
@@ -618,12 +622,12 @@ function SessionSettingsModalContent(props: {
                     </span>
                     <span
                       className="sb-session-participant-name"
-                      title={getUserDisplayName(user)}
+                      title={getUserDisplayName(user, t)}
                     >
                       <ParticipantName
                         state={state}
                         userId={user.userId}
-                        displayName={getUserDisplayName(user)}
+                        displayName={getUserDisplayName(user, t)}
                       />
                       {role && (
                         <span className="sb-session-participant-badge">
@@ -647,7 +651,7 @@ function SessionSettingsModalContent(props: {
                       <ParticipantFriendButton
                         state={state}
                         userId={user.userId}
-                        displayName={getUserDisplayName(user)}
+                        displayName={getUserDisplayName(user, t)}
                       />
                     )}
                     {isHost && !isHostUser && (
@@ -771,7 +775,7 @@ function SessionCloseConfirmModalContent(props: {
                 className="sb-session-cohost-option"
                 onClick={() => appointCoHost(coHostKey)}
               >
-                {getUserDisplayName(user)}
+                {getUserDisplayName(user, t)}
               </button>
             );
           })}
@@ -2889,7 +2893,7 @@ export function getSelfDisplayName(
   return (
     trimmedOrNull(profile?.name) ??
     (userId
-      ? userId.slice(0, 8)
+      ? visualAnonymousLabel(getUserAnimalVisual(userId), t)
       : t("anonymous", { defaultValue: "Anonymous" }))
   );
 }

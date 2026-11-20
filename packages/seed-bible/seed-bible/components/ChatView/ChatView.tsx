@@ -23,6 +23,7 @@ import {
   getUserAnimalVisual,
   type ConnectionSessionUserVisual,
 } from "../../managers/SessionsManager";
+import { visualAnonymousLabel } from "../../managers/Utils";
 import { Avatar } from "../Avatar/Avatar";
 import { formatRelativeTime, translateTitle } from "../../app/utils";
 import { AskIcon, MaterialIcon } from "../icons";
@@ -449,19 +450,6 @@ function getParticipantVisual(
     : participant.visual;
 }
 
-function getVisualLabel(
-  visual: ConnectionSessionUserVisual,
-  t: (key: string, options?: Record<string, unknown>) => string
-): string {
-  return t(`visual-color-animal-anonymous`, {
-    defaultValue: `{{color}} {{animal}} (Anonymous)`,
-    color: t(`color-${visual.colorName}`, { defaultValue: visual.colorName }),
-    animal: t(`animal-${visual.defaultIcon}`, {
-      defaultValue: visual.defaultIcon,
-    }),
-  });
-}
-
 export function getParticipantDisplayLabel(
   participant: ChatParticipant,
   t: (key: string, options?: Record<string, unknown>) => string
@@ -476,9 +464,7 @@ export function getParticipantDisplayLabel(
     return name;
   }
 
-  const visual = getParticipantVisual(participant);
-  const visualLabel = getVisualLabel(visual, t);
-  return visualLabel;
+  return visualAnonymousLabel(getParticipantVisual(participant), t);
 }
 
 export function getParticipantMentionLabel(

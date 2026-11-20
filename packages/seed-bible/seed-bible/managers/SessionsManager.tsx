@@ -28,12 +28,16 @@ import type { AnnotationsManager } from "./AnnotationsManager";
 import type { DiscoverManager } from "./DiscoverManager";
 import type { SettingsManager } from "./SettingsManager";
 import { toShareableUrl } from "../app/publicLinks";
+import { trimmedOrNull } from "./Utils";
+import {
+  type ConnectionSessionUserVisual,
+  getUserAnimalVisual,
+  getConnectedUserVisualKey,
+} from "./UserVisual";
 
-export interface ConnectionSessionUserVisual {
-  defaultIcon: string;
-  color: string;
-  colorName: string;
-}
+// Re-export for callers that import these from SessionsManager.
+export type { ConnectionSessionUserVisual };
+export { getUserAnimalVisual, getConnectedUserVisualKey };
 
 export interface ConnectedSessionUser extends SessionConnectionInfo {
   /**
@@ -453,7 +457,7 @@ function parseQuestionAnswer(value: unknown): SessionQuestionAnswer | null {
   const visual = record.visual as Record<string, unknown> | undefined;
   const color = toStringOrNull(visual?.color);
   const defaultIcon = toStringOrNull(visual?.defaultIcon);
-  if (!stepKey || !authorId || !text?.trim() || !name || !color) return null;
+  if (!stepKey || !authorId || !text?.trim() || !color) return null;
   if (!defaultIcon) return null;
   const pictureUrl = toStringOrNull(record.pictureUrl);
   return {
@@ -462,7 +466,7 @@ function parseQuestionAnswer(value: unknown): SessionQuestionAnswer | null {
     text,
     updatedAtMs:
       typeof record.updatedAtMs === "number" ? record.updatedAtMs : 0,
-    name,
+    name: name ?? "",
     // Shown as an <img>, so only a web address is taken from a peer.
     pictureUrl:
       pictureUrl && /^https?:\/\//.test(pictureUrl) ? pictureUrl : null,
@@ -739,94 +743,6 @@ function canLoadSessionData(sessionData: SessionData): sessionData is {
     Number.isFinite(sessionData.chapterNumber) &&
     sessionData.chapterNumber > 0
   );
-}
-
-/**
- * Deterministic animal-icon + color assignment for a user.
- *
- * One function, one rule: a given user key always maps to the same
- * `(icon, color)` pair — everywhere on every client. No list context, no
- * walk-forward. Used for:
- *   - The sidebar self-avatar (bottom-right), when other people are present
- *   - The connected-users list inside a shared tab
- *   - The "Shared with you" toasts
- *
- * We lift the palette to 10 icons × 12 colors = 120 combos. Collision
- * probability for N users visible at the same time is `1 - Π(1 - i/120)`
- * for i ∈ [0..N-1] — ~4% for 3 users, ~8% for 5 users. In exchange we get
- * full cross-client and cross-surface consistency: the color you see on
- * the sidebar is the same color the tab shows is the same color every
- * other participant sees for you.
- *
- * NOTE: Make sure to keep icons updated in the translation files (e.g. `en.json`)
- */
-const USER_ANIMAL_ICONS = [
-  "forest", // tree
-  "park", // log
-  "eco", // leaf
-  "pets", // dog
-  "cruelty_free", // bunny-style
-  "local_cafe", // coffee
-  "local_florist", // flower
-  "grass", // grass
-  "potted_plant", // plant
-  "nature", // tree
-] as const;
-
-// NOTE: Make sure to keep colors updated in the translation files (e.g. `en.json`)
-const USER_PRESENCE_COLORS = [
-  ["#34D399", "emerald"], // emerald
-  ["#60A5FA", "blue"], // blue
-  ["#F472B6", "pink"], // pink
-  ["#FBBF24", "amber"], // amber
-  ["#A78BFA", "violet"], // violet
-  ["#F87171", "red"], // red
-  ["#10B981", "green"], // green
-  ["#F59E0B", "orange"], // orange
-  ["#06B6D4", "cyan"], // cyan
-  ["#EC4899", "rose"], // rose
-  ["#8B5CF6", "purple"], // purple
-  ["#14B8A6", "teal"], // teal
-] as const;
-
-function hashUserKey(key: string): number {
-  let h = 5381;
-  for (let i = 0; i < key.length; i++) {
-    h = ((h << 5) + h) ^ key.charCodeAt(i);
-  }
-  return h >>> 0;
-}
-
-/**
- * Pure-hash user visual. Same input → same output, forever. The icon and
- * color are derived independently from the hash so small changes to the
- * key (e.g. user id suffix) distribute across the whole palette.
- */
-export function getUserAnimalVisual(key: string): ConnectionSessionUserVisual {
-  const normalized = key && key.length > 0 ? key : "anonymous";
-  const hash = hashUserKey(normalized);
-  const iconIndex = hash % USER_ANIMAL_ICONS.length;
-  const colorIndex =
-    Math.floor(hash / USER_ANIMAL_ICONS.length) % USER_PRESENCE_COLORS.length;
-  const color = USER_PRESENCE_COLORS[colorIndex]!;
-  return {
-    defaultIcon: USER_ANIMAL_ICONS[iconIndex]!,
-    color: color[0],
-    colorName: color[1],
-  };
-}
-
-/**
- * Given a `ConnectedSessionUser`, returns the SAME key that the sidebar
- * self-avatar would use for this same person on their own client. This
- * guarantees visual consistency between "how I see myself in the sidebar"
- * and "how others see me in the connected users row".
- */
-export function getConnectedUserVisualKey(user: {
-  userId?: string | null;
-  connectionId?: string | null;
-}): string {
-  return user.userId ?? user.connectionId ?? "anonymous";
 }
 
 /**
@@ -1355,7 +1271,12 @@ async function createBibleReadingSession(
           }
         }
 
-        const visual = getUserAnimalVisual(client.connectionId);
+        // Key the visual off the stable user ID when known — this keeps the
+        // avatar and name consistent across reconnects and multiple tabs. Fall
+        // back to connectionId for anonymous guests who have no user ID.
+        const visual = getUserAnimalVisual(
+          effectiveUserId ?? client.connectionId
+        );
 
         return {
           isSelf: client.isSelf,
@@ -1410,7 +1331,7 @@ async function createBibleReadingSession(
         connectionId,
         userId: sharedEntry.userId,
         profile: sharedEntry.profile,
-        visual: getUserAnimalVisual(connectionId),
+        visual: getUserAnimalVisual(sharedEntry.userId ?? connectionId),
         isActive: false,
         joinedAtMs: sharedEntry.joinedAtMs,
       });
@@ -1753,7 +1674,10 @@ async function createBibleReadingSession(
       authorId,
       text: trimmed.slice(0, MAX_QUESTION_ANSWER_LENGTH),
       updatedAtMs: Date.now(),
-      name: self?.profile?.name ?? `User ${authorId.slice(0, 8)}`,
+      // Brand-new accounts may not have a name yet. Store an empty string
+      // rather than a fixed English fallback; each peer's display layer calls
+      // visualAnonymousLabel(answer.visual, t) to get a translated label.
+      name: trimmedOrNull(self?.profile?.name) ?? "",
       pictureUrl: self?.profile?.pictureUrl ?? null,
       visual,
     };

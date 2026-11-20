@@ -6,15 +6,27 @@ import {
   type ConnectionSessionUserVisual,
   type SessionOptions,
 } from "../../managers/SessionsManager";
-import type { useI18n } from "../../i18n/I18nManager";
+import { trimmedOrNull, visualAnonymousLabel } from "../../managers/Utils";
+import { useI18n, type I18nHook } from "../../i18n/I18nManager";
 
 /** Session leadership role for a connected user, shown as an avatar badge. */
 export type SessionRole = "host" | "co-host";
 
-export function getUserDisplayName(user: ConnectedSessionUser): string {
+/**
+ * What to call a session participant: their profile name, or the Color + Icon
+ * of the animal avatar they show in the list (e.g. "Red Forest (Anonymous)").
+ *
+ * Empty / whitespace-only names are treated as missing — new accounts are
+ * created with `name: ""`, and `??` alone would leave a blank label beside the
+ * avatar. The visual fallback uses `user.visual`, the same pair the avatar is
+ * drawn with, so the label and picture always agree.
+ */
+export function getUserDisplayName(
+  user: ConnectedSessionUser,
+  t: I18nHook["t"]
+): string {
   return (
-    user.profile?.name ??
-    `User ${(user.userId ?? user.connectionId).slice(0, 8)}`
+    trimmedOrNull(user.profile?.name) ?? visualAnonymousLabel(user.visual, t)
   );
 }
 
@@ -63,7 +75,7 @@ export function sortUsersByRole<T extends ConnectedSessionUser>(
 /** "Host" / "Co-host" for a role badge, or undefined for a plain participant. */
 export function sessionRoleLabel(
   role: SessionRole | null,
-  t: ReturnType<typeof useI18n>["t"]
+  t: I18nHook["t"]
 ): string | undefined {
   if (role === "host") {
     return t("host", { defaultValue: "Host" });
@@ -158,7 +170,8 @@ export function SessionUserAvatar({
   /** Set when they're reading away from the group: where they are instead. */
   elsewherePassage?: string;
 }) {
-  const title = [getUserDisplayName(user), roleLabel, elsewherePassage]
+  const { t } = useI18n();
+  const title = [getUserDisplayName(user, t), roleLabel, elsewherePassage]
     .filter(Boolean)
     .join(" · ");
   return (

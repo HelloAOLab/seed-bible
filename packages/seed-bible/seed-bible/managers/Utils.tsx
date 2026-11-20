@@ -1,3 +1,5 @@
+import { getUserAnimalVisual } from "./UserVisual";
+
 /**
  * The value with surrounding whitespace removed, or null when nothing is left.
  *
@@ -11,8 +13,59 @@ export function trimmedOrNull(value: string | null | undefined): string | null {
 }
 
 /**
- * What to call someone: their profile name, or "User 1a2b3c4d" (the start of
- * their user ID) when they never set one.
+ * English names for the animal-avatar Material icons. Used as `defaultValue`
+ * when a locale hasn't translated `animal-*` yet — keep in sync with
+ * `USER_ANIMAL_ICONS` in SessionsManager and the `animal-*` keys in en.json.
+ */
+const ENGLISH_ANIMAL_LABELS: Record<string, string> = {
+  forest: "Forest",
+  park: "Log",
+  eco: "Leaf",
+  pets: "Dog",
+  cruelty_free: "Rabbit",
+  local_cafe: "Coffee",
+  local_florist: "Flower",
+  grass: "Grass",
+  potted_plant: "Plant",
+  nature: "Tree",
+};
+
+function titleCaseWord(value: string): string {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+}
+
+/**
+ * Default label for someone who never set a profile name: the Color + Icon of
+ * their animal avatar, e.g. "Red Forest (Anonymous)". Shared by session
+ * participants, chat, and anywhere else that avatar is the only identity.
+ *
+ * `visual` is only the color/icon names — callers pass whatever key they used
+ * for the avatar (`connectionId` in a session, `userId` on a profile card) so
+ * the label always matches the picture beside it.
+ */
+export function visualAnonymousLabel(
+  visual: { colorName: string; defaultIcon: string },
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  return t("visual-color-animal-anonymous", {
+    defaultValue: "{{color}} {{animal}} (Anonymous)",
+    color: t(`color-${visual.colorName}`, {
+      defaultValue: titleCaseWord(visual.colorName),
+    }),
+    animal: t(`animal-${visual.defaultIcon}`, {
+      defaultValue:
+        ENGLISH_ANIMAL_LABELS[visual.defaultIcon] ?? visual.defaultIcon,
+    }),
+  });
+}
+
+/**
+ * What to call someone: their profile name, or the Color + Icon of their
+ * animal avatar (e.g. "Red Forest (Anonymous)") when they never set one.
+ *
+ * Uses the user ID as the visual key — the same key that sessions and profile
+ * cards use for signed-in participants — so the label matches the avatar in
+ * every context where a user ID is available.
  */
 export function displayNameOf(
   person: { userId: string; name?: string | null },
@@ -20,10 +73,7 @@ export function displayNameOf(
 ): string {
   return (
     trimmedOrNull(person.name) ??
-    t("unnamed-user", {
-      id: person.userId.slice(0, 8),
-      defaultValue: "User {{id}}",
-    })
+    visualAnonymousLabel(getUserAnimalVisual(person.userId), t)
   );
 }
 

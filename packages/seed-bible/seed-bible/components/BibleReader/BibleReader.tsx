@@ -3101,6 +3101,9 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote,
   } = readingState;
   const readerRootRef = useRef<HTMLDivElement>(null);
+  // Needed above for presence / highlight author labels; hooks must run before
+  // any early return, so this stays with the other hooks at the top.
+  const { t, language, isRtl } = useI18n();
 
   if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
     throw readingState.chapterDataPromise;
@@ -3191,7 +3194,7 @@ export function BibleReader(props: BibleReaderProps) {
       if (!range) continue;
       found.push({
         connectionId: user.connectionId,
-        displayName: getUserDisplayName(user),
+        displayName: getUserDisplayName(user, t),
         imageUrl: user.profile?.pictureUrl ?? null,
         visual: user.visual,
         firstVerse: range.first,
@@ -3374,8 +3377,6 @@ export function BibleReader(props: BibleReaderProps) {
     isContentStale && (chapterData.value === null || isWaitLong);
   const dimStaleChapter = isContentStale && !showChapterSkeleton;
 
-  const { t, language, isRtl } = useI18n();
-
   // Outside a session a decoration comes from an extension or a link, which
   // nobody in particular made. In a session every decoration has an owner,
   // and one not yet recorded was just added on this device.
@@ -3403,7 +3404,7 @@ export function BibleReader(props: BibleReaderProps) {
       if (!user) return null;
       return {
         key: getConnectedUserVisualKey(user),
-        displayName: getUserDisplayName(user),
+        displayName: getUserDisplayName(user, t),
         imageUrl: user.profile?.pictureUrl ?? null,
         visual: user.visual,
       };

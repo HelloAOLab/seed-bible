@@ -9,7 +9,7 @@ import type {
   SendFriendRequestResult,
 } from "../../managers/FriendsManager";
 import type { ModalManager } from "../../managers/ModalManager";
-import { displayNameOf } from "../../managers/Utils";
+import { personIdentityName } from "./PersonCard";
 import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -293,7 +293,7 @@ function IncomingRequestRow(props: {
   // disabled.
   const answering = useSignal<"accept" | "decline" | null>(null);
 
-  const name = displayNameOf(request, t);
+  const name = personIdentityName(request, t);
 
   const answer = async (accept: boolean) => {
     answering.value = accept ? "accept" : "decline";
@@ -348,7 +348,7 @@ function OutgoingRequestRow(props: {
   const { request, friends, navigation, profiles, toast } = props;
   const { t } = useI18n();
   const busy = useSignal(false);
-  const name = displayNameOf(request, t);
+  const name = personIdentityName(request, t);
 
   return (
     <li className="sb-friends-row">
@@ -407,7 +407,7 @@ function FriendRow(props: {
         <Button
           size="sm"
           aria-label={t("remove-friend-user", {
-            name: displayNameOf(friend, t),
+            name: personIdentityName(friend, t),
             defaultValue: "Remove {{name}} as a friend",
           })}
           onClick={() =>

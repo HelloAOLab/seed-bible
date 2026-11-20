@@ -92,6 +92,8 @@ describe("CustomizationsManager", () => {
       profilePromise: null,
       isProfileLoading: signal(false),
       isSavingProfile: signal(false),
+      needsDisplayNamePrompt: signal(false),
+      dismissDisplayNamePrompt: vi.fn(),
       updateProfile: vi.fn().mockResolvedValue(undefined),
       login: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn().mockResolvedValue(undefined),
