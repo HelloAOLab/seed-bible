@@ -898,8 +898,9 @@
   color: inherit;
   cursor: pointer;
 }
-/* About the Apocrypha, opened from the info button beside its heading. */
-.sb-apocrypha-info {
+/* About the Apocrypha (ApocryphaInfo.tsx). The window around it is drawn by
+   ModalHost, so its width is chosen from here. */
+.sb-dialog:has(.sb-apocrypha-info-content) {
   --sb-dialog-width: min(35rem, 100%);
 }
 

@@ -30,6 +30,26 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/OfflineTranslationStore";
 import type { Mock } from "vitest";
 import { pressAndRelease } from "../testUtils/pressAndRelease";
+import { ModalHost } from "@packages/seed-bible/seed-bible/components/ModalHost/ModalHost";
+import type { JSX } from "preact";
+
+/** The selector plus the window host, which draws "About the Apocrypha". */
+function withWindows(state: SeedBibleState, selector: JSX.Element) {
+  return (
+    <>
+      {selector}
+      <ModalHost manager={state.modals} isMobile={state.app.isMobile} />
+    </>
+  );
+}
+
+function apocryphaWindow() {
+  return (
+    document
+      .querySelector("#apocrypha-info")
+      ?.closest<HTMLElement>('[role="dialog"]') ?? null
+  );
+}
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nContext", async () => {
   const { mockI18nContext } = await import("../testUtils/mockI18n");
@@ -870,13 +890,16 @@ describe("BibleSelector", () => {
 
     act(() => {
       render(
-        <BibleSelector
-          isOpen={true}
-          onClose={vi.fn()}
-          selectorState={selectorState}
-          bibleDataManager={bibleDataManager}
-          app={state.app}
-        />,
+        withWindows(
+          state,
+          <BibleSelector
+            isOpen={true}
+            onClose={vi.fn()}
+            selectorState={selectorState}
+            bibleDataManager={bibleDataManager}
+            app={state.app}
+          />
+        ),
         container
       );
     });
@@ -906,13 +929,16 @@ describe("BibleSelector", () => {
 
     act(() => {
       render(
-        <BibleSelector
-          isOpen={true}
-          onClose={vi.fn()}
-          selectorState={selectorState}
-          bibleDataManager={bibleDataManager}
-          app={state.app}
-        />,
+        withWindows(
+          state,
+          <BibleSelector
+            isOpen={true}
+            onClose={vi.fn()}
+            selectorState={selectorState}
+            bibleDataManager={bibleDataManager}
+            app={state.app}
+          />
+        ),
         container
       );
     });
@@ -937,8 +963,8 @@ describe("BibleSelector", () => {
 
     expect(document.body.textContent).toContain("About the Apocrypha");
 
-    const closeButton = document.querySelector(
-      '.sb-apocrypha-info button[aria-label=\"Close\"]'
+    const closeButton = apocryphaWindow()?.querySelector(
+      'button[aria-label="Close"]'
     ) as HTMLButtonElement | null;
 
     expect(closeButton).not.toBeNull();
@@ -961,13 +987,16 @@ describe("BibleSelector", () => {
 
     act(() => {
       render(
-        <BibleSelector
-          isOpen={true}
-          onClose={onClose}
-          selectorState={selectorState}
-          bibleDataManager={bibleDataManager}
-          app={state.app}
-        />,
+        withWindows(
+          state,
+          <BibleSelector
+            isOpen={true}
+            onClose={onClose}
+            selectorState={selectorState}
+            bibleDataManager={bibleDataManager}
+            app={state.app}
+          />
+        ),
         container
       );
     });
@@ -1014,13 +1043,16 @@ describe("BibleSelector", () => {
 
     act(() => {
       render(
-        <BibleSelector
-          isOpen={true}
-          onClose={onClose}
-          selectorState={selectorState}
-          bibleDataManager={bibleDataManager}
-          app={state.app}
-        />,
+        withWindows(
+          state,
+          <BibleSelector
+            isOpen={true}
+            onClose={onClose}
+            selectorState={selectorState}
+            bibleDataManager={bibleDataManager}
+            app={state.app}
+          />
+        ),
         container
       );
     });
@@ -1059,6 +1091,120 @@ describe("BibleSelector", () => {
     expect(document.querySelector("#apocrypha-info")).toBeNull();
 
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("opens the Apocrypha info popup as a bottom sheet on a phone", async () => {
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture({
+        responses: {
+          [makeUrl("/api/AAB/books.json")]: createResponse({
+            ...aabBooks,
+            books: [
+              ...aabBooks.books,
+              edgeCaseBooks.books.find((book) => book.id === "TOB")!,
+            ],
+          }),
+        },
+      });
+
+    (state.app.viewportWidth as unknown as { value: number }).value =
+      MOBILE_BREAKPOINT;
+    selectorState.localSelectedTestament.value = 2;
+
+    act(() => {
+      render(
+        withWindows(
+          state,
+          <BibleSelector
+            isOpen={true}
+            onClose={vi.fn()}
+            selectorState={selectorState}
+            bibleDataManager={bibleDataManager}
+            app={state.app}
+          />
+        ),
+        container
+      );
+    });
+
+    await waitFor(() =>
+      Boolean(
+        container.querySelector('button[aria-label="About the Apocrypha"]')
+      )
+    );
+
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>(
+          'button[aria-label="About the Apocrypha"]'
+        )!
+        .click();
+    });
+
+    await waitFor(() => Boolean(document.querySelector("#apocrypha-info")));
+
+    expect(apocryphaWindow()?.classList.contains("sb-bottom-sheet")).toBe(true);
+    expect(apocryphaWindow()?.getAttribute("aria-label")).toBe(
+      "About the Apocrypha"
+    );
+  });
+
+  it("closes the Apocrypha info popup when the selector closes, and keeps it closed on the next open", async () => {
+    const { selectorState, bibleDataManager, state, slot } =
+      await createSelectorFixture();
+
+    selectorState.localSelectedTestament.value = 3;
+
+    // Reads the open state the way the app does, so closing the selector (as
+    // the browser's Back button does, through `?selector=open`) re-renders it.
+    const Host = () =>
+      withWindows(
+        state,
+        <BibleSelector
+          isOpen={selectorState.isOpen.value}
+          onClose={() => {}}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+          app={state.app}
+        />
+      );
+
+    act(() => {
+      render(<Host />, container);
+    });
+
+    await waitFor(() =>
+      Boolean(
+        container.querySelector('button[aria-label="About the Apocrypha"]')
+      )
+    );
+
+    act(() => {
+      container
+        .querySelector<HTMLButtonElement>(
+          'button[aria-label="About the Apocrypha"]'
+        )!
+        .click();
+    });
+
+    await waitFor(() => Boolean(document.querySelector("#apocrypha-info")));
+
+    await act(async () => {
+      await selectorState.setOpen(false);
+    });
+
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+
+    await act(async () => {
+      await selectorState.setOpen(true, slot);
+    });
+
+    await waitFor(() =>
+      Boolean(
+        container.querySelector('button[aria-label="About the Apocrypha"]')
+      )
+    );
+    expect(document.querySelector("#apocrypha-info")).toBeNull();
   });
 });
 
@@ -2594,13 +2740,16 @@ describe("BibleSelector loading and failure states", () => {
 
     act(() => {
       render(
-        <BibleSelector
-          isOpen={true}
-          onClose={onClose}
-          selectorState={selectorState}
-          bibleDataManager={bibleDataManager}
-          app={state.app}
-        />,
+        withWindows(
+          state,
+          <BibleSelector
+            isOpen={true}
+            onClose={onClose}
+            selectorState={selectorState}
+            bibleDataManager={bibleDataManager}
+            app={state.app}
+          />
+        ),
         container
       );
     });
@@ -2619,9 +2768,7 @@ describe("BibleSelector loading and failure states", () => {
     });
     await waitFor(() => Boolean(document.querySelector("#apocrypha-info")));
 
-    const dialog = document.querySelector<HTMLElement>(
-      '[role="dialog"].sb-apocrypha-info'
-    )!;
+    const dialog = apocryphaWindow()!;
     expect(dialog.contains(document.activeElement)).toBe(true);
 
     act(() => {
