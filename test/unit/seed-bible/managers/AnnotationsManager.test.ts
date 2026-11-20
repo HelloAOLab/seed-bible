@@ -1871,6 +1871,178 @@ describe("AnnotationsManager", () => {
       expect(manager.editingAnnotation.value).toBeNull();
       expect(discover.view.value).toBe("play_playlist");
     });
+
+    it("asks before discarding when the editor reports unsaved text", () => {
+      const confirmDiscardUnsavedAnnotation = vi.fn();
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        {
+          confirmDiscardUnsavedAnnotation,
+        }
+      );
+      manager.editAnnotation(createCommentAnnotation());
+      manager.setAnnotationEditorDirtyCheck(() => true);
+
+      manager.cancelEditingAnnotation();
+
+      expect(confirmDiscardUnsavedAnnotation).toHaveBeenCalledTimes(1);
+      expect(manager.editingAnnotation.value).not.toBeNull();
+      expect(discover.view.value).toBe("create_annotation");
+
+      // User confirms discard.
+      confirmDiscardUnsavedAnnotation.mock.calls[0]![0]!();
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(discover.view.value).toBeNull();
+    });
+  });
+
+  describe("runAfterLeavingAnnotationEditor", () => {
+    it("runs the action immediately when the editor is not open", () => {
+      const manager = createManager();
+      const action = vi.fn();
+
+      manager.runAfterLeavingAnnotationEditor(action);
+
+      expect(action).toHaveBeenCalledTimes(1);
+      expect(discover.view.value).toBeNull();
+    });
+
+    it("leaves a clean editor and then runs the action", async () => {
+      const manager = createManager();
+      await manager.createNewAnnotation();
+      manager.setAnnotationEditorDirtyCheck(() => false);
+      const action = vi.fn(() => {
+        discover.view.value = "discover";
+      });
+
+      manager.runAfterLeavingAnnotationEditor(action);
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(action).toHaveBeenCalledTimes(1);
+      expect(discover.view.value).toBe("discover");
+    });
+
+    it("asks before leaving a dirty editor, and only then runs the action", () => {
+      const confirmDiscardUnsavedAnnotation = vi.fn();
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        {
+          confirmDiscardUnsavedAnnotation,
+        }
+      );
+      manager.editAnnotation(createCommentAnnotation());
+      manager.setAnnotationEditorDirtyCheck(() => true);
+      const action = vi.fn(() => {
+        discover.view.value = "discover";
+      });
+
+      manager.runAfterLeavingAnnotationEditor(action);
+
+      expect(action).not.toHaveBeenCalled();
+      expect(manager.editingAnnotation.value).not.toBeNull();
+      expect(discover.view.value).toBe("create_annotation");
+
+      confirmDiscardUnsavedAnnotation.mock.calls[0]![0]!();
+
+      expect(manager.editingAnnotation.value).toBeNull();
+      expect(action).toHaveBeenCalledTimes(1);
+      expect(discover.view.value).toBe("discover");
+    });
+
+    it("keeps the draft when the discard prompt is dismissed without confirming", () => {
+      const confirmDiscardUnsavedAnnotation = vi.fn();
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        {
+          confirmDiscardUnsavedAnnotation,
+        }
+      );
+      manager.editAnnotation(createCommentAnnotation());
+      manager.setAnnotationEditorDirtyCheck(() => true);
+      const action = vi.fn();
+
+      manager.runAfterLeavingAnnotationEditor(action);
+
+      // Prompt opened; user chose Keep editing (onDiscard never called).
+      expect(confirmDiscardUnsavedAnnotation).toHaveBeenCalledTimes(1);
+      expect(action).not.toHaveBeenCalled();
+      expect(manager.editingAnnotation.value).not.toBeNull();
+      expect(discover.view.value).toBe("create_annotation");
+    });
+
+    it("treats a missing dirty check as clean so a still-loading editor is not blocked", async () => {
+      const confirmDiscardUnsavedAnnotation = vi.fn();
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        {
+          confirmDiscardUnsavedAnnotation,
+        }
+      );
+      await manager.createNewAnnotation();
+      const action = vi.fn();
+
+      manager.runAfterLeavingAnnotationEditor(action);
+
+      expect(confirmDiscardUnsavedAnnotation).not.toHaveBeenCalled();
+      expect(action).toHaveBeenCalledTimes(1);
+      expect(manager.editingAnnotation.value).toBeNull();
+    });
+  });
+
+  describe("editAnnotation while another note is open", () => {
+    it("asks before replacing a dirty draft with a different note", () => {
+      const confirmDiscardUnsavedAnnotation = vi.fn();
+      const manager = createAnnotationsManager(
+        os,
+        login,
+        tabs,
+        discover,
+        undefined,
+        {
+          confirmDiscardUnsavedAnnotation,
+        }
+      );
+      const first = createCommentAnnotation({ id: "a1" });
+      const second = createCommentAnnotation({ id: "a2", verseNumber: 2 });
+      manager.editAnnotation(first);
+      manager.setAnnotationEditorDirtyCheck(() => true);
+
+      manager.editAnnotation(second);
+
+      expect(confirmDiscardUnsavedAnnotation).toHaveBeenCalledTimes(1);
+      expect(manager.editingAnnotation.value?.id).toBe("a1");
+
+      confirmDiscardUnsavedAnnotation.mock.calls[0]![0]!();
+      expect(manager.editingAnnotation.value?.id).toBe("a2");
+    });
+
+    it("is a no-op when the same note is already open", () => {
+      const manager = createManager();
+      const annotation = createCommentAnnotation({ id: "a1" });
+      manager.editAnnotation(annotation);
+      manager.setAnnotationEditorDirtyCheck(() => true);
+
+      manager.editAnnotation(annotation);
+
+      expect(manager.editingAnnotation.value?.id).toBe("a1");
+      expect(discover.view.value).toBe("create_annotation");
+    });
   });
 
   describe("deleteAnnotationAndRefresh", () => {

@@ -83,6 +83,7 @@ function createMockAnnotationsManager(editing: Annotation | null) {
     editingAnnotation,
     saveEditingAnnotation,
     cancelEditingAnnotation: vi.fn(),
+    setAnnotationEditorDirtyCheck: vi.fn(),
   } as unknown as AnnotationsManager;
   return { annotations, saveEditingAnnotation };
 }

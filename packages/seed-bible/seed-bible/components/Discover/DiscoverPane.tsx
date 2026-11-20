@@ -69,7 +69,11 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         annotations={annotations}
         tabs={tabs}
         toast={props.toast}
-        onClose={close}
+        onClose={() => {
+          // X closes the whole Discover pane; ask first when the note still
+          // has unsaved text (Cancel/Back only leave the editor).
+          annotations.runAfterLeavingAnnotationEditor(close);
+        }}
       />
     );
   }

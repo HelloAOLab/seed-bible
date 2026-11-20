@@ -505,6 +505,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       getAnnotationsForChapter: vi.fn(() => signal([])),
       visibleAnnotationsForChapter: vi.fn(() => []),
       pendingCountForChapter: vi.fn(() => 0),
+      runAfterLeavingAnnotationEditor: vi.fn((cb: () => void) => cb()),
       sync: {
         pendingCount: signal(0),
       },
@@ -2921,6 +2922,7 @@ describe("BibleReader", () => {
         getAnnotationsForChapter: vi.fn(() => chapterAnnotations),
         pendingCountForChapter: vi.fn(() => 0),
         visibleAnnotationsForChapter: vi.fn(() => chapterAnnotations.value),
+        runAfterLeavingAnnotationEditor: vi.fn((cb: () => void) => cb()),
       },
     } as any as SeedBibleState;
   }
@@ -3069,6 +3071,64 @@ describe("BibleReader", () => {
     });
     expect(readingState.discoverContentPanelInline.value).toBe(false);
     expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("clicking an annotated verse number while the editor is dirty defers the view switch until confirmed", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    readingState.discoverContentPanelInline.value = false;
+    const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
+    state.settings.settings.value = {
+      ...state.settings.settings.value,
+      discoveredContent: {
+        ...state.settings.settings.value.discoveredContent,
+        showContent: false,
+      },
+    };
+
+    // Simulate a dirty editor: capture the deferred action without running it.
+    let deferredAction: (() => void) | undefined;
+    state.annotations.runAfterLeavingAnnotationEditor = vi.fn(
+      (cb: () => void) => {
+        deferredAction = cb;
+      }
+    );
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const annotatedVerseNumber = container.querySelector(
+      '.sb-verse[data-verse-number="1"] .sb-verse-number-annotated'
+    ) as HTMLElement;
+
+    act(() => {
+      annotatedVerseNumber.dispatchEvent(
+        new MouseEvent("click", { bubbles: true })
+      );
+    });
+
+    // The guard was called — confirmation is pending.
+    expect(
+      state.annotations.runAfterLeavingAnnotationEditor
+    ).toHaveBeenCalled();
+    // The view has NOT changed yet (dialog is showing).
+    expect(state.discover.view.value).not.toBe("discover");
+    // Simulating "Discard note" runs the deferred action and switches the view.
+    act(() => deferredAction!());
+    expect(state.discover.view.value).toBe("discover");
+    expect(state.discover.scrollToVerse.value).toEqual({
+      bookId: "GEN",
+      chapterNumber: 1,
+      verseNumber: 1,
+    });
   });
 
   it("clicking an annotated verse number on mobile leaves the compact discover panel placement alone and selects the verse", () => {

@@ -225,6 +225,10 @@ import {
   type AnnotationsManager,
 } from "../managers/AnnotationsManager";
 import { syncAnnotationConflictModal } from "../components/AnnotationConflictModal/AnnotationConflictModal";
+import {
+  closeUnsavedAnnotationConfirm,
+  openUnsavedAnnotationConfirm,
+} from "../components/CreateAnnotationForm/unsavedAnnotationConfirm";
 import { createAdoptionPrompt } from "../components/AdoptDeviceContentModal/AdoptDeviceContentModal";
 import {
   createModalManager,
@@ -1095,6 +1099,9 @@ export function createSeedBibleState(
       confirmAdoption: (owner) => askToAdopt(owner, "notes"),
       friendIds: friends.friendIds,
       friendReads,
+      confirmDiscardUnsavedAnnotation: (onDiscard) =>
+        openUnsavedAnnotationConfirm(modals, onDiscard),
+      onAnnotationEditorClosed: () => closeUnsavedAnnotationConfirm(modals),
     }
   );
   const yourContent = createYourContentManager({
@@ -3574,16 +3581,20 @@ export function createSeedBibleState(
   });
 
   const handleOpenDiscover = () => {
-    if (!playlists.view.peek()) {
-      playlists.view.value = playlists.playing.peek()
-        ? "play_playlist"
-        : "discover";
-    } else {
-      playlists.view.value = null;
-    }
+    annotations.runAfterLeavingAnnotationEditor(() => {
+      if (!playlists.view.peek()) {
+        playlists.view.value = playlists.playing.peek()
+          ? "play_playlist"
+          : "discover";
+      } else {
+        playlists.view.value = null;
+      }
+    });
   };
   const handleCloseDiscover = () => {
-    playlists.view.value = null;
+    annotations.runAfterLeavingAnnotationEditor(() => {
+      playlists.view.value = null;
+    });
   };
 
   effect(() => {

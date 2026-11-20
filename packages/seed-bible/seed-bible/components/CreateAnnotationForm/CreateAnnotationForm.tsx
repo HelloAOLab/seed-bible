@@ -1,6 +1,6 @@
 import "./CreateAnnotationForm.css";
 import { lazy, Suspense, type ComponentType } from "preact/compat";
-import { useRef, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import {
   annotationVerseNumbers,
@@ -101,7 +101,9 @@ function CreateAnnotationTitle(props: {
       <IconButton
         icon="arrow_back"
         label={t("back", { defaultValue: "Back" })}
-        onClick={() => annotations.cancelEditingAnnotation()}
+        onClick={() => {
+          annotations.cancelEditingAnnotation();
+        }}
       />
       <span className="sb-discover-title" dir="auto">
         {t("annotate-title", {
@@ -119,6 +121,9 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
   const { t } = useI18n();
   const EditorComponent = useAnnotationEditor();
   const editorRef = useRef<AnnotationEditorHandle | null>(null);
+  // TipTap may normalize HTML on load; compare against the editor's own first
+  // snapshot so an untouched existing note isn't treated as dirty.
+  const baselineHtmlRef = useRef<string | null>(null);
   // Sync re-entry gate: React `saving` state is too late for Mod+Enter
   // (disabled only blocks the button; a second key event can land before
   // setSaving re-renders). Flip this before the first await.
@@ -128,6 +133,32 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
   const [editorEmpty, setEditorEmpty] = useState(!editing?.data.html);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Tell AnnotationsManager how to detect unsaved text for this mount, so
+  // other entry points (verse-number clicks, cancel, opening another note)
+  // can ask before throwing the draft away. Baseline is seeded lazily on
+  // first check (and in onEditor) so a Strict Mode effect re-run that
+  // clears it still recovers once the editor is up.
+  useEffect(() => {
+    if (!editing) {
+      annotations.setAnnotationEditorDirtyCheck(null);
+      return;
+    }
+    annotations.setAnnotationEditorDirtyCheck(() => {
+      const editor = editorRef.current;
+      if (!editor) {
+        return false;
+      }
+      if (baselineHtmlRef.current === null) {
+        baselineHtmlRef.current = editor.getHTML();
+        return false;
+      }
+      return editor.getHTML() !== baselineHtmlRef.current;
+    });
+    return () => {
+      annotations.setAnnotationEditorDirtyCheck(null);
+    };
+  }, [annotations, editing?.id]);
 
   if (!editing) {
     return null;
@@ -218,11 +249,13 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
         }
       >
         <EditorComponent
+          key={editing.id}
           className="sb-settings-text-input sb-annotation-editor"
           initialContent={editing.data.html}
           autofocus="end"
           onEditor={(editor) => {
             editorRef.current = editor;
+            baselineHtmlRef.current = editor ? editor.getHTML() : null;
           }}
           onEmptyChange={setEditorEmpty}
           onModEnter={() => {
@@ -233,10 +266,12 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
 
       {error ? <p className="sb-playlist-add-error">{error}</p> : null}
 
-      <div>
+      <div className="sb-annotation-form-actions">
         <Button
           className="sb-reading-plans-back"
-          onClick={() => annotations.cancelEditingAnnotation()}
+          onClick={() => {
+            annotations.cancelEditingAnnotation();
+          }}
         >
           {t("cancel", { defaultValue: "Cancel" })}
         </Button>

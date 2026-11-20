@@ -103,6 +103,7 @@ describe("CreateAnnotationForm retrying the rich text editor", () => {
       editingAnnotation: signal(createAnnotation()),
       saveEditingAnnotation: vi.fn(),
       cancelEditingAnnotation: vi.fn(),
+      setAnnotationEditorDirtyCheck: vi.fn(),
     } as unknown as AnnotationsManager;
     const tabs = {
       tabs: signal([]),
