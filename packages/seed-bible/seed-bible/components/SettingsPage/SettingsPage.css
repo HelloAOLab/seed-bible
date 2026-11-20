@@ -260,8 +260,7 @@
 }
 
 /* The choice to store a value for a setting at all, on its own row above the
-   field. The checkbox itself is hidden (but still focusable) so the Material
-   glyph can stand in for it. */
+   field. */
 .sb-settings-field-override {
   align-self: flex-start;
   font-size: var(--sb-font-size-13);
