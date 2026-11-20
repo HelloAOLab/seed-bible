@@ -26,6 +26,7 @@ import {
 import { useI18n } from "../../i18n/I18nManager";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
+import { Checkbox } from "../Checkbox/Checkbox";
 import { translateTitle } from "../../app/utils";
 import { CONFIDENT_PASSAGE } from "../../managers/customContent/classify";
 import { contentFeatures } from "./contentFeatures";
@@ -1505,21 +1506,18 @@ function AiSuggestionsSettings(props: {
                 })}
         </span>
       </div>
-      <label className="sb-ccl-checkbox">
-        <input
-          type="checkbox"
-          checked={manifest.autoPublish === true}
-          disabled={customContent.isSaving.value || chosen === ""}
-          onChange={(event) => {
-            const checked = (event.currentTarget as HTMLInputElement).checked;
-            void run(() => customContent.setAutoPublish(checked));
-          }}
-        />
-        {t("custom-content-ai-auto-publish-on-request", {
+      <Checkbox
+        className="sb-ccl-checkbox"
+        label={t("custom-content-ai-auto-publish-on-request", {
           defaultValue:
             "When you ask the AI, publish items without further review if every passage is named in the content or a confident suggestion",
         })}
-      </label>
+        checked={manifest.autoPublish === true}
+        disabled={customContent.isSaving.value || chosen === ""}
+        onToggled={(checked) => {
+          void run(() => customContent.setAutoPublish(checked));
+        }}
+      />
     </div>
   );
 }
@@ -1900,21 +1898,17 @@ function SiteImportForm(props: {
             'Tag, category and "page 2" listing pages are skipped automatically.',
         })}
       </p>
-      <label className="sb-ccl-check">
-        <input
-          type="checkbox"
-          checked={permission.value}
-          onChange={(event) => {
-            permission.value = (
-              event.currentTarget as HTMLInputElement
-            ).checked;
-          }}
-        />
-        {t("custom-content-site-permission", {
+      <Checkbox
+        className="sb-ccl-check"
+        label={t("custom-content-site-permission", {
           defaultValue:
             "I own this website or have permission to list its content in Seed Bible.",
         })}
-      </label>
+        checked={permission.value}
+        onToggled={(checked) => {
+          permission.value = checked;
+        }}
+      />
       <div className="sb-ccl-import-actions">
         <Button
           variant="primary"
@@ -2097,25 +2091,20 @@ function SiteLookup(props: {
           .filter(Boolean)
           .join(" ")}
       </p>
-      <label className="sb-ccl-check">
-        <input
-          type="checkbox"
-          checked={chosen.length === pages.length}
-          ref={(input) => {
-            if (input) {
-              input.indeterminate =
-                chosen.length > 0 && chosen.length < pages.length;
-            }
-          }}
-          onChange={(event) =>
-            setTicked(
-              pages.map((page) => page.itemId),
-              (event.currentTarget as HTMLInputElement).checked
-            )
-          }
-        />
-        {t("custom-content-site-select-all", { defaultValue: "Select all" })}
-      </label>
+      <Checkbox
+        className="sb-ccl-check"
+        label={t("custom-content-site-select-all", {
+          defaultValue: "Select all",
+        })}
+        checked={chosen.length === pages.length}
+        indeterminate={chosen.length > 0 && chosen.length < pages.length}
+        onToggled={(checked) =>
+          setTicked(
+            pages.map((page) => page.itemId),
+            checked
+          )
+        }
+      />
       <ul className="sb-ccl-folders">
         {[...folders.entries()]
           .sort((a, b) => b[1].length - a[1].length)
@@ -2128,26 +2117,20 @@ function SiteLookup(props: {
             return (
               <li key={folder} className="sb-ccl-folder">
                 <div className="sb-ccl-folder-row">
-                  <label className="sb-ccl-check">
-                    <input
-                      type="checkbox"
-                      checked={tickedCount === ids.length}
-                      ref={(input) => {
-                        if (input) {
-                          input.indeterminate =
-                            tickedCount > 0 && tickedCount < ids.length;
-                        }
-                      }}
-                      onChange={(event) =>
-                        setTicked(
-                          ids,
-                          (event.currentTarget as HTMLInputElement).checked
-                        )
-                      }
-                    />
-                    <span dir="ltr">{folder}</span>
-                    <span className="sb-ccl-folder-count">{ids.length}</span>
-                  </label>
+                  <Checkbox
+                    className="sb-ccl-check"
+                    label={
+                      <>
+                        <span dir="ltr">{folder}</span>{" "}
+                        <span className="sb-ccl-folder-count">
+                          {ids.length}
+                        </span>
+                      </>
+                    }
+                    checked={tickedCount === ids.length}
+                    indeterminate={tickedCount > 0 && tickedCount < ids.length}
+                    onToggled={(checked) => setTicked(ids, checked)}
+                  />
                   <Button
                     variant="ghost"
                     aria-expanded={isOpen}
@@ -2174,26 +2157,22 @@ function SiteLookup(props: {
                   <ul className="sb-ccl-pages">
                     {folderPages.map((page) => (
                       <li key={page.itemId}>
-                        <label className="sb-ccl-check">
-                          <input
-                            type="checkbox"
-                            checked={!unticked.value.has(page.itemId)}
-                            onChange={(event) =>
-                              setTicked(
-                                [page.itemId],
-                                (event.currentTarget as HTMLInputElement)
-                                  .checked
-                              )
-                            }
-                          />
-                          <span
-                            className="sb-ccl-page-url"
-                            dir="ltr"
-                            title={page.url}
-                          >
-                            {sitePath(page.url)}
-                          </span>
-                        </label>
+                        <Checkbox
+                          className="sb-ccl-check"
+                          label={
+                            <span
+                              className="sb-ccl-page-url"
+                              dir="ltr"
+                              title={page.url}
+                            >
+                              {sitePath(page.url)}
+                            </span>
+                          }
+                          checked={!unticked.value.has(page.itemId)}
+                          onToggled={(checked) =>
+                            setTicked([page.itemId], checked)
+                          }
+                        />
                       </li>
                     ))}
                   </ul>

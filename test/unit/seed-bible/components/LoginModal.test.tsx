@@ -169,3 +169,46 @@ describe("LoginModal backdrop", () => {
     await vi.waitFor(() => expect(state.login.isLoginOpen.value).toBe(false));
   });
 });
+
+describe("LoginModal terms", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  it("is a checkbox named by the agreement, ticked by clicking its text, with the terms still a link", async () => {
+    const state = await createTestSeedBibleState();
+    act(() => {
+      state.login.isLoginOpen.value = true;
+      render(
+        <TestHost state={state}>
+          <LoginModal login={state.login} navigation={state.navigation} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const terms = container.querySelector<HTMLInputElement>(
+      ".sb-login-modal input[type=checkbox]"
+    )!;
+    const label = terms.labels![0]!;
+    expect(label.textContent).toBe("I agree to the Terms of service");
+    expect(label.querySelector("a")?.getAttribute("href")).toBeTruthy();
+    expect(terms.checked).toBe(false);
+
+    act(() => {
+      label
+        .querySelector(".sb-checkbox-label")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(terms.checked).toBe(true);
+  });
+});

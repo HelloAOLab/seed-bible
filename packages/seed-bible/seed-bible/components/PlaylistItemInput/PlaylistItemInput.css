@@ -33,3 +33,9 @@
 .sb-playlist-cancel-edit {
   margin-top: 8px;
 }
+
+/* Centred beside the Add button rather than stretched to its height with the
+   text at the top. */
+.sb-playlist-embed-toggle {
+  align-self: center;
+}

@@ -551,6 +551,12 @@ describe("CustomizationContentView", () => {
         )!;
       await click(folder("/news/").querySelector<HTMLInputElement>("input")!);
       expect(container.textContent).toContain("2 pages selected");
+      // Some pages are still picked, so Select all shows as partly ticked.
+      const selectAll = [
+        ...container.querySelectorAll<HTMLInputElement>("input[type=checkbox]"),
+      ].find((input) => input.labels?.[0]?.textContent === "Select all")!;
+      expect(selectAll.checked).toBe(false);
+      expect(selectAll.indeterminate).toBe(true);
 
       await click(button("Import 2 pages"));
       await waitForCondition(() =>
