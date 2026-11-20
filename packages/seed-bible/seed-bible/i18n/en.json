@@ -37,6 +37,7 @@
   "profile-name-placeholder": "e.g Craig family",
   "description": "Description",
   "optional": "(Optional)",
+  "text-field-count": "{{count}} of {{max}} characters",
   "description-placeholder": "Enter your profile description...",
   "location": "Location",
   "location-placeholder": "e.g Austin,TX",

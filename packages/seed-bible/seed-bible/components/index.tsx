@@ -8,6 +8,7 @@ export * from "./Dialog/Dialog";
 export * from "./Switch/Switch";
 export * from "./Checkbox/Checkbox";
 export * from "./SettingRow/SettingRow";
+export * from "./TextField/TextField";
 export {
   ContextMenuWithButton,
   ContextMenuItem,

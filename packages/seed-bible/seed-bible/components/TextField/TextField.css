@@ -1,0 +1,87 @@
+/* The shared text box: outlined, with the border turning the primary color
+   (and thickening) while it's being typed in. A surface that needs it to look
+   different sets these on the box or anything around it, instead of
+   overriding the rules:
+   - `--sb-text-input-background`: the fill (none by default, so it sits on
+     whatever surface is behind it).
+   - `--sb-text-input-border-color`: the border when not focused.
+   - `--sb-text-input-focus-color`: the border and ring while focused.
+   - `--sb-text-input-height`, `--sb-text-input-padding-inline`,
+     `--sb-text-input-font-size`: set by the sizes below, so these three only
+     take effect set on the box itself. */
+.sb-text-input {
+  --sb-text-input-height: 2.75rem;
+  --sb-text-input-padding-inline: 0.75rem;
+  --sb-text-input-font-size: var(--sb-font-size-15);
+
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--sb-text-input-height);
+  margin: 0;
+  padding: 0.5rem var(--sb-text-input-padding-inline);
+  border: 1px solid
+    var(
+      --sb-text-input-border-color,
+      color-mix(in srgb, var(--sb-font-color), transparent 70%)
+    );
+  border-radius: var(--sb-radius-md);
+  background: var(--sb-text-input-background, transparent);
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: var(--sb-text-input-font-size);
+  line-height: 1.4;
+  transition:
+    border-color var(--sb-duration-fast) ease,
+    box-shadow var(--sb-duration-fast) ease;
+}
+
+.sb-text-input-sm {
+  --sb-text-input-height: 2.25rem;
+  --sb-text-input-padding-inline: 0.625rem;
+  --sb-text-input-font-size: var(--sb-font-size-14);
+
+  padding-block: 0.375rem;
+}
+
+.sb-text-input-multiline {
+  resize: vertical;
+}
+
+.sb-text-input::placeholder {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .sb-text-input:hover:not(:focus, :disabled, [aria-invalid="true"]) {
+    border-color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  }
+}
+
+/* A text box always shows where the typing goes, so this is :focus, not
+   :focus-visible. The ring is drawn inside the border's spread, so the box
+   doesn't move. */
+.sb-text-input:focus {
+  outline: none;
+  border-color: var(--sb-text-input-focus-color, var(--sb-primary-color));
+  box-shadow: 0 0 0 1px
+    var(--sb-text-input-focus-color, var(--sb-primary-color));
+}
+
+.sb-text-input[aria-invalid="true"] {
+  --sb-text-input-border-color: var(--sb-danger-color);
+  --sb-text-input-focus-color: var(--sb-danger-color);
+}
+
+.sb-text-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-text-input {
+    transition: none;
+  }
+}
