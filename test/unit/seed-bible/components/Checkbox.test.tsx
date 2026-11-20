@@ -177,6 +177,34 @@ describe("Checkbox", () => {
 
     expect(inputRef.mock.calls).toEqual([[box()]]);
   });
+
+  it("hands an inline inputRef the element once too, though it's a new function each render", () => {
+    // The usual way to write one: `inputRef={(element) => element?.focus()}`.
+    const received: (HTMLInputElement | null)[] = [];
+    function Parent(props: { count: number }) {
+      return (
+        <Checkbox
+          label={`Picked ${props.count}`}
+          checked={false}
+          onToggled={() => {}}
+          inputRef={(element) => {
+            received.push(element);
+          }}
+        />
+      );
+    }
+    act(() => {
+      render(<Parent count={1} />, container);
+    });
+    act(() => {
+      render(<Parent count={2} />, container);
+    });
+    act(() => {
+      render(<Parent count={3} />, container);
+    });
+
+    expect(received).toEqual([box()]);
+  });
 });
 
 describe("CheckboxIndicator", () => {

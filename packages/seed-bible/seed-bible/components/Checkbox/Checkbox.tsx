@@ -49,19 +49,20 @@ export function Checkbox({
       input.current.indeterminate = indeterminate;
     }
   });
-  // Kept the same between renders: Preact detaches and reattaches a ref that
-  // changes, which would call a callback `inputRef` on every re-render.
-  const setInput = useCallback(
-    (element: HTMLInputElement | null) => {
-      input.current = element;
-      if (typeof inputRef === "function") {
-        inputRef(element);
-      } else if (inputRef) {
-        inputRef.current = element;
-      }
-    },
-    [inputRef]
-  );
+  // The input's ref never changes, even when the caller passes a new inline
+  // `inputRef` each render: Preact detaches and reattaches a ref that changes,
+  // which would hand the caller's callback the element again every time.
+  const latestInputRef = useRef(inputRef);
+  latestInputRef.current = inputRef;
+  const setInput = useCallback((element: HTMLInputElement | null) => {
+    input.current = element;
+    const ref = latestInputRef.current;
+    if (typeof ref === "function") {
+      ref(element);
+    } else if (ref) {
+      ref.current = element;
+    }
+  }, []);
   const classes = [className, classAttribute].filter(Boolean).join(" ");
   const box = (
     <input
