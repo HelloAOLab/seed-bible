@@ -26,6 +26,7 @@
 
 ### 🐛 Fixed
 
+- A sandboxed extension's web workers and the files in its `public/` folder are now built into its single module, as its CSS and imported images already were, instead of being written beside it where the sandbox could never load them. A build that would still write another file now fails, naming it.
 - Let extension authors import every type the extension SDK uses in its own functions and components, such as `SandboxErrorCode`, `SandboxPanePlacement`, `CloseButtonProps` and, for tests, `SandboxState` and `SandboxMethods`.
 
 ### 🗑️ Removed

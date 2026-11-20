@@ -89,7 +89,9 @@ export default defineExtension({
 Everything it imports, Preact included, is bundled in, since it runs in its
 own frame. Its CSS is in it too: the frame can't load a separate stylesheet,
 so the module adds the CSS it imports, Seed Bible's shared components'
-included, to the page when it loads.
+included, to the page when it loads. Images, fonts, files in \`public/\`
+and web workers are inlined as \`data:\` or \`blob:\` URLs for the same
+reason.
 
 Declare in \`extension.json\` the \`permissions\` it needs and every host it
 contacts under \`network\`; the user approves them when installing.

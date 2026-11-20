@@ -1,5 +1,12 @@
 // @vitest-environment node
-import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { SourceMap } from "node:module";
 import os from "node:os";
 import path from "node:path";
@@ -7,6 +14,7 @@ import { gzipSync } from "node:zlib";
 import { JSDOM } from "jsdom";
 import { build } from "vite";
 import {
+  inlineAssetsPlugin,
   inlineCssPlugin,
   standaloneBundleConfig,
 } from "@packages/seed-bible-extension-scripts/src/lib/standaloneBundle";
@@ -166,6 +174,146 @@ describe("the sandboxed bundle", () => {
       /no entry module/
     );
     expect(bundle["style.css"]).toBeDefined();
+  });
+
+  describe("files the code imports", () => {
+    /** A project in a new folder, with the given files. */
+    async function project(files: Record<string, string>) {
+      const root = await mkdtemp(path.join(os.tmpdir(), "sb-assets-"));
+      folders.push(root);
+      for (const [name, text] of Object.entries(files)) {
+        await mkdir(path.dirname(path.join(root, name)), { recursive: true });
+        await writeFile(path.join(root, name), text);
+      }
+      return root;
+    }
+
+    /** Runs the bundle in a page and returns what it stored in `result`. */
+    function run(code: string) {
+      const page = new JSDOM(
+        `<!doctype html><html><head></head><body><p class="logo">Hi</p></body></html>`,
+        { runScripts: "outside-only" }
+      );
+      page.window.eval(`${code.replace(/^export\s*\{[^}]*\};?\s*$/m, "")}`);
+      return { page, css: inlinedCss(code) };
+    }
+
+    // More than Vite's 4 KB limit for inlining an import in an app build.
+    const bigSvg = `<svg xmlns="http://www.w3.org/2000/svg">${"<!-- padding -->".repeat(400)}<rect/></svg>`;
+
+    it("inlines an imported SVG and an image in CSS, however big", async () => {
+      const root = await project({
+        "icon.svg": bigSvg,
+        "photo.svg": bigSvg,
+        "panel.css": '.panel { background: url("./photo.svg"); }',
+        "index.ts": [
+          'import "./panel.css";',
+          'import icon from "./icon.svg";',
+          "document.body.dataset.icon = icon;",
+        ].join("\n"),
+      });
+      const { outDir, code } = await buildBundle(root);
+      folders.push(outDir);
+
+      expect(await readdir(outDir)).toEqual(["index.js"]);
+      const { page, css } = run(code);
+      const icon = page.window.document.body.dataset.icon!;
+      expect(icon).toMatch(/^data:image\/svg\+xml/);
+      expect(css).toMatch(/\.panel\{background:url\("?data:image\/svg\+xml/);
+    }, 60_000);
+
+    it("inlines files from public/, which Vite would copy beside the bundle", async () => {
+      const logo = '<svg xmlns="http://www.w3.org/2000/svg"><circle/></svg>';
+      const root = await project({
+        "public/images/logo.svg": logo,
+        "panel.css": ".logo { background: url(/images/logo.svg); }",
+        "index.ts": [
+          'import "./panel.css";',
+          'document.body.dataset.logo = "/images/logo.svg";',
+        ].join("\n"),
+      });
+      const { outDir, code } = await buildBundle(root);
+      folders.push(outDir);
+
+      expect(await readdir(outDir)).toEqual(["index.js"]);
+      const dataUrl = `data:image/svg+xml;base64,${Buffer.from(logo).toString("base64")}`;
+      const { page, css } = run(code);
+      expect(page.window.document.body.dataset.logo).toBe(dataUrl);
+      expect(css).toContain(`.logo{background:url("${dataUrl}")}`);
+    }, 60_000);
+
+    it("turns a web worker into a blob: URL made from its code", async () => {
+      const root = await project({
+        "double.ts": "self.onmessage = (e) => postMessage(e.data * 2);",
+        "index.ts": [
+          'import Double from "./double.ts?worker";',
+          "export const workers = [",
+          "  new Double(),",
+          '  new Worker(new URL("./double.ts", import.meta.url)),',
+          "];",
+        ].join("\n"),
+      });
+      const { outDir, code } = await buildBundle(root);
+      folders.push(outDir);
+
+      expect(await readdir(outDir)).toEqual(["index.js"]);
+      const page = new JSDOM("<!doctype html><html><body></body></html>", {
+        runScripts: "outside-only",
+      });
+      const blobs: string[] = [];
+      const created: string[] = [];
+      page.window.eval(
+        "URL.createObjectURL = (blob) => { window.__blobs.push(blob); return 'blob:null/' + window.__blobs.length; };" +
+          "window.Worker = class { constructor(url) { window.__created.push(String(url)); } };"
+      );
+      Object.assign(page.window, { __blobs: blobs, __created: created });
+      page.window.eval(
+        code
+          .replace(/^export\s*\{[^}]*\};?\s*$/m, "")
+          .replaceAll("import.meta.url", "'blob:null/bundle'")
+      );
+
+      expect(created).toEqual(["blob:null/1", "blob:null/2"]);
+      for (const blob of blobs as unknown as Blob[]) {
+        expect(blob.type).toBe("text/javascript");
+        expect(await blob.text()).toMatch(/postMessage\(\w+\.data\s*\*\s*2\)/);
+      }
+    }, 60_000);
+
+    it("fails the build, rather than ship a file the sandbox can't load, when nothing refers to it", () => {
+      const plugin = inlineAssetsPlugin();
+      const bundle = {
+        "index.js": {
+          type: "chunk",
+          isEntry: true,
+          fileName: "index.js",
+          code: "fetch(['/assets', 'data.bin'].join('/'));",
+        },
+        "assets/data.bin": {
+          type: "asset",
+          fileName: "assets/data.bin",
+          source: new Uint8Array([1, 2, 3]),
+        },
+      };
+      const context = {
+        error(message: string): never {
+          throw new Error(message);
+        },
+      };
+      (plugin.configResolved as unknown as (config: object) => void)({
+        base: "/",
+        publicDir: "",
+      });
+      const generateBundle = plugin.generateBundle as unknown as (
+        this: typeof context,
+        options: unknown,
+        files: typeof bundle
+      ) => Promise<void>;
+
+      return expect(generateBundle.call(context, {}, bundle)).rejects.toThrow(
+        /would also write assets\/data\.bin/
+      );
+    });
   });
 
   describe("in a development build's source map", () => {
