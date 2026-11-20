@@ -266,7 +266,7 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
 
       {error ? <p className="sb-playlist-add-error">{error}</p> : null}
 
-      <div>
+      <div className="sb-annotation-form-actions">
         <Button
           className="sb-reading-plans-back"
           onClick={() => {
