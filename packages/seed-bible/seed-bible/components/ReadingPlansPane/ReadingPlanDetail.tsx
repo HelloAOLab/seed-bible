@@ -39,6 +39,7 @@ import { HeroImageBanner } from "../HeroImageField/HeroImageField";
 import { ReadingPlanOptionsMenu } from "./ReadingPlanOptionsMenu";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
+import type { LoginManager } from "../../managers/LoginManager";
 
 interface ReadingPlanDetailProps {
   readingPlans: ReadingPlansManager;
@@ -64,6 +65,7 @@ interface ReadingPlanDetailProps {
   toast?: (message: string) => void;
   /** Lets Share open the share sheet rather than only copy the plan's link. */
   app?: AppState;
+  login?: Pick<LoginManager, "userId" | "login">;
 }
 
 function formatShortDate(ms: number): string {
@@ -88,6 +90,7 @@ const SELF_PACED_CHOICE = "__self_paced__";
 export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
   const {
     readingPlans,
+    login,
     books,
     modals,
     onOpenScripture,
@@ -160,15 +163,34 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
       if (starting) {
         return;
       }
+
       setStarting(true);
+
       try {
+        let userId = login!.userId.value;
+        if (!userId) {
+          const userInfo = await login!.login();
+          // Verify that authentication succeeded.
+          userId = login!.userId.value || userInfo!.id;
+          if (!userId) {
+            return;
+          }
+        }
+
         const created = await readingPlans.startReadingPlan(
           plan,
           selfPaced ? { selfPaced: true } : { cadenceId: chosen }
         );
+
         await readingPlans.selectReadingPlanProgress(created);
       } catch (error) {
         console.error("Failed to start reading plan:", error);
+
+        toast?.(
+          t("reading-plan-start-failed", {
+            defaultValue: "Couldn't start the reading plan. Please try again.",
+          })
+        );
       } finally {
         setStarting(false);
       }

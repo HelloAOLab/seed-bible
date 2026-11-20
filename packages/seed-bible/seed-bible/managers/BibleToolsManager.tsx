@@ -1044,7 +1044,7 @@ export interface OpenReadingPlansPaneOptions {
    * them still gets a working pane, just without the image picker.
    */
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
-  login?: Pick<LoginManager, "userId">;
+  login?: Pick<LoginManager, "userId" | "login">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
   toast?: (message: string) => void;
   /** Lets a plan's Share open the share sheet rather than only copy its link. */

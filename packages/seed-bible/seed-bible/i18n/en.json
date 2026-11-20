@@ -353,6 +353,7 @@
   "reading-plans-empty": "You don't have any reading plans yet. Create one to get started.",
   "untitled-reading-plan": "Untitled plan",
   "reading-plan-description_placeholder": "What is this plan about?",
+  "reading-plan-start-failed": "Couldn't start the reading plan. Please try again.",
   "discover": "Discover",
   "playlists": "Playlists",
   "playlist-history-session-summary": "{{time}} - {{percent}}% complete - {{item}}",

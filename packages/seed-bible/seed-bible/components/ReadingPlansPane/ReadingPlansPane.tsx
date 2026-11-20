@@ -54,7 +54,7 @@ interface ReadingPlansPaneProps {
   /** Loads chapters for the plan editor's inline scripture previews. */
   loadChapter?: ScriptureChapterLoader;
   os?: Pick<CasualOSManager, "recordFile" | "recordData">;
-  login?: Pick<LoginManager, "userId">;
+  login?: Pick<LoginManager, "userId" | "login">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
   /**
    * Navigates the reader to a scripture reading. Without it a plan's scripture
@@ -457,6 +457,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
         onPlayReadings={onPlayReadings}
         toast={toast}
         app={app}
+        login={login}
         onEdit={() => {
           const plan = readingPlans.selectedReadingPlan.peek();
           if (plan) {
