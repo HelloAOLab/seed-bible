@@ -210,7 +210,7 @@ describe("ColorPicker", () => {
       input.dispatchEvent(new Event("input", { bubbles: true }));
     });
     act(() => {
-      document.dispatchEvent(
+      document.activeElement!.dispatchEvent(
         new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
       );
     });
@@ -228,6 +228,62 @@ describe("ColorPicker", () => {
 
     expect(onChange).not.toHaveBeenCalled();
     expect(onCancel).toHaveBeenCalledTimes(2);
+  });
+
+  it("takes focus when it opens and gives it back to its swatch when it closes", () => {
+    setup();
+    // A click focuses the button it lands on; the synthetic one doesn't.
+    act(() => trigger().focus());
+    open();
+
+    expect(dialog()!.contains(document.activeElement)).toBe(true);
+
+    act(() => {
+      document.activeElement!.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    expect(dialog()).toBeNull();
+    expect(document.activeElement).toBe(trigger());
+  });
+
+  it("keeps Tab inside the picker", () => {
+    setup();
+    open();
+
+    const confirmButton = document.body.querySelector<HTMLButtonElement>(
+      ".sb-color-picker-confirm"
+    )!;
+    act(() => confirmButton.focus());
+    const tab = new KeyboardEvent("keydown", {
+      key: "Tab",
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      confirmButton.dispatchEvent(tab);
+    });
+
+    expect(tab.defaultPrevented).toBe(true);
+    expect(dialog()!.contains(document.activeElement)).toBe(true);
+    expect(document.activeElement).not.toBe(confirmButton);
+  });
+
+  it("cancels on Escape from the hex field", () => {
+    const { onChange, onCancel } = setup();
+    open();
+
+    act(() => hexInput().focus());
+    act(() => {
+      hexInput().dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(dialog()).toBeNull();
   });
 
   it("updates the saturation square from pointer drags without committing", () => {
