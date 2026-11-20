@@ -3069,7 +3069,10 @@ describe("BibleReader", () => {
     const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
     state.settings.settings.value = {
       ...state.settings.settings.value,
-      discoveredContent: { showContent: false },
+      discoveredContent: {
+        ...state.settings.settings.value.discoveredContent,
+        showContent: false,
+      },
     };
 
     // Simulate a dirty editor: capture the deferred action without running it.
