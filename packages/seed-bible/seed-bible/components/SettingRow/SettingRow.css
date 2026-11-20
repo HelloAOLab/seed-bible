@@ -1,0 +1,31 @@
+/* One setting: label (and description) at the start, control at the end.
+   `--sb-setting-row-padding` sets the space around it, for a list whose rows
+   sit closer or further apart. */
+.sb-setting-row {
+  --sb-setting-row-padding: 0.375rem 0.25rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: var(--sb-setting-row-padding);
+}
+
+.sb-setting-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.sb-setting-row-label {
+  font-size: var(--sb-font-size-14);
+  font-weight: 500;
+  color: var(--sb-font-color);
+}
+
+.sb-setting-row-description {
+  margin: 0;
+  font-size: var(--sb-font-size-12);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}

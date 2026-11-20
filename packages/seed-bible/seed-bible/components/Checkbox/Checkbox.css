@@ -1,0 +1,95 @@
+/* The shared checkbox: a real checkbox drawn by us, so it looks the same in
+   every browser, with its text beside it. The text takes the surrounding font
+   size and color. */
+.sb-checkbox {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.sb-checkbox-input {
+  appearance: none;
+  -webkit-appearance: none;
+  flex-shrink: 0;
+  position: relative;
+  box-sizing: border-box;
+  width: 1.125rem;
+  height: 1.125rem;
+  /* Centers the box on the label's first line (1.4em tall), so a label that
+     wraps keeps the box beside its start. */
+  margin: calc((1.4em - 1.125rem) / 2) 0 0;
+  font: inherit;
+  border: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  border-radius: var(--sb-radius-xs);
+  background-color: var(--sb-background);
+  cursor: pointer;
+  transition:
+    background-color var(--sb-duration-fast) ease,
+    border-color var(--sb-duration-fast) ease;
+}
+
+.sb-checkbox-input:is(:checked, :indeterminate) {
+  border-color: var(--sb-primary-color);
+  background-color: var(--sb-primary-color);
+}
+
+/* The tick: two borders of a box, turned. */
+.sb-checkbox-input:checked:not(:indeterminate)::before {
+  content: "";
+  position: absolute;
+  top: 0.0625rem;
+  left: 0.3125rem;
+  width: 0.3125rem;
+  height: 0.5625rem;
+  border: solid var(--sb-primary-font-color);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Some ticked: a dash. */
+.sb-checkbox-input:indeterminate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 0.5rem;
+  height: 2px;
+  margin: auto;
+  border-radius: 1px;
+  background-color: var(--sb-primary-font-color);
+}
+
+@media (hover: hover) {
+  .sb-checkbox-input:hover:not(:disabled, :checked, :indeterminate),
+  .sb-checkbox:hover
+    .sb-checkbox-input:not(:disabled, :checked, :indeterminate) {
+    border-color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+  }
+}
+
+.sb-checkbox-input:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+}
+
+.sb-checkbox-input:disabled,
+.sb-checkbox:has(.sb-checkbox-input:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* The label already dims the box with it. */
+.sb-checkbox .sb-checkbox-input:disabled {
+  opacity: 1;
+}
+
+.sb-checkbox-label {
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-checkbox-input {
+    transition: none;
+  }
+}

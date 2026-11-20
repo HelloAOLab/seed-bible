@@ -5,6 +5,9 @@ export * from "./CloseButton/CloseButton";
 export * from "./IconButton/IconButton";
 export * from "./BottomSheet/BottomSheet";
 export * from "./Dialog/Dialog";
+export * from "./Switch/Switch";
+export * from "./Checkbox/Checkbox";
+export * from "./SettingRow/SettingRow";
 export {
   ContextMenuWithButton,
   ContextMenuItem,
