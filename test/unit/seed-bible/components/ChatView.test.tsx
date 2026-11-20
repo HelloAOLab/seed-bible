@@ -1644,12 +1644,13 @@ describe("ChatView", () => {
 
   // ─── Tool-call events ────────────────────────────────────────────────────────
 
-  it("renders a tool-use notification for a single tool call", () => {
+  it("names the tool in the notification for a single tool call, with nothing to expand", () => {
     const author = createMockParticipant({ id: "author", name: "Author" });
     const toolCall = createMockToolCallMessage({
       id: "tool-1",
       authors: ["author"],
       timeMs: 1_000,
+      name: "get_cultural_context",
     });
     const chat = createMockChatSession({
       messages: signal([toolCall]),
@@ -1662,8 +1663,11 @@ describe("ChatView", () => {
     });
 
     const event = container.querySelector(".sb-chat-view-event");
-    expect(event).not.toBeNull();
-    expect(event?.textContent).toContain("Author used a tool");
+    expect(event?.textContent).toContain("Author used get_cultural_context");
+    expect(event?.querySelector("code")?.textContent).toBe(
+      "get_cultural_context"
+    );
+    expect(event?.querySelector("button")).toBeNull();
   });
 
   it("collapses consecutive tool calls from the same author into one notification", () => {
@@ -1726,8 +1730,107 @@ describe("ChatView", () => {
 
     const events = container.querySelectorAll(".sb-chat-view-event");
     expect(events).toHaveLength(2);
-    expect(events[0]?.textContent).toContain("Alice used a tool");
-    expect(events[1]?.textContent).toContain("Bob used a tool");
+    expect(events[0]?.textContent).toContain("Alice used search");
+    expect(events[1]?.textContent).toContain("Bob used search");
+  });
+
+  it("lists every tool of a group in the order they were used once expanded", () => {
+    const author = createMockParticipant({ id: "author", name: "Author" });
+    const names = [
+      "get_cultural_context",
+      "word_study",
+      "get_cultural_context",
+    ];
+    const toolCalls = names.map((name, index) =>
+      createMockToolCallMessage({
+        id: `tool-${index}`,
+        authors: ["author"],
+        timeMs: 1_000 * (index + 1),
+        name,
+      })
+    );
+    const chat = createMockChatSession({
+      messages: signal(toolCalls),
+      getMessageAuthors: vi.fn().mockReturnValue([author]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const toggle = container.querySelector(".sb-chat-view-event button");
+    expect(toggle).toBeInstanceOf(HTMLButtonElement);
+    expect(toggle?.textContent).toContain("Author used 3 tools");
+    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+    expect(container.querySelector(".sb-chat-view-event ol")).toBeNull();
+
+    act(() => {
+      (toggle as HTMLButtonElement).click();
+    });
+
+    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+    const listed = Array.from(
+      container.querySelectorAll(".sb-chat-view-event ol li")
+    ).map((item) => item.textContent?.trim());
+    expect(listed).toEqual(names);
+  });
+
+  it("hides the tool list again when an expanded group is pressed a second time", () => {
+    const author = createMockParticipant({ id: "author", name: "Author" });
+    const chat = createMockChatSession({
+      messages: signal([
+        createMockToolCallMessage({ id: "tool-1", authors: ["author"] }),
+        createMockToolCallMessage({ id: "tool-2", authors: ["author"] }),
+      ]),
+      getMessageAuthors: vi.fn().mockReturnValue([author]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const toggle = container.querySelector(
+      ".sb-chat-view-event button"
+    ) as HTMLButtonElement;
+    act(() => {
+      toggle.click();
+    });
+    act(() => {
+      toggle.click();
+    });
+
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(container.querySelector(".sb-chat-view-event ol")).toBeNull();
+  });
+
+  it("keeps the expand arrow's icon name out of what screen readers announce for the toggle", () => {
+    const author = createMockParticipant({ id: "author", name: "Author" });
+    const chat = createMockChatSession({
+      messages: signal([
+        createMockToolCallMessage({ id: "tool-1", authors: ["author"] }),
+        createMockToolCallMessage({ id: "tool-2", authors: ["author"] }),
+      ]),
+      getMessageAuthors: vi.fn().mockReturnValue([author]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const toggle = container.querySelector(".sb-chat-view-event button")!;
+    const announced = Array.from(toggle.childNodes)
+      .filter(
+        (node) =>
+          !(node instanceof Element) ||
+          node.getAttribute("aria-hidden") !== "true"
+      )
+      .map((node) => node.textContent)
+      .join("")
+      .trim();
+    expect(announced).toBe("Author used 2 tools");
   });
 
   it("breaks an author message group when a tool call happens between messages", () => {

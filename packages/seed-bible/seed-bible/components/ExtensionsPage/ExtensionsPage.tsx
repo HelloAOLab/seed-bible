@@ -5,10 +5,10 @@ import type { ExtensionListEntry } from "../../managers/ExtensionManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { MaterialIcon } from "../icons";
 import { SearchBar } from "../SearchBar/SearchBar";
+import { withSlot } from "../../i18n/withSlot";
 import {
   ExtensionTile,
   SourceLabel,
-  withSource,
 } from "../ExtensionConsentModal/ExtensionConsentModal";
 import {
   ExtensionInfoPage,
@@ -94,7 +94,7 @@ function ExtensionCard(props: {
             </span>
             <span className="sb-extensions-card-source">
               {sourceHost
-                ? withSource(
+                ? withSlot(
                     (host) => t("extension-consent-from", { host }),
                     <SourceLabel
                       source={{ sourceHost, uploader }}
