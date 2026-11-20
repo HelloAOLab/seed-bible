@@ -1,6 +1,9 @@
+import "../TextField/TextField.css";
+import "../Select/Select.css";
 import "./SearchableSelect.css";
 import { useRef, useState } from "preact/hooks";
-import type { ComponentChildren } from "preact";
+import type { ComponentChild, ComponentChildren } from "preact";
+import { Field, useFieldIds } from "../Field/Field";
 import {
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
@@ -15,7 +18,7 @@ export interface SearchableSelectOption {
 /**
  * The searchable picker used by Settings for the UI language: a closed
  * trigger that opens a filterable list. Selecting an option commits it and
- * closes the menu.
+ * closes the menu. The trigger is drawn like `Select`'s box.
  */
 export function SearchableSelect(props: {
   id?: string;
@@ -25,7 +28,8 @@ export function SearchableSelect(props: {
   searchPlaceholder: string;
   searchLabel?: string;
   emptyLabel: string;
-  buttonClassName?: string;
+  /** What the picker is for ("Language"), shown above it and naming the trigger for screen readers. */
+  label?: ComponentChild;
 }) {
   const {
     id,
@@ -35,8 +39,9 @@ export function SearchableSelect(props: {
     searchPlaceholder,
     searchLabel,
     emptyLabel,
-    buttonClassName = "",
+    label,
   } = props;
+  const ids = useFieldIds(id);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -56,15 +61,13 @@ export function SearchableSelect(props: {
     setQuery("");
   };
 
-  return (
+  const picker = (
     <div className="sb-language-picker">
       <button
         ref={triggerRef}
         type="button"
-        id={id}
-        className={`sb-language-picker-button${
-          buttonClassName ? ` ${buttonClassName}` : ""
-        }`}
+        id={ids.controlId}
+        className="sb-language-picker-button sb-text-input sb-select-input"
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((isOpen) => !isOpen)}
@@ -179,5 +182,12 @@ export function SearchableSelect(props: {
         </>
       )}
     </div>
+  );
+  return label ? (
+    <Field ids={ids} label={label}>
+      {picker}
+    </Field>
+  ) : (
+    picker
   );
 }

@@ -59,6 +59,32 @@ export function fieldDescribedBy(
   return list.length ? list.join(" ") : undefined;
 }
 
+const isShown = (node: ComponentChild) =>
+  node !== undefined && node !== null && node !== false;
+
+/**
+ * Everything a field's control needs from the text around it: the ids, whether
+ * an error is showing, and the `aria-describedby` to put on the control.
+ */
+export function useFieldWiring(props: {
+  id?: string;
+  hint?: ComponentChild;
+  error?: ComponentChild;
+  /** A count is showing under the control. */
+  count?: boolean;
+  /** An `aria-describedby` the caller gave, which stays first. */
+  describedBy?: string;
+}) {
+  const ids = useFieldIds(props.id);
+  const hasError = isShown(props.error);
+  const describedBy = fieldDescribedBy(
+    ids,
+    { hint: isShown(props.hint), count: !!props.count, error: hasError },
+    props.describedBy
+  );
+  return { ids, hasError, describedBy };
+}
+
 /** The label above a field's control, and the error, hint and count under it. */
 export function Field({
   ids,
@@ -78,8 +104,8 @@ export function Field({
   children: ComponentChildren;
 }) {
   const { t } = useI18n();
-  const hasError = error !== undefined && error !== null && error !== false;
-  const hasHint = hint !== undefined && hint !== null && hint !== false;
+  const hasError = isShown(error);
+  const hasHint = isShown(hint);
   return (
     <div className={["sb-field", className].filter(Boolean).join(" ")}>
       <label

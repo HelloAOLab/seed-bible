@@ -49,6 +49,7 @@ import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
 import { SettingRow } from "../SettingRow/SettingRow";
 import { Switch } from "../Switch/Switch";
+import { SelectField } from "../Select/Select";
 
 function FlagImg({ cc }: { cc: string }) {
   return (
@@ -539,36 +540,31 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           </>
         )}
 
-        <div className="sb-settings-field-row">
-          <label className="sb-settings-field-label" htmlFor="sb-font-select">
-            {t("scripture-font", { defaultValue: "Scripture Font" })}
-          </label>
-          <select
-            id="sb-font-select"
-            className="sb-settings-language-select"
-            value={current.fontOverride ?? "default"}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-              if (target.value === "default") {
-                settings.setFontOverride(undefined);
-              } else {
-                settings.setFontOverride(target.value);
-              }
-            }}
-          >
-            {[
-              {
-                value: "default",
-                name: t("default", { defaultValue: "Default" }),
-              },
-              ...CUSTOMIZATION_FONT_PRESETS,
-            ].map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          id="sb-font-select"
+          className="sb-settings-select-field"
+          label={t("scripture-font", { defaultValue: "Scripture Font" })}
+          value={current.fontOverride ?? "default"}
+          onValueChange={(value) => {
+            if (value === "default") {
+              settings.setFontOverride(undefined);
+            } else {
+              settings.setFontOverride(value);
+            }
+          }}
+        >
+          {[
+            {
+              value: "default",
+              name: t("default", { defaultValue: "Default" }),
+            },
+            ...CUSTOMIZATION_FONT_PRESETS,
+          ].map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.name}
+            </option>
+          ))}
+        </SelectField>
 
         <h3 className="sb-settings-subheading">
           {t("scripture-elements", { defaultValue: "Scripture elements" })}
@@ -682,135 +678,93 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
         <h3 className="sb-settings-subheading">
           {t("session", { defaultValue: "Session" })}
         </h3>
-        <div className="sb-settings-field-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-verse-selection-effects"
-          >
-            {t("verse-selection-effects", {
-              defaultValue: "Verse Selection Effects",
+        <SelectField
+          id="sb-verse-selection-effects"
+          className="sb-settings-select-field"
+          label={t("verse-selection-effects", {
+            defaultValue: "Verse Selection Effects",
+          })}
+          value={current.verseSelectionEffects ?? "default"}
+          onValueChange={(value) => {
+            settings.setVerseSelectionEffects(value as VerseSelectionEffects);
+          }}
+        >
+          <option value="default">
+            {t("default", { defaultValue: "Default" })}
+          </option>
+          <option value="enabled">
+            {t("enabled", { defaultValue: "Enabled" })}
+          </option>
+          <option value="disabled">
+            {t("disabled", { defaultValue: "Disabled" })}
+          </option>
+        </SelectField>
+        <SelectField
+          id="sb-viewing-area-indicators"
+          className="sb-settings-select-field"
+          label={t("viewing-area-indicators", {
+            defaultValue: "Viewing areas",
+          })}
+          hint={t("viewing-area-indicators-desc", {
+            count: VIEWING_AREA_HOSTS_ONLY_MIN_USERS,
+            defaultValue:
+              "Default follows the session: everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more. Hosts only hides the other bars on your screen, even when the session is showing everyone. Everyone cannot show those bars when the host has set the session to hosts only.",
+          })}
+          value={current.viewingAreaIndicators ?? "default"}
+          onValueChange={(value) => {
+            settings.setViewingAreaIndicators(value as ViewingAreaIndicators);
+          }}
+        >
+          <option value="default">
+            {t("default", { defaultValue: "Default" })}
+          </option>
+          <option value="everyone">
+            {t("session-settings-viewing-areas-everyone", {
+              defaultValue: "Everyone",
             })}
-          </label>
-
-          <select
-            id="sb-verse-selection-effects"
-            className="sb-settings-language-select"
-            value={current.verseSelectionEffects ?? "default"}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-
-              settings.setVerseSelectionEffects(
-                target.value as VerseSelectionEffects
-              );
-            }}
-          >
-            <option value="default">
-              {t("default", { defaultValue: "Default" })}
-            </option>
-            <option value="enabled">
-              {t("enabled", { defaultValue: "Enabled" })}
-            </option>
-            <option value="disabled">
-              {t("disabled", { defaultValue: "Disabled" })}
-            </option>
-          </select>
-        </div>
-        <div className="sb-settings-field-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-viewing-area-indicators"
-          >
-            {t("viewing-area-indicators", {
-              defaultValue: "Viewing areas",
+          </option>
+          <option value="hosts-only">
+            {t("session-settings-viewing-areas-hosts-only", {
+              defaultValue: "Hosts only",
             })}
-          </label>
-
-          <select
-            id="sb-viewing-area-indicators"
-            className="sb-settings-language-select"
-            value={current.viewingAreaIndicators ?? "default"}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-
-              settings.setViewingAreaIndicators(
-                target.value as ViewingAreaIndicators
-              );
-            }}
-          >
-            <option value="default">
-              {t("default", { defaultValue: "Default" })}
-            </option>
-            <option value="everyone">
-              {t("session-settings-viewing-areas-everyone", {
-                defaultValue: "Everyone",
-              })}
-            </option>
-            <option value="hosts-only">
-              {t("session-settings-viewing-areas-hosts-only", {
-                defaultValue: "Hosts only",
-              })}
-            </option>
-          </select>
-          <p className="sb-settings-field-description">
-            {t("viewing-area-indicators-desc", {
-              count: VIEWING_AREA_HOSTS_ONLY_MIN_USERS,
-              defaultValue:
-                "Default follows the session: everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more. Hosts only hides the other bars on your screen, even when the session is showing everyone. Everyone cannot show those bars when the host has set the session to hosts only.",
-            })}
-          </p>
-        </div>
+          </option>
+        </SelectField>
         <h3 className="sb-settings-subheading">
           {t("display", { defaultValue: "Display" })}
         </h3>
 
-        <div className="sb-settings-field-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-ui-size-select"
-          >
-            {t("ui-size", { defaultValue: "UI size" })}
-          </label>
-          <select
-            id="sb-ui-size-select"
-            className="sb-settings-language-select"
-            value={current.uiSize}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-              settings.setUISize(target.value as UISize);
-            }}
-          >
-            {UI_SIZE_OPTIONS.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          id="sb-ui-size-select"
+          className="sb-settings-select-field"
+          label={t("ui-size", { defaultValue: "UI size" })}
+          value={current.uiSize}
+          onValueChange={(value) => {
+            settings.setUISize(value as UISize);
+          }}
+        >
+          {UI_SIZE_OPTIONS.map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
+          ))}
+        </SelectField>
 
-        <div className="sb-settings-field-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-book-orientation-select"
-          >
-            {t("book-order", { defaultValue: "Book order" })}
-          </label>
-          <select
-            id="sb-book-orientation-select"
-            className="sb-settings-language-select"
-            value={current.bookOrientation}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-              settings.setBookOrientation(target.value as BookOrientation);
-            }}
-          >
-            <option value="traditional">
-              {t("traditional", { defaultValue: "Traditional" })}
-            </option>
-            <option value="tanakh">
-              {t("tanakh", { defaultValue: "Tanakh" })}
-            </option>
-          </select>
-        </div>
+        <SelectField
+          id="sb-book-orientation-select"
+          className="sb-settings-select-field"
+          label={t("book-order", { defaultValue: "Book order" })}
+          value={current.bookOrientation}
+          onValueChange={(value) => {
+            settings.setBookOrientation(value as BookOrientation);
+          }}
+        >
+          <option value="traditional">
+            {t("traditional", { defaultValue: "Traditional" })}
+          </option>
+          <option value="tanakh">
+            {t("tanakh", { defaultValue: "Tanakh" })}
+          </option>
+        </SelectField>
         <SettingRow
           label={t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
         >
@@ -1328,12 +1282,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
           )}
           <li>
             <div className="sb-settings-field-row">
-              <span className="sb-settings-field-label">
-                {t("language", { defaultValue: "Language" })}
-              </span>
               <SearchableSelect
                 id="sb-language-select"
-                buttonClassName="sb-settings-language-select"
+                label={t("language", { defaultValue: "Language" })}
                 value={language}
                 options={availableLanguages.map((languageCode) => {
                   const meta = LANG_META[languageCode];

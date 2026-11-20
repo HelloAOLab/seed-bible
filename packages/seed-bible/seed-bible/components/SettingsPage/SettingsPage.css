@@ -276,6 +276,12 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
 
+/* Where a dropdown field sits in the settings list: the padding the older
+   rows have, which aren't `SettingRow` or `SelectField` yet. */
+.sb-settings-select-field {
+  padding: 0.25rem;
+}
+
 .sb-settings-language-select {
   border: none;
   border-radius: var(--sb-radius-md);
@@ -309,12 +315,6 @@
 
 .sb-language-picker {
   position: relative;
-}
-
-.sb-language-picker-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .sb-language-picker-overlay {

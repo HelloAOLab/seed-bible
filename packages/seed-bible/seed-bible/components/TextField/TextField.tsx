@@ -1,11 +1,6 @@
 import "./TextField.css";
 import type { JSX, Ref } from "preact";
-import {
-  Field,
-  fieldDescribedBy,
-  useFieldIds,
-  type FieldTextProps,
-} from "../Field/Field";
+import { Field, useFieldWiring, type FieldTextProps } from "../Field/Field";
 import { useForwardedRef } from "../useForwardedRef";
 
 export type TextInputSize = "sm" | "md";
@@ -130,19 +125,18 @@ export function TextField(props: TextFieldProps) {
     invalid = false,
     ...inputProps
   } = props;
-  const ids = useFieldIds(id as string | undefined);
-  const hasError = error !== undefined && error !== null && error !== false;
-  const hasHint = hint !== undefined && hint !== null && hint !== false;
   const max = inputProps.maxLength as number | undefined;
   const count =
     showCount && max !== undefined
       ? { used: inputProps.value?.length ?? 0, max }
       : undefined;
-  const describedBy = fieldDescribedBy(
-    ids,
-    { hint: hasHint, count: !!count, error: hasError },
-    inputProps["aria-describedby"] as string | undefined
-  );
+  const { ids, hasError, describedBy } = useFieldWiring({
+    id: id as string | undefined,
+    hint,
+    error,
+    count: !!count,
+    describedBy: inputProps["aria-describedby"] as string | undefined,
+  });
   return (
     <Field
       ids={ids}
