@@ -152,6 +152,31 @@ describe("Checkbox", () => {
 
     expect(box().indeterminate).toBe(true);
   });
+
+  it("hands a callback inputRef the element once, not again on every re-render", () => {
+    const inputRef = vi.fn();
+    function Parent(props: { count: number }) {
+      return (
+        <Checkbox
+          label={`Picked ${props.count}`}
+          checked={false}
+          onToggled={() => {}}
+          inputRef={inputRef}
+        />
+      );
+    }
+    act(() => {
+      render(<Parent count={1} />, container);
+    });
+    act(() => {
+      render(<Parent count={2} />, container);
+    });
+    act(() => {
+      render(<Parent count={3} />, container);
+    });
+
+    expect(inputRef.mock.calls).toEqual([[box()]]);
+  });
 });
 
 describe("CheckboxIndicator", () => {

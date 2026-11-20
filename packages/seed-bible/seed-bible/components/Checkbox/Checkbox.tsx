@@ -1,6 +1,6 @@
 import "./Checkbox.css";
 import type { ComponentChild, JSX, Ref } from "preact";
-import { useLayoutEffect, useRef } from "preact/hooks";
+import { useCallback, useLayoutEffect, useRef } from "preact/hooks";
 
 export type CheckboxProps = Omit<
   JSX.InputHTMLAttributes<HTMLInputElement>,
@@ -49,18 +49,24 @@ export function Checkbox({
       input.current.indeterminate = indeterminate;
     }
   });
+  // Kept the same between renders: Preact detaches and reattaches a ref that
+  // changes, which would call a callback `inputRef` on every re-render.
+  const setInput = useCallback(
+    (element: HTMLInputElement | null) => {
+      input.current = element;
+      if (typeof inputRef === "function") {
+        inputRef(element);
+      } else if (inputRef) {
+        inputRef.current = element;
+      }
+    },
+    [inputRef]
+  );
   const classes = [className, classAttribute].filter(Boolean).join(" ");
   const box = (
     <input
       {...rest}
-      ref={(element: HTMLInputElement | null) => {
-        input.current = element;
-        if (typeof inputRef === "function") {
-          inputRef(element);
-        } else if (inputRef) {
-          inputRef.current = element;
-        }
-      }}
+      ref={setInput}
       type="checkbox"
       className={["sb-checkbox-input", label === undefined && classes]
         .filter(Boolean)
