@@ -184,39 +184,6 @@
   gap: 12px;
 }
 
-.toggle {
-  position: relative;
-  width: 50px;
-  height: 28px;
-  cursor: pointer;
-}
-
-.toggle input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.track {
-  position: absolute;
-  inset: 0;
-  background: #ccc;
-  border-radius: var(--sb-radius-full);
-  transition: background var(--sb-duration-base);
-}
-
-.thumb {
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  width: 18px;
-  height: 18px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: var(--sb-shadow-raised);
-  transition: transform var(--sb-duration-base);
-}
-
 .label {
   font-size: var(--sb-font-size-14);
   color: #555;
