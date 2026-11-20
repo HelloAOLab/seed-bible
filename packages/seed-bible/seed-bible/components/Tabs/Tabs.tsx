@@ -1683,6 +1683,9 @@ function SaveCategoryPickerContent(props: {
     const nextSelection = [...selectedCategories.value];
     if (nextSelection.length === 0) return;
 
+    const failureMessage = t("save-failed", {
+      defaultValue: "Couldn't save. Please try again.",
+    });
     isSaving.value = true;
     try {
       // New staged folder names are created as part of addSave /
@@ -1692,7 +1695,7 @@ function SaveCategoryPickerContent(props: {
         if (!saveId) return;
         await saves.setSaveCategories(saveId, nextSelection);
       } else {
-        await saves.addSave(
+        const saved = await saves.addSave(
           location.translationId,
           location.bookId,
           location.chapterNumber,
@@ -1701,8 +1704,17 @@ function SaveCategoryPickerContent(props: {
             ...(location.verse !== undefined ? { verse: location.verse } : {}),
           }
         );
+        // Declining to sign in is the user's own choice, not a failure to
+        // report; the window just closes as it always has.
+        if (!saved && state.login.userId.value) {
+          state.app.toast(failureMessage);
+          return;
+        }
       }
       onClose();
+    } catch (error) {
+      console.warn("Failed to save:", error);
+      state.app.toast(failureMessage);
     } finally {
       isSaving.value = false;
     }

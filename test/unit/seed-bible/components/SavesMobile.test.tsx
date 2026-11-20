@@ -5,7 +5,10 @@ import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import { Sidebar } from "@packages/seed-bible/seed-bible/components/Tabs/Tabs";
 import type { ModalRegistration } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
+import {
+  createTestSeedBibleState,
+  waitFor,
+} from "../testUtils/createTestSeedBibleState";
 import { TestHost } from "./TestHost";
 
 vi.mock("../i18n/I18nManager", () => ({
@@ -286,6 +289,51 @@ describe("mobile saves screen", () => {
       expect(state.saves.saves.value[0]!.id).toBe(saveId);
     });
 
+    it("keeps the picker open and says so when the saves can't load", async () => {
+      // Offline: the load fails, and so does the retry the Save button makes.
+      // Only the saves read fails, so other records read at sign-in don't
+      // muddy the test. Signing in again is what makes the load run against
+      // this mock; the one in `beforeEach` has already succeeded.
+      vi.spyOn(state.os, "getData").mockImplementation(
+        async (_recordName: string, address: string) => {
+          if (address === "saves") {
+            throw new TypeError("Failed to fetch");
+          }
+          return {
+            success: false,
+            errorCode: "data_not_found",
+            errorMessage: "Data not found",
+          };
+        }
+      );
+      await act(async () => {
+        const sessionKey = state.os.sessionKey.value;
+        state.os.sessionKey.value = null;
+        state.os.sessionKey.value = sessionKey;
+      });
+      const openModal = vi.spyOn(state.modals, "openModal");
+      const closeModal = vi.spyOn(state.modals, "closeModal");
+      const toast = vi.spyOn(state.app, "toast");
+      await openTabsList();
+
+      await chooseFromSelectedTabMenu("Save chapter");
+      const picker = renderModalContent(openModal.mock.calls[0]![0]);
+      await act(async () => {
+        picker
+          .querySelector<HTMLButtonElement>(".sb-save-picker-save")!
+          .click();
+      });
+      // The Save button retries the load before giving up.
+      await act(async () => {
+        await waitFor(() => toast.mock.calls.length > 0);
+      });
+
+      expect(toast).toHaveBeenCalledWith("Couldn't save. Please try again.");
+      expect(closeModal).not.toHaveBeenCalled();
+      expect(state.saves.saves.value).toEqual([]);
+      expect(state.os.recordData).not.toHaveBeenCalled();
+    });
+
     it("stars the tab as soon as the chapter is saved from its menu", async () => {
       const openModal = vi.spyOn(state.modals, "openModal");
       await openTabsList();
@@ -301,8 +349,8 @@ describe("mobile saves screen", () => {
 
       // The picker's Save doesn't wait for the write, so the row repaints
       // after the click's act() has already returned.
-      await vi.waitFor(() => {
-        expect(savedMarker(selectedRow())).not.toBeNull();
+      await act(async () => {
+        await waitFor(() => savedMarker(selectedRow()) !== null);
       });
       expect(state.saves.saves.value).toHaveLength(1);
     });

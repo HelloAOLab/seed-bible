@@ -183,8 +183,11 @@ export function createNavigationManager(
         // turn it into an in-page update, and things only read while the app
         // starts (a session to join, a customization) would be skipped. The
         // native apps rely on this to open links handed to them by the OS.
+        // `canIntercept` is false in the iOS app, whose `capacitor://` origin
+        // WebKit treats as opaque, and `intercept()` there throws.
         if (
           disposed ||
+          !event.canIntercept ||
           event.downloadRequest ||
           event.navigationType === "reload" ||
           !isNavigationToSameOrigin(event.destination?.url)

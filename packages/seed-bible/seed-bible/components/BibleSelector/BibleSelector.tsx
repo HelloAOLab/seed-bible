@@ -294,31 +294,33 @@ const SearchBar = (props: {
         <div class="testament-selection starterAnimation">
           {!isMobile.value && (
             <>
-              <div
-                class="sidebar-translation-selector flex-between-center"
-                style={
-                  tourStepId === "selector-translation"
-                    ? SPOTLIGHT_STYLE
-                    : undefined
-                }
-                onClick={() => {
-                  selectingTranslation.value = !selectingTranslation.value;
-                  setSearch("");
-                }}
-              >
-                <span class="sidebar-selected-title flex-align-center">
-                  {selectedTranslation?.value?.shortName}
-                </span>
-                <span
-                  style={{
-                    transition: "transform var(--sb-duration-slow)",
+              {!bibleSelectorState.picking.value && (
+                <div
+                  class="sidebar-translation-selector flex-between-center"
+                  style={
+                    tourStepId === "selector-translation"
+                      ? SPOTLIGHT_STYLE
+                      : undefined
+                  }
+                  onClick={() => {
+                    selectingTranslation.value = !selectingTranslation.value;
+                    setSearch("");
                   }}
-                  class={`material-symbols-outlined ${selectingTranslation.value ? "upside-down" : ""}`}
-                  // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
                 >
-                  expand_more
-                </span>
-              </div>
+                  <span class="sidebar-selected-title flex-align-center">
+                    {selectedTranslation?.value?.shortName}
+                  </span>
+                  <span
+                    style={{
+                      transition: "transform var(--sb-duration-slow)",
+                    }}
+                    class={`material-symbols-outlined ${selectingTranslation.value ? "upside-down" : ""}`}
+                    // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
+                  >
+                    expand_more
+                  </span>
+                </div>
+              )}
 
               <div
                 className="sb-selector-book-search"

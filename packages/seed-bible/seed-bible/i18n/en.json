@@ -1607,7 +1607,6 @@
   "playlist-step-video": "Video",
   "playlist-step-audio": "Audio",
   "playlist-step-link": "Link",
-  "playlist-step-compare-label": "Compare verses",
   "playlist-editor-video-link-placeholder": "https://youtube.com/watch?v=…",
   "playlist-editor-link-placeholder": "https://",
   "custom-content-cleanup-titles": "Cleanup titles",
@@ -1621,5 +1620,6 @@
   "screenshot-previous": "Previous screenshot",
   "screenshot-next": "Next screenshot",
   "screenshot-close": "Close screenshot viewer",
-  "screenshot-name": "Screenshot {{n}}"
+  "screenshot-name": "Screenshot {{n}}",
+  "save-failed": "Couldn't save. Please try again."
 }
