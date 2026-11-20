@@ -596,7 +596,12 @@ function makeAudible(session: ListeningSession): void {
 function beginSession(session: ListeningSession): void {
   const { readingState } = session;
   sessions.set(readingState, session);
-  const hide = audioPlayback?.show(readingState, session.controller);
+  // `let` so the effect can clear it when the playlist hides the controls and
+  // restore a fresh one when it gives the tab back.
+  let hide: (() => void) | undefined = audioPlayback?.show(
+    readingState,
+    session.controller
+  );
 
   // Moving to another step's verses in the same chapter ends it too.
   const chapterKey = () =>
@@ -607,7 +612,25 @@ function beginSession(session: ListeningSession): void {
     // including the moment that playlist lets the tab go.
     const held = playlistHoldsReadingState(readingState);
     const key = chapterKey();
+
     if (key === opened) {
+      // Right chapter. For a whole-chapter session, the playlist hides the
+      // controls so they're absent while it runs and come back paused once it
+      // ends — the user never sees them disappear mid-read, and they return
+      // already in the right state without any auto-play.
+      if (session.passage === null) {
+        if (held && hide !== undefined) {
+          untracked(() => {
+            const h = hide!;
+            hide = undefined;
+            h();
+          });
+        } else if (!held && hide === undefined && !session.ended) {
+          untracked(() => {
+            hide = audioPlayback?.show(readingState, session.controller);
+          });
+        }
+      }
       return;
     }
     // A playlist that borrowed this tab keeps a paused whole-chapter
@@ -615,6 +638,15 @@ function beginSession(session: ListeningSession): void {
     // Listening to a playlist step (passage set) still ends when that step's
     // verses change — `held` alone would block that.
     if (held && session.passage === null) {
+      // Hide the controls while the playlist has the tab; they come back
+      // paused at the same position once the playlist ends.
+      if (hide !== undefined) {
+        untracked(() => {
+          const h = hide!;
+          hide = undefined;
+          h();
+        });
+      }
       return;
     }
     untracked(() => endSession(session));
@@ -1335,10 +1367,9 @@ export function isAudioPlayToolVisible(
   if (ctx.surface === "quick-toolbar" && ctx.app?.isMinimalEmbed?.value) {
     return false;
   }
-  // During a playlist it reads scripture steps only; a step's own verses
-  // when it has them (see `stepPassage`).
-  const step = ctx.playlists.playing.value?.currentItem.value;
-  if (step && (step.type !== "bible-verse" || step.compare)) {
+  // Hidden entirely while a playlist is running: the playlist owns the tab's
+  // navigation and the Audio Reader's controls come back once it ends.
+  if (ctx.playlists.playing.value) {
     return false;
   }
   return (

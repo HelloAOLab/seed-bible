@@ -100,25 +100,13 @@ describe("isAudioPlayToolVisible (#1607)", () => {
     expect(isAudioPlayToolVisible(ctx, NO_VOICES)).toBe(false);
   });
 
-  // A playlist (or a reading plan's day) leaves it to play scripture.
   const playingStep = (item: unknown) => ({
     currentItem: signal(item),
   });
 
-  it("shows while a playlist is on a scripture step", () => {
-    const ctx = createContext({
-      surface: "mobile-navigation-bar",
-      isMobile: true,
-      playing: playingStep({
-        type: "bible-verse",
-        ref: { bookId: "GEN", chapter: 1, verse: 1 },
-      }),
-    });
-    expect(isAudioPlayToolVisible(ctx, NO_VOICES)).toBe(true);
-  });
-
-  it("is hidden while a playlist is on a step that isn't plain scripture", () => {
+  it("is hidden while a playlist is running, regardless of step type", () => {
     for (const item of [
+      { type: "bible-verse", ref: { bookId: "GEN", chapter: 1, verse: 1 } },
       { type: "html", html: "<p>Pray</p>" },
       { type: "link", url: "https://youtu.be/abc" },
       {
@@ -166,7 +154,7 @@ describe("isAudioPlayToolVisible speech fallback (#1769)", () => {
     expect(isAudioPlayToolVisible(ctx, voicesFor("en"))).toBe(false);
   });
 
-  it("reads a playlist's scripture step aloud too", () => {
+  it("is hidden during a playlist even when speech is available", () => {
     const ctx = createContext({
       surface: "mobile-navigation-bar",
       isMobile: true,
@@ -178,7 +166,7 @@ describe("isAudioPlayToolVisible speech fallback (#1769)", () => {
         }),
       },
     });
-    expect(isAudioPlayToolVisible(ctx, voicesFor("en"))).toBe(true);
+    expect(isAudioPlayToolVisible(ctx, voicesFor("en"))).toBe(false);
   });
 
   it("stays hidden when no installed voice can read the translation's language", () => {
