@@ -2680,7 +2680,10 @@ describe("createPlaylistManager", () => {
         render(
           h(I18nProvider, {
             i18n: lastI18n,
-            children: h(ModalHost, { manager: lastModals }),
+            children: h(ModalHost, {
+              manager: lastModals,
+              isMobile: signal(false),
+            }),
           }),
           container
         );
