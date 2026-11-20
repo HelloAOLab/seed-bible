@@ -6,6 +6,8 @@
    - `--sb-checkbox-color`: the fill and border when ticked.
    - `--sb-checkbox-mark-color`: the tick and dash, drawn on that fill.
    - `--sb-checkbox-border-color`: the border when not ticked.
+   - `--sb-checkbox-hover-border-color`: that border while the pointer is over
+     the box or its label.
    `CheckboxIndicator` draws the same box on a <span>, for inside a control
    that does the ticking itself; the classes beside each state below
    (`sb-checkbox-on` and the rest) are its versions of them. */
@@ -96,7 +98,10 @@
     ),
   .sb-checkbox:hover
     .sb-checkbox-input:not(:disabled, :checked, :indeterminate) {
-    border-color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+    border-color: var(
+      --sb-checkbox-hover-border-color,
+      color-mix(in srgb, var(--sb-font-color), transparent 20%)
+    );
   }
 }
 
