@@ -8,7 +8,8 @@
       "toolbarTitle": "Listen",
       "play": "Play chapter audio",
       "pause": "Pause chapter audio",
-      "no-audio": "No audio is available for this chapter."
+      "no-audio": "No audio is available for this chapter.",
+      "tap-to-listen": "Tap to listen along"
     },
     "af": {
       "title": "Oudio-leser",
