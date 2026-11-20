@@ -32,6 +32,7 @@ import {
   makeCompleteTranslation,
 } from "./testUtils/mockBibleApiData";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { Mock } from "vitest";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
 
@@ -142,7 +143,8 @@ function createSelectorState(
     createSavesManagerMock() as any,
     createNavigationManager(),
     login as any,
-    i18n as any
+    i18n as any,
+    createModalManager()
   );
 }
 

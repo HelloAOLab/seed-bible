@@ -17,7 +17,7 @@ import {
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { TranslationList } from "../TranslationList/TranslationList";
 import { TranslationViewModeMenu } from "../TranslationList/TranslationViewModeMenu";
-import { computed, Signal, signal } from "@preact/signals";
+import { computed, signal } from "@preact/signals";
 import {
   computePopover,
   TutorialPopoverContent,
@@ -204,9 +204,6 @@ export function BibleSelector(props: BibleSelectorProps) {
             tutorial={tutorial}
           />
         </div>
-        {selectorState.showApocryphaInfo.value && (
-          <ApocryphaInfo bibleSelectorState={selectorState} />
-        )}
       </div>
 
       {tourStep && (
@@ -583,7 +580,7 @@ const SideBarBooks = (props: {
     isBook,
     ghostArray,
     apocryphaAvailable,
-    showApocryphaInfo,
+    openApocryphaInfo,
   } = bibleSelectorState;
 
   const RenderBooksByTestament = computed(() => {
@@ -850,7 +847,7 @@ const SideBarBooks = (props: {
               >
                 <span class="testament-title">
                   {t("apocrypha", { defaultValue: "Apocrypha" })}
-                  <ApocryphaInfoButton showApocryphaInfo={showApocryphaInfo} />
+                  <ApocryphaInfoButton onOpen={openApocryphaInfo} />
                 </span>
                 {renderBooksGrid(APBooks, ntColumns, 2, undefined, true)}
               </div>
@@ -904,9 +901,7 @@ const SideBarBooks = (props: {
             <span class="testament-title testament-title--with-action">
               {config.title}
 
-              {lst === 3 && (
-                <ApocryphaInfoButton showApocryphaInfo={showApocryphaInfo} />
-              )}
+              {lst === 3 && <ApocryphaInfoButton onOpen={openApocryphaInfo} />}
             </span>
           )}
           {renderBooksGrid(config.books, singleColumns)}
@@ -1934,62 +1929,7 @@ const TranslationInfo = (props: {
   );
 };
 
-const ApocryphaInfo = (props: { bibleSelectorState: BibleSelectorState }) => {
-  const { showApocryphaInfo } = props.bibleSelectorState;
-  const { t } = useI18n();
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") showApocryphaInfo.value = false;
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
-
-  return (
-    <>
-      <div
-        class="sb-apocrypha-info-backdrop"
-        onClick={(event) => {
-          event.stopPropagation();
-          showApocryphaInfo.value = false;
-        }}
-      />
-      <div
-        id="apocrypha-info"
-        class="sb-apocrypha-info-overlay"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="apocrypha-info-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div class="sb-apocrypha-info">
-          <div class="sb-apocrypha-info-header">
-            <h2 class="sb-apocrypha-info-title">
-              {t("about-apocrypha", {
-                defaultValue: "About the Apocrypha",
-              })}
-            </h2>
-
-            <CloseButton
-              onClose={(event) => {
-                event.stopPropagation();
-                showApocryphaInfo.value = false;
-              }}
-            />
-          </div>
-
-          <div class="sb-apocrypha-info-content">
-            {t("apocrypha-info-text", {
-              defaultValue:
-                "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
-            })}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-};
-const ApocryphaInfoButton = (props: { showApocryphaInfo: Signal<boolean> }) => {
+const ApocryphaInfoButton = (props: { onOpen: () => void }) => {
   const { t } = useI18n();
 
   return (
@@ -2001,12 +1941,12 @@ const ApocryphaInfoButton = (props: { showApocryphaInfo: Signal<boolean> }) => {
         defaultValue: "About the Apocrypha",
       })}
       onClick={() => {
-        props.showApocryphaInfo.value = true;
+        props.onOpen();
       }}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          props.showApocryphaInfo.value = true;
+          props.onOpen();
         }
       }}
     >

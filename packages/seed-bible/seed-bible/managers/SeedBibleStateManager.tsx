@@ -1053,7 +1053,8 @@ export function createSeedBibleState(
     saves,
     navigation,
     login,
-    i18n
+    i18n,
+    modals
   );
   const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
