@@ -1,5 +1,6 @@
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
+import { signal } from "@preact/signals";
 import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import { Sidebar } from "@packages/seed-bible/seed-bible/components/Tabs/Tabs";
 import type { ModalRegistration } from "@packages/seed-bible/seed-bible/managers/ModalManager";
@@ -73,6 +74,9 @@ describe("mobile saves screen", () => {
     document.body.appendChild(container);
     modalContainers = [];
 
+    // Tabs persist to localStorage, so a test that opens one would otherwise
+    // hand the next test's state an extra, selected tab.
+    localStorage.clear();
     state = await createTestSeedBibleState();
 
     // Saves only load and persist for a signed-in user, and the records
@@ -170,18 +174,47 @@ describe("mobile saves screen", () => {
     });
   }
 
-  describe("the selected tab row's save button", () => {
-    const rowSaveButton = () =>
-      container.querySelector<HTMLButtonElement>(".sb-tab-save-button");
+  describe("saving a tab's chapter", () => {
+    /** The tab list's rows, without the "add a tab" row that ends it. */
+    const tabRows = () =>
+      Array.from(container.querySelectorAll<HTMLElement>(".sb-tab-row")).filter(
+        (row) => row.querySelector(".sb-tab-main-title")
+      );
+    const selectedRow = () =>
+      container.querySelector<HTMLElement>(".sb-tab-row-selected")!;
+    const savedMarker = (row: HTMLElement) =>
+      row.querySelector<HTMLElement>(".sb-tab-saved-marker");
 
-    it("opens the folder picker for the row's whole chapter", async () => {
+    /** The items of the selected tab's options menu, once it's open. */
+    async function openSelectedTabMenu() {
+      const menuButton = selectedRow().querySelector<HTMLButtonElement>(
+        "[aria-label='Open tab menu']"
+      );
+      expect(menuButton).not.toBeNull();
+      await act(async () => {
+        menuButton!.click();
+      });
+      return Array.from(
+        document.querySelectorAll<HTMLElement>(".sb-tab-menu-item")
+      );
+    }
+
+    /** Opens the selected tab's options menu and picks an item by its label. */
+    async function chooseFromSelectedTabMenu(label: string) {
+      const item = (await openSelectedTabMenu()).find(
+        (element) => element.textContent?.trim() === label
+      );
+      expect(item).toBeDefined();
+      await act(async () => {
+        item!.click();
+      });
+    }
+
+    it("offers Save chapter in the tab's menu, which opens the folder picker for the whole chapter", async () => {
       const openModal = vi.spyOn(state.modals, "openModal");
       await openTabsList();
 
-      expect(rowSaveButton()).not.toBeNull();
-      await act(async () => {
-        rowSaveButton()!.click();
-      });
+      await chooseFromSelectedTabMenu("Save chapter");
 
       // The default tab sits on AAB GEN 1, and the id carries no verse.
       expect(openModal).toHaveBeenCalledTimes(1);
@@ -191,7 +224,7 @@ describe("mobile saves screen", () => {
       expect(openModal.mock.calls[0]![0].mobileSheet).toBe(true);
     });
 
-    it("edits the existing save when the chapter is already saved", async () => {
+    it("offers Edit save instead once the chapter is saved, and edits that save", async () => {
       // Add mode would be a dead end here: addSave ignores a location it
       // already holds, so changing folders and hitting Save silently did
       // nothing. It also never removes the save — that is the panel's job.
@@ -202,9 +235,7 @@ describe("mobile saves screen", () => {
       const openModal = vi.spyOn(state.modals, "openModal");
       await openTabsList();
 
-      await act(async () => {
-        rowSaveButton()!.click();
-      });
+      await chooseFromSelectedTabMenu("Edit save");
 
       expect(openModal).toHaveBeenCalledTimes(1);
       expect(openModal.mock.calls[0]![0].id).toBe(`save-edit-${saveId}`);
@@ -226,9 +257,7 @@ describe("mobile saves screen", () => {
       const openModal = vi.spyOn(state.modals, "openModal");
       await openTabsList();
 
-      await act(async () => {
-        rowSaveButton()!.click();
-      });
+      await chooseFromSelectedTabMenu("Edit save");
 
       const picker = renderModalContent(openModal.mock.calls[0]![0]);
       const folderButton = (name: string) =>
@@ -257,40 +286,135 @@ describe("mobile saves screen", () => {
       expect(state.saves.saves.value[0]!.id).toBe(saveId);
     });
 
-    /** The star renders as an SVG, so "filled" is its fill, not a font axis. */
-    const starFill = () =>
-      rowSaveButton()!.querySelector("svg")!.getAttribute("fill");
-
-    it("leaves the star unfilled while the chapter is unsaved", async () => {
+    it("stars the tab as soon as the chapter is saved from its menu", async () => {
+      const openModal = vi.spyOn(state.modals, "openModal");
       await openTabsList();
+      expect(savedMarker(selectedRow())).toBeNull();
 
-      expect(starFill()).toBe("none");
-      expect(rowSaveButton()!.className).not.toContain("saved");
+      await chooseFromSelectedTabMenu("Save chapter");
+      const picker = renderModalContent(openModal.mock.calls[0]![0]);
+      await act(async () => {
+        picker
+          .querySelector<HTMLButtonElement>(".sb-save-picker-save")!
+          .click();
+      });
+
+      // The picker's Save doesn't wait for the write, so the row repaints
+      // after the click's act() has already returned.
+      await vi.waitFor(() => {
+        expect(savedMarker(selectedRow())).not.toBeNull();
+      });
+      expect(state.saves.saves.value).toHaveLength(1);
     });
 
-    it("fills the star once a chapter-level save exists", async () => {
+    it("has no save button on the row, only the menu", async () => {
       await act(async () => {
         await state.saves.addSave("AAB", "GEN", 1);
       });
       await openTabsList();
 
-      expect(starFill()).toBe("currentColor");
-      expect(rowSaveButton()!.className).toContain("sb-tab-save-button-saved");
-      // Filled is an indicator, not a pressed toggle: pressing a filled star
-      // opens the existing save's folders for editing rather than unfiling it,
-      // so aria-pressed would announce a toggle the button does not have.
-      expect(rowSaveButton()!.getAttribute("aria-pressed")).toBeNull();
+      const rowButtons = Array.from(
+        selectedRow().querySelectorAll<HTMLButtonElement>("button")
+      ).filter((button) => !button.classList.contains("sb-tab-button"));
+      expect(
+        rowButtons.map((button) => button.getAttribute("aria-label"))
+      ).toEqual(["Open tab menu"]);
     });
 
-    it("leaves the star unfilled when only a verse range is saved", async () => {
-      // The button files the whole chapter, so its state tracks a
+    it("marks a saved chapter with a star that only shows status", async () => {
+      await act(async () => {
+        await state.saves.addSave("AAB", "GEN", 1);
+      });
+      await openTabsList();
+
+      const marker = savedMarker(selectedRow());
+      expect(marker).not.toBeNull();
+      expect(marker!.getAttribute("role")).toBe("img");
+      expect(marker!.getAttribute("aria-label")).toBe("Chapter saved");
+      expect(marker!.querySelector("svg")!.getAttribute("fill")).toBe(
+        "currentColor"
+      );
+      // It sits inside the tab's own button, so a click on it selects the tab
+      // like the rest of the label does, rather than opening the picker.
+      expect(marker!.closest("button")!.classList).toContain("sb-tab-button");
+    });
+
+    it("leaves the star off while the chapter is unsaved", async () => {
+      await openTabsList();
+
+      expect(tabRows().length).toBeGreaterThan(0);
+      for (const row of tabRows()) {
+        expect(savedMarker(row)).toBeNull();
+      }
+    });
+
+    it("stars tabs that aren't selected too", async () => {
+      const firstTabId = state.tabs.tabs.value[0]!.id;
+      await act(async () => {
+        await state.saves.addSave("AAB", "GEN", 1);
+        const secondTab = state.tabs.addTab();
+        state.tabs.selectTab(secondTab.id);
+      });
+      expect(state.tabs.selectedTabId.value).not.toBe(firstTabId);
+      await openTabsList();
+
+      const unselected = tabRows().filter(
+        (row) => !row.classList.contains("sb-tab-row-selected")
+      );
+      expect(unselected).toHaveLength(1);
+      expect(savedMarker(unselected[0]!)).not.toBeNull();
+    });
+
+    it("leaves the star off when only a verse range is saved", async () => {
+      // The menu item files the whole chapter, so the star tracks a
       // chapter-level save rather than anything saved from within the chapter.
       await act(async () => {
         await state.saves.addSave("AAB", "GEN", 1, { verse: [2, 4] });
       });
       await openTabsList();
 
-      expect(starFill()).toBe("none");
+      expect(savedMarker(selectedRow())).toBeNull();
+    });
+
+    it("puts the star before the bookmark marker when the chapter has both", async () => {
+      await act(async () => {
+        await state.bookmarks.ensureLoaded();
+        await state.bookmarks.createBookmark(
+          { name: "Reading plan", colorId: "blue" },
+          { translationId: "AAB", bookId: "GEN", chapterNumber: 1 }
+        );
+        await state.saves.addSave("AAB", "GEN", 1);
+      });
+      await openTabsList();
+
+      const star = savedMarker(selectedRow());
+      const bookmark = selectedRow().querySelector(".sb-tab-bookmark-marker");
+      expect(star).not.toBeNull();
+      expect(bookmark).not.toBeNull();
+      expect(star!.nextElementSibling).toBe(bookmark);
+    });
+
+    it("never stars a shared-session tab", async () => {
+      const tab = state.tabs.tabs.value[0]!;
+      tab.sharedSession = {
+        id: "session-1",
+        connectedUsers: signal([]),
+        options: signal({
+          hostUserId: "host-user",
+          coHostUserIds: null,
+          allowedNavigators: null,
+          allowedDecorators: null,
+          highlightDurationSeconds: null,
+          shareTranslation: true,
+          endedAt: null,
+        }),
+      } as unknown as NonNullable<typeof tab.sharedSession>;
+      await act(async () => {
+        await state.saves.addSave("AAB", "GEN", 1);
+      });
+      await openTabsList();
+
+      expect(savedMarker(selectedRow())).toBeNull();
     });
   });
 

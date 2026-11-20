@@ -190,11 +190,6 @@
   display: none;
 }
 
-.sb-icon-button.sb-tab-save-button-saved {
-  --sb-icon-button-color: var(--sb-primary-color);
-  color: var(--sb-icon-button-color);
-}
-
 /* ---- Saves section (pinned above the tab list when the saves
  *      toggle in the sidebar header is on) -------------------------------- */
 
@@ -767,17 +762,37 @@
 }
 
 /* The tab's ⋯ shows on the selected tab, on hover, while its menu is open and
-   when the row has keyboard focus. Hidden rather than removed, so the row keeps
-   its height and a click on that spot falls through to the row and selects the
-   tab. Without hover (touch screens, the phone drawer) there'd be no way to
-   reveal it, so it always shows there. The drawer is told apart by the app's
-   layout (`data-sb-app-layout`), not `.sb-tabs-sidebar-mobile-open`: that class
-   outlives the drawer when the window is widened with it open. It fades with
-   the row's hover background; `visibility` flips at the start of a fade in and
-   the end of a fade out, so it's never clickable while fully invisible. Save,
-   save folder and bookmark rows follow the same rules; they have no selected
-   state. */
+   when the row has keyboard focus. Without hover (touch screens, the phone
+   drawer) there'd be no way to reveal it, so it always shows there. The drawer
+   is told apart by the app's layout (`data-sb-app-layout`), not
+   `.sb-tabs-sidebar-mobile-open`: that class outlives the drawer when the
+   window is widened with it open. It fades with the row's hover background;
+   `visibility` flips at the start of a fade in and the end of a fade out, so
+   it's never clickable while fully invisible. Save, save folder and bookmark
+   rows follow the same rules; they have no selected state, and their hidden ⋯
+   keeps its space, so a click on that spot falls through to the row.
+
+   A tab row's hidden ⋯ gives up its width too, so a status icon at the row's
+   edge (the speaker while a tab plays audio) sits there instead of beside an
+   empty gap, and slides aside as the ⋯ comes back. The width animates through
+   a one-column grid: `minmax(0, …)` lets the column shrink past the button's
+   fixed width, and `overflow: hidden` clips what's left over. Only the width
+   collapses, so the row keeps its height. */
 @media (hover: hover) {
+  :where(html:not([data-sb-app-layout="mobile"]))
+    .sb-tab-row
+    > .sb-tab-menu-anchor {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  :where(html:not([data-sb-app-layout="mobile"]))
+    .sb-tab-row:not(.sb-tab-row-selected, :hover, :has(:focus-visible))
+    > .sb-tab-menu-anchor:not(:has([aria-expanded="true"])) {
+    grid-template-columns: minmax(0, 0fr);
+  }
+
   :where(html:not([data-sb-app-layout="mobile"]))
     .sb-tab-row
     > .sb-tab-menu-anchor,
@@ -804,6 +819,29 @@
     opacity: 0;
     transition:
       opacity var(--sb-duration-fast) ease,
+      visibility 0s var(--sb-duration-fast);
+  }
+}
+
+/* The slide is movement, so with reduced motion the width changes at once and
+   the ⋯ only fades. Same selectors as the tab-row transitions above, so these
+   win by coming later. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  :where(html:not([data-sb-app-layout="mobile"]))
+    .sb-tab-row
+    > .sb-tab-menu-anchor {
+    transition:
+      opacity var(--sb-duration-fast) ease,
+      grid-template-columns var(--sb-duration-fast) ease,
+      visibility 0s;
+  }
+
+  :where(html:not([data-sb-app-layout="mobile"]))
+    .sb-tab-row:not(.sb-tab-row-selected, :hover, :has(:focus-visible))
+    > .sb-tab-menu-anchor:not(:has([aria-expanded="true"])) {
+    transition:
+      opacity var(--sb-duration-fast) ease,
+      grid-template-columns var(--sb-duration-fast) ease,
       visibility 0s var(--sb-duration-fast);
   }
 }
@@ -860,6 +898,18 @@
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
+}
+
+/* Marks a tab whose chapter is saved. */
+.sb-tab-saved-marker {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  color: var(--sb-primary-color);
+}
+
+.sb-tab-row-selected .sb-tab-saved-marker {
+  color: currentColor;
 }
 
 .sb-tab-users-section {
