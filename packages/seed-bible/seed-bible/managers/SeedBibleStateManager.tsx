@@ -1741,6 +1741,17 @@ export function createSeedBibleState(
       viewportWidth.value > viewportHeight.value
   );
 
+  // iPhone Safari plays `<video>` full screen natively, outside the Fullscreen
+  // API, so `document.fullscreenElement` stays empty. Only the video's own
+  // `webkitbeginfullscreen`/`webkitendfullscreen` events (which don't bubble,
+  // hence the capture listeners below) say it is happening.
+  let nativeVideoFullscreen = false;
+  const isShowingFullscreen = () =>
+    nativeVideoFullscreen ||
+    !!document.fullscreenElement ||
+    !!(document as Document & { webkitFullscreenElement?: Element | null })
+      .webkitFullscreenElement;
+
   /**
    * Re-reads the real `window.innerWidth`/`.innerHeight` and applies them.
    * Shared by the resize listener below and a one-time post-mount correction
@@ -1751,10 +1762,26 @@ export function createSeedBibleState(
     if (typeof window === "undefined") {
       return;
     }
+    // Turning a phone sideways while a video is full screen widens the window
+    // past the phone breakpoint. Switching layouts then would rebuild the
+    // reader, and the rebuilt video drops out of full screen. Nothing behind a
+    // full screen element is visible anyway, so the layout waits until it
+    // exits (the listeners below re-measure then).
+    if (isShowingFullscreen()) {
+      return;
+    }
     batch(() => {
       viewportWidth.value = window.innerWidth;
       viewportHeight.value = window.innerHeight;
     });
+  };
+
+  const onNativeVideoFullscreenStart = () => {
+    nativeVideoFullscreen = true;
+  };
+  const onNativeVideoFullscreenEnd = () => {
+    nativeVideoFullscreen = false;
+    applyViewport();
   };
 
   effect(() => {
@@ -1762,8 +1789,32 @@ export function createSeedBibleState(
       return;
     }
     window.addEventListener("resize", applyViewport);
+    document.addEventListener("fullscreenchange", applyViewport);
+    document.addEventListener("webkitfullscreenchange", applyViewport);
+    document.addEventListener(
+      "webkitbeginfullscreen",
+      onNativeVideoFullscreenStart,
+      true
+    );
+    document.addEventListener(
+      "webkitendfullscreen",
+      onNativeVideoFullscreenEnd,
+      true
+    );
     return () => {
       window.removeEventListener("resize", applyViewport);
+      document.removeEventListener("fullscreenchange", applyViewport);
+      document.removeEventListener("webkitfullscreenchange", applyViewport);
+      document.removeEventListener(
+        "webkitbeginfullscreen",
+        onNativeVideoFullscreenStart,
+        true
+      );
+      document.removeEventListener(
+        "webkitendfullscreen",
+        onNativeVideoFullscreenEnd,
+        true
+      );
     };
   });
 

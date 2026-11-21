@@ -1763,6 +1763,77 @@ describe("createSeedBibleState", () => {
       }
     });
 
+    // Rotating a phone while a playlist video is full screen widens the
+    // window past the phone breakpoint. Switching layouts would rebuild the
+    // reader and throw the video out of full screen, so the layout waits.
+    describe("while something is full screen", () => {
+      const setWindowWidth = (value: number) =>
+        Object.defineProperty(window, "innerWidth", {
+          value,
+          configurable: true,
+        });
+      const setFullscreenElement = (value: Element | null) =>
+        Object.defineProperty(document, "fullscreenElement", {
+          value,
+          configurable: true,
+        });
+      let originalWidth: number;
+      beforeEach(() => {
+        originalWidth = window.innerWidth;
+      });
+      afterEach(() => {
+        setWindowWidth(originalWidth);
+        setFullscreenElement(null);
+        document.body.replaceChildren();
+        document.documentElement.removeAttribute("data-sb-app-layout");
+      });
+
+      it("keeps the phone layout until full screen exits, then catches up", async () => {
+        const state = await createTestSeedBibleState({
+          config: { ...DEFAULT_APP_CONFIG, renderedAsMobile: true },
+        });
+        setWindowWidth(400);
+        state.app.applyViewport();
+        expect(state.app.isMobile.value).toBe(true);
+
+        const iframe = document.createElement("iframe");
+        document.body.append(iframe);
+        setFullscreenElement(iframe);
+        document.dispatchEvent(new Event("fullscreenchange"));
+        setWindowWidth(900);
+        window.dispatchEvent(new Event("resize"));
+
+        expect(state.app.isMobile.value).toBe(true);
+        expect(document.documentElement.dataset.sbAppLayout).toBe("mobile");
+
+        setFullscreenElement(null);
+        document.dispatchEvent(new Event("fullscreenchange"));
+
+        expect(state.app.isMobile.value).toBe(false);
+        expect(state.app.viewportWidth.value).toBe(900);
+      });
+
+      it("keeps the phone layout while an iPhone plays a video full screen natively", async () => {
+        const state = await createTestSeedBibleState({
+          config: { ...DEFAULT_APP_CONFIG, renderedAsMobile: true },
+        });
+        setWindowWidth(400);
+        state.app.applyViewport();
+
+        const video = document.createElement("video");
+        document.body.append(video);
+        video.dispatchEvent(new Event("webkitbeginfullscreen"));
+        setWindowWidth(900);
+        window.dispatchEvent(new Event("resize"));
+
+        expect(state.app.isMobile.value).toBe(true);
+
+        video.dispatchEvent(new Event("webkitendfullscreen"));
+
+        expect(state.app.isMobile.value).toBe(false);
+      });
+    });
+
     // `<html>` is shared by everything on the page, so a state that's been
     // disposed must stop writing to it.
     it("stops marking <html> once disposed", async () => {
