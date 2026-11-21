@@ -12,8 +12,9 @@
 //   screenshot [file] [--clean] save a PNG of the phone's screen, print its path
 //                            (--clean hides the controlling bar for the capture)
 //   focus                    bring Chrome to the front, without changing the page
-//   click <target> [--nth N] tap an element in the app's tab: a CSS selector, or
-//                            text=<words> for a button, link or label by its name
+//   click <target> [--nth N] [--partial]
+//                            tap an element in the app's tab: a CSS selector, or
+//                            text=<words> for a button, link or label by its exact name
 //   type <text> [--clear]    type into the focused field (--clear empties it first)
 //   press <key>              Enter, Escape, Tab, Backspace or an arrow key
 //   scroll <up|down|to> ...  scroll like a finger: up|down [pixels], or to <target>
@@ -913,39 +914,76 @@ async function showTap(cdp: Cdp, x: number, y: number): Promise<void> {
 /**
  * Finds one visible element and scrolls it to the middle of the screen. A
  * target is a CSS selector, or `text=<words>` to match a button, link, label
- * or field by its name (its aria-label, text, value or placeholder), exact
- * matches first. More than one match is an error rather than a guess: this is
- * a signed-in account, so a wrong tap could do something real.
+ * or field by its name: its aria-label, title, value or placeholder, or its
+ * text, either all of it or any one line of it (so a button that reads "edit /
+ * Your content / Create and manage…" is "Your content"). The name has to match
+ * exactly, apart from case and spacing; `partial` also accepts a name that
+ * only contains the words. More than one match is an error rather than a
+ * guess, and so is no exact match: this is a signed-in account, so a wrong tap
+ * could do something real ("Edit" must not find "Close playlist editor").
  */
-function findScript(target: string, nth: number | undefined): string {
+export function findScript(
+  target: string,
+  nth: number | undefined,
+  partial = false
+): string {
   return `(() => {
     const spec = ${JSON.stringify(target)};
     const nth = ${JSON.stringify(nth ?? null)};
+    const partial = ${JSON.stringify(partial)};
     const visible = (el) => {
       const r = el.getBoundingClientRect();
       const s = getComputedStyle(el);
       return r.width > 0 && r.height > 0 && s.visibility !== "hidden" && s.display !== "none";
     };
+    const clean = (t) => String(t).replace(/\\s+/g, " ").trim();
+    // What the element is shown as in a message.
     const name = (el) =>
-      (el.getAttribute("aria-label") || el.innerText || el.value || el.getAttribute("title") || el.getAttribute("placeholder") || "")
-        .replace(/\\s+/g, " ").trim();
+      clean(el.getAttribute("aria-label") || el.innerText || el.value || el.getAttribute("title") || el.getAttribute("placeholder") || "");
+    // Everything it could be called: its labels, its text, and each line of it.
+    // Icons are left out: the app's icon font shows its glyphs as words
+    // ("edit", "person"), so a pencil must not make a button named "Edit".
+    const names = (el) => {
+      const out = [];
+      for (const attr of [el.getAttribute("aria-label"), el.getAttribute("title"), el.value, el.getAttribute("placeholder")]) {
+        if (attr) out.push(clean(attr).toLowerCase());
+      }
+      const icons = [...el.querySelectorAll('[aria-hidden="true"], [class*="material-symbols"]')]
+        .map((n) => clean(n.textContent).toLowerCase())
+        .filter(Boolean);
+      const lines = (el.innerText || "").split("\\n")
+        .map((line) => clean(line).toLowerCase())
+        .filter((line) => line && !icons.includes(line));
+      if (lines.length) out.push(lines.join(" "), ...lines);
+      return out;
+    };
     const describe = (el) =>
       el.tagName.toLowerCase() + (el.id ? "#" + el.id : "") + ' "' + name(el).slice(0, 50) + '"';
+    const list = (els) =>
+      els.slice(0, 10).map((el, i) => "  " + (i + 1) + ". " + describe(el)).join("\\n");
+    // Keep the innermost: a list item and the button inside it are one target.
+    const innermost = (els) => els.filter((a) => !els.some((b) => b !== a && a.contains(b)));
     let found;
     if (spec.startsWith("text=")) {
-      const want = spec.slice(5).trim().toLowerCase();
+      const want = clean(spec.slice(5)).toLowerCase();
       const all = [...document.querySelectorAll("button,a,[role=button],[role=tab],[role=menuitem],[role=option],[role=switch],[role=checkbox],[role=radio],label,summary,input,select,textarea,li,h1,h2,h3,[tabindex]")].filter(visible);
-      const exact = all.filter((el) => name(el).toLowerCase() === want);
-      found = exact.length ? exact : all.filter((el) => name(el).toLowerCase().includes(want));
-      // Keep the innermost: a list item and the button inside it are one target.
-      found = found.filter((a) => !found.some((b) => b !== a && a.contains(b)));
+      const exact = innermost(all.filter((el) => names(el).includes(want)));
+      const partials = innermost(all.filter((el) => names(el).some((n) => n.includes(want))));
+      if (exact.length) {
+        found = exact;
+      } else if (partial) {
+        found = partials;
+      } else if (partials.length) {
+        return { error: "No element is named exactly \\"" + want + "\\". Elements whose name contains it (nothing was tapped; add --partial to tap one):\\n" + list(partials) };
+      } else {
+        found = [];
+      }
     } else {
       found = [...document.querySelectorAll(spec)].filter(visible);
     }
     if (found.length === 0) return { error: "No visible element matches " + spec };
     if (found.length > 1 && nth === null) {
-      return { error: found.length + " elements match " + spec + "; pick one with --nth N:\\n" +
-        found.slice(0, 10).map((el, i) => "  " + (i + 1) + ". " + describe(el)).join("\\n") };
+      return { error: found.length + " elements match " + spec + "; pick one with --nth N:\\n" + list(found) };
     }
     const el = found[(nth ?? 1) - 1];
     if (!el) return { error: "Only " + found.length + " match; --nth " + nth + " is out of range" };
@@ -975,9 +1013,10 @@ type Point = { x?: number; y?: number; error?: string };
 async function locate(
   cdp: Cdp,
   target: string,
-  nth: number | undefined
+  nth: number | undefined,
+  partial: boolean
 ): Promise<{ x: number; y: number; describe: string }> {
-  const found = await cdp.evaluate<Found>(findScript(target, nth));
+  const found = await cdp.evaluate<Found>(findScript(target, nth, partial));
   if (found.error) fail(found.error);
   await sleep(150); // let the scroll settle
   const point = await cdp.evaluate<Point>(MEASURE);
@@ -987,22 +1026,34 @@ async function locate(
   return { x: point.x, y: point.y, describe: found.describe ?? target };
 }
 
-/** Pulls `--nth N` out of the arguments; what's left is the target or text. */
-function splitNth(rest: string[]): { words: string[]; nth?: number } {
-  const i = rest.indexOf("--nth");
-  if (i === -1) return { words: rest };
-  const nth = Number(rest[i + 1]);
+/**
+ * Pulls `--nth N` and `--partial` out of the arguments; what's left is the
+ * target or text.
+ */
+function splitFlags(rest: string[]): {
+  words: string[];
+  nth?: number;
+  partial: boolean;
+} {
+  const partial = rest.includes("--partial");
+  let words = rest.filter((a) => a !== "--partial");
+  const i = words.indexOf("--nth");
+  if (i === -1) return { words, partial };
+  const nth = Number(words[i + 1]);
   if (!Number.isInteger(nth) || nth < 1) fail("--nth takes a number from 1.");
-  return { words: [...rest.slice(0, i), ...rest.slice(i + 2)], nth };
+  words = [...words.slice(0, i), ...words.slice(i + 2)];
+  return { words, nth, partial };
 }
 
 async function click(rest: string[]): Promise<void> {
-  const { words, nth } = splitNth(rest);
+  const { words, nth, partial } = splitFlags(rest);
   const target = words.join(" ").trim();
-  if (!target) fail("Usage: click <css selector | text=words> [--nth N]");
+  if (!target) {
+    fail("Usage: click <css selector | text=words> [--nth N] [--partial]");
+  }
   const cdp = await connectTab();
   await showControlling(cdp, `tapping "${target.replace(/^text=/, "")}"`);
-  const { x, y, describe } = await locate(cdp, target, nth);
+  const { x, y, describe } = await locate(cdp, target, nth, partial);
   await showTap(cdp, x, y);
   // A touch tap, as a finger would make, so the app's touch handling runs.
   await cdp.send("Input.synthesizeTapGesture", {
@@ -1089,10 +1140,14 @@ async function scroll(rest: string[]): Promise<void> {
   const cdp = await connectTab();
   await showControlling(cdp, "scrolling");
   if (what === "to") {
-    const { words, nth } = splitNth(more);
+    const { words, nth, partial } = splitFlags(more);
     const target = words.join(" ").trim();
-    if (!target) fail("Usage: scroll to <css selector | text=words> [--nth N]");
-    const found = await cdp.evaluate<Found>(findScript(target, nth));
+    if (!target) {
+      fail(
+        "Usage: scroll to <css selector | text=words> [--nth N] [--partial]"
+      );
+    }
+    const found = await cdp.evaluate<Found>(findScript(target, nth, partial));
     if (found.error) fail(found.error);
     await cdp.evaluate("delete window.__phoneTarget");
     console.log(`Scrolled ${found.describe} to the middle of the screen.`);
@@ -1130,59 +1185,62 @@ async function back(): Promise<void> {
   process.exit(0);
 }
 
-const [command, ...args] = process.argv.slice(2);
-switch (command) {
-  case "pair": {
-    const [address, code] = args;
-    if (!address || !code) fail("Usage: pair <ip:port> <code>");
-    console.log(adb(["pair", address, code]).trim());
-    break;
+// Only when run as the script, so the matching can be imported and tested.
+if (import.meta.main) {
+  const [command, ...args] = process.argv.slice(2);
+  switch (command) {
+    case "pair": {
+      const [address, code] = args;
+      if (!address || !code) fail("Usage: pair <ip:port> <code>");
+      console.log(adb(["pair", address, code]).trim());
+      break;
+    }
+    case "connect":
+      await connect(args[0]);
+      break;
+    case "status":
+      status();
+      break;
+    case "open":
+      open(args[0]);
+      break;
+    case "logs":
+      await logs(
+        Number(args.find((a) => /^\d+$/.test(a)) ?? 30),
+        args.includes("--reload")
+      );
+      break;
+    case "screenshot": {
+      const file = args.find((a) => a !== "--clean");
+      if (args.includes("--clean")) await cleanScreenshot(file);
+      else screenshot(file);
+      break;
+    }
+    case "release":
+      await release();
+      break;
+    case "focus":
+      focusChrome(serial());
+      console.log("Chrome is in front.");
+      break;
+    case "click":
+      await click(args);
+      break;
+    case "type":
+      await type(args);
+      break;
+    case "press":
+      await press(args[0]);
+      break;
+    case "scroll":
+      await scroll(args);
+      break;
+    case "back":
+      await back();
+      break;
+    default:
+      fail(
+        "Usage: phone.ts <pair <ip:port> <code> | connect [ip:port] | status | open [path] | logs [seconds] [--reload] | screenshot [file] [--clean] | focus | click <target> [--nth N] [--partial] | type <text> [--clear] | press <key> | scroll <up|down|to> ... | back | release>"
+      );
   }
-  case "connect":
-    await connect(args[0]);
-    break;
-  case "status":
-    status();
-    break;
-  case "open":
-    open(args[0]);
-    break;
-  case "logs":
-    await logs(
-      Number(args.find((a) => /^\d+$/.test(a)) ?? 30),
-      args.includes("--reload")
-    );
-    break;
-  case "screenshot": {
-    const file = args.find((a) => a !== "--clean");
-    if (args.includes("--clean")) await cleanScreenshot(file);
-    else screenshot(file);
-    break;
-  }
-  case "release":
-    await release();
-    break;
-  case "focus":
-    focusChrome(serial());
-    console.log("Chrome is in front.");
-    break;
-  case "click":
-    await click(args);
-    break;
-  case "type":
-    await type(args);
-    break;
-  case "press":
-    await press(args[0]);
-    break;
-  case "scroll":
-    await scroll(args);
-    break;
-  case "back":
-    await back();
-    break;
-  default:
-    fail(
-      "Usage: phone.ts <pair <ip:port> <code> | connect [ip:port] | status | open [path] | logs [seconds] [--reload] | screenshot [file] [--clean] | focus | click <target> [--nth N] | type <text> [--clear] | press <key> | scroll <up|down|to> ... | back | release>"
-    );
 }
