@@ -265,11 +265,6 @@
   color: var(--rp-muted);
 }
 
-.sb-rp-add-reading {
-  display: flex;
-  gap: 8px;
-}
-
 .sb-rp-add-button {
   flex: none;
   width: 42px;
