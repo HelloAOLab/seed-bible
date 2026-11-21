@@ -9,7 +9,17 @@
 //   status                   connected devices and active port forwards
 //   open [path]              open localhost:3002/<path> in the phone's Chrome
 //   logs [seconds] [--reload] stream the Seed Bible tab's console (default 30s)
-//   screenshot [file]        save a PNG of the phone's screen, print its path
+//   screenshot [file] [--clean] save a PNG of the phone's screen, print its path
+//                            (--clean hides the controlling bar for the capture)
+//   focus                    bring Chrome to the front, without changing the page
+//   click <target> [--nth N] tap an element in the app's tab: a CSS selector, or
+//                            text=<words> for a button, link or label by its name
+//   type <text> [--clear]    type into the focused field (--clear empties it first)
+//   press <key>              Enter, Escape, Tab, Backspace or an arrow key
+//   scroll <up|down|to> ...  scroll like a finger: up|down [pixels], or to <target>
+//   back                     go back one page in the app's tab
+//   release                  take down the "Claude is controlling this phone" bar:
+//                            run it when you are finished with the phone
 
 import { execFileSync } from "node:child_process";
 import { existsSync, writeFileSync } from "node:fs";
@@ -305,6 +315,36 @@ function open(path = ""): void {
   }
 }
 
+/**
+ * Brings Chrome to the front of the phone's screen without loading anything,
+ * so the page keeps its state. The commands that drive the page do this first:
+ * a backgrounded Chrome can't be seen, screenshotted or watched, and the
+ * person using the phone can't tell what's being done.
+ */
+function focusChrome(device: string): void {
+  if (!hasChrome(device)) {
+    fail(
+      "Chrome isn't installed (or is disabled) on the phone, so there's nothing to bring to the front. `open` falls back to the default browser, but the page can't be driven there."
+    );
+  }
+  // MAIN/LAUNCHER is what tapping Chrome's icon sends: an already-running
+  // Chrome comes forward as it was, rather than opening a page.
+  adb(
+    [
+      "shell",
+      "am",
+      "start",
+      "-a",
+      "android.intent.action.MAIN",
+      "-c",
+      "android.intent.category.LAUNCHER",
+      "-p",
+      CHROME,
+    ],
+    device
+  );
+}
+
 const PNG_SIGNATURE = Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
 ]);
@@ -445,7 +485,10 @@ function openSocket(url: string): Promise<WebSocket> {
  * it retries once.
  */
 async function attach(
-  device: string
+  device: string,
+  // Asked of each app tab's connection in turn; the first to say yes is used.
+  // Without it the first tab is used, which is fine for reading its console.
+  pick?: (ws: WebSocket) => Promise<boolean>
 ): Promise<{ ws: WebSocket; tab: Target; appTabs: Target[] }> {
   let local: string | undefined;
   // The forward reaches every tab in the phone's Chrome, so it shouldn't
@@ -483,13 +526,29 @@ async function attach(
           `No ${APP_ORIGIN} tab open in the phone's Chrome. Run \`open\` first.`
         );
       }
-      const tab = appTabs.find((t) => t.webSocketDebuggerUrl);
-      if (!tab?.webSocketDebuggerUrl) {
+      const candidates = appTabs.filter((t) => t.webSocketDebuggerUrl);
+      if (candidates.length === 0) {
         fail(
           "The app's tab is already being inspected by another DevTools window (e.g. chrome://inspect on this computer). Close that, then try again."
         );
       }
-      const ws = await openSocket(tab.webSocketDebuggerUrl);
+      let chosen: { ws: WebSocket; tab: Target } | undefined;
+      for (const candidate of candidates) {
+        const candidateSocket = await openSocket(
+          candidate.webSocketDebuggerUrl!
+        );
+        if (!pick || (await pick(candidateSocket))) {
+          chosen = { ws: candidateSocket, tab: candidate };
+          break;
+        }
+        candidateSocket.close();
+      }
+      if (!chosen) {
+        fail(
+          `${appTabs.length} ${APP_ORIGIN} tabs are open and none is the one showing on the phone. Bring the one you want to the front in Chrome, or run \`open\`.`
+        );
+      }
+      const { ws, tab } = chosen;
       // An open connection survives removing its forward, so drop it now:
       // even a hard kill of this command then leaves nothing behind.
       tryAdb(["forward", "--remove", forward], device);
@@ -657,6 +716,420 @@ function status(): void {
   }
 }
 
+// ---- Driving the app's tab -------------------------------------------------
+// These work inside the page only (through the same DevTools connection as
+// `logs`), so they can't touch the phone's notifications or other apps, and
+// they stop if the tab isn't the app.
+
+interface Cdp {
+  send<T = any>(method: string, params?: object): Promise<T>;
+  /** Runs an expression in the page and returns its value. */
+  evaluate<T = any>(expression: string): Promise<T>;
+}
+
+const WATCHDOG_MS = 30_000;
+
+/**
+ * Whether this tab is the one showing on the phone. The phone's Chrome can
+ * have several tabs on the app (the one `open` reuses, one the user signed in
+ * with), and driving a hidden one would tap where nobody can see.
+ */
+function isShowing(ws: WebSocket): Promise<boolean> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(false), 3000);
+    ws.addEventListener("message", (event) => {
+      const msg = JSON.parse(String(event.data)) as {
+        id?: number;
+        result?: { result?: { value?: unknown } };
+      };
+      if (msg.id !== 1) return;
+      clearTimeout(timer);
+      resolve(msg.result?.result?.value === true);
+    });
+    ws.send(
+      JSON.stringify({
+        id: 1,
+        method: "Runtime.evaluate",
+        params: {
+          expression: 'document.visibilityState === "visible"',
+          returnByValue: true,
+        },
+      })
+    );
+  });
+}
+
+async function connectTab(options: { focus?: boolean } = {}): Promise<Cdp> {
+  // Started first: if the phone drops mid-command, requests through the
+  // forward hang instead of failing.
+  setTimeout(
+    () =>
+      fail("Timed out waiting for the phone. Run `status`, then try again."),
+    WATCHDOG_MS
+  );
+  if (options.focus !== false) {
+    focusChrome(serial());
+    await sleep(900); // the switch to Chrome takes a moment to finish
+  }
+  const { ws } = await attach(serial(), isShowing);
+  let nextId = 1;
+  const pending = new Map<
+    number,
+    { resolve: (value: any) => void; reject: (error: Error) => void }
+  >();
+  ws.addEventListener("message", (event) => {
+    const msg = JSON.parse(String(event.data)) as {
+      id?: number;
+      result?: unknown;
+      error?: { message: string };
+    };
+    if (msg.id === undefined) return;
+    const waiting = pending.get(msg.id);
+    if (!waiting) return;
+    pending.delete(msg.id);
+    if (msg.error) waiting.reject(new Error(msg.error.message));
+    else waiting.resolve(msg.result);
+  });
+  ws.addEventListener("close", () =>
+    fail(`The tab closed or left ${APP_ORIGIN}. Run \`open\` and try again.`)
+  );
+  const send = <T>(method: string, params: object = {}) =>
+    new Promise<T>((resolve, reject) => {
+      const id = nextId++;
+      pending.set(id, { resolve, reject });
+      ws.send(JSON.stringify({ id, method, params }));
+    });
+  const evaluate = async <T>(expression: string): Promise<T> => {
+    const result = await send<{
+      result: { value: T };
+      exceptionDetails?: { text: string; exception?: { description?: string } };
+    }>("Runtime.evaluate", {
+      expression,
+      returnByValue: true,
+      awaitPromise: true,
+    });
+    if (result.exceptionDetails) {
+      throw new Error(
+        result.exceptionDetails.exception?.description ??
+          result.exceptionDetails.text
+      );
+    }
+    return result.result.value;
+  };
+  // The tab can have gone elsewhere since `open`; never act on another site.
+  const origin = await evaluate<string>("location.origin");
+  if (origin !== APP_ORIGIN) {
+    fail(
+      `The app's tab is showing ${origin}, not ${APP_ORIGIN}. Run \`open\` first.`
+    );
+  }
+  return { send, evaluate };
+}
+
+/** Where the tab is now, for the commands to report. */
+const where = (cdp: Cdp) =>
+  cdp.evaluate<string>("location.pathname + location.search");
+
+/**
+ * Shows, inside the page, that this script is driving the phone: an orange bar
+ * across the top. It stays until `release` takes it down, so it's up the whole
+ * time the phone is being worked on, and if a session ends without a release
+ * the bar is still there rather than quietly gone. It ignores touches (so it
+ * can't block a tap or the hit test) and lives only in this tab; reloading the
+ * page clears it.
+ */
+const BAR_ID = "claude-phone-control";
+
+async function showControlling(cdp: Cdp, action: string): Promise<void> {
+  await cdp.evaluate(`(() => {
+    let bar = document.getElementById(${JSON.stringify(BAR_ID)});
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = ${JSON.stringify(BAR_ID)};
+      bar.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:2147483647;pointer-events:none;padding:6px 12px;background:#c25a2c;color:#fff;font:600 13px/1.3 system-ui,sans-serif;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.35)";
+      document.documentElement.appendChild(bar);
+    }
+    bar.style.display = "";
+    bar.textContent = "Claude is controlling this phone \\u00b7 " + ${JSON.stringify(action)};
+  })()`);
+}
+
+/** Takes the bar down: the work on the phone is finished. */
+async function release(): Promise<void> {
+  // Not focusing: the work is over, so the person using the phone shouldn't be
+  // pulled back into Chrome just to take the bar down.
+  const cdp = await connectTab({ focus: false });
+  const removed = await cdp.evaluate<boolean>(`(() => {
+    const bar = document.getElementById(${JSON.stringify(BAR_ID)});
+    if (bar) bar.remove();
+    return !!bar;
+  })()`);
+  console.log(
+    removed
+      ? "Released: the controlling bar is down."
+      : "Nothing to release: the bar wasn't showing."
+  );
+  process.exit(0);
+}
+
+/**
+ * A screenshot with the bar hidden for the instant of the capture, so the
+ * picture is of the app alone. The bar goes straight back up.
+ */
+async function cleanScreenshot(file: string | undefined): Promise<void> {
+  // Not focusing: a screenshot shouldn't move Chrome, and coming forward again
+  // would dismiss the on-screen keyboard that's often what's being captured.
+  const cdp = await connectTab({ focus: false });
+  const hid = await cdp.evaluate<boolean>(`(() => {
+    const bar = document.getElementById(${JSON.stringify(BAR_ID)});
+    if (bar) bar.style.display = "none";
+    return !!bar;
+  })()`);
+  await sleep(250); // let the phone repaint without it
+  try {
+    screenshot(file);
+  } finally {
+    if (hid) {
+      await cdp.evaluate(
+        `document.getElementById(${JSON.stringify(BAR_ID)}).style.display = ""`
+      );
+    }
+  }
+  process.exit(0);
+}
+
+/** A ring where a tap is about to land, so the person watching can see it. */
+async function showTap(cdp: Cdp, x: number, y: number): Promise<void> {
+  await cdp.evaluate(`((x, y) => {
+    const ring = document.createElement("div");
+    ring.style.cssText = "position:fixed;left:" + (x - 24) + "px;top:" + (y - 24) + "px;width:48px;height:48px;box-sizing:border-box;border-radius:50%;border:3px solid #c25a2c;background:rgba(194,90,44,.25);z-index:2147483647;pointer-events:none;transition:transform .6s,opacity .6s";
+    document.documentElement.appendChild(ring);
+    requestAnimationFrame(() => { ring.style.transform = "scale(1.7)"; ring.style.opacity = "0"; });
+    setTimeout(() => ring.remove(), 800);
+  })(${x}, ${y})`);
+  await sleep(400); // long enough to be seen before the tap lands
+}
+
+/**
+ * Finds one visible element and scrolls it to the middle of the screen. A
+ * target is a CSS selector, or `text=<words>` to match a button, link, label
+ * or field by its name (its aria-label, text, value or placeholder), exact
+ * matches first. More than one match is an error rather than a guess: this is
+ * a signed-in account, so a wrong tap could do something real.
+ */
+function findScript(target: string, nth: number | undefined): string {
+  return `(() => {
+    const spec = ${JSON.stringify(target)};
+    const nth = ${JSON.stringify(nth ?? null)};
+    const visible = (el) => {
+      const r = el.getBoundingClientRect();
+      const s = getComputedStyle(el);
+      return r.width > 0 && r.height > 0 && s.visibility !== "hidden" && s.display !== "none";
+    };
+    const name = (el) =>
+      (el.getAttribute("aria-label") || el.innerText || el.value || el.getAttribute("title") || el.getAttribute("placeholder") || "")
+        .replace(/\\s+/g, " ").trim();
+    const describe = (el) =>
+      el.tagName.toLowerCase() + (el.id ? "#" + el.id : "") + ' "' + name(el).slice(0, 50) + '"';
+    let found;
+    if (spec.startsWith("text=")) {
+      const want = spec.slice(5).trim().toLowerCase();
+      const all = [...document.querySelectorAll("button,a,[role=button],[role=tab],[role=menuitem],[role=option],[role=switch],[role=checkbox],[role=radio],label,summary,input,select,textarea,li,h1,h2,h3,[tabindex]")].filter(visible);
+      const exact = all.filter((el) => name(el).toLowerCase() === want);
+      found = exact.length ? exact : all.filter((el) => name(el).toLowerCase().includes(want));
+      // Keep the innermost: a list item and the button inside it are one target.
+      found = found.filter((a) => !found.some((b) => b !== a && a.contains(b)));
+    } else {
+      found = [...document.querySelectorAll(spec)].filter(visible);
+    }
+    if (found.length === 0) return { error: "No visible element matches " + spec };
+    if (found.length > 1 && nth === null) {
+      return { error: found.length + " elements match " + spec + "; pick one with --nth N:\\n" +
+        found.slice(0, 10).map((el, i) => "  " + (i + 1) + ". " + describe(el)).join("\\n") };
+    }
+    const el = found[(nth ?? 1) - 1];
+    if (!el) return { error: "Only " + found.length + " match; --nth " + nth + " is out of range" };
+    el.scrollIntoView({ block: "center", inline: "center" });
+    window.__phoneTarget = el;
+    return { ok: true, describe: describe(el) };
+  })()`;
+}
+
+const MEASURE = `(() => {
+  const el = window.__phoneTarget;
+  delete window.__phoneTarget;
+  if (!el || !el.isConnected) return { error: "The element went away before it could be tapped." };
+  const r = el.getBoundingClientRect();
+  const x = Math.min(Math.max(r.left + r.width / 2, 1), innerWidth - 1);
+  const y = Math.min(Math.max(r.top + r.height / 2, 1), innerHeight - 1);
+  const hit = document.elementFromPoint(x, y);
+  if (!hit || !(el.contains(hit) || hit.contains(el))) {
+    return { error: "Something else is on top of it at that spot: <" + (hit ? hit.tagName.toLowerCase() + (hit.className ? "." + String(hit.className).split(" ")[0] : "") : "nothing") + ">" };
+  }
+  return { x, y };
+})()`;
+
+type Found = { ok?: true; describe?: string; error?: string };
+type Point = { x?: number; y?: number; error?: string };
+
+async function locate(
+  cdp: Cdp,
+  target: string,
+  nth: number | undefined
+): Promise<{ x: number; y: number; describe: string }> {
+  const found = await cdp.evaluate<Found>(findScript(target, nth));
+  if (found.error) fail(found.error);
+  await sleep(150); // let the scroll settle
+  const point = await cdp.evaluate<Point>(MEASURE);
+  if (point.error || point.x === undefined || point.y === undefined) {
+    fail(`${found.describe}: ${point.error}`);
+  }
+  return { x: point.x, y: point.y, describe: found.describe ?? target };
+}
+
+/** Pulls `--nth N` out of the arguments; what's left is the target or text. */
+function splitNth(rest: string[]): { words: string[]; nth?: number } {
+  const i = rest.indexOf("--nth");
+  if (i === -1) return { words: rest };
+  const nth = Number(rest[i + 1]);
+  if (!Number.isInteger(nth) || nth < 1) fail("--nth takes a number from 1.");
+  return { words: [...rest.slice(0, i), ...rest.slice(i + 2)], nth };
+}
+
+async function click(rest: string[]): Promise<void> {
+  const { words, nth } = splitNth(rest);
+  const target = words.join(" ").trim();
+  if (!target) fail("Usage: click <css selector | text=words> [--nth N]");
+  const cdp = await connectTab();
+  await showControlling(cdp, `tapping "${target.replace(/^text=/, "")}"`);
+  const { x, y, describe } = await locate(cdp, target, nth);
+  await showTap(cdp, x, y);
+  // A touch tap, as a finger would make, so the app's touch handling runs.
+  await cdp.send("Input.synthesizeTapGesture", {
+    x,
+    y,
+    gestureSourceType: "touch",
+  });
+  await sleep(700); // let the page react
+  console.log(`Tapped ${describe}. Now at ${await where(cdp)}`);
+  process.exit(0);
+}
+
+async function type(rest: string[]): Promise<void> {
+  const clear = rest.includes("--clear");
+  const text = rest.filter((a) => a !== "--clear").join(" ");
+  if (!text) fail("Usage: type <text> [--clear]");
+  const cdp = await connectTab();
+  await showControlling(cdp, "typing");
+  const field = await cdp.evaluate<string>(`(() => {
+    const el = document.activeElement;
+    if (!el) return "";
+    const tag = el.tagName.toLowerCase();
+    if (tag === "input" || tag === "textarea") {
+      if (${JSON.stringify(clear)}) el.select();
+      return tag + (el.type && tag === "input" ? "[" + el.type + "]" : "");
+    }
+    if (el.isContentEditable) {
+      if (${JSON.stringify(clear)}) document.execCommand("selectAll");
+      return "editor";
+    }
+    return "";
+  })()`);
+  if (!field)
+    fail("Nothing you can type into is focused. `click` a field first.");
+  await cdp.send("Input.insertText", { text });
+  // The characters aren't echoed: this could be a password or a code.
+  console.log(`Typed ${text.length} characters into the ${field}.`);
+  process.exit(0);
+}
+
+const KEYS: Record<
+  string,
+  { key: string; code: string; vk: number; text?: string }
+> = {
+  enter: { key: "Enter", code: "Enter", vk: 13, text: "\r" },
+  escape: { key: "Escape", code: "Escape", vk: 27 },
+  tab: { key: "Tab", code: "Tab", vk: 9 },
+  backspace: { key: "Backspace", code: "Backspace", vk: 8 },
+  arrowup: { key: "ArrowUp", code: "ArrowUp", vk: 38 },
+  arrowdown: { key: "ArrowDown", code: "ArrowDown", vk: 40 },
+  arrowleft: { key: "ArrowLeft", code: "ArrowLeft", vk: 37 },
+  arrowright: { key: "ArrowRight", code: "ArrowRight", vk: 39 },
+};
+
+async function press(name: string | undefined): Promise<void> {
+  const k = KEYS[(name ?? "").toLowerCase()];
+  if (!k)
+    fail(
+      `Usage: press <${Object.values(KEYS)
+        .map((v) => v.key)
+        .join(" | ")}>`
+    );
+  const cdp = await connectTab();
+  await showControlling(cdp, `pressing ${k.key}`);
+  const event = {
+    key: k.key,
+    code: k.code,
+    windowsVirtualKeyCode: k.vk,
+    nativeVirtualKeyCode: k.vk,
+  };
+  await cdp.send("Input.dispatchKeyEvent", {
+    type: k.text ? "keyDown" : "rawKeyDown",
+    ...event,
+    ...(k.text ? { text: k.text } : {}),
+  });
+  await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", ...event });
+  await sleep(400);
+  console.log(`Pressed ${k.key}. Now at ${await where(cdp)}`);
+  process.exit(0);
+}
+
+async function scroll(rest: string[]): Promise<void> {
+  const [what, ...more] = rest;
+  const cdp = await connectTab();
+  await showControlling(cdp, "scrolling");
+  if (what === "to") {
+    const { words, nth } = splitNth(more);
+    const target = words.join(" ").trim();
+    if (!target) fail("Usage: scroll to <css selector | text=words> [--nth N]");
+    const found = await cdp.evaluate<Found>(findScript(target, nth));
+    if (found.error) fail(found.error);
+    await cdp.evaluate("delete window.__phoneTarget");
+    console.log(`Scrolled ${found.describe} to the middle of the screen.`);
+    process.exit(0);
+  }
+  if (what !== "up" && what !== "down") {
+    fail("Usage: scroll <up | down> [pixels]  |  scroll to <target>");
+  }
+  const pixels = Number(more[0] ?? 500);
+  if (!Number.isFinite(pixels) || pixels <= 0)
+    fail("Pixels must be a positive number.");
+  // A finger swipe from the middle of the screen, so whatever scrolls there
+  // (the page, or a pane inside it) scrolls, as it would by hand.
+  const { w, h } = await cdp.evaluate<{ w: number; h: number }>(
+    "({ w: innerWidth, h: innerHeight })"
+  );
+  await cdp.send("Input.synthesizeScrollGesture", {
+    x: w / 2,
+    y: h / 2,
+    yDistance: what === "down" ? -pixels : pixels,
+    gestureSourceType: "touch",
+    speed: 1200,
+  });
+  await sleep(500);
+  console.log(`Scrolled ${what} ${pixels}px.`);
+  process.exit(0);
+}
+
+async function back(): Promise<void> {
+  const cdp = await connectTab();
+  await showControlling(cdp, "going back");
+  await cdp.evaluate("history.back()");
+  await sleep(600);
+  console.log(`Went back. Now at ${await where(cdp)}`);
+  process.exit(0);
+}
+
 const [command, ...args] = process.argv.slice(2);
 switch (command) {
   case "pair": {
@@ -680,11 +1153,36 @@ switch (command) {
       args.includes("--reload")
     );
     break;
-  case "screenshot":
-    screenshot(args[0]);
+  case "screenshot": {
+    const file = args.find((a) => a !== "--clean");
+    if (args.includes("--clean")) await cleanScreenshot(file);
+    else screenshot(file);
+    break;
+  }
+  case "release":
+    await release();
+    break;
+  case "focus":
+    focusChrome(serial());
+    console.log("Chrome is in front.");
+    break;
+  case "click":
+    await click(args);
+    break;
+  case "type":
+    await type(args);
+    break;
+  case "press":
+    await press(args[0]);
+    break;
+  case "scroll":
+    await scroll(args);
+    break;
+  case "back":
+    await back();
     break;
   default:
     fail(
-      "Usage: phone.ts <pair <ip:port> <code> | connect [ip:port] | status | open [path] | logs [seconds] [--reload] | screenshot [file]>"
+      "Usage: phone.ts <pair <ip:port> <code> | connect [ip:port] | status | open [path] | logs [seconds] [--reload] | screenshot [file] [--clean] | focus | click <target> [--nth N] | type <text> [--clear] | press <key> | scroll <up|down|to> ... | back | release>"
     );
 }
