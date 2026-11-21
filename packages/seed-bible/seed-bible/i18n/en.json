@@ -829,7 +829,6 @@
   "cant-be-undone": "This can't be undone.",
   "delete-save-folder-failed": "Couldn't delete the folder.",
   "save-chapter": "Save chapter",
-  "save-failed": "Couldn't save. Please try again.",
   "save-folder-empty": "No saves here yet.",
   "save-options": "Save options",
   "saves": "Saves",
@@ -1073,6 +1072,7 @@
   "audio-playback-verse": "Verse {{current}} of {{total}}",
   "audio-scrub-verse": "Verse {{verse}}",
   "tab-playing-audio": "Playing audio",
+  "tab-chapter-saved": "Chapter saved",
   "collapsed-tab-playing-label": "{{label}} — playing audio",
   "share-embed": "Embed",
   "share-embed-subtitle": "Add this passage to a website",
@@ -1624,5 +1624,6 @@
   "screenshot-previous": "Previous screenshot",
   "screenshot-next": "Next screenshot",
   "screenshot-close": "Close screenshot viewer",
-  "screenshot-name": "Screenshot {{n}}"
+  "screenshot-name": "Screenshot {{n}}",
+  "save-failed": "Couldn't save. Please try again."
 }
