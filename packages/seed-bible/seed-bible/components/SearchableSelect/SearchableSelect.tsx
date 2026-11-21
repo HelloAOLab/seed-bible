@@ -70,6 +70,9 @@ export function SearchableSelect(props: {
         className="sb-language-picker-button sb-text-input sb-select-input"
         aria-haspopup="listbox"
         aria-expanded={open}
+        // A linked <label> would replace the button's text as its name, hiding
+        // the chosen option; naming it by the label and itself keeps both.
+        aria-labelledby={label ? `${ids.labelId} ${ids.controlId}` : undefined}
         onClick={() => setOpen((isOpen) => !isOpen)}
         onKeyDown={(event) => {
           handleMenuTriggerKeyDown(event, {

@@ -122,8 +122,8 @@
   color: var(--sb-secondary-font-color);
 }
 
-/* Where a field sits in the content forms: the padding the older rows had,
-   none when it's laid out straight in the editor beside the full-width cards. */
+/* Insets a field 0.25rem inside the content forms; none when it's laid out
+   straight in the editor beside the full-width cards. */
 .sb-ccl-field {
   padding: 0.25rem;
 }

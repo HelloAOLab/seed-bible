@@ -50,7 +50,7 @@
   --sb-text-input-background: var(--pe-surface);
   --sb-text-input-border-color: var(--pe-border);
   --sb-text-input-focus-color: var(--pe-accent-strong);
-  --sb-text-input-radius: 0.625rem;
+  --sb-text-input-radius: var(--sb-radius-lg);
   --sb-text-input-font-family: var(--pe-font-ui);
 
   color: var(--pe-text);

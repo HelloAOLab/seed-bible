@@ -10,6 +10,7 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
 
   const [customTimerFlag, setCustomTimerFlag] = useState<string>("");
   const [customTimer, setCustomTimer] = useState<string | null>(null);
+  const customTimerBox = useRef<HTMLInputElement>(null);
 
   // useEffect(() => {
   //   setTagMask(thisBot, "customTimerFlag", customTimerFlag, "local");
@@ -204,6 +205,7 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                       })}
                       inputMode="decimal"
                       placeholder="0"
+                      inputRef={customTimerBox}
                       value={customTimer !== null ? customTimer : ""}
                       onValueInput={(value) => {
                         // Allow empty, digits, and decimal point
@@ -225,6 +227,10 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                               interval: 0,
                             };
                           }
+                        } else if (customTimerBox.current) {
+                          // Nothing re-renders for a rejected key, so the box
+                          // would keep showing it.
+                          customTimerBox.current.value = customTimer ?? "";
                         }
                       }}
                       onMouseDown={(e) => e.stopPropagation()}

@@ -494,7 +494,9 @@ async function attach(
   device: string,
   // Asked of each app tab's connection in turn; the first to say yes is used.
   // Without it the first tab is used, which is fine for reading its console.
-  pick?: (ws: WebSocket) => Promise<boolean>
+  pick?: (ws: WebSocket) => Promise<boolean>,
+  // Use the first app tab when none says yes, instead of failing.
+  orFirst = false
 ): Promise<{ ws: WebSocket; tab: Target; appTabs: Target[] }> {
   let local: string | undefined;
   // The forward reaches every tab in the phone's Chrome, so it shouldn't
@@ -548,6 +550,12 @@ async function attach(
           break;
         }
         candidateSocket.close();
+      }
+      if (!chosen && orFirst) {
+        chosen = {
+          ws: await openSocket(candidates[0].webSocketDebuggerUrl!),
+          tab: candidates[0],
+        };
       }
       if (!chosen) {
         fail(
@@ -735,37 +743,46 @@ interface Cdp {
 
 const WATCHDOG_MS = 30_000;
 
+/** Asks a tab's connection whether a page expression is true. */
+function tabWhere(expression: string): (ws: WebSocket) => Promise<boolean> {
+  return (ws) =>
+    new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(false), 3000);
+      ws.addEventListener("message", (event) => {
+        const msg = JSON.parse(String(event.data)) as {
+          id?: number;
+          result?: { result?: { value?: unknown } };
+        };
+        if (msg.id !== 1) return;
+        clearTimeout(timer);
+        resolve(msg.result?.result?.value === true);
+      });
+      ws.send(
+        JSON.stringify({
+          id: 1,
+          method: "Runtime.evaluate",
+          params: { expression, returnByValue: true },
+        })
+      );
+    });
+}
+
 /**
  * Whether this tab is the one showing on the phone. The phone's Chrome can
  * have several tabs on the app (the one `open` reuses, one the user signed in
  * with), and driving a hidden one would tap where nobody can see.
  */
-function isShowing(ws: WebSocket): Promise<boolean> {
-  return new Promise((resolve) => {
-    const timer = setTimeout(() => resolve(false), 3000);
-    ws.addEventListener("message", (event) => {
-      const msg = JSON.parse(String(event.data)) as {
-        id?: number;
-        result?: { result?: { value?: unknown } };
-      };
-      if (msg.id !== 1) return;
-      clearTimeout(timer);
-      resolve(msg.result?.result?.value === true);
-    });
-    ws.send(
-      JSON.stringify({
-        id: 1,
-        method: "Runtime.evaluate",
-        params: {
-          expression: 'document.visibilityState === "visible"',
-          returnByValue: true,
-        },
-      })
-    );
-  });
-}
+const isShowing = tabWhere('document.visibilityState === "visible"');
 
-async function connectTab(options: { focus?: boolean } = {}): Promise<Cdp> {
+async function connectTab(
+  options: {
+    focus?: boolean;
+    /** Which tab to use; the one showing on the phone when left out. */
+    pick?: (ws: WebSocket) => Promise<boolean>;
+    /** Use the first app tab when `pick` finds none. */
+    orFirst?: boolean;
+  } = {}
+): Promise<Cdp> {
   // Started first: if the phone drops mid-command, requests through the
   // forward hang instead of failing.
   setTimeout(
@@ -777,7 +794,11 @@ async function connectTab(options: { focus?: boolean } = {}): Promise<Cdp> {
     focusChrome(serial());
     await sleep(900); // the switch to Chrome takes a moment to finish
   }
-  const { ws } = await attach(serial(), isShowing);
+  const { ws } = await attach(
+    serial(),
+    options.pick ?? isShowing,
+    options.orFirst
+  );
   let nextId = 1;
   const pending = new Map<
     number,
@@ -863,8 +884,14 @@ async function showControlling(cdp: Cdp, action: string): Promise<void> {
 /** Takes the bar down: the work on the phone is finished. */
 async function release(): Promise<void> {
   // Not focusing: the work is over, so the person using the phone shouldn't be
-  // pulled back into Chrome just to take the bar down.
-  const cdp = await connectTab({ focus: false });
+  // pulled back into Chrome just to take the bar down. Chrome is often in the
+  // background by now, where no tab counts as showing, so the tab is found by
+  // the bar it carries instead.
+  const cdp = await connectTab({
+    focus: false,
+    pick: tabWhere(`!!document.getElementById(${JSON.stringify(BAR_ID)})`),
+    orFirst: true,
+  });
   const removed = await cdp.evaluate<boolean>(`(() => {
     const bar = document.getElementById(${JSON.stringify(BAR_ID)});
     if (bar) bar.remove();
@@ -1060,7 +1087,7 @@ export const PROBE_SCRIPT = `(() => {
   const el = window.__phoneTarget;
   delete window.__phoneTarget;
   if (!el || !el.isConnected) return { error: "The element went away." };
-  const clean = (t) => String(t).replace(/\\\\s+/g, " ").trim();
+  const clean = (t) => String(t).replace(/\\s+/g, " ").trim();
   const desc = (e) => {
     const cls = typeof e.className === "string" ? e.className.split(" ").filter(Boolean).slice(0, 3).join(".") : "";
     const label = e.getAttribute("aria-label") || clean(e.innerText || "").slice(0, 24);

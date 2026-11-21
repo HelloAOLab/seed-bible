@@ -269,8 +269,8 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
 
-/* Where a dropdown field sits in the settings list: the padding the older
-   rows have, which aren't `SettingRow` or `SelectField` yet. */
+/* Insets a dropdown field 0.25rem from the edges of the settings list, in line
+   with the rows around it. */
 .sb-settings-select-field {
   padding: 0.25rem;
 }

@@ -24,6 +24,7 @@ export type FieldTextProps = {
 
 export type FieldIds = {
   controlId: string;
+  labelId: string;
   hintId: string;
   errorId: string;
   countId: string;
@@ -35,6 +36,7 @@ export function useFieldIds(id?: string): FieldIds {
   const controlId = id ?? generated;
   return {
     controlId,
+    labelId: `${controlId}-label`,
     hintId: `${controlId}-hint`,
     errorId: `${controlId}-error`,
     countId: `${controlId}-count`,
@@ -109,6 +111,7 @@ export function Field({
   return (
     <div className={["sb-field", className].filter(Boolean).join(" ")}>
       <label
+        id={ids.labelId}
         className={hideLabel ? "sb-visually-hidden" : "sb-field-label"}
         htmlFor={ids.controlId}
       >

@@ -370,11 +370,34 @@ describe("SearchableSelect's label", () => {
     expect(trigger.textContent).toContain("English");
   });
 
+  it("is named by the label and the chosen language together", () => {
+    renderPicker("Language");
+
+    const trigger = container.querySelector("button")!;
+    const name = trigger
+      .getAttribute("aria-labelledby")!
+      .split(" ")
+      .map((id) => {
+        const part = container.ownerDocument.getElementById(id)!;
+        if (part !== trigger) return part.textContent;
+        return Array.from(trigger.children)
+          .filter((child) => child.getAttribute("aria-hidden") !== "true")
+          .map((child) => child.textContent)
+          .join(" ");
+      })
+      .join(" ");
+
+    expect(name).toBe("Language English");
+  });
+
   it("works without a label, as before", () => {
     renderPicker();
 
     expect(container.querySelector("label")).toBeNull();
     expect(container.querySelector("button")!.textContent).toContain("English");
+    expect(
+      container.querySelector("button")!.hasAttribute("aria-labelledby")
+    ).toBe(false);
   });
 
   it("wears the same box as a Select, so both pickers match", () => {
