@@ -1,5 +1,9 @@
 /* The shared text box: outlined, with the border turning the primary color
-   (and thickening) while it's being typed in. A surface that needs it to look
+   (and thickening) while it's being typed in. `TextInput` and `Select` wear
+   it, and so do a few things that are a box you type in without being an
+   `<input>`: `SearchableSelect`'s trigger, and the wrapper around a rich-text
+   editor (the cursor lives in an element inside it, so the focus rules below
+   also match `:focus-within`). A surface that needs it to look
    different sets these on the box or anything around it, instead of
    overriding the rules:
    - `--sb-text-input-background`: the fill (none by default, so it sits on
@@ -55,18 +59,24 @@
 }
 
 @media (hover: hover) {
-  .sb-text-input:hover:not(:focus, :disabled, [aria-invalid="true"]) {
+  .sb-text-input:hover:not(
+      :focus,
+      :focus-within,
+      :disabled,
+      [aria-invalid="true"]
+    ) {
     border-color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
   }
 }
 
 /* A text box always shows where the typing goes, so this is :focus, not
-   :focus-visible. The ring is drawn inside the border's spread, so the box
-   doesn't move. */
-.sb-text-input:focus {
+   :focus-visible. The ring is inset, drawn inside the border, so the box
+   doesn't move and a container that clips at its edge (a scrolling window
+   body with no padding) can't cut it off. */
+.sb-text-input:is(:focus, :focus-within) {
   outline: none;
   border-color: var(--sb-text-input-focus-color, var(--sb-primary-color));
-  box-shadow: 0 0 0 1px
+  box-shadow: inset 0 0 0 1px
     var(--sb-text-input-focus-color, var(--sb-primary-color));
 }
 

@@ -129,9 +129,8 @@
   gap: 0.5rem;
 }
 
-.sb-extension-add-link-row .sb-settings-text-input {
+.sb-extension-add-link-input {
   flex: 1;
-  min-width: 0;
 }
 
 .sb-extension-add-link-status {
@@ -532,28 +531,6 @@
   font-size: var(--sb-font-size-18);
   font-weight: 600;
   color: var(--sb-font-color);
-}
-
-.sb-settings-text-input {
-  border: none;
-  border-radius: var(--sb-radius-md);
-  padding: 0.375rem 0.5rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  color: var(--sb-font-color);
-  font-size: var(--sb-font-size-15);
-  font-family: inherit;
-  width: 100%;
-  box-sizing: border-box;
-  transition: background-color var(--sb-duration-base) ease;
-}
-
-.sb-settings-text-input::placeholder {
-  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
-}
-
-.sb-settings-text-input:focus {
-  outline: none;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
 }
 
 .sb-settings-actions {

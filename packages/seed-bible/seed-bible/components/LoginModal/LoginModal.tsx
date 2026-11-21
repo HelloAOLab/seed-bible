@@ -10,6 +10,7 @@ import type { LoginManager } from "../../managers/LoginManager";
 import { Button } from "../Button/Button";
 import { Checkbox } from "../Checkbox/Checkbox";
 import { Dialog } from "../Dialog/Dialog";
+import { TextField } from "../TextField/TextField";
 
 type LoginStep = "email" | "code";
 
@@ -307,11 +308,14 @@ export function LoginModal({
           <form className="sb-login-form" onSubmit={submitCode}>
             <div className="sb-login-field">
               <div className="sb-login-code-row">
-                <input
-                  ref={codeInputRef}
+                <TextField
+                  inputRef={codeInputRef}
                   id="sb-login-code"
-                  className="sb-settings-text-input sb-login-input sb-login-code-input"
-                  type="text"
+                  className="sb-login-code-input"
+                  label={t("login-code-placeholder", {
+                    defaultValue: "Enter login code here",
+                  })}
+                  hideLabel
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   value={code.value}
@@ -319,10 +323,8 @@ export function LoginModal({
                   placeholder={t("login-code-placeholder", {
                     defaultValue: "Enter login code here",
                   })}
-                  onInput={(event: Event) => {
-                    code.value = (
-                      event.currentTarget as HTMLInputElement
-                    ).value;
+                  onValueInput={(value) => {
+                    code.value = value;
                   }}
                 />
                 <button
@@ -371,10 +373,13 @@ export function LoginModal({
         ) : (
           <form className="sb-login-form" onSubmit={submitEmail}>
             <div className="sb-login-field">
-              <input
-                ref={emailInputRef}
+              <TextField
+                inputRef={emailInputRef}
                 id="sb-login-email"
-                className="sb-settings-text-input sb-login-input"
+                label={t("login-email-title", {
+                  defaultValue: "Enter your email address",
+                })}
+                hideLabel
                 type="email"
                 autoComplete="email"
                 value={email.value}
@@ -382,8 +387,8 @@ export function LoginModal({
                 placeholder={t("login-email-title", {
                   defaultValue: "Enter your email address",
                 })}
-                onInput={(event: Event) => {
-                  email.value = (event.currentTarget as HTMLInputElement).value;
+                onValueInput={(value) => {
+                  email.value = value;
                 }}
               />
             </div>
