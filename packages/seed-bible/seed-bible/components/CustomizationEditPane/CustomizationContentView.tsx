@@ -1,6 +1,5 @@
 import "./CustomizationContentView.css";
 import { useSignal } from "@preact/signals";
-import type { ComponentChildren } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
@@ -27,6 +26,9 @@ import { useI18n } from "../../i18n/I18nManager";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
 import { Checkbox } from "../Checkbox/Checkbox";
+import { TextField } from "../TextField/TextField";
+import { SelectField } from "../Select/Select";
+import "../Field/Field.css";
 import { translateTitle } from "../../app/utils";
 import { CONFIDENT_PASSAGE } from "../../managers/customContent/classify";
 import { contentFeatures } from "./contentFeatures";
@@ -474,24 +476,19 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
               });
             }}
           >
-            <label className="sr-only" htmlFor="sb-ccl-new-category">
-              {t("custom-content-new-category", {
+            <TextField
+              id="sb-ccl-new-category"
+              label={t("custom-content-new-category", {
                 defaultValue: "New category",
               })}
-            </label>
-            <input
-              id="sb-ccl-new-category"
-              type="text"
-              className="sb-cz-input"
+              hideLabel
               maxLength={100}
               placeholder={t("custom-content-new-category-placeholder", {
                 defaultValue: "e.g. Sermons, Kids, Worship",
               })}
               value={newCategory.value}
-              onInput={(event) => {
-                newCategory.value = (
-                  event.currentTarget as HTMLInputElement
-                ).value;
+              onValueInput={(value) => {
+                newCategory.value = value;
               }}
             />
             <Button type="submit" disabled={busy || !newCategory.value.trim()}>
@@ -500,29 +497,21 @@ function ContentLibraryEditor(props: { state: SeedBibleState }) {
           </form>
         </div>
 
-        <div className="sb-settings-field-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-ccl-default-author"
-          >
-            {t("custom-content-default-author", {
-              defaultValue: "Default author",
-            })}
-          </label>
-          <input
-            id="sb-ccl-default-author"
-            type="text"
-            className="sb-cz-input"
-            maxLength={200}
-            defaultValue={manifest.defaultAuthor ?? ""}
-            onChange={(event) => {
-              const value = (event.currentTarget as HTMLInputElement).value;
-              if (value.trim() !== (manifest.defaultAuthor ?? "")) {
-                void run(() => customContent.setDefaultAuthor(value));
-              }
-            }}
-          />
-        </div>
+        <TextField
+          id="sb-ccl-default-author"
+          className="sb-ccl-field"
+          label={t("custom-content-default-author", {
+            defaultValue: "Default author",
+          })}
+          maxLength={200}
+          defaultValue={manifest.defaultAuthor ?? ""}
+          onChange={(event) => {
+            const value = (event.currentTarget as HTMLInputElement).value;
+            if (value.trim() !== (manifest.defaultAuthor ?? "")) {
+              void run(() => customContent.setDefaultAuthor(value));
+            }
+          }}
+        />
 
         {contentFeatures.aiSuggestions && (
           <AiSuggestionsSettings state={state} run={run} />
@@ -849,12 +838,8 @@ function ItemForm(props: {
 
   const set =
     (field: keyof ItemDraft) =>
-    (event: Event): void => {
-      const target = event.currentTarget as
-        | HTMLInputElement
-        | HTMLTextAreaElement
-        | HTMLSelectElement;
-      form.value = { ...form.value, [field]: target.value };
+    (value: string): void => {
+      form.value = { ...form.value, [field]: value };
     };
 
   const canSave =
@@ -899,52 +884,41 @@ function ItemForm(props: {
                 defaultValue: "Edit content",
               })}
         </h3>
-        <Field
+        <TextField
           id="sb-ccl-url"
+          className="sb-ccl-field"
           label={t("custom-content-url", { defaultValue: "Link" })}
-        >
-          <input
-            id="sb-ccl-url"
-            type="url"
-            className="sb-cz-input"
-            required
-            maxLength={2048}
-            placeholder="https://"
-            value={form.value.url}
-            onInput={set("url")}
-          />
-        </Field>
-        <Field
+          type="url"
+          required
+          maxLength={2048}
+          placeholder="https://"
+          value={form.value.url}
+          onValueInput={set("url")}
+        />
+        <TextField
           id="sb-ccl-title"
+          className="sb-ccl-field"
           label={t("custom-content-title", { defaultValue: "Title" })}
-        >
-          <input
-            id="sb-ccl-title"
-            type="text"
-            className="sb-cz-input"
-            required
-            maxLength={300}
-            value={form.value.title}
-            onInput={set("title")}
-          />
-        </Field>
-        <Field
+          required
+          maxLength={300}
+          value={form.value.title}
+          onValueInput={set("title")}
+        />
+        <TextField
           id="sb-ccl-description"
+          className="sb-ccl-field"
           label={t("custom-content-description", {
             defaultValue: "Description",
           })}
-        >
-          <textarea
-            id="sb-ccl-description"
-            className="sb-cz-input sb-ccl-textarea"
-            rows={4}
-            maxLength={2000}
-            value={form.value.description}
-            onInput={set("description")}
-          />
-        </Field>
-        <Field
+          multiline
+          rows={4}
+          maxLength={2000}
+          value={form.value.description}
+          onValueInput={set("description")}
+        />
+        <TextField
           id="sb-ccl-verses"
+          className="sb-ccl-field"
           label={t("custom-content-verses", {
             defaultValue: "Passages it covers",
           })}
@@ -952,17 +926,11 @@ function ItemForm(props: {
             defaultValue:
               "Separate passages with a semicolon, e.g. John 10:1-18; Psalm 23",
           })}
-        >
-          <input
-            id="sb-ccl-verses"
-            type="text"
-            className="sb-cz-input"
-            value={form.value.verses}
-            onInput={set("verses")}
-            aria-invalid={parsed.unrecognized.length > 0}
-            aria-describedby="sb-ccl-verses-status"
-          />
-        </Field>
+          value={form.value.verses}
+          onValueInput={set("verses")}
+          invalid={parsed.unrecognized.length > 0}
+          aria-describedby="sb-ccl-verses-status"
+        />
         <p id="sb-ccl-verses-status" className="sb-cz-hint" aria-live="polite">
           {parsed.unrecognized.length > 0 ? (
             <span className="sb-ccl-error">
@@ -980,55 +948,42 @@ function ItemForm(props: {
             })
           ) : null}
         </p>
-        <Field
+        <SelectField
           id="sb-ccl-category"
+          className="sb-ccl-field"
           label={t("custom-content-category", { defaultValue: "Category" })}
+          value={form.value.categoryId}
+          onValueChange={set("categoryId")}
         >
-          <select
-            id="sb-ccl-category"
-            className="sb-settings-language-select"
-            value={form.value.categoryId}
-            onChange={set("categoryId")}
-          >
-            <option value="">
-              {t("custom-content-other", { defaultValue: "Other" })}
+          <option value="">
+            {t("custom-content-other", { defaultValue: "Other" })}
+          </option>
+          {manifest?.categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
             </option>
-            {manifest?.categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field
+          ))}
+        </SelectField>
+        <TextField
           id="sb-ccl-author"
+          className="sb-ccl-field"
           label={t("custom-content-author", { defaultValue: "Author" })}
-        >
-          <input
-            id="sb-ccl-author"
-            type="text"
-            className="sb-cz-input"
-            maxLength={200}
-            value={form.value.author}
-            onInput={set("author")}
-          />
-        </Field>
-        <Field
+          maxLength={200}
+          value={form.value.author}
+          onValueInput={set("author")}
+        />
+        <TextField
           id="sb-ccl-image"
+          className="sb-ccl-field"
           label={t("custom-content-image", {
             defaultValue: "Image link (optional)",
           })}
-        >
-          <input
-            id="sb-ccl-image"
-            type="url"
-            className="sb-cz-input"
-            maxLength={2048}
-            placeholder="https://"
-            value={form.value.image}
-            onInput={set("image")}
-          />
-        </Field>
+          type="url"
+          maxLength={2048}
+          placeholder="https://"
+          value={form.value.image}
+          onValueInput={set("image")}
+        />
       </form>
 
       <footer className="sb-cz-footer">
@@ -1059,23 +1014,6 @@ function ItemForm(props: {
           </>
         )}
       </footer>
-    </div>
-  );
-}
-
-function Field(props: {
-  id: string;
-  label: string;
-  hint?: string;
-  children: ComponentChildren;
-}) {
-  return (
-    <div className="sb-settings-field-row sb-ccl-field">
-      <label className="sb-settings-field-label" htmlFor={props.id}>
-        {props.label}
-      </label>
-      {props.children}
-      {props.hint && <span className="sb-cz-hint">{props.hint}</span>}
     </div>
   );
 }
@@ -1201,25 +1139,20 @@ function ImportPanel(props: {
       )}
       {!active && tab.value === "links" && (
         <>
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-ccl-import-links"
-          >
-            {t("custom-content-import-links", {
+          <TextField
+            id="sb-ccl-import-links"
+            label={t("custom-content-import-links", {
               defaultValue: "Import links, one per line",
             })}
-          </label>
-          <textarea
-            id="sb-ccl-import-links"
-            className="sb-cz-input sb-ccl-textarea"
+            multiline
             rows={4}
             placeholder={t("custom-content-import-links-placeholder", {
               defaultValue:
                 "https://www.youtube.com/watch?v=…\nhttps://example.org/sermons/…",
             })}
             value={links.value}
-            onInput={(event) => {
-              links.value = (event.currentTarget as HTMLTextAreaElement).value;
+            onValueInput={(value) => {
+              links.value = value;
             }}
           />
           <div className="sb-ccl-import-actions">
@@ -1461,36 +1394,14 @@ function AiSuggestionsSettings(props: {
       <h3 className="sb-settings-subheading">
         {t("custom-content-ai", { defaultValue: "AI suggestions" })}
       </h3>
-      <div className="sb-settings-field-row sb-ccl-field">
-        <label className="sb-settings-field-label" htmlFor="sb-ccl-classifier">
-          {t("custom-content-ai-provider", {
-            defaultValue: "Suggest categories and passages with",
-          })}
-        </label>
-        <select
-          id="sb-ccl-classifier"
-          className="sb-settings-language-select"
-          value={chosen}
-          disabled={customContent.isSaving.value}
-          onChange={(event) => {
-            const value = (event.currentTarget as HTMLSelectElement).value;
-            void run(() => customContent.setClassifier(value || null));
-          }}
-        >
-          <option value="">
-            {t("custom-content-ai-none", {
-              defaultValue: "No AI: only passages named in the content",
-            })}
-          </option>
-          {providers.map((provider) => (
-            <option key={provider.id} value={provider.id}>
-              {translateTitle(t, provider.name)}
-            </option>
-          ))}
-          {missing && <option value={chosen}>{chosen}</option>}
-        </select>
-        <span className="sb-cz-hint">
-          {missing
+      <SelectField
+        id="sb-ccl-classifier"
+        className="sb-ccl-field"
+        label={t("custom-content-ai-provider", {
+          defaultValue: "Suggest categories and passages with",
+        })}
+        hint={
+          missing
             ? t("custom-content-ai-missing", {
                 defaultValue:
                   "The chosen agent isn't available. Turn its extension on under Extensions.",
@@ -1503,9 +1414,26 @@ function AiSuggestionsSettings(props: {
               : t("custom-content-ai-on-request", {
                   defaultValue:
                     "The AI is only asked when you press Suggest with AI. Passages named in the content are always found. Set up the agent and its key under Extensions, the same as for chat.",
-                })}
-        </span>
-      </div>
+                })
+        }
+        value={chosen}
+        disabled={customContent.isSaving.value}
+        onValueChange={(value) => {
+          void run(() => customContent.setClassifier(value || null));
+        }}
+      >
+        <option value="">
+          {t("custom-content-ai-none", {
+            defaultValue: "No AI: only passages named in the content",
+          })}
+        </option>
+        {providers.map((provider) => (
+          <option key={provider.id} value={provider.id}>
+            {translateTitle(t, provider.name)}
+          </option>
+        ))}
+        {missing && <option value={chosen}>{chosen}</option>}
+      </SelectField>
       <Checkbox
         className="sb-ccl-checkbox"
         label={t("custom-content-ai-auto-publish-on-request", {
@@ -1833,65 +1761,54 @@ function SiteImportForm(props: {
             "We'll look your site up in Common Crawl, a public archive of the web, and list the pages it has saved. You choose which ones to import.",
         })}
       </p>
-      <Field
+      <TextField
         id="sb-ccl-site"
+        className="sb-ccl-field"
         label={t("custom-content-site-address", {
           defaultValue: "Website address",
         })}
-      >
-        <input
-          id="sb-ccl-site"
-          className="sb-cz-input"
-          inputMode="url"
-          placeholder="gracecommunity.org/sermons"
-          value={site.value}
-          aria-invalid={invalid.value || undefined}
-          onInput={(event) => {
-            site.value = (event.currentTarget as HTMLInputElement).value;
-            invalid.value = false;
-          }}
-        />
-      </Field>
+        inputMode="url"
+        placeholder="gracecommunity.org/sermons"
+        value={site.value}
+        invalid={invalid.value}
+        aria-describedby={invalid.value ? "sb-ccl-site-error" : undefined}
+        onValueInput={(value) => {
+          site.value = value;
+          invalid.value = false;
+        }}
+      />
       {invalid.value && (
-        <p className="sb-ccl-error" role="alert">
+        <p id="sb-ccl-site-error" className="sb-ccl-error" role="alert">
           {t("custom-content-error-invalid-site", {
             defaultValue:
               "Enter a website address, like gracecommunity.org/sermons.",
           })}
         </p>
       )}
-      <Field
+      <TextField
         id="sb-ccl-site-include"
+        className="sb-ccl-field"
         label={t("custom-content-site-include", {
           defaultValue: "Only pages under (optional)",
         })}
-      >
-        <input
-          id="sb-ccl-site-include"
-          className="sb-cz-input"
-          placeholder="/sermons/"
-          value={include.value}
-          onInput={(event) => {
-            include.value = (event.currentTarget as HTMLInputElement).value;
-          }}
-        />
-      </Field>
-      <Field
+        placeholder="/sermons/"
+        value={include.value}
+        onValueInput={(value) => {
+          include.value = value;
+        }}
+      />
+      <TextField
         id="sb-ccl-site-exclude"
+        className="sb-ccl-field"
         label={t("custom-content-site-exclude", {
           defaultValue: "Skip pages under (optional)",
         })}
-      >
-        <input
-          id="sb-ccl-site-exclude"
-          className="sb-cz-input"
-          placeholder="/events/, /blog/"
-          value={exclude.value}
-          onInput={(event) => {
-            exclude.value = (event.currentTarget as HTMLInputElement).value;
-          }}
-        />
-      </Field>
+        placeholder="/events/, /blog/"
+        value={exclude.value}
+        onValueInput={(value) => {
+          exclude.value = value;
+        }}
+      />
       <p className="sb-cz-hint">
         {t("custom-content-site-noise", {
           defaultValue:

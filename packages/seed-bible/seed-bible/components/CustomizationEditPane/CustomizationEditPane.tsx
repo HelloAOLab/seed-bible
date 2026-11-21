@@ -87,6 +87,8 @@ import {
   ThemeThumbnail,
 } from "./CustomizationPreviews";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
+import "../Field/Field.css";
 
 // The picture editor pulls in `react-avatar-editor`, so it's only fetched on
 // the "Upload logo" click rather than at boot, same as SettingsPage does.
@@ -764,16 +766,11 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           className="sb-settings-field-row"
           data-tutorial="customization-name"
         >
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-customization-name"
-          >
+          <label className="sb-field-label" htmlFor="sb-customization-name">
             {t("customization-name", { defaultValue: "Name" })}
           </label>
-          <input
+          <TextInput
             id="sb-customization-name"
-            type="text"
-            className="sb-cz-input"
             value={record.name}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLInputElement;
@@ -786,7 +783,7 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           className="sb-settings-field-row"
           data-tutorial="customization-logo"
         >
-          <span className="sb-settings-field-label">
+          <span className="sb-field-label">
             {t("logo", { defaultValue: "Logo" })}
           </span>
           {record.logoUrl ? (
@@ -1818,15 +1815,13 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
           data-tutorial="theme-variant-name"
         >
           <label
-            className="sb-settings-field-label"
+            className="sb-field-label"
             htmlFor="sb-customization-variant-name"
           >
             {t("variant-name", { defaultValue: "Name" })}
           </label>
-          <input
+          <TextInput
             id="sb-customization-variant-name"
-            type="text"
-            className="sb-cz-input"
             value={variant.name}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLInputElement;
@@ -1837,7 +1832,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
 
         <div className="sb-settings-field-row" data-tutorial="theme-base">
           <span
-            className="sb-settings-field-label"
+            className="sb-field-label"
             id="sb-customization-variant-base-theme"
           >
             {t("based-on", { defaultValue: "Based on" })}
@@ -2279,7 +2274,7 @@ function CustomizationFontFieldRow(props: {
 
   return (
     <div className="sb-settings-field-row">
-      <label className="sb-settings-field-label" htmlFor={selectId}>
+      <label className="sb-field-label" htmlFor={selectId}>
         {label}
       </label>
       <div className="sb-cz-font-row">
@@ -2342,19 +2337,19 @@ function CustomizationFontFieldRow(props: {
         </span>
       </div>
       {isCustom && (
-        <input
-          type="text"
-          className="sb-cz-input"
+        <TextInput
+          aria-label={t("custom-font-name-placeholder", {
+            defaultValue: "Google Font name",
+          })}
           placeholder={t("custom-font-name-placeholder", {
             defaultValue: "Google Font name",
           })}
           value={customName}
-          onInput={(event: Event) => {
-            const target = event.currentTarget as HTMLInputElement;
+          onValueInput={(name) => {
             customizations.setEditingVariantFont(
               variantId,
               fieldKey,
-              buildCustomFontValue(target.value)
+              buildCustomFontValue(name)
             );
           }}
         />

@@ -49,24 +49,6 @@
 
 /* Shared surfaces */
 
-.sb-cz-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: var(--sb-radius-md);
-  background: transparent;
-  color: var(--sb-font-color);
-  font-size: var(--sb-font-size-15);
-  font-family: inherit;
-  transition: border-color var(--sb-duration-base) ease;
-}
-
-.sb-cz-input:focus {
-  outline: none;
-  border-color: var(--sb-primary-color);
-}
-
 /* The "Default translation" row, which opens the translation menu. */
 .sb-cz-row {
   width: 100%;
