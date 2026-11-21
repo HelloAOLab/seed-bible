@@ -78,7 +78,7 @@ describe("ColorPicker", () => {
 
   function hexInput() {
     const el = document.body.querySelector<HTMLInputElement>(
-      ".sb-color-picker-hex"
+      'input[aria-label="Hex color"]'
     );
     if (!el) throw new Error("hex input was not rendered");
     return el;

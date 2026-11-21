@@ -135,27 +135,13 @@
 }
 
 .ftv-label {
+  display: block;
   margin-bottom: 6px;
   font-size: var(--sb-font-size-13);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   opacity: 0.6;
-}
-
-.ftv-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 8px 10px;
-  border-radius: var(--sb-radius-sm);
-  border: 1px solid var(--sb-divider-color, rgb(0 0 0 / 12%));
-  background: var(--sb-background, #fff);
-  color: var(--sb-font-color, #333);
-  font-size: var(--sb-font-size-15);
-}
-
-.ftv-input--invalid {
-  border-color: var(--sb-error-color, #d64545);
 }
 
 .ftv-verse-preview {
@@ -179,8 +165,9 @@
   margin-bottom: 8px;
 }
 
-.ftv-reference-row .ftv-input {
+.ftv-reference-row .ftv-reference-input {
   flex: 1;
+  width: auto;
 }
 
 .ftv-selecting-banner {
@@ -221,12 +208,11 @@
   font-size: var(--sb-font-size-14);
 }
 
-.ftv-hint-box {
+.sb-text-input.ftv-hint-box {
   flex: 1;
+  width: auto;
   resize: none;
   overflow: hidden;
-  font-family: inherit;
-  line-height: 1.4;
 }
 
 .sb-icon-button.ftv-step-remove {

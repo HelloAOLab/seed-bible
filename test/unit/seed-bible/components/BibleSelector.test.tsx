@@ -320,6 +320,40 @@ describe("BibleSelector", () => {
     expect(text).toContain("Matthew");
   });
 
+  it("names the testament dropdown and changes the testament when one is chosen", async () => {
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
+
+    act(() => {
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={vi.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+          app={state.app}
+        />,
+        container
+      );
+    });
+
+    await waitFor(() => Boolean(container.querySelector("#booktab-GEN")));
+    const dropdown = container.querySelector<HTMLSelectElement>(
+      'select[aria-label="Testament"]'
+    );
+    expect(dropdown).not.toBeNull();
+    expect(
+      Array.from(dropdown!.options).map((option) => option.textContent)
+    ).toEqual(expect.arrayContaining(["Old Testament", "New Testament"]));
+
+    act(() => {
+      dropdown!.value = "1";
+      dropdown!.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    expect(selectorState.selectedTestament.value).toBe(1);
+  });
+
   it("clicking a chapter selects it", async () => {
     const { selectorState, selectChapter, bibleDataManager, state } =
       await createSelectorFixture();
@@ -2086,10 +2120,12 @@ describe("BibleSelector translation selector", () => {
       selectorState.showCustomTranslation.value = true;
     });
 
-    await waitFor(() => Boolean(container.querySelector("input.custom-tr-in")));
+    await waitFor(() =>
+      Boolean(container.querySelector('input[aria-label="Enter URL"]'))
+    );
 
     const urlInput = container.querySelector(
-      "input.custom-tr-in"
+      'input[aria-label="Enter URL"]'
     ) as HTMLInputElement;
     expect(urlInput).not.toBeNull();
 

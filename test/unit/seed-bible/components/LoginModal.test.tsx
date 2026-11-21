@@ -157,6 +157,14 @@ describe("LoginModal backdrop", () => {
     expect(document.activeElement).toBe(emailInput);
   });
 
+  it("names the email box for screen readers, not only by its placeholder", async () => {
+    const { emailInput } = await renderOpenLogin();
+
+    const box = emailInput as HTMLInputElement;
+    expect(box.labels?.[0]?.textContent).toBe("Enter your email address");
+    expect(box.placeholder).toBe("Enter your email address");
+  });
+
   it("closes on Escape", async () => {
     const { state, emailInput } = await renderOpenLogin();
 

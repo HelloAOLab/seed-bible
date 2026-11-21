@@ -23,6 +23,7 @@ import {
 import { openReaderLocation } from "../Tabs/openReaderLocation";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
 import { IconButton } from "../IconButton/IconButton";
 
 type Translate = ReturnType<typeof useI18n>["t"];
@@ -295,19 +296,14 @@ export function BookmarkForm(props: {
 
   return (
     <div className="sb-bookmark-form">
-      <input
-        className="sb-bookmark-form-name"
-        type="text"
+      <TextInput
         autoFocus={autoFocus}
         disabled={disabled}
         maxLength={MAX_BOOKMARK_NAME_LENGTH}
         value={value.name}
         aria-label={t("bookmark-name", { defaultValue: "Bookmark name" })}
         placeholder={t("bookmark-name", { defaultValue: "Bookmark name" })}
-        onInput={(event: Event) => {
-          const target = event.target as HTMLInputElement;
-          onChange({ ...value, name: target.value });
-        }}
+        onValueInput={(name) => onChange({ ...value, name })}
         onKeyDown={(event: KeyboardEvent) => {
           if (event.key === "Enter" && onSubmit) {
             event.preventDefault();

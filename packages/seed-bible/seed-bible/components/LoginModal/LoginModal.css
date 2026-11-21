@@ -144,10 +144,6 @@
   text-decoration: underline;
 }
 
-.sb-login-input {
-  width: 100%;
-}
-
 .sb-login-error {
   margin: 0;
   font-size: var(--sb-font-size-13);

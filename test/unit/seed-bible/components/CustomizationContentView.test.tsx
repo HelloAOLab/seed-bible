@@ -160,6 +160,60 @@ describe("CustomizationContentView", () => {
     expect(button("Save draft").disabled).toBe(true);
   });
 
+  it("flags an unrecognized passage on its box, tied to the hint and the explanation", async () => {
+    const server = fakeRecordsServer();
+    await renderEditor(server);
+    await createLibrary();
+    await click(button("Add content"));
+
+    const box = () =>
+      container.querySelector<HTMLInputElement>("#sb-ccl-verses")!;
+    const described = () =>
+      box()
+        .getAttribute("aria-describedby")!
+        .split(" ")
+        .map((id) => document.getElementById(id)?.textContent ?? "")
+        .join(" | ");
+
+    await type("Passages it covers", "John 3");
+    expect(box().getAttribute("aria-invalid")).toBeNull();
+
+    await type("Passages it covers", "John 99");
+    expect(box().getAttribute("aria-invalid")).toBe("true");
+    expect(described()).toContain("Separate passages with a semicolon");
+    expect(described()).toContain("Not a passage we recognize: John 99");
+  });
+
+  it("names the item form's boxes and its category dropdown by their labels", async () => {
+    const server = fakeRecordsServer();
+    await renderEditor(server);
+    await createLibrary();
+    await click(button("Add content"));
+
+    const named = (id: string) =>
+      container.querySelector<
+        HTMLElement & { labels: NodeListOf<HTMLLabelElement> }
+      >(`#${id}`)!;
+    expect(named("sb-ccl-url").labels[0]!.textContent).toBe("Link");
+    expect(named("sb-ccl-title").labels[0]!.textContent).toBe("Title");
+    expect(named("sb-ccl-description").tagName).toBe("TEXTAREA");
+    expect(named("sb-ccl-category").tagName).toBe("SELECT");
+    expect(named("sb-ccl-category").labels[0]!.textContent).toBe("Category");
+  });
+
+  it("names the new-category box by a label that's hidden on screen", async () => {
+    const server = fakeRecordsServer();
+    await renderEditor(server);
+    await createLibrary();
+
+    const box = container.querySelector<HTMLInputElement>(
+      "#sb-ccl-new-category"
+    )!;
+    const label = box.labels![0]!;
+    expect(label.textContent).toBe("New category");
+    expect(label.classList.contains("sb-visually-hidden")).toBe(true);
+  });
+
   it("keeps an item without passages as a draft that can't be published yet", async () => {
     const server = fakeRecordsServer();
     const { customContent } = await renderEditor(server);
@@ -566,6 +620,31 @@ describe("CustomizationContentView", () => {
         "item_0",
         "item_1",
       ]);
+    });
+
+    it("flags an address that isn't a website on its box, and announces why", async () => {
+      const server = fakeRecordsServer();
+      const { service } = stubImportService();
+      await renderEditor(server, { importService: service });
+      await createLibrary();
+      await click(button("Import a website"));
+      await type("Website address", "not a site!");
+      await click(
+        container.querySelector<HTMLInputElement>(
+          ".sb-ccl-check input[type=checkbox]"
+        )!
+      );
+      await click(button("Find pages"));
+
+      const box = container.querySelector<HTMLInputElement>("#sb-ccl-site")!;
+      const alert = container.querySelector('[role="alert"]')!;
+      expect(alert.textContent).toContain("Enter a website address");
+      expect(box.getAttribute("aria-invalid")).toBe("true");
+      expect(box.getAttribute("aria-describedby")).toBe(alert.id);
+
+      await type("Website address", "gracecommunity.org");
+      expect(box.getAttribute("aria-invalid")).toBeNull();
+      expect(container.querySelector('[role="alert"]')).toBeNull();
     });
 
     it("says plainly when the archive has nothing from the site", async () => {

@@ -9,6 +9,9 @@ import type { I18nHook } from "../../i18n/I18nManager";
 import { IconButton } from "../IconButton/IconButton";
 import { Checkbox } from "../Checkbox/Checkbox";
 import { Switch } from "../Switch/Switch";
+import "../Field/Field.css";
+import { TextInput } from "../TextField/TextField";
+import { Select } from "../Select/Select";
 
 function NumberSettingInput(props: {
   id: string;
@@ -24,16 +27,14 @@ function NumberSettingInput(props: {
   const draft = useSignal<string | null>(null);
 
   return (
-    <input
+    <TextInput
       id={id}
-      className="sb-settings-text-input"
       type="number"
       min={limits.min}
       max={limits.max}
       step={limits.step}
       value={draft.value ?? (value === undefined ? "" : String(value))}
-      onInput={(event: Event) => {
-        const raw = (event.currentTarget as HTMLInputElement).value;
+      onValueInput={(raw) => {
         draft.value = raw;
         const parsed = Number(raw);
         // An in-progress edit that isn't a number yet (e.g. empty, or a bare
@@ -66,12 +67,10 @@ function EnumSettingSelect(props: {
   const selected = value !== undefined && choices.includes(value) ? value : "";
 
   return (
-    <select
+    <Select
       id={id}
-      className="sb-settings-language-select"
       value={selected}
-      onChange={(event: Event) => {
-        const next = (event.currentTarget as HTMLSelectElement).value;
+      onValueChange={(next) => {
         if (choices.includes(next)) {
           onChange(next);
         }
@@ -86,7 +85,7 @@ function EnumSettingSelect(props: {
           })}
         </option>
       ))}
-    </select>
+    </Select>
   );
 }
 
@@ -222,7 +221,7 @@ export function ExtensionSettingsForm(props: {
                 <div className="sb-settings-field-switch-row">
                   <div className="sb-settings-field-title-row">
                     <label
-                      className="sb-settings-field-label"
+                      className="sb-field-label"
                       htmlFor={overridden ? fieldId : undefined}
                     >
                       {title}
@@ -245,7 +244,7 @@ export function ExtensionSettingsForm(props: {
               <>
                 <div className="sb-settings-field-title-row">
                   <label
-                    className="sb-settings-field-label"
+                    className="sb-field-label"
                     htmlFor={overridden ? fieldId : undefined}
                   >
                     {title}
@@ -274,17 +273,10 @@ export function ExtensionSettingsForm(props: {
                       t={t}
                     />
                   ) : (
-                    <input
+                    <TextInput
                       id={fieldId}
-                      className="sb-settings-text-input"
-                      type="text"
                       value={value === undefined ? "" : String(value)}
-                      onInput={(event: Event) =>
-                        onChange(
-                          key,
-                          (event.currentTarget as HTMLInputElement).value
-                        )
-                      }
+                      onValueInput={(next) => onChange(key, next)}
                     />
                   ))}
               </>

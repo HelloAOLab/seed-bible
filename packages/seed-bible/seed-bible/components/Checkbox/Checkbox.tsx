@@ -1,6 +1,7 @@
 import "./Checkbox.css";
 import type { ComponentChild, JSX, Ref } from "preact";
-import { useCallback, useLayoutEffect, useRef } from "preact/hooks";
+import { useLayoutEffect, useRef } from "preact/hooks";
+import { useForwardedRef } from "../useForwardedRef";
 
 export type CheckboxProps = Omit<
   JSX.InputHTMLAttributes<HTMLInputElement>,
@@ -49,20 +50,9 @@ export function Checkbox({
       input.current.indeterminate = indeterminate;
     }
   });
-  // The input's ref never changes, even when the caller passes a new inline
-  // `inputRef` each render: Preact detaches and reattaches a ref that changes,
-  // which would hand the caller's callback the element again every time.
-  const latestInputRef = useRef(inputRef);
-  latestInputRef.current = inputRef;
-  const setInput = useCallback((element: HTMLInputElement | null) => {
+  const setInput = useForwardedRef(inputRef, (element) => {
     input.current = element;
-    const ref = latestInputRef.current;
-    if (typeof ref === "function") {
-      ref(element);
-    } else if (ref) {
-      ref.current = element;
-    }
-  }, []);
+  });
   const classes = [className, classAttribute].filter(Boolean).join(" ");
   const box = (
     <input
