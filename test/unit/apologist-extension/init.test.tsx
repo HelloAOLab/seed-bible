@@ -408,7 +408,7 @@ describe("initApologistExtension discover provider", () => {
       expect(removedFromChats(context)).toEqual(["apologist-chat-provider"]);
     });
 
-    it("sends the saved model, the link's model over it, and the default with neither", async () => {
+    it("sends the saved model, the link's model over it, and no model with neither", async () => {
       fetchMock.mockImplementation(() => Promise.resolve(chatReply()));
 
       await sendChatMessage(
@@ -428,7 +428,7 @@ describe("initApologistExtension discover provider", () => {
       expect(sentModels()).toEqual([
         "anthropic/claude",
         "openai/gpt/5.4-nano",
-        "openai/gpt/5-mini",
+        undefined,
       ]);
     });
 
@@ -441,7 +441,7 @@ describe("initApologistExtension discover provider", () => {
       saved.value = { model: "anthropic/claude" };
       await sendChatMessage(context);
 
-      expect(sentModels()).toEqual(["openai/gpt/5-mini", "anthropic/claude"]);
+      expect(sentModels()).toEqual([undefined, "anthropic/claude"]);
     });
 
     it("regroups the open chapter's results when the saved content author changes", async () => {

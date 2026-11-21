@@ -185,7 +185,6 @@ type ChatMessage =
 
 const PROVIDER_ID = "apologist-chat-provider";
 const DISCOVER_PROVIDER_ID = "apologist-discover-provider";
-const DEFAULT_APOLOGIST_MODEL = "openai/gpt/5-mini";
 
 // Bounds the tool-call resolution loop below so a model that never emits
 // final content (or keeps calling tools) can't hang generateResponse forever.
@@ -293,8 +292,7 @@ export default function initApologistExtension() {
                 method: "POST",
                 body,
               }),
-            model:
-              urlModel ?? readSavedText("model") ?? DEFAULT_APOLOGIST_MODEL,
+            model: urlModel ?? readSavedText("model") ?? undefined,
             stream: false,
             language: uiLocaleForApologist(i18n.language),
             bible: resolveApologistBible(
@@ -395,8 +393,7 @@ export default function initApologistExtension() {
                     method: "POST",
                     body,
                   }),
-                model:
-                  urlModel ?? readSavedText("model") ?? DEFAULT_APOLOGIST_MODEL,
+                model: urlModel ?? readSavedText("model") ?? undefined,
                 stream: true,
                 language: uiLanguage,
                 bible: bibleCode,
