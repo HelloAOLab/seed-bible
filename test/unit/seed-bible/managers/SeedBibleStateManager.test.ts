@@ -715,21 +715,98 @@ describe("createSeedBibleState", () => {
       delete (globalThis as any).posthog;
     }
   });
+  it("sets isJoiningSession while a shared session is joining", async () => {
+    const session = createMockSharedSession("session-joining");
 
-  it("does not auto-join a shared session when sessionId is missing from URL tags", async () => {
+    let finishJoin!: (joinedSession: typeof session) => void;
+
+    mockSessionsManager.joinSession.mockReturnValue(
+      new Promise((resolve) => {
+        finishJoin = resolve;
+      })
+    );
+
     const state = await createState();
 
-    await waitFor(() => state.tabs.tabs.value.length >= 1);
+    const joinPromise = state.app.joinSharedSession("session-joining");
 
-    expect(mockSessionsManager.joinSession).not.toHaveBeenCalled();
-    expect(state.tabs.tabs.value).toHaveLength(1);
+    expect(state.app.isJoiningSession.value).toBe(true);
+
+    finishJoin(session);
+    await joinPromise;
+
+    expect(state.app.isJoiningSession.value).toBe(false);
+  });
+  it("resets isJoiningSession when joining a shared session fails", async () => {
+    let failJoin!: (error: Error) => void;
+
+    mockSessionsManager.joinSession.mockReturnValue(
+      new Promise((_, reject) => {
+        failJoin = reject;
+      })
+    );
+
+    const state = await createState();
+
+    const joinPromise = state.app.joinSharedSession("session-failing");
+
+    expect(state.app.isJoiningSession.value).toBe(true);
+
+    failJoin(new Error("Failed to join session"));
+
+    await expect(joinPromise).rejects.toThrow("Failed to join session");
+
+    expect(state.app.isJoiningSession.value).toBe(false);
+  });
+  it("keeps isJoiningSession true until all concurrent joins finish", async () => {
+    const firstSession = createMockSharedSession("session-1");
+    const secondSession = createMockSharedSession("session-2");
+
+    let finishFirst!: (joinedSession: typeof firstSession) => void;
+    let finishSecond!: (joinedSession: typeof secondSession) => void;
+
+    mockSessionsManager.joinSession.mockImplementation((id: string) => {
+      return new Promise((resolve) => {
+        if (id === "session-1") {
+          finishFirst = resolve;
+        } else {
+          finishSecond = resolve;
+        }
+      });
+    });
+
+    const state = await createStateWithTwoTabs();
+
+    const firstJoin = state.app.joinSharedSession("session-1");
+    const secondJoin = state.app.joinSharedSession("session-2");
+
+    expect(state.app.isJoiningSession.value).toBe(true);
+
+    finishFirst(firstSession);
+    await firstJoin;
+
+    // One join is still pending.
+    expect(state.app.isJoiningSession.value).toBe(true);
+
+    finishSecond(secondSession);
+    await secondJoin;
+
+    expect(state.app.isJoiningSession.value).toBe(false);
   });
 
   it("auto-joins a shared session when sessionId is present in the URL", async () => {
     const session = createMockSharedSession("url-session-123");
-    mockSessionsManager.joinSession.mockResolvedValue(session);
+
+    let finishJoin!: (joinedSession: typeof session) => void;
+
+    mockSessionsManager.joinSession.mockReturnValue(
+      new Promise((resolve) => {
+        finishJoin = resolve;
+      })
+    );
 
     window.history.replaceState(null, "", "?sessionId=url-session-123");
+
     try {
       const state = await createStateWithOptions({});
 
@@ -737,11 +814,22 @@ describe("createSeedBibleState", () => {
         () => mockSessionsManager.joinSession.mock.calls.length === 1
       );
 
-      // A link that names no chapter leaves the session wherever it is.
+      // The join is still pending, so the loading state must be true.
+      expect(state.app.isJoiningSession.value).toBe(true);
+
       expect(mockSessionsManager.joinSession).toHaveBeenCalledWith(
         "url-session-123",
         undefined
       );
+
+      // Complete the join.
+      finishJoin(session);
+
+      await waitFor(() =>
+        state.tabs.tabs.value.some((tab) => tab.sharedSession === session)
+      );
+
+      expect(state.app.isJoiningSession.value).toBe(false);
       expect(state.tabs.tabs.value).toHaveLength(2);
       expect(state.tabs.tabs.value[1]?.sharedSession).toBe(session);
       expect(state.tabs.selectedTabId.value).toBe("tab-2");
@@ -884,6 +972,7 @@ describe("createSeedBibleState", () => {
           state.app.currentToast.value?.message ===
           "Couldn't join the shared session"
       );
+      expect(state.app.isJoiningSession.value).toBe(false);
 
       const selected = state.tabs.tabs.value.find(
         (tab) => tab.id === state.tabs.selectedTabId.value
@@ -924,6 +1013,7 @@ describe("createSeedBibleState", () => {
           state.app.currentToast.value?.message ===
           "Couldn't join the shared session"
       );
+      expect(state.app.isJoiningSession.value).toBe(false);
 
       expect(state.tabs.tabs.value).toHaveLength(1);
       const [tab] = state.tabs.tabs.value;

@@ -1,0 +1,37 @@
+.sb-joining-session-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  /* Prevent interaction with everything behind it */
+  cursor: wait;
+}
+
+.sb-joining-session-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: min(90%, 380px);
+  padding: 32px 24px;
+  background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+  border-radius: 12px;
+  box-shadow: var(--sb-shadow-lg);
+  text-align: center;
+}
+
+.sb-joining-session-modal h3 {
+  margin: 16px 0 8px;
+  font-size: var(--sb-font-size-lg);
+  font-weight: 600;
+}
+
+.sb-joining-session-modal p {
+  margin: 0;
+  font-size: var(--sb-font-size-sm);
+  opacity: 0.7;
+}
