@@ -17,7 +17,12 @@
 //                            text=<words> for a button, link or label by its exact name
 //   type <text> [--clear]    type into the focused field (--clear empties it first)
 //   press <key>              Enter, Escape, Tab, Backspace or an arrow key
+//   probe <target> [--nth N] [--partial]
+//                            read-only: where an element is, and which element
+//                            answers a tap at points across it
 //   scroll <up|down|to> ...  scroll like a finger: up|down [pixels], or to <target>
+//   reset-cache              remove the app's service worker and its caches (keeps
+//                            sign-in), then reload: for stale styles or scripts
 //   back                     go back one page in the app's tab
 //   release                  take down the "Claude is controlling this phone" bar:
 //                            run it when you are finished with the phone
@@ -925,7 +930,8 @@ async function showTap(cdp: Cdp, x: number, y: number): Promise<void> {
 export function findScript(
   target: string,
   nth: number | undefined,
-  partial = false
+  partial = false,
+  scroll = true
 ): string {
   return `(() => {
     const spec = ${JSON.stringify(target)};
@@ -987,7 +993,7 @@ export function findScript(
     }
     const el = found[(nth ?? 1) - 1];
     if (!el) return { error: "Only " + found.length + " match; --nth " + nth + " is out of range" };
-    el.scrollIntoView({ block: "center", inline: "center" });
+    if (${JSON.stringify(scroll)}) el.scrollIntoView({ block: "center", inline: "center" });
     window.__phoneTarget = el;
     return { ok: true, describe: describe(el) };
   })()`;
@@ -1043,6 +1049,114 @@ function splitFlags(rest: string[]): {
   if (!Number.isInteger(nth) || nth < 1) fail("--nth takes a number from 1.");
   words = [...words.slice(0, i), ...words.slice(i + 2)];
   return { words, nth, partial };
+}
+
+/**
+ * Read-only: where the target is, which interactive elements overlap it, and
+ * which element answers a tap at a grid of points across it. For finding out
+ * why a button can't be tapped. It doesn't scroll or tap anything.
+ */
+export const PROBE_SCRIPT = `(() => {
+  const el = window.__phoneTarget;
+  delete window.__phoneTarget;
+  if (!el || !el.isConnected) return { error: "The element went away." };
+  const clean = (t) => String(t).replace(/\\\\s+/g, " ").trim();
+  const desc = (e) => {
+    const cls = typeof e.className === "string" ? e.className.split(" ").filter(Boolean).slice(0, 3).join(".") : "";
+    const label = e.getAttribute("aria-label") || clean(e.innerText || "").slice(0, 24);
+    return e.tagName.toLowerCase() + (e.id ? "#" + e.id : "") + (cls ? "." + cls : "") + (label ? ' "' + label + '"' : "");
+  };
+  const box = (e) => {
+    const b = e.getBoundingClientRect();
+    return "x " + b.left.toFixed(1) + ".." + b.right.toFixed(1) + " y " + b.top.toFixed(1) + ".." + b.bottom.toFixed(1) + " (" + b.width.toFixed(1) + " x " + b.height.toFixed(1) + ")";
+  };
+  const style = (e) => {
+    const c = getComputedStyle(e);
+    return "z=" + c.zIndex + " position=" + c.position + " pointer-events=" + c.pointerEvents + " visibility=" + c.visibility + " opacity=" + c.opacity;
+  };
+  const r = el.getBoundingClientRect();
+  const lines = ["target  " + desc(el), "        " + box(el), "        " + style(el)];
+  const interactive = "button,a[href],input,select,textarea,[role=button],[tabindex]";
+  const overlapping = [...document.querySelectorAll(interactive)].filter((e) => {
+    if (e === el || el.contains(e) || e.contains(el)) return false;
+    const b = e.getBoundingClientRect();
+    return b.width > 0 && b.height > 0 && b.left < r.right && b.right > r.left && b.top < r.bottom && b.bottom > r.top;
+  });
+  lines.push("", "interactive elements whose box overlaps the target's: " + (overlapping.length || "none"));
+  for (const e of overlapping.slice(0, 12)) lines.push("  " + desc(e), "    " + box(e), "    " + style(e));
+  const cols = 9, rows = 3, runs = new Map(), hits = new Map();
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < cols; j++) {
+      const x = r.left + ((j + 0.5) / cols) * r.width, y = r.top + ((i + 0.5) / rows) * r.height;
+      const hit = document.elementFromPoint(x, y);
+      const who = !hit ? "nothing" : el.contains(hit) ? "THE TARGET" : desc(hit);
+      runs.set(who, (runs.get(who) || 0) + 1);
+      if (hit && !el.contains(hit)) hits.set(who, hit);
+    }
+  }
+  const positionRules = [];
+  const walkRules = (list, href) => {
+    for (const rule of list) {
+      if (rule.selectorText === undefined && rule.cssRules) { walkRules(rule.cssRules, href); continue; }
+      if (rule.selectorText && rule.style && rule.style.position) {
+        try {
+          if (el.matches(rule.selectorText)) positionRules.push("  " + rule.selectorText.replace(/\\s+/g, " ").slice(0, 110) + "  { position: " + rule.style.position + " }  (" + (href || "inline <style>") + ")");
+        } catch (e) {}
+      }
+    }
+  };
+  for (const sheet of document.styleSheets) {
+    try { walkRules(sheet.cssRules, sheet.href ? sheet.href.replace(location.origin, "") : ""); } catch (e) {}
+  }
+  lines.push("", "style rules that set position on the target (in cascade order, last one wins unless less specific): " + (positionRules.length || "none"), ...positionRules, "  inline style: " + (el.getAttribute("style") || "none"));
+  const letters = new Map();
+  const mapRows = [];
+  for (let i = 0; i < rows; i++) {
+    let row = "";
+    for (let j = 0; j < cols; j++) {
+      const x = r.left + ((j + 0.5) / cols) * r.width, y = r.top + ((i + 0.5) / rows) * r.height;
+      const hit = document.elementFromPoint(x, y);
+      if (hit && el.contains(hit)) row += "T";
+      else if (!hit) row += ".";
+      else { if (!letters.has(hit)) letters.set(hit, String.fromCharCode(65 + letters.size)); row += letters.get(hit); }
+    }
+    mapRows.push("  " + row);
+  }
+  lines.push("", "map of the target, left to right (T = the target, letters = other elements, . = nothing):", ...mapRows);
+  for (const [hit, letter] of letters) lines.push("  " + letter + " = " + desc(hit));
+  lines.push("", "service worker: " + (navigator.serviceWorker && navigator.serviceWorker.controller ? "this page is controlled by " + navigator.serviceWorker.controller.scriptURL.replace(location.origin, "") + " (state " + navigator.serviceWorker.controller.state + ")" : "none controls this page"));
+  lines.push("", "page: innerWidth " + innerWidth + ", visualViewport width " + (visualViewport ? visualViewport.width.toFixed(1) : "?") + " scale " + (visualViewport ? visualViewport.scale.toFixed(3) : "?") + ", document scroll width " + document.documentElement.scrollWidth + ", devicePixelRatio " + devicePixelRatio);
+  lines.push("", "who answers a tap at " + cols * rows + " points across it (" + rows + " rows x " + cols + " columns):");
+  for (const [who, n] of [...runs.entries()].sort((a, b) => b[1] - a[1])) lines.push("  " + n + " of " + cols * rows + "  " + who);
+  for (const [who, hit] of hits) {
+    const chain = [];
+    for (let e = hit.parentElement; e && chain.length < 4; e = e.parentElement) chain.push(desc(e));
+    lines.push("", "answering element  " + who, "  " + box(hit), "  " + style(hit),
+      "  same node as another page element? " + [...document.querySelectorAll(hit.tagName.toLowerCase() + "[aria-label]")].filter((e) => e.getAttribute("aria-label") === hit.getAttribute("aria-label")).length + " element(s) share its label",
+      "  inside: " + chain.join("  <  "),
+      "  children: " + [...hit.children].map((c) => desc(c) + " " + box(c)).join(" | "),
+      "  ::before " + getComputedStyle(hit, "::before").position + " " + getComputedStyle(hit, "::before").inset + " | ::after " + getComputedStyle(hit, "::after").content);
+  }
+  return { lines };
+})()`;
+
+async function probe(rest: string[]): Promise<void> {
+  const { words, nth, partial } = splitFlags(rest);
+  const target = words.join(" ").trim();
+  if (!target)
+    fail("Usage: probe <css selector | text=words> [--nth N] [--partial]");
+  const cdp = await connectTab();
+  await showControlling(cdp, "inspecting");
+  const found = await cdp.evaluate<Found>(
+    findScript(target, nth, partial, false)
+  );
+  if (found.error) fail(found.error);
+  const result = await cdp.evaluate<{ lines?: string[]; error?: string }>(
+    PROBE_SCRIPT
+  );
+  if (result.error || !result.lines) fail(result.error ?? "Nothing to report.");
+  console.log(result.lines.join("\n"));
+  process.exit(0);
 }
 
 async function click(rest: string[]): Promise<void> {
@@ -1176,6 +1290,32 @@ async function scroll(rest: string[]): Promise<void> {
   process.exit(0);
 }
 
+/**
+ * Clears what a stale service worker holds: its registration and its cached
+ * files, for this address only, then reloads. Sign-in lives in local storage,
+ * which this leaves alone, unlike clearing the site's data in Chrome.
+ */
+async function resetCache(): Promise<void> {
+  const cdp = await connectTab();
+  await showControlling(cdp, "clearing the service worker");
+  const result = await cdp.evaluate<{
+    workers: number;
+    caches: number;
+  }>(`(async () => {
+    const regs = navigator.serviceWorker ? await navigator.serviceWorker.getRegistrations() : [];
+    for (const reg of regs) await reg.unregister();
+    const keys = window.caches ? await caches.keys() : [];
+    for (const key of keys) await caches.delete(key);
+    return { workers: regs.length, caches: keys.length };
+  })()`);
+  await cdp.send("Page.reload", { ignoreCache: true });
+  await sleep(1500);
+  console.log(
+    `Removed ${result.workers} service worker(s) and ${result.caches} cache(s) for ${APP_ORIGIN}, then reloaded. Sign-in is untouched.`
+  );
+  process.exit(0);
+}
+
 async function back(): Promise<void> {
   const cdp = await connectTab();
   await showControlling(cdp, "going back");
@@ -1223,6 +1363,9 @@ if (import.meta.main) {
       focusChrome(serial());
       console.log("Chrome is in front.");
       break;
+    case "probe":
+      await probe(args);
+      break;
     case "click":
       await click(args);
       break;
@@ -1235,12 +1378,15 @@ if (import.meta.main) {
     case "scroll":
       await scroll(args);
       break;
+    case "reset-cache":
+      await resetCache();
+      break;
     case "back":
       await back();
       break;
     default:
       fail(
-        "Usage: phone.ts <pair <ip:port> <code> | connect [ip:port] | status | open [path] | logs [seconds] [--reload] | screenshot [file] [--clean] | focus | click <target> [--nth N] [--partial] | type <text> [--clear] | press <key> | scroll <up|down|to> ... | back | release>"
+        "Usage: phone.ts <pair <ip:port> <code> | connect [ip:port] | status | open [path] | logs [seconds] [--reload] | screenshot [file] [--clean] | focus | click <target> [--nth N] [--partial] | probe <target> | type <text> [--clear] | press <key> | scroll <up|down|to> ... | reset-cache | back | release>"
       );
   }
 }
