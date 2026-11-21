@@ -408,6 +408,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
   // The view outlives this component, so closing the pane to go read and add a
   // passage brings the user back to the editor they were in, not to the list.
   const view = readingPlansView.value;
+  const { t } = useI18n();
 
   const closeEditor = () => {
     showPlansList();
@@ -423,6 +424,11 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
       await readingPlans.startReadingPlan(plan);
     } catch (error) {
       console.error("Failed to restart reading plan:", error);
+      toast?.(
+        t("reading-plan-start-failed", {
+          defaultValue: "Couldn't start the reading plan. Please try again.",
+        })
+      );
       return;
     }
     await openReadingPlanDetail(readingPlans, plan);

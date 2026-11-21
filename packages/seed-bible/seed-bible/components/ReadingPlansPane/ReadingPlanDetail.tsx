@@ -5,7 +5,9 @@ import { useI18n } from "../../i18n/I18nManager";
 import {
   cadenceDurationDays,
   estimateReadingMinutes,
+  formatReadingPlanId,
   isReadingChapterComplete,
+  latestReadingPlanProgress,
   readingChapters,
   readingCompletion,
   summarizeCalendar,
@@ -163,29 +165,29 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
       if (starting) {
         return;
       }
-
       setStarting(true);
-
       try {
-        let userId = login!.userId.value;
-        if (!userId) {
-          const userInfo = await login!.login();
-          // Verify that authentication succeeded.
-          userId = login!.userId.value || userInfo!.id;
-          if (!userId) {
+        if (!login?.userId.value) {
+          await login?.login();
+          if (!login?.userId.value) {
             return;
           }
         }
-
+        const progresses = readingPlans.userReadingPlanProgresses.value;
+        const planId = formatReadingPlanId(plan.recordName, plan.address);
+        const existingProgress = latestReadingPlanProgress(progresses, planId);
+        if (existingProgress) {
+          await readingPlans.selectReadingPlanProgress(existingProgress);
+          return;
+        }
+        // No existing progress: create a new one.
         const created = await readingPlans.startReadingPlan(
           plan,
           selfPaced ? { selfPaced: true } : { cadenceId: chosen }
         );
-
         await readingPlans.selectReadingPlanProgress(created);
       } catch (error) {
         console.error("Failed to start reading plan:", error);
-
         toast?.(
           t("reading-plan-start-failed", {
             defaultValue: "Couldn't start the reading plan. Please try again.",
