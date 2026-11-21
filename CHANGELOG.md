@@ -22,6 +22,7 @@
 
 ### 🔧 Changed
 
+- While playing a playlist, the compact Discover panel beside the reader now only shows on scripture steps. It's hidden on note, question, video, link and compare steps, where it had nothing to do with what was on screen.
 - Narrow what `useI18n` from `seed-bible/extensions` is typed to return to `t`, `ns`, `language` and `isRtl`, leaving out the app's own language prompts, which extensions can't use.
 
 ### 🐛 Fixed

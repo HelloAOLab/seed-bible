@@ -7365,9 +7365,29 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
       /** Where a compare step's second passage is shown. */
       compareReadingState?: BibleReadingState;
       sharedSession?: unknown;
+      /** Gives the tab's chapter something for the compact discover panel. */
+      discoveredContent?: boolean;
     }
   ) {
     const { selectorState, readingState } = createFixture();
+    if (options.discoveredContent) {
+      (readingState as any).discoveredCrossReferences = signal([
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "cross-reference",
+              reference: { chapter: 1, bookData: { name: "Genesis" } },
+              crossReference: {
+                chapter: 5,
+                verse: 3,
+                bookData: { commonName: "Exodus", name: "Exodus" },
+              },
+            },
+          ],
+        },
+      ]);
+    }
     const slot: TabSlot = {
       id: "slot-1",
       tab: { id: "tab-1", readingState } as any,
@@ -7394,6 +7414,7 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
         isMobile: signal(options.compact),
         isCompactReader: signal(options.compact),
       },
+      discover: { ...base.discover, contentTypes: signal([]) },
       playlists: {
         ...base.playlists,
         playing: signal(playing),
@@ -8147,5 +8168,75 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
 
     expect(page()).toBeNull();
     expect(chapterText()).toBe(true);
+  });
+  describe("the compact discover panel", () => {
+    const panel = () =>
+      container.querySelector(".sb-bible-reader-discover-panel");
+
+    it("shows beside a scripture step", () => {
+      renderStep(
+        [{ type: "bible-verse", ref: { bookId: "GEN", chapter: 1 } }],
+        { compact: false, discoveredContent: true }
+      );
+
+      expect(chapterText()).toBe(true);
+      expect(panel()).not.toBeNull();
+    });
+
+    it.each([
+      ["note", NOTE],
+      [
+        "question",
+        {
+          type: "html" as const,
+          html: "<p>What stands out?</p>",
+          question: { answer: "<p>The light.</p>" },
+        },
+      ],
+      [
+        "video",
+        {
+          type: "link" as const,
+          url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        },
+      ],
+      [
+        "link",
+        {
+          type: "link" as const,
+          url: "https://example.com/talk",
+          preview: { title: "A talk on John" },
+        },
+      ],
+    ])("is left out of a %s step", (_kind, item) => {
+      renderStep([item], { compact: false, discoveredContent: true });
+
+      expect(page()).not.toBeNull();
+      expect(panel()).toBeNull();
+    });
+
+    it("is left out of a compare step", async () => {
+      const second = createFixture();
+      const playing = renderStep(
+        [
+          {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 1, verse: 1 },
+            compare: { ref: { bookId: "GEN", chapter: 1, verse: 2 } },
+          },
+        ],
+        {
+          compact: false,
+          compareReadingState: second.readingState,
+          discoveredContent: true,
+        }
+      );
+      await act(async () => {
+        await playing.jumpTo(0);
+      });
+
+      expect(container.querySelector(".sb-playlist-compare")).not.toBeNull();
+      expect(panel()).toBeNull();
+    });
   });
 });

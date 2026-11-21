@@ -4140,9 +4140,14 @@ export function BibleReader(props: BibleReaderProps) {
   // const extraContent = discoverPanel ? (
   //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
   // ) : null;
+  // Discover follows the passage being read, so a playlist step that fills
+  // the reader with something else (a note, question, video, link or a
+  // compare step's two passages) leaves it out.
   const extraContent =
     state &&
     !isMinimalEmbed &&
+    !stepPage &&
+    !comparePage &&
     !state.app.isDiscoverOpen.value &&
     state.settings.settings.value.discoveredContent.showContent ? (
       <DiscoverContentPanel
