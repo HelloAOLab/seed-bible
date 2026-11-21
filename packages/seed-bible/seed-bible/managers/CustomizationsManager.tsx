@@ -754,7 +754,6 @@ export function getFontPresetsForField(
     ...CUSTOMIZATION_FONT_PRESETS,
   ];
 }
-
 /**
  * Builds a font-family CSS value for a manually-typed Google Font name.
  * Restricted to letters/digits/spaces (real font names never need more)
@@ -814,7 +813,6 @@ export function buildBibleThemeFromCustomizationTheme(
         };
   return applyHighlightOverrides(withVariables, variant.highlightColors);
 }
-
 export interface CustomizationsManager {
   customizations: Signal<SeedBibleCustomization[]>;
   isLoading: Signal<boolean>;
