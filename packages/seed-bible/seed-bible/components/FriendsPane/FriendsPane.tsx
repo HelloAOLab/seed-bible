@@ -25,6 +25,7 @@ import {
 } from "./friendLinks";
 import { PersonButton, type PersonProfileDeps } from "./PersonCard";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
 
 export const FRIENDS_PANE_ID = "friends-pane";
 
@@ -198,11 +199,10 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
         {t("add-friend", { defaultValue: "Add a friend" })}
       </FriendsHeading>
       <form className="sb-friends-add-form" onSubmit={submit}>
-        <input
-          type="text"
+        <TextInput
           className="sb-friends-add-input"
           value={value.value}
-          onInput={(e) => (value.value = e.currentTarget.value)}
+          onValueInput={(text) => (value.value = text)}
           placeholder={
             ADD_FRIEND_BY_EMAIL_ENABLED
               ? t("add-friend-placeholder", {

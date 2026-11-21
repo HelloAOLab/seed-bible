@@ -79,6 +79,7 @@ import {
 } from "../Bookmarks/Bookmarks";
 import { CloseButton } from "../CloseButton/CloseButton";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
 import { IconButton } from "../IconButton/IconButton";
 import { SettingRow } from "../SettingRow/SettingRow";
 import { Checkbox } from "../Checkbox/Checkbox";
@@ -1749,16 +1750,17 @@ function SaveCategoryPickerContent(props: {
 
           {isAddingNew.value ? (
             <div className="sb-save-picker-new-row">
-              <input
+              <TextInput
                 autoFocus
-                className="sb-save-picker-new-input"
+                aria-label={t("new-folder-placeholder", {
+                  defaultValue: "New folder name",
+                })}
                 placeholder={t("new-folder-placeholder", {
                   defaultValue: "New folder name",
                 })}
                 value={newCategoryName.value}
-                onInput={(event: Event) => {
-                  const target = event.target as HTMLInputElement;
-                  newCategoryName.value = target.value;
+                onValueInput={(name) => {
+                  newCategoryName.value = name;
                 }}
                 onKeyDown={(event: KeyboardEvent) => {
                   if (event.key === "Enter") {

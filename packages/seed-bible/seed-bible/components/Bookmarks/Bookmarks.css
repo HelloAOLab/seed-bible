@@ -63,23 +63,6 @@
   gap: 0.625rem;
 }
 
-.sb-bookmark-form-name {
-  width: 100%;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  border-radius: var(--sb-radius-md);
-  background: transparent;
-  color: var(--sb-font-color);
-  font: inherit;
-  font-size: var(--sb-font-size-14);
-  box-sizing: border-box;
-}
-
-.sb-bookmark-form-name:focus {
-  outline: none;
-  border-color: var(--sb-primary-color);
-}
-
 .sb-bookmark-form-colors {
   display: flex;
   flex-wrap: wrap;

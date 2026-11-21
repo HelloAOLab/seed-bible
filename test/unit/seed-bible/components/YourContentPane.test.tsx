@@ -1132,7 +1132,7 @@ describe("YourContentPane", () => {
       choose(rows()[0]!, "Edit");
       const dialog = renderOpenedModal(openModal);
       const nameInput = dialog.querySelector<HTMLInputElement>(
-        ".sb-bookmark-form-name"
+        'input[aria-label="Bookmark name"]'
       )!;
       expect(nameInput.value).toBe("Sermon prep");
 
@@ -1171,7 +1171,9 @@ describe("YourContentPane", () => {
       choose(rows()[0]!, "Edit");
       const dialog = renderOpenedModal(openModal);
       type(
-        dialog.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!,
+        dialog.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!,
         "Advent"
       );
       await act(async () => {
@@ -1187,7 +1189,9 @@ describe("YourContentPane", () => {
       );
       expect(closeModal).not.toHaveBeenCalled();
       expect(
-        dialog.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+        dialog.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!.value
       ).toBe("Advent");
       // The manager put the old name back when the write failed.
       expect(names()).toEqual(["Sermon prep"]);
