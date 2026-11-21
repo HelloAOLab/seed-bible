@@ -2074,13 +2074,16 @@ function SavesSection(props: SavesSectionProps) {
                   <SaveStarIcon isSaved size={16} />
                 </span>
                 {isRenaming ? (
-                  <input
+                  <TextInput
+                    size="sm"
                     className="sb-save-category-rename-input"
                     autoFocus
+                    aria-label={t("new-folder-placeholder", {
+                      defaultValue: "Folder name",
+                    })}
                     value={renameValue.value}
-                    onInput={(event: Event) => {
-                      const target = event.target as HTMLInputElement;
-                      renameValue.value = target.value;
+                    onValueInput={(name) => {
+                      renameValue.value = name;
                     }}
                     onKeyDown={(event: KeyboardEvent) => {
                       if (event.key === "Enter") {

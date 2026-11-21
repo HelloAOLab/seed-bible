@@ -244,33 +244,17 @@
 }
 
 .twitch-select-box {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  justify-content: center;
-  align-items: center;
-  height: 24px;
-  padding: 3px 0px 0px 0px;
-  width: 65px;
-  font-size: var(--sb-font-size-12);
-  outline: none;
+  width: 6.5rem;
 }
 
 .qr-drag-handle:hover {
   opacity: 1;
 }
 
-.twitch-custom-timer-input {
-  width: 60px;
-  height: 24px;
-  padding: 0px 20px 0px 3px;
-  -moz-appearance: textfield;
-}
-
-.twitch-custom-timer-input::-webkit-outer-spin-button,
-.twitch-custom-timer-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+/* The box leaves room for the "m" drawn over its right end. */
+.sb-text-input.twitch-custom-timer-input {
+  width: 4.5rem;
+  padding-inline-end: 1.5rem;
 }
 
 .twitch-custom-timer-wrapper {

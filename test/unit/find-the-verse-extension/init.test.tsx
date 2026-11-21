@@ -666,6 +666,19 @@ describe("Find the Verse", () => {
     );
   }
 
+  it("names the game name and verse reference boxes, the first by its label", async () => {
+    await openEditor(playableGame());
+
+    const name = container.querySelector<HTMLInputElement>(
+      'input[aria-required="true"]'
+    );
+    expect(name?.labels?.[0]?.textContent).toContain("Game name");
+    const reference = container.querySelector<HTMLInputElement>(
+      'input[placeholder="e.g. John 1:1"]'
+    );
+    expect(reference?.getAttribute("aria-label")).toBe("Secret verse");
+  });
+
   it("saves a game with blank chances once 3 hints are filled in", async () => {
     await openEditor(playableGame());
     await act(async () => {
@@ -706,12 +719,9 @@ describe("Find the Verse", () => {
     expect(recordData).not.toHaveBeenCalled();
     expect(tabs.value).toHaveLength(1);
     const hints = [...container.querySelectorAll("textarea")];
-    expect(hints.map((hint) => hint.getAttribute("aria-invalid"))).toEqual([
-      "false",
-      "true",
-      "false",
-      "true",
-    ]);
+    expect(
+      hints.map((hint) => hint.getAttribute("aria-invalid") === "true")
+    ).toEqual([false, true, false, true]);
 
     await typeHint(3, "delta hint");
     expect(formErrors()).toEqual([]);

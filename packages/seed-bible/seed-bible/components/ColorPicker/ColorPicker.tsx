@@ -6,6 +6,7 @@ import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import { hexToHsv, hsvToHex, normalizeHex, parseHex, type Hsv } from "./color";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
 import { useModalLayer } from "../useModalFocus";
 
 const POPOVER_GAP_PX = 8;
@@ -430,7 +431,8 @@ export function ColorPicker(props: ColorPickerProps) {
                 />
                 <label className="sb-color-picker-hex-label">
                   <span className="sb-color-picker-hex-hash">#</span>
-                  <input
+                  <TextInput
+                    size="sm"
                     className="sb-color-picker-hex"
                     value={hexText.value}
                     spellcheck={false}

@@ -49,6 +49,8 @@ import { toShareableUrl } from "../../app/publicLinks";
 import { SearchBar as SearchField } from "../SearchBar/SearchBar";
 import { CloseButton } from "../CloseButton/CloseButton";
 import { Button } from "../Button/Button";
+import { Select } from "../Select/Select";
+import { TextInput } from "../TextField/TextField";
 import { IconButton } from "../IconButton/IconButton";
 
 /**
@@ -346,34 +348,33 @@ const SearchBar = (props: {
                     : undefined
                 }
               >
-                <select
-                  value={selectedTestament.value}
-                  onChange={(e) => {
-                    selectedTestament.value = Number(
-                      (e.target as HTMLSelectElement).value
-                    );
+                <Select
+                  size="sm"
+                  aria-label={t("testament", { defaultValue: "Testament" })}
+                  value={String(selectedTestament.value)}
+                  onValueChange={(value) => {
+                    selectedTestament.value = Number(value);
                   }}
-                  class="dropdown-select"
                 >
-                  <option value={2} class="dropdown-option">
+                  <option value={2}>
                     {t("allBooks", { defaultValue: "All Books" })}
                   </option>
-                  <option value={0} class="dropdown-option">
+                  <option value={0}>
                     {!isMobile.value
                       ? t("old-testament", { defaultValue: "Old Testament" })
                       : t("old-testament_short", { defaultValue: "OT" })}
                   </option>
-                  <option value={1} class="dropdown-option">
+                  <option value={1}>
                     {!isMobile.value
                       ? t("new-testament", { defaultValue: "New Testament" })
                       : t("new-testament_short", { defaultValue: "NT" })}
                   </option>
                   {apocryphaAvailable.value && (
-                    <option value={3} class="dropdown-option">
+                    <option value={3}>
                       {t("apocrypha", { defaultValue: "Apocrypha" })}
                     </option>
                   )}
-                </select>
+                </Select>
               </div>
             </>
           )}
@@ -1836,12 +1837,13 @@ const CustomTranslation = (props: {
     <div class="custom-translation-container flex-col-gap-md">
       <div class="custom-tr-api flex-col-gap-md">
         <div class="custom-tr-in-con flex-start-center-gap-sm">
-          <input
+          <TextInput
             value={inputValue.value}
-            onChange={(e) => {
-              inputValue.value = (e.target as HTMLInputElement).value;
+            onValueInput={(url) => {
+              inputValue.value = url;
             }}
             class="custom-tr-in"
+            aria-label={t("enter-url", { defaultValue: "Enter URL" })}
             placeholder={t("enter-url", { defaultValue: "Enter URL" })}
           />
           <button

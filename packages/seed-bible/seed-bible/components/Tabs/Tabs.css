@@ -288,20 +288,17 @@
   transform: rotate(180deg);
 }
 
-.sb-save-category-rename-input {
-  flex: 1;
-  min-width: 0;
-  font: inherit;
-  color: inherit;
-  background: transparent;
-  border: 1px solid var(--sb-divider-color);
-  border-radius: var(--sb-radius-sm);
-  padding: 0.125rem 0.375rem;
-  outline: none;
-}
+/* The rename box sits in the row in place of the folder's name, so it stays as
+   short as the row's text. */
+.sb-text-input.sb-save-category-rename-input {
+  --sb-text-input-height: 1.75rem;
+  --sb-text-input-padding-inline: 0.375rem;
+  --sb-text-input-radius: var(--sb-radius-sm);
 
-.sb-save-category-rename-input:focus {
-  border-color: var(--sb-primary-color);
+  flex: 1;
+  width: auto;
+  padding-block: 0.125rem;
+  font-size: inherit;
 }
 
 .sb-save-category-menu-anchor {
@@ -1454,10 +1451,6 @@
 :where(html[data-sb-app-layout="mobile"]) .sb-selector-panel .dropdown {
   flex: 1 1 0;
   min-width: 0;
-}
-
-:where(html[data-sb-app-layout="mobile"]) .sb-selector-panel .dropdown-select {
-  width: 100%;
 }
 
 /* Books area: leave room at the bottom for the switcher (~52px). */
