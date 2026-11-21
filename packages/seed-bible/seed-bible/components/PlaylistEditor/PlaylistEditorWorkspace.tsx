@@ -35,6 +35,7 @@ import {
 } from "./playlistSteps";
 import { Button } from "../Button/Button";
 import { BottomSheet } from "../BottomSheet/BottomSheet";
+import { TextInput } from "../TextField/TextField";
 
 type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 
@@ -196,17 +197,14 @@ function PlaylistDetailsFields(props: {
         <label className="sb-pe-field-label" htmlFor={`${idPrefix}-title`}>
           {t("playlist-editor-title", { defaultValue: "Title" })}
         </label>
-        <input
+        <TextInput
           id={`${idPrefix}-title`}
-          className="sb-pe-input"
-          type="text"
           dir="auto"
           value={editing.title ?? ""}
           placeholder={t("untitled-playlist", {
             defaultValue: "Untitled playlist",
           })}
-          onInput={(event) => {
-            const value = event.currentTarget.value;
+          onValueInput={(value) => {
             playlists.updateEditingPlaylistMetadata({
               title: value.trim() ? value : null,
             });
@@ -220,17 +218,16 @@ function PlaylistDetailsFields(props: {
         >
           {t("description", { defaultValue: "Description" })}
         </label>
-        <textarea
+        <TextInput
+          multiline
           id={`${idPrefix}-description`}
-          className="sb-pe-textarea"
           dir="auto"
           rows={3}
           value={editing.description ?? ""}
           placeholder={t("playlist-description_placeholder", {
             defaultValue: "What is this playlist about?",
           })}
-          onInput={(event) => {
-            const value = event.currentTarget.value;
+          onValueInput={(value) => {
             playlists.updateEditingPlaylistMetadata({
               description: value.trim() ? value : null,
             });

@@ -796,6 +796,42 @@ describe("the playlist editor", () => {
           expect(header().textContent).toContain("The Best Catan Strategy");
         }
       });
+
+      const describedBy = (box: Element | null) =>
+        (box?.getAttribute("aria-describedby") ?? "")
+          .split(" ")
+          .filter(Boolean)
+          .map((id) => document.getElementById(id)?.textContent);
+
+      it("reads each box's hint out with it", () => {
+        openWorkspace([VIDEO], 0, compact);
+
+        expect(describedBy(container.querySelector("#sb-pe-title-0"))).toEqual([
+          "Optional — a short heading",
+        ]);
+        expect(describedBy(container.querySelector("#sb-pe-link-0"))).toEqual([
+          "YouTube or Vimeo",
+        ]);
+      });
+
+      it("flags a link that isn't a link, and announces why", () => {
+        openWorkspace([VIDEO], 0, compact);
+        type(container.querySelector("#sb-pe-link-0"), "not a link");
+
+        const box = container.querySelector("#sb-pe-link-0")!;
+        const alert = container.querySelector('[role="alert"]')!;
+        expect(box.getAttribute("aria-invalid")).toBe("true");
+        expect(alert.textContent).toBe("That isn't a YouTube or Vimeo link.");
+        expect(box.getAttribute("aria-describedby")).toContain(alert.id);
+      });
+
+      it("doesn't flag a link that's fine", () => {
+        openWorkspace([VIDEO], 0, compact);
+
+        const box = container.querySelector("#sb-pe-link-0")!;
+        expect(box.getAttribute("aria-invalid")).toBeNull();
+        expect(container.querySelector('[role="alert"]')).toBeNull();
+      });
     });
 
     it("goes back to the list when the open step is deleted from its menu", () => {
@@ -825,6 +861,20 @@ describe("the playlist editor", () => {
       expect(sheet!.querySelector("#sb-pe-details-title")).not.toBeNull();
       expect(sheet!.querySelector("#sb-pe-details-description")).not.toBeNull();
       expect(sheet!.textContent).toContain("Cover image");
+    });
+
+    it("names the title and description boxes by their labels", () => {
+      const sheet = openDetails()!;
+
+      const title = sheet.querySelector<HTMLInputElement>(
+        "#sb-pe-details-title"
+      )!;
+      const description = sheet.querySelector<HTMLTextAreaElement>(
+        "#sb-pe-details-description"
+      )!;
+      expect(title.labels?.[0]?.textContent).toBe("Title");
+      expect(description.labels?.[0]?.textContent).toBe("Description");
+      expect(description.tagName).toBe("TEXTAREA");
     });
 
     it("saves the title and description to the draft as they're typed", () => {

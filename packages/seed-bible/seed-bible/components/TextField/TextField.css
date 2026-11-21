@@ -10,6 +10,8 @@
      whatever surface is behind it).
    - `--sb-text-input-border-color`: the border when not focused.
    - `--sb-text-input-focus-color`: the border and ring while focused.
+   - `--sb-text-input-radius`: the corners (the shared medium radius).
+   - `--sb-text-input-font-family`: the typeface (the surrounding one).
    - `--sb-text-input-height`, `--sb-text-input-padding-inline`,
      `--sb-text-input-font-size`: set by the sizes below, so these three only
      take effect set on the box itself. */
@@ -30,10 +32,11 @@
       --sb-text-input-border-color,
       color-mix(in srgb, var(--sb-font-color), transparent 70%)
     );
-  border-radius: var(--sb-radius-md);
+  border-radius: var(--sb-text-input-radius, var(--sb-radius-md));
   background: var(--sb-text-input-background, transparent);
   color: var(--sb-font-color);
   font: inherit;
+  font-family: var(--sb-text-input-font-family, inherit);
   font-size: var(--sb-text-input-font-size);
   line-height: 1.4;
   transition:
