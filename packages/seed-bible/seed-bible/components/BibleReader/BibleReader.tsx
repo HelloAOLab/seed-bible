@@ -687,6 +687,31 @@ function splitVerseIntoSegments(
   return segments;
 }
 
+/** The small ⓘ after a verse that opens its footnote. */
+function FootnoteButton(props: {
+  noteId: number;
+  onOpen: (noteId: number) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <TooltipTrigger>
+      <button
+        className="sb-inline-footnote-button"
+        aria-label={t("open-footnote", {
+          noteId: props.noteId,
+          defaultValue: "Open footnote {{noteId}}",
+        })}
+        onClick={(event: MouseEvent) => {
+          event.stopPropagation();
+          props.onOpen(props.noteId);
+        }}
+      >
+        <span className="material-symbols-outlined">info</span>
+      </button>
+    </TooltipTrigger>
+  );
+}
+
 function renderInlineContent(
   part: ChapterVerse["content"][0],
   index: number,
@@ -845,18 +870,7 @@ function renderInlineContent(
     return (
       <span key={index} className="sb-inline-footnote">
         {"\u00A0"}
-        <TooltipTrigger>
-          <button
-            className="sb-inline-footnote-button"
-            aria-label={`Open footnote ${part.noteId}`}
-            onClick={(event: MouseEvent) => {
-              event.stopPropagation();
-              onOpenFootnote(part.noteId);
-            }}
-          >
-            <span className="material-symbols-outlined">info</span>
-          </button>
-        </TooltipTrigger>
+        <FootnoteButton noteId={part.noteId} onOpen={onOpenFootnote} />
       </span>
     );
   }

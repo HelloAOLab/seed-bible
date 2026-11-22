@@ -1,4 +1,4 @@
-import { cloneElement, toChildArray, type VNode } from "preact";
+import { cloneElement, type VNode } from "preact";
 import { useTooltip, withTooltipHandlers } from "./useTooltip";
 
 export interface TooltipTriggerProps {
@@ -38,8 +38,14 @@ export function TooltipTrigger({ label, children }: TooltipTriggerProps) {
     {
       ...withTooltipHandlers(props, handlers),
       ...(named || !label ? {} : { "aria-label": label }),
+      // A disabled element gets no styled label, so it keeps a browser one.
+      ...(props.disabled && text && props.title === undefined
+        ? { title: text }
+        : {}),
     },
-    ...toChildArray(props.children as never),
+    // One child, as it came, so a conditional child that comes and goes
+    // doesn't shift the positions of the ones after it.
+    props.children as never,
     tooltip
   );
 }

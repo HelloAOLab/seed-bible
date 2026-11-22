@@ -186,6 +186,25 @@ describe("tooltips on icon buttons", () => {
       expect(tooltipText()).toBeNull();
     });
 
+    it.each(["Enter", " "])(
+      "hides the label when %j presses the button",
+      (key) => {
+        setFocusVisible(true);
+        const { first } = renderButtons();
+        act(() => first.focus());
+        wait(600);
+        expect(tooltipText()).toBe("Bookmark");
+
+        act(() => {
+          first.dispatchEvent(
+            new KeyboardEvent("keydown", { key, bubbles: true })
+          );
+        });
+
+        expect(tooltipText()).toBeNull();
+      }
+    );
+
     it("hides the label when focus moves away", () => {
       setFocusVisible(true);
       const { first, second } = renderButtons();
@@ -204,6 +223,44 @@ describe("tooltips on icon buttons", () => {
   });
 
   describe("with a finger", () => {
+    it("doesn't open the browser's own menu while the hold is still waiting", () => {
+      const { first } = renderButtons();
+      pointer(first, "pointerdown", { pointerType: "touch" });
+      wait(420);
+
+      const menu = new MouseEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+      });
+      act(() => void first.dispatchEvent(menu));
+
+      expect(menu.defaultPrevented).toBe(true);
+    });
+
+    it("leaves a mouse right-click's menu alone", () => {
+      const { first } = renderButtons();
+
+      const menu = new MouseEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+      });
+      act(() => void first.dispatchEvent(menu));
+
+      expect(menu.defaultPrevented).toBe(false);
+    });
+
+    it("lets a keyboard press through shortly after a hold", () => {
+      const { first, onClick } = renderButtons();
+      pointer(first, "pointerdown", { pointerType: "touch" });
+      wait(550);
+      pointer(first, "pointerup", { pointerType: "touch" });
+
+      wait(400);
+      act(() => first.click());
+
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
     it("shows the label after holding, and the lift doesn't press the button", () => {
       const { first, onClick } = renderButtons();
 
@@ -357,14 +414,24 @@ describe("tooltips on icon buttons", () => {
       expect(tooltipText()).toBeNull();
     });
 
-    it("still shows a label for a button that was disabled all along", () => {
+    it("keeps the browser's own tooltip, not a styled one, while disabled", () => {
       const button = renderSend(true);
 
       pointer(button, "pointerenter");
       wait(600);
-      renderSend(true);
+      pointer(button, "pointerdown", { pointerType: "touch" });
+      wait(600);
 
-      expect(tooltipText()).toBe("Send");
+      expect(tooltipText()).toBeNull();
+      expect(button.getAttribute("title")).toBe("Send");
+    });
+
+    it("drops the browser title once it is enabled again", () => {
+      renderSend(true);
+      const button = renderSend(false);
+
+      // An empty title shows nothing in a browser.
+      expect(button.title).toBe("");
     });
   });
 
@@ -467,6 +534,46 @@ describe("TooltipTrigger", () => {
 
     expect(tooltipText()).toBeNull();
     expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the wrapped element's conditional children where they were", () => {
+    const view = (open: boolean) =>
+      act(() => {
+        render(
+          <TooltipTrigger label="Go">
+            <button>
+              {open && <i className="badge" />}
+              <i className="icon" />
+            </button>
+          </TooltipTrigger>,
+          container
+        );
+      });
+    view(false);
+    const icon = container.querySelector(".icon");
+
+    view(true);
+
+    expect(container.querySelector(".badge")).not.toBeNull();
+    expect(container.querySelector(".icon")).toBe(icon);
+  });
+
+  it("gives a disabled element the browser's tooltip instead of a styled one", () => {
+    act(() => {
+      render(
+        <TooltipTrigger label="Go">
+          <button disabled>x</button>
+        </TooltipTrigger>,
+        container
+      );
+    });
+    const button = container.querySelector("button")!;
+
+    pointer(button, "pointerenter");
+    wait(600);
+
+    expect(button.getAttribute("title")).toBe("Go");
+    expect(tooltipText()).toBeNull();
   });
 
   it("keeps an accessible name the element already has", () => {

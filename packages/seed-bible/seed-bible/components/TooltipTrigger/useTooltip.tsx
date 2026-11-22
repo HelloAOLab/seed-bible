@@ -15,6 +15,11 @@ const HOLD_MS = 500;
 const HOLD_MOVE_PX = 10;
 /** How long a label from a press-and-hold stays up after the finger lifts. */
 const HOLD_LINGER_MS = 1500;
+/**
+ * How long after the lift a held press still cancels the click that may
+ * follow it. After that, a click is a new press (a keyboard Enter, say).
+ */
+const HOLD_CLICK_WINDOW_MS = 300;
 
 /** The tooltip on screen now, so showing another one can take it down first. */
 let active: { hide: () => void } | null = null;
@@ -64,12 +69,10 @@ export function useTooltip(label: string): {
   // also taken as a tap (which would run the button's action) or as the
   // browser's own long-press menu.
   const heldOpen = useRef(false);
-  // The element the label is over, and whether it was already disabled when
-  // the label opened (a disabled button's label is fine; one that turns
-  // disabled under its label, like a send button after sending, isn't).
-  const shownFor = useRef<{ element: HTMLElement; disabled: boolean } | null>(
-    null
-  );
+  // The element the label is over, to notice it turning disabled underneath
+  // (a send button after sending).
+  const shownFor = useRef<HTMLElement | null>(null);
+  const releaseTimer = useRef<ReturnType<typeof setTimeout>>();
   const self = useRef({ hide: () => {} }).current;
 
   const show = (element: HTMLElement) => {
@@ -77,7 +80,7 @@ export function useTooltip(label: string): {
     if (active && active !== self) active.hide();
     active = self;
     shown.current = true;
-    shownFor.current = { element, disabled: isDisabled(element) };
+    shownFor.current = element;
     setAnchor({
       x: rect.left + rect.width / 2,
       y: rect.top,
@@ -89,6 +92,7 @@ export function useTooltip(label: string): {
   const hide = () => {
     clearTimeout(showTimer.current);
     clearTimeout(lingerTimer.current);
+    clearTimeout(releaseTimer.current);
     heldOpen.current = false;
     if (shown.current) {
       shown.current = false;
@@ -108,7 +112,7 @@ export function useTooltip(label: string): {
 
   const showSoon = (element: HTMLElement) => {
     clearTimeout(showTimer.current);
-    if (!label) return;
+    if (!label || isDisabled(element)) return;
     const warm = Date.now() - lastHiddenAt < WARM_MS;
     if (warm) {
       show(element);
@@ -122,6 +126,7 @@ export function useTooltip(label: string): {
       clearTimeout(showTimer.current);
       clearTimeout(lingerTimer.current);
       clearTimeout(holdTimer.current);
+      clearTimeout(releaseTimer.current);
       if (shown.current) {
         shown.current = false;
         if (active === self) active = null;
@@ -135,7 +140,7 @@ export function useTooltip(label: string): {
   // which would leave its label up over everything.
   useEffect(() => {
     const current = shownFor.current;
-    if (current && !current.disabled && isDisabled(current.element)) hide();
+    if (current && isDisabled(current)) hide();
   });
 
   // A scroll moves the element out from under a tooltip that doesn't follow it.
@@ -167,7 +172,7 @@ export function useTooltip(label: string): {
       const element = event.currentTarget;
       heldOpen.current = false;
       // With no label to show, a hold is only a slow tap and must stay one.
-      if (!label) return;
+      if (!label || isDisabled(element)) return;
       holdStart.current = { x: event.clientX, y: event.clientY };
       clearTimeout(holdTimer.current);
       holdTimer.current = setTimeout(() => {
@@ -192,6 +197,12 @@ export function useTooltip(label: string): {
       if (heldOpen.current) {
         clearTimeout(lingerTimer.current);
         lingerTimer.current = setTimeout(hide, HOLD_LINGER_MS);
+        // The click that may follow the lift belongs to the hold; one that
+        // comes later doesn't.
+        clearTimeout(releaseTimer.current);
+        releaseTimer.current = setTimeout(() => {
+          heldOpen.current = false;
+        }, HOLD_CLICK_WINDOW_MS);
       }
     },
     onPointerCancel: () => {
@@ -210,10 +221,22 @@ export function useTooltip(label: string): {
     },
     onBlur: () => hide(),
     onKeyDown: (event) => {
-      if (event.key === "Escape") hide();
+      // Escape dismisses the label; Enter and Space act on the element, which
+      // may open something the label would sit over.
+      if (
+        event.key === "Escape" ||
+        event.key === "Enter" ||
+        event.key === " "
+      ) {
+        hide();
+      }
     },
     onContextMenu: (event) => {
-      if (heldOpen.current) event.preventDefault();
+      // Android sends its long-press menu at about 400ms, before the label's
+      // 500ms, so a hold that is still waiting has to block it too.
+      if (heldOpen.current || holdTimer.current !== undefined) {
+        event.preventDefault();
+      }
     },
     onClickCapture: (event) => {
       if (heldOpen.current) {

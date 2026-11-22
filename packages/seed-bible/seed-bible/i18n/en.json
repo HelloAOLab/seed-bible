@@ -216,6 +216,7 @@
   "id_highlight-text-color": "{{id}} highlight text color",
   "id_highlight-background-color": "{{id}} highlight background color",
   "close-footnote": "Close footnote",
+  "open-footnote": "Open footnote {{noteId}}",
   "add-custom-color": "Add custom color",
   "add-color": "Add color",
   "clear-highlight": "Clear highlight",

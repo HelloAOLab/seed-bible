@@ -67,6 +67,9 @@ export function IconButton({
         .join(" ")}
       aria-label={label}
       aria-pressed={pressed}
+      // A disabled button gets no styled label (browsers differ on whether it
+      // gets hover events at all), so it keeps the browser's own.
+      title={rest.disabled ? label : undefined}
     >
       {typeof icon === "string" ? (
         <MaterialIcon aria-hidden="true">{icon}</MaterialIcon>
