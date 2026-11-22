@@ -748,6 +748,16 @@ describe("Sidebar pane layout picker", () => {
     expect(menu()!.getAttribute("aria-label")).toBe("Panels");
     expect(trigger.getAttribute("aria-haspopup")).toBe("dialog");
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(menu()!.id).not.toBe("");
+    expect(trigger.getAttribute("aria-controls")).toBe(menu()!.id);
+  });
+
+  it("points at nothing while closed", async () => {
+    const { trigger } = await openPicker();
+
+    act(() => trigger.click());
+
+    expect(trigger.hasAttribute("aria-controls")).toBe(false);
   });
 
   it("moves focus to the layout in use, and says which one that is", async () => {
@@ -792,6 +802,50 @@ describe("Sidebar pane layout picker", () => {
     });
 
     expect(menu()).toBeNull();
+  });
+
+  it("leaves the keyboard to the tour tip while the tour holds it open", async () => {
+    const state = await createTestSeedBibleState();
+    state.settings.setDisablePanels(false);
+    state.sidebar.isSidebarCollapsed.value = false;
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    const trigger = container.querySelector<HTMLButtonElement>(
+      ".sb-pane-layout-anchor button"
+    )!;
+    act(() => trigger.click());
+    // The first open starts the tour step that points at the picker, which
+    // keeps it open. If the tour can't start here there is nothing to check.
+    expect(state.tutorial.running.value).toBe(true);
+    expect(menu()).not.toBeNull();
+    // Opening didn't pull focus into the picker, away from the tip.
+    expect(menu()!.contains(document.activeElement)).toBe(false);
+    const tipButton = document.createElement("button");
+    document.body.appendChild(tipButton);
+    act(() => tipButton.focus());
+
+    act(() => {
+      tipButton.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Escape",
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    tipButton.remove();
+
+    // Focus stayed on the tip, not moved to the button under its overlay, and
+    // the picker is still open for the step.
+    expect(document.activeElement).not.toBe(trigger);
+    expect(menu()).not.toBeNull();
+    expect(menu()!.contains(document.activeElement)).toBe(false);
   });
 
   it("closes when its own button is pressed again", async () => {

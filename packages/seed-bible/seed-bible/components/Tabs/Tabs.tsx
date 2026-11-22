@@ -58,7 +58,7 @@ import {
   sortUsersByRole,
 } from "../Avatar/Avatar";
 import type { ComponentChildren } from "preact";
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useId, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
 import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
 import { useAppConfig } from "../../app/appConfig";
@@ -102,6 +102,8 @@ interface TabsHeaderProps {
   panelsEnabled: boolean;
   paneLayout: TabSlotLayoutId | "single";
   isLayoutMenuOpen: boolean;
+  /** The tour step that points at the picker is holding it open. */
+  layoutMenuHeldByTour: boolean;
   toggleLayoutMenu: () => void;
   closeLayoutMenu: () => void;
   setLayout: (layout: TabSlotLayoutId) => void;
@@ -926,6 +928,7 @@ export function TabsHeader(props: TabsHeaderProps) {
     panelsEnabled,
     paneLayout,
     isLayoutMenuOpen,
+    layoutMenuHeldByTour,
     toggleLayoutMenu,
     closeLayoutMenu,
     setLayout,
@@ -937,6 +940,7 @@ export function TabsHeader(props: TabsHeaderProps) {
   const { t } = useI18n();
   const layoutAnchorRef = useRef<HTMLDivElement | null>(null);
   const layoutTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const layoutMenuId = useId();
 
   return (
     <div className="sb-sidebar-top-row">
@@ -986,6 +990,7 @@ export function TabsHeader(props: TabsHeaderProps) {
               onClick={toggleLayoutMenu}
               aria-haspopup="dialog"
               aria-expanded={isLayoutMenuOpen}
+              aria-controls={isLayoutMenuOpen ? layoutMenuId : undefined}
               className="sb-sidebar-top-icon-button"
               icon="dashboard"
               label={t("select-pane-layout", {
@@ -994,8 +999,13 @@ export function TabsHeader(props: TabsHeaderProps) {
             />
 
             <Popover
+              id={layoutMenuId}
               open={isLayoutMenuOpen}
               onClose={closeLayoutMenu}
+              // While the tour holds it open the tip has the keyboard: the
+              // picker neither takes focus from it nor answers its keys.
+              initialFocus={layoutMenuHeldByTour ? false : undefined}
+              dismissible={!layoutMenuHeldByTour}
               anchorRef={layoutAnchorRef}
               returnFocusRef={layoutTriggerRef}
               role="dialog"
@@ -2913,8 +2923,8 @@ export function Sidebar(props: SidebarProps) {
 
   // Only an expand or collapse the user asked for animates (see
   // `isUserResize`); the rest snap. While it animates the sidebar clips its
-  // contents (see Tabs.css), and only then: the pane-layout menu hangs out
-  // over the reader the rest of the time. A timer rather than
+  // contents (see Tabs.css), and only then, so nothing is cut off the rest of
+  // the time. A timer rather than
   // `transitionend`, which never fires when there's no transition (mobile,
   // reduced motion) and would leave it clipped. `animateToggle` covers the
   // render that flips it, so the very first frame is already clipped; an
@@ -2974,6 +2984,7 @@ export function Sidebar(props: SidebarProps) {
             panelsEnabled={panelsEnabled}
             paneLayout={paneLayout}
             isLayoutMenuOpen={isLayoutMenuOpen.value || tourWantsLayoutMenu}
+            layoutMenuHeldByTour={tourWantsLayoutMenu}
             toggleLayoutMenu={() => {
               closeContextMenus();
               const willOpen = !isLayoutMenuOpen.value;
