@@ -1,3 +1,4 @@
+import { Popover } from "../Popover/Popover";
 import "./Tabs.inline.css";
 import "./Tabs.css";
 import { useSignal } from "@preact/signals";
@@ -935,21 +936,7 @@ export function TabsHeader(props: TabsHeaderProps) {
   const activeLogoUrl = customizations.activeCustomization.value?.logoUrl;
   const { t } = useI18n();
   const layoutAnchorRef = useRef<HTMLDivElement | null>(null);
-
-  // Close the pane-layout menu when clicking anywhere outside its anchor.
-  useEffect(() => {
-    if (!isLayoutMenuOpen) return;
-    const handlePointerDown = (event: PointerEvent) => {
-      const anchor = layoutAnchorRef.current;
-      if (anchor && !anchor.contains(event.target as Node)) {
-        closeLayoutMenu();
-      }
-    };
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isLayoutMenuOpen, closeLayoutMenu]);
+  const layoutTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   return (
     <div className="sb-sidebar-top-row">
@@ -995,7 +982,10 @@ export function TabsHeader(props: TabsHeaderProps) {
         {panelsEnabled && !effectivelyCollapsed && (
           <div className="sb-pane-layout-anchor" ref={layoutAnchorRef}>
             <IconButton
+              buttonRef={layoutTriggerRef}
               onClick={toggleLayoutMenu}
+              aria-haspopup="dialog"
+              aria-expanded={isLayoutMenuOpen}
               className="sb-sidebar-top-icon-button"
               icon="dashboard"
               label={t("select-pane-layout", {
@@ -1003,8 +993,17 @@ export function TabsHeader(props: TabsHeaderProps) {
               })}
             />
 
-            {isLayoutMenuOpen && (
-              <div className="sb-pane-layout-menu">
+            <Popover
+              open={isLayoutMenuOpen}
+              onClose={closeLayoutMenu}
+              anchorRef={layoutAnchorRef}
+              returnFocusRef={layoutTriggerRef}
+              role="dialog"
+              aria-label={t("panels", { defaultValue: "Panels" })}
+              className="sb-pane-layout-menu"
+              gap={8}
+            >
+              <div>
                 <div className="sb-pane-layout-menu-title">
                   {t("panels", { defaultValue: "Panels" })}
                 </div>
@@ -1024,6 +1023,8 @@ export function TabsHeader(props: TabsHeaderProps) {
                           ? " sb-pane-layout-option-selected"
                           : ""
                       }`}
+                      role="radio"
+                      aria-checked={paneLayout === layout.id}
                       aria-label={layout.label}
                       title={layout.label}
                     >
@@ -1032,7 +1033,7 @@ export function TabsHeader(props: TabsHeaderProps) {
                   ))}
                 </div>
               </div>
-            )}
+            </Popover>
           </div>
         )}
 

@@ -700,3 +700,105 @@ describe("tab options menu", () => {
     );
   });
 });
+
+describe("Sidebar pane layout picker", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    act(() => render(null, container));
+    container.remove();
+    vi.useRealTimers();
+  });
+
+  async function openPicker() {
+    const state = await createTestSeedBibleState();
+    state.settings.setDisablePanels(false);
+    state.sidebar.isSidebarCollapsed.value = false;
+    // The first open starts a tour step that keeps the menu open on purpose.
+    vi.spyOn(state.tutorial, "startContextual").mockImplementation(() => {});
+    act(() => {
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
+    });
+    const trigger = container.querySelector<HTMLButtonElement>(
+      ".sb-pane-layout-anchor button"
+    )!;
+    act(() => trigger.click());
+    return { state, trigger };
+  }
+
+  const menu = () =>
+    document.body.querySelector<HTMLElement>(".sb-pane-layout-menu");
+
+  it("opens as a named dialog that the trigger says it controls", async () => {
+    const { trigger } = await openPicker();
+
+    expect(menu()).not.toBeNull();
+    expect(menu()!.getAttribute("role")).toBe("dialog");
+    expect(menu()!.getAttribute("aria-label")).toBe("Panels");
+    expect(trigger.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("moves focus to the layout in use, and says which one that is", async () => {
+    await openPicker();
+
+    const options = [
+      ...menu()!.querySelectorAll<HTMLElement>('[role="radio"]'),
+    ];
+    const chosen = options.filter(
+      (option) => option.getAttribute("aria-checked") === "true"
+    );
+    expect(options.length).toBeGreaterThan(1);
+    expect(chosen).toHaveLength(1);
+    expect(document.activeElement).toBe(chosen[0]);
+  });
+
+  it("closes on Escape and puts focus back on its button", async () => {
+    const { trigger } = await openPicker();
+
+    act(() => {
+      document.activeElement!.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Escape",
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(menu()).toBeNull();
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("closes on a press outside it", async () => {
+    await openPicker();
+
+    act(() => {
+      document.body.dispatchEvent(
+        new MouseEvent("mousedown", { bubbles: true })
+      );
+    });
+
+    expect(menu()).toBeNull();
+  });
+
+  it("closes when its own button is pressed again", async () => {
+    const { trigger } = await openPicker();
+
+    act(() => trigger.click());
+
+    expect(menu()).toBeNull();
+  });
+});
