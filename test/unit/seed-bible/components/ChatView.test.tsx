@@ -945,7 +945,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    const emptyEl = container.querySelector(".sb-chat-view-empty");
+    const emptyEl = container.querySelector(".sb-empty-state");
     expect(emptyEl).not.toBeNull();
     expect(emptyEl?.textContent).toContain("Start a conversation");
   });
@@ -1774,7 +1774,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    expect(container.querySelector(".sb-chat-view-empty")).not.toBeNull();
+    expect(container.querySelector(".sb-empty-state")).not.toBeNull();
   });
 
   it("does not render the empty state when there are only tool calls", () => {
@@ -1790,7 +1790,7 @@ describe("ChatView", () => {
       render(<ChatView chat={chat} state={state} />, container);
     });
 
-    expect(container.querySelector(".sb-chat-view-empty")).toBeNull();
+    expect(container.querySelector(".sb-empty-state")).toBeNull();
     expect(container.querySelector(".sb-chat-view-event")).not.toBeNull();
   });
 
@@ -2496,7 +2496,7 @@ describe("ChatView", () => {
           ".sb-chat-view-compose-shell .sb-chat-ai-limits"
         )
       ).toBeNull();
-      expect(container.querySelector(".sb-chat-view-empty")).toBeNull();
+      expect(container.querySelector(".sb-empty-state")).toBeNull();
       expect(container.textContent).not.toContain("Start a conversation");
       expect(notice?.textContent).toContain("Before you chat with AI");
       expect(notice?.querySelectorAll("li")).toHaveLength(4);
@@ -2687,7 +2687,7 @@ describe("ChatView", () => {
           Node.DOCUMENT_POSITION_FOLLOWING
       ).not.toBe(0);
       expect(container.textContent).toContain("Hello from earlier");
-      expect(container.querySelector(".sb-chat-view-empty")).toBeNull();
+      expect(container.querySelector(".sb-empty-state")).toBeNull();
       expect(composeInput().disabled).toBe(true);
     });
 

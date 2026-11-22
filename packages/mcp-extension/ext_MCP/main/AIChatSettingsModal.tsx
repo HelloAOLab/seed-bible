@@ -2,7 +2,12 @@ import "./AIChatSettingsModal.css";
 import { useState } from "preact/hooks";
 import { useI18n } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { Button, IconButton, TextInput } from "seed-bible/components";
+import {
+  Button,
+  EmptyState,
+  IconButton,
+  TextInput,
+} from "seed-bible/components";
 import type {
   MCPManager,
   McpServerConfig,
@@ -284,14 +289,12 @@ export function AIChatSettingsModalContent(props: { mcp: MCPManager }) {
         })}
       </p>
       {servers.length === 0 ? (
-        <div className="sb-settings-empty-state">
-          <p>
-            {t("no-mcp-servers-configured", {
-              defaultValue: "No MCP servers configured yet.",
-              ns: "mcp-extension",
-            })}
-          </p>
-        </div>
+        <EmptyState className="sb-settings-empty-state">
+          {t("no-mcp-servers-configured", {
+            defaultValue: "No MCP servers configured yet.",
+            ns: "mcp-extension",
+          })}
+        </EmptyState>
       ) : (
         <ul className="sb-extensions-list">
           {servers.map((server) => (

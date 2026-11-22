@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./SettingsPage.css";
 import { localizedThemeName } from "./localizedThemeName";
 import { useSignal } from "@preact/signals";
@@ -934,9 +935,9 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           {title}
         </h2>
         {entries.length === 0 ? (
-          <div className="sb-settings-empty-state">
-            <p>{emptyMessage}</p>
-          </div>
+          <EmptyState className="sb-settings-empty-state">
+            {emptyMessage}
+          </EmptyState>
         ) : (
           <ul className="sb-extensions-group">
             {entries.map(renderExtensionRow)}
@@ -1005,13 +1006,11 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </p>
         )}
         {catalog.entries.length === 0 ? (
-          <div className="sb-settings-empty-state">
-            <p>
-              {t("no-extensions-available", {
-                defaultValue: "No extensions available.",
-              })}
-            </p>
-          </div>
+          <EmptyState className="sb-settings-empty-state">
+            {t("no-extensions-available", {
+              defaultValue: "No extensions available.",
+            })}
+          </EmptyState>
         ) : (
           <>
             <SearchBar
@@ -1022,13 +1021,11 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
               placeholder={t("extensions-search")}
             />
             {query && shownExtensions.length === 0 ? (
-              <div className="sb-settings-empty-state" role="status">
-                <p>
-                  {t("extensions-search-no-matches", {
-                    query: searchQuery.value.trim(),
-                  })}
-                </p>
-              </div>
+              <EmptyState className="sb-settings-empty-state" role="status">
+                {t("extensions-search-no-matches", {
+                  query: searchQuery.value.trim(),
+                })}
+              </EmptyState>
             ) : (
               <>
                 {renderSection(

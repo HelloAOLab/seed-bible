@@ -260,12 +260,9 @@
   gap: 0.25rem;
   margin-bottom: 0.25rem;
 }
-
 .sb-bookmarks-panel-empty {
-  margin: 0;
-  padding: 0.5rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: var(--sb-font-size-13);
+  --sb-empty-state-padding: 0.5rem;
+  --sb-empty-state-font-size: var(--sb-font-size-13);
 }
 
 .sb-bookmarks-panel-row {

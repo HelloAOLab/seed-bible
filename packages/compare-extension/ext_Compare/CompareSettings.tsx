@@ -5,6 +5,7 @@ import {
   IconButton,
   MaterialIcon,
   useDragReorder,
+  EmptyState,
 } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import {
@@ -170,11 +171,11 @@ export function CompareSettings(props: {
         </ul>
 
         {draggable.length === 0 && (
-          <p className="sb-discover-empty">
+          <EmptyState>
             {t("no-translations-selected", {
               defaultValue: "No translations added yet.",
             })}
-          </p>
+          </EmptyState>
         )}
       </div>
 

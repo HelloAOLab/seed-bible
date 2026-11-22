@@ -843,11 +843,9 @@
   font-size: var(--sb-font-size-13);
   color: var(--sb-today-muted-font-color);
 }
-
 .sb-today-container .sb-today-feed-empty {
-  margin: 0.25rem 0 0.75rem;
-  font-size: var(--sb-font-size-14);
-  color: var(--sb-today-muted-font-color);
+  --sb-empty-state-padding: 0.25rem 0 0.75rem;
+  --sb-empty-state-color: var(--sb-today-muted-font-color);
 }
 
 /* Styled as a plain text link, like a section's "see all". */

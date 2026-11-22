@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "../ScriptureNote/ScriptureNote.css";
 import "./QuestionAnswersSheet.css";
 import "../visuallyHidden.inline.css";
@@ -120,11 +121,11 @@ function QuestionAnswersSheetBody(props: {
         <>
           <div className="sb-scripture-note-body sb-question-answers-list">
             {answers.length === 0 ? (
-              <p className="sb-question-answers-empty">
+              <EmptyState className="sb-question-answers-empty">
                 {t("question-answers-empty", {
                   defaultValue: "No one has answered yet. Be the first.",
                 })}
-              </p>
+              </EmptyState>
             ) : (
               <ul>
                 {answers.map((answer) => {

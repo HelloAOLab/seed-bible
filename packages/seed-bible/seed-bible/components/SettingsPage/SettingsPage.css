@@ -27,20 +27,16 @@
   margin: 0.25rem 0;
   border: 0;
 }
-
 .sb-settings-empty-state {
-  padding: 0.625rem 0.75rem;
-  border: 1px solid var(--sb-divider-color);
-  border-radius: var(--sb-radius-md);
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 75%);
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  font-size: var(--sb-font-size-14);
+  --sb-empty-state-padding: 0.625rem 0.75rem;
+  --sb-empty-state-border: 1px solid var(--sb-divider-color);
+  --sb-empty-state-radius: var(--sb-radius-md);
+  --sb-empty-state-background: color-mix(
+    in srgb,
+    var(--sb-secondary-color),
+    transparent 75%
+  );
 }
-
-.sb-settings-empty-state p {
-  margin: 0;
-}
-
 .sb-settings-save-error {
   margin: 0.5rem 0 0;
   font-size: var(--sb-font-size-13);
@@ -336,12 +332,10 @@
 .sb-language-picker-search-input::placeholder {
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
-
 .sb-language-picker-empty {
-  padding: 0.75rem 0.625rem;
-  font-size: var(--sb-font-size-13);
+  --sb-empty-state-padding: 0.75rem 0.625rem;
+  --sb-empty-state-font-size: var(--sb-font-size-13);
   text-align: center;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
 .sb-language-picker-item {

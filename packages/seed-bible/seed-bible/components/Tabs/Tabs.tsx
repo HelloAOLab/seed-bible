@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./Tabs.inline.css";
 import "./Tabs.css";
 import { useSignal } from "@preact/signals";
@@ -2157,11 +2158,11 @@ function SavesSection(props: SavesSectionProps) {
             {isExpanded && (
               <div className="sb-save-category-items">
                 {items.length === 0 ? (
-                  <div className="sb-save-category-empty">
+                  <EmptyState className="sb-save-category-empty">
                     {t("save-folder-empty", {
                       defaultValue: "No saves here yet.",
                     })}
-                  </div>
+                  </EmptyState>
                 ) : (
                   items.map((save) => {
                     // Saves are pure links — they always render as a

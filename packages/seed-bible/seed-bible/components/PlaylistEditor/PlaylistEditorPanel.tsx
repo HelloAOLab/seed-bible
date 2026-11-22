@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./PlaylistEditor.css";
 import type { ComponentChildren } from "preact";
 import { useCallback, useEffect, useRef } from "preact/hooks";
@@ -206,28 +207,30 @@ export function PlaylistStepList(props: {
 
   if (items.length === 0) {
     return (
-      <div className="sb-pe-empty-list">
-        <PeIcon name="items-list" />
-        <p className="sb-pe-empty-list-title">
-          {t("playlist-editor-empty-title", {
-            defaultValue: "This playlist is empty",
-          })}
-        </p>
-        <p className="sb-pe-empty-list-text">
-          {t("playlist-editor-empty-text", {
-            defaultValue:
-              "Add scripture, notes, questions or videos to get started.",
-          })}
-        </p>
-        <Button
-          size="lg"
-          icon="add"
-          className="sb-pe-empty-list-add"
-          onClick={() => openAddStepMenu(playlists)}
-        >
-          {t("playlist-editor-add-step-title", { defaultValue: "Add a step" })}
-        </Button>
-      </div>
+      <EmptyState
+        className="sb-pe-empty-list"
+        size="panel"
+        icon={<PeIcon name="items-list" />}
+        title={t("playlist-editor-empty-title", {
+          defaultValue: "This playlist is empty",
+        })}
+        action={
+          <Button
+            size="lg"
+            icon="add"
+            onClick={() => openAddStepMenu(playlists)}
+          >
+            {t("playlist-editor-add-step-title", {
+              defaultValue: "Add a step",
+            })}
+          </Button>
+        }
+      >
+        {t("playlist-editor-empty-text", {
+          defaultValue:
+            "Add scripture, notes, questions or videos to get started.",
+        })}
+      </EmptyState>
     );
   }
 

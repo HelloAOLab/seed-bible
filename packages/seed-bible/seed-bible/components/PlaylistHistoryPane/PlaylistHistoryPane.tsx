@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "../Discover/DiscoverPane.css";
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n";
@@ -130,11 +131,11 @@ export function PlaylistHistoryPane(props: PlaylistHistoryPaneProps) {
     <div className="sb-playlist-history-screen">
       <div className="sb-playlist-history-inner">
         {history.length === 0 ? (
-          <p className="sb-playlist-history-empty">
+          <EmptyState className="sb-playlist-history-empty">
             {t("playlist-history-empty", {
               defaultValue: "Playlists you listen to will show up here.",
             })}
-          </p>
+          </EmptyState>
         ) : (
           <PlaylistHistoryList
             history={history}
