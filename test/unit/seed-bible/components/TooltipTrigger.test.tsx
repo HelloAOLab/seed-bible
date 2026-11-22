@@ -195,7 +195,11 @@ describe("tooltips on icon buttons", () => {
 
       act(() => second.focus());
 
-      expect(tooltipText()).not.toBe("Bookmark");
+      expect(
+        [...document.body.querySelectorAll(".sb-tooltip")].map(
+          (tip) => tip.textContent
+        )
+      ).not.toContain("Bookmark");
     });
   });
 
@@ -298,6 +302,72 @@ describe("tooltips on icon buttons", () => {
     });
   });
 
+  describe("one label at a time", () => {
+    it("takes the label that is up down when another button's label shows", () => {
+      const { first, second } = renderButtons();
+      pointer(first, "pointerdown", { pointerType: "touch" });
+      wait(550);
+      pointer(first, "pointerup", { pointerType: "touch" });
+      expect(tooltipText()).toBe("Bookmark");
+
+      pointer(second, "pointerenter");
+      wait(600);
+
+      const labels = [...document.body.querySelectorAll(".sb-tooltip")].map(
+        (tip) => tip.textContent
+      );
+      expect(labels).toEqual(["Share"]);
+    });
+
+    it("still makes the next button wait while an unrelated label is up", () => {
+      const { first, second } = renderButtons();
+      pointer(first, "pointerdown", { pointerType: "touch" });
+      wait(550);
+      pointer(first, "pointerup", { pointerType: "touch" });
+
+      pointer(second, "pointerenter");
+      wait(100);
+
+      const labels = [...document.body.querySelectorAll(".sb-tooltip")].map(
+        (tip) => tip.textContent
+      );
+      expect(labels).not.toContain("Share");
+    });
+  });
+
+  describe("a button that becomes disabled", () => {
+    function renderSend(disabled: boolean) {
+      act(() => {
+        render(
+          <IconButton icon="send" label="Send" disabled={disabled} />,
+          container
+        );
+      });
+      return container.querySelector("button")!;
+    }
+
+    it("takes its label down when it turns disabled while the label shows", () => {
+      const button = renderSend(false);
+      pointer(button, "pointerenter");
+      wait(600);
+      expect(tooltipText()).toBe("Send");
+
+      renderSend(true);
+
+      expect(tooltipText()).toBeNull();
+    });
+
+    it("still shows a label for a button that was disabled all along", () => {
+      const button = renderSend(true);
+
+      pointer(button, "pointerenter");
+      wait(600);
+      renderSend(true);
+
+      expect(tooltipText()).toBe("Send");
+    });
+  });
+
   describe("an icon button's other behavior", () => {
     it("still calls the caller's own handlers", () => {
       const onFocus = vi.fn();
@@ -374,6 +444,29 @@ describe("TooltipTrigger", () => {
     pointer(button, "pointerenter");
     wait(600);
     expect(tooltipText()).toBe("Close");
+  });
+
+  it("leaves a tap alone and shows nothing when there is no label to show", () => {
+    const onClick = vi.fn();
+    act(() => {
+      render(
+        <TooltipTrigger>
+          <button onClick={onClick}>x</button>
+        </TooltipTrigger>,
+        container
+      );
+    });
+    const button = container.querySelector("button")!;
+
+    pointer(button, "pointerdown", { pointerType: "touch" });
+    wait(800);
+    pointer(button, "pointerup", { pointerType: "touch" });
+    act(() => button.click());
+    pointer(button, "pointerenter");
+    wait(800);
+
+    expect(tooltipText()).toBeNull();
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it("keeps an accessible name the element already has", () => {

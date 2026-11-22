@@ -16,8 +16,11 @@ const HOLD_MOVE_PX = 10;
 /** How long a label from a press-and-hold stays up after the finger lifts. */
 const HOLD_LINGER_MS = 1500;
 
-let visibleCount = 0;
+/** The tooltip on screen now, so showing another one can take it down first. */
+let active: { hide: () => void } | null = null;
 let lastHiddenAt = -Infinity;
+
+const isDisabled = (element: HTMLElement) => element.matches(":disabled");
 
 type Handler<E extends Event> = (
   event: E & { currentTarget: HTMLElement }
@@ -61,13 +64,20 @@ export function useTooltip(label: string): {
   // also taken as a tap (which would run the button's action) or as the
   // browser's own long-press menu.
   const heldOpen = useRef(false);
+  // The element the label is over, and whether it was already disabled when
+  // the label opened (a disabled button's label is fine; one that turns
+  // disabled under its label, like a send button after sending, isn't).
+  const shownFor = useRef<{ element: HTMLElement; disabled: boolean } | null>(
+    null
+  );
+  const self = useRef({ hide: () => {} }).current;
 
   const show = (element: HTMLElement) => {
     const rect = element.getBoundingClientRect();
-    if (!shown.current) {
-      shown.current = true;
-      visibleCount++;
-    }
+    if (active && active !== self) active.hide();
+    active = self;
+    shown.current = true;
+    shownFor.current = { element, disabled: isDisabled(element) };
     setAnchor({
       x: rect.left + rect.width / 2,
       y: rect.top,
@@ -82,11 +92,13 @@ export function useTooltip(label: string): {
     heldOpen.current = false;
     if (shown.current) {
       shown.current = false;
-      visibleCount--;
+      shownFor.current = null;
+      if (active === self) active = null;
       lastHiddenAt = Date.now();
       setAnchor(null);
     }
   };
+  self.hide = hide;
 
   const cancelHold = () => {
     clearTimeout(holdTimer.current);
@@ -96,7 +108,8 @@ export function useTooltip(label: string): {
 
   const showSoon = (element: HTMLElement) => {
     clearTimeout(showTimer.current);
-    const warm = visibleCount > 0 || Date.now() - lastHiddenAt < WARM_MS;
+    if (!label) return;
+    const warm = Date.now() - lastHiddenAt < WARM_MS;
     if (warm) {
       show(element);
     } else {
@@ -111,12 +124,19 @@ export function useTooltip(label: string): {
       clearTimeout(holdTimer.current);
       if (shown.current) {
         shown.current = false;
-        visibleCount--;
+        if (active === self) active = null;
         lastHiddenAt = Date.now();
       }
     },
     []
   );
+
+  // Not every browser sends `blur` when the focused button becomes disabled,
+  // which would leave its label up over everything.
+  useEffect(() => {
+    const current = shownFor.current;
+    if (current && !current.disabled && isDisabled(current.element)) hide();
+  });
 
   // A scroll moves the element out from under a tooltip that doesn't follow it.
   useEffect(() => {
@@ -146,6 +166,8 @@ export function useTooltip(label: string): {
       }
       const element = event.currentTarget;
       heldOpen.current = false;
+      // With no label to show, a hold is only a slow tap and must stay one.
+      if (!label) return;
       holdStart.current = { x: event.clientX, y: event.clientY };
       clearTimeout(holdTimer.current);
       holdTimer.current = setTimeout(() => {
