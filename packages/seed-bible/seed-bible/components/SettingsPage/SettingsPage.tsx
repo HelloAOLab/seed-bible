@@ -1,3 +1,4 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./SettingsPage.css";
 import { localizedThemeName } from "./localizedThemeName";
 import { useSignal } from "@preact/signals";
@@ -474,20 +475,23 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           >
             {t("scripture-settings-font-size-example", { defaultValue: "A" })}
           </button>
-          <button
-            type="button"
-            className="sb-scripture-quick-btn"
-            onClick={handleCycleLineHeight}
-            aria-label={t("change-line-spacing", {
-              defaultValue: "Change line spacing",
-            })}
-            title={t("line-spacing_lineHeight", {
+          <TooltipTrigger
+            label={t("line-spacing_lineHeight", {
               lineHeight: currentLineHeight,
               defaultValue: `Line spacing: ${currentLineHeight}`,
             })}
           >
-            <ScriptureLineHeightIcon index={lineHeightIndex} />
-          </button>
+            <button
+              type="button"
+              className="sb-scripture-quick-btn"
+              onClick={handleCycleLineHeight}
+              aria-label={t("change-line-spacing", {
+                defaultValue: "Change line spacing",
+              })}
+            >
+              <ScriptureLineHeightIcon index={lineHeightIndex} />
+            </button>
+          </TooltipTrigger>
         </div>
 
         {!isMobile && (

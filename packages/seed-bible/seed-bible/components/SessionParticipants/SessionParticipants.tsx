@@ -1,3 +1,4 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./SessionParticipants.css";
 import { signal, useSignal } from "@preact/signals";
 import type {
@@ -69,41 +70,42 @@ export function MobileSessionParticipants({
 
   return (
     <>
-      <button
-        type="button"
-        className="sb-session-participants-stack"
-        onClick={() => {
-          isSheetOpen.value = true;
-        }}
-        aria-label={t("participants", { defaultValue: "Participants" })}
-        title={t("participants", { defaultValue: "Participants" })}
-      >
-        {stackUsers.map((user) => {
-          // Host and co-hosts get an accent (orange) ring in the stack so
-          // leadership reads at a glance; everyone else keeps the neutral ring.
-          const role = getUserSessionRole(options, user);
-          return (
-            <span
-              key={user.connectionId}
-              className={`sb-session-participants-stack-item${
-                role ? " sb-session-participants-stack-item-lead" : ""
-              }`}
-            >
-              <Avatar
-                imageUrl={user.profile?.pictureUrl ?? null}
-                visual={user.visual}
-                title={getUserDisplayName(user)}
-                isSelf={user.isSelf}
-              />
+      <TooltipTrigger>
+        <button
+          type="button"
+          className="sb-session-participants-stack"
+          onClick={() => {
+            isSheetOpen.value = true;
+          }}
+          aria-label={t("participants", { defaultValue: "Participants" })}
+        >
+          {stackUsers.map((user) => {
+            // Host and co-hosts get an accent (orange) ring in the stack so
+            // leadership reads at a glance; everyone else keeps the neutral ring.
+            const role = getUserSessionRole(options, user);
+            return (
+              <span
+                key={user.connectionId}
+                className={`sb-session-participants-stack-item${
+                  role ? " sb-session-participants-stack-item-lead" : ""
+                }`}
+              >
+                <Avatar
+                  imageUrl={user.profile?.pictureUrl ?? null}
+                  visual={user.visual}
+                  title={getUserDisplayName(user)}
+                  isSelf={user.isSelf}
+                />
+              </span>
+            );
+          })}
+          {overflowCount > 0 && (
+            <span className="sb-session-participants-stack-more">
+              +{overflowCount}
             </span>
-          );
-        })}
-        {overflowCount > 0 && (
-          <span className="sb-session-participants-stack-more">
-            +{overflowCount}
-          </span>
-        )}
-      </button>
+          )}
+        </button>
+      </TooltipTrigger>
 
       {isSheetOpen.value && (
         <BottomSheet

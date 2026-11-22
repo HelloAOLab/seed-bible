@@ -1,3 +1,4 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./BibleReaderToolbar.inline.css";
 import "../visuallyHidden.inline.css";
 import {
@@ -3550,22 +3551,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     const hex = customHighlightColors.value[slot];
                     if (!hex) {
                       return (
-                        <button
-                          key={`custom-slot-${slot}`}
-                          type="button"
-                          className="sb-verse-toolbar-color-button"
-                          onPointerEnter={preloadColorPicker}
-                          onFocus={preloadColorPicker}
-                          onClick={() => {
-                            customColorPickerOpen.value = true;
-                          }}
-                          aria-label={t("add-custom-color", {
-                            defaultValue: "Add custom color",
-                          })}
-                          title={t("add-color", { defaultValue: "Add color" })}
+                        <TooltipTrigger
+                          label={t("add-color", { defaultValue: "Add color" })}
                         >
-                          <span className="sb-verse-toolbar-color sb-verse-toolbar-color-slot" />
-                        </button>
+                          <button
+                            key={`custom-slot-${slot}`}
+                            type="button"
+                            className="sb-verse-toolbar-color-button"
+                            onPointerEnter={preloadColorPicker}
+                            onFocus={preloadColorPicker}
+                            onClick={() => {
+                              customColorPickerOpen.value = true;
+                            }}
+                            aria-label={t("add-custom-color", {
+                              defaultValue: "Add custom color",
+                            })}
+                          >
+                            <span className="sb-verse-toolbar-color sb-verse-toolbar-color-slot" />
+                          </button>
+                        </TooltipTrigger>
                       );
                     }
                     return (
@@ -3606,50 +3610,56 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 {/* On mobile the "+" lives inside the scroll strip so custom
                     colors and defaults stay one continuous thumb-scroll row. */}
                 {isSmallScreen.value && (
-                  <button
-                    ref={customColorAnchorRef}
-                    type="button"
-                    className="sb-verse-toolbar-plus sb-verse-toolbar-plus-inline"
-                    onPointerEnter={preloadColorPicker}
-                    onFocus={preloadColorPicker}
-                    onClick={() => {
-                      customColorPickerOpen.value = true;
-                    }}
-                    aria-label={t("add-custom-color", {
-                      defaultValue: "Add custom color",
-                    })}
-                    title={t("add-color", { defaultValue: "Add color" })}
-                    aria-haspopup="dialog"
-                    aria-expanded={customColorPickerOpen.value}
+                  <TooltipTrigger
+                    label={t("add-color", { defaultValue: "Add color" })}
                   >
-                    <span className="material-symbols-outlined">add</span>
-                  </button>
+                    <button
+                      ref={customColorAnchorRef}
+                      type="button"
+                      className="sb-verse-toolbar-plus sb-verse-toolbar-plus-inline"
+                      onPointerEnter={preloadColorPicker}
+                      onFocus={preloadColorPicker}
+                      onClick={() => {
+                        customColorPickerOpen.value = true;
+                      }}
+                      aria-label={t("add-custom-color", {
+                        defaultValue: "Add custom color",
+                      })}
+                      aria-haspopup="dialog"
+                      aria-expanded={customColorPickerOpen.value}
+                    >
+                      <span className="material-symbols-outlined">add</span>
+                    </button>
+                  </TooltipTrigger>
                 )}
               </div>
 
               <div className="sb-verse-toolbar-picker-actions">
                 {!isSmallScreen.value && (
-                  <button
-                    ref={customColorAnchorRef}
-                    type="button"
-                    className="sb-verse-toolbar-plus"
-                    onPointerEnter={preloadColorPicker}
-                    onFocus={preloadColorPicker}
-                    onClick={() => {
-                      customColorPickerOpen.value = true;
-                    }}
-                    aria-label={t("add-custom-color", {
-                      defaultValue: "Add custom color",
-                    })}
-                    title={t("add-color", { defaultValue: "Add color" })}
-                    aria-haspopup="dialog"
-                    aria-expanded={customColorPickerOpen.value}
+                  <TooltipTrigger
+                    label={t("add-color", { defaultValue: "Add color" })}
                   >
-                    <span className="material-symbols-outlined">add</span>
-                    <span className="sb-verse-toolbar-action-text">
-                      {t("add", { defaultValue: "Add" })}
-                    </span>
-                  </button>
+                    <button
+                      ref={customColorAnchorRef}
+                      type="button"
+                      className="sb-verse-toolbar-plus"
+                      onPointerEnter={preloadColorPicker}
+                      onFocus={preloadColorPicker}
+                      onClick={() => {
+                        customColorPickerOpen.value = true;
+                      }}
+                      aria-label={t("add-custom-color", {
+                        defaultValue: "Add custom color",
+                      })}
+                      aria-haspopup="dialog"
+                      aria-expanded={customColorPickerOpen.value}
+                    >
+                      <span className="material-symbols-outlined">add</span>
+                      <span className="sb-verse-toolbar-action-text">
+                        {t("add", { defaultValue: "Add" })}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
                 )}
                 <LazyColorPicker
                   value="#ffeb3a"
@@ -3666,45 +3676,48 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   onChange={applyCustomColor}
                 />
 
-                <button
-                  type="button"
-                  className="sb-verse-toolbar-clear"
-                  disabled={!hasAnyHighlighted.value}
-                  onClick={() => {
-                    const rs = selectionState.value;
-                    if (!rs) return;
-                    const session = sessionState.value;
-                    if (
-                      session &&
-                      session.userCanDecorate(session.localSessionId.value)
-                    ) {
-                      // Clean up the shared decoration first so the removal
-                      // propagates to other clients even if the local
-                      // unhighlight is a no-op (e.g. user isn't logged in
-                      // with HighlightsManager but the session had a
-                      // decoration broadcast earlier).
-                      removeSharedHighlightsFromSelection(session, rs);
-                    }
-                    // Clear the saved highlight too. Highlights broadcast to a
-                    // session aren't saved, but a personal one can still be
-                    // sitting on these verses — made before joining, or made
-                    // while the user had no permission to broadcast — and
-                    // "clear" has to mean the verse ends up unhighlighted.
-                    void rs.unhighlightSelectedVerses();
-                    // Clearing a highlight should clear the selection too,
-                    // same as applying one (#1704).
-                    rs.clearSelectedVerses();
-                  }}
-                  aria-label={t("clear-highlight", {
-                    defaultValue: "Clear highlight",
-                  })}
-                  title={t("clear", { defaultValue: "Clear" })}
-                >
-                  <span className="material-symbols-outlined">ink_eraser</span>
-                  <span className="sb-verse-toolbar-action-text">
-                    {t("clear", { defaultValue: "Clear" })}
-                  </span>
-                </button>
+                <TooltipTrigger label={t("clear", { defaultValue: "Clear" })}>
+                  <button
+                    type="button"
+                    className="sb-verse-toolbar-clear"
+                    disabled={!hasAnyHighlighted.value}
+                    onClick={() => {
+                      const rs = selectionState.value;
+                      if (!rs) return;
+                      const session = sessionState.value;
+                      if (
+                        session &&
+                        session.userCanDecorate(session.localSessionId.value)
+                      ) {
+                        // Clean up the shared decoration first so the removal
+                        // propagates to other clients even if the local
+                        // unhighlight is a no-op (e.g. user isn't logged in
+                        // with HighlightsManager but the session had a
+                        // decoration broadcast earlier).
+                        removeSharedHighlightsFromSelection(session, rs);
+                      }
+                      // Clear the saved highlight too. Highlights broadcast to a
+                      // session aren't saved, but a personal one can still be
+                      // sitting on these verses — made before joining, or made
+                      // while the user had no permission to broadcast — and
+                      // "clear" has to mean the verse ends up unhighlighted.
+                      void rs.unhighlightSelectedVerses();
+                      // Clearing a highlight should clear the selection too,
+                      // same as applying one (#1704).
+                      rs.clearSelectedVerses();
+                    }}
+                    aria-label={t("clear-highlight", {
+                      defaultValue: "Clear highlight",
+                    })}
+                  >
+                    <span className="material-symbols-outlined">
+                      ink_eraser
+                    </span>
+                    <span className="sb-verse-toolbar-action-text">
+                      {t("clear", { defaultValue: "Clear" })}
+                    </span>
+                  </button>
+                </TooltipTrigger>
               </div>
             </div>
           ) : (
@@ -3762,34 +3775,35 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       className="sb-verse-toolbar-action-item"
                       data-verse-tool-id={tool.id}
                     >
-                      <button
-                        disabled={tool.disabled.value}
-                        onClick={() => {
-                          if (hasMenuItems) {
-                            selectedVerseToolId.value =
-                              selectedVerseToolId.value === tool.id
-                                ? null
-                                : tool.id;
-                            return;
-                          }
+                      <TooltipTrigger>
+                        <button
+                          disabled={tool.disabled.value}
+                          onClick={() => {
+                            if (hasMenuItems) {
+                              selectedVerseToolId.value =
+                                selectedVerseToolId.value === tool.id
+                                  ? null
+                                  : tool.id;
+                              return;
+                            }
 
-                          selectedVerseToolId.value = null;
-                          void handleVerseAction(
-                            tool.onSelect,
-                            tool.preserveSelection
-                          );
-                        }}
-                        className="sb-verse-toolbar-action"
-                        aria-label={label}
-                        title={label}
-                      >
-                        <span className="sb-verse-toolbar-action-icon">
-                          <ToolIcon />
-                        </span>
-                        <span className="sb-verse-toolbar-action-label">
-                          {label}
-                        </span>
-                      </button>
+                            selectedVerseToolId.value = null;
+                            void handleVerseAction(
+                              tool.onSelect,
+                              tool.preserveSelection
+                            );
+                          }}
+                          className="sb-verse-toolbar-action"
+                          aria-label={label}
+                        >
+                          <span className="sb-verse-toolbar-action-icon">
+                            <ToolIcon />
+                          </span>
+                          <span className="sb-verse-toolbar-action-label">
+                            {label}
+                          </span>
+                        </button>
+                      </TooltipTrigger>
                       {floatingMenuOpen && (
                         <FloatingVerseToolMenu
                           anchorId={tool.id}
@@ -3863,70 +3877,72 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
                 const highlightCard = showHighlightCard.value ? (
                   <div key="highlight" className="sb-verse-toolbar-action-item">
-                    <button
-                      type="button"
-                      className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
-                      onClick={() => {
-                        isHighlightPickerOpen.value = true;
-                        showHighlightColorSwipeHint.value = true;
-                      }}
-                      aria-label={t("highlight-selection", {
-                        defaultValue: "Highlight selection",
-                      })}
-                      title={highlightLabel}
-                    >
-                      <span className="sb-verse-toolbar-action-icon">
-                        <span className="material-symbols-outlined">
-                          format_ink_highlighter
+                    <TooltipTrigger label={highlightLabel}>
+                      <button
+                        type="button"
+                        className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
+                        onClick={() => {
+                          isHighlightPickerOpen.value = true;
+                          showHighlightColorSwipeHint.value = true;
+                        }}
+                        aria-label={t("highlight-selection", {
+                          defaultValue: "Highlight selection",
+                        })}
+                      >
+                        <span className="sb-verse-toolbar-action-icon">
+                          <span className="material-symbols-outlined">
+                            format_ink_highlighter
+                          </span>
                         </span>
-                      </span>
-                      <span className="sb-verse-toolbar-action-label">
-                        {highlightLabel}
-                      </span>
-                    </button>
+                        <span className="sb-verse-toolbar-action-label">
+                          {highlightLabel}
+                        </span>
+                      </button>
+                    </TooltipTrigger>
                   </div>
                 ) : null;
 
                 const saveCard = !showSaveCard.value ? null : (
                   <div key="save" className="sb-verse-toolbar-action-item">
-                    <button
-                      type="button"
-                      className={`sb-verse-toolbar-action sb-verse-toolbar-save-trigger${
-                        isSelectionSaved
-                          ? " sb-verse-toolbar-save-trigger-active"
-                          : ""
-                      }`}
-                      onClick={() => {
-                        if (!rs) return;
-                        const translationId = rs.translationId.value;
-                        const bookId = rs.bookId.value;
-                        const chapterNumber = rs.chapterNumber.value;
-                        if (
-                          !translationId ||
-                          !bookId ||
-                          !chapterNumber ||
-                          verseTarget === undefined
-                        ) {
-                          return;
-                        }
-                        openSaveModalForLocation(props.state, {
-                          translationId,
-                          bookId,
-                          chapterNumber,
-                          verse: verseTarget,
-                        });
-                        rs.clearSelectedVerses();
-                      }}
-                      aria-label={saveLabel}
-                      title={saveLabel}
-                    >
-                      <span className="sb-verse-toolbar-action-icon">
-                        <SaveStarIcon isSaved={isSelectionSaved} size={20} />
-                      </span>
-                      <span className="sb-verse-toolbar-action-label">
-                        {saveLabel}
-                      </span>
-                    </button>
+                    <TooltipTrigger>
+                      <button
+                        type="button"
+                        className={`sb-verse-toolbar-action sb-verse-toolbar-save-trigger${
+                          isSelectionSaved
+                            ? " sb-verse-toolbar-save-trigger-active"
+                            : ""
+                        }`}
+                        onClick={() => {
+                          if (!rs) return;
+                          const translationId = rs.translationId.value;
+                          const bookId = rs.bookId.value;
+                          const chapterNumber = rs.chapterNumber.value;
+                          if (
+                            !translationId ||
+                            !bookId ||
+                            !chapterNumber ||
+                            verseTarget === undefined
+                          ) {
+                            return;
+                          }
+                          openSaveModalForLocation(props.state, {
+                            translationId,
+                            bookId,
+                            chapterNumber,
+                            verse: verseTarget,
+                          });
+                          rs.clearSelectedVerses();
+                        }}
+                        aria-label={saveLabel}
+                      >
+                        <span className="sb-verse-toolbar-action-icon">
+                          <SaveStarIcon isSaved={isSelectionSaved} size={20} />
+                        </span>
+                        <span className="sb-verse-toolbar-action-label">
+                          {saveLabel}
+                        </span>
+                      </button>
+                    </TooltipTrigger>
                   </div>
                 );
 
