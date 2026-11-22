@@ -950,6 +950,18 @@ describe("ChatView", () => {
     expect(emptyEl?.textContent).toContain("Start a conversation");
   });
 
+  it("leaves no empty hint under the title when nobody else is there", () => {
+    const chat = createMockChatSession({ parsedMessages: signal([]) });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-empty-state-title")).not.toBeNull();
+    expect(container.querySelector(".sb-empty-state-hint")).toBeNull();
+  });
+
   it("shows a presence prompt in the empty state when other users are present", () => {
     const alice = createMockParticipant({
       id: "p-alice",

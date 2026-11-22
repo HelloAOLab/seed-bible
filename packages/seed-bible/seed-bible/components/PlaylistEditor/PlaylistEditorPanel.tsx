@@ -218,6 +218,9 @@ export function PlaylistStepList(props: {
           <Button
             size="lg"
             icon="add"
+            // The add-step menu's outside-press check recognises its openers by
+            // this class.
+            className="sb-pe-empty-list-add"
             onClick={() => openAddStepMenu(playlists)}
           >
             {t("playlist-editor-add-step-title", {

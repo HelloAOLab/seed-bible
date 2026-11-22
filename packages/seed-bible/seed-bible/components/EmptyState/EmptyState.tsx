@@ -33,7 +33,8 @@ export type EmptyStateProps = Omit<
  *
  * A screen that needs it to look different sets the custom properties it
  * exposes instead of overriding its rules: `--sb-empty-state-color` (the text,
- * for a screen with its own muted grey), `--sb-empty-state-padding`, and
+ * for a screen with its own muted grey), `--sb-empty-state-font-size`,
+ * `--sb-empty-state-padding`, and
  * `--sb-empty-state-background`, `-border` and `-radius` (for one that sits in
  * a box). To have screen readers announce it when it appears (a search with no
  * results), pass `role="status"`.

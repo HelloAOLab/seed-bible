@@ -315,6 +315,13 @@
   --sb-empty-state-color: var(--pe-muted);
 }
 
+/* The editor's icons are fixed-size masks (16px), not SVGs, so they follow the
+   empty state's icon slot only when told to. */
+.sb-pe-empty-list .sb-pe-icon {
+  width: 1em;
+  height: 1em;
+}
+
 /* The steps are the same rows as the playing list's (`PlaylistStepRow`);
    one that can't be published yet is outlined. */
 .sb-pe-step--invalid {

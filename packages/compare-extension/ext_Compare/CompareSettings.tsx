@@ -171,7 +171,7 @@ export function CompareSettings(props: {
         </ul>
 
         {draggable.length === 0 && (
-          <EmptyState>
+          <EmptyState className="sb-compare-empty-note">
             {t("no-translations-selected", {
               defaultValue: "No translations added yet.",
             })}

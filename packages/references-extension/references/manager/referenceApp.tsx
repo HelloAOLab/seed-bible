@@ -510,7 +510,7 @@ const ReferenceApp = (props: {
 function ReferencesEmpty(props: { message: string }) {
   return (
     <EmptyState
-      className="sb-references-pane"
+      className="sb-references-pane sb-references-empty"
       size="panel"
       icon="quick_reference_all"
     >

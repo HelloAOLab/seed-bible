@@ -1221,7 +1221,9 @@ export function ChatView(props: ChatViewProps) {
                 defaultValue: "Start a conversation",
               })}
             >
-              <PresencePrompt others={othersPresent} />
+              {othersPresent.length > 0 ? (
+                <PresencePrompt others={othersPresent} />
+              ) : null}
             </EmptyState>
           )
         ) : (
