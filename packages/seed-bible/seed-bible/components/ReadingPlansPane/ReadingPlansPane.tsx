@@ -1,3 +1,4 @@
+import { Spinner } from "../Spinner/Spinner";
 import "./ReadingPlansPane.css";
 import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
@@ -667,11 +668,11 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                   </span>
                 </div>
                 <span className="sb-rp-today-go" aria-hidden="true">
-                  <MaterialIcon>
-                    {openingId === hero.planId
-                      ? "hourglass_top"
-                      : "arrow_forward"}
-                  </MaterialIcon>
+                  {openingId === hero.planId ? (
+                    <Spinner />
+                  ) : (
+                    <MaterialIcon>arrow_forward</MaterialIcon>
+                  )}
                 </span>
               </button>
             ) : null}
@@ -823,9 +824,13 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                             </span>
                           </span>
                         </button>
-                        <MaterialIcon className="sb-rp-card-chevron">
-                          {opening ? "hourglass_top" : "arrow_forward"}
-                        </MaterialIcon>
+                        {opening ? (
+                          <Spinner className="sb-rp-card-chevron" />
+                        ) : (
+                          <MaterialIcon className="sb-rp-card-chevron">
+                            arrow_forward
+                          </MaterialIcon>
+                        )}
                         {optionsMenu(row)}
                       </div>
                       <PlanLoadError planId={row.planId} />
@@ -1159,9 +1164,13 @@ function ActivePlanCard(props: {
         {props.openLabel ? (
           <span className="sb-rp-card-open-label">{props.openLabel}</span>
         ) : null}
-        <MaterialIcon className="sb-rp-card-chevron">
-          {opening ? "hourglass_top" : "arrow_forward"}
-        </MaterialIcon>
+        {opening ? (
+          <Spinner className="sb-rp-card-chevron" />
+        ) : (
+          <MaterialIcon className="sb-rp-card-chevron">
+            arrow_forward
+          </MaterialIcon>
+        )}
         {menu}
       </div>
 

@@ -1,3 +1,4 @@
+import { LoadingStatus } from "../LoadingStatus/LoadingStatus";
 import "./BibleSelector.inline.css";
 import "./BibleSelector.css";
 import {
@@ -42,7 +43,6 @@ import {
 } from "../../managers/OfflineTranslationsManager";
 import { downloadTranslationWithToast } from "../OfflineDownloadPrompt/downloadTranslationWithToast";
 import type { TutorialManager } from "../../managers/TutorialManager";
-import { Spinner } from "../Spinner/Spinner";
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { toShareableUrl } from "../../app/publicLinks";
@@ -438,10 +438,9 @@ const BooksStatusMessage = (props: {
 
   if (booksStatus.value === "loading") {
     return (
-      <p className="sb-selector-status sb-selector-status--loading">
-        <Spinner />
+      <LoadingStatus className="sb-selector-status sb-selector-status--loading">
         {t("loading-books", { defaultValue: "Loading books…" })}
-      </p>
+      </LoadingStatus>
     );
   }
 
@@ -491,13 +490,12 @@ const TranslationListStatus = (props: {
     const name = translation?.shortName ?? load.translationId;
     if (load.status === "loading") {
       return (
-        <p className="sb-selector-status sb-selector-status--loading">
-          <Spinner />
+        <LoadingStatus className="sb-selector-status sb-selector-status--loading">
           {t("loading-translation", {
             defaultValue: "Loading {{name}}…",
             name,
           })}
-        </p>
+        </LoadingStatus>
       );
     }
     return (
@@ -528,12 +526,11 @@ const TranslationListStatus = (props: {
 
   if (catalogStatus.value === "loading") {
     return (
-      <p className="sb-selector-status sb-selector-status--loading">
-        <Spinner />
+      <LoadingStatus className="sb-selector-status sb-selector-status--loading">
         {t("loading-translations", {
           defaultValue: "Loading translations…",
         })}
-      </p>
+      </LoadingStatus>
     );
   }
 
