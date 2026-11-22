@@ -22,9 +22,11 @@ export type LoadingStatusProps = Omit<
 };
 
 /**
- * A spinner with the words that say what it is waiting for, announced to
- * screen readers when it appears. For a line or a screen that has nothing to
- * show until something arrives. Where the finished content has a known shape
+ * A spinner with the words that say what it is waiting for, marked as a
+ * `status` so assistive technology can pick it up. (Some screen readers only
+ * announce a status whose words change after it is on the page, so don't rely
+ * on it being read out as it appears.) For a line or a screen that has nothing
+ * to show until something arrives. Where the finished content has a known shape
  * (a card, a list of rows), draw `Skeleton` blocks in a `SkeletonContainer`
  * instead, and for a button that is working, give `Button` its `loading`
  * prop.

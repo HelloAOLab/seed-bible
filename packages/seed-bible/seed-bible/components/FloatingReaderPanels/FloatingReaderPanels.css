@@ -64,6 +64,11 @@
   padding: 0.875rem 0.75rem;
   font-size: var(--sb-font-size-14);
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  --sb-loading-status-color: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 30%
+  );
 }
 
 .sb-floating-search-status-error {

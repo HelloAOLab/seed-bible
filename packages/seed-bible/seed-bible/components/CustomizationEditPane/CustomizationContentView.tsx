@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import { ContentViewLoading } from "./ContentViewLoading";
 import "./CustomizationContentView.css";
 import { useSignal } from "@preact/signals";
 import { useEffect, useRef } from "preact/hooks";
@@ -340,13 +340,7 @@ export function CustomizationContentView(props: { state: SeedBibleState }) {
     );
   }
   if (status !== "ready" || customContent.recordName.value !== recordName) {
-    return (
-      <div className="sb-settings-page sb-cz-page">
-        <SkeletonContainer label={t("loading", { defaultValue: "Loading…" })}>
-          <Skeleton width="100%" height="12rem" radius="var(--sb-radius-md)" />
-        </SkeletonContainer>
-      </div>
-    );
+    return <ContentViewLoading />;
   }
 
   return <ContentLibraryEditor state={state} />;

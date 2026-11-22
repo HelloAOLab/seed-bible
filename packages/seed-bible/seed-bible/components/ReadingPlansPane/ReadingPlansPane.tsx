@@ -669,7 +669,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                 </div>
                 <span className="sb-rp-today-go" aria-hidden="true">
                   {openingId === hero.planId ? (
-                    <Spinner />
+                    <Spinner size="1.5rem" />
                   ) : (
                     <MaterialIcon>arrow_forward</MaterialIcon>
                   )}
@@ -825,7 +825,10 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                           </span>
                         </button>
                         {opening ? (
-                          <Spinner className="sb-rp-card-chevron" />
+                          <Spinner
+                            size="1.5rem"
+                            className="sb-rp-card-chevron"
+                          />
                         ) : (
                           <MaterialIcon className="sb-rp-card-chevron">
                             arrow_forward
@@ -1165,7 +1168,7 @@ function ActivePlanCard(props: {
           <span className="sb-rp-card-open-label">{props.openLabel}</span>
         ) : null}
         {opening ? (
-          <Spinner className="sb-rp-card-chevron" />
+          <Spinner size="1.5rem" className="sb-rp-card-chevron" />
         ) : (
           <MaterialIcon className="sb-rp-card-chevron">
             arrow_forward
