@@ -376,6 +376,23 @@ describe("initApologistExtension discover provider", () => {
       });
     });
 
+    it("treats a blank name in the link as unset", () => {
+      const overSaved = install(
+        "?apologistName=",
+        undefined,
+        signal({ name: "Saved Bot" })
+      );
+      expect(findChatProvider(overSaved).name).toBe("Saved Bot");
+      unregisterExtension("ext_Apologist");
+
+      const alone = install("?apologistName=%20%20");
+      expect(findChatProvider(alone).name).toEqual({
+        key: "title",
+        defaultValue: "Apologist",
+        ns: "ext_Apologist",
+      });
+    });
+
     it("uses the icon in the link, and the default icon when the link's value is blank", () => {
       const fromLink = install(
         "?apologistIconUrl=https%3A%2F%2Fexample.com%2Fbot.png"
@@ -442,6 +459,22 @@ describe("initApologistExtension discover provider", () => {
       await sendChatMessage(context);
 
       expect(sentModels()).toEqual([undefined, "anthropic/claude"]);
+    });
+
+    it("treats a blank model in the link as unset", async () => {
+      fetchMock.mockImplementation(() => Promise.resolve(chatReply()));
+
+      await sendChatMessage(
+        install(
+          "?apologistModel=",
+          undefined,
+          signal({ model: "anthropic/claude" })
+        )
+      );
+      unregisterExtension("ext_Apologist");
+      await sendChatMessage(install("?apologistModel=%20"));
+
+      expect(sentModels()).toEqual(["anthropic/claude", undefined]);
     });
 
     it("regroups the open chapter's results when the saved content author changes", async () => {
@@ -972,6 +1005,21 @@ describe("initApologistExtension discover provider", () => {
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe("https://apologist.seedbible.io/api/v1/chat/completions");
     expect(init.headers).toEqual({ "x-api-key": "url_key" });
+  });
+
+  it("uses the default domain when the link's domain is blank", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        'data: {"choices":[{"delta":{"content":"Hi"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n',
+        { status: 200 }
+      )
+    );
+    const context = install("?apologistDomain=&apologistApiKey=url_key");
+
+    await sendChatMessage(context);
+
+    const [url] = fetchMock.mock.calls[0]!;
+    expect(url).toBe("https://apologist.seedbible.io/api/v1/chat/completions");
   });
 
   it.each(["not_set", "signed_out", "not_loaded"] as const)(

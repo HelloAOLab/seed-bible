@@ -197,18 +197,19 @@ export default function initApologistExtension() {
       console.log("Apologist extension initialized with context:", context);
 
       const url = context.navigation.currentUrl.value;
-      const urlName = url.searchParams.get("apologistName") ?? null;
+      // A blank value (`?apologistName=`) counts as unset, so it falls back
+      // to the saved setting or default instead of overriding them with "".
+      const readLinkText = (key: string): string | null =>
+        url.searchParams.get(key)?.trim() || null;
+      const urlName = readLinkText("apologistName");
       const apologistIconUrl =
-        url.searchParams.get("apologistIconUrl") || ApologistIcon;
-      const customApologistDomain =
-        url.searchParams.get("apologistDomain") ?? null;
+        readLinkText("apologistIconUrl") ?? ApologistIcon;
+      const customApologistDomain = readLinkText("apologistDomain");
       const apologistDomain = customApologistDomain ?? DEFAULT_APOLOGIST_DOMAIN;
-      const apologistApiKey = url.searchParams.get("apologistApiKey") ?? null;
-      const apologistShareToken =
-        url.searchParams.get("apologistShareToken") ?? null;
-      const urlModel = url.searchParams.get("apologistModel") ?? null;
-      const apologistConversationId: string | null =
-        url.searchParams.get("apologistConversation") ?? null;
+      const apologistApiKey = readLinkText("apologistApiKey");
+      const apologistShareToken = readLinkText("apologistShareToken");
+      const urlModel = readLinkText("apologistModel");
+      const apologistConversationId = readLinkText("apologistConversation");
       const rawApologistTeamId = url.searchParams.get("apologistTeamID");
       const urlTeamId =
         rawApologistTeamId && /^\d+$/.test(rawApologistTeamId)
