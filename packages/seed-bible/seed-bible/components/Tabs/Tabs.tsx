@@ -2383,66 +2383,66 @@ export function Tabs(props: TabsProps) {
               : fullTitle;
 
           return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                closeContextMenus();
-                closeLayoutMenu();
-                app.selectTab(tab.id);
-              }}
-              className={`sb-collapsed-tab-tile${
-                isSelected ? " sb-collapsed-tab-tile-selected" : ""
-              }`}
-              aria-label={
-                isPlayingAudio
-                  ? t("collapsed-tab-playing-label", {
-                      label,
-                      defaultValue: "{{label}} — playing audio",
-                    })
-                  : label
-              }
-              title={fullTitle}
-            >
-              <span className="sb-collapsed-tab-title">{shortTitle}</span>
-              {isPlayingAudio && (
-                <MaterialIcon
-                  className="sb-collapsed-tab-audio-icon"
-                  aria-hidden="true"
-                >
-                  volume_up
-                </MaterialIcon>
-              )}
-              {session &&
-                sessionUsers.length > 0 &&
-                (() => {
-                  const options = session.options.value;
-                  const sorted = sortUsersByRole(sessionUsers, options);
-                  const shown = sorted.slice(0, 3);
-                  const extra = sorted.length - shown.length;
-                  return (
-                    <span
-                      className="sb-collapsed-tab-presence"
-                      aria-hidden="true"
-                    >
-                      {shown.map((user) => {
-                        const role = getUserSessionRole(options, user);
-                        return (
-                          <span
-                            key={user.connectionId}
-                            className={`sb-collapsed-tab-presence-dot${role ? ` sb-collapsed-tab-presence-dot-${role === "co-host" ? "cohost" : "host"}` : ""}`}
-                            style={{ backgroundColor: user.visual.color }}
-                          />
-                        );
-                      })}
-                      {extra > 0 && (
-                        <span className="sb-collapsed-tab-presence-more">
-                          +{extra}
-                        </span>
-                      )}
-                    </span>
-                  );
-                })()}
-            </button>
+            <TooltipTrigger key={tab.id} label={fullTitle}>
+              <button
+                onClick={() => {
+                  closeContextMenus();
+                  closeLayoutMenu();
+                  app.selectTab(tab.id);
+                }}
+                className={`sb-collapsed-tab-tile${
+                  isSelected ? " sb-collapsed-tab-tile-selected" : ""
+                }`}
+                aria-label={
+                  isPlayingAudio
+                    ? t("collapsed-tab-playing-label", {
+                        label,
+                        defaultValue: "{{label}} — playing audio",
+                      })
+                    : label
+                }
+              >
+                <span className="sb-collapsed-tab-title">{shortTitle}</span>
+                {isPlayingAudio && (
+                  <MaterialIcon
+                    className="sb-collapsed-tab-audio-icon"
+                    aria-hidden="true"
+                  >
+                    volume_up
+                  </MaterialIcon>
+                )}
+                {session &&
+                  sessionUsers.length > 0 &&
+                  (() => {
+                    const options = session.options.value;
+                    const sorted = sortUsersByRole(sessionUsers, options);
+                    const shown = sorted.slice(0, 3);
+                    const extra = sorted.length - shown.length;
+                    return (
+                      <span
+                        className="sb-collapsed-tab-presence"
+                        aria-hidden="true"
+                      >
+                        {shown.map((user) => {
+                          const role = getUserSessionRole(options, user);
+                          return (
+                            <span
+                              key={user.connectionId}
+                              className={`sb-collapsed-tab-presence-dot${role ? ` sb-collapsed-tab-presence-dot-${role === "co-host" ? "cohost" : "host"}` : ""}`}
+                              style={{ backgroundColor: user.visual.color }}
+                            />
+                          );
+                        })}
+                        {extra > 0 && (
+                          <span className="sb-collapsed-tab-presence-more">
+                            +{extra}
+                          </span>
+                        )}
+                      </span>
+                    );
+                  })()}
+              </button>
+            </TooltipTrigger>
           );
         })}
         <IconButton
