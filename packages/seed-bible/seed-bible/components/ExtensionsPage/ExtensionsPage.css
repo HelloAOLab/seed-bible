@@ -34,8 +34,11 @@
   flex: 0 1 22.5rem;
 }
 
-.sb-extensions-page-add-link {
+/* The two buttons wrap onto the next row together, never one at a time. */
+.sb-extensions-page-toolbar-actions {
+  display: flex;
   flex-shrink: 0;
+  gap: 1rem;
 }
 
 .sb-extensions-page-columns {

@@ -1,5 +1,7 @@
 import { readInjectedConfig, type AppConfig } from "./appConfig";
 
+export const SEED_BIBLE_DOCS_URL = "https://bible.helloao.org/docs/seed-bible/";
+
 /**
  * The same page under a different origin. Built from the path rather than by
  * setting `protocol`/`host`, because the URL standard refuses to switch a
