@@ -18,6 +18,7 @@ import type { ModalManager } from "./ModalManager";
 import type { ChatsManager } from "./ChatsManager";
 import type { I18nManager } from "../i18n";
 import { useI18n } from "../i18n/I18nManager";
+import { Button } from "../components/Button/Button";
 import type {
   BibleReadingExtensionManager,
   ReadingExtensionInstance,
@@ -1442,20 +1443,12 @@ function PauseAudioReaderConfirm(props: {
         })}
       </p>
       <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={props.onCancel}
-        >
+        <Button variant="secondary" onClick={props.onCancel}>
           {t("cancel")}
-        </button>
-        <button
-          type="button"
-          className="sb-photo-modal-button sb-photo-modal-button-primary"
-          onClick={props.onPlay}
-        >
+        </Button>
+        <Button variant="primary" onClick={props.onPlay}>
           {t("play-playlist", { defaultValue: "Play playlist" })}
-        </button>
+        </Button>
       </div>
     </div>
   );
