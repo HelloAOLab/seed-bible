@@ -62,6 +62,7 @@ describe("I18nManager getInitialLanguage()", () => {
       updateQueryParam: vi.fn(),
       linkToQuery: vi.fn(),
       linkToBareRoot: vi.fn(),
+      toShareableUrl: vi.fn(),
       updateQueryParams: vi.fn(),
       updatePathAndQueryParams: vi.fn(),
       stampCurrentState: vi.fn(),
@@ -201,6 +202,7 @@ describe("I18nManager language fallback prompt", () => {
       getCurrentScrollPosition: vi.fn(),
       linkToQuery: vi.fn(),
       linkToBareRoot: vi.fn(),
+      toShareableUrl: vi.fn(),
       dispose: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ["en"]);
@@ -260,6 +262,7 @@ describe("I18nManager UI language switch prompt", () => {
       getCurrentScrollPosition: vi.fn(),
       linkToQuery: vi.fn(),
       linkToBareRoot: vi.fn(),
+      toShareableUrl: vi.fn(),
       dispose: vi.fn(),
       batchWrites: vi.fn((fn: () => unknown) => fn()),
     } as NavigationManager;
