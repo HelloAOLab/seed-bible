@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "../SettingsPage/SettingsPage.css";
 import "./CustomizationEditPane.css";
 // `.filters-icon` is defined here rather than in a shared stylesheet —
@@ -1235,14 +1236,12 @@ function CustomizationNotFound(props: { message?: string }) {
   return (
     <div className="sb-settings-page">
       <section className="sb-settings-section">
-        <div className="sb-settings-empty-state">
-          <p>
-            {props.message ??
-              t("customization-not-found", {
-                defaultValue: "This Custom Branding could not be found.",
-              })}
-          </p>
-        </div>
+        <EmptyState className="sb-settings-empty-state">
+          {props.message ??
+            t("customization-not-found", {
+              defaultValue: "This Custom Branding could not be found.",
+            })}
+        </EmptyState>
       </section>
     </div>
   );
@@ -1423,13 +1422,11 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
           </li>
         </ul>
         {installableExtensions.length === 0 ? (
-          <div className="sb-settings-empty-state">
-            <p>
-              {t("no-extensions-available", {
-                defaultValue: "No extensions available.",
-              })}
-            </p>
-          </div>
+          <EmptyState className="sb-settings-empty-state">
+            {t("no-extensions-available", {
+              defaultValue: "No extensions available.",
+            })}
+          </EmptyState>
         ) : (
           <ul className="sb-cz-list">
             {installableExtensions.map((entry) => {
@@ -1646,13 +1643,11 @@ function DefaultTranslationPickerMenuContent(props: { state: SeedBibleState }) {
 
   if (!record) {
     return (
-      <div className="sb-settings-empty-state">
-        <p>
-          {t("customization-not-found", {
-            defaultValue: "This Custom Branding could not be found.",
-          })}
-        </p>
-      </div>
+      <EmptyState className="sb-settings-empty-state">
+        {t("customization-not-found", {
+          defaultValue: "This Custom Branding could not be found.",
+        })}
+      </EmptyState>
     );
   }
 

@@ -152,9 +152,9 @@ describe("PhotoChooserContent", () => {
       ).click();
     });
 
-    expect(
-      container.querySelector(".sb-photo-chooser-empty")?.textContent
-    ).toContain("No photos yet. Upload a picture to get started.");
+    expect(container.querySelector(".sb-empty-state")?.textContent).toContain(
+      "No photos yet. Upload a picture to get started."
+    );
     expect(container.querySelector(".sb-photo-gallery-item")).toBeNull();
 
     act(() => {
@@ -172,7 +172,7 @@ describe("PhotoChooserContent", () => {
     expect((items[0] as HTMLImageElement).src).toBe(
       "https://example.com/new.jpg"
     );
-    expect(container.querySelector(".sb-photo-chooser-empty")).toBeNull();
+    expect(container.querySelector(".sb-empty-state")).toBeNull();
   });
 
   it("shows a photo in Recent uploads after the common save function runs", async () => {
@@ -215,9 +215,9 @@ describe("PhotoChooserContent", () => {
         ) as HTMLButtonElement
       ).click();
     });
-    expect(
-      container.querySelector(".sb-photo-chooser-empty")?.textContent
-    ).toContain("No photos yet");
+    expect(container.querySelector(".sb-empty-state")?.textContent).toContain(
+      "No photos yet"
+    );
 
     await act(async () => {
       await gallery.savePhoto(
@@ -225,7 +225,7 @@ describe("PhotoChooserContent", () => {
       );
     });
 
-    expect(container.querySelector(".sb-photo-chooser-empty")).toBeNull();
+    expect(container.querySelector(".sb-empty-state")).toBeNull();
     expect(
       (
         container.querySelector(

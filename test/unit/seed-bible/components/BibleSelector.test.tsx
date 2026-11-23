@@ -2422,7 +2422,7 @@ describe("BibleSelector offline downloads", () => {
     const { state, store } = await openTranslationList();
 
     const button = offlineButton();
-    expect(button?.title).toBe("Download for offline use");
+    expect(button?.getAttribute("aria-label")).toBe("Download for offline use");
 
     act(() => {
       button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -2433,7 +2433,9 @@ describe("BibleSelector offline downloads", () => {
     expect(await store!.getChapter("AAB", "GEN", 1)).not.toBeNull();
     // The button now offers to remove the download instead.
     await waitFor(() => Boolean(offlineButton("downloaded")));
-    expect(offlineButton("downloaded")?.title).toContain("Available offline");
+    expect(offlineButton("downloaded")?.getAttribute("aria-label")).toContain(
+      "Available offline"
+    );
   });
 
   it("asks for confirmation before removing a download, and removes it on confirm", async () => {
@@ -2519,7 +2521,9 @@ describe("BibleSelector offline downloads", () => {
     });
 
     await waitFor(() => Boolean(offlineButton("update")));
-    expect(offlineButton("update")?.title).toContain("newer version");
+    expect(offlineButton("update")?.getAttribute("aria-label")).toContain(
+      "newer version"
+    );
   });
 
   const downloadedFilterNote = () =>

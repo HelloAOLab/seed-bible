@@ -1,0 +1,71 @@
+/* The shared "nothing here yet" note. A screen that needs it to look different
+   sets these custom properties on it instead of overriding the rules:
+   - `--sb-empty-state-color`: the text, for a screen with its own muted grey.
+   - `--sb-empty-state-font-size`: the text size, for a dense or roomy list.
+   - `--sb-empty-state-padding`: the room around it. An inline note has none,
+     since the list or section it sits in already pads it.
+   - `--sb-empty-state-background`, `-border`, `-radius`: for one that sits in
+     a box, as the settings screens' do. */
+.sb-empty-state {
+  box-sizing: border-box;
+  padding: var(--sb-empty-state-padding, 0);
+  border: var(--sb-empty-state-border, none);
+  border-radius: var(--sb-empty-state-radius, 0);
+  background: var(--sb-empty-state-background, none);
+  color: var(
+    --sb-empty-state-color,
+    color-mix(in srgb, var(--sb-font-color), transparent 40%)
+  );
+  font-size: var(--sb-empty-state-font-size, var(--sb-font-size-14));
+  line-height: 1.4;
+}
+
+.sb-empty-state-title {
+  margin: 0;
+  font-weight: 600;
+  /* Stronger than the hint under it. */
+  color: var(--sb-font-color);
+}
+
+/* A whole screen that is empty: centered, and taking the room there is. */
+.sb-empty-state-panel {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: var(--sb-empty-state-padding, 2rem 1rem);
+  text-align: center;
+  font-size: var(--sb-empty-state-font-size, var(--sb-font-size-13));
+}
+
+.sb-empty-state-panel .sb-empty-state-title {
+  font-size: var(--sb-font-size-15);
+}
+
+.sb-empty-state-panel .sb-empty-state-hint {
+  max-width: 22rem;
+  line-height: 1.5;
+}
+
+.sb-empty-state-icon {
+  display: inline-flex;
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  font-size: 2.5rem;
+  /* Fainter than the text: the icon sets the mood, the words do the work. */
+  color: color-mix(in srgb, var(--sb-font-color), transparent 65%);
+}
+
+.sb-empty-state-icon .material-symbols-outlined {
+  font-size: inherit;
+}
+
+.sb-empty-state-icon > svg {
+  width: 1em;
+  height: 1em;
+}
+
+.sb-empty-state-action {
+  margin-top: 0.25rem;
+}

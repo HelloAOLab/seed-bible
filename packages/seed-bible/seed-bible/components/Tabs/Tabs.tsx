@@ -1,4 +1,6 @@
 import { Popover } from "../Popover/Popover";
+import { EmptyState } from "../EmptyState/EmptyState";
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./Tabs.inline.css";
 import "./Tabs.css";
 import { useSignal } from "@preact/signals";
@@ -1025,21 +1027,21 @@ export function TabsHeader(props: TabsHeaderProps) {
                   }}
                 >
                   {TAB_SLOT_LAYOUT_OPTIONS.map((layout) => (
-                    <button
-                      key={layout.id}
-                      onClick={() => setLayout(layout.id)}
-                      className={`sb-pane-layout-option${
-                        paneLayout === layout.id
-                          ? " sb-pane-layout-option-selected"
-                          : ""
-                      }`}
-                      role="radio"
-                      aria-checked={paneLayout === layout.id}
-                      aria-label={layout.label}
-                      title={layout.label}
-                    >
-                      {renderLayoutPreview(layout.id)}
-                    </button>
+                    <TooltipTrigger key={layout.id}>
+                      <button
+                        onClick={() => setLayout(layout.id)}
+                        className={`sb-pane-layout-option${
+                          paneLayout === layout.id
+                            ? " sb-pane-layout-option-selected"
+                            : ""
+                        }`}
+                        role="radio"
+                        aria-checked={paneLayout === layout.id}
+                        aria-label={layout.label}
+                      >
+                        {renderLayoutPreview(layout.id)}
+                      </button>
+                    </TooltipTrigger>
                   ))}
                 </div>
               </div>
@@ -2168,11 +2170,11 @@ function SavesSection(props: SavesSectionProps) {
             {isExpanded && (
               <div className="sb-save-category-items">
                 {items.length === 0 ? (
-                  <div className="sb-save-category-empty">
+                  <EmptyState className="sb-save-category-empty">
                     {t("save-folder-empty", {
                       defaultValue: "No saves here yet.",
                     })}
-                  </div>
+                  </EmptyState>
                 ) : (
                   items.map((save) => {
                     // Saves are pure links — they always render as a
@@ -2892,16 +2894,17 @@ function SelfAvatarButton(props: { state: SeedBibleState }) {
   const label = t("open-profile", { defaultValue: "Open profile" });
 
   return (
-    <button
-      className="sb-sidebar-self-avatar"
-      onClick={() => {
-        state.openProfile();
-      }}
-      aria-label={`${label} (${displayName})`}
-      title={displayName}
-    >
-      <SelfAvatarVisual state={state} />
-    </button>
+    <TooltipTrigger label={displayName}>
+      <button
+        className="sb-sidebar-self-avatar"
+        onClick={() => {
+          state.openProfile();
+        }}
+        aria-label={`${label} (${displayName})`}
+      >
+        <SelfAvatarVisual state={state} />
+      </button>
+    </TooltipTrigger>
   );
 }
 

@@ -3,6 +3,7 @@ export * from "./icons";
 export * from "./Button/Button";
 export * from "./CloseButton/CloseButton";
 export * from "./IconButton/IconButton";
+export * from "./TooltipTrigger/TooltipTrigger";
 export * from "./BottomSheet/BottomSheet";
 export * from "./Dialog/Dialog";
 export * from "./Switch/Switch";
@@ -19,6 +20,7 @@ export {
 export * from "./Popover/Popover";
 export * from "./PortalComponent/PortalComponent";
 export * from "./Skeleton/Skeleton";
+export * from "./EmptyState/EmptyState";
 export * from "./ExpandableText/ExpandableText";
 export * from "./PlaylistLinkContent/PlaylistLinkContent";
 export * from "./SearchBar/SearchBar";
