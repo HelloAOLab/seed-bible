@@ -31,6 +31,7 @@
 - Show an extension's icon and a gallery of its screenshots on its About tab. ([#2176](https://github.com/HelloAOLab/seed-bible/pull/2176))
 - Let extensions use more of Seed Bible's own controls: dialogs, popovers, tooltips, switches, checkboxes, text fields, dropdowns, filter pills, and empty and loading states. ([#2200](https://github.com/HelloAOLab/seed-bible/pull/2200), [#2224](https://github.com/HelloAOLab/seed-bible/pull/2224), [#2226](https://github.com/HelloAOLab/seed-bible/pull/2226), [#2230](https://github.com/HelloAOLab/seed-bible/pull/2230), [#2231](https://github.com/HelloAOLab/seed-bible/pull/2231), [#2232](https://github.com/HelloAOLab/seed-bible/pull/2232), [#2233](https://github.com/HelloAOLab/seed-bible/pull/2233), [#2242](https://github.com/HelloAOLab/seed-bible/pull/2242), [#2175](https://github.com/HelloAOLab/seed-bible/pull/2175), [#2193](https://github.com/HelloAOLab/seed-bible/pull/2193))
   - Extensions installed from a link now get these controls' real styles and the app's translations, and can bring their own CSS.
+- Added link to Seed Bible extensions documentation to extension page and About page.
 
 ### 🔧 Changed
 
