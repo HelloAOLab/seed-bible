@@ -1,4 +1,5 @@
 import { EmptyState } from "../EmptyState/EmptyState";
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "../ScriptureNote/ScriptureNote.css";
 import "./QuestionAnswersSheet.css";
 import "../visuallyHidden.inline.css";
@@ -206,21 +207,20 @@ function QuestionAnswersSheetBody(props: {
               }
               onInput={(event) => setDraft(event.currentTarget.value)}
             />
-            <button
-              type="submit"
-              className="sb-question-answers-share"
-              disabled={!draft.trim()}
-              aria-label={t("question-answers-share", {
-                defaultValue: "Share with group",
-              })}
-              title={t("question-answers-share", {
-                defaultValue: "Share with group",
-              })}
-            >
-              <MaterialIcon>
-                {isRtl ? "arrow_back" : "arrow_forward"}
-              </MaterialIcon>
-            </button>
+            <TooltipTrigger>
+              <button
+                type="submit"
+                className="sb-question-answers-share"
+                disabled={!draft.trim()}
+                aria-label={t("question-answers-share", {
+                  defaultValue: "Share with group",
+                })}
+              >
+                <MaterialIcon>
+                  {isRtl ? "arrow_back" : "arrow_forward"}
+                </MaterialIcon>
+              </button>
+            </TooltipTrigger>
           </form>
         </>
       ) : null}

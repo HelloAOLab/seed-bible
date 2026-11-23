@@ -32,6 +32,7 @@ import {
   IconButton,
   Skeleton,
   SkeletonContainer,
+  TooltipTrigger,
 } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { ReferenceBody, ReferencePreview } from "./referenceText";
@@ -665,20 +666,21 @@ function ReferenceAccordion(props: ReferenceViewProps) {
                   {/* The button and body stay mounted while collapsed so
                       closing can animate; CSS hides them from focus and
                       screen readers once the animation ends. */}
-                  <button
-                    type="button"
-                    className="sb-references-round-icon sb-references-row-open"
-                    onClick={() => onGoToChapter(reference)}
-                    title={goToChapterLabel}
-                    aria-label={goToChapterLabel}
-                  >
-                    <span
-                      className="material-symbols-outlined"
-                      aria-hidden="true"
+                  <TooltipTrigger>
+                    <button
+                      type="button"
+                      className="sb-references-round-icon sb-references-row-open"
+                      onClick={() => onGoToChapter(reference)}
+                      aria-label={goToChapterLabel}
                     >
-                      arrow_outward
-                    </span>
-                  </button>
+                      <span
+                        className="material-symbols-outlined"
+                        aria-hidden="true"
+                      >
+                        arrow_outward
+                      </span>
+                    </button>
+                  </TooltipTrigger>
                   <div
                     id={bodyId}
                     className="sb-references-collapsible sb-references-row-body-wrap"
@@ -822,30 +824,32 @@ function ReferenceSplitView(props: ReferenceViewProps) {
         </div>
 
         <div className="sb-references-detail-footer">
-          <button
-            type="button"
-            className="sb-references-pager-button"
-            disabled={index === 0}
-            onClick={() => select(index - 1)}
-            title={previousLabel}
-            aria-label={previousLabel}
-          >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              chevron_left
-            </span>
-          </button>
-          <button
-            type="button"
-            className="sb-references-pager-button sb-references-pager-button--next"
-            disabled={index >= total - 1}
-            onClick={() => select(index + 1)}
-            title={nextLabel}
-            aria-label={nextLabel}
-          >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              chevron_right
-            </span>
-          </button>
+          <TooltipTrigger>
+            <button
+              type="button"
+              className="sb-references-pager-button"
+              disabled={index === 0}
+              onClick={() => select(index - 1)}
+              aria-label={previousLabel}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                chevron_left
+              </span>
+            </button>
+          </TooltipTrigger>
+          <TooltipTrigger>
+            <button
+              type="button"
+              className="sb-references-pager-button sb-references-pager-button--next"
+              disabled={index >= total - 1}
+              onClick={() => select(index + 1)}
+              aria-label={nextLabel}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                chevron_right
+              </span>
+            </button>
+          </TooltipTrigger>
           <span className="sb-references-pager-position" aria-live="polite">
             {t("reference-position", {
               current: index + 1,
@@ -871,16 +875,17 @@ function ShowMoreButton(props: { onClick: () => void }) {
   const label = t("show-more", { defaultValue: "Show more references" });
 
   return (
-    <button
-      type="button"
-      className="sb-references-more"
-      onClick={props.onClick}
-      title={label}
-      aria-label={label}
-    >
-      <span className="material-symbols-outlined" aria-hidden="true">
-        expand_more
-      </span>
-    </button>
+    <TooltipTrigger>
+      <button
+        type="button"
+        className="sb-references-more"
+        onClick={props.onClick}
+        aria-label={label}
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">
+          expand_more
+        </span>
+      </button>
+    </TooltipTrigger>
   );
 }

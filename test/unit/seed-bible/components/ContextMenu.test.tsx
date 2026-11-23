@@ -246,7 +246,7 @@ describe("ContextMenu", () => {
     expect(rightMenu?.style.transformOrigin).toBe("right top");
   });
 
-  it("names its ⋮ button for screen readers and the tooltip", () => {
+  it("names its ⋮ button for screen readers", () => {
     act(() => {
       render(
         <ContextMenuWithButton label="Bookmark options">
@@ -258,7 +258,6 @@ describe("ContextMenu", () => {
 
     const button = container.querySelector("button")!;
     expect(button.getAttribute("aria-label")).toBe("Bookmark options");
-    expect(button.getAttribute("title")).toBe("Bookmark options");
     expect(button.getAttribute("aria-haspopup")).toBe("menu");
     expect(button.getAttribute("aria-expanded")).toBe("false");
   });
