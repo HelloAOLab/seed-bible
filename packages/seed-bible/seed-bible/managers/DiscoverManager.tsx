@@ -1,5 +1,6 @@
 import type { JSX, VNode } from "preact";
 import {
+  batch,
   computed,
   signal,
   type ReadonlySignal,
@@ -205,9 +206,16 @@ export interface DiscoverManager {
    */
   inlineVideo: ReadonlySignal<DiscoverInlineVideo | null>;
   /**
+   * The tab that was selected when the video started. Its reader keeps the
+   * player while it's on screen, so clicking into the other side of a split
+   * view doesn't move the player and restart it.
+   */
+  inlineVideoTabId: ReadonlySignal<string | null>;
+  /**
    * Plays a video in the reader instead of a modal: beside the scripture on
    * wide screens and phones held sideways, above it on phones held upright.
-   * Replaces whatever video was playing there.
+   * Replaces whatever video was playing there. On a phone it also closes the
+   * Discover pane, which would otherwise cover the player.
    */
   playInline: (video: DiscoverInlineVideo) => void;
   /** Closes the inline player. */
@@ -262,7 +270,19 @@ function registerById<T extends { id: string }>(
   };
 }
 
-export function createDiscoverManager(): DiscoverManager {
+/**
+ * App state the manager reads when a video starts playing inline. Functions
+ * rather than signals because the tabs and the layout are set up after this
+ * manager, which the tabs manager needs.
+ */
+export interface DiscoverManagerOptions {
+  selectedTabId?: () => string | null;
+  isCompactReader?: () => boolean;
+}
+
+export function createDiscoverManager(
+  options: DiscoverManagerOptions = {}
+): DiscoverManager {
   const providers = signal<readonly DiscoverProvider[]>([]);
   const registeredContentTypes = signal<
     readonly DiscoverContentTypeDefinition[]
@@ -278,6 +298,7 @@ export function createDiscoverManager(): DiscoverManager {
   const isDiscoverOpen = computed(() => !!view.value);
   const scrollToVerse = signal<DiscoverScrollTarget | null>(null);
   const inlineVideo = signal<DiscoverInlineVideo | null>(null);
+  const inlineVideoTabId = signal<string | null>(null);
   // One answer per provider per chapter. Later registrations and a return
   // visit reuse it; a failed lookup is dropped so the next visit can retry.
   // `chapterOrder` is oldest first and caps how many chapter keys we keep,
@@ -404,12 +425,22 @@ export function createDiscoverManager(): DiscoverManager {
     scrollToVerse,
 
     inlineVideo,
+    inlineVideoTabId,
     playInline(video: DiscoverInlineVideo) {
-      if (inlineVideo.peek()?.id === video.id) return;
-      inlineVideo.value = video;
+      batch(() => {
+        if (options.isCompactReader?.()) {
+          view.value = null;
+        }
+        if (inlineVideo.peek()?.id === video.id) return;
+        inlineVideoTabId.value = options.selectedTabId?.() ?? null;
+        inlineVideo.value = video;
+      });
     },
     closeInlineVideo() {
-      inlineVideo.value = null;
+      batch(() => {
+        inlineVideo.value = null;
+        inlineVideoTabId.value = null;
+      });
     },
 
     async *discover(

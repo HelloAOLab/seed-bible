@@ -45,28 +45,9 @@
   flex-shrink: 0;
 }
 
+/* A 16:9 box the shared player (PlaylistLinkContent) fills. */
 .sb-inline-video-frame {
-  position: relative;
+  display: flex;
   aspect-ratio: 16 / 9;
   width: 100%;
-  overflow: hidden;
-  border-radius: var(--sb-radius-md);
-  background: #000;
-}
-
-.sb-inline-video-player {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
-.sb-inline-video-link {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
 }

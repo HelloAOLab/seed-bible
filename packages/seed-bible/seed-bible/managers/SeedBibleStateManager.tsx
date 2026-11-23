@@ -992,7 +992,11 @@ export function createSeedBibleState(
   );
   const chats = createChatsManager(login, i18n, selectedTabTranslationBooks);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
-  const discover = createDiscoverManager();
+  // Both are read only when a video starts playing, after setup finishes.
+  const discover = createDiscoverManager({
+    selectedTabId: () => tabs.selectedTabId.peek(),
+    isCompactReader: () => isCompactReader.peek(),
+  });
   const readingExtensions = createBibleReadingExtensionManager();
   const tabs = createTabs(
     navigation,

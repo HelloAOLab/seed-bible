@@ -611,6 +611,30 @@ describe("BibleReaderToolbar — verse selection vs. side panes", () => {
     }
   });
 
+  it("does not clear the verse selection when a tap lands on the inline video player", async () => {
+    const readingState = await selectFirstVerse();
+    await renderToolbar();
+
+    // Stands in for `InlineVideoPanel`, e.g. a press on its close button.
+    const player = document.createElement("section");
+    player.className = "sb-inline-video";
+    const close = document.createElement("button");
+    player.appendChild(close);
+    document.body.appendChild(player);
+
+    try {
+      await act(async () => {
+        close.dispatchEvent(
+          new window.PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+
+      expect(readingState.selectedVerses.value).toHaveLength(1);
+    } finally {
+      player.remove();
+    }
+  });
+
   it("does not clear the verse selection when a tap lands inside a floating pane", async () => {
     const readingState = await selectFirstVerse();
     await renderToolbar();

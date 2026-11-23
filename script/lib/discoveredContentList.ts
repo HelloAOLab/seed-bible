@@ -1,4 +1,5 @@
 import { scanVerseReferencesInText } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
+import { resolveLinkMedia } from "@packages/seed-bible/seed-bible/managers/resolveLinkMedia";
 import { createRequire } from "node:module";
 
 // Loaded via createRequire rather than a static `import { createRecordsClient }`
@@ -305,6 +306,16 @@ export async function buildDiscoveredContentList(
       continue;
     }
 
+    // The reader's inline player can only play a video; anything else would
+    // leave an empty player with just an "Open" link in it.
+    let playInline = playsInline(row);
+    if (playInline && resolveLinkMedia(url).kind === "link") {
+      warnings.push(
+        `Row ${sheetRow} ("${title}"): Play Inline is ticked but "${url}" isn't a video, so it will open in a pop-up.`
+      );
+      playInline = false;
+    }
+
     items.push({
       id: uniqueSlug(title, usedIds),
       title,
@@ -313,7 +324,7 @@ export async function buildDiscoveredContentList(
       url: cell(row, "URL"),
       imageUrl,
       references,
-      ...(playsInline(row) ? { playInline: true } : {}),
+      ...(playInline ? { playInline: true } : {}),
     });
   }
 

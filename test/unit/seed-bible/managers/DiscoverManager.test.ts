@@ -755,4 +755,53 @@ describe("inline video", () => {
 
     expect(manager.inlineVideo.value).toEqual(other);
   });
+
+  it("remembers which tab was selected when the video started", () => {
+    let selectedTabId = "tab-1";
+    const manager = createDiscoverManager({
+      selectedTabId: () => selectedTabId,
+    });
+
+    manager.playInline(video);
+    selectedTabId = "tab-2";
+
+    expect(manager.inlineVideoTabId.value).toBe("tab-1");
+
+    manager.closeInlineVideo();
+    expect(manager.inlineVideoTabId.value).toBeNull();
+  });
+
+  it("keeps the same video and its tab when it's played again", () => {
+    let selectedTabId = "tab-1";
+    const manager = createDiscoverManager({
+      selectedTabId: () => selectedTabId,
+    });
+
+    manager.playInline(video);
+    const playing = manager.inlineVideo.value;
+    selectedTabId = "tab-2";
+    manager.playInline({ ...video });
+
+    expect(manager.inlineVideo.value).toBe(playing);
+    expect(manager.inlineVideoTabId.value).toBe("tab-1");
+  });
+
+  it("closes the Discover pane on a phone, where it would cover the player", () => {
+    const manager = createDiscoverManager({ isCompactReader: () => true });
+    manager.view.value = "discover";
+
+    manager.playInline(video);
+
+    expect(manager.view.value).toBeNull();
+    expect(manager.inlineVideo.value).toEqual(video);
+  });
+
+  it("leaves the Discover pane open on a wide screen, where the player sits beside it", () => {
+    const manager = createDiscoverManager({ isCompactReader: () => false });
+    manager.view.value = "discover";
+
+    manager.playInline(video);
+
+    expect(manager.view.value).toBe("discover");
+  });
 });

@@ -93,4 +93,104 @@ describe("PlaylistLinkContent", () => {
       container.querySelector(".sb-play-playlist-link-preview")
     ).toBeNull();
   });
+
+  it("starts a YouTube video playing from a given second", () => {
+    act(() => {
+      render(
+        <PlaylistLinkContent
+          url="https://www.youtube.com/watch?v=abc123"
+          autoplay
+          startAt={42.7}
+        />,
+        container
+      );
+    });
+
+    const src = new URL(container.querySelector("iframe")!.src);
+    expect(src.pathname).toBe("/embed/abc123");
+    expect(src.searchParams.get("autoplay")).toBe("1");
+    expect(src.searchParams.get("start")).toBe("42");
+  });
+
+  it("starts a Vimeo video from a given second", () => {
+    act(() => {
+      render(
+        <PlaylistLinkContent url="https://vimeo.com/12345" startAt={90} />,
+        container
+      );
+    });
+
+    expect(container.querySelector("iframe")!.src).toBe(
+      "https://player.vimeo.com/video/12345#t=90s"
+    );
+  });
+
+  it("starts a video file from a given second and reports its position as it plays", () => {
+    const onTimeUpdate = vi.fn();
+    act(() => {
+      render(
+        <PlaylistLinkContent
+          url="https://example.com/clip.mp4"
+          startAt={12}
+          onTimeUpdate={onTimeUpdate}
+        />,
+        container
+      );
+    });
+
+    const video = container.querySelector("video")!;
+    expect(video.getAttribute("src")).toBe("https://example.com/clip.mp4#t=12");
+
+    Object.defineProperty(video, "currentTime", { value: 15.5 });
+    act(() => {
+      video.dispatchEvent(new Event("timeupdate"));
+    });
+    expect(onTimeUpdate).toHaveBeenLastCalledWith(15.5);
+  });
+
+  it("reports a YouTube video's position from the player's messages, and ignores other pages", () => {
+    const onTimeUpdate = vi.fn();
+    act(() => {
+      render(
+        <PlaylistLinkContent
+          url="https://www.youtube.com/watch?v=abc123"
+          onTimeUpdate={onTimeUpdate}
+        />,
+        container
+      );
+    });
+    const iframe = container.querySelector("iframe")!;
+    expect(new URL(iframe.src).searchParams.get("enablejsapi")).toBe("1");
+
+    const send = (origin: string, currentTime: number) =>
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          origin,
+          source: iframe.contentWindow,
+          data: JSON.stringify({
+            event: "infoDelivery",
+            info: { currentTime },
+          }),
+        })
+      );
+
+    send("https://evil.example", 99);
+    expect(onTimeUpdate).not.toHaveBeenCalled();
+
+    send("https://www.youtube.com", 33.2);
+    expect(onTimeUpdate).toHaveBeenLastCalledWith(33.2);
+  });
+
+  it("leaves a plain video link's URL alone when no playback options are given", () => {
+    act(() => {
+      render(
+        <PlaylistLinkContent url="https://www.youtube.com/watch?v=abc123" />,
+        container
+      );
+    });
+
+    expect(container.querySelector("iframe")!.src).toBe(
+      "https://www.youtube.com/embed/abc123"
+    );
+  });
 });

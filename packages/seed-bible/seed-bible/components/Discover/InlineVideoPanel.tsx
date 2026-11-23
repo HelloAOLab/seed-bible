@@ -1,23 +1,18 @@
 import "./InlineVideoPanel.css";
-import { useCallback, useRef } from "preact/hooks";
+import { useCallback, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { DiscoverInlineVideo } from "../../managers/DiscoverManager";
 import { resolveLinkMedia } from "../../managers/resolveLinkMedia";
 import { CloseButton } from "../CloseButton/CloseButton";
+import { PlaylistLinkContent } from "../PlaylistLinkContent/PlaylistLinkContent";
 
 /**
- * Starts an embedded player as soon as it loads. The reader opened the player
- * by clicking a video, so it should play without a second click.
+ * How far into each playing video the reader got. The player is rebuilt when
+ * it moves to another part of the page (a phone turned sideways switches the
+ * reader's layout), and this lets the new one carry on from the same moment.
+ * Keyed by the video object, so playing it again after closing starts over.
  */
-function withAutoplay(embedUrl: string): string {
-  try {
-    const url = new URL(embedUrl);
-    url.searchParams.set("autoplay", "1");
-    return url.toString();
-  } catch {
-    return embedUrl;
-  }
-}
+const resumePositions = new WeakMap<DiscoverInlineVideo, number>();
 
 /**
  * Publishes the panel's height as `--sb-inline-video-height` on its parent,
@@ -60,7 +55,10 @@ export function InlineVideoPanel(props: {
   const { video, onClose } = props;
   const { t } = useI18n();
   const panelRef = usePublishHeight();
-  const media = resolveLinkMedia(video.url);
+  // Read once: the position keeps updating while this player plays, and
+  // feeding it back into the player's URL would reload it.
+  const [startAt] = useState(() => resumePositions.get(video));
+  const isVideo = resolveLinkMedia(video.url).kind !== "link";
 
   return (
     <section
@@ -85,34 +83,14 @@ export function InlineVideoPanel(props: {
           onClose={onClose}
         />
       </div>
-      <div className="sb-inline-video-frame">
-        {media.kind === "video" ? (
-          <video
-            className="sb-inline-video-player"
-            src={media.url}
-            controls
-            autoPlay
-            playsInline
-          />
-        ) : media.kind === "embed" ? (
-          <iframe
-            className="sb-inline-video-player"
-            src={withAutoplay(media.url)}
-            allow="autoplay; encrypted-media; picture-in-picture; web-share; fullscreen"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-            title={video.title}
-          />
-        ) : (
-          <a
-            className="sb-inline-video-link"
-            href={media.url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {t("open-link", { defaultValue: "Open" })}
-          </a>
-        )}
+      <div className={isVideo ? "sb-inline-video-frame" : undefined}>
+        <PlaylistLinkContent
+          url={video.url}
+          title={video.title}
+          autoplay
+          startAt={startAt}
+          onTimeUpdate={(seconds) => resumePositions.set(video, seconds)}
+        />
       </div>
     </section>
   );

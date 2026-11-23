@@ -4,6 +4,12 @@ import { resolveLinkMedia } from "../../managers/resolveLinkMedia";
 import type { LinkPreview } from "../../managers/linkPreview";
 import { safeImageUrl } from "../../managers/safeImageUrl";
 import { Button } from "../Button/Button";
+import { useRef } from "preact/hooks";
+import {
+  useYouTubeCurrentTime,
+  withEmbedPlayback,
+  withVideoStart,
+} from "./embedPlayback";
 
 /**
  * Renders a playlist link item based on what its URL points at (see
@@ -18,24 +24,43 @@ import { Button } from "../Button/Button";
  *
  * A plain link with a stored `preview` shows the page's image, title, and
  * description above the "Open" button, so the reader can see where it goes.
+ *
+ * For a video, `autoplay` and `startAt` (seconds) control how it starts, and
+ * `onTimeUpdate` reports its position while it plays: always for a video
+ * file, for YouTube when YouTube answers, and not for Vimeo.
  */
 export function PlaylistLinkContent(props: {
   url: string;
   title?: string;
   embed?: boolean;
   preview?: LinkPreview;
+  autoplay?: boolean;
+  startAt?: number;
+  onTimeUpdate?: (seconds: number) => void;
 }) {
   const { t } = useI18n();
   const media = resolveLinkMedia(props.url);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  useYouTubeCurrentTime(
+    iframeRef,
+    media.kind === "embed" ? props.onTimeUpdate : undefined
+  );
 
   if (media.kind === "video") {
+    const { onTimeUpdate } = props;
     return (
       <div className="sb-play-playlist-content-embed">
         <video
           className="sb-play-playlist-content-video"
-          src={media.url}
+          src={withVideoStart(media.url, props.startAt)}
           controls
+          autoPlay={props.autoplay}
           playsInline
+          onTimeUpdate={
+            onTimeUpdate
+              ? (event) => onTimeUpdate(event.currentTarget.currentTime)
+              : undefined
+          }
         />
       </div>
     );
@@ -45,8 +70,17 @@ export function PlaylistLinkContent(props: {
     return (
       <div className="sb-play-playlist-content-embed">
         <iframe
+          ref={iframeRef}
           className="sb-play-playlist-content-iframe"
-          src={media.url}
+          src={
+            media.kind === "embed"
+              ? withEmbedPlayback(media.url, {
+                  autoplay: props.autoplay,
+                  startAt: props.startAt,
+                  reportTime: !!props.onTimeUpdate,
+                })
+              : media.url
+          }
           allow="autoplay; encrypted-media; web-share; fullscreen"
           referrerPolicy="strict-origin-when-cross-origin"
           allowFullScreen

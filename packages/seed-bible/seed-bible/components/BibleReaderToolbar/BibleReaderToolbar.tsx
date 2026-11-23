@@ -2419,6 +2419,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       if (target.closest(".sb-verse-toolbar")) return;
       if (target.closest(".sb-pane-side-shell")) return;
       if (target.closest(".sb-bible-reader-discover-panel")) return;
+      if (target.closest(".sb-inline-video")) return;
       if (target.closest(".sb-pane-shell-detached")) return;
       if (target.closest(".sb-context-menu")) return;
       if (target.closest(".sb-tool-context-menu")) return;

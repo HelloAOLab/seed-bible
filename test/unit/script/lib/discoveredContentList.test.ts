@@ -225,7 +225,7 @@ describe("buildDiscoveredContentList", () => {
   it("marks a row to play inline when its Play Inline cell is ticked", async () => {
     const csv = [
       `${header},Play Inline`,
-      "Inline Video,Author,Genesis 1,https://example.com/a,Desc,TRUE",
+      "Inline Video,Author,Genesis 1,https://www.youtube.com/watch?v=abc123,Desc,TRUE",
       "Modal Video,Author,Genesis 2,https://example.com/b,Desc,FALSE",
       "Blank Video,Author,Genesis 3,https://example.com/c,Desc,",
     ].join("\n");
@@ -240,6 +240,23 @@ describe("buildDiscoveredContentList", () => {
       ["Inline Video", true],
       ["Modal Video", undefined],
       ["Blank Video", undefined],
+    ]);
+  });
+
+  it("ignores Play Inline on a link that isn't a video, with a warning", async () => {
+    const csv = [
+      `${header},Play Inline`,
+      "An Article,Author,Genesis 1,https://example.com/article,Desc,TRUE",
+    ].join("\n");
+
+    const { items, warnings } = await buildDiscoveredContentList(
+      csv,
+      fetchLinkPreview
+    );
+
+    expect(items[0]).not.toHaveProperty("playInline");
+    expect(warnings).toEqual([
+      'Row 2 ("An Article"): Play Inline is ticked but "https://example.com/article" isn\'t a video, so it will open in a pop-up.',
     ]);
   });
 

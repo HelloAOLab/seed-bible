@@ -3226,6 +3226,8 @@ describe("BibleReader", () => {
   function renderReaderWithInlineVideo(options: {
     compact: boolean;
     selectedTabId?: string;
+    /** Tabs shown in the layout's slots; this reader is always `tab-1`. */
+    tabsOnScreen?: string[];
   }) {
     const { selectorState, readingState } = createFixture();
     (readingState as any).discoveredCrossReferences = signal([
@@ -3248,19 +3250,27 @@ describe("BibleReader", () => {
       id: "slot-1",
       tab: { id: "tab-1", readingState } as any,
     };
-    const discover = createDiscoverManager();
+    const selectedTabId = signal(options.selectedTabId ?? "tab-1");
+    const isCompactReader = signal(options.compact);
+    const discover = createDiscoverManager({
+      selectedTabId: () => selectedTabId.peek(),
+      isCompactReader: () => isCompactReader.peek(),
+    });
     const base = createMobileState();
     const state = {
       ...base,
       app: {
         ...base.app,
-        isMobile: signal(options.compact),
-        isCompactReader: signal(options.compact),
+        isMobile: isCompactReader,
+        isCompactReader,
+        effectiveSlots: signal(
+          (options.tabsOnScreen ?? ["tab-1"]).map((id) => ({
+            id: `slot-${id}`,
+            tab: { id },
+          }))
+        ),
       },
-      tabs: {
-        ...base.tabs,
-        selectedTabId: signal(options.selectedTabId ?? "tab-1"),
-      },
+      tabs: { ...base.tabs, selectedTabId },
       discover,
     } as any as SeedBibleState;
 
@@ -3277,7 +3287,13 @@ describe("BibleReader", () => {
     });
 
     const player = () => container.querySelector(".sb-inline-video");
-    return { discover, player };
+    return {
+      discover,
+      player,
+      selectedTabId,
+      isCompactReader,
+      effectiveSlots: (state.app as any).effectiveSlots,
+    };
   }
 
   const inlineVideo = {
@@ -3305,9 +3321,9 @@ describe("BibleReader", () => {
     expect(sideColumn?.firstElementChild).toBe(player());
     expect(player()?.textContent).toContain("Genesis Overview");
     expect(player()?.textContent).toContain("Bible Project");
-    expect(player()?.querySelector("iframe")?.getAttribute("src")).toBe(
-      "https://www.youtube.com/embed/abc123?autoplay=1"
-    );
+    const src = new URL(player()!.querySelector("iframe")!.src);
+    expect(src.pathname).toBe("/embed/abc123");
+    expect(src.searchParams.get("autoplay")).toBe("1");
     // The panel the reader had open stays the same element, so its filter
     // and scroll position survive the video opening.
     expect(sideColumn?.lastElementChild).toBe(discoverPanel);
@@ -3350,6 +3366,111 @@ describe("BibleReader", () => {
     act(() => discover.playInline(inlineVideo));
 
     expect(player()).toBeNull();
+  });
+
+  it("keeps the inline video in the side of a split view it was started from when the other side is selected", () => {
+    const { discover, player, selectedTabId } = renderReaderWithInlineVideo({
+      compact: false,
+      tabsOnScreen: ["tab-1", "tab-2"],
+    });
+
+    act(() => discover.playInline(inlineVideo));
+    const iframe = player()?.querySelector("iframe");
+    expect(iframe).not.toBeNull();
+
+    act(() => {
+      selectedTabId.value = "tab-2";
+    });
+
+    expect(player()?.querySelector("iframe")).toBe(iframe);
+  });
+
+  it("doesn't take over a video started from the other side of a split view when this side is selected", () => {
+    const { discover, player, selectedTabId } = renderReaderWithInlineVideo({
+      compact: false,
+      selectedTabId: "tab-2",
+      tabsOnScreen: ["tab-1", "tab-2"],
+    });
+
+    act(() => discover.playInline(inlineVideo));
+    act(() => {
+      selectedTabId.value = "tab-1";
+    });
+
+    expect(player()).toBeNull();
+  });
+
+  it("moves the inline video to the selected tab once the tab it started in is off screen", () => {
+    const { discover, player, selectedTabId, effectiveSlots } =
+      renderReaderWithInlineVideo({
+        compact: false,
+        selectedTabId: "tab-2",
+        tabsOnScreen: ["tab-1", "tab-2"],
+      });
+
+    act(() => discover.playInline(inlineVideo));
+    expect(player()).toBeNull();
+
+    act(() => {
+      effectiveSlots.value = [{ id: "slot-tab-1", tab: { id: "tab-1" } }];
+      selectedTabId.value = "tab-1";
+    });
+
+    expect(player()).not.toBeNull();
+  });
+
+  it("carries on from the same moment when turning the phone switches the reader's layout", () => {
+    const { discover, player, isCompactReader } = renderReaderWithInlineVideo({
+      compact: true,
+    });
+    act(() => discover.playInline(inlineVideo));
+    const iframe = player()!.querySelector("iframe")!;
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          origin: "https://www.youtube.com",
+          source: iframe.contentWindow,
+          data: JSON.stringify({
+            event: "infoDelivery",
+            info: { currentTime: 61.4 },
+          }),
+        })
+      );
+    });
+    act(() => {
+      isCompactReader.value = false;
+    });
+
+    const resumed = new URL(player()!.querySelector("iframe")!.src);
+    expect(resumed.searchParams.get("start")).toBe("61");
+    expect(resumed.searchParams.get("autoplay")).toBe("1");
+  });
+
+  it("starts the video over when it's closed and played again", () => {
+    const { discover, player } = renderReaderWithInlineVideo({
+      compact: false,
+    });
+    act(() => discover.playInline(inlineVideo));
+    const iframe = player()!.querySelector("iframe")!;
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          origin: "https://www.youtube.com",
+          source: iframe.contentWindow,
+          data: JSON.stringify({
+            event: "infoDelivery",
+            info: { currentTime: 30 },
+          }),
+        })
+      );
+    });
+
+    act(() => discover.closeInlineVideo());
+    act(() => discover.playInline({ ...inlineVideo }));
+
+    const src = new URL(player()!.querySelector("iframe")!.src);
+    expect(src.searchParams.get("start")).toBeNull();
   });
 
   it("puts the inline video above the chapter on a phone without remounting the swipe viewport", () => {

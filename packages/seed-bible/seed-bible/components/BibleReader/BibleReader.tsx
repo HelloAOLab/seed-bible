@@ -4161,16 +4161,25 @@ export function BibleReader(props: BibleReaderProps) {
       />
     ) : null;
 
-  // A video chosen to play inline shows in the selected tab's reader only, so
-  // a split view doesn't play it twice.
+  // A video playing inline shows in one reader only, so a split view never
+  // plays it twice: the one for the tab it was started from, while that tab
+  // is on screen, or else the selected tab's. It doesn't follow the selection
+  // between the two sides of a split view, which would restart it.
   const playingInlineVideo =
     state && !isMinimalEmbed ? state.discover.inlineVideo.value : null;
-  const inlineVideo =
-    playingInlineVideo &&
-    currentSlot.tab != null &&
-    state?.tabs.selectedTabId.value === currentSlot.tab.id
-      ? playingInlineVideo
-      : null;
+  const inlineVideoHere = (() => {
+    if (!state || !playingInlineVideo || currentSlot.tab == null) return false;
+    const ownerTabId = state.discover.inlineVideoTabId.value;
+    const ownerOnScreen =
+      ownerTabId != null &&
+      state.app.effectiveSlots.value.some(
+        (slot) => slot.tab?.id === ownerTabId
+      );
+    return ownerOnScreen
+      ? currentSlot.tab.id === ownerTabId
+      : state.tabs.selectedTabId.value === currentSlot.tab.id;
+  })();
+  const inlineVideo = inlineVideoHere ? playingInlineVideo : null;
   const inlineVideoPanel =
     state && inlineVideo ? (
       <InlineVideoPanel

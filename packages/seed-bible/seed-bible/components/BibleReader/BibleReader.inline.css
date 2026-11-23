@@ -476,8 +476,9 @@
 }
 
 /* Holds the swipe viewport and, while a discovered video plays inline, the
-   player: above the chapter on an upright phone, so the text starts below it
-   and scrolls on its own, and beside it on a phone held sideways. */
+   player above the chapter, so the text starts below it and scrolls on its
+   own. (A phone held sideways is wider than the compact layout, so it gets
+   the desktop layout's side-by-side rule further down.) */
 .sb-reader-mobile-body {
   flex: 1 1 auto;
   display: flex;
@@ -487,17 +488,12 @@
 }
 
 /* The mobile header floats over the top of this column; the top padding
-   keeps the player clear of it, and gives that room back while the header is
-   slid away. */
+   keeps the player clear of it. It stays put when the header slides away:
+   giving that room back would resize the chapter below and make the verses
+   jump while the reader scrolls. */
 .sb-reader-mobile-inline-video {
   flex: none;
   padding: 3.25rem 0.75rem 0.5rem;
-  transition: padding-top var(--sb-duration-slow) ease;
-}
-
-.sb-bible-reader-mobile:has(.sb-bible-reader-mobile-header-hidden)
-  .sb-reader-mobile-inline-video {
-  padding-top: 0.5rem;
 }
 
 /* The header sits over the player now, not the chapter. */
@@ -505,25 +501,6 @@
   .sb-reader-mobile-body--inline-video
   .sb-reader-swipe-panel {
   padding-top: 0.5rem;
-}
-
-@media (orientation: landscape) {
-  .sb-reader-mobile-body--inline-video {
-    flex-direction: row;
-  }
-
-  /* After the chapter: the right in LTR, the left in RTL. */
-  .sb-reader-mobile-inline-video {
-    order: 1;
-    flex: 0 0 min(45%, 22.5rem);
-    overflow-y: auto;
-  }
-
-  .sb-bible-reader-mobile
-    .sb-reader-mobile-body--inline-video
-    .sb-reader-swipe-panel {
-    padding-top: 2.5rem;
-  }
 }
 
 .sb-reader-swipe-viewport {
