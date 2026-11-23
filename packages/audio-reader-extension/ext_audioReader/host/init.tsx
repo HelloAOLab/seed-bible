@@ -607,10 +607,17 @@ function beginSession(session: ListeningSession): void {
   const chapterKey = () =>
     `${readingState.translationId.value}|${readingState.bookId.value}|${readingState.chapterNumber.value}|${passageKey(stepPassage?.(readingState) ?? null)}`;
   const opened = untracked(chapterKey);
+  // Listening started during the playlist is the user listening to its step,
+  // so the playlist has nothing to hold back: only narration from before it
+  // waits out of sight.
+  const startedDuringPlaylist = untracked(() =>
+    playlistHoldsReadingState(readingState)
+  );
   const stopWatching = effect(() => {
     // Call it inside the effect so the session follows this tab's playlist,
     // including the moment that playlist lets the tab go.
-    const held = playlistHoldsReadingState(readingState);
+    const held =
+      !startedDuringPlaylist && playlistHoldsReadingState(readingState);
     const key = chapterKey();
 
     if (key === opened) {
@@ -1514,8 +1521,16 @@ export default function initAudioReaderExtension() {
           const readingState = ctx.readingState;
           const passage = untracked(() => stepPassage?.(readingState) ?? null);
           const existing = sessions.get(readingState);
+          // Narration a playlist is holding has no controls on screen, so
+          // resuming it would play with nothing to show or pause it. Listen
+          // starts the step afresh instead.
+          const heldByPlaylist =
+            existing !== undefined &&
+            context.audioPlayback.controllerFor(readingState) !==
+              existing.controller;
           if (
             existing &&
+            !heldByPlaylist &&
             passageKey(existing.passage) === passageKey(passage)
           ) {
             if (existing.isPlaying.peek()) existing.controller.pause();
