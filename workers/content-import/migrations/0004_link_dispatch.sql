@@ -1,6 +1,5 @@
--- An import's links are no longer queued one message each. A few messages
--- per import each take the next link that's ready, so these move what the
--- queue used to track per message onto the rows.
+-- An import keeps one queue message per slot, each taking the next link
+-- that's ready, so a link's retries are tracked on its row.
 
 -- When a link that failed for a passing reason may be tried again.
 ALTER TABLE import_items ADD COLUMN retry_at INTEGER;

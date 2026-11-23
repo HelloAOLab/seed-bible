@@ -180,17 +180,6 @@ export function findActiveJob(
     .first<JobRow>();
 }
 
-export function getItem(
-  db: D1Database,
-  jobId: string,
-  itemId: string
-): Promise<ItemRow | null> {
-  return db
-    .prepare("SELECT * FROM import_items WHERE job_id = ? AND item_id = ?")
-    .bind(jobId, itemId)
-    .first<ItemRow>();
-}
-
 /** Progress is counted from the item rows themselves, so it can't drift from what happened. */
 export async function jobProgress(
   db: D1Database,
@@ -318,21 +307,29 @@ export async function settleItem(
 /**
  * Puts a running link back in line, freeing its slot, to be tried again no
  * sooner than `retryAt`. `lastError` is kept on the row, so a link that runs
- * out of retries can say what kept failing.
+ * out of retries can say what kept failing. `notATry` gives back the try
+ * claiming it counted, when it was stopped by something other than itself
+ * (the owner's session ending).
  */
 export async function releaseItem(
   db: D1Database,
   jobId: string,
   itemId: string,
-  options: { lastError?: string; retryAt?: number } = {}
+  options: { lastError?: string; retryAt?: number; notATry?: boolean } = {}
 ): Promise<void> {
   await db
     .prepare(
       `UPDATE import_items SET state = 'queued', lease_until = NULL,
-         error = COALESCE(?, error), retry_at = ?
+         attempts = attempts - ?, error = COALESCE(?, error), retry_at = ?
        WHERE job_id = ? AND item_id = ? AND state = 'running'`
     )
-    .bind(options.lastError ?? null, options.retryAt ?? null, jobId, itemId)
+    .bind(
+      options.notATry ? 1 : 0,
+      options.lastError ?? null,
+      options.retryAt ?? null,
+      jobId,
+      itemId
+    )
     .run();
 }
 
@@ -426,12 +423,28 @@ export async function stalledJobs(
   return results;
 }
 
-/** Puts links whose lease ran out (a consumer that died mid-link) back in line. */
+/**
+ * Puts links whose lease ran out (a consumer that died mid-link) back in
+ * line. A link that has used all its tries this way is marked failed
+ * instead: the page itself may be what stops the consumer, and picking it
+ * again would only stop the next one.
+ */
 export async function requeueExpiredLeases(
   db: D1Database,
   now: number
-): Promise<{ job_id: string; item_id: string }[]> {
-  const { results } = await db
+): Promise<{
+  requeued: { job_id: string; item_id: string }[];
+  failed: { job_id: string; item_id: string }[];
+}> {
+  const failed = await db
+    .prepare(
+      `UPDATE import_items SET state = 'failed', lease_until = NULL, error = ?
+       WHERE state = 'running' AND lease_until <= ? AND attempts >= ?
+       RETURNING job_id, item_id`
+    )
+    .bind(gaveUpReason("worker_stopped"), now, MAX_ITEM_ATTEMPTS)
+    .all<{ job_id: string; item_id: string }>();
+  const requeued = await db
     .prepare(
       `UPDATE import_items SET state = 'queued', lease_until = NULL
        WHERE state = 'running' AND lease_until <= ?
@@ -439,7 +452,7 @@ export async function requeueExpiredLeases(
     )
     .bind(now)
     .all<{ job_id: string; item_id: string }>();
-  return results;
+  return { requeued: requeued.results, failed: failed.results };
 }
 
 /**

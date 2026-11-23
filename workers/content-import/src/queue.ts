@@ -30,9 +30,9 @@ export async function sendAll<T>(
 
 /**
  * Gets an import's links going: one message per slot, each of which works
- * through the links one at a time (see `processImportMessage`). Queuing a
- * message per link instead had every link waiting for a slot re-sent every
- * few seconds, and each send counts towards the queue's daily limit.
+ * through the links one at a time (see `processImportMessage`). Not one per
+ * link: a link's message would have nothing to do until a slot freed, and
+ * every send counts towards the queue's daily operations limit.
  */
 export async function startLinks(
   env: Env,

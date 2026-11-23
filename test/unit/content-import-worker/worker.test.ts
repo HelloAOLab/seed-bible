@@ -586,6 +586,37 @@ describe("content import worker", () => {
       expect(libraryItems(casualos)).toHaveLength(4);
     });
 
+    it("doesn't count a pause for sign-in as one of a link's tries", async () => {
+      const { worker, key, casualos } = setup();
+      const started = await startImport(worker, key, [
+        { url: "https://example.org/a" },
+      ]);
+      let current = key;
+      for (let pause = 0; pause < 4; pause++) {
+        casualos.endSession(current);
+        await worker.drain();
+        current = casualos.signIn(OWNER, `s${pause}`);
+        expect(await progressOf(worker, current, started.id)).toMatchObject({
+          status: "paused_signin",
+        });
+        const resumed = await call(
+          worker,
+          "POST",
+          `/imports/${started.id}/resume`,
+          { key: current }
+        );
+        expect(resumed.status).toBe(200);
+      }
+      // Its first real failure is retried, not taken as the last try.
+      casualos.failures.set("recordData", { code: "server_error", times: 1 });
+      await worker.drain();
+      expect(await progressOf(worker, current, started.id)).toMatchObject({
+        status: "done",
+        done: 1,
+        failed: 0,
+      });
+    });
+
     it("stops working on links once cancelled", async () => {
       const { worker, key, casualos } = setup();
       const started = await startImport(worker, key, [
@@ -642,6 +673,58 @@ describe("content import worker", () => {
         status: "done",
         done: 4,
       });
+    });
+
+    it("gives up on a link that keeps stopping its consumer, and finishes the import", async () => {
+      const { worker, key, casualos } = setup();
+      const started = await startImport(worker, key, [
+        { url: "https://example.org/crashes" },
+      ]);
+      // Each time the link is taken, its consumer dies (say, out of memory)
+      // before it can record anything.
+      for (let i = 0; i < 5; i++) {
+        expect(
+          (await claimNextItem(worker.env.DB, started.id, worker.clock.now))
+            .kind
+        ).toBe("claimed");
+        worker.pending.length = 0;
+        worker.clock.now += LEASE_MS + 1;
+        await runCleanup(worker.env, worker.deps);
+      }
+
+      expect(await progressOf(worker, key, started.id)).toMatchObject({
+        status: "done",
+        failed: 1,
+      });
+      expect(worker.pending).toHaveLength(0);
+      expect(
+        worker.db.sqlite
+          .prepare("SELECT error FROM import_items WHERE job_id = ?")
+          .get(started.id)
+      ).toEqual({ error: "gave_up_after_retries; last: worker_stopped" });
+      expect(
+        casualos.records.get(LIBRARY)!.get(CONTENT_IMPORT_STATUS_ADDRESS)?.data
+      ).toMatchObject({ jobId: started.id, status: "done", failed: 1 });
+    });
+
+    it("sends one set of messages per import in a cleanup run", async () => {
+      const { worker, key } = setup();
+      const started = await startImport(
+        worker,
+        key,
+        Array.from({ length: 3 }, (_, i) => ({
+          url: `https://example.org/${i}`,
+        }))
+      );
+      for (let i = 0; i < 3; i++) {
+        await claimNextItem(worker.env.DB, started.id, worker.clock.now);
+      }
+      // All three consumers died, long enough ago that the import also
+      // looks stalled.
+      worker.pending.length = 0;
+      worker.clock.now += STALLED_AFTER_MS + 1;
+      await runCleanup(worker.env, worker.deps);
+      expect(worker.pending).toHaveLength(3);
     });
 
     it("keeps one message per slot on the queue, rather than one per link waiting for a slot", async () => {

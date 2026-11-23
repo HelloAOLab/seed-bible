@@ -268,7 +268,7 @@ export async function processImportMessage(
           : "server_error";
     if (isFatalSessionError(code)) {
       // Never retry with a dead key: pause, and let the owner sign in again.
-      await releaseItem(env.DB, job.id, row.item_id);
+      await releaseItem(env.DB, job.id, row.item_id, { notATry: true });
       await setJobStatus(env.DB, job.id, ["running"], "paused_signin", now, {
         clearKey: true,
       });
