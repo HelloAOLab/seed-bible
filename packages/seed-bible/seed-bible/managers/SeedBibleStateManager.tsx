@@ -2909,6 +2909,20 @@ export function createSeedBibleState(
     ];
   };
 
+  customizations.editsDroppedAfterClose.subscribe((dropped) => {
+    if (!dropped) {
+      return;
+    }
+    const { t } = i18n;
+    toast(
+      t("customization-closed-with-conflict", {
+        name: dropped.name,
+        defaultValue:
+          "Your last changes to {{name}} weren't saved, because someone else saved it first. Open it again to see their version.",
+      })
+    );
+  });
+
   const MIN_TOAST_MS = 1500;
   const FULL_TOAST_MS = 3500;
   const TAPPABLE_TOAST_MS = 6000;

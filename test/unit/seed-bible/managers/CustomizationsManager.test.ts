@@ -4448,6 +4448,202 @@ describe("CustomizationsManager", () => {
       expect(manager.saveConflict.value).toBeNull();
     });
 
+    it("lets a member who isn't its creator delete it, leaving a key only the creator may erase", async () => {
+      const pointer = (recordName: string, address: string) => ({
+        recordName,
+        address,
+        host: "api.example.com",
+        defaultHost: "api.example.com",
+        visibility: "public" as const,
+        requestMapping: { "headers.authorization.bearer": "apiKey" },
+        keys: ["apiKey"],
+      });
+      joinStudio("studio-1");
+      store("studio-1").set("customization_shared", {
+        data: {
+          ...sharedCustomization("studio-1", "customization_shared"),
+          extensionSensitiveProxies: {
+            "ext-1": { old: pointer("creator-1", "creator-proxy") },
+            "ext-2": { current: pointer("studio-1", "studio-proxy") },
+          },
+        },
+        marker: CUSTOMIZATION_MARKER,
+      });
+      const eraseProxyMock = vi
+        .spyOn(os, "eraseProxy")
+        .mockImplementation(async (recordName) =>
+          recordName === "creator-1"
+            ? {
+                success: false,
+                errorCode: "not_authorized",
+                errorMessage: "",
+              }
+            : { success: true }
+        );
+      const { manager } = createManager();
+      await manager.load();
+
+      await manager.remove("customization_shared");
+
+      expect(records.get("studio-1")!.has("customization_shared")).toBe(false);
+      expect(eraseProxyMock).toHaveBeenCalledWith("studio-1", "studio-proxy");
+      expect(manager.customizations.value).toEqual([]);
+    });
+
+    it("still stops a delete when a key in the studio's own record can't be erased", async () => {
+      joinStudio("studio-1");
+      store("studio-1").set("customization_shared", {
+        data: {
+          ...sharedCustomization("studio-1", "customization_shared"),
+          extensionSensitiveProxies: {
+            "ext-1": {
+              current: {
+                recordName: "studio-1",
+                address: "studio-proxy",
+                host: "api.example.com",
+                defaultHost: "api.example.com",
+                visibility: "public",
+                requestMapping: { "headers.authorization.bearer": "apiKey" },
+                keys: ["apiKey"],
+              },
+            },
+          },
+        },
+        marker: CUSTOMIZATION_MARKER,
+      });
+      vi.spyOn(os, "eraseProxy").mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+        errorMessage: "",
+      });
+      const { manager } = createManager();
+      await manager.load();
+
+      await expect(manager.remove("customization_shared")).rejects.toThrow(
+        "not_authorized"
+      );
+      expect(records.get("studio-1")!.has("customization_shared")).toBe(true);
+    });
+
+    it("records a new content library during a save conflict, and keeps it when using their version", async () => {
+      joinStudio("studio-1", "admin");
+      store("studio-1").set("customization_shared", {
+        data: sharedCustomization("studio-1", "customization_shared"),
+        marker: CUSTOMIZATION_MARKER,
+      });
+      const { manager } = createManager();
+      await manager.load();
+      manager.startEditing("customization_shared");
+      saveAsAnotherMember("studio-1", "customization_shared", 2000);
+      manager.updateEditingName("Mine");
+      await manager.saveEditingCustomization().catch(() => undefined);
+      expect(manager.saveConflict.value).not.toBeNull();
+
+      await manager.setEditingContentRecordName("seedbible-content-1");
+
+      const stored = records.get("studio-1")!.get("customization_shared")!
+        .data as { name: string; contentRecordName?: string };
+      expect(stored.contentRecordName).toBe("seedbible-content-1");
+      // Their rename is kept: only the library was written.
+      expect(stored.name).toBe("Renamed by someone else");
+
+      await manager.resolveSaveConflict("use-theirs");
+      expect(manager.editingCustomization.value?.contentRecordName).toBe(
+        "seedbible-content-1"
+      );
+    });
+
+    it("says so when edits waiting to save as the editor closed hit someone else's save", async () => {
+      vi.useFakeTimers();
+      try {
+        joinStudio("studio-1");
+        store("studio-1").set("customization_shared", {
+          data: sharedCustomization("studio-1", "customization_shared"),
+          marker: CUSTOMIZATION_MARKER,
+        });
+        const { manager } = createManager();
+        await manager.load();
+        manager.startEditing("customization_shared");
+        saveAsAnotherMember("studio-1", "customization_shared", 2000);
+        manager.updateEditingName("Mine");
+
+        manager.stopEditing();
+        await vi.waitFor(() =>
+          expect(manager.editsDroppedAfterClose.value).not.toBeNull()
+        );
+
+        expect(manager.editsDroppedAfterClose.value?.name).toBe("Mine");
+        expect(manager.saveConflict.value).toBeNull();
+        expect(
+          (
+            records.get("studio-1")!.get("customization_shared")!.data as {
+              name: string;
+            }
+          ).name
+        ).toBe("Renamed by someone else");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("keeps a viewer's theme and extension choices made through the address from before the move", async () => {
+      joinStudio("studio-1");
+      const shared = {
+        ...sharedCustomization("studio-1", "customization_shared"),
+        movedFromRecordName: "creator-1",
+        extensionSettings: {
+          "ext.a": "available" as const,
+          "ext.b": "available" as const,
+        },
+      };
+      shared.variants = [
+        ...shared.variants,
+        { ...shared.variants[0]!, id: "variant-2", name: "Dark" },
+      ];
+      store("studio-1").set("customization_shared", {
+        data: shared,
+        marker: CUSTOMIZATION_MARKER,
+      });
+      const oldLocator = "creator-1.customization_shared";
+      store("user-1").set(VARIANT_SELECTIONS_ADDRESS, {
+        data: { selections: { [oldLocator]: "variant-2" } },
+        marker: "publicRead",
+      });
+      store("user-1").set(EXTENSION_PREFERENCES_ADDRESS, {
+        data: {
+          extraExtensionIds: { [oldLocator]: ["ext.a"] },
+          removedExtensionIds: {},
+        },
+        marker: "publicRead",
+      });
+      const viewerNav = createNavigationManager({
+        initialHref:
+          "http://localhost/?customization=studio-1.customization_shared",
+      });
+      const { manager } = createManager(viewerNav);
+      await manager.initialCustomizationLoadPromise;
+
+      await vi.waitFor(() =>
+        expect(manager.activeVariant.value?.id).toBe("variant-2")
+      );
+      await vi.waitFor(() =>
+        expect(manager.activeExtensionIds.value).toEqual(["ext.a"])
+      );
+
+      // The first change under the new address brings the old choices along.
+      await manager.addExtensionToActiveCustomization("ext.b");
+
+      expect([...manager.activeExtensionIds.value].sort()).toEqual([
+        "ext.a",
+        "ext.b",
+      ]);
+      const saved = records.get("user-1")!.get(EXTENSION_PREFERENCES_ADDRESS)!
+        .data as { extraExtensionIds: Record<string, string[]> };
+      expect(
+        [...saved.extraExtensionIds["studio-1.customization_shared"]!].sort()
+      ).toEqual(["ext.a", "ext.b"]);
+    });
+
     describe("shareWithOthers()", () => {
       let createStudioMock: Mock;
 
@@ -4598,6 +4794,103 @@ describe("CustomizationsManager", () => {
         expect(viewer.activeCustomizationLocator.value).toBe(
           `studio-new.${own.id}`
         );
+      });
+
+      it("a page rendered on the server for a link from before the move keeps the studio's copy once it loads", async () => {
+        const { manager: owner } = createManager();
+        const own = await owner.create();
+        await owner.shareWithOthers(own.id);
+        const linkedNav = createNavigationManager({
+          initialHref: `http://localhost/?customization=user-1.${own.id}`,
+        });
+        const { manager: server } = createManager(linkedNav);
+        await server.initialCustomizationLoadPromise;
+
+        const seed = JSON.parse(
+          JSON.stringify(server.getInitialCustomizationSeed())
+        ) as InitialCustomizationSeed;
+        getDataMock.mockClear();
+        const { manager: client } = createManager(linkedNav, seed);
+        await client.initialCustomizationLoadPromise;
+
+        expect(seed.customization?.studioId).toBe("studio-new");
+        expect(client.linkedCustomization.value?.studioId).toBe("studio-new");
+        expect(client.activeCustomizationLocator.value).toBe(
+          `studio-new.${own.id}`
+        );
+        // The seed was used as it is, not fetched again.
+        expect(
+          getDataMock.mock.calls.filter(([, address]) => address === own.id)
+        ).toEqual([]);
+      });
+
+      it("saves edits that waited behind a share into the studio, not back over the note", async () => {
+        let release: () => void = () => undefined;
+        createStudioMock.mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              release = () =>
+                resolve({ success: true, studioId: "studio-new" });
+            })
+        );
+        const { manager } = createManager();
+        const own = await manager.create();
+        manager.startEditing(own.id);
+        recordFileMock.mockResolvedValueOnce({
+          success: true,
+          url: "https://files.example.com/user-1/logo.png",
+        });
+        await manager.uploadLogo(
+          new File(["logo"], "logo.png", { type: "image/png" })
+        );
+
+        const sharing = manager.shareWithOthers(own.id);
+        await vi.waitFor(() => expect(createStudioMock).toHaveBeenCalled());
+        manager.updateEditingName("Renamed during the share");
+        const saving = manager.saveEditingCustomization();
+        release();
+        await sharing;
+        await saving;
+
+        expect(records.get("user-1")!.get(own.id)!.marker).toBe(
+          MOVED_CUSTOMIZATION_MARKER
+        );
+        const studioCopy = records.get("studio-new")!.get(own.id)!.data as {
+          name: string;
+          studioId: string;
+          logoUrl: string;
+        };
+        expect(studioCopy).toMatchObject({
+          name: "Renamed during the share",
+          studioId: "studio-new",
+          logoUrl: "https://files.example.com/studio-new/copied.png",
+        });
+      });
+
+      it("uses the studio from a failed attempt again when trying once more", async () => {
+        const { manager } = createManager();
+        const own = await manager.create();
+        const storeData = recordDataMock.getMockImplementation()!;
+        recordDataMock.mockImplementation(
+          async (
+            recordName: string,
+            address: string,
+            data: unknown,
+            options: { marker?: string }
+          ) =>
+            options.marker === MOVED_CUSTOMIZATION_MARKER
+              ? { success: false, errorCode: "server_error", errorMessage: "" }
+              : storeData(recordName, address, data, options)
+        );
+        await expect(manager.shareWithOthers(own.id)).rejects.toBeInstanceOf(
+          CustomizationSharingError
+        );
+        recordDataMock.mockImplementation(storeData);
+
+        const moved = await manager.shareWithOthers(own.id);
+
+        expect(createStudioMock).toHaveBeenCalledTimes(1);
+        expect(moved.studioId).toBe("studio-new");
       });
 
       it("follows only one moved note, so two pointing at each other can't loop", async () => {

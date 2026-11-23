@@ -513,6 +513,12 @@ const customizationSchema = z
      * the record of the one person who made it.
      */
     studioId: z.string().min(1).optional(),
+    /**
+     * The record a shared customization lived in before it moved into its
+     * studio. Viewers' choices made through the old address are kept under
+     * it, so they're still found there.
+     */
+    movedFromRecordName: z.string().min(1).optional(),
     createdAt: z.number(),
     updatedAt: z.number(),
     /**
@@ -625,6 +631,8 @@ export interface SeedBibleCustomization {
   contentRecordName?: string;
   /** The studio this customization belongs to. Absent means it's in its creator's own record. */
   studioId?: string;
+  /** The record a shared customization lived in before it moved into its studio. */
+  movedFromRecordName?: string;
   createdAt: number;
   updatedAt: number;
   /** Per-extension availability while this customization is active. An id with no entry follows `defaultExtensionAvailability`. */
@@ -845,6 +853,37 @@ function narrowVariants(
   }));
 }
 
+/** The customization with each of its uploaded files' URLs passed through `map`. */
+function withFileUrls(
+  customization: SeedBibleCustomization,
+  map: (url: string) => string
+): SeedBibleCustomization {
+  return {
+    ...customization,
+    logoUrl: customization.logoUrl
+      ? map(customization.logoUrl)
+      : customization.logoUrl,
+    ...(customization.icons
+      ? {
+          icons: Object.fromEntries(
+            Object.entries(customization.icons).map(([iconId, url]) => [
+              iconId,
+              map(url),
+            ])
+          ),
+        }
+      : {}),
+  };
+}
+
+/** Data read from a record or a page, as a customization, or null when it isn't one. */
+function parseCustomization(data: unknown): SeedBibleCustomization | null {
+  const parsed = customizationSchema.safeParse(data);
+  return parsed.success
+    ? { ...parsed.data, variants: narrowVariants(parsed.data.variants) }
+    : null;
+}
+
 export interface CustomizationColorGroup {
   id: string;
   title: string;
@@ -1034,6 +1073,12 @@ export interface CustomizationsManager {
    * `resolveSaveConflict` picks a side.
    */
   saveConflict: ReadonlySignal<CustomizationSaveConflict | null>;
+  /**
+   * Set (with a new `id` each time) when edits still waiting to auto-save as
+   * the editor closed couldn't be saved, because someone else saved first.
+   * With the editor closed there's no conflict banner, so the app says so.
+   */
+  editsDroppedAfterClose: ReadonlySignal<{ id: number; name: string } | null>;
   /** Saves the draft over the other copy, or drops the draft's changes for it. */
   resolveSaveConflict: (choice: "keep-mine" | "use-theirs") => Promise<void>;
   /**
@@ -1407,6 +1452,10 @@ export function createCustomizationsManager(
   const isLoading = signal(false);
   const studioRoles = signal<Record<string, StudioRole>>({});
   const saveConflict = signal<CustomizationSaveConflict | null>(null);
+  const editsDroppedAfterClose = signal<{ id: number; name: string } | null>(
+    null
+  );
+  let editsDroppedAfterCloseCount = 0;
   const editingCustomization = signal<SeedBibleCustomization | null>(null);
   /**
    * The `updatedAt` of the saved copy the open draft is built on. A shared
@@ -1437,19 +1486,35 @@ export function createCustomizationsManager(
     resolveInitialCustomizationLoadPromise = resolve;
   });
 
-  const loadByLocator = (locator: string): Promise<void> =>
-    loadByLocatorFollowingMoves(locator, true);
+  /**
+   * The `?customization=` locator the linked customization was loaded for.
+   * Differs from `linkedCustomizationLocator` when the link's address held a
+   * note saying the customization moved into a studio.
+   */
+  let linkedCustomizationRequestedLocator: string | null = null;
 
-  const loadByLocatorFollowingMoves = async (
+  const loadByLocator = async (locator: string): Promise<void> => {
+    const found = await findByLocator(locator, true);
+    if (found) {
+      linkedCustomization.value = found.customization;
+      linkedCustomizationLocator.value = found.locator;
+      linkedCustomizationRequestedLocator = locator;
+    }
+  };
+
+  const findByLocator = async (
     locator: string,
     followMoves: boolean
-  ): Promise<void> => {
+  ): Promise<{
+    customization: SeedBibleCustomization;
+    locator: string;
+  } | null> => {
     // `id` is always `customization_<uuid>` (no dots); split on the LAST dot
     // so a recordName that happens to contain one still parses correctly.
     const dotIndex = locator.lastIndexOf(".");
     if (dotIndex <= 0 || dotIndex === locator.length - 1) {
       console.warn("Invalid customization locator:", locator);
-      return;
+      return null;
     }
     const recordName = locator.slice(0, dotIndex);
     const id = locator.slice(dotIndex + 1);
@@ -1458,42 +1523,34 @@ export function createCustomizationsManager(
       const result = await os.getData(recordName, id);
       if (!result.success || !result.data) {
         console.warn("Customization not found for locator:", locator);
-        return;
+        return null;
       }
-      const parsed = customizationSchema.safeParse(result.data);
-      if (!parsed.success) {
-        // A customization moved into a studio leaves a note at its old
-        // address, so links shared before the move still open it. Only one
-        // hop is followed, so two notes pointing at each other can't loop.
-        const moved = movedCustomizationSchema.safeParse(result.data);
-        if (moved.success && followMoves) {
-          await loadByLocatorFollowingMoves(
-            buildCustomizationLocator(
-              moved.data.movedTo.recordName,
-              moved.data.movedTo.id
-            ),
-            false
-          );
-          return;
-        }
-        console.warn(
-          "Invalid customization record for locator:",
-          locator,
-          parsed.error
+      const customization = parseCustomization(result.data);
+      if (customization) {
+        return { customization, locator };
+      }
+      // A customization moved into a studio leaves a note at its old
+      // address, so links shared before the move still open it. Only one
+      // hop is followed, so two notes pointing at each other can't loop.
+      const moved = movedCustomizationSchema.safeParse(result.data);
+      if (moved.success && followMoves) {
+        return findByLocator(
+          buildCustomizationLocator(
+            moved.data.movedTo.recordName,
+            moved.data.movedTo.id
+          ),
+          false
         );
-        return;
       }
-      linkedCustomization.value = {
-        ...parsed.data,
-        variants: narrowVariants(parsed.data.variants),
-      };
-      linkedCustomizationLocator.value = locator;
+      console.warn("Invalid customization record for locator:", locator);
+      return null;
     } catch (error) {
       console.error(
         "Failed to load customization from locator:",
         locator,
         error
       );
+      return null;
     }
   };
 
@@ -1535,14 +1592,7 @@ export function createCustomizationsManager(
   function parseSeedCustomization(
     customization: SeedBibleCustomization
   ): SeedBibleCustomization | null {
-    const parsed = customizationSchema.safeParse(customization);
-    if (!parsed.success) {
-      return null;
-    }
-    return {
-      ...parsed.data,
-      variants: narrowVariants(parsed.data.variants),
-    };
+    return parseCustomization(customization);
   }
 
   if (initialLocator) {
@@ -1578,6 +1628,7 @@ export function createCustomizationsManager(
               validatedSeedCustomization.id
             )
           : initialLocator;
+        linkedCustomizationRequestedLocator = initialLocator;
       }
       initialCustomizationLoadCompleted = true;
       settleInitialCustomizationLoad();
@@ -1634,8 +1685,11 @@ export function createCustomizationsManager(
     }
     return {
       locator: initialLocator,
+      // Compared with the locator the load was asked for, not the one it
+      // ended at: a link from before a move into a studio ends at the
+      // studio's address, and is still this page's customization.
       customization:
-        linkedCustomizationLocator.value === initialLocator
+        linkedCustomizationRequestedLocator === initialLocator
           ? linkedCustomization.value
           : null,
     };
@@ -1691,12 +1745,65 @@ export function createCustomizationsManager(
     }
   });
 
+  /**
+   * The address the active customization had before it moved into a studio,
+   * where a viewer's choices made through that address are still kept.
+   */
+  const previousActiveLocator = computed<string | null>(() => {
+    const customization = activeCustomization.value;
+    return customization?.studioId && customization.movedFromRecordName
+      ? buildCustomizationLocator(
+          customization.movedFromRecordName,
+          customization.id
+        )
+      : null;
+  });
+
+  const hasExtensionChoices = (locator: string): boolean =>
+    extensionPreferences.extraExtensionIdsByLocator.value[locator] !==
+      undefined ||
+    extensionPreferences.removedExtensionIdsByLocator.value[locator] !==
+      undefined;
+
+  /**
+   * Where the viewer's extension choices for the active customization are:
+   * its own address, or, until they change one there, its old address.
+   */
+  const extensionChoicesLocator = computed<string | null>(() => {
+    const locator = activeCustomizationLocator.value;
+    const previous = previousActiveLocator.value;
+    if (!locator || !previous || hasExtensionChoices(locator)) {
+      return locator;
+    }
+    return hasExtensionChoices(previous) ? previous : locator;
+  });
+
+  /**
+   * Copies the viewer's extension choices from the active customization's
+   * old address to its current one before the first change there, which
+   * would otherwise hide every choice still under the old address.
+   */
+  const adoptPreviousExtensionChoices = async (
+    locator: string
+  ): Promise<void> => {
+    const previous = previousActiveLocator.value;
+    if (!previous || hasExtensionChoices(locator)) {
+      return;
+    }
+    for (const id of extensionPreferences.getExtraExtensionIds(previous)) {
+      await extensionPreferences.addExtraExtensionId(locator, id);
+    }
+    for (const id of extensionPreferences.getRemovedExtensionIds(previous)) {
+      await extensionPreferences.addRemovedExtensionId(locator, id);
+    }
+  };
+
   const activeExtensionIds = computed<string[]>(() => {
     const customization = activeCustomization.value;
     if (!customization) {
       return [];
     }
-    const locator = activeCustomizationLocator.value;
+    const locator = extensionChoicesLocator.value;
     const removed = locator
       ? extensionPreferences.getRemovedExtensionIds(locator)
       : [];
@@ -1718,7 +1825,14 @@ export function createCustomizationsManager(
 
   const selectedVariantId = computed<string | null>(() => {
     const locator = activeCustomizationLocator.value;
-    return locator ? variantSelections.getSelectedVariantId(locator) : null;
+    const previous = previousActiveLocator.value;
+    if (!locator) {
+      return null;
+    }
+    return (
+      variantSelections.getSelectedVariantId(locator) ??
+      (previous ? variantSelections.getSelectedVariantId(previous) : null)
+    );
   });
 
   const canFollowSystemScheme = computed<boolean>(() => {
@@ -1889,22 +2003,19 @@ export function createCustomizationsManager(
   ): SeedBibleCustomization[] => {
     const loaded: SeedBibleCustomization[] = [];
     for (const item of items) {
-      const parsed = customizationSchema.safeParse(item.data);
-      if (!parsed.success) {
-        console.warn("Skipping invalid customization record:", parsed.error);
+      const customization = parseCustomization(item.data);
+      if (!customization) {
+        console.warn("Skipping invalid customization record:", item);
         continue;
       }
-      if (parsed.data.studioId !== studioId) {
+      if (customization.studioId !== studioId) {
         console.warn(
           "Skipping a customization record stored outside its own record:",
-          parsed.data.id
+          customization.id
         );
         continue;
       }
-      loaded.push({
-        ...parsed.data,
-        variants: narrowVariants(parsed.data.variants),
-      });
+      loaded.push(customization);
     }
     return loaded;
   };
@@ -2050,7 +2161,23 @@ export function createCustomizationsManager(
    */
   const stopEditing = (): void => {
     if (autoSaveTimer !== null) {
-      void flushAutoSave();
+      const closing = editingCustomization.value;
+      void saveEditingCustomization().catch((error) => {
+        if (!(error instanceof CustomizationSaveConflictError)) {
+          console.error("Failed to auto-save customization:", error);
+          return;
+        }
+        // The editor is gone, so there's no banner to offer the choice.
+        if (saveConflict.value?.customizationId === closing?.id) {
+          saveConflict.value = null;
+        }
+        if (closing) {
+          editsDroppedAfterClose.value = {
+            id: ++editsDroppedAfterCloseCount,
+            name: closing.name,
+          };
+        }
+      });
     }
     editingCustomization.value = null;
     editingVariantId.value = null;
@@ -2075,6 +2202,29 @@ export function createCustomizationsManager(
     saveConflict.value = null;
   };
 
+  /** Files copied into a studio by a share, old URL to new. */
+  const copiedFileUrls = new Map<string, string>();
+
+  /**
+   * A draft captured before a share that finished while its save waited in
+   * the queue, moved to the studio like the share moved the saved copy.
+   * Saving it as captured would write it back to the creator's own record,
+   * over the note that points to the studio.
+   */
+  const rehomedAfterShare = (
+    draft: SeedBibleCustomization
+  ): SeedBibleCustomization => {
+    const known = customizations.value.find((c) => c.id === draft.id);
+    if (draft.studioId || !known?.studioId) {
+      return draft;
+    }
+    return {
+      ...withFileUrls(draft, (url) => copiedFileUrls.get(url) ?? url),
+      studioId: known.studioId,
+      movedFromRecordName: known.movedFromRecordName,
+    };
+  };
+
   /**
    * The copy of a shared customization on the server right now, or null
    * when it can't be read. Only reads; callers decide what a difference
@@ -2091,10 +2241,7 @@ export function createCustomizationsManager(
       if (!result.success) {
         return null;
       }
-      const parsed = customizationSchema.safeParse(result.data);
-      return parsed.success
-        ? { ...parsed.data, variants: narrowVariants(parsed.data.variants) }
-        : null;
+      return parseCustomization(result.data);
     } catch {
       return null;
     }
@@ -2130,8 +2277,9 @@ export function createCustomizationsManager(
       return;
     }
 
-    const saved: SeedBibleCustomization = { ...current, updatedAt: Date.now() };
+    let saved: SeedBibleCustomization = { ...current, updatedAt: Date.now() };
     await queueWrite(async () => {
+      saved = rehomedAfterShare(saved);
       await checkForSaveConflict(saved);
       // Nothing local changes unless the server kept the record, so a failed
       // save keeps the draft unsaved instead of looking applied.
@@ -2249,17 +2397,35 @@ export function createCustomizationsManager(
     if (!current) {
       return;
     }
-    const next: SeedBibleCustomization = {
-      ...current,
-      updatedAt: Date.now(),
+    const withLibrary = (
+      customization: SeedBibleCustomization,
+      library: string | undefined,
+      updatedAt: number
+    ): SeedBibleCustomization => {
+      const next: SeedBibleCustomization = { ...customization, updatedAt };
+      if (library) {
+        next.contentRecordName = library;
+      } else {
+        delete next.contentRecordName;
+      }
+      return next;
     };
-    if (recordName) {
-      next.contentRecordName = recordName;
-    } else {
-      delete next.contentRecordName;
+    const previous = current.contentRecordName;
+    const saved = await saveFieldChange(
+      current.id,
+      {
+        apply: (customization, updatedAt) =>
+          withLibrary(customization, recordName ?? undefined, updatedAt),
+        isApplied: (customization) =>
+          (customization.contentRecordName ?? null) === recordName,
+        undo: (customization, updatedAt) =>
+          withLibrary(customization, previous, updatedAt),
+      },
+      "a customization's content library"
+    );
+    if (!saved) {
+      throw new Error("Failed to save the customization's content library.");
     }
-    editingCustomization.value = next;
-    await saveEditingCustomization();
   };
 
   const addEditingVariant = (): CustomizationThemeVariant | null => {
@@ -2652,6 +2818,23 @@ export function createCustomizationsManager(
     for (const byProxy of Object.values(existing.extensionSensitiveProxies)) {
       for (const pointer of Object.values(byProxy)) {
         const erased = await os.eraseProxy(pointer.recordName, pointer.address);
+        // A key saved before sharing is kept in its creator's own record,
+        // which other members of the studio may not erase. Their delete still
+        // goes ahead: with the customization gone, nothing points at the key.
+        const othersRecord =
+          pointer.recordName !== userId &&
+          pointer.recordName !== existing.studioId;
+        if (
+          othersRecord &&
+          !erased.success &&
+          erased.errorCode === "not_authorized"
+        ) {
+          console.warn(
+            "Left a sensitive proxy kept in another person's record:",
+            pointer.recordName
+          );
+          continue;
+        }
         if (!erased.success && erased.errorCode !== "data_not_found") {
           throw new Error(
             `Failed to clear a customization's sensitive settings: ${erased.errorCode}`
@@ -2897,11 +3080,40 @@ export function createCustomizationsManager(
   ): ExtensionSettingValue | undefined =>
     getExtensionSettingDefault(activeCustomization.value, extensionId, key);
 
-  const setExtensionSensitiveProxy = async (
+  /**
+   * Applies one small change to a customization and saves it right away,
+   * for changes that point at something already created elsewhere (a proxy,
+   * a content library), so the customization must record it now or lose
+   * track of it.
+   *
+   * The draft gets the change too, so a later save of it carries the change
+   * instead of dropping it. The write itself starts from the newest saved
+   * copy rather than the draft: the draft may hold edits the author hasn't
+   * saved yet, and might still discard. For a shared customization that's
+   * the server's copy, so the write doesn't undo what someone else saved,
+   * and can't hit a save conflict. Their changes aren't in the open draft,
+   * so its base stays put and its next save still reports the conflict.
+   *
+   * The draft and the saved copy share one timestamp, so once the write
+   * lands they compare equal and the draft doesn't read as unsaved.
+   * Resolves to whether it was saved; a failed write takes the change back
+   * off the draft, unless something newer has replaced it there since.
+   */
+  const saveFieldChange = async (
     customizationId: string,
-    extensionId: string,
-    proxyId: string,
-    pointer: SensitiveProxyPointer | null
+    change: {
+      apply: (
+        customization: SeedBibleCustomization,
+        updatedAt: number
+      ) => SeedBibleCustomization;
+      /** Whether `customization` still holds this change. */
+      isApplied: (customization: SeedBibleCustomization) => boolean;
+      undo: (
+        customization: SeedBibleCustomization,
+        updatedAt: number
+      ) => SeedBibleCustomization;
+    },
+    label: string
   ): Promise<boolean> => {
     const userId = login.userId.value;
     if (
@@ -2910,79 +3122,29 @@ export function createCustomizationsManager(
     ) {
       return false;
     }
-    // The draft gets the pointer now, so any later save of it carries the
-    // pointer instead of dropping it. The write itself starts from the last
-    // saved copy instead of the draft: the draft may hold edits the author
-    // hasn't saved yet, and might still discard.
-    // The draft and the saved copy share one timestamp, so once the write
-    // lands they compare equal and the draft doesn't read as unsaved.
     const updatedAt = Date.now();
     const draft = editingCustomization.value;
-    const previous =
-      draft?.id === customizationId
-        ? draft.extensionSensitiveProxies[extensionId]?.[proxyId]
-        : undefined;
     if (draft?.id === customizationId) {
-      editingCustomization.value = withExtensionSensitiveProxy(
-        draft,
-        extensionId,
-        proxyId,
-        pointer,
-        updatedAt
-      );
+      editingCustomization.value = change.apply(draft, updatedAt);
     }
-    // A failed write takes the pointer back off the draft, unless something
-    // newer has replaced it there since.
-    const undoDraft = () => {
-      const current = editingCustomization.value;
-      if (
-        current?.id === customizationId &&
-        (current.extensionSensitiveProxies[extensionId]?.[proxyId] ?? null) ===
-          pointer
-      ) {
-        editingCustomization.value = withExtensionSensitiveProxy(
-          current,
-          extensionId,
-          proxyId,
-          previous ?? null,
-          Date.now()
-        );
-      }
-    };
     const written = await queueWrite(async () => {
       const known = customizations.value.find((c) => c.id === customizationId);
       if (!known || login.userId.value !== userId) {
         return false;
       }
-      // For a shared customization the write starts from the server's copy,
-      // so it doesn't undo what someone else saved. Their changes aren't in
-      // the open draft, so its base stays put and its next save still
-      // reports the conflict.
       const latest = await fetchSharedCopy(known);
       const saved = latest ?? known;
       const draftWasCurrent =
         draftBaseUpdatedAt !== null && draftBaseUpdatedAt === saved.updatedAt;
-      const next = withExtensionSensitiveProxy(
-        saved,
-        extensionId,
-        proxyId,
-        pointer,
-        updatedAt
-      );
+      const next = change.apply(saved, updatedAt);
       try {
         const result = await persist(userId, next);
         if (!result.success) {
-          console.error(
-            "Failed to save a customization's sensitive settings:",
-            result.errorCode
-          );
+          console.error(`Failed to save ${label}:`, result.errorCode);
           return false;
         }
       } catch (error) {
-        console.error(
-          "Failed to save a customization's sensitive settings:",
-          error
-        );
+        console.error(`Failed to save ${label}:`, error);
         return false;
       }
       customizations.value = customizations.value.map((c) =>
@@ -2995,12 +3157,59 @@ export function createCustomizationsManager(
       ) {
         draftBaseUpdatedAt = next.updatedAt;
       }
+      // "Use their version" switches to the copy the conflict found, which
+      // is now older than this write; it must keep this change too.
+      const conflict = saveConflict.value;
+      if (conflict?.customizationId === customizationId) {
+        saveConflict.value = { ...conflict, theirs: next };
+      }
       return true;
     });
     if (!written) {
-      undoDraft();
+      const current = editingCustomization.value;
+      if (current?.id === customizationId && change.isApplied(current)) {
+        editingCustomization.value = change.undo(current, Date.now());
+      }
     }
     return written;
+  };
+
+  const setExtensionSensitiveProxy = (
+    customizationId: string,
+    extensionId: string,
+    proxyId: string,
+    pointer: SensitiveProxyPointer | null
+  ): Promise<boolean> => {
+    const draft = editingCustomization.value;
+    const previous =
+      draft?.id === customizationId
+        ? (draft.extensionSensitiveProxies[extensionId]?.[proxyId] ?? null)
+        : null;
+    return saveFieldChange(
+      customizationId,
+      {
+        apply: (customization, updatedAt) =>
+          withExtensionSensitiveProxy(
+            customization,
+            extensionId,
+            proxyId,
+            pointer,
+            updatedAt
+          ),
+        isApplied: (customization) =>
+          (customization.extensionSensitiveProxies[extensionId]?.[proxyId] ??
+            null) === pointer,
+        undo: (customization, updatedAt) =>
+          withExtensionSensitiveProxy(
+            customization,
+            extensionId,
+            proxyId,
+            previous,
+            updatedAt
+          ),
+      },
+      "a customization's sensitive settings"
+    );
   };
 
   const addExtensionToActiveCustomization = async (
@@ -3014,6 +3223,7 @@ export function createCustomizationsManager(
     if (availability === "hidden") {
       return;
     }
+    await adoptPreviousExtensionChoices(locator);
     if (availability === "auto-installed") {
       await extensionPreferences.clearRemovedExtensionId(locator, extensionId);
       return;
@@ -3028,6 +3238,7 @@ export function createCustomizationsManager(
     if (!locator) {
       return;
     }
+    await adoptPreviousExtensionChoices(locator);
     if (getActiveExtensionAvailability(extensionId) === "auto-installed") {
       await extensionPreferences.addRemovedExtensionId(locator, extensionId);
       return;
@@ -3084,6 +3295,9 @@ export function createCustomizationsManager(
     }
   };
 
+  /** Studios made by shares that failed afterwards, by customization ID. */
+  const studiosFromFailedShares = new Map<string, string>();
+
   const shareWithOthers = async (
     id: string
   ): Promise<SeedBibleCustomization> => {
@@ -3110,30 +3324,38 @@ export function createCustomizationsManager(
         return existing;
       }
 
-      const studio = await os.createStudio(existing.name);
-      if (!studio.success) {
-        throw new CustomizationSharingError(
-          studio.errorCode,
-          `Couldn't create a studio: ${studio.errorMessage}`
-        );
+      // CasualOS can't delete a studio, so one left by a failed attempt is
+      // used again rather than making another each time.
+      let studioId = studiosFromFailedShares.get(id);
+      if (!studioId) {
+        const studio = await os.createStudio(existing.name);
+        if (!studio.success) {
+          throw new CustomizationSharingError(
+            studio.errorCode,
+            `Couldn't create a studio: ${studio.errorMessage}`
+          );
+        }
+        studioId = studio.studioId;
+        studiosFromFailedShares.set(id, studioId);
       }
-      const { studioId } = studio;
+      const intoStudio = studioId;
 
-      const icons: CustomizationIcons = {};
-      for (const [iconId, url] of Object.entries(existing.icons ?? {})) {
-        icons[iconId as CustomizationIconId] = await copyFileToStudio(
-          url,
-          userId,
-          studioId
-        );
-      }
+      const fileUrls = [
+        ...(existing.logoUrl ? [existing.logoUrl] : []),
+        ...Object.values(existing.icons ?? {}),
+      ];
+      await Promise.all(
+        fileUrls.map(async (url) => {
+          copiedFileUrls.set(
+            url,
+            await copyFileToStudio(url, userId, intoStudio)
+          );
+        })
+      );
       const moved: SeedBibleCustomization = {
-        ...existing,
+        ...withFileUrls(existing, (url) => copiedFileUrls.get(url) ?? url),
         studioId,
-        logoUrl: existing.logoUrl
-          ? await copyFileToStudio(existing.logoUrl, userId, studioId)
-          : existing.logoUrl,
-        ...(existing.icons ? { icons } : {}),
+        movedFromRecordName: userId,
         updatedAt: Date.now(),
       };
 
@@ -3162,6 +3384,7 @@ export function createCustomizationsManager(
           "Couldn't move the customization to its studio."
         );
       }
+      studiosFromFailedShares.delete(id);
 
       const oldLocator = buildCustomizationLocator(userId, id);
       customizations.value = customizations.value.map((c) =>
@@ -3170,11 +3393,9 @@ export function createCustomizationsManager(
       studioRoles.value = { ...studioRoles.value, [studioId]: "admin" };
       const draft = editingCustomization.value;
       if (draft?.id === id) {
+        // Edits made while the share ran stay in the draft.
         editingCustomization.value = {
-          ...draft,
-          studioId,
-          logoUrl: moved.logoUrl,
-          icons: moved.icons,
+          ...rehomedAfterShare(draft),
           updatedAt: moved.updatedAt,
         };
         draftBaseUpdatedAt = moved.updatedAt;
@@ -3261,6 +3482,7 @@ export function createCustomizationsManager(
     studioRoles,
     getStudioRole,
     saveConflict,
+    editsDroppedAfterClose,
     resolveSaveConflict,
     shareWithOthers,
     listMembers,

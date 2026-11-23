@@ -49,6 +49,37 @@ export interface StudioMembership {
   role: StudioRole;
 }
 
+export type StudioResult<T extends object> =
+  | ({ success: true } & T)
+  | { success: false; errorCode: string; errorMessage: string };
+
+/**
+ * One studio procedure's answer in the shape callers use: the SDK's
+ * success, reshaped by `onSuccess`, or its failure with a plain string code.
+ */
+function toStudioResult<
+  R extends
+    | { success: true }
+    | { success: false; errorCode: unknown; errorMessage: string },
+  T extends object,
+>(
+  result: R,
+  onSuccess: (result: Extract<R, { success: true }>) => T
+): StudioResult<T> {
+  if (result.success) {
+    return {
+      success: true,
+      ...onSuccess(result as Extract<R, { success: true }>),
+    };
+  }
+  const failure = result as Extract<R, { success: false }>;
+  return {
+    success: false,
+    errorCode: String(failure.errorCode),
+    errorMessage: failure.errorMessage,
+  };
+}
+
 export interface StudioMember {
   userId: string;
   role: StudioRole;
@@ -600,67 +631,37 @@ export function CasualOSManager(
      */
     createStudio: async (
       displayName: string
-    ): Promise<
-      | { success: true; studioId: string }
-      | { success: false; errorCode: string; errorMessage: string }
-    > => {
-      const result = await client.createStudio({ displayName });
-      return result.success
-        ? { success: true, studioId: result.studioId }
-        : {
-            success: false,
-            errorCode: String(result.errorCode),
-            errorMessage: result.errorMessage,
-          };
-    },
+    ): Promise<StudioResult<{ studioId: string }>> =>
+      toStudioResult(await client.createStudio({ displayName }), (result) => ({
+        studioId: result.studioId,
+      })),
 
     /** Every studio the signed-in user belongs to, with their role in it. */
     listStudios: async (
       userId: string
-    ): Promise<
-      | { success: true; studios: StudioMembership[] }
-      | { success: false; errorCode: string; errorMessage: string }
-    > => {
-      const result = await client.listStudios({ userId });
-      return result.success
-        ? {
-            success: true,
-            studios: result.studios.map((studio) => ({
-              studioId: studio.studioId,
-              displayName: studio.displayName,
-              role: studio.role,
-            })),
-          }
-        : {
-            success: false,
-            errorCode: String(result.errorCode),
-            errorMessage: result.errorMessage,
-          };
-    },
+    ): Promise<StudioResult<{ studios: StudioMembership[] }>> =>
+      toStudioResult(await client.listStudios({ userId }), (result) => ({
+        studios: result.studios.map((studio) => ({
+          studioId: studio.studioId,
+          displayName: studio.displayName,
+          role: studio.role,
+        })),
+      })),
 
     listStudioMembers: async (
       studioId: string
-    ): Promise<
-      | { success: true; members: StudioMember[] }
-      | { success: false; errorCode: string; errorMessage: string }
-    > => {
-      const result = await client.listStudioMembers({ studioId });
-      return result.success
-        ? {
-            success: true,
-            members: result.members.map((member) => ({
-              userId: member.userId,
-              role: member.role,
-              name: member.user.displayName || member.user.name || null,
-              email: member.user.email ?? null,
-            })),
-          }
-        : {
-            success: false,
-            errorCode: String(result.errorCode),
-            errorMessage: result.errorMessage,
-          };
-    },
+    ): Promise<StudioResult<{ members: StudioMember[] }>> =>
+      toStudioResult(
+        await client.listStudioMembers({ studioId }),
+        (result) => ({
+          members: result.members.map((member) => ({
+            userId: member.userId,
+            role: member.role,
+            name: member.user.displayName || member.user.name || null,
+            email: member.user.email ?? null,
+          })),
+        })
+      ),
 
     /**
      * Adds someone to a studio by the email they sign in with. Only a studio
@@ -671,23 +672,11 @@ export function CasualOSManager(
       studioId: string,
       email: string,
       role: StudioRole
-    ): Promise<
-      | { success: true }
-      | { success: false; errorCode: string; errorMessage: string }
-    > => {
-      const result = await client.addStudioMember({
-        studioId,
-        addedEmail: email,
-        role,
-      });
-      return result.success
-        ? { success: true }
-        : {
-            success: false,
-            errorCode: String(result.errorCode),
-            errorMessage: result.errorMessage,
-          };
-    },
+    ): Promise<StudioResult<object>> =>
+      toStudioResult(
+        await client.addStudioMember({ studioId, addedEmail: email, role }),
+        () => ({})
+      ),
 
     /**
      * Removes someone from a studio. Only a studio admin may, and not
@@ -696,22 +685,11 @@ export function CasualOSManager(
     removeStudioMember: async (
       studioId: string,
       userId: string
-    ): Promise<
-      | { success: true }
-      | { success: false; errorCode: string; errorMessage: string }
-    > => {
-      const result = await client.removeStudioMember({
-        studioId,
-        removedUserId: userId,
-      });
-      return result.success
-        ? { success: true }
-        : {
-            success: false,
-            errorCode: String(result.errorCode),
-            errorMessage: result.errorMessage,
-          };
-    },
+    ): Promise<StudioResult<object>> =>
+      toStudioResult(
+        await client.removeStudioMember({ studioId, removedUserId: userId }),
+        () => ({})
+      ),
 
     /**
      * Removes an uploaded file, given the URL `recordFile` returned for it.

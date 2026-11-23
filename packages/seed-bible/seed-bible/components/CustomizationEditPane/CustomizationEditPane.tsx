@@ -1114,7 +1114,7 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
               {studioRole
                 ? t("customization-people-row-hint-shared", {
                     role: studioRoleLabel(t, studioRole),
-                    defaultValue: "Shared · you're a {{role}}",
+                    defaultValue: "Shared · Your role: {{role}}",
                   })
                 : t("customization-people-row-hint-private", {
                     defaultValue: "Only you can edit this",
