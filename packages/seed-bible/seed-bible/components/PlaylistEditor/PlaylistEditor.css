@@ -3,18 +3,18 @@
  * phone), the toolbar and step cards over the reader, and the bars along the
  * bottom.
  *
- * Accents use the design's own oranges, which read on light and dark
- * backgrounds alike. Neutrals (text, borders, quiet surfaces) are mixed from
- * the theme's font and reader colors instead, so they follow whichever theme
- * is active; in the light theme they land on the design's values.
+ * Accents are the theme's primary color, and red is its danger color, so
+ * the editor follows custom branding. Neutrals (text, borders, quiet
+ * surfaces) are mixed from the theme's font and reader colors; in the light
+ * theme they land on the design's values.
  */
 .sb-pe {
-  --pe-accent: #d36433;
-  --pe-accent-strong: #e2673a;
-  --pe-accent-text: #c9572b;
-  --pe-on-accent: #fff;
-  --pe-add: #ed6535;
-  --pe-danger: #c24a2a;
+  --pe-accent: var(--sb-primary-color);
+  --pe-accent-strong: var(--sb-primary-color);
+  --pe-accent-text: var(--sb-primary-color);
+  --pe-on-accent: var(--sb-primary-font-color);
+  --pe-add: var(--sb-primary-color);
+  --pe-danger: var(--sb-danger-color);
   --pe-surface: var(--sb-reader-background, #fff);
   --pe-text: var(--sb-font-color, #1f1b18);
   --pe-accent-soft: color-mix(
@@ -45,6 +45,14 @@
   --pe-font-title: "Newsreader", serif;
   --pe-font-passage: "Literata", "Newsreader", serif;
 
+  /* The shared text box and dropdown, in the editor's own colors, typeface
+     and corners. */
+  --sb-text-input-background: var(--pe-surface);
+  --sb-text-input-border-color: var(--pe-border);
+  --sb-text-input-focus-color: var(--pe-accent-strong);
+  --sb-text-input-radius: var(--sb-radius-lg);
+  --sb-text-input-font-family: var(--pe-font-ui);
+
   color: var(--pe-text);
   box-sizing: border-box;
 
@@ -56,10 +64,10 @@
 
   /* `:where` keeps this reset at one class's weight: enough to override the
      app's global `button` styles, while any editor class declared below
-     still wins. The cover image field is a shared component styled by its own
-     stylesheet, at that same weight, so it's left out: the reset would
-     otherwise strip its "Add cover image" button bare and invisible. */
-  & :where(button:not(.sb-hero-field *)) {
+     still wins. The shared buttons and the cover image field are styled by
+     their own stylesheets, at that same weight, so they're left out: the
+     reset would otherwise strip them bare. */
+  & :where(button:not(.sb-button, .sb-icon-button, .sb-hero-field *)) {
     font: inherit;
     color: inherit;
     background: none;
@@ -69,9 +77,11 @@
     cursor: pointer;
   }
 
+  /* The shared text box and dropdown draw their own focus ring, inside their
+     border, like every other box in the app. */
   & button:focus-visible,
-  & input:focus-visible,
-  & textarea:focus-visible {
+  & input:not(.sb-text-input):focus-visible,
+  & textarea:not(.sb-text-input):focus-visible {
     outline: 2px solid var(--pe-accent-strong);
     outline-offset: 2px;
   }
@@ -204,22 +214,10 @@
 }
 
 /* The back arrow that leaves the editor, at the start of the side panel's
-   and the phone header's title bar. */
-.sb-pe-back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+   and the phone header's title bar: pulled into the bar's padding, so the
+   arrow rather than its hover circle lines up with the edge. */
+.sb-icon-button.sb-pe-back {
   margin-inline-start: -8px;
-  border-radius: 50%;
-  color: var(--pe-text);
-}
-
-.sb-pe-back:hover,
-.sb-pe-back:focus-visible {
-  background: color-mix(in srgb, var(--pe-text) 8%, transparent);
 }
 
 .sb-pe-back .sb-pe-icon {
@@ -286,14 +284,6 @@
   flex-shrink: 0;
 }
 
-.sb-pe-panel-close {
-  display: flex;
-}
-
-.sb-pe-panel-close .sb-pe-icon {
-  color: var(--pe-text);
-}
-
 .sb-pe-panel-body {
   display: flex;
   flex-direction: column;
@@ -320,46 +310,16 @@
 
 /* A playlist with no steps yet: says so, with a way to add the first. */
 .sb-pe-empty-list {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 40px 16px;
-  text-align: center;
-
-  & > .sb-pe-icon {
-    width: 32px;
-    height: 32px;
-    margin-bottom: 6px;
-    color: var(--pe-muted);
-  }
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- the editor's own spacing */
+  --sb-empty-state-padding: 40px 16px;
+  --sb-empty-state-color: var(--pe-muted);
 }
 
-.sb-pe-empty-list-title {
-  margin: 0;
-  font-weight: 600;
-  font-size: 16px;
-}
-
-.sb-pe-empty-list-text {
-  margin: 0 0 12px;
-  font-size: 13px;
-  color: var(--pe-muted);
-}
-
-.sb-pe-empty-list-add {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 18px;
-  border: 1px solid var(--pe-add);
-  border-radius: 10px;
-  background: transparent;
-  color: var(--pe-add);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
+/* The editor's icons are fixed-size masks (16px), not SVGs, so they follow the
+   empty state's icon slot only when told to. */
+.sb-pe-empty-list .sb-pe-icon {
+  width: 1em;
+  height: 1em;
 }
 
 /* The steps are the same rows as the playing list's (`PlaylistStepRow`);
@@ -375,13 +335,8 @@
   flex-shrink: 0;
 }
 
-.sb-pe-step-action {
-  display: flex;
-  color: var(--pe-text);
-}
-
-.sb-pe-step-action--danger {
-  color: var(--pe-danger);
+.sb-icon-button.sb-pe-step-action--danger {
+  --sb-icon-button-color: var(--pe-danger);
 }
 
 .sb-pe-step-action .sb-pe-icon--pencil {
@@ -402,7 +357,6 @@
 
   & .sb-pe-publish {
     flex: 1;
-    height: 42px;
   }
 }
 
@@ -431,10 +385,6 @@
   font-weight: 500;
   font-size: 17px;
   line-height: 22px;
-}
-
-.sb-pe-add-menu-close .sb-pe-icon {
-  color: var(--pe-muted);
 }
 
 .sb-pe-add-menu-where {
@@ -632,14 +582,7 @@
 }
 
 .sb-pe-toolbar-action {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   white-space: nowrap;
-}
-
-.sb-pe-toolbar-action--danger {
-  color: var(--pe-danger);
 }
 
 /* The step card, centred where the chapter would be. */
@@ -705,45 +648,6 @@
   line-height: 15px;
   color: var(--pe-muted);
   text-align: end;
-}
-
-.sb-pe-input,
-.sb-pe-textarea {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid var(--pe-border);
-  border-radius: 10px;
-  background: var(--pe-surface);
-  color: var(--pe-text);
-  font-family: var(--pe-font-ui);
-  font-size: 14px;
-  line-height: 18px;
-}
-
-.sb-pe-input::placeholder,
-.sb-pe-textarea::placeholder {
-  color: #757575;
-}
-
-.sb-pe-textarea {
-  display: block;
-  resize: vertical;
-  line-height: 22.4px;
-  min-height: 68px;
-}
-
-.sb-pe-textarea--tall {
-  min-height: 182px;
-}
-
-.sb-pe-input:focus,
-.sb-pe-textarea:focus {
-  outline: none;
-  border-color: var(--pe-accent-strong);
-}
-
-.sb-pe-input--invalid {
-  border-color: var(--pe-danger);
 }
 
 .sb-pe-count {
@@ -900,7 +804,7 @@
 
 .sb-pe-compare-reference-icon {
   font-size: 18px;
-  color: #e2673a;
+  color: var(--sb-primary-color);
 }
 
 .sb-pe-compare-text {
@@ -912,7 +816,7 @@
   cursor: pointer;
 
   &:focus-visible {
-    outline: 2px solid #e2673a;
+    outline: 2px solid var(--sb-primary-color);
     outline-offset: 2px;
   }
 }
@@ -926,11 +830,15 @@
 .sb-pe-compare-verse--picked {
   background: color-mix(
     in srgb,
-    var(--pe-accent-strong, #e2673a) 22%,
+    var(--pe-accent-strong, var(--sb-primary-color)) 22%,
     transparent
   );
   box-shadow: 0 0 0 2px
-    color-mix(in srgb, var(--pe-accent-strong, #e2673a) 22%, transparent);
+    color-mix(
+      in srgb,
+      var(--pe-accent-strong, var(--sb-primary-color)) 22%,
+      transparent
+    );
   color: var(--sb-font-color);
 }
 
@@ -957,6 +865,12 @@
 .sb-pe-compare-status {
   margin: 0;
   color: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
+  --sb-loading-status-color: color-mix(
+    in srgb,
+    var(--sb-font-color) 55%,
+    transparent
+  );
+  --sb-loading-status-font-size: inherit;
 }
 
 /* The pick bar and the note, under the page: as the toolbar stack holds them
@@ -1008,15 +922,11 @@
   }
 
   /* A long reference takes two lines rather than lose its end. */
-  & > button {
+  & > .sb-button {
+    padding-block: 0.4375rem;
     border-radius: 18px;
-    white-space: normal;
     text-align: center;
-  }
-
-  & > .sb-pe-pickbar-cancel {
-    padding: 7px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.28);
+    white-space: normal;
   }
 }
 
@@ -1049,24 +959,13 @@
 }
 
 .sb-pe-insert-action {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  height: 33px;
-  padding: 0 10px;
-  border: 1px solid color-mix(in srgb, var(--pe-text) 14%, var(--pe-surface));
-  border-radius: 10px;
-  background: var(--pe-surface);
-  font-family: var(--pe-font-list);
-  font-size: 12px;
   white-space: nowrap;
 }
 
 .sb-pe-insert-action .sb-pe-icon {
   width: 12px;
   height: 12px;
-  color: #f24f2c;
+  color: var(--pe-accent);
 }
 
 .sb-pe-insert-picker {
@@ -1084,9 +983,8 @@
   gap: 6px;
 }
 
-.sb-pe-insert-picker-row .sb-pe-input {
-  padding: 8px 10px;
-  font-size: 13px;
+.sb-pe-insert-picker-input {
+  flex: 1;
 }
 
 .sb-pe-insert-picker-list {
@@ -1109,15 +1007,6 @@
 
 .sb-pe-insert-picker-list button:hover {
   background: var(--pe-border-faint);
-}
-
-.sb-pe-insert-picker-go {
-  flex-shrink: 0;
-  padding: 0 12px;
-  border-radius: 8px;
-  background: var(--pe-accent-strong);
-  color: var(--pe-on-accent);
-  font-size: 13px;
 }
 
 /* The note editor itself: TipTap, dressed as a plain text area. */
@@ -1168,6 +1057,7 @@
 
 .sb-pe-rich-field:focus-within {
   border-color: var(--pe-accent-strong);
+  box-shadow: inset 0 0 0 1px var(--pe-accent-strong);
 }
 
 .sb-pe-rich-field-inner {
@@ -1257,55 +1147,24 @@
   height: 14px;
 }
 
-.sb-pe-publish {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 11px 18px;
-  border-radius: 10px;
-  background: var(--pe-accent-strong);
-  color: var(--pe-on-accent);
-  font-family: var(--pe-font-ui);
-  font-weight: 500;
-  font-size: 13px;
-  line-height: 16px;
-  white-space: nowrap;
-}
-
 .sb-pe-pickbar {
   display: flex;
   align-items: center;
   gap: 20px;
   padding: 8px 8px 8px 16px;
   border-radius: 999px;
-  background: #1f1b18;
-  box-shadow: 0 8px 12px rgba(31, 27, 24, 0.18);
+  /* The filter pills' shade (Your Content), made solid so the verses it
+     floats over don't show through. */
+  background: color-mix(in srgb, var(--pe-text) 9%, var(--pe-surface));
   font-family: var(--pe-font-ui);
   font-size: 13px;
   line-height: 16px;
-  color: #fff;
+  color: var(--pe-text);
   white-space: nowrap;
 }
 
 .sb-pe-pickbar-ref {
-  color: #f4b89c;
-}
-
-.sb-pe-pickbar-cancel {
-  color: #cfc8c2;
-}
-
-.sb-pe-pickbar-apply {
-  padding: 7px 14px;
-  border-radius: 999px;
-  background: #e2673a;
-  color: #fff;
-  font-weight: 500;
-}
-
-.sb-pe-pickbar-apply:disabled {
-  opacity: 0.5;
-  cursor: default;
+  color: var(--pe-accent-text);
 }
 
 /* ---------- Phone ---------- */
@@ -1379,42 +1238,30 @@
   gap: 16px;
 }
 
-.sb-pe-square-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid color-mix(in srgb, var(--pe-text) 13%, var(--pe-surface));
-  border-radius: 10px;
+.sb-icon-button.sb-pe-add-toggle {
+  --sb-icon-button-color: var(--pe-add);
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.375rem;
 }
 
-.sb-pe-square-button.sb-pe-step-action--danger {
-  color: var(--pe-danger);
+.sb-icon-button.sb-pe-add-toggle[aria-expanded="true"] {
+  --sb-icon-button-background: color-mix(
+    in srgb,
+    var(--pe-add) 10%,
+    transparent
+  );
 }
 
-/* A title bar's plain icon buttons, Add a step in the accent colour. */
-.sb-pe-mobile-header-actions .sb-pe-square-button,
-.sb-pe-panel-header-actions .sb-pe-square-button {
-  border: none;
-}
-
-.sb-pe-add-toggle {
-  color: var(--pe-add);
-}
-
-.sb-pe-add-toggle[aria-expanded="true"] {
-  background: color-mix(in srgb, var(--pe-add) 10%, transparent);
-}
-
-.sb-pe-step-menu[aria-expanded="true"] {
-  background: color-mix(in srgb, var(--pe-text) 8%, transparent);
+.sb-icon-button.sb-pe-step-menu[aria-expanded="true"] {
+  --sb-icon-button-background: color-mix(
+    in srgb,
+    var(--pe-text) 8%,
+    transparent
+  );
 }
 
 .sb-pe-add-toggle-plus {
   display: block;
-  width: 22px;
-  height: 22px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -1471,13 +1318,14 @@
 
 /* The menu in a step's title bar (Item settings, and Delete): a vertical
    ellipsis, as on a tab's row. */
-.sb-pe-step-menu .material-symbols-outlined {
-  font-size: 24px;
+.sb-icon-button.sb-pe-step-menu {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.5rem;
 }
 
 /* The menu is portaled out of the editor, past its `--pe-*` colours. */
 .sb-context-menu-item.sb-pe-step-menu-delete {
-  color: #c24a2a;
+  color: var(--sb-danger-color);
 }
 
 /* Phone: the open scripture step's note, on the chapter pill like the note
@@ -1518,13 +1366,6 @@
 
 .sb-pe-note-remove {
   align-self: flex-start;
-  padding: 8px 0;
-  border: none;
-  background: none;
-  color: var(--pe-danger);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .sb-pe-mobile-bottom {
@@ -1576,85 +1417,27 @@ body.sb-scroll-hide-bars .sb-pe-workspace--mobile .sb-pe-mobile-bottom {
 .sb-pe-mobile-bottom .sb-pe-publish {
   flex: 1;
   min-width: 0;
-  height: 44px;
   padding-inline: 10px;
   text-align: center;
   white-space: normal;
   line-height: 15px;
 }
 
-/* The editor's sheets (the playlist's details, a step's settings) rise from
-   the bottom of the screen like the reader's verse sheet, covering the
-   chapter pill, its note and the app's tabs (the toolbar's layer is 101). */
-.sb-pe-sheet-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 102;
-  background: rgba(0, 0, 0, 0.32);
-}
-
-.sb-pe-sheet {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 103;
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 24px);
-  padding: 12px 14px calc(23px + env(safe-area-inset-bottom, 0px));
-  border-radius: 28px 28px 0 0;
-  background: var(--pe-surface);
-  box-shadow: 0 -8px 24px var(--sb-shadow-color, rgba(0, 0, 0, 0.16));
-}
-
-.sb-pe-sheet-handle {
-  display: flex;
-  justify-content: center;
-  flex-shrink: 0;
-  height: 16px;
-}
-
-.sb-pe-sheet-handle::before {
-  content: "";
-  width: 36px;
-  height: 4px;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--pe-text) 20%, var(--pe-surface));
-}
-
-/* ---------- Review & publish ---------- */
-
-/* The phone's sheet for the playlist's title, description and cover. Its
-   fields scroll under the header when the cover or keyboard makes them tall. */
-
-.sb-pe-details-sheet-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-shrink: 0;
-  height: 40px;
-  padding: 0 8px;
-  margin-bottom: 16px;
-}
-
-.sb-pe-details-sheet-title {
-  margin: 0;
-  font-family: var(--pe-font-ui);
-  font-weight: 600;
-  font-size: 16px;
-}
-
-/* The cover at the size the shared playlist page shows it, so the sheet
-   needn't scroll far to reach it. */
-/* Desktop: the playlist's details in a dialog, opened from its title. */
-.sb-pe-details-modal {
+/* The playlist's details (its title, description and cover): in a dialog on
+   desktop and a sheet on a phone, both opened from its title. The sheet's
+   body scrolls under its header when the cover or keyboard makes it tall. */
+.sb-pe-details-modal,
+.sb-pe-details-sheet-body {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  /* Room for a focused field's outline (2px, 2px out), which the scrolling
+     body around these fields would otherwise cut off at the sides. */
+  padding: 0 4px 4px;
   font-family: var(--pe-font-ui);
 
+  /* The cover at the size the shared playlist page shows it, so the sheet
+     needn't scroll far to reach it. */
   & .sb-hero-field {
     width: min(100%, 15rem);
   }
@@ -1663,27 +1446,9 @@ body.sb-scroll-hide-bars .sb-pe-workspace--mobile .sb-pe-mobile-bottom {
 .sb-pe-details-modal-footer {
   display: flex;
   justify-content: flex-end;
-
-  & .sb-pe-publish {
-    width: auto;
-    padding-inline: 28px;
-  }
 }
 
-.sb-pe-details-sheet-body .sb-hero-field {
-  width: min(100%, 15rem);
-}
-
-.sb-pe-details-sheet-body {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 0 8px 4px;
-  font-family: var(--pe-font-ui);
-}
+/* ---------- Review & publish ---------- */
 
 .sb-pe-review {
   display: flex;
@@ -1715,16 +1480,4 @@ body.sb-scroll-hide-bars .sb-pe-workspace--mobile .sb-pe-mobile-bottom {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-}
-
-.sb-pe-review-back {
-  padding: 11px 18px;
-  border: 1px solid var(--pe-border);
-  border-radius: 10px;
-  font-size: 13px;
-}
-
-.sb-pe-publish:disabled {
-  opacity: 0.5;
-  cursor: default;
 }

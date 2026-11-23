@@ -39,6 +39,28 @@ describe("PlaylistItemInput", () => {
     container.remove();
   });
 
+  it("switches between scripture, text and link with the item type dropdown", () => {
+    act(() => {
+      render(
+        <PlaylistItemInput books={BOOKS} onAdd={vi.fn()} onUpdate={vi.fn()} />,
+        container
+      );
+    });
+    const dropdown = container.querySelector<HTMLSelectElement>(
+      'select[aria-label="Item type"]'
+    )!;
+    expect(dropdown.value).toBe("scripture");
+    expect(container.querySelector('input[type="url"]')).toBeNull();
+
+    act(() => {
+      dropdown.value = "link";
+      dropdown.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    expect(dropdown.value).toBe("link");
+    expect(container.querySelector('input[type="url"]')).not.toBeNull();
+  });
+
   it("keeps a scripture item's fixed translation when it's edited", async () => {
     const onUpdate = vi.fn();
     const handle = createRef<PlaylistItemInputHandle>();

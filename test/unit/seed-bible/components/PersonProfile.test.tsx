@@ -62,9 +62,7 @@ describe("person profile card", () => {
   const visibleLabel = (el: Element) => {
     const copy = el.cloneNode(true) as Element;
     copy
-      .querySelectorAll(
-        ".sb-friends-copy-label--hidden, .sb-friends-busy-spinner"
-      )
+      .querySelectorAll(".sb-friends-copy-label--hidden, .sb-spinner")
       .forEach((hidden) => hidden.remove());
     return copy.textContent;
   };
@@ -398,9 +396,7 @@ describe("person profile card", () => {
 
       expect(button("Accept")!.getAttribute("aria-busy")).toBe("true");
       expect(button("Decline")!.disabled).toBe(true);
-      expect(
-        button("Decline")!.querySelector(".sb-friends-busy-spinner")
-      ).toBeNull();
+      expect(button("Decline")!.querySelector(".sb-spinner")).toBeNull();
 
       release();
       await settle();

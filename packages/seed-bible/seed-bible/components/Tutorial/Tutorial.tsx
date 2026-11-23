@@ -7,6 +7,7 @@ import type {
   TutorialStep,
 } from "../../managers/TutorialManager";
 import { useEffect, useRef } from "preact/hooks";
+import { useModalLayer } from "../useModalFocus";
 
 export interface Rect {
   top: number;
@@ -65,6 +66,12 @@ export function Tutorial({
   // enough to guarantee the box never overlaps the highlighted element.
   const popSize = useSignal<{ w: number; h: number } | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
+  // The overlay blocks the page, so the keyboard belongs to the tip, even
+  // over a sheet that keeps Tab inside itself.
+  useModalLayer(overlayRef, {
+    enabled: running && !!step && matchesFilter,
+    initialFocusRef: popoverRef,
+  });
 
   useEffect(() => {
     if (!running || !step || !matchesFilter) {
@@ -206,6 +213,7 @@ export function Tutorial({
 
       <div
         ref={popoverRef}
+        tabIndex={-1}
         className={`sb-tour-popover${spotlight ? "" : " sb-tour-popover-centered"}`}
         style={popover.style}
         onClick={(event: MouseEvent) => event.stopPropagation()}
@@ -272,6 +280,10 @@ export function TutorialPopoverContent({
             className="sb-tour-btn sb-tour-btn-back"
             onClick={tutorial.prev}
           >
+            {/* Mirrors next's arrow, so the dots between them look centered. */}
+            <span className="sb-tour-back-arrow" dir="ltr" aria-hidden="true">
+              ←
+            </span>
             {t("tutorial.back", { defaultValue: "Back" })}
           </button>
         )}

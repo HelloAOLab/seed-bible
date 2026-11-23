@@ -10,6 +10,7 @@ import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
 import { isMinimalEmbedUrl } from "./EmbedMode";
 import { SYSTEM_THEME_ID } from "./ThemeManager";
+import type { ViewingAreaPreference } from "./SessionsManager";
 import { parseNumber } from "./Utils";
 import { CUSTOMIZATION_FONT_PRESETS } from "./CustomizationsManager";
 
@@ -91,12 +92,29 @@ export interface ScriptureElementsBehavior {
 
 export interface DiscoveredContentBehavior {
   showContent: boolean;
+  /**
+   * Whether discovered content shows in shared sessions too. It is personal —
+   * only the reader sees it — so sessions hide it unless this is on.
+   */
+  showInSharedSessions: boolean;
+  /**
+   * Whether the reader has acknowledged the hint that only they can see
+   * discovered content in a shared session.
+   */
+  sharedSessionHintSeen: boolean;
 }
 
 export const VERSE_LINE_HEIGHT_OPTIONS: number[] = [1.5, 1.7, 2, 2.5];
 export const DEFAULT_VERSE_LINE_HEIGHT = 1.7;
 
 export type VerseSelectionEffects = "default" | "enabled" | "disabled";
+
+/**
+ * Whose viewing-area bars this person wants to see. "default" follows the
+ * session. "hosts-only" hides other bars on this screen. "everyone" follows
+ * a session that is showing everyone, and does not widen a hosts-only one.
+ */
+export type ViewingAreaIndicators = ViewingAreaPreference;
 
 export interface AppSettings {
   fontSize: TextSize;
@@ -130,6 +148,11 @@ export interface AppSettings {
    */
   discoverContentPanelInline: boolean;
   verseSelectionEffects?: VerseSelectionEffects;
+  /**
+   * Whose viewing-area bars this person sees in a shared session. See
+   * `ViewingAreaIndicators`.
+   */
+  viewingAreaIndicators?: ViewingAreaIndicators;
 }
 
 export const DEFAULT_SCRIPTURE_WIDTH = 68; // ch
@@ -171,6 +194,7 @@ const TAG_SCRIPTURE_WIDTH = "app.scriptureWidth";
 const TAG_THEME_ID = "app.themeId";
 const TAG_DISCOVER_CONTENT_PANEL_INLINE = "app.discoverContentPanelInline";
 const TAG_VERSE_SELECTION_EFFECTS = "app.verseSelectionEffects";
+const TAG_VIEWING_AREA_INDICATORS = "app.viewingAreaIndicators";
 
 // Profile.config keys are stored unprefixed.
 const PROFILE_FONT_SIZE = "fontSize";
@@ -190,6 +214,7 @@ const PROFILE_SCRIPTURE_WIDTH = "scriptureWidth";
 const PROFILE_THEME_ID = "themeId";
 const PROFILE_DISCOVER_CONTENT_PANEL_INLINE = "discoverContentPanelInline";
 const PROFILE_VERSE_SELECTION_EFFECTS = "verseSelectionEffects";
+const PROFILE_VIEWING_AREA_INDICATORS = "viewingAreaIndicators";
 
 const DEFAULT_SELECTION_UI: SelectionUIBehavior = {
   showSelectedItems: true,
@@ -207,6 +232,8 @@ const DEFAULT_SCRIPTURE_ELEMENTS: ScriptureElementsBehavior = {
 
 const DEFAULT_DISCOVERED_CONTENT: DiscoveredContentBehavior = {
   showContent: true,
+  showInSharedSessions: false,
+  sharedSessionHintSeen: false,
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -226,6 +253,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   themeId: SYSTEM_THEME_ID,
   discoverContentPanelInline: true,
   verseSelectionEffects: "default",
+  viewingAreaIndicators: "default",
 };
 
 function parseCustomHighlightColors(value: unknown): string[] {
@@ -284,6 +312,15 @@ function parseVerseSelectionEffects(
   fallback: VerseSelectionEffects
 ): VerseSelectionEffects {
   return value === "default" || value === "enabled" || value === "disabled"
+    ? value
+    : fallback;
+}
+
+function parseViewingAreaIndicators(
+  value: unknown,
+  fallback: ViewingAreaIndicators
+): ViewingAreaIndicators {
+  return value === "default" || value === "everyone" || value === "hosts-only"
     ? value
     : fallback;
 }
@@ -407,6 +444,14 @@ function parseDiscoveredContent(
       typeof obj.showContent === "boolean"
         ? obj.showContent
         : fallback.showContent,
+    showInSharedSessions:
+      typeof obj.showInSharedSessions === "boolean"
+        ? obj.showInSharedSessions
+        : fallback.showInSharedSessions,
+    sharedSessionHintSeen:
+      typeof obj.sharedSessionHintSeen === "boolean"
+        ? obj.sharedSessionHintSeen
+        : fallback.sharedSessionHintSeen,
   };
 }
 
@@ -488,6 +533,7 @@ export interface SettingsManager {
   setDiscoverContentPanelInline: (discoverContentPanelInline: boolean) => void;
   setFontOverride: (value: AppSettings["fontOverride"]) => void;
   setVerseSelectionEffects: (value: VerseSelectionEffects) => void;
+  setViewingAreaIndicators: (value: ViewingAreaIndicators) => void;
 }
 
 export function createSettings(
@@ -620,6 +666,10 @@ export function createSettings(
       verseSelectionEffects: parseVerseSelectionEffects(
         read(PROFILE_VERSE_SELECTION_EFFECTS, TAG_VERSE_SELECTION_EFFECTS),
         DEFAULT_SETTINGS.verseSelectionEffects ?? "default"
+      ),
+      viewingAreaIndicators: parseViewingAreaIndicators(
+        read(PROFILE_VIEWING_AREA_INDICATORS, TAG_VIEWING_AREA_INDICATORS),
+        DEFAULT_SETTINGS.viewingAreaIndicators ?? "default"
       ),
       keepScreenAwake: parseBoolean(
         read(PROFILE_KEEP_AWAKE, TAG_KEEP_AWAKE),
@@ -779,6 +829,17 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_VERSE_SELECTION_EFFECTS, value);
   };
 
+  const setViewingAreaIndicators = (value: ViewingAreaIndicators) => {
+    settings.value = {
+      ...settings.value,
+      viewingAreaIndicators: value,
+    };
+
+    sessionOverrides[TAG_VIEWING_AREA_INDICATORS] = value;
+
+    saveProfileConfigValue(login, PROFILE_VIEWING_AREA_INDICATORS, value);
+  };
+
   const setVerseLineHeight = (lineHeight: number) => {
     if (!Number.isFinite(lineHeight)) return;
     settings.value = { ...settings.value, verseLineHeight: lineHeight };
@@ -893,6 +954,8 @@ export function createSettings(
     sessionOverrides[TAG_FONT_OVERRIDE] = NO_FONT_OVERRIDE;
     sessionOverrides[TAG_VERSE_SELECTION_EFFECTS] =
       DEFAULT_SETTINGS.verseSelectionEffects ?? "default";
+    sessionOverrides[TAG_VIEWING_AREA_INDICATORS] =
+      DEFAULT_SETTINGS.viewingAreaIndicators ?? "default";
 
     saveProfileConfigValue(login, PROFILE_FONT_SIZE, DEFAULT_SETTINGS.fontSize);
     saveProfileConfigValue(
@@ -930,6 +993,11 @@ export function createSettings(
       login,
       PROFILE_VERSE_SELECTION_EFFECTS,
       DEFAULT_SETTINGS.verseSelectionEffects ?? "default"
+    );
+    saveProfileConfigValue(
+      login,
+      PROFILE_VIEWING_AREA_INDICATORS,
+      DEFAULT_SETTINGS.viewingAreaIndicators ?? "default"
     );
     saveProfileConfigValue(
       login,
@@ -1130,5 +1198,6 @@ export function createSettings(
     setDiscoverContentPanelInline,
     setFontOverride,
     setVerseSelectionEffects,
+    setViewingAreaIndicators,
   };
 }

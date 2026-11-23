@@ -11,6 +11,8 @@ import { MaterialIcon } from "../icons";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { NoteHeading } from "../ScriptureNote/ScriptureNote";
 import { PlaylistNoteComposer } from "./PlaylistNoteComposer";
+import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
 
 type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 
@@ -85,17 +87,14 @@ export function PlaylistStepNoteSheet(props: {
             >
               {t("playlist-editor-title", { defaultValue: "Title" })}
             </label>
-            <input
+            <TextInput
               id="sb-pe-note-sheet-title"
-              className="sb-pe-input"
-              type="text"
               dir="auto"
               value={item.noteTitle ?? ""}
               placeholder={t("playlist-editor-note-title", {
                 defaultValue: "Note title",
               })}
-              onInput={(event) => {
-                const value = event.currentTarget.value;
+              onValueInput={(value) => {
                 update({ noteTitle: value.trim() ? value : undefined });
               }}
             />
@@ -114,8 +113,10 @@ export function PlaylistStepNoteSheet(props: {
             onChange={(html) => update({ note: html || undefined })}
           />
           {hasNote ? (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
+              tone="danger"
               className="sb-pe-note-remove"
               onClick={() => {
                 update({ note: undefined, noteTitle: undefined });
@@ -125,7 +126,7 @@ export function PlaylistStepNoteSheet(props: {
               {t("playlist-editor-note-remove", {
                 defaultValue: "Remove note",
               })}
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : null}

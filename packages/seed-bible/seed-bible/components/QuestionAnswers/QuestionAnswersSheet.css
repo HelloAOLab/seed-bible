@@ -58,11 +58,8 @@
     list-style: none;
   }
 }
-
 .sb-question-answers-empty {
-  margin: 0;
-  opacity: 0.7;
-  font-size: 0.9375rem;
+  --sb-empty-state-font-size: var(--sb-font-size-15);
 }
 
 .sb-question-answer {
@@ -101,18 +98,6 @@
 .sb-question-answer-actions {
   display: flex;
   margin-inline-start: auto;
-
-  & button {
-    min-height: 2rem;
-    padding: 0 0.5rem;
-    border: none;
-    background: transparent;
-    color: var(--sb-primary-color);
-    font: inherit;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
 }
 
 .sb-question-answer-text {

@@ -1,3 +1,4 @@
+import { LoadingStatus } from "../LoadingStatus/LoadingStatus";
 import "../PlaylistStepPage/PlaylistStepPage.css";
 import "../PlaylistCompareStep/PlaylistCompareStep.css";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
@@ -14,6 +15,7 @@ import { MaterialIcon } from "../icons";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { passageLabel, playlistItemLabel } from "../playlistItemLabel";
 import { PlaylistStepNoteSheet } from "./PlaylistStepNoteSheet";
+import { Button } from "../Button/Button";
 
 type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 type Which = "first" | "second";
@@ -219,15 +221,18 @@ function ComparePickBar(props: {
           defaultValue: "Now tap the last verse",
         })}
       </span>
-      <button
-        type="button"
+      <Button
+        size="sm"
+        shape="pill"
         className="sb-pe-pickbar-cancel"
         onClick={props.onCancel}
       >
         {t("cancel", { defaultValue: "Cancel" })}
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Button
+        variant="primary"
+        size="sm"
+        shape="pill"
         className="sb-pe-pickbar-apply"
         onClick={props.onJustThis}
       >
@@ -235,7 +240,7 @@ function ComparePickBar(props: {
           reference: props.reference,
           defaultValue: "Just {{reference}}",
         })}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -291,9 +296,11 @@ function PassageVerses(props: {
   }
   if (!chapter) {
     return (
-      <p className="sb-pe-compare-status">
-        {t("loading", { defaultValue: "Loading…" })}
-      </p>
+      <div className="sb-pe-compare-status">
+        <LoadingStatus>
+          {t("loading", { defaultValue: "Loading…" })}
+        </LoadingStatus>
+      </div>
     );
   }
 

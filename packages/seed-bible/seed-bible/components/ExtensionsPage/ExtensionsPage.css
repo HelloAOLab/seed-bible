@@ -35,23 +35,7 @@
 }
 
 .sb-extensions-page-add-link {
-  min-height: 2.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0 1.125rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
-  border-radius: var(--sb-radius-full);
-  background: transparent;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-extensions-page-add-link:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  flex-shrink: 0;
 }
 
 .sb-extensions-page-columns {
@@ -130,11 +114,15 @@
   gap: 1.75rem;
 }
 
-.sb-extensions-page-note,
-.sb-extensions-page-empty {
+.sb-extensions-page-note {
   margin: 0;
   font-size: var(--sb-font-size-15);
   color: var(--sb-extensions-page-muted);
+}
+
+.sb-extensions-page-empty {
+  --sb-empty-state-font-size: var(--sb-font-size-15);
+  --sb-empty-state-color: var(--sb-extensions-page-muted);
 }
 
 .sb-extensions-page-section {
@@ -207,6 +195,10 @@
 }
 
 .sb-extensions-card-name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
   font-size: var(--sb-font-size-16);
   font-weight: 600;
 }

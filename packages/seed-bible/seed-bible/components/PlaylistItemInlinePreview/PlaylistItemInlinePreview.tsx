@@ -1,3 +1,4 @@
+import { LoadingStatus } from "../LoadingStatus/LoadingStatus";
 import "./PlaylistItemInlinePreview.css";
 import { useEffect, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
@@ -127,9 +128,11 @@ function ScripturePreview(props: {
 
   if (state.status === "loading") {
     return (
-      <p className="sb-item-inline-preview-status">
-        {t("loading", { defaultValue: "Loading…" })}
-      </p>
+      <div className="sb-item-inline-preview-status">
+        <LoadingStatus>
+          {t("loading", { defaultValue: "Loading…" })}
+        </LoadingStatus>
+      </div>
     );
   }
 

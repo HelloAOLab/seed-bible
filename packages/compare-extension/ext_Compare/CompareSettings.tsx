@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { SeedBibleState, Translation } from "seed-bible/managers";
-import { MaterialIcon, useDragReorder } from "seed-bible/components";
+import {
+  Button,
+  IconButton,
+  MaterialIcon,
+  useDragReorder,
+  EmptyState,
+} from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import {
   removeId,
@@ -101,20 +107,14 @@ export function CompareSettings(props: {
     setDraftIds(null);
   };
 
-  // `sb-discover-item-delete` is the playlist editor's own remove button: a
-  // bare icon with no background or border until hovered.
   const renderRemoveButton = (entry: CompareOrderEntry) => (
-    <button
-      type="button"
-      className="sb-discover-item-delete"
-      aria-label={t("remove-translation", {
-        defaultValue: "Remove translation",
-      })}
-      title={t("remove-translation", { defaultValue: "Remove translation" })}
+    <IconButton
+      className="sb-compare-remove"
+      size="sm"
+      icon="delete"
+      label={t("remove-translation", { defaultValue: "Remove translation" })}
       onClick={() => remove(entry.id)}
-    >
-      <MaterialIcon>delete</MaterialIcon>
-    </button>
+    />
   );
 
   return (
@@ -171,26 +171,28 @@ export function CompareSettings(props: {
         </ul>
 
         {draggable.length === 0 && (
-          <p className="sb-discover-empty">
+          <EmptyState className="sb-compare-empty-note">
             {t("no-translations-selected", {
               defaultValue: "No translations added yet.",
             })}
-          </p>
+          </EmptyState>
         )}
       </div>
 
       <div className="sb-compare-add-bar">
-        <button
-          type="button"
+        <Button
           className="sb-compare-add-button"
+          variant="primary"
+          size="lg"
+          shape="pill"
+          icon="add"
           onClick={() => {
             state.addReturnTo.value = "settings";
             state.view.value = "add";
           }}
         >
-          <MaterialIcon>add</MaterialIcon>
           {t("add-translation", { defaultValue: "Add translation" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

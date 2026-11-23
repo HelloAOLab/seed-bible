@@ -50,6 +50,12 @@
 #     IOS_PROVISIONING_PROFILE_BASE64       base64 of the App Store provisioning
 #                                           profile for org.seedbible.app (it
 #                                           must include Associated Domains)
+#
+#   App Store Connect upload (release builds → TestFlight):
+#     APP_STORE_CONNECT_API_KEY_ID          the key's Key ID
+#     APP_STORE_CONNECT_API_ISSUER_ID       the Issuer ID shown above the keys
+#     APP_STORE_CONNECT_API_KEY             the downloaded .p8 file's contents,
+#                                           pasted as they are
 name: Native Apps
 
 on:
@@ -400,6 +406,27 @@ jobs:
             ${{ runner.temp }}/output/*.ipa
             ${{ runner.temp }}/output/*.zip
           if-no-files-found: error
+
+      - name: Upload to App Store Connect
+        if: steps.mode.outputs.mode == 'release'
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+          PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        run: |
+          if [ -z "$KEY_ID" ] || [ -z "$ISSUER_ID" ] || [ -z "$PRIVATE_KEY" ]; then
+            echo "::warning title=iOS upload skipped::The App Store Connect API key secrets aren't set, so the .ipa was only saved as an artifact. See .github/workflows/native.yml."
+            exit 0
+          fi
+          # altool only takes the key as a file named AuthKey_<id>.p8 in one
+          # of a few fixed folders.
+          KEY_DIR="$HOME/.appstoreconnect/private_keys"
+          mkdir -p "$KEY_DIR"
+          printf '%s\n' "$PRIVATE_KEY" > "$KEY_DIR/AuthKey_$KEY_ID.p8"
+          xcrun altool --upload-app --type ios \
+            --file "$(ls "$RUNNER_TEMP"/output/*.ipa)" \
+            --apiKey "$KEY_ID" --apiIssuer "$ISSUER_ID"
+          rm -f "$KEY_DIR/AuthKey_$KEY_ID.p8"
 
       - name: Remove the signing keychain
         if: always() && steps.mode.outputs.mode == 'release'

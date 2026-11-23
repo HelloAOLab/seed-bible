@@ -33,6 +33,9 @@ import {
   playlistStepLabel,
   playlistTotalMinutes,
 } from "./playlistSteps";
+import { Button } from "../Button/Button";
+import { BottomSheet } from "../BottomSheet/BottomSheet";
+import { TextInput } from "../TextField/TextField";
 
 type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 
@@ -108,9 +111,9 @@ function StepActions(props: {
       <div className="sb-pe-mobile-header-actions">
         <AddStepToggle playlists={playlists} />
         <ContextMenuWithButton
-          buttonClassName="sb-pe-square-button sb-pe-step-menu"
-          aria-label={more}
-          title={more}
+          buttonClassName="sb-pe-step-menu"
+          size="lg"
+          label={more}
         >
           <ContextMenuItem
             onClick={() => (playlists.editorStepSettingsOpen.value = true)}
@@ -133,22 +136,25 @@ function StepActions(props: {
   }
   return (
     <div className="sb-pe-toolbar-actions">
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="sm"
+        icon={<PeIcon name="copy" />}
         className="sb-pe-toolbar-action"
         onClick={() => playlists.duplicateEditingPlaylistItem(index)}
       >
-        <PeIcon name="copy" />
         {duplicate}
-      </button>
-      <button
-        type="button"
-        className="sb-pe-toolbar-action sb-pe-toolbar-action--danger"
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        tone="danger"
+        icon={<PeIcon name="trash" />}
+        className="sb-pe-toolbar-action"
         onClick={() => playlists.removeEditingPlaylistItem(index)}
       >
-        <PeIcon name="trash" />
         {remove}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -191,17 +197,14 @@ function PlaylistDetailsFields(props: {
         <label className="sb-pe-field-label" htmlFor={`${idPrefix}-title`}>
           {t("playlist-editor-title", { defaultValue: "Title" })}
         </label>
-        <input
+        <TextInput
           id={`${idPrefix}-title`}
-          className="sb-pe-input"
-          type="text"
           dir="auto"
           value={editing.title ?? ""}
           placeholder={t("untitled-playlist", {
             defaultValue: "Untitled playlist",
           })}
-          onInput={(event) => {
-            const value = event.currentTarget.value;
+          onValueInput={(value) => {
             playlists.updateEditingPlaylistMetadata({
               title: value.trim() ? value : null,
             });
@@ -215,17 +218,16 @@ function PlaylistDetailsFields(props: {
         >
           {t("description", { defaultValue: "Description" })}
         </label>
-        <textarea
+        <TextInput
+          multiline
           id={`${idPrefix}-description`}
-          className="sb-pe-textarea"
           dir="auto"
           rows={3}
           value={editing.description ?? ""}
           placeholder={t("playlist-description_placeholder", {
             defaultValue: "What is this playlist about?",
           })}
-          onInput={(event) => {
-            const value = event.currentTarget.value;
+          onValueInput={(value) => {
             playlists.updateEditingPlaylistMetadata({
               description: value.trim() ? value : null,
             });
@@ -278,30 +280,16 @@ function PlaylistDetailsSheet(props: { state: SeedBibleState }) {
   });
 
   return (
-    <>
-      <div className="sb-pe-sheet-scrim" onClick={close} />
-      <div
-        className="sb-pe sb-pe-sheet sb-pe-details-sheet"
-        role="dialog"
-        aria-label={heading}
-      >
-        <div className="sb-pe-sheet-handle" />
-        <div className="sb-pe-details-sheet-header">
-          <h3 className="sb-pe-details-sheet-title">{heading}</h3>
-          <button
-            type="button"
-            className="sb-pe-panel-close"
-            aria-label={t("close", { defaultValue: "Close" })}
-            onClick={close}
-          >
-            <PeIcon name="close" />
-          </button>
-        </div>
-        <div className="sb-pe-details-sheet-body">
-          <PlaylistDetailsFields state={state} idPrefix="sb-pe-details" />
-        </div>
+    <BottomSheet
+      className="sb-pe-details-sheet"
+      label={heading}
+      title={heading}
+      onClose={close}
+    >
+      <div className="sb-pe sb-pe-details-sheet-body">
+        <PlaylistDetailsFields state={state} idPrefix="sb-pe-details" />
       </div>
-    </>
+    </BottomSheet>
   );
 }
 
@@ -320,30 +308,16 @@ function PlaylistStepSettingsSheet(props: {
   });
 
   return (
-    <>
-      <div className="sb-pe-sheet-scrim" onClick={close} />
-      <div
-        className="sb-pe sb-pe-sheet sb-pe-details-sheet sb-pe-settings-sheet"
-        role="dialog"
-        aria-label={heading}
-      >
-        <div className="sb-pe-sheet-handle" />
-        <div className="sb-pe-details-sheet-header">
-          <h3 className="sb-pe-details-sheet-title">{heading}</h3>
-          <button
-            type="button"
-            className="sb-pe-panel-close"
-            aria-label={t("close", { defaultValue: "Close" })}
-            onClick={close}
-          >
-            <PeIcon name="close" />
-          </button>
-        </div>
-        <div className="sb-pe-details-sheet-body">
-          <StepSettings playlists={playlists} index={index} item={item} />
-        </div>
+    <BottomSheet
+      className="sb-pe-details-sheet sb-pe-settings-sheet"
+      label={heading}
+      title={heading}
+      onClose={close}
+    >
+      <div className="sb-pe sb-pe-details-sheet-body">
+        <StepSettings playlists={playlists} index={index} item={item} />
       </div>
-    </>
+    </BottomSheet>
   );
 }
 
@@ -393,9 +367,9 @@ function UnfinishedStepsContent(props: { state: SeedBibleState }) {
         </ul>
       </div>
       <div className="sb-pe-review-actions">
-        <button type="button" className="sb-pe-review-back" onClick={close}>
+        <Button className="sb-pe-review-back" onClick={close}>
           {t("playlist-editor-keep-editing", { defaultValue: "Keep editing" })}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -436,10 +410,11 @@ export function PublishButton(props: { state: SeedBibleState }) {
       .finally(() => setSaving(false));
   };
   return (
-    <button
-      type="button"
+    <Button
+      variant="primary"
+      size="lg"
       className="sb-pe-publish"
-      disabled={saving}
+      loading={saving}
       onClick={save}
     >
       {saving
@@ -447,7 +422,7 @@ export function PublishButton(props: { state: SeedBibleState }) {
         : t("playlist-editor-save-and-publish", {
             defaultValue: "Save & Publish",
           })}
-    </button>
+    </Button>
   );
 }
 
@@ -481,9 +456,9 @@ function PlaylistDetailsModal(props: { state: SeedBibleState }) {
       ),
       footer: ({ t }) => (
         <div className="sb-pe sb-pe-details-modal-footer">
-          <button type="button" className="sb-pe-publish" onClick={close}>
+          <Button variant="primary" className="sb-pe-publish" onClick={close}>
             {t("done", { defaultValue: "Done" })}
-          </button>
+          </Button>
         </div>
       ),
       onDismiss: close,
@@ -517,13 +492,15 @@ export function VersePickBar(props: { state: SeedBibleState }) {
           defaultValue: "Highlight verses {{verses}}",
         })}
       </span>
-      <button
-        type="button"
+      <Button
+        variant="primary"
+        size="sm"
+        shape="pill"
         className="sb-pe-pickbar-apply"
         onClick={() => playlists.applyEditorVersePick()}
       >
         {t("playlist-editor-apply", { defaultValue: "Apply" })}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -553,13 +530,15 @@ export function ChapterChangeBar(props: { state: SeedBibleState }) {
           defaultValue: "Use {{passage}} for step {{step}}?",
         })}
       </span>
-      <button
-        type="button"
+      <Button
+        variant="primary"
+        size="sm"
+        shape="pill"
         className="sb-pe-pickbar-apply"
         onClick={() => playlists.applyEditorChapterChange()}
       >
         {t("playlist-editor-apply", { defaultValue: "Apply" })}
-      </button>
+      </Button>
     </div>
   );
 }

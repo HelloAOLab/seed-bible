@@ -1,0 +1,56 @@
+/* The shared dropdown. The box itself is `TextInput`'s (`sb-text-input`, so its
+   border, focus ring, error color, sizes and custom properties apply here
+   too: see TextField.css); this adds what a dropdown needs on top: the
+   browser's own arrow turned off, and ours drawn in its place. `SearchableSelect`'s
+   button wears the same two classes, so both kinds of picker match. */
+.sb-select {
+  position: relative;
+  display: block;
+  min-width: 0;
+  color: var(--sb-font-color);
+}
+
+.sb-select-input {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+
+.sb-select > .sb-select-input {
+  /* Room for the arrow. */
+  padding-inline-end: calc(var(--sb-text-input-padding-inline) + 1.5rem);
+}
+
+/* The arrow: two borders of a box, turned. Drawn in CSS so it needs no icon
+   font, which a sandboxed extension frame doesn't have. */
+.sb-select::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: 1rem;
+  top: 50%;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border: solid currentColor;
+  border-width: 0 2px 2px 0;
+  transform: translateY(-70%) rotate(45deg);
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.sb-select:has(.sb-select-input:disabled)::after {
+  opacity: 0.3;
+}
+
+.sb-select-input:disabled {
+  cursor: not-allowed;
+}
+
+/* The native option list ignores the box's transparent background and draws
+   white, so each option takes the theme's background to keep the text
+   readable in dark mode. */
+.sb-select-input option,
+.sb-select-input optgroup {
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+}

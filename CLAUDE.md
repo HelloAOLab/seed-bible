@@ -17,7 +17,7 @@ This applies to all prose responses — summaries, explanations, and trade-off d
 
 ## Project Overview
 
-**Seed Bible** is a collaborative, web-based Bible study and visualization platform built on top of [CasualOS](https://github.com/casual-simulation/casualos) — a distributed runtime that manages bots, state, and real-time collaboration. The app compiles into `.aux` files (CasualOS's binary script format) and runs inside a CasualOS simulation.
+**Seed Bible** is a collaborative, web-based Bible study and visualization platform built on top of [CasualOS](https://github.com/casual-simulation/casualos) — a distributed runtime that manages bots, state, and real-time collaboration.
 
 ## Package Manager
 
@@ -26,22 +26,10 @@ This project requires **pnpm v10+**. Do not use npm or yarn.
 ## Common Commands
 
 ```bash
-pnpm dev               # Run the SSR dev server (Express + Vite, HMR)
-pnpm test              # Run Vitest test suite
-pnpm test:watch        # Vitest in watch mode
 pnpm lint              # ESLint (includes i18n translation key validation) + stylelint (duplicate selectors/declarations, fixed colors paired with theme colors, raw values that have a design token)
-pnpm lint:fix          # Auto-fix linting issues
 pnpm check:ts          # TypeScript type check — client + patterns (non-emit)
-pnpm build             # Production build (client + SSR + server bundles)
 pnpm pattern pack <name>  # Package a patterns/<name> portal into .aux
 pnpm build:native      # Static web build for the Capacitor iOS/Android apps (mobile/)
-pnpm format            # Prettier formatting
-```
-
-**Run a single test file:**
-
-```bash
-pnpm vitest run FreeUseBibleAPI.test.ts
 ```
 
 ## Architecture
@@ -53,20 +41,12 @@ This is a **monorepo** (pnpm workspaces) containing a Preact-based Bible reader.
 **Managers** (`managers/`) contain all business logic. Each owns one domain:
 
 - `OsManager` — CasualOS gateway; wraps the SDK records/auth/inst clients (data, files, shared docs). Every CasualOS-touching manager receives this `os`.
-- `LoginManager` — Email-code auth, sessions, and user profile
-- `BibleDataManager` — Bible content and translation loading
-- `BibleReadingManager` — Reading position and navigation
-- `HighlightsManager`, `SavesManager`, `AnnotationsManager` — Annotations, persisted via CasualOS records
-- `SessionsManager` — Shared/multiplayer sessions (Yjs shared documents)
-- `ThemeManager` — Dark/light mode and color schemes
-- `ExtensionManager` — Extension lifecycle
-- `SearchManager` — Typesense-backed search
 
 **Components** (`components/`) are Preact functional components. State is managed with `@preact/signals`, not useState/useReducer.
 
 **App entry** (`app/`) — initialization hooks, PostHog bootstrap, and the entry point that wires managers together.
 
-**i18n** (`i18n/`) — i18next with 24 locale JSON files. Translation keys are validated at lint time by a custom ESLint rule in `script/eslint/`.
+**i18n** (`i18n/`) — i18next with one JSON file per locale. Translation keys are validated at lint time by a custom ESLint rule in `script/eslint/`.
 
 ### Extensions (`packages/*-extension/`)
 
@@ -118,4 +98,4 @@ The app deploys as a **web app, not a pattern**: `pnpm build` makes client + SSR
 
 **Design tokens**: Shared scales (corners, stacking layers, animation speeds, font sizes, shadows, and any added later) are `--sb-*` tokens defined in `app/styles/base.inline.css`; the comment beside each family says what its steps are for. Use a token instead of a raw value, picking the nearest step rather than inventing one, and add a step or a family there when nothing fits. Some values stay raw on purpose (icon sizes, reader text, hairlines, em values, z-indexes that only order things inside one component); give those a `stylelint-disable-next-line` comment with the reason, since stylelint's `seed-bible/use-design-tokens` warns on a raw value that equals a token. Every token also goes in `app/styles/sharedTokens.ts`, because sandboxed extension frames only get that copy; a unit test checks the two match. A new family needs a line in `script/stylelint/useDesignTokensRule.mjs` too, saying which properties it covers, before the lint can flag raw values for it. A token built on a theme variable (like the shadows on `--sb-shadow-color`) must be declared on `body`, where ThemeManager sets the theme, not `:root`, or it locks in the light value.
 
-**Shared components**: Reusable controls are built once in `components/` and are meant for extensions as well as the app, so an extension's interface looks and behaves like Seed Bible's own. Before hand-building a control, check `components/index.tsx` for one that already does the job. A new shared component is exported from `components/index.tsx`, the public `seed-bible/components` entry extensions import from; is styled only with `--sb-*` tokens and theme variables; and takes a `className` for placement. A surface that needs it to look different sets the custom properties the component exposes where it has them, rather than overriding its rules. A component that calls `useI18n()` needs an `I18nProvider` above it, so code that renders its own root with `render(..., container)` wraps that root in `<I18nProvider i18n={context.i18n}>`, which `seed-bible/i18n` exports.
+**Shared components**: Reusable controls are built once in `components/` and are meant for extensions as well as the app, so an extension's interface looks and behaves like Seed Bible's own. Before hand-building a control, check `components/index.tsx` for one that already does the job. A new shared component is exported from `components/index.tsx`, the public `seed-bible/components` entry extensions import from; is styled only with `--sb-*` tokens and theme variables; and takes a `className` for placement. A surface that needs it to look different sets the custom properties the component exposes where it has them, rather than overriding its rules. Shared components are bundled into sandboxed extensions, so they import `useI18n` from `i18n/I18nContext` rather than `I18nManager`, which brings every locale; `extensionBundleImports.test.ts` checks what they reach. Each one imports its own CSS file next to it (not `base.inline.css`): the package build keeps that import, and the extension build tool carries the CSS into the sandboxed frame. For the same reason a shared component doesn't use the app's global utility classes (`flex-between` and the rest of `utilities.inline.css`), which a sandboxed frame never gets; it gives its own class the rule instead. To hide something on screen but keep it for screen readers, anywhere in the app, use `.sb-visually-hidden` and import `components/visuallyHidden.inline.css` in that file.

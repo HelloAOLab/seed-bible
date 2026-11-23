@@ -1,9 +1,11 @@
 import "./ExtensionInfoPage.css";
 import type { ComponentChildren } from "preact";
 import { useSignal } from "@preact/signals";
-import { useEffect, useRef } from "preact/hooks";
-import { useI18n } from "../../i18n/I18nManager";
+import { useEffect, useMemo, useRef } from "preact/hooks";
+import { baseLanguageTag, useI18n } from "../../i18n/I18nManager";
+import { DEFAULT_UI_LANGUAGE } from "../../managers/ReadingUrlPath";
 import type {
+  Extension,
   ExtensionListEntry,
   ExtensionManager,
 } from "../../managers/ExtensionManager";
@@ -23,6 +25,17 @@ import {
   ExtensionPermissionsPanel,
   type PermissionsApi,
 } from "../ExtensionConsentModal/ExtensionPermissionsPanel";
+import { Button } from "../Button/Button";
+import { ScreenshotViewer } from "../ScreenshotViewer/ScreenshotViewer";
+import {
+  ExtensionReviewBadges,
+  ExtensionReviewControls,
+  ExtensionReviewDetailRows,
+  ExtensionReviewNotice,
+  useExtensionReview,
+} from "../ExtensionReview/ExtensionReview";
+import type { ExtensionReviewsManager } from "../../managers/ExtensionReviewsManager";
+import type { ModalManager } from "../../managers/ModalManager";
 
 export type ExtensionInstallState =
   | "none"
@@ -38,8 +51,15 @@ export interface ExtensionInfoPageProps {
   name: string;
   description: string;
   installState: ExtensionInstallState;
-  extensions: PermissionsApi & Pick<ExtensionManager, "describeUploader">;
+  extensions: PermissionsApi &
+    Pick<ExtensionManager, "describeUploader" | "loadExtensionTranslations">;
   people?: ConsentPeople;
+  /** Which extensions are verified. */
+  reviews?: ExtensionReviewsManager;
+  /** Whether the extension is compiled into the app, which makes it verified. */
+  builtIn: boolean;
+  /** Opens the dialog an admin marks an extension verified in. */
+  modals?: ModalManager;
   /**
    * "narrow" stacks everything for the sidebar; "wide" lays it out across a
    * full-screen page, with the tabs down the side.
@@ -87,6 +107,104 @@ const TAB_ICONS: Record<InfoTab, string> = {
   settings: "settings",
 };
 
+function ExtensionScreenshots(props: {
+  extension: Extension;
+  extensions: Pick<ExtensionManager, "loadExtensionTranslations">;
+}) {
+  const { extension, extensions } = props;
+  const { t, language } = useI18n();
+  const failed = useSignal<Set<string>>(new Set());
+  const opened = useSignal<number | null>(null);
+  const translationsReady = useSignal(false);
+  const declared = extension.meta.screenshots ?? [];
+  const hasCaptions = declared.some((shot) => shot.caption);
+
+  useEffect(() => {
+    if (baseLanguageTag(language) === DEFAULT_UI_LANGUAGE || !hasCaptions)
+      return;
+    let current = true;
+    translationsReady.value = false;
+    void extensions.loadExtensionTranslations(extension).then(
+      () => {
+        if (current) translationsReady.value = true;
+      },
+      () => {
+        // The inline English captions remain usable when the import fails.
+      }
+    );
+    return () => {
+      current = false;
+    };
+  }, [extension, extensions, language, hasCaptions]);
+
+  // Resource bundle updates do not change the language signal, so recompute
+  // captions when the deferred translations have arrived.
+  const screenshots = useMemo(
+    () =>
+      declared.flatMap((shot, index) => {
+        if (failed.value.has(shot.src)) return [];
+        const english = extension.meta.translations.en;
+        const fallback =
+          shot.caption && Object.hasOwn(english, shot.caption)
+            ? english[shot.caption]
+            : undefined;
+        const translated = shot.caption
+          ? t(shot.caption, {
+              ns: extension.meta.id,
+              defaultValue: fallback ?? "",
+            })
+          : undefined;
+        const caption = translated || undefined;
+        return [
+          {
+            src: shot.src,
+            caption,
+            accessibleName: caption ?? t("screenshot-name", { n: index + 1 }),
+          },
+        ];
+      }),
+    [declared, failed.value, language, translationsReady.value, extension, t]
+  );
+  const remove = (src: string) => {
+    failed.value = new Set([...failed.value, src]);
+  };
+
+  if (screenshots.length === 0) return null;
+  return (
+    <section className="sb-extension-info-section sb-extension-screenshots">
+      <h2 className="sb-extension-info-heading">
+        {t("extension-screenshots")}
+      </h2>
+      <div className="sb-extension-screenshot-strip">
+        {screenshots.map((shot, index) => (
+          <button
+            key={index}
+            type="button"
+            className="sb-extension-screenshot"
+            aria-label={shot.accessibleName}
+            onClick={() => (opened.value = index)}
+          >
+            <img
+              src={shot.src}
+              alt=""
+              loading="lazy"
+              onError={() => remove(shot.src)}
+            />
+          </button>
+        ))}
+      </div>
+      {opened.value !== null && (
+        <ScreenshotViewer
+          screenshots={screenshots}
+          initialIndex={opened.value}
+          onClose={() => (opened.value = null)}
+          onImageError={remove}
+        />
+      )}
+    </section>
+  );
+}
+
 /**
  * Everything about one extension in one place: what it is and can do, and,
  * once it's installed, its permissions, its settings and uninstalling it.
@@ -106,6 +224,8 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
   const url = extension && "url" in extension ? extension.url : null;
   const summary = extensions.sandboxPermissions.value[entry.id];
   const uploader = useExtensionUploader(extensions, entry.id, url);
+  const { builtIn } = props;
+  const review = useExtensionReview(props.reviews, entry.id, builtIn);
   const installed =
     installState === "installed" || installState === "downloaded";
 
@@ -171,6 +291,7 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
         <dd className="sb-extension-info-id">
           {sourced?.declaredId ?? entry.id}
         </dd>
+        <ExtensionReviewDetailRows review={review} builtIn={builtIn} />
       </dl>
     </section>
   );
@@ -179,41 +300,44 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
     <p className="sb-extension-info-description">{props.description}</p>
   );
 
-  const unreviewed = url && (
-    <p className="sb-extension-consent-notice">
-      <span
-        className="material-symbols-outlined sb-extension-consent-notice-icon"
-        aria-hidden="true"
-      >
-        info
-      </span>
-      {t("extension-consent-unreviewed")}
-    </p>
+  const unreviewed = url && <ExtensionReviewNotice review={review} />;
+
+  const reviewControls = !builtIn && props.reviews && props.modals && (
+    <ExtensionReviewControls
+      reviews={props.reviews}
+      modals={props.modals}
+      name={name}
+      extensionId={entry.id}
+    />
   );
 
   const installButton = !installed && (
-    <button
-      type="button"
+    <Button
+      variant="primary"
+      size="lg"
+      shape="pill"
       className="sb-extension-info-install"
-      disabled={installState === "pending"}
+      loading={installState === "pending"}
       onClick={props.onInstall}
     >
       {installState === "pending"
         ? t("extension-state-pending", { defaultValue: "Installing…" })
         : t("install", { defaultValue: "Install" })}
-    </button>
+    </Button>
   );
 
   const uninstallButton = installed && (
-    <button
-      type="button"
+    <Button
+      tone="danger"
+      size="lg"
+      shape="pill"
       className="sb-extension-info-uninstall"
       onClick={props.onUninstall}
     >
       {wide
         ? t("uninstall", { defaultValue: "Uninstall" })
         : t("extension-info-uninstall", { name })}
-    </button>
+    </Button>
   );
 
   const whatItCanDo = !installed && manifest?.ok && (
@@ -258,21 +382,33 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
     </section>
   );
 
+  const screenshots = extension && (
+    <ExtensionScreenshots
+      key={entry.id}
+      extension={extension}
+      extensions={extensions}
+    />
+  );
+
   const about = wide ? (
     <div className="sb-extension-info-about">
       <div className="sb-extension-info-about-main">
         {description}
+        {screenshots}
         {unreviewed}
       </div>
       {details}
+      {reviewControls}
     </div>
   ) : (
     <div className="sb-extension-info-panel">
       {description}
+      {screenshots}
       {installButton}
       {unreviewed}
       {whatItCanDo}
       {details}
+      {reviewControls}
       {uninstallButton}
     </div>
   );
@@ -303,6 +439,7 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
               {statusLabel}
             </span>
           )}
+          <ExtensionReviewBadges review={review} builtIn={builtIn} focusable />
         </div>
         <p className="sb-extension-consent-source">
           {sourceHost
@@ -408,8 +545,14 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
           </div>
         ) : (
           <div className="sb-extension-info-body">
-            <div className="sb-extension-info-body-main">{whatItCanDo}</div>
-            <aside className="sb-extension-info-aside">{details}</aside>
+            <div className="sb-extension-info-body-main">
+              {screenshots}
+              {whatItCanDo}
+            </div>
+            <aside className="sb-extension-info-aside">
+              {details}
+              {reviewControls}
+            </aside>
           </div>
         )}
       </div>

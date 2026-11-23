@@ -1,7 +1,7 @@
 import { resolveLocalBin } from "../lib/resolveLocalBin.js";
 import { runNodeScript } from "../lib/spawn.js";
 import { loadExtensionProjectInfo } from "../lib/project.js";
-import { checkIcon } from "../lib/icon.js";
+import { checkImages } from "../lib/images.js";
 import {
   checkManifestPermissions,
   checkPermissionUses,
@@ -26,7 +26,7 @@ export async function runCheck(root: string = process.cwd()): Promise<number> {
 }
 
 /**
- * Prints what's wrong with the manifest's permissions or icon; 1 if anything
+ * Prints what's wrong with the manifest's permissions or images; 1 if anything
  * is.
  */
 export async function checkPermissions(root: string): Promise<number> {
@@ -35,7 +35,7 @@ export async function checkPermissions(root: string): Promise<number> {
   if (!isSandboxedProject(sources)) {
     return 0;
   }
-  console.log("[check] Checking extension.json's permissions and icon …");
+  console.log("[check] Checking extension.json's permissions and images …");
   const { errors, warnings } = checkPermissionUses(
     info.meta,
     findPermissionUses(sources)
@@ -43,7 +43,7 @@ export async function checkPermissions(root: string): Promise<number> {
   const problems = [
     ...checkManifestPermissions(info.meta),
     ...errors,
-    ...(await checkIcon(root, info.meta)),
+    ...(await checkImages(root, info.meta)),
   ];
   for (const problem of problems) {
     console.error(`[check] ${problem}`);

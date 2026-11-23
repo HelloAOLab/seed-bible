@@ -7,8 +7,9 @@ import type {
   PlaylistManager,
 } from "../../managers/PlaylistManager";
 import { resolveLinkMedia } from "../../managers/resolveLinkMedia";
-import { safeImageUrl } from "../../managers/linkPreview";
+import { safeImageUrl } from "../../managers/safeImageUrl";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
+import { TextInput } from "../TextField/TextField";
 import { PeIcon } from "./editorControls";
 import { PlaylistNoteComposer } from "./PlaylistNoteComposer";
 import { playlistStepKind, playlistStepKindName } from "./playlistSteps";
@@ -27,6 +28,9 @@ export interface StepCardContext {
   resolveBookName: (bookId: string) => string;
 }
 
+/** The id of a field's hint, which its box lists in `aria-describedby`. */
+const hintIdFor = (htmlFor: string) => `${htmlFor}-hint`;
+
 function Field(props: {
   label: string;
   hint?: string;
@@ -40,7 +44,12 @@ function Field(props: {
           {props.label}
         </label>
         {props.hint ? (
-          <span className="sb-pe-field-hint">{props.hint}</span>
+          <span
+            id={props.htmlFor ? hintIdFor(props.htmlFor) : undefined}
+            className="sb-pe-field-hint"
+          >
+            {props.hint}
+          </span>
         ) : null}
       </div>
       {props.children}
@@ -69,19 +78,18 @@ function TitleField(props: {
       }
       htmlFor={props.id}
     >
-      <input
+      <TextInput
         id={props.id}
-        className="sb-pe-input"
-        type="text"
         dir="auto"
         value={props.value}
+        aria-describedby={hintIdFor(props.id)}
         placeholder={
           props.placeholder ||
           t("playlist-editor-title-placeholder", {
             defaultValue: "e.g. Before we begin",
           })
         }
-        onInput={(event) => props.onInput(event.currentTarget.value)}
+        onValueInput={props.onInput}
       />
     </Field>
   );
@@ -270,16 +278,23 @@ function LinkCard(props: { ctx: StepCardContext; item: LinkItem }) {
         }
         htmlFor={linkId}
       >
-        <input
+        <TextInput
           id={linkId}
-          className={`sb-pe-input${trimmed && !looksRight ? " sb-pe-input--invalid" : ""}`}
           type="url"
           value={url}
+          invalid={!!trimmed && !looksRight}
+          aria-describedby={
+            [
+              kind === "video" ? hintIdFor(linkId) : undefined,
+              trimmed && !looksRight ? `${linkId}-error` : undefined,
+            ]
+              .filter(Boolean)
+              .join(" ") || undefined
+          }
           placeholder={t("playlist-editor-video-link-placeholder", {
             defaultValue: "https://youtube.com/watch?v=…",
           })}
-          onInput={(event) => {
-            const value = event.currentTarget.value;
+          onValueInput={(value) => {
             setUrl(value);
             if (commitTimer.current) clearTimeout(commitTimer.current);
             commitTimer.current = setTimeout(() => {
@@ -313,7 +328,7 @@ function LinkCard(props: { ctx: StepCardContext; item: LinkItem }) {
             </span>
           </div>
         ) : trimmed ? (
-          <p className="sb-pe-error" role="alert">
+          <p id={`${linkId}-error`} className="sb-pe-error" role="alert">
             {kind === "video"
               ? t("playlist-editor-video-link-invalid", {
                   defaultValue: "That isn't a YouTube or Vimeo link.",

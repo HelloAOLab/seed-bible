@@ -1,4 +1,8 @@
-import { MaterialIcon } from "seed-bible/components";
+import {
+  Button,
+  type ButtonSize,
+  type ButtonVariant,
+} from "seed-bible/components";
 import { setSoundMuted, soundMuted } from "./winSound";
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
@@ -7,9 +11,13 @@ type Translate = (key: string, options?: Record<string, unknown>) => string;
 export function SoundToggle({
   t,
   className,
+  variant = "secondary",
+  size = "md",
 }: {
   t: Translate;
-  className: string;
+  className?: string;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
 }) {
   const muted = soundMuted.value;
   const label = muted
@@ -22,17 +30,15 @@ export function SoundToggle({
         ns: "find-the-verse-extension",
       });
   return (
-    <button
-      type="button"
+    <Button
       className={className}
+      variant={variant}
+      size={size}
+      icon={muted ? "volume_off" : "volume_up"}
       aria-pressed={!muted}
-      title={label}
       onClick={() => setSoundMuted(!muted)}
     >
-      <MaterialIcon aria-hidden="true">
-        {muted ? "volume_off" : "volume_up"}
-      </MaterialIcon>
-      <span>{label}</span>
-    </button>
+      {label}
+    </Button>
   );
 }

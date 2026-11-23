@@ -1,7 +1,3 @@
-.sb-language-english-name {
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-}
-
 .sb-settings-page {
   padding: 0.75rem 0.5rem 1.5rem;
   color: var(--sb-font-color);
@@ -31,20 +27,16 @@
   margin: 0.25rem 0;
   border: 0;
 }
-
 .sb-settings-empty-state {
-  padding: 0.625rem 0.75rem;
-  border: 1px solid var(--sb-divider-color);
-  border-radius: var(--sb-radius-md);
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 75%);
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  font-size: var(--sb-font-size-14);
+  --sb-empty-state-padding: 0.625rem 0.75rem;
+  --sb-empty-state-border: 1px solid var(--sb-divider-color);
+  --sb-empty-state-radius: var(--sb-radius-md);
+  --sb-empty-state-background: color-mix(
+    in srgb,
+    var(--sb-secondary-color),
+    transparent 75%
+  );
 }
-
-.sb-settings-empty-state p {
-  margin: 0;
-}
-
 .sb-settings-save-error {
   margin: 0.5rem 0 0;
   font-size: var(--sb-font-size-13);
@@ -93,28 +85,6 @@
   margin-left: auto;
 }
 
-.sb-extension-row-action-button {
-  width: 1.875rem;
-  height: 1.875rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  border-radius: var(--sb-radius-md);
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 70%);
-  color: var(--sb-font-color);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-.sb-extension-row-action-button:hover {
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 56%);
-}
-
-.sb-extension-row-action-button .material-symbols-outlined {
-  font-size: 1.125rem;
-}
-
 .sb-extension-state-icon {
   font-size: 1.125rem;
   flex: 0 0 auto;
@@ -140,39 +110,6 @@
   line-height: 1.25;
 }
 
-.sb-pill-toggle {
-  display: inline-block;
-  width: 2.75rem;
-  height: 1.5rem;
-  border-radius: var(--sb-radius-lg);
-  background-color: color-mix(in srgb, var(--sb-font-color), transparent 78%);
-  position: relative;
-  flex-shrink: 0;
-  transition: background-color var(--sb-duration-base) ease;
-}
-
-.sb-pill-toggle::before {
-  content: "";
-  position: absolute;
-  top: 0.125rem;
-  left: 0.125rem;
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 50%;
-  background-color: #fff;
-  box-shadow: var(--sb-shadow-raised);
-  transition: left var(--sb-duration-base) ease;
-}
-
-.sb-pill-toggle.is-on {
-  background-color: var(--sb-primary-color);
-}
-
-.sb-pill-toggle.is-on::before {
-  left: 1.375rem;
-  background-color: var(--sb-primary-font-color);
-}
-
 .sb-extension-add-link {
   display: flex;
   flex-direction: column;
@@ -181,27 +118,6 @@
 
 .sb-extensions-add-link-button {
   align-self: flex-start;
-  min-height: 2.75rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0 1rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
-  border-radius: var(--sb-radius-full);
-  background: transparent;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-extensions-add-link-button:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-}
-
-.sb-extensions-add-link-button .material-symbols-outlined {
-  font-size: 1.125rem;
 }
 
 .sb-extension-add-link-row {
@@ -209,13 +125,8 @@
   gap: 0.5rem;
 }
 
-.sb-extension-add-link-row .sb-settings-text-input {
+.sb-extension-add-link-input {
   flex: 1;
-  min-width: 0;
-}
-
-.sb-extension-add-link-row .sb-settings-action-button {
-  width: auto;
 }
 
 .sb-extension-add-link-status {
@@ -278,20 +189,19 @@
   padding: 0.25rem 0.25rem;
 }
 
-.sb-settings-field-label {
-  font-size: var(--sb-font-size-13);
-  font-weight: 500;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-}
-
 .sb-extension-settings-fields {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.sb-extension-settings-fields .sb-settings-toggle-row {
-  padding: 0;
+/* A yes/no setting: its title (and reset button) at the start, the switch at
+   the end. */
+.sb-settings-field-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 /* One destination's sensitive settings, saved together. */
@@ -314,10 +224,6 @@
   font-size: var(--sb-font-size-14);
 }
 
-.sb-extension-sensitive-unused-row .sb-settings-action-button {
-  width: auto;
-}
-
 .sb-extension-sensitive-actions {
   display: flex;
   gap: 0.5rem;
@@ -333,15 +239,6 @@
   min-height: 1.5rem;
 }
 
-.sb-settings-field-title-row .sb-theme-color-reset {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.sb-settings-field-title-row .sb-theme-color-reset .material-symbols-outlined {
-  font-size: 1rem;
-}
-
 /* Sits under a setting's title, so it stays close to the title's size rather
    than the browser's default paragraph size, which was larger than the title. */
 .sb-settings-field-description {
@@ -352,43 +249,11 @@
 }
 
 /* The choice to store a value for a setting at all, on its own row above the
-   field. The checkbox itself is hidden (but still focusable) so the Material
-   glyph can stand in for it. */
+   field. */
 .sb-settings-field-override {
-  display: inline-flex;
-  align-items: center;
   align-self: flex-start;
-  gap: 0.25rem;
   font-size: var(--sb-font-size-13);
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-  cursor: pointer;
-}
-
-.sb-settings-field-override-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.sb-settings-field-override-icon {
-  font-size: 1.125rem;
-}
-
-.sb-settings-field-override-input:checked + .sb-settings-field-override-icon {
-  color: var(--sb-primary-color);
-}
-
-.sb-settings-field-override-input:focus-visible
-  + .sb-settings-field-override-icon {
-  outline: 2px solid var(--sb-primary-color);
-  outline-offset: 2px;
-  border-radius: var(--sb-radius-xs);
 }
 
 /* Says what the field's value is overriding, so it reads as a note about the
@@ -400,45 +265,14 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
 
-.sb-settings-language-select {
-  border: none;
-  border-radius: var(--sb-radius-md);
-  padding: 0.75rem 1rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  color: var(--sb-font-color);
-  font-size: var(--sb-font-size-15);
-  font-family: inherit;
-  cursor: pointer;
-  /* max-width: 220px; */
-  transition: background-color var(--sb-duration-base) ease;
-  width: 100%;
-}
-
-/* The native option popup ignores the select's translucent background and
-   renders white, so options need an explicit theme background to keep the
-   inherited font color readable in dark mode. */
-.sb-settings-language-select option {
-  background: var(--sb-background);
-  color: var(--sb-font-color);
-}
-
-.sb-settings-language-select:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
-}
-
-.sb-settings-language-select:focus {
-  outline: none;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
+/* Insets a dropdown field 0.25rem from the edges of the settings list, in line
+   with the rows around it. */
+.sb-settings-select-field {
+  padding: 0.25rem;
 }
 
 .sb-language-picker {
   position: relative;
-}
-
-.sb-language-picker-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .sb-language-picker-overlay {
@@ -498,12 +332,10 @@
 .sb-language-picker-search-input::placeholder {
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
-
 .sb-language-picker-empty {
-  padding: 0.75rem 0.625rem;
-  font-size: var(--sb-font-size-13);
+  --sb-empty-state-padding: 0.75rem 0.625rem;
+  --sb-empty-state-font-size: var(--sb-font-size-13);
   text-align: center;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
 .sb-language-picker-item {
@@ -535,94 +367,18 @@
    the default downward-opening absolute menu spills off-screen behind the tab
    bar. Render it as a bottom-anchored sheet that stays above the nav bar and
    scrolls internally, with the overlay dimming the whole screen. */
-@media (max-width: 480px) {
-  .sb-language-picker-overlay {
-    background: rgba(0, 0, 0, 0.3);
-  }
-
-  .sb-language-picker-menu {
-    position: fixed;
-    left: 0.75rem;
-    right: 0.75rem;
-    top: auto;
-    bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
-    min-width: 0;
-    max-height: min(50dvh, 22.5rem);
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-language-picker-overlay {
+  background: var(--sb-backdrop);
 }
 
-.sb-settings-toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.375rem 0.25rem;
-}
-
-.sb-settings-toggle-label {
-  font-size: var(--sb-font-size-14);
-  font-weight: 500;
-  color: var(--sb-font-color);
-}
-
-/* Custom pill-toggle (ported from develop design) */
-.sb-settings-toggle-row input[type="checkbox"] {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 2.75rem;
-  height: 1.5rem;
-  border-radius: var(--sb-radius-lg);
-  /* Off-state track: a tint of the theme's font color over its background so
-     it stays subtle yet visible in both light and dark modes. */
-  background-color: color-mix(
-    in srgb,
-    var(--sb-font-color) 22%,
-    var(--sb-background)
-  );
-  position: relative;
-  cursor: pointer;
-  transition: background-color var(--sb-duration-base) ease;
-  flex-shrink: 0;
-  margin: 0;
-  border: none;
-  outline: none;
-}
-
-.sb-settings-toggle-row input[type="checkbox"]::before {
-  content: "";
-  position: absolute;
-  top: 0.125rem;
-  left: 0.125rem;
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 50%;
-  /* Off-state knob: same hue as the track but a shade lighter, so it reads
-     clearly without the harsh pure-white glare on dark surfaces. */
-  background-color: color-mix(
-    in srgb,
-    var(--sb-font-color) 60%,
-    var(--sb-background)
-  );
-  box-shadow: var(--sb-shadow-raised);
-  transition:
-    left var(--sb-duration-base) ease,
-    background-color var(--sb-duration-base) ease;
-}
-
-.sb-settings-toggle-row input[type="checkbox"]:checked {
-  background-color: var(--sb-primary-color);
-}
-
-.sb-settings-toggle-row input[type="checkbox"]:checked::before {
-  left: 1.375rem;
-  /* On-state knob: the primary's paired font color always contrasts the
-     primary track (white on the orange light theme, dark on the pale dark). */
-  background-color: var(--sb-primary-font-color);
-}
-
-.sb-settings-toggle-row input[type="checkbox"]:focus-visible {
-  outline: 2px solid var(--sb-primary-color);
-  outline-offset: 2px;
+:where(html[data-sb-app-layout="mobile"]) .sb-language-picker-menu {
+  position: fixed;
+  left: 0.75rem;
+  right: 0.75rem;
+  top: auto;
+  bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
+  min-width: 0;
+  max-height: min(50dvh, 22.5rem);
 }
 
 .sb-settings-list {
@@ -734,81 +490,12 @@
   color: var(--sb-font-color);
 }
 
-.sb-settings-text-input {
-  border: none;
-  border-radius: var(--sb-radius-md);
-  padding: 0.375rem 0.5rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  color: var(--sb-font-color);
-  font-size: var(--sb-font-size-15);
-  font-family: inherit;
-  width: 100%;
-  box-sizing: border-box;
-  transition: background-color var(--sb-duration-base) ease;
-}
-
-.sb-settings-text-input::placeholder {
-  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
-}
-
-.sb-settings-text-input:focus {
-  outline: none;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
-}
-
 .sb-settings-actions {
   margin-top: 0.875rem;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.625rem;
-}
-
-.sb-settings-save-button {
-  border: none;
-  border-radius: var(--sb-radius-md);
-  padding: 0.625rem 1.25rem;
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition:
-    transform 0.1s ease,
-    background-color var(--sb-duration-base) ease;
-}
-
-.sb-settings-save-button:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), black 6%);
-}
-
-.sb-settings-save-button:active {
-  transform: translateY(1px);
-}
-
-.sb-settings-action-button {
-  border: none;
-  border-radius: var(--sb-radius-md);
-  padding: 0.75rem 1rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  color: var(--sb-font-color);
-  font-size: var(--sb-font-size-14);
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-  transition: background-color var(--sb-duration-base) ease;
-}
-
-.sb-settings-action-button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
-}
-
-.sb-settings-action-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 /* Breadcrumb row at the top of a settings subpage — ported from develop */
@@ -820,30 +507,6 @@
   margin-bottom: 0.625rem;
   font-size: var(--sb-font-size-12);
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
-}
-
-.sb-settings-breadcrumbs-back {
-  border: none;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
-  cursor: pointer;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: background-color var(--sb-duration-base) ease;
-}
-
-.sb-settings-breadcrumbs-back:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  color: var(--sb-font-color);
-}
-
-.sb-settings-breadcrumbs-back .material-symbols-outlined {
-  font-size: 1.125rem;
 }
 
 .sb-settings-breadcrumbs-item {
@@ -1122,32 +785,6 @@
   }
 }
 
-.sb-theme-color-reset {
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    background-color var(--sb-duration-base) ease,
-    color var(--sb-duration-base) ease;
-}
-
-.sb-theme-color-reset:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  color: var(--sb-font-color);
-}
-
-.sb-theme-color-reset .material-symbols-outlined {
-  font-size: 1.125rem;
-}
-
 .sb-settings-login-prompt {
   display: flex;
   flex-direction: column;
@@ -1160,10 +797,8 @@
 }
 
 /* This can be added at main css too but that is not being used by setting bar to so avoid whole css load use here */
-@media screen and (max-width: 480px) {
-  .hide-on-mobile {
-    display: none;
-  }
+:where(html[data-sb-app-layout="mobile"]) .hide-on-mobile {
+  display: none;
 }
 
 /*

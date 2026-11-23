@@ -1,3 +1,4 @@
+import { LoadingStatus } from "../LoadingStatus/LoadingStatus";
 import "./FloatingReaderPanels.css";
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
@@ -31,6 +32,9 @@ import { Avatar } from "../Avatar/Avatar";
 import { ChatParticipantsIcon, MaterialIcon } from "../icons";
 import { SearchBar } from "../SearchBar/SearchBar";
 import { CloseButton } from "../CloseButton/CloseButton";
+import { EmptyState } from "../EmptyState/EmptyState";
+import { IconButton } from "../IconButton/IconButton";
+import { Button } from "../Button/Button";
 
 interface SearchResult {
   id: string;
@@ -580,7 +584,9 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
 
           {searchLoading.value && (
             <div className="sb-floating-search-status">
-              {t("searching", { defaultValue: "Searching..." })}
+              <LoadingStatus>
+                {t("searching", { defaultValue: "Searching..." })}
+              </LoadingStatus>
             </div>
           )}
 
@@ -734,10 +740,15 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       // though they're part of this panel's UI. Ignore taps inside them so
       // picking a provider doesn't close the panel out from under the click.
       if (target.closest(".sb-context-menu")) return;
-      // Footnote-style modals use this overlay class and sit outside the chat
-      // panel in the DOM. Ignore taps on them so dismissing or interacting with
-      // the modal doesn't also close chat.
-      if (target.closest(".sb-footnote-modal-overlay")) return;
+      // Dialogs and modal sheets sit outside the chat panel in the DOM. Ignore
+      // taps on them so dismissing or interacting with one doesn't also close
+      // chat.
+      if (
+        target.closest(
+          ".sb-dialog-backdrop, .sb-bottom-sheet-backdrop, .sb-bottom-sheet-modal"
+        )
+      )
+        return;
       sidebar.closeChatPanel();
     };
 
@@ -783,19 +794,16 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
     >
       <header className="sb-floating-chat-header">
         {selectedChat ? (
-          <button
-            type="button"
+          <IconButton
+            size="sm"
+            look="tinted"
             className="sb-floating-chat-header-back"
+            icon="arrow_back"
+            label={t("back", { defaultValue: "Back" })}
             onClick={() => {
               state.chats.selectChat(null);
             }}
-            aria-label={t("back", { defaultValue: "Back" })}
-            title={t("back", { defaultValue: "Back" })}
-          >
-            <span className="material-symbols-outlined" aria-hidden="true">
-              arrow_back
-            </span>
-          </button>
+          />
         ) : null}
 
         {selectedChat ? (
@@ -819,18 +827,22 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
             anchorClassName="sb-floating-chat-header-members-anchor"
             buttonClassName="sb-floating-chat-header-members-button"
             menuClassName="sb-floating-chat-members-menu"
-            icon={
-              <span className="sb-floating-chat-header-members-button-icon">
-                <ChatParticipantsIcon />
+            trigger={(menu) => (
+              <Button
+                {...menu}
+                variant="ghost"
+                size="sm"
+                icon={<ChatParticipantsIcon />}
+                aria-label={t("participants", {
+                  defaultValue: "Participants",
+                })}
+                title={t("participants", {
+                  defaultValue: "Participants",
+                })}
+              >
                 {selectedChat.participants.value.length}
-              </span>
-            }
-            aria-label={t("participants", {
-              defaultValue: "Participants",
-            })}
-            title={t("participants", {
-              defaultValue: "Participants",
-            })}
+              </Button>
+            )}
             onClick={() => {
               closeContextMenus();
             }}
@@ -907,20 +919,32 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
             anchorClassName="sb-floating-chat-header-ai-context-anchor"
             buttonClassName="sb-floating-chat-header-ai-context-button"
             menuClassName="sb-floating-chat-ai-context-menu"
-            icon={
-              <span className="sb-floating-chat-header-ai-context-button-icon">
-                <MaterialIcon>auto_awesome</MaterialIcon>
-                {state.chats.activeContexts.value.length > 1 && (
-                  <span>{state.chats.activeContexts.value.length}</span>
-                )}
-              </span>
-            }
-            aria-label={t("ai-context-button-label", {
-              defaultValue: "Active AI context",
-            })}
-            title={t("ai-context-button-label", {
-              defaultValue: "Active AI context",
-            })}
+            trigger={(menu) => {
+              const label = t("ai-context-button-label", {
+                defaultValue: "Active AI context",
+              });
+              const count = state.chats.activeContexts.value.length;
+              // One context shows the sparkle alone; more show how many.
+              return count > 1 ? (
+                <Button
+                  {...menu}
+                  variant="ghost"
+                  size="sm"
+                  icon="auto_awesome"
+                  aria-label={label}
+                  title={label}
+                >
+                  {count}
+                </Button>
+              ) : (
+                <IconButton
+                  {...menu}
+                  size="sm"
+                  icon="auto_awesome"
+                  label={label}
+                />
+              );
+            }}
             onClick={() => {
               closeContextMenus();
             }}
@@ -981,40 +1005,29 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
 function NoChatsAvailable() {
   const { t } = useI18n();
   return (
-    <div className="sb-floating-chat-empty">
-      <span
-        className="material-symbols-outlined sb-floating-chat-empty-icon"
-        aria-hidden="true"
-      >
-        chat_bubble_outline
-      </span>
-      <p className="sb-floating-chat-empty-title">
-        {t("you-have-no-chats", {
-          defaultValue:
-            "You have no chats. Create one using the + button below.",
-        })}
-      </p>
-    </div>
+    <EmptyState
+      className="sb-floating-chat-empty"
+      size="panel"
+      icon="chat_bubble_outline"
+      title={t("you-have-no-chats", {
+        defaultValue: "You have no chats. Create one using the + button below.",
+      })}
+    />
   );
 }
 
 function NoProvidersAvailable() {
   const { t } = useI18n();
   return (
-    <div className="sb-floating-chat-empty">
-      <span
-        className="material-symbols-outlined sb-floating-chat-empty-icon"
-        aria-hidden="true"
-      >
-        chat_bubble_outline
-      </span>
-      <p className="sb-floating-chat-empty-title">
-        {t("no-chat-providers", {
-          defaultValue:
-            "No chat providers are available. Connect an AI or messaging provider to start chatting.",
-        })}
-      </p>
-    </div>
+    <EmptyState
+      className="sb-floating-chat-empty"
+      size="panel"
+      icon="chat_bubble_outline"
+      title={t("no-chat-providers", {
+        defaultValue:
+          "No chat providers are available. Connect an AI or messaging provider to start chatting.",
+      })}
+    />
   );
 }
 
@@ -1137,8 +1150,9 @@ export function ChatList({
           buttonClassName="sb-floating-chat-list-create-button"
           menuClassName="sb-floating-chat-list-create-menu"
           icon="add"
-          aria-label={t("add", { defaultValue: "Add" })}
-          title={t("add", { defaultValue: "Add" })}
+          label={t("add", { defaultValue: "Add" })}
+          size="md"
+          look="tinted"
         >
           {providers.map((provider) => (
             <ContextMenuItem

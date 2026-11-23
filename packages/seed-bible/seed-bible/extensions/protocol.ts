@@ -57,6 +57,7 @@ export function isSandboxPermission(
   );
 }
 
+/** How Seed Bible treats one permission (`SANDBOX_PERMISSION_INFO`). */
 export interface SandboxPermissionInfo {
   /** How much harm misuse could do; the consent dialog warns about `high`. */
   risk: "low" | "medium" | "high";
@@ -151,8 +152,14 @@ export type SandboxIcon =
       material: string;
     };
 
+/**
+ * Which `sb.tools.register…` method registered a tool: `toolbar` for
+ * `registerToolbarTool`, `verse` for `registerVerseToolbarTool`, `quick` for
+ * `registerQuickTool` and `belowReader` for `registerBelowReaderTool`.
+ */
 export type SandboxToolSurface = "toolbar" | "verse" | "quick" | "belowReader";
 
+/** One entry in a tool's submenu, as Seed Bible receives it. */
 export interface SandboxToolItem {
   id: string;
   title: SandboxTitle;
@@ -160,8 +167,15 @@ export interface SandboxToolItem {
   disabled?: boolean;
 }
 
+/**
+ * A tool as Seed Bible receives it from `sb.tools.register…`: the options
+ * the extension passed, with its handlers left out and `isVisible` and
+ * `isDisabled` read into plain `visible` and `disabled`. In a test, this is
+ * what `TestHost.tools` holds.
+ */
 export interface SandboxToolDefinition {
   id: string;
+  /** Which `sb.tools.register…` method registered it. */
   surface: SandboxToolSurface;
   title: SandboxTitle;
   icon: SandboxIcon;
@@ -172,6 +186,7 @@ export interface SandboxToolDefinition {
   items?: SandboxToolItem[];
 }
 
+/** The parts of a registered tool that can change after it's registered. */
 export type SandboxToolPatch = Partial<
   Omit<SandboxToolDefinition, "id" | "surface">
 >;
@@ -243,13 +258,22 @@ export interface SandboxVerseRef {
   verse?: number;
 }
 
-/** App state the host keeps every frame up to date with. */
+/**
+ * App state Seed Bible keeps every frame of an extension up to date with.
+ * Extensions read it through `sb` (`sb.reading.position`, `sb.app.isMobile`
+ * and so on); tests set it with `TestHostOptions.state` and
+ * `TestHost.setState`.
+ */
 export interface SandboxState {
   /** `--sb-*` CSS declarations: the shared size scale, then the active theme. */
   themeCss: string;
   language: string;
   direction: "ltr" | "rtl";
-  /** This extension's own translation strings for `language`, over `en`. */
+  /**
+   * This extension's own translation strings for `language`, over `en`. The
+   * SDK reads `SandboxInit.strings` instead; this stays for extensions built
+   * with an SDK from before it.
+   */
   strings: Record<string, string>;
   isMobile: boolean;
   /** Null unless `reading:position` is granted. */
@@ -816,6 +840,20 @@ export interface SandboxHostRequests {
 
 export type SandboxHostRequestKind = keyof SandboxHostRequests;
 
+/**
+ * The translation strings a frame needs, sent when it starts and again when
+ * the language changes, rather than with every state change, since the app's
+ * run to well over 100 KB. Each set is by language code: `language`, and `en`,
+ * which fills in what `language` lacks.
+ */
+export interface SandboxStrings {
+  language: string;
+  /** The app's own strings: `useI18n()`, and `sb.i18n.t` with `ns: "seed-bible"`. */
+  app: Record<string, Record<string, string>>;
+  /** This extension's, from its `extension.json`. */
+  extension: Record<string, Record<string, string>>;
+}
+
 /** Sent with the port that connects a frame to the host. */
 export interface SandboxInit {
   protocol: number;
@@ -825,9 +863,16 @@ export interface SandboxInit {
   /** What the manifest lets the extension ask for later. */
   optional: SandboxPermission[];
   state: SandboxState;
+  /** Missing from a host older than this SDK, which only sends `state.strings`. */
+  strings?: SandboxStrings;
 }
 
-/** Each frame → host call, by method: what it takes and what it returns. */
+/**
+ * Every call an extension can make to Seed Bible, by method name: what it
+ * takes and what it returns. The name is the `sb` path without `sb.`, so
+ * `sb.notes.create` is `"notes.create"`. Tests use it to type the answers
+ * passed to `createTestHost`.
+ */
 export interface SandboxMethods {
   "tools.register": { params: SandboxToolDefinition; result: null };
   "tools.update": {
@@ -1066,6 +1111,7 @@ export interface SandboxMethods {
   ready: { params: { error?: string }; result: null };
 }
 
+/** The name of a call an extension can make, like `"notes.create"`. */
 export type SandboxMethod = keyof SandboxMethods;
 
 /**
@@ -1116,6 +1162,10 @@ export interface SandboxRequest<M extends SandboxMethod = SandboxMethod> {
   params: SandboxMethods[M]["params"];
 }
 
+/**
+ * Why a call to Seed Bible failed: the `code` of a `SandboxError`, which
+ * describes each one.
+ */
 export type SandboxErrorCode =
   | "permission_denied"
   | "invalid_request"
@@ -1167,6 +1217,8 @@ export type SandboxHostEvent =
   /** Checks the background frame is still answering; it replies with `pong`. */
   | { type: "ping" }
   | { type: "state"; state: Partial<SandboxState> }
+  /** The language changed; every string the frame uses, in the new one. */
+  | { type: "strings"; strings: SandboxStrings }
   /** The permissions granted now, after the user granted an optional one. */
   | { type: "permissions"; granted: SandboxPermission[] };
 

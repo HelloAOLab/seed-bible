@@ -3,6 +3,8 @@ import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n";
 import { ProfileAvatarButton, ProfileContactLine } from "./ProfilePane";
 import "./ProfilePane.css";
+import { Button } from "../Button/Button";
+import { TextField } from "../TextField/TextField";
 
 export const EDIT_PROFILE_PANE_ID = "edit-profile-screen-pane";
 
@@ -86,94 +88,64 @@ export function EditProfilePane(props: EditProfileScreenProps) {
           <ProfileContactLine state={state} />
         </div>
 
-        <div className="sb-profile-field">
-          <label
-            className="sb-profile-field-label"
-            htmlFor="sb-edit-profile-name"
-          >
-            {t("profile-name", { defaultValue: "Profile name" })}
-          </label>
-          <input
-            id="sb-edit-profile-name"
-            className="sb-profile-field-input"
-            type="text"
-            maxLength={100}
-            value={name.value}
-            onInput={(event: Event) => {
-              newName.value = (event.currentTarget as HTMLInputElement).value;
-            }}
-            placeholder={t("profile-name-placeholder", {
-              defaultValue: "e.g Craig family",
-            })}
-          />
-        </div>
+        <TextField
+          id="sb-edit-profile-name"
+          label={t("profile-name", { defaultValue: "Profile name" })}
+          maxLength={100}
+          value={name.value}
+          onValueInput={(value) => {
+            newName.value = value;
+          }}
+          placeholder={t("profile-name-placeholder", {
+            defaultValue: "e.g Craig family",
+          })}
+        />
 
-        <div className="sb-profile-field">
-          <label
-            className="sb-profile-field-label"
-            htmlFor="sb-edit-profile-location"
-          >
-            {t("location", { defaultValue: "Location" })}{" "}
-            <span className="sb-profile-field-optional">
-              {t("optional", { defaultValue: "(Optional)" })}
-            </span>
-          </label>
-          <input
-            id="sb-edit-profile-location"
-            className="sb-profile-field-input"
-            type="text"
-            maxLength={100}
-            value={location.value}
-            onInput={(event: Event) => {
-              newLocation.value = (
-                event.currentTarget as HTMLInputElement
-              ).value;
-            }}
-            placeholder={t("location-placeholder", {
-              defaultValue: "e.g Austin,TX",
-            })}
-          />
-        </div>
+        <TextField
+          id="sb-edit-profile-location"
+          label={t("location", { defaultValue: "Location" })}
+          optional
+          maxLength={100}
+          value={location.value}
+          onValueInput={(value) => {
+            newLocation.value = value;
+          }}
+          placeholder={t("location-placeholder", {
+            defaultValue: "e.g Austin,TX",
+          })}
+        />
 
-        <div className="sb-profile-field">
-          <label
-            className="sb-profile-field-label"
-            htmlFor="sb-edit-profile-description"
-          >
-            {t("description", { defaultValue: "Description" })}{" "}
-            <span className="sb-profile-field-optional">
-              {t("optional", { defaultValue: "(Optional)" })}
-            </span>
-          </label>
-          <textarea
-            id="sb-edit-profile-description"
-            className="sb-profile-field-input sb-profile-field-textarea"
-            maxLength={300}
-            value={description.value}
-            onInput={(event: Event) => {
-              newDescription.value = (
-                event.currentTarget as HTMLTextAreaElement
-              ).value;
-            }}
-            placeholder={t("description-placeholder", {
-              defaultValue: "Enter your profile description...",
-            })}
-          />
-        </div>
+        <TextField
+          id="sb-edit-profile-description"
+          label={t("description", { defaultValue: "Description" })}
+          optional
+          multiline
+          rows={4}
+          maxLength={300}
+          showCount
+          value={description.value}
+          onValueInput={(value) => {
+            newDescription.value = value;
+          }}
+          placeholder={t("description-placeholder", {
+            defaultValue: "Enter your profile description...",
+          })}
+        />
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="lg"
           className="sb-profile-save"
           onClick={handleSave}
-          disabled={!isProfileLoaded.value || isSaving.value}
-          aria-busy={isSaving.value}
+          disabled={!isProfileLoaded.value}
+          loading={isSaving.value}
         >
           {!isProfileLoaded.value
             ? t("loading-profile", { defaultValue: "Loading your profile…" })
             : isSaving.value
               ? t("saving", { defaultValue: "Saving…" })
               : t("save-changes", { defaultValue: "Save changes" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

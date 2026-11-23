@@ -9,6 +9,7 @@ import {
   RESOLVED_ID,
   generateEntryModuleSource,
 } from "../../script/lib/extensionsModule";
+import { libraryCssImportsPlugin } from "../../script/lib/vite-plugin-library-css-imports";
 
 // The app's own `virtual:@extensions` module (script/lib/vite-plugin-extensions.ts)
 // auto-discovers every extension package under the monorepo's `packages/`
@@ -55,7 +56,11 @@ function resolveGitCommit(): string {
 }
 
 export default defineConfig({
-  plugins: [preact(), emptyExtensionSetPlugin()],
+  plugins: [
+    preact(),
+    emptyExtensionSetPlugin(),
+    libraryCssImportsPlugin({ firstEntry: "styles" }),
+  ],
 
   define: {
     __APP_VERSION__: JSON.stringify(appVersion),
@@ -99,12 +104,10 @@ export default defineConfig({
       },
       formats: ["es"],
       fileName: (_format, entryName) => `${entryName}.js`,
-      // One merged `dist/style.css` instead of one per entry — the `styles`
-      // entry above exists only to pull the foundation CSS into that same
-      // file (see its own comment for why).
-      cssFileName: "style",
     },
-    cssCodeSplit: false,
+    // One CSS file per chunk, which `libraryCssImportsPlugin` links to its chunk;
+    // it also writes the merged `style.css`.
+    cssCodeSplit: true,
     rollupOptions: {
       external: (id) =>
         !id.startsWith(".") && !path.isAbsolute(id) && id !== VIRTUAL_ID,

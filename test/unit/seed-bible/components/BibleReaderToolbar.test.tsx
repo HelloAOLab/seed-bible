@@ -2672,7 +2672,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     });
 
     const handle = container.querySelector<HTMLElement>(
-      ".sb-verse-toolbar-handle-area"
+      ".sb-bottom-sheet-handle-area"
     );
     if (!options?.desktop && !handle) {
       throw new Error("The verse sheet handle did not render.");
@@ -3021,7 +3021,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
   it("does not start the sheet drag when pressing down on a toolbar button", async () => {
     await renderSheet();
     const closeButton = container.querySelector<HTMLElement>(
-      ".sb-verse-toolbar-close"
+      ".sb-bottom-sheet-close"
     );
     if (!closeButton) throw new Error("The close button did not render.");
 
@@ -3225,6 +3225,47 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
 
     expect(overflow()?.style.height).toBe("0px");
     expect(readingState.selectedVerses.value).toHaveLength(1);
+  });
+
+  it("backs out of the highlight colors on Escape before clearing the selection", async () => {
+    await renderSheet();
+    const highlight = Array.from(
+      sheet()!.querySelectorAll<HTMLButtonElement>("button")
+    ).find((button) => button.textContent?.includes("Highlight"));
+    if (!highlight) throw new Error("The Highlight card did not render.");
+    await act(async () => {
+      highlight.click();
+    });
+    const cornerButton = () =>
+      container.querySelector<HTMLButtonElement>(".sb-bottom-sheet-close")!;
+    expect(cornerButton().getAttribute("aria-label")).toBe("Back");
+    // Points the other way in right-to-left languages.
+    expect(cornerButton().querySelector(".rtl-mirror")?.textContent).toBe(
+      "arrow_back"
+    );
+
+    const pressEscape = async () => {
+      await act(async () => {
+        (document.activeElement ?? document.body).dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "Escape",
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      });
+    };
+
+    // Escape on Back does what clicking it does: back to the actions.
+    cornerButton().focus();
+    await pressEscape();
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+    expect(cornerButton().getAttribute("aria-label")).toBe("Close");
+
+    // From the actions, Escape closes the sheet.
+    cornerButton().focus();
+    await pressEscape();
+    expect(readingState.selectedVerses.value).toHaveLength(0);
   });
 
   it("exposes the handle to keyboards, which have no gesture available", async () => {
@@ -3785,7 +3826,7 @@ describe("BibleReaderToolbar — mobile verse sheet annotations", () => {
     });
 
     const handle = container.querySelector<HTMLElement>(
-      ".sb-verse-toolbar-handle-area"
+      ".sb-bottom-sheet-handle-area"
     );
     if (!handle) throw new Error("The verse sheet handle did not render.");
     return { handle, chapter, firstVerse };
@@ -4597,7 +4638,7 @@ describe("BibleReaderToolbar — mobile verse sheet discovered content", () => {
       );
     });
     const handle = container.querySelector<HTMLElement>(
-      ".sb-verse-toolbar-handle-area"
+      ".sb-bottom-sheet-handle-area"
     );
     if (!handle) throw new Error("The verse sheet handle did not render.");
     return handle;

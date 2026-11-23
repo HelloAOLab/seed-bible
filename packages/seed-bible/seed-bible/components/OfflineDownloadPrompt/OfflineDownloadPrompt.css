@@ -1,41 +1,15 @@
-/* Offer to save the current translation for offline reading.
-   Centered dialog by default; a bottom sheet on narrow screens. */
-.sb-offline-prompt-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: var(--sb-layer-prompt);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  box-sizing: border-box;
-  font-family: var(--sb-font-family);
+/* The offer to save a translation for offline reading, or to update a saved
+   one: a dialog, or a bottom sheet on a phone. */
+.sb-offline-prompt {
+  --sb-dialog-width: min(26.25rem, 100%);
 }
 
-.sb-offline-prompt {
-  width: min(26.25rem, 100%);
-  background: var(--sb-reader-background);
-  color: var(--sb-font-color);
-  border-radius: var(--sb-radius-2xl);
-  box-shadow: var(--sb-shadow-modal);
-  padding: 2rem 1.75rem 1.25rem;
-  box-sizing: border-box;
+.sb-offline-prompt-content {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 0.75rem;
-}
-
-/* Grab handle: only meaningful once the card is a sheet. */
-.sb-offline-prompt-handle {
-  display: none;
-  width: 2.375rem;
-  height: 0.25rem;
-  border-radius: var(--sb-radius-full);
-  background: var(--sb-divider-color);
-  align-self: center;
-  margin-bottom: 0.5rem;
+  font-family: var(--sb-font-family);
 }
 
 .sb-offline-prompt-header {
@@ -77,70 +51,6 @@
   opacity: 0.7;
 }
 
-.sb-offline-prompt-btn {
-  appearance: none;
-  border: 1px solid transparent;
-  border-radius: var(--sb-radius-full);
-  padding: 0.9rem 1.5rem;
-  font-family: var(--sb-font-family);
-  font-size: 1em;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    filter var(--sb-duration-fast) ease,
-    background var(--sb-duration-fast) ease;
-}
-
-.sb-offline-prompt-btn:hover {
-  filter: brightness(0.96);
-}
-
 .sb-offline-prompt-btn-primary {
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
   margin-top: 0.75rem;
-}
-
-.sb-offline-prompt-btn-secondary {
-  background: transparent;
-  color: var(--sb-font-color);
-  opacity: 0.7;
-  padding: 0.65rem 1.5rem;
-}
-
-@media (max-width: 40rem) {
-  .sb-offline-prompt-overlay {
-    align-items: flex-end;
-    padding: 0;
-  }
-
-  .sb-offline-prompt {
-    width: 100%;
-    border-radius: var(--sb-radius-2xl) var(--sb-radius-2xl) 0 0;
-    padding: 0.75rem 1.5rem 1.5rem;
-    box-shadow: var(--sb-shadow-sheet);
-  }
-
-  .sb-offline-prompt-handle {
-    display: block;
-  }
-}
-
-/* The card slides up as a sheet, and fades in as a dialog. */
-@media (prefers-reduced-motion: no-preference) {
-  .sb-offline-prompt {
-    animation: sb-offline-prompt-in 0.22s ease-out;
-  }
-}
-
-@keyframes sb-offline-prompt-in {
-  from {
-    opacity: 0;
-    transform: translateY(1.5rem);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }

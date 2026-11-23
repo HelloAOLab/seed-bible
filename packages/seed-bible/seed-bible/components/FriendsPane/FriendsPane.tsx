@@ -1,3 +1,5 @@
+import { LoadingStatus } from "../LoadingStatus/LoadingStatus";
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./FriendsPane.css";
 import { useEffect } from "preact/hooks";
 import { useSignal } from "@preact/signals";
@@ -14,7 +16,6 @@ import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
 import {
   answerFriendRequest,
-  BusyButton,
   cancelFriendRequest,
   CopyButton,
   openRemoveFriendConfirm,
@@ -25,6 +26,8 @@ import {
   parseUserId,
 } from "./friendLinks";
 import { PersonButton, type PersonProfileDeps } from "./PersonCard";
+import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
 
 export const FRIENDS_PANE_ID = "friends-pane";
 
@@ -198,11 +201,10 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
         {t("add-friend", { defaultValue: "Add a friend" })}
       </FriendsHeading>
       <form className="sb-friends-add-form" onSubmit={submit}>
-        <input
-          type="text"
+        <TextInput
           className="sb-friends-add-input"
           value={value.value}
-          onInput={(e) => (value.value = e.currentTarget.value)}
+          onValueInput={(text) => (value.value = text)}
           placeholder={
             ADD_FRIEND_BY_EMAIL_ENABLED
               ? t("add-friend-placeholder", {
@@ -214,14 +216,15 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
           autoComplete="off"
           spellcheck={false}
         />
-        <BusyButton
+        <Button
           type="submit"
-          className="sb-friends-button sb-friends-button--primary"
-          busy={busy.value}
+          variant="primary"
+          size="sm"
+          loading={busy.value}
           disabled={value.value.trim().length === 0}
         >
           {t("send-friend-request", { defaultValue: "Send request" })}
-        </BusyButton>
+        </Button>
       </form>
       {outcome.value ? (
         <div
@@ -307,30 +310,31 @@ function IncomingRequestRow(props: {
     <li className="sb-friends-row">
       <PersonButton deps={profiles} person={request} />
       <span className="sb-friends-row-actions">
-        <BusyButton
-          className="sb-friends-button sb-friends-button--primary"
-          busy={answering.value === "accept"}
+        <Button
+          variant="primary"
+          size="sm"
+          loading={answering.value === "accept"}
           disabled={answering.value !== null}
-          ariaLabel={t("accept-friend-user", {
+          aria-label={t("accept-friend-user", {
             name,
             defaultValue: "Accept {{name}}'s friend request",
           })}
           onClick={() => void answer(true)}
         >
           {t("accept", { defaultValue: "Accept" })}
-        </BusyButton>
-        <BusyButton
-          className="sb-friends-button"
-          busy={answering.value === "decline"}
+        </Button>
+        <Button
+          size="sm"
+          loading={answering.value === "decline"}
           disabled={answering.value !== null}
-          ariaLabel={t("decline-friend-user", {
+          aria-label={t("decline-friend-user", {
             name,
             defaultValue: "Decline {{name}}'s friend request",
           })}
           onClick={() => void answer(false)}
         >
           {t("decline", { defaultValue: "Decline" })}
-        </BusyButton>
+        </Button>
       </span>
     </li>
   );
@@ -367,10 +371,10 @@ function OutgoingRequestRow(props: {
             defaultValue: "Copy the link to your friend request to {{name}}",
           })}
         />
-        <BusyButton
-          className="sb-friends-button"
-          busy={busy.value}
-          ariaLabel={t("cancel-friend-request-user", {
+        <Button
+          size="sm"
+          loading={busy.value}
+          aria-label={t("cancel-friend-request-user", {
             name,
             defaultValue: "Cancel your friend request to {{name}}",
           })}
@@ -382,7 +386,7 @@ function OutgoingRequestRow(props: {
           }}
         >
           {t("cancel", { defaultValue: "Cancel" })}
-        </BusyButton>
+        </Button>
       </span>
     </li>
   );
@@ -402,9 +406,8 @@ function FriendRow(props: {
     <li className="sb-friends-row">
       <PersonButton deps={profiles} person={friend} />
       <span className="sb-friends-row-actions">
-        <button
-          type="button"
-          className="sb-friends-button"
+        <Button
+          size="sm"
           aria-label={t("remove-friend-user", {
             name: displayNameOf(friend, t),
             defaultValue: "Remove {{name}} as a friend",
@@ -414,7 +417,7 @@ function FriendRow(props: {
           }
         >
           {t("remove", { defaultValue: "Remove" })}
-        </button>
+        </Button>
       </span>
     </li>
   );
@@ -447,13 +450,9 @@ export function FriendsPane(props: { state: SeedBibleState }) {
                 "Sign in to add friends and see what they're reading.",
             })}
           </p>
-          <button
-            type="button"
-            className="sb-friends-button sb-friends-button--primary"
-            onClick={() => void login.login()}
-          >
+          <Button variant="primary" onClick={() => void login.login()}>
             {t("log-in", { defaultValue: "Log in" })}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -503,15 +502,17 @@ export function FriendsPane(props: { state: SeedBibleState }) {
                 />
               ))}
             </ul>
+          ) : loading ? (
+            <LoadingStatus className="sb-friends-loading">
+              {t("loading", { defaultValue: "Loading…" })}
+            </LoadingStatus>
           ) : (
-            <p className="sb-friends-empty">
-              {loading
-                ? t("loading", { defaultValue: "Loading…" })
-                : t("friends-empty", {
-                    defaultValue:
-                      "No friends yet. Share your friend link, or add someone by their user ID.",
-                  })}
-            </p>
+            <EmptyState className="sb-friends-empty">
+              {t("friends-empty", {
+                defaultValue:
+                  "No friends yet. Share your friend link, or add someone by their user ID.",
+              })}
+            </EmptyState>
           )}
         </section>
 

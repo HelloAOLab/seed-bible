@@ -1,4 +1,5 @@
 import "./ReadingPlanEditor.css";
+import "../visuallyHidden.inline.css";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { RefObject } from "preact";
 import { MaterialIcon } from "../icons";
@@ -35,6 +36,11 @@ import { cadenceOptionLabel } from "./cadenceLabels";
 import { readingLabel } from "./readingLabel";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { readingItemIcon, readingPreviewText } from "./readingPreview";
+import { Button } from "../Button/Button";
+import { TextField } from "../TextField/TextField";
+import "../Field/Field.css";
+import { IconButton } from "../IconButton/IconButton";
+import { CheckboxIndicator } from "../Checkbox/Checkbox";
 
 interface ReadingPlanEditorProps {
   readingPlans: ReadingPlansManager;
@@ -208,50 +214,34 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
 
       <div className="sb-rp-editor-body">
         <section className="sb-rp-editor-section">
-          <label className="sb-rp-field">
-            <span className="sb-rp-field-label">
-              {t("reading-plan-step-name-title", {
-                defaultValue: "Name your plan",
-              })}
-            </span>
-            <input
-              className="sb-rp-text-input"
-              type="text"
-              value={draft.plan.title ?? ""}
-              autoFocus={draft.isNew && totalReadings === 0}
-              onInput={(event: Event) =>
-                readingPlans.updateEditingReadingPlan({
-                  title: (event.currentTarget as HTMLInputElement).value,
-                })
-              }
-              placeholder={t("reading-plan-name-placeholder", {
-                defaultValue: "e.g. My Psalms Journey",
-              })}
-            />
-          </label>
-          <label className="sb-rp-field">
-            <span className="sb-rp-field-label">
-              {t("reading-plan-description-label", {
-                defaultValue: "Description (optional)",
-              })}
-            </span>
-            <input
-              className="sb-rp-text-input"
-              type="text"
-              value={draft.plan.description ?? ""}
-              onInput={(event: Event) =>
-                readingPlans.updateEditingReadingPlan({
-                  description: (event.currentTarget as HTMLInputElement).value,
-                })
-              }
-              placeholder={t("reading-plan-description_placeholder", {
-                defaultValue: "What is this plan about?",
-              })}
-            />
-          </label>
+          <TextField
+            label={t("reading-plan-step-name-title", {
+              defaultValue: "Name your plan",
+            })}
+            value={draft.plan.title ?? ""}
+            autoFocus={draft.isNew && totalReadings === 0}
+            onValueInput={(title) =>
+              readingPlans.updateEditingReadingPlan({ title })
+            }
+            placeholder={t("reading-plan-name-placeholder", {
+              defaultValue: "e.g. My Psalms Journey",
+            })}
+          />
+          <TextField
+            label={t("reading-plan-description-label", {
+              defaultValue: "Description (optional)",
+            })}
+            value={draft.plan.description ?? ""}
+            onValueInput={(description) =>
+              readingPlans.updateEditingReadingPlan({ description })
+            }
+            placeholder={t("reading-plan-description_placeholder", {
+              defaultValue: "What is this plan about?",
+            })}
+          />
           {modals ? (
             <div className="sb-rp-field">
-              <span className="sb-rp-field-label">
+              <span className="sb-field-label">
                 {t("hero-image", { defaultValue: "Cover image" })}
               </span>
               <HeroImageField
@@ -367,11 +357,9 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
               unsaved changes (cover image included) and leaves the published
               plan as it was. */}
           {draft.isNew ? (
-            <button
-              type="button"
-              className={`sb-rp-button sb-rp-button-secondary${
-                confirmingDiscard ? " sb-rp-button-danger" : ""
-              }`}
+            <Button
+              size="lg"
+              tone={confirmingDiscard ? "danger" : "neutral"}
               onClick={() => void handleDiscard()}
               disabled={saving}
             >
@@ -380,29 +368,25 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
                     defaultValue: "Delete for good?",
                   })
                 : t("reading-plan-discard-draft", { defaultValue: "Discard" })}
-            </button>
+            </Button>
           ) : (
-            <button
-              type="button"
-              className="sb-rp-button sb-rp-button-secondary"
-              onClick={onCancel}
-              disabled={saving}
-            >
+            <Button size="lg" onClick={onCancel} disabled={saving}>
               {t("cancel", { defaultValue: "Cancel" })}
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            className="sb-rp-button sb-rp-button-primary"
+          <Button
+            variant="primary"
+            size="lg"
             onClick={handleSave}
-            disabled={!canSave || saving}
+            disabled={!canSave}
+            loading={saving}
           >
             {draft.isNew
               ? t("reading-plan-create-submit", { defaultValue: "Create plan" })
               : t("reading-plan-save-changes", {
                   defaultValue: "Save changes",
                 })}
-          </button>
+          </Button>
         </div>
       </footer>
     </div>
@@ -452,16 +436,18 @@ function CadencesSection(props: CadencesSectionProps) {
           >
             <input
               type="checkbox"
-              className="sb-rp-choice-checkbox"
+              className="sb-rp-choice-checkbox sb-visually-hidden"
               checked={selected}
               // A plan has to offer at least one cadence, so the last one
               // standing can't be unchecked.
               disabled={selected && lastSelected}
               onChange={() => onToggle(option.id)}
             />
-            <span className="sb-rp-choice-box" aria-hidden="true">
-              {selected && <MaterialIcon>check</MaterialIcon>}
-            </span>
+            <CheckboxIndicator
+              className="sb-rp-choice-box"
+              checked={selected}
+              disabled={selected && lastSelected}
+            />
             <span className="sb-rp-choice-text">
               <span className="sb-rp-choice-title">
                 {cadenceOptionLabel(option, t)}
@@ -581,16 +567,15 @@ function SessionsSection(props: SessionsSectionProps) {
                     })}
                   </span>
                 </button>
-                <button
-                  type="button"
-                  className="sb-rp-icon-button sb-rp-session-remove"
+                <IconButton
+                  size="sm"
+                  className="sb-rp-session-remove"
                   onClick={() => onRemoveSession(index)}
-                  aria-label={t("reading-plan-remove-session", {
+                  icon="delete"
+                  label={t("reading-plan-remove-session", {
                     defaultValue: "Remove session",
                   })}
-                >
-                  <MaterialIcon>delete</MaterialIcon>
-                </button>
+                />
               </div>
 
               {session.readings.length > 0 ? (
@@ -645,35 +630,33 @@ function SessionsSection(props: SessionsSectionProps) {
                             {expanded ? "expand_less" : "expand_more"}
                           </MaterialIcon>
                         </button>
-                        <button
-                          type="button"
-                          className="sb-rp-icon-button sb-rp-reading-edit"
-                          aria-pressed={editingReadingId === reading.id}
+                        <IconButton
+                          size="sm"
+                          className="sb-rp-reading-edit"
+                          pressed={editingReadingId === reading.id}
                           onClick={() => {
                             onSelectSession(index);
                             setEditingReadingId(reading.id);
                           }}
-                          aria-label={t("reading-plan-edit-reading", {
+                          icon="edit"
+                          label={t("reading-plan-edit-reading", {
                             defaultValue: "Edit reading",
                           })}
-                        >
-                          <MaterialIcon>edit</MaterialIcon>
-                        </button>
-                        <button
-                          type="button"
-                          className="sb-rp-icon-button sb-rp-reading-remove"
+                        />
+                        <IconButton
+                          size="sm"
+                          className="sb-rp-reading-remove"
                           onClick={() => {
                             onRemoveReading(index, reading.id);
                             if (editingReadingId === reading.id) {
                               setEditingReadingId(null);
                             }
                           }}
-                          aria-label={t("reading-plan-scripture-remove", {
+                          icon="close"
+                          label={t("reading-plan-scripture-remove", {
                             defaultValue: "Remove reading",
                           })}
-                        >
-                          <MaterialIcon>close</MaterialIcon>
-                        </button>
+                        />
                         {expanded ? (
                           <PlaylistItemInlinePreview
                             id={previewId}

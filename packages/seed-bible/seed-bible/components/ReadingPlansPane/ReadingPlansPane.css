@@ -16,32 +16,10 @@
   color: var(--sb-font-color);
   font-family: "DM Sans", var(--sb-font-family, sans-serif);
 }
-
-/* The new-plan button and the back button both live in the pane's header (see
-   ReadingPlansPaneActions / ReadingPlansPaneLeading), so they're sized to sit
-   in that 42px-tall row rather than in the pane body. The new-plan button
-   matches the "+ Create" button in the Discover pane's header. */
-.sb-reading-plans-create {
-  padding: 0.375rem 0.75rem;
-  border: 1px solid var(--sb-primary-color);
-  border-radius: var(--sb-radius-full);
-  background: var(--sb-primary-color);
-  color: var(--sb-background);
-  font-family: inherit;
-  font-size: var(--sb-font-size-13);
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.sb-reading-plans-create:hover {
-  opacity: 0.9;
-}
-
 .sb-reading-plans-empty {
-  padding: 24px 8px;
-  font-size: var(--sb-font-size-15);
-  text-align: center;
-  color: var(--rp-muted);
+  --sb-empty-state-padding: 1.5rem 0.5rem;
+  --sb-empty-state-font-size: var(--sb-font-size-15);
+  --sb-empty-state-color: var(--rp-muted);
 }
 
 .sb-reading-plans-scroll {
@@ -61,10 +39,8 @@
    (it's centred across the whole window, see ReadingPlanEditor.css), so leave
    room to scroll the last plan clear of it. On phones the pane already stops
    above it (see PaneLayout.css). */
-@media (min-width: 481px) {
-  .sb-reading-plans-scroll {
-    padding-bottom: var(--sb-reader-bottom-inset, 6rem);
-  }
+:where(html:not([data-sb-app-layout="mobile"])) .sb-reading-plans-scroll {
+  padding-bottom: var(--sb-reader-bottom-inset, 6rem);
 }
 
 /* Today hero */
@@ -360,21 +336,4 @@
 
 .sb-rp-restart {
   flex: none;
-  padding: 6px 10px;
-  border: none;
-  background: transparent;
-  color: var(--rp-accent);
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-rp-restart:hover {
-  text-decoration: underline;
-}
-
-/* Second tap on "Discard" — the one that actually erases the draft. */
-.sb-rp-restart-danger {
-  color: #dc2626;
 }

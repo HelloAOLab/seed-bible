@@ -1,5 +1,6 @@
 import { useI18n } from "../../i18n/I18nManager";
 import { getAnnotationUpdatedTimeFormatter } from "../Discover/AnnotationsSection";
+import { Button } from "../Button/Button";
 
 /**
  * Asks, on going to edit a playlist with unsaved edits kept from before,
@@ -29,24 +30,16 @@ export function PlaylistDraftChoice(props: {
             })}
       </p>
       <div className="sb-confirm-delete-actions sb-unsaved-changes-actions sb-pe-draft-choice-actions">
-        <button
-          type="button"
-          className="sb-photo-modal-button"
-          onClick={props.onDiscard}
-        >
+        <Button variant="secondary" onClick={props.onDiscard}>
           {t("playlist-editor-discard-draft", {
             defaultValue: "Discard Draft",
           })}
-        </button>
-        <button
-          type="button"
-          className="sb-photo-modal-button sb-photo-modal-button-primary"
-          onClick={props.onContinue}
-        >
+        </Button>
+        <Button variant="primary" onClick={props.onContinue}>
           {t("playlist-editor-continue-draft", {
             defaultValue: "Continue from Draft",
           })}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1,3 +1,5 @@
+import { LoadingStatus } from "../LoadingStatus/LoadingStatus";
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./BibleSelector.inline.css";
 import "./BibleSelector.css";
 import {
@@ -17,7 +19,7 @@ import {
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { TranslationList } from "../TranslationList/TranslationList";
 import { TranslationViewModeMenu } from "../TranslationList/TranslationViewModeMenu";
-import { computed, Signal, signal } from "@preact/signals";
+import { computed, signal } from "@preact/signals";
 import {
   computePopover,
   TutorialPopoverContent,
@@ -42,13 +44,15 @@ import {
 } from "../../managers/OfflineTranslationsManager";
 import { downloadTranslationWithToast } from "../OfflineDownloadPrompt/downloadTranslationWithToast";
 import type { TutorialManager } from "../../managers/TutorialManager";
-import { Spinner } from "../Spinner/Spinner";
 import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 import type { AppState } from "../../managers/SeedBibleStateManager";
-import { MOBILE_BREAKPOINT } from "../../managers/SeedBibleStateManager";
 import { toShareableUrl } from "../../app/publicLinks";
 import { SearchBar as SearchField } from "../SearchBar/SearchBar";
 import { CloseButton } from "../CloseButton/CloseButton";
+import { Button } from "../Button/Button";
+import { Select } from "../Select/Select";
+import { TextInput } from "../TextField/TextField";
+import { IconButton } from "../IconButton/IconButton";
 
 /**
  * CSS-only spotlight: the huge translucent box-shadow dims everything around
@@ -203,9 +207,6 @@ export function BibleSelector(props: BibleSelectorProps) {
             tutorial={tutorial}
           />
         </div>
-        {selectorState.showApocryphaInfo.value && (
-          <ApocryphaInfo bibleSelectorState={selectorState} />
-        )}
       </div>
 
       {tourStep && (
@@ -293,31 +294,33 @@ const SearchBar = (props: {
         <div class="testament-selection starterAnimation">
           {!isMobile.value && (
             <>
-              <div
-                class="sidebar-translation-selector flex-between-center"
-                style={
-                  tourStepId === "selector-translation"
-                    ? SPOTLIGHT_STYLE
-                    : undefined
-                }
-                onClick={() => {
-                  selectingTranslation.value = !selectingTranslation.value;
-                  setSearch("");
-                }}
-              >
-                <span class="sidebar-selected-title flex-align-center">
-                  {selectedTranslation?.value?.shortName}
-                </span>
-                <span
-                  style={{
-                    transition: "transform var(--sb-duration-slow)",
+              {!bibleSelectorState.picking.value && (
+                <div
+                  class="sidebar-translation-selector flex-between-center"
+                  style={
+                    tourStepId === "selector-translation"
+                      ? SPOTLIGHT_STYLE
+                      : undefined
+                  }
+                  onClick={() => {
+                    selectingTranslation.value = !selectingTranslation.value;
+                    setSearch("");
                   }}
-                  class={`material-symbols-outlined ${selectingTranslation.value ? "upside-down" : ""}`}
-                  // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
                 >
-                  expand_more
-                </span>
-              </div>
+                  <span class="sidebar-selected-title flex-align-center">
+                    {selectedTranslation?.value?.shortName}
+                  </span>
+                  <span
+                    style={{
+                      transition: "transform var(--sb-duration-slow)",
+                    }}
+                    class={`material-symbols-outlined ${selectingTranslation.value ? "upside-down" : ""}`}
+                    // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
+                  >
+                    expand_more
+                  </span>
+                </div>
+              )}
 
               <div
                 className="sb-selector-book-search"
@@ -346,34 +349,33 @@ const SearchBar = (props: {
                     : undefined
                 }
               >
-                <select
-                  value={selectedTestament.value}
-                  onChange={(e) => {
-                    selectedTestament.value = Number(
-                      (e.target as HTMLSelectElement).value
-                    );
+                <Select
+                  size="sm"
+                  aria-label={t("testament", { defaultValue: "Testament" })}
+                  value={String(selectedTestament.value)}
+                  onValueChange={(value) => {
+                    selectedTestament.value = Number(value);
                   }}
-                  class="dropdown-select"
                 >
-                  <option value={2} class="dropdown-option">
+                  <option value={2}>
                     {t("allBooks", { defaultValue: "All Books" })}
                   </option>
-                  <option value={0} class="dropdown-option">
+                  <option value={0}>
                     {!isMobile.value
                       ? t("old-testament", { defaultValue: "Old Testament" })
                       : t("old-testament_short", { defaultValue: "OT" })}
                   </option>
-                  <option value={1} class="dropdown-option">
+                  <option value={1}>
                     {!isMobile.value
                       ? t("new-testament", { defaultValue: "New Testament" })
                       : t("new-testament_short", { defaultValue: "NT" })}
                   </option>
                   {apocryphaAvailable.value && (
-                    <option value={3} class="dropdown-option">
+                    <option value={3}>
                       {t("apocrypha", { defaultValue: "Apocrypha" })}
                     </option>
                   )}
-                </select>
+                </Select>
               </div>
             </>
           )}
@@ -389,12 +391,13 @@ const SearchBar = (props: {
               <span class="sb-bible-reader-mobile-header-title">
                 {t("books", { defaultValue: "Books" })}
               </span>
-              <button
+              <IconButton
+                size="lg"
                 class="sb-selector-mobile-tabs"
+                icon={<SbTabsIcon />}
+                label={t("tabs", { defaultValue: "Tabs" })}
                 onClick={() => openTabs()}
-              >
-                <SbTabsIcon />
-              </button>
+              />
             </>
           )}
         </div>
@@ -436,10 +439,9 @@ const BooksStatusMessage = (props: {
 
   if (booksStatus.value === "loading") {
     return (
-      <p className="sb-selector-status sb-selector-status--loading">
-        <Spinner />
+      <LoadingStatus className="sb-selector-status sb-selector-status--loading">
         {t("loading-books", { defaultValue: "Loading books…" })}
-      </p>
+      </LoadingStatus>
     );
   }
 
@@ -451,13 +453,14 @@ const BooksStatusMessage = (props: {
             "The books couldn't be loaded. Check your connection and try again.",
         })}
       </p>
-      <button
-        type="button"
+      <Button
+        variant="secondary"
+        shape="pill"
         className="sb-selector-retry"
         onClick={() => void retryBooks()}
       >
         {t("try-again", { defaultValue: "Try again" })}
-      </button>
+      </Button>
     </div>
   );
 };
@@ -488,13 +491,12 @@ const TranslationListStatus = (props: {
     const name = translation?.shortName ?? load.translationId;
     if (load.status === "loading") {
       return (
-        <p className="sb-selector-status sb-selector-status--loading">
-          <Spinner />
+        <LoadingStatus className="sb-selector-status sb-selector-status--loading">
           {t("loading-translation", {
             defaultValue: "Loading {{name}}…",
             name,
           })}
-        </p>
+        </LoadingStatus>
       );
     }
     return (
@@ -505,13 +507,14 @@ const TranslationListStatus = (props: {
             name,
           })}
         </p>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          shape="pill"
           className="sb-selector-retry"
           onClick={() => void selectTranslation(load.translationId)}
         >
           {t("try-again", { defaultValue: "Try again" })}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -524,12 +527,11 @@ const TranslationListStatus = (props: {
 
   if (catalogStatus.value === "loading") {
     return (
-      <p className="sb-selector-status sb-selector-status--loading">
-        <Spinner />
+      <LoadingStatus className="sb-selector-status sb-selector-status--loading">
         {t("loading-translations", {
           defaultValue: "Loading translations…",
         })}
-      </p>
+      </LoadingStatus>
     );
   }
 
@@ -542,13 +544,14 @@ const TranslationListStatus = (props: {
               "Couldn't load the full list of translations, so some may be missing.",
           })}
         </p>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          shape="pill"
           className="sb-selector-retry"
           onClick={() => retryCatalog()}
         >
           {t("try-again", { defaultValue: "Try again" })}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -564,7 +567,7 @@ const SideBarBooks = (props: {
 
   const { t } = useI18n();
 
-  const { viewportWidth } = app;
+  const { viewportWidth, isMobile } = app;
 
   const {
     lastBookClicked,
@@ -576,11 +579,12 @@ const SideBarBooks = (props: {
     isBook,
     ghostArray,
     apocryphaAvailable,
-    showApocryphaInfo,
+    openApocryphaInfo,
   } = bibleSelectorState;
 
   const RenderBooksByTestament = computed(() => {
     const ws = viewportWidth.value;
+    const mobile = isMobile.value;
     const lbc = lastBookClicked.value;
     const bd = bookData.value;
     const cht = chT.value;
@@ -593,7 +597,7 @@ const SideBarBooks = (props: {
     let singleColumns = 5;
     let otWidthPercent = 60;
     let ntWidthPercent = 40;
-    if (ws <= MOBILE_BREAKPOINT) {
+    if (mobile) {
       otColumns = 1;
       ntColumns = 1;
       singleColumns = 1;
@@ -723,16 +727,15 @@ const SideBarBooks = (props: {
                 class="sidebar-chapters show-sidebar-chapter"
                 style={{
                   ...chapterGridStyle,
-                  justifyContent:
-                    ws <= MOBILE_BREAKPOINT
-                      ? "flex-start"
-                      : bd.numberOfChapters < 4 * separator
-                        ? chapterColumnPosition === "end"
-                          ? "flex-end"
-                          : chapterColumnPosition === "middle"
-                            ? "center"
-                            : "flex-start"
-                        : "space-between",
+                  justifyContent: mobile
+                    ? "flex-start"
+                    : bd.numberOfChapters < 4 * separator
+                      ? chapterColumnPosition === "end"
+                        ? "flex-end"
+                        : chapterColumnPosition === "middle"
+                          ? "center"
+                          : "flex-start"
+                      : "space-between",
                 }}
               >
                 {narrowChapterStyle && ntColumns === 2 && (
@@ -830,7 +833,7 @@ const SideBarBooks = (props: {
             </span>
             {renderBooksGrid(NTBooks, ntColumns, 1, undefined, true)}
           </div>
-          {ws <= MOBILE_BREAKPOINT && apocryphaAvailable.value && (
+          {mobile && apocryphaAvailable.value && (
             <>
               <div className="separator" style={{ display: "flex" }} />
               <div
@@ -843,7 +846,7 @@ const SideBarBooks = (props: {
               >
                 <span class="testament-title">
                   {t("apocrypha", { defaultValue: "Apocrypha" })}
-                  <ApocryphaInfoButton showApocryphaInfo={showApocryphaInfo} />
+                  <ApocryphaInfoButton onOpen={openApocryphaInfo} />
                 </span>
                 {renderBooksGrid(APBooks, ntColumns, 2, undefined, true)}
               </div>
@@ -893,13 +896,11 @@ const SideBarBooks = (props: {
           class="testament-container flex-col-gap-sm"
           style={{ width: "100%" }}
         >
-          {(config.alwaysShowTitle || ws > MOBILE_BREAKPOINT) && (
+          {(config.alwaysShowTitle || !mobile) && (
             <span class="testament-title testament-title--with-action">
               {config.title}
 
-              {lst === 3 && (
-                <ApocryphaInfoButton showApocryphaInfo={showApocryphaInfo} />
-              )}
+              {lst === 3 && <ApocryphaInfoButton onOpen={openApocryphaInfo} />}
             </span>
           )}
           {renderBooksGrid(config.books, singleColumns)}
@@ -1310,25 +1311,26 @@ const OfflineTranslationControls = (props: {
             });
 
     return (
-      <button
-        type="button"
-        class="sb-offline-btn downloading flex-center"
-        title={label}
-        aria-label={label}
-        onClick={(e: MouseEvent) => {
-          e.stopPropagation();
-          offline.cancelDownload(translation.id);
-        }}
-      >
-        <span
-          class={`sb-offline-progress${percent === null ? " indeterminate" : ""}`}
-          style={{ "--sb-offline-progress": `${percent ?? 0}%` }}
+      <TooltipTrigger>
+        <button
+          type="button"
+          class="sb-offline-btn downloading flex-center"
+          aria-label={label}
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation();
+            offline.cancelDownload(translation.id);
+          }}
         >
-          {percent !== null && (
-            <span class="sb-offline-progress-label">{percent}</span>
-          )}
-        </span>
-      </button>
+          <span
+            class={`sb-offline-progress${percent === null ? " indeterminate" : ""}`}
+            style={{ "--sb-offline-progress": `${percent ?? 0}%` }}
+          >
+            {percent !== null && (
+              <span class="sb-offline-progress-label">{percent}</span>
+            )}
+          </span>
+        </button>
+      </TooltipTrigger>
     );
   }
 
@@ -1358,55 +1360,58 @@ const OfflineTranslationControls = (props: {
   return (
     <>
       {summary?.updateAvailable && (
-        <button
-          type="button"
-          class="sb-offline-btn update flex-center"
-          title={updateLabel}
-          aria-label={updateLabel}
-          onClick={(e: MouseEvent) => {
-            e.stopPropagation();
-            void startDownload();
-          }}
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">
-            sync
-          </span>
-        </button>
+        <TooltipTrigger>
+          <button
+            type="button"
+            class="sb-offline-btn update flex-center"
+            aria-label={updateLabel}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              void startDownload();
+            }}
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">
+              sync
+            </span>
+          </button>
+        </TooltipTrigger>
       )}
       {summary ? (
-        <button
-          type="button"
-          ref={buttonRef}
-          class="sb-offline-btn downloaded flex-center"
-          style={highlightStyle}
-          title={downloadedLabel}
-          aria-label={downloadedLabel}
-          onClick={(e: MouseEvent) => {
-            e.stopPropagation();
-            pendingOfflineDelete.value = translation;
-          }}
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">
-            offline_pin
-          </span>
-        </button>
+        <TooltipTrigger>
+          <button
+            type="button"
+            ref={buttonRef}
+            class="sb-offline-btn downloaded flex-center"
+            style={highlightStyle}
+            aria-label={downloadedLabel}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              pendingOfflineDelete.value = translation;
+            }}
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">
+              offline_pin
+            </span>
+          </button>
+        </TooltipTrigger>
       ) : (
-        <button
-          type="button"
-          ref={buttonRef}
-          class={`sb-offline-btn flex-center${error ? " has-error" : ""}`}
-          style={highlightStyle}
-          title={downloadTitle}
-          aria-label={downloadTitle}
-          onClick={(e: MouseEvent) => {
-            e.stopPropagation();
-            void startDownload();
-          }}
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">
-            download
-          </span>
-        </button>
+        <TooltipTrigger>
+          <button
+            type="button"
+            ref={buttonRef}
+            class={`sb-offline-btn flex-center${error ? " has-error" : ""}`}
+            style={highlightStyle}
+            aria-label={downloadTitle}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              void startDownload();
+            }}
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">
+              download
+            </span>
+          </button>
+        </TooltipTrigger>
       )}
     </>
   );
@@ -1471,20 +1476,21 @@ const ConfirmOfflineDelete = (props: {
         })}
       </p>
       <div className="sb-offline-delete-actions">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           className="sb-offline-delete-cancel"
           onClick={close}
         >
           {t("cancel")}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="primary"
+          tone="danger"
           className="sb-offline-delete-confirm"
           onClick={() => void confirm()}
         >
           {t("remove", { defaultValue: "Remove" })}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -1833,12 +1839,13 @@ const CustomTranslation = (props: {
     <div class="custom-translation-container flex-col-gap-md">
       <div class="custom-tr-api flex-col-gap-md">
         <div class="custom-tr-in-con flex-start-center-gap-sm">
-          <input
+          <TextInput
             value={inputValue.value}
-            onChange={(e) => {
-              inputValue.value = (e.target as HTMLInputElement).value;
+            onValueInput={(url) => {
+              inputValue.value = url;
             }}
             class="custom-tr-in"
+            aria-label={t("enter-url", { defaultValue: "Enter URL" })}
             placeholder={t("enter-url", { defaultValue: "Enter URL" })}
           />
           <button
@@ -1926,62 +1933,7 @@ const TranslationInfo = (props: {
   );
 };
 
-const ApocryphaInfo = (props: { bibleSelectorState: BibleSelectorState }) => {
-  const { showApocryphaInfo } = props.bibleSelectorState;
-  const { t } = useI18n();
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") showApocryphaInfo.value = false;
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
-
-  return (
-    <>
-      <div
-        class="sb-apocrypha-info-backdrop"
-        onClick={(event) => {
-          event.stopPropagation();
-          showApocryphaInfo.value = false;
-        }}
-      />
-      <div
-        id="apocrypha-info"
-        class="sb-apocrypha-info-overlay"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="apocrypha-info-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div class="sb-apocrypha-info">
-          <div class="sb-apocrypha-info-header">
-            <h2 class="sb-apocrypha-info-title">
-              {t("about-apocrypha", {
-                defaultValue: "About the Apocrypha",
-              })}
-            </h2>
-
-            <CloseButton
-              onClose={(event) => {
-                event.stopPropagation();
-                showApocryphaInfo.value = false;
-              }}
-            />
-          </div>
-
-          <div class="sb-apocrypha-info-content">
-            {t("apocrypha-info-text", {
-              defaultValue:
-                "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
-            })}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-};
-const ApocryphaInfoButton = (props: { showApocryphaInfo: Signal<boolean> }) => {
+const ApocryphaInfoButton = (props: { onOpen: () => void }) => {
   const { t } = useI18n();
 
   return (
@@ -1993,12 +1945,12 @@ const ApocryphaInfoButton = (props: { showApocryphaInfo: Signal<boolean> }) => {
         defaultValue: "About the Apocrypha",
       })}
       onClick={() => {
-        props.showApocryphaInfo.value = true;
+        props.onOpen();
       }}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          props.showApocryphaInfo.value = true;
+          props.onOpen();
         }
       }}
     >

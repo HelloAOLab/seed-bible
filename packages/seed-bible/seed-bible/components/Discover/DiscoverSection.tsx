@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import type { ComponentChildren } from "preact";
 import "./DiscoverSection.css";
 
@@ -20,5 +21,5 @@ export function DiscoverSection(props: {
 }
 
 export function DiscoverEmpty(props: { text: string }) {
-  return <div className="sb-discover-empty">{props.text}</div>;
+  return <EmptyState className="sb-discover-empty">{props.text}</EmptyState>;
 }

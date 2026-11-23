@@ -55,6 +55,7 @@ import { useHorizontalScroll } from "../useHorizontalScroll";
 import { UserImagesGrid } from "./UserImages";
 import { CustomizationCard } from "../CustomizationEditPane/CustomizationCard";
 import "./YourContentPane.css";
+import { Button } from "../Button/Button";
 
 export const YOUR_CONTENT_PANE_ID = "your-content-pane";
 
@@ -81,6 +82,8 @@ export interface YourContentScreenProps {
   onOpenReadingPlan: (plan: ReadingPlanMetadata) => void;
   /** Opens a reading plan in the plan editor and leaves this screen. */
   onEditReadingPlan: (plan: ReadingPlanMetadata) => void;
+  /** Opens the plan editor on a new reading plan and leaves this screen. */
+  onCreateReadingPlan: () => void;
   /** Opens a customization in its editor and leaves this screen. */
   onEditCustomization: (customizationId: string) => void;
   /** Creates a new customization, opens it in the editor and leaves this screen. */
@@ -285,7 +288,7 @@ function AnnotationCard(props: {
         <ContextMenuWithButton
           icon="more_horiz"
           buttonClassName="sb-content-kebab"
-          aria-label={t("more-options", { defaultValue: "More options" })}
+          label={t("more-options", { defaultValue: "More options" })}
         >
           <ContextMenuItem onClick={props.onEdit}>
             <MaterialIcon
@@ -426,7 +429,7 @@ function HighlightRow(props: {
       <ContextMenuWithButton
         icon="more_horiz"
         buttonClassName="sb-content-kebab"
-        aria-label={t("more-options", { defaultValue: "More options" })}
+        label={t("more-options", { defaultValue: "More options" })}
       >
         <ContextMenuItem onClick={confirmDelete}>
           <MaterialIcon
@@ -545,8 +548,7 @@ function SavePill(props: {
       </button>
       <ContextMenuWithButton
         buttonClassName="sb-content-save-menu"
-        aria-label={t("save-options", { defaultValue: "Save options" })}
-        title={t("save-options", { defaultValue: "Save options" })}
+        label={t("save-options", { defaultValue: "Save options" })}
       >
         <ContextMenuItem
           onClick={() => openSaveModalForLocation(state, location)}
@@ -615,11 +617,10 @@ function BookmarkRow(props: {
       </button>
       <ContextMenuWithButton
         buttonClassName="sb-content-save-menu"
-        aria-label={t("bookmark-options-named", {
+        label={t("bookmark-options-named", {
           defaultValue: "Options for {{name}}",
           name: bookmark.name,
         })}
-        title={t("bookmark-options", { defaultValue: "Bookmark options" })}
       >
         <ContextMenuItem onClick={() => openEditBookmarkModal(state, bookmark)}>
           <MaterialIcon
@@ -682,6 +683,7 @@ function ReadingPlanRow(props: {
         fullPlan={plan.status === "draft" ? null : full}
         onEdit={props.onEdit}
         modals={state.modals}
+        app={state.app}
         toast={state.app.toast}
         buttonClassName="sb-discover-item-menu"
       />
@@ -1049,8 +1051,17 @@ export function YourContentPane(props: YourContentScreenProps) {
           {/* Outside the chip strip so it stays put while the chips scroll. */}
           <ContextMenuWithButton
             buttonClassName="sb-content-create"
-            aria-label={t("create-menu", { defaultValue: "Create" })}
-            icon={<>+ {t("create-playlist", { defaultValue: "Create" })}</>}
+            trigger={(menu) => (
+              <Button
+                {...menu}
+                variant="primary"
+                size="sm"
+                shape="pill"
+                icon="add"
+              >
+                {t("create-playlist", { defaultValue: "Create" })}
+              </Button>
+            )}
           >
             <ContextMenuItem onClick={props.onCreatePlaylist}>
               <MaterialIcon className="sb-context-menu-item-icon">
@@ -1058,6 +1069,18 @@ export function YourContentPane(props: YourContentScreenProps) {
               </MaterialIcon>
               {t("create-playlist-menu-item", { defaultValue: "Playlist" })}
             </ContextMenuItem>
+            {/* Both save to the user's account, so a signed-out user can't
+                keep what they make. */}
+            {userId ? (
+              <ContextMenuItem onClick={props.onCreateReadingPlan}>
+                <MaterialIcon className="sb-context-menu-item-icon">
+                  menu_book
+                </MaterialIcon>
+                {t("create-reading-plan-menu-item", {
+                  defaultValue: "Reading Plan",
+                })}
+              </ContextMenuItem>
+            ) : null}
             {userId ? (
               <ContextMenuItem onClick={props.onCreateCustomization}>
                 <MaterialIcon className="sb-context-menu-item-icon">
@@ -1108,13 +1131,13 @@ export function YourContentPane(props: YourContentScreenProps) {
                 defaultValue: "Your content couldn't be loaded.",
               })}
             </p>
-            <button
-              type="button"
+            <Button
+              shape="pill"
               className="sb-content-retry"
               onClick={() => void yourContent.load({ force: true })}
             >
               {t("try-again", { defaultValue: "Try again" })}
-            </button>
+            </Button>
           </div>
         ) : null}
 
@@ -1125,13 +1148,13 @@ export function YourContentPane(props: YourContentScreenProps) {
                 defaultValue: "Couldn't load your bookmarks. Please try again.",
               })}
             </p>
-            <button
-              type="button"
+            <Button
+              shape="pill"
               className="sb-content-retry"
               onClick={loadBookmarks}
             >
               {t("try-again", { defaultValue: "Try again" })}
-            </button>
+            </Button>
           </div>
         ) : null}
 
@@ -1269,7 +1292,7 @@ export function YourContentPane(props: YourContentScreenProps) {
                   playlist={p}
                   playlists={playlists}
                   modals={state.modals}
-                  toast={state.app.toast}
+                  app={state.app}
                   onPlay={props.onPlayPlaylist}
                   onEdit={props.onEditPlaylist}
                 />

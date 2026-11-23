@@ -6,6 +6,8 @@ import { sanitize } from "../../managers/Sanitization";
 import { parseVerseReference } from "../../managers/BibleDataManager";
 import { PeIcon } from "./editorControls";
 import { escapeHtml } from "./playlistSteps";
+import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
 
 // TipTap is sizeable and never server-rendered; see `TextItemInput`.
 const TipTapEditor = lazy(() =>
@@ -147,8 +149,9 @@ export function PlaylistNoteComposer(props: {
               {t("playlist-editor-insert", { defaultValue: "INSERT" })}
             </span>
             <div className="sb-pe-insert-actions">
-              <button
-                type="button"
+              <Button
+                size="sm"
+                icon={<PeIcon name="arrow-right" />}
                 className="sb-pe-insert-action"
                 aria-expanded={inserting === "step"}
                 disabled={steps.length === 0}
@@ -156,33 +159,32 @@ export function PlaylistNoteComposer(props: {
                   setInserting(inserting === "step" ? null : "step")
                 }
               >
-                <PeIcon name="arrow-right" />
                 {t("playlist-editor-link-item", { defaultValue: "Link item" })}
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                size="sm"
+                icon={<PeIcon name="book-open" />}
                 className="sb-pe-insert-action"
                 aria-expanded={inserting === "verse"}
                 onClick={() =>
                   setInserting(inserting === "verse" ? null : "verse")
                 }
               >
-                <PeIcon name="book-open" />
                 {t("playlist-editor-embed-verse", {
                   defaultValue: "Embed verse",
                 })}
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                size="sm"
+                icon={<PeIcon name="link" />}
                 className="sb-pe-insert-action"
                 aria-expanded={inserting === "link"}
                 onClick={() =>
                   setInserting(inserting === "link" ? null : "link")
                 }
               >
-                <PeIcon name="link" />
                 {t("playlist-editor-link", { defaultValue: "Link" })}
-              </button>
+              </Button>
             </div>
           </div>
           {inserting === "step" ? (
@@ -227,9 +229,9 @@ export function PlaylistNoteComposer(props: {
                 }
               }}
             >
-              <input
-                className="sb-pe-input"
-                type="text"
+              <TextInput
+                size="sm"
+                className="sb-pe-insert-picker-input"
                 value={verseText}
                 autoFocus
                 aria-label={t("playlist-editor-embed-verse", {
@@ -238,15 +240,17 @@ export function PlaylistNoteComposer(props: {
                 placeholder={t("playlist-editor-verse-placeholder", {
                   defaultValue: "e.g. John 3:16",
                 })}
-                onInput={(event) => setVerseText(event.currentTarget.value)}
+                onValueInput={setVerseText}
               />
-              <button
+              <Button
                 type="submit"
+                variant="primary"
+                size="sm"
                 className="sb-pe-insert-picker-go"
                 disabled={!parsedVerse}
               >
                 {t("playlist-editor-insert-button", { defaultValue: "Insert" })}
-              </button>
+              </Button>
             </form>
           ) : null}
           {inserting === "link" ? (
@@ -262,8 +266,9 @@ export function PlaylistNoteComposer(props: {
                 }
               }}
             >
-              <input
-                className="sb-pe-input"
+              <TextInput
+                size="sm"
+                className="sb-pe-insert-picker-input"
                 type="url"
                 value={linkUrl}
                 autoFocus
@@ -271,15 +276,17 @@ export function PlaylistNoteComposer(props: {
                 placeholder={t("playlist-editor-link-placeholder", {
                   defaultValue: "https://",
                 })}
-                onInput={(event) => setLinkUrl(event.currentTarget.value)}
+                onValueInput={setLinkUrl}
               />
-              <button
+              <Button
                 type="submit"
+                variant="primary"
+                size="sm"
                 className="sb-pe-insert-picker-go"
                 disabled={!validUrl}
               >
                 {t("playlist-editor-insert-button", { defaultValue: "Insert" })}
-              </button>
+              </Button>
             </form>
           ) : null}
         </>

@@ -8,11 +8,14 @@ import { MaterialIcon, SeedBibleIcon } from "../icons";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { PlaylistItemNoteTag } from "../PlaylistItemNoteTag/PlaylistItemNoteTag";
 import {
+  compareStepTitle,
   playlistStepKind,
   playlistStepMinutes,
   playlistTotalMinutes,
   type PlaylistStepKind,
 } from "../PlaylistEditor/playlistSteps";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 /**
  * A playlist's cover, author, description and steps, with a back button and
@@ -55,15 +58,13 @@ export function PlaylistOverview(props: {
   return (
     <div className={`sb-playlist-page ${props.className ?? ""}`}>
       <div className="sb-playlist-page-header">
-        <button
-          type="button"
+        <IconButton
+          size="lg"
           className="sb-playlist-page-back"
-          aria-label={props.backLabel}
-          title={props.backLabel}
+          icon={isRtl ? "arrow_forward" : "arrow_back"}
+          label={props.backLabel}
           onClick={props.onBack}
-        >
-          <MaterialIcon>{isRtl ? "arrow_forward" : "arrow_back"}</MaterialIcon>
-        </button>
+        />
         <h1 className="sb-playlist-page-title">
           <span dir="auto">{title}</span>
         </h1>
@@ -100,14 +101,15 @@ export function PlaylistOverview(props: {
       </div>
       {action ? (
         <div className="sb-playlist-page-footer">
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="lg"
             className="sb-playlist-page-start"
             disabled={action.disabled}
             onClick={action.onClick}
           >
             {action.label}
-          </button>
+          </Button>
         </div>
       ) : null}
     </div>
@@ -152,7 +154,8 @@ export function PlaylistStepIcon(props: { item: PlaylistItemData }) {
 
 /**
  * What a row of steps shows for one: its icon, name (with any note's title),
- * and its time estimate at the row's end.
+ * and its time estimate at the row's end. A titled compare step's note title
+ * is its name, so it isn't repeated after it.
  */
 export function PlaylistOverviewItemContent(props: {
   item: PlaylistItemData;
@@ -162,12 +165,17 @@ export function PlaylistOverviewItemContent(props: {
 }) {
   const { item } = props;
   const { t } = useI18n();
+  const compareTitle = compareStepTitle(item);
+  const name =
+    props.label ??
+    compareTitle ??
+    playlistItemLabel(item, t, props.resolveBookName);
   return (
     <>
       <PlaylistStepIcon item={item} />
       <span className="sb-discover-item-title" dir="auto">
-        {props.label ?? playlistItemLabel(item, t, props.resolveBookName)}
-        <PlaylistItemNoteTag item={item} />
+        {name}
+        {name !== compareTitle ? <PlaylistItemNoteTag item={item} /> : null}
       </span>
       <span className="sb-playlist-page-item-minutes">
         {t("playlist-editor-minutes", {

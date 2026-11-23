@@ -320,6 +320,13 @@ function createFixture(): ReaderFixture {
     disableExtension: vi.fn(async () => undefined),
     enableExtension: vi.fn(async () => undefined),
     isShared: signal(false),
+    showDiscoveredContent: signal(true),
+    userDismissedHiddenContentWarning: signal(false),
+    turnOnDiscoveredContent: vi.fn(),
+    hasHiddenDiscoveredContent: signal(false),
+    dismissHiddenContentWarning: vi.fn(),
+    showSharedSessionHint: signal(false),
+    dismissSharedSessionHint: vi.fn(),
     dispose: vi.fn(async () => undefined),
     enabledExtensions: signal<ReadingExtensionRuntime[]>([]),
     isExtensionEnabled: vi.fn(() => false),
@@ -3026,7 +3033,10 @@ describe("BibleReader", () => {
     const state = createStateWithAnnotatedVerse("GEN", 1, 1, false);
     state.settings.settings.value = {
       ...state.settings.settings.value,
-      discoveredContent: { showContent: false },
+      discoveredContent: {
+        ...state.settings.settings.value.discoveredContent,
+        showContent: false,
+      },
     };
 
     act(() => {
@@ -3253,7 +3263,10 @@ describe("BibleReader", () => {
     const state = createStateWithAnnotatedVerse("GEN", 1, 3, true);
     state.settings.settings.value = {
       ...state.settings.settings.value,
-      discoveredContent: { showContent: false },
+      discoveredContent: {
+        ...state.settings.settings.value.discoveredContent,
+        showContent: false,
+      },
     };
 
     act(() => {
@@ -4210,6 +4223,7 @@ describe("BibleReader", () => {
     function createSession(
       users: Array<{
         connectionId: string;
+        userId?: string | null;
         isSelf?: boolean;
         name?: string;
         pictureUrl?: string | null;
@@ -4222,13 +4236,18 @@ describe("BibleReader", () => {
           firstVerse?: number;
           lastVerse?: number;
         }
-      >
+      >,
+      sessionOptions?: {
+        hostUserId?: string | null;
+        coHostUserIds?: string[];
+        viewingAreaVisibility?: "auto" | "everyone" | "hosts-only";
+      }
     ) {
       return {
         connectedUsers: signal(
           users.map((user) => ({
             connectionId: user.connectionId,
-            userId: user.connectionId,
+            userId: user.userId === undefined ? user.connectionId : user.userId,
             isSelf: user.isSelf ?? false,
             isActive: true,
             joinedAtMs: 0,
@@ -4240,23 +4259,38 @@ describe("BibleReader", () => {
           }))
         ),
         participantPositions: signal(new Map(Object.entries(positions))),
-        options: signal({ hostUserId: null, allowedNavigators: [] }),
+        options: signal({
+          hostUserId: sessionOptions?.hostUserId ?? null,
+          coHostUserIds: sessionOptions?.coHostUserIds ?? [],
+          allowedNavigators: [],
+          viewingAreaVisibility: sessionOptions?.viewingAreaVisibility,
+        }),
       } as any;
     }
 
-    function renderReader(session: unknown, fixture: ReaderFixture) {
+    function renderReader(
+      session: unknown,
+      fixture: ReaderFixture,
+      state = createMobileState()
+    ) {
       act(() => {
         render(
           <BibleReader
             currentSlot={fixture.slot}
             selectorState={fixture.selectorState}
             readingState={fixture.readingState}
-            state={createMobileState()}
+            state={state}
             sharedSession={session as any}
           />,
           container
         );
       });
+    }
+
+    function markerNames() {
+      return [
+        ...container.querySelectorAll(".sb-presence-avatars .sb-tab-user-icon"),
+      ].map((icon) => icon.getAttribute("title"));
     }
 
     it("draws a bar spanning the verses another participant can see", () => {
@@ -4392,7 +4426,10 @@ describe("BibleReader", () => {
               id,
               { bookId: "GEN", chapterNumber: 1, firstVerse: 1, lastVerse: 2 },
             ])
-          )
+          ),
+          // Six people would otherwise hide everyone but the hosts. This case
+          // is about how a crowd on the same verses is drawn.
+          { viewingAreaVisibility: "everyone" }
         ),
         fixture
       );
@@ -4925,6 +4962,225 @@ describe("BibleReader", () => {
       } finally {
         restoreScreen();
       }
+    });
+
+    const sameChapter = (ids: string[]) =>
+      Object.fromEntries(
+        ids.map((id) => [
+          id,
+          { bookId: "GEN", chapterNumber: 1, firstVerse: 1, lastVerse: 2 },
+        ])
+      );
+
+    it("shows everyone's place while fewer than four people are here", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "auto" }
+        ),
+        fixture
+      );
+
+      expect(markerNames().sort()).toEqual(["Host", "Mary"]);
+    });
+
+    it("shows only hosts once four people are here, until the host says otherwise", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const session = createSession(
+        [
+          { connectionId: "me", isSelf: true },
+          { connectionId: "host", name: "Host" },
+          { connectionId: "cohost", name: "Co-host" },
+          { connectionId: "mary", name: "Mary" },
+        ],
+        sameChapter(["host", "cohost", "mary"]),
+        {
+          hostUserId: "host",
+          coHostUserIds: ["cohost"],
+          viewingAreaVisibility: "auto",
+        }
+      );
+      renderReader(session, fixture);
+
+      expect(markerNames().sort()).toEqual(["Co-host", "Host"]);
+
+      act(() => {
+        session.options.value = {
+          ...session.options.value,
+          viewingAreaVisibility: "everyone",
+        };
+      });
+
+      expect(markerNames().sort()).toEqual(["Co-host", "Host", "Mary"]);
+    });
+
+    it("hides other participants when the host chooses hosts only, even in a small session", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "hosts-only" }
+        ),
+        fixture
+      );
+
+      expect(markerNames()).toEqual(["Host"]);
+      expect(container.querySelector(".sb-presence-gutter")).not.toBeNull();
+    });
+
+    it("lets a person choose to see everyone even when the session would show only hosts", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const state = createMobileState();
+      state.settings.settings.value = {
+        ...state.settings.settings.value,
+        viewingAreaIndicators: "everyone",
+      };
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+            { connectionId: "john", name: "John" },
+          ],
+          sameChapter(["host", "mary", "john"]),
+          { hostUserId: "host", viewingAreaVisibility: "auto" }
+        ),
+        fixture,
+        state
+      );
+
+      expect(markerNames().sort()).toEqual(["Host", "John", "Mary"]);
+    });
+
+    it("lets a person choose to see only hosts even when the session is small", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const state = createMobileState();
+      state.settings.settings.value = {
+        ...state.settings.settings.value,
+        viewingAreaIndicators: "hosts-only",
+      };
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "auto" }
+        ),
+        fixture,
+        state
+      );
+
+      expect(markerNames()).toEqual(["Host"]);
+    });
+
+    it("keeps the host's hosts-only choice when someone set Everyone for themselves", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const state = createMobileState();
+      state.settings.settings.value = {
+        ...state.settings.settings.value,
+        viewingAreaIndicators: "everyone",
+      };
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "hosts-only" }
+        ),
+        fixture,
+        state
+      );
+
+      expect(markerNames()).toEqual(["Host"]);
+    });
+
+    it("lets someone choose hosts only even when the host is showing everyone", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      const state = createMobileState();
+      state.settings.settings.value = {
+        ...state.settings.settings.value,
+        viewingAreaIndicators: "hosts-only",
+      };
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "host", name: "Host" },
+            { connectionId: "mary", name: "Mary" },
+          ],
+          sameChapter(["host", "mary"]),
+          { hostUserId: "host", viewingAreaVisibility: "everyone" }
+        ),
+        fixture,
+        state
+      );
+
+      expect(markerNames()).toEqual(["Host"]);
+    });
+
+    it("counts a person with two tabs once, so three people still show everyone's place", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", userId: "me", isSelf: true },
+            { connectionId: "ada-laptop", userId: "ada", name: "Ada" },
+            { connectionId: "ada-phone", userId: "ada", name: "Ada" },
+            { connectionId: "bob", userId: "bob", name: "Bob" },
+          ],
+          sameChapter(["ada-laptop", "ada-phone", "bob"]),
+          { hostUserId: "me", viewingAreaVisibility: "auto" }
+        ),
+        fixture
+      );
+
+      expect(markerNames().sort()).toEqual(["Ada", "Ada", "Bob"]);
+    });
+
+    it("shows everyone when automatic would show only hosts but none of them are here", () => {
+      stubLineBoxes({ 1: 40, 2: 70 });
+      const fixture = createFixture();
+      renderReader(
+        createSession(
+          [
+            { connectionId: "me", isSelf: true },
+            { connectionId: "mary", name: "Mary" },
+            { connectionId: "john", name: "John" },
+            { connectionId: "ann", name: "Ann" },
+          ],
+          sameChapter(["mary", "john", "ann"]),
+          { hostUserId: "host", viewingAreaVisibility: "auto" }
+        ),
+        fixture
+      );
+
+      expect(markerNames().sort()).toEqual(["Ann", "John", "Mary"]);
     });
 
     it("draws no gutter outside a shared session", () => {
@@ -5461,7 +5717,7 @@ describe("BibleReader", () => {
     });
 
     expect(container.querySelector(".sb-inline-footnote-button")).toBeNull();
-    expect(container.querySelector(".sb-footnote-modal")).toBeNull();
+    expect(document.querySelector(".sb-footnote-dialog")).toBeNull();
   });
 
   it("hides highlight classes/styles when scriptureElements.showHighlights is false", () => {
@@ -5592,16 +5848,17 @@ describe("BibleReader", () => {
       );
     });
 
-    expect(
-      container.querySelector(".sb-footnote-modal-title")?.textContent
-    ).toContain("Genesis 1:1");
-    expect(
-      container.querySelector(".sb-footnote-modal-content")?.textContent
-    ).toContain("Footnote text");
+    const dialog = document.querySelector<HTMLElement>(".sb-footnote-dialog");
+    expect(dialog?.getAttribute("role")).toBe("dialog");
+    expect(dialog?.querySelector(".sb-dialog-title")?.textContent).toContain(
+      "Genesis 1:1"
+    );
+    expect(dialog?.querySelector(".sb-dialog-body")?.textContent).toContain(
+      "Footnote text"
+    );
 
-    const closeButton = container.querySelector(
-      ".sb-footnote-modal-close"
-    ) as HTMLButtonElement | null;
+    const closeButton =
+      dialog?.querySelector<HTMLButtonElement>(".sb-dialog-close");
     expect(closeButton).not.toBeNull();
 
     act(() => {
@@ -5609,6 +5866,60 @@ describe("BibleReader", () => {
     });
 
     expect(selectFootnote).toHaveBeenCalledWith(null);
+  });
+
+  function renderOpenFootnote(
+    change: (fixture: ReaderFixture) => void = () => {}
+  ) {
+    const fixture = createFixture();
+    change(fixture);
+    fixture.selectedFootnote.value = {
+      chapter: fixture.chapterData.value!,
+      verse: null,
+      note: { noteId: 7, text: "Footnote text", caller: "+" },
+    };
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={fixture.slot}
+          selectorState={fixture.selectorState}
+          readingState={fixture.readingState}
+        />,
+        container
+      );
+    });
+    return fixture;
+  }
+
+  it("closes the footnote on Escape", () => {
+    const { selectFootnote } = renderOpenFootnote();
+    const dialog = document.querySelector<HTMLElement>(".sb-footnote-dialog")!;
+
+    act(() => {
+      dialog.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    expect(selectFootnote).toHaveBeenCalledWith(null);
+  });
+
+  it("shows the footnote at the reader's text size and in the translation's direction", () => {
+    renderOpenFootnote(({ chapterData }) => {
+      const chapter = chapterData.value!;
+      chapterData.value = {
+        ...chapter,
+        translation: { ...chapter.translation, textDirection: "rtl" },
+      };
+    });
+    const text = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="dialog"] *')
+    ).findLast((el) => el.textContent === "Footnote text")!;
+
+    expect(
+      text.closest('[class*="sb-reader-font-size-"]')?.classList
+    ).toContain("sb-reader-font-size-m");
+    expect(text.closest("[dir]")?.getAttribute("dir")).toBe("rtl");
   });
 
   it("makes scripture references in footnote text clickable", () => {
@@ -5685,7 +5996,7 @@ describe("BibleReader", () => {
     });
 
     const links = Array.from(
-      container.querySelectorAll(".sb-verse-reference-link")
+      document.querySelectorAll(".sb-footnote-dialog .sb-verse-reference-link")
     ) as HTMLAnchorElement[];
     expect(links).toHaveLength(2);
     expect(links[0]?.textContent).toBe("John 3:16");
@@ -5936,13 +6247,11 @@ describe("BibleReader", () => {
       const { back } = renderPlaying(true);
 
       const info = back?.nextElementSibling;
-      expect(
-        info?.querySelector(".sb-quick-toolbar-current-playlist")
-      ).not.toBeNull();
+      expect(info?.querySelector(".sb-quick-toolbar-card")).not.toBeNull();
       expect(info?.textContent).toContain("The Love of Jesus");
       expect(
         container.querySelector(
-          ".sb-bible-reader-mobile-header-actions .sb-quick-toolbar-current-playlist"
+          ".sb-bible-reader-mobile-header-actions .sb-quick-toolbar-card"
         )
       ).toBeNull();
     });
@@ -5975,7 +6284,7 @@ describe("BibleReader", () => {
     expect(buttons.at(-1)?.className).toBe(
       "sb-bible-reader-mobile-header-translation"
     );
-    expect(buttons.at(-2)?.className).toBe(
+    expect(buttons.at(-2)?.classList).toContain(
       "sb-bible-reader-mobile-header-settings"
     );
   });
@@ -7679,10 +7988,46 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
           };
         });
         expect(
-          container.querySelector(".sb-footnote-modal-content")?.textContent
+          document.querySelector(".sb-footnote-dialog .sb-dialog-body")
+            ?.textContent
         ).toContain("Footnote text");
-        click(container.querySelector(".sb-footnote-modal-close"));
+        click(document.querySelector(".sb-footnote-dialog .sb-dialog-close"));
         expect(second.readingState.selectFootnote).toHaveBeenCalledWith(null);
+      });
+
+      it("lays out a footnote from its second passage in that passage's direction", async () => {
+        // A left-to-right tab beside a right-to-left passage.
+        const second = createFixture();
+        const chapter = second.chapterData.value!;
+        second.chapterData.value = {
+          ...chapter,
+          translation: { ...chapter.translation, textDirection: "rtl" },
+        };
+        const playing = renderStep(
+          [
+            {
+              ...COMPARE,
+              compare: { ref: { bookId: "GEN", chapter: 1, verse: 1 } },
+            },
+          ],
+          { compact: true, compareReadingState: second.readingState }
+        );
+        await act(async () => {
+          await playing.jumpTo(0);
+        });
+
+        act(() => {
+          second.selectedFootnote.value = {
+            note: second.chapterData.value!.chapter.footnotes[0]!,
+            verse: null,
+            chapter: second.chapterData.value!,
+          };
+        });
+
+        const text = Array.from(
+          document.querySelectorAll<HTMLElement>(".sb-footnote-dialog *")
+        ).findLast((el) => el.textContent === "Footnote text")!;
+        expect(text.closest("[dir]")?.getAttribute("dir")).toBe("rtl");
       });
 
       it("hands the verse toolbar back to the tab's own passage when it's used", async () => {

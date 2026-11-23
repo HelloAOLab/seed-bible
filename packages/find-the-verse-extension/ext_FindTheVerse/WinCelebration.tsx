@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { Button, Dialog } from "seed-bible/components";
 import { formatReference } from "./books";
 import { SoundToggle } from "./SoundToggle";
 import type { TargetVerse } from "./types";
@@ -63,8 +64,9 @@ function Confetti() {
 }
 
 /**
- * Full-screen win moment over the reader, on every screen size. Loaded only
- * when a round is won.
+ * The win moment: confetti over the reader and a card in the middle, on every
+ * screen size. The page stays undimmed; Escape or a tap outside the card
+ * keeps reading. Loaded only when a round is won.
  */
 export default function WinCelebration({
   target,
@@ -85,33 +87,24 @@ export default function WinCelebration({
 }) {
   const backRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    backRef.current?.focus({ preventScroll: true });
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onDismiss();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onDismiss]);
-
   const translate = (key: string, options?: Record<string, unknown>) =>
     t(key, { ...options, ns: "find-the-verse-extension" });
+  const title = translate("you-found-it", { defaultValue: "You found it!" });
 
   return (
-    <div className="ftv-celebration">
+    <>
       <Confetti />
-      <div
-        className="ftv-celebration-card"
-        role="dialog"
-        aria-modal="false"
-        aria-labelledby="ftv-celebration-title"
+      <Dialog
+        className="ftv-celebration"
+        label={title}
+        showClose={false}
+        initialFocusRef={backRef}
+        onClose={onDismiss}
       >
         <div className="ftv-celebration-emoji" aria-hidden="true">
           🎉
         </div>
-        <p id="ftv-celebration-title" className="ftv-celebration-title">
-          {translate("you-found-it", { defaultValue: "You found it!" })}
-        </p>
+        <p className="ftv-celebration-title">{title}</p>
         <p className="ftv-celebration-reference">
           {formatReference(
             target.bookId,
@@ -135,20 +128,20 @@ export default function WinCelebration({
           </p>
         )}
         <div className="ftv-celebration-actions">
-          <button
-            ref={backRef}
-            type="button"
-            className="ftv-btn ftv-btn--primary"
-            onClick={onBack}
-          >
+          <Button buttonRef={backRef} variant="primary" onClick={onBack}>
             {translate("back-to-menu", { defaultValue: "Back to games" })}
-          </button>
-          <button type="button" className="ftv-btn" onClick={onDismiss}>
+          </Button>
+          <Button onClick={onDismiss}>
             {translate("keep-reading", { defaultValue: "Keep reading" })}
-          </button>
+          </Button>
         </div>
-        <SoundToggle t={translate} className="ftv-celebration-sound" />
-      </div>
-    </div>
+        <SoundToggle
+          t={translate}
+          className="ftv-celebration-sound"
+          variant="ghost"
+          size="sm"
+        />
+      </Dialog>
+    </>
   );
 }

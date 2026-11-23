@@ -483,6 +483,12 @@ export interface QuickToolContext {
 export interface BibleQuickToolbarTool extends ResolvedBibleTool {
   /** Optional class name for custom styling. */
   className?: string;
+  /**
+   * `"icon"` (the default) draws the tool as a round icon button. `"card"`
+   * draws a plain button sized to its icon, for a tool whose icon is wider
+   * than a glyph, like the "Now playing" card with the playlist title.
+   */
+  display?: "icon" | "card";
   /** Disabled signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility signal resolved for current context. */
@@ -500,6 +506,12 @@ export type ManagedBibleQuickToolbarToolItem =
 export interface ManagedBibleQuickToolbarTool extends BibleTool<QuickToolContext> {
   /** Optional class name for custom styling. */
   className?: string;
+  /**
+   * `"icon"` (the default) draws the tool as a round icon button. `"card"`
+   * draws a plain button sized to its icon, for a tool whose icon is wider
+   * than a glyph, like the "Now playing" card with the playlist title.
+   */
+  display?: "icon" | "card";
 
   /** Optional disabled predicate (boolean or signal). */
   isDisabled?: ToolPredicate<QuickToolContext>;
@@ -922,7 +934,7 @@ function getDefaultQuickToolbarTools(
         key: "current-playlist",
         defaultValue: "Current Playlist",
       },
-      className: "sb-quick-toolbar-current-playlist",
+      display: "card",
       icon: (c) => (
         <NowPlayingIcon playlists={c.playlists} readingState={c.readingState} />
       ),
@@ -1035,6 +1047,8 @@ export interface OpenReadingPlansPaneOptions {
   login?: Pick<LoginManager, "userId">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
   toast?: (message: string) => void;
+  /** Lets a plan's Share open the share sheet rather than only copy its link. */
+  app?: AppState;
   /**
    * Returns to the screen that opened the pane, from the plans list or from a
    * plan that screen opened directly. Without it the list has no back button,
@@ -1064,6 +1078,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
     login,
     gallery,
     toast,
+    app,
   } = options;
 
   // Scripture without a pinned translation previews in the one being read.
@@ -1127,6 +1142,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
           );
         }}
         toast={toast}
+        app={app}
         onBack={options.onBack}
       />
     ),
@@ -1998,6 +2014,7 @@ export function createBibleToolsManager(
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
       className: tool.className,
+      display: tool.display,
     }));
 
     return sortBy(tools, [(tool) => tool.priority]);

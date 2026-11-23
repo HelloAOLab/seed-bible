@@ -9,9 +9,10 @@
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  /* Above the mobile reader toolbar wrap (z-index 101) so Ask AI / Chat are
-     not trapped under the bottom chrome after the verse sheet dismisses. */
-  z-index: calc(var(--sb-layer-chrome) + 2);
+  /* Above the mobile reader toolbar wrap (chrome + 1) so Ask AI / Chat are
+     not trapped under the bottom chrome after the verse sheet dismisses, and
+     above the phone verse sheet itself (chrome + 2, BottomSheet.css). */
+  z-index: calc(var(--sb-layer-chrome) + 3);
   background: var(--sb-reader-toolbar-background);
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-xl);
@@ -63,6 +64,11 @@
   padding: 0.875rem 0.75rem;
   font-size: var(--sb-font-size-14);
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  --sb-loading-status-color: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 30%
+  );
 }
 
 .sb-floating-search-status-error {
@@ -229,28 +235,6 @@
   border-bottom: 1px solid var(--sb-divider-color);
 }
 
-.sb-floating-chat-header-back {
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  border-radius: var(--sb-radius-md);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
-  cursor: pointer;
-  transition:
-    background-color var(--sb-duration-fast) ease,
-    color var(--sb-duration-fast) ease;
-}
-
-.sb-floating-chat-header-back:hover,
-.sb-floating-chat-header-back:focus-visible {
-  color: var(--sb-font-color);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
-}
-
 .sb-floating-chat-header-title {
   margin: 0;
   min-width: 0;
@@ -270,53 +254,37 @@
   color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
 }
 
-@media (max-width: 480px) {
-  /* Search is a bottom-anchored sheet on mobile: the input sits just above the
-     5-tab bar and results grow upward. It is capped to the *small* viewport
-     height (`svh`, which excludes the Android address bar) and anchored to the
-     bottom rather than `top: 0`, so the top results can never be pushed behind
-     the browser chrome (the old full-screen `top: 0` overlay anchored to the
-     taller layout viewport, hiding the first results until the bar collapsed).
-     Keeping it off the top of the screen also leaves the reader above the sheet
-     visible and tappable, so the app never feels frozen — tapping a reader
-     control closes search (via the outside-tap handler) and activates it. */
-  .sb-floating-search-panel {
-    left: 0;
-    right: 0;
-    top: auto;
-    bottom: 4.5rem;
-    transform: none;
-    width: 100%;
-    max-width: 100%;
-    max-height: calc(
-      100svh - 4.5rem - env(safe-area-inset-top, 0px) -
-        env(safe-area-inset-bottom, 0px) - 0.75rem
-    );
-    border-radius: 0;
-    border: none;
-    box-shadow: none;
-    padding: calc(env(safe-area-inset-top, 0px) + 0.875rem) 1rem 0.875rem;
-    background: transparent;
-    gap: 0.875rem;
-    animation: none;
-    /* Empty areas of the sheet let taps fall through to the reader; the input
-       row and results below re-enable pointer events. */
-    pointer-events: none;
-  }
-}
-
-.sb-floating-chat-header-members-button-icon {
-  display: inline-flex;
-  gap: 0.25rem;
-  align-items: center;
-  font-size: 0.875rem;
-}
-
-.sb-floating-chat-header-ai-context-button-icon {
-  display: inline-flex;
-  gap: 0.25rem;
-  align-items: center;
-  font-size: 0.875rem;
+/* Search is a bottom-anchored sheet on mobile: the input sits just above the
+   5-tab bar and results grow upward. It is capped to the *small* viewport
+   height (`svh`, which excludes the Android address bar) and anchored to the
+   bottom rather than `top: 0`, so the top results can never be pushed behind
+   the browser chrome (the old full-screen `top: 0` overlay anchored to the
+   taller layout viewport, hiding the first results until the bar collapsed).
+   Keeping it off the top of the screen also leaves the reader above the sheet
+   visible and tappable, so the app never feels frozen — tapping a reader
+   control closes search (via the outside-tap handler) and activates it. */
+:where(html[data-sb-app-layout="mobile"]) .sb-floating-search-panel {
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 4.5rem;
+  transform: none;
+  width: 100%;
+  max-width: 100%;
+  max-height: calc(
+    100svh - 4.5rem - env(safe-area-inset-top, 0px) -
+      env(safe-area-inset-bottom, 0px) - 0.75rem
+  );
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  padding: calc(env(safe-area-inset-top, 0px) + 0.875rem) 1rem 0.875rem;
+  background: transparent;
+  gap: 0.875rem;
+  animation: none;
+  /* Empty areas of the sheet let taps fall through to the reader; the input
+     row and results below re-enable pointer events. */
+  pointer-events: none;
 }
 
 .sb-floating-chat-members-menu {
@@ -398,21 +366,11 @@
   bottom: 0.875rem;
 }
 
-.sb-floating-chat-list-create-button {
-  width: 2.125rem;
-  height: 2.125rem;
-  border-radius: var(--sb-radius-full);
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  background: var(--sb-primary-color);
-  color: var(--sb-tertiary-color);
-  box-shadow: 0 10px 24px
-    color-mix(in srgb, var(--sb-primary-color), transparent 78%);
-}
-
-.sb-floating-chat-list-create-button:hover,
-.sb-floating-chat-list-create-button:focus-visible {
-  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 10%);
-  background: color-mix(
+/* New chat: a filled circle in the primary color. */
+.sb-icon-button.sb-floating-chat-list-create-button {
+  --sb-icon-button-color: var(--sb-primary-font-color);
+  --sb-icon-button-background: var(--sb-primary-color);
+  --sb-icon-button-hover-background: color-mix(
     in srgb,
     var(--sb-primary-color),
     var(--sb-font-color) 15%
@@ -645,31 +603,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .sb-floating-chat-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 0.5rem;
-  padding: 1.25rem 1rem 3.5rem;
-  flex: 1 1 auto;
+  --sb-empty-state-padding: 1.25rem 1rem 3.5rem;
 }
-
-.sb-floating-chat-empty-icon {
-  font-size: 2.25rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
-  margin-bottom: 0.25rem;
-}
-
-.sb-floating-chat-empty-title {
-  margin: 0;
-  font-size: var(--sb-font-size-16);
-  font-weight: 600;
-  color: var(--sb-font-color);
-}
-
 .sb-floating-chat-empty-body {
   margin: 0;
   font-size: var(--sb-font-size-13);
@@ -766,23 +702,21 @@
   }
 }
 
-@media (max-width: 480px) {
-  /* Fill the screen above the 5-tab bar. The wider rule pins the panel
-     7.5rem up (tab bar + chapter nav) and sizes it with a capped viewport
-     height, which leaves a strip of the reader under the browser chrome and
-     another between the composer and the tabs. Stretch between the top of
-     the viewport and the toolbar instead — same 4.375rem inset the
-     fullscreen panes use. */
-  .sb-floating-chat-panel {
-    inset: 0 0 4.375rem;
-    transform: none;
-    width: auto;
-    height: auto;
-    max-height: none;
-    border-radius: 0;
-    border: none;
-    box-shadow: none;
-    animation: none;
-    padding-top: env(safe-area-inset-top, 0px);
-  }
+/* Fill the screen above the 5-tab bar. The wider rule pins the panel
+   7.5rem up (tab bar + chapter nav) and sizes it with a capped viewport
+   height, which leaves a strip of the reader under the browser chrome and
+   another between the composer and the tabs. Stretch between the top of
+   the viewport and the toolbar instead — same 4.375rem inset the
+   fullscreen panes use. */
+:where(html[data-sb-app-layout="mobile"]) .sb-floating-chat-panel {
+  inset: 0 0 4.375rem;
+  transform: none;
+  width: auto;
+  height: auto;
+  max-height: none;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  animation: none;
+  padding-top: env(safe-area-inset-top, 0px);
 }

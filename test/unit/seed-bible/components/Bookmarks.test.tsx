@@ -181,7 +181,9 @@ describe("bookmarks", () => {
       // The premade bookmark is the ordinary create form, already open.
       expect(rows(modal)).toHaveLength(1);
       expect(
-        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+        modal.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!.value
       ).toBe("My bookmark");
       // Nothing is stored until Save.
       expect(recordData).not.toHaveBeenCalled();
@@ -285,7 +287,9 @@ describe("bookmarks", () => {
       await click(button(modal, ".sb-bookmark-add-new"));
 
       expect(
-        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+        modal.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!.value
       ).toBe("My bookmark 3");
     });
 
@@ -295,7 +299,9 @@ describe("bookmarks", () => {
 
       await click(button(modal, ".sb-bookmark-add-new"));
       await type(
-        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!,
+        modal.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!,
         "Sermon prep"
       );
       await click(
@@ -359,7 +365,9 @@ describe("bookmarks", () => {
         // The sheet stays open, offering the premade bookmark again.
         expect(rows(modal)).toHaveLength(1);
         expect(
-          modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+          modal.querySelector<HTMLInputElement>(
+            'input[aria-label="Bookmark name"]'
+          )!.value
         ).toBe("My bookmark");
       });
 
@@ -608,11 +616,7 @@ describe("bookmarks", () => {
         await renderSidebar();
 
         expect(toggleRibbons()).toEqual([outlined, outlined]);
-        expect(
-          toggle().classList.contains(
-            "sb-sidebar-tabs-header-bookmarks-button-active"
-          )
-        ).toBe(false);
+        expect(toggle().getAttribute("aria-pressed")).toBe("false");
       });
 
       it("fills the same ribbons in the active color while the panel is open", async () => {
@@ -623,11 +627,7 @@ describe("bookmarks", () => {
 
         const filled = { fill: "currentColor", stroke: null };
         expect(toggleRibbons()).toEqual([filled, filled]);
-        expect(
-          toggle().classList.contains(
-            "sb-sidebar-tabs-header-bookmarks-button-active"
-          )
-        ).toBe(true);
+        expect(toggle().getAttribute("aria-pressed")).toBe("true");
       });
 
       it("is outlined on mobile too", async () => {
@@ -735,7 +735,7 @@ describe("bookmarks", () => {
       ).toBeNull();
       const modal = renderModal(openModalSpy.mock.calls[0]![0]);
       const nameInput = modal.querySelector<HTMLInputElement>(
-        ".sb-bookmark-form-name"
+        'input[aria-label="Bookmark name"]'
       )!;
       expect(nameInput.value).toBe("Reading plan");
 
@@ -780,7 +780,9 @@ describe("bookmarks", () => {
       const isOpen = () =>
         state.modals.modals.value.some((m) => m.id === modalId);
       await type(
-        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!,
+        modal.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!,
         "Sermon prep"
       );
       await click(button(modal, ".sb-bookmark-picker-save"));
@@ -802,7 +804,9 @@ describe("bookmarks", () => {
       );
       expect(isOpen()).toBe(true);
       expect(
-        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+        modal.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!.value
       ).toBe("Sermon prep");
       // Once the save has settled, it can be closed again.
       await act(async () => {

@@ -1,7 +1,7 @@
 import { useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import type { Feature, Point } from "geojson";
-import { MaterialIcon, Skeleton } from "seed-bible/components";
+import { MaterialIcon, Skeleton, TooltipTrigger } from "seed-bible/components";
 import type {
   findLocation,
   getPlaceAttribution,
@@ -274,15 +274,16 @@ export function PlaceMap(props: {
           onTap={onOpen}
           controls={
             onOpen ? (
-              <button
-                type="button"
-                className="sb-geojson-map-control sb-theographic-map-open"
-                title={openLabel}
-                aria-label={openLabel}
-                onClick={onOpen}
-              >
-                <MaterialIcon>float_landscape_2</MaterialIcon>
-              </button>
+              <TooltipTrigger>
+                <button
+                  type="button"
+                  className="sb-geojson-map-control sb-theographic-map-open"
+                  aria-label={openLabel}
+                  onClick={onOpen}
+                >
+                  <MaterialIcon>float_landscape_2</MaterialIcon>
+                </button>
+              </TooltipTrigger>
             ) : null
           }
         />

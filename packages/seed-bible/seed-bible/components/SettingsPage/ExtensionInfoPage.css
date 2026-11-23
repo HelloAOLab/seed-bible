@@ -93,7 +93,8 @@
   box-shadow: var(--sb-shadow-raised);
 }
 
-.sb-extension-info-tab:focus-visible {
+.sb-extension-info-tab:focus-visible,
+.sb-extension-screenshot:focus-visible {
   outline: 2px solid var(--sb-primary-color);
   outline-offset: 2px;
 }
@@ -110,25 +111,10 @@
   line-height: 1.55;
 }
 
-.sb-extension-info-install {
-  min-height: 3rem;
-  border: none;
-  border-radius: var(--sb-radius-full);
-  background: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
-  color: var(--sb-primary-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-16);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-extension-info-install:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), #000000 35%);
-}
-
-.sb-extension-info-install:disabled {
-  cursor: progress;
-  opacity: 0.7;
+/* Darkened like the consent dialog's Allow, so the Light theme's white label
+   on orange passes 4.5:1. Two classes, to outrank the Button's own accent. */
+.sb-button.sb-extension-info-install {
+  --sb-button-accent: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
 }
 
 .sb-extension-info-section {
@@ -168,20 +154,6 @@
 
 .sb-extension-info-uninstall {
   align-self: flex-start;
-  min-height: 2.75rem;
-  padding: 0 1.125rem;
-  border: 1px solid color-mix(in srgb, #c62828, transparent 65%);
-  border-radius: var(--sb-radius-full);
-  background: transparent;
-  color: color-mix(in srgb, #c62828, var(--sb-font-color) 20%);
-  font-family: inherit;
-  font-size: var(--sb-font-size-15);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sb-extension-info-uninstall:hover {
-  background: color-mix(in srgb, #c62828, transparent 90%);
 }
 
 .sb-extension-info-abilities,
@@ -258,11 +230,6 @@
   gap: 0.625rem;
 }
 
-.sb-extension-info-wide .sb-extension-info-install {
-  min-height: 3.25rem;
-  font-size: var(--sb-font-size-16);
-}
-
 .sb-extension-info-install-note {
   font-size: var(--sb-font-size-13);
   line-height: 1.5;
@@ -298,6 +265,9 @@
 }
 
 .sb-extension-info-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   flex: 1 1 17rem;
   max-width: 21rem;
 }
@@ -381,4 +351,32 @@
 .sb-extension-info-wide .sb-extension-permissions .sb-extension-consent-card {
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-xl);
+}
+
+.sb-extension-screenshots {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sb-extension-screenshot-strip {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.25rem;
+}
+
+.sb-extension-screenshot {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: var(--sb-radius-lg);
+  background: var(--sb-reader-background);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.sb-extension-screenshot img {
+  display: block;
+  height: 10rem;
+  width: auto;
 }

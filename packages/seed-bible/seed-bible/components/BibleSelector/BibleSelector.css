@@ -2,23 +2,20 @@
   flex: 1;
 }
 
-/* Dims the page behind the panel like a modal's backdrop
-   (`.sb-footnote-modal-overlay`); the overlay's background transition fades
-   it in and out. */
+/* Dims the page behind the panel like a dialog's backdrop; the overlay's
+   background transition fades it in and out. */
 .sb-selector-overlay.open {
   pointer-events: all;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--sb-backdrop);
 }
 
-@media (max-width: 480px) {
-  .sb-selector-overlay {
-    display: none;
-    pointer-events: all;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-selector-overlay {
+  display: none;
+  pointer-events: all;
+}
 
-  .sb-selector-overlay.open {
-    display: flex;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-selector-overlay.open {
+  display: flex;
 }
 
 /* The selector takes the reader toolbar's colors. Its rules are written
@@ -68,35 +65,33 @@
 /* Keep these overrides in this file, directly after the rules above, for the
    same reason as the docked-pane override in PaneLayout.css: same selectors,
    and cross-file order follows Vite's import traversal, not intent. */
-@media (max-width: 480px) {
-  .sb-selector-panel {
-    width: 100%;
-    height: 100dvh;
-    bottom: 0;
-    padding: 1rem 0 0.625rem;
-    border-radius: 0;
-    border: none;
-    transition: none;
-    transform: none;
-  }
-
-  /* Override the desktop translateY animation — on mobile the selector
-   * behaves like a tab swap (instant), not a sheet that slides up. */
-  .sb-selector-overlay.open .sb-selector-panel {
-    transform: none;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-selector-panel {
+  width: 100%;
+  height: 100dvh;
+  bottom: 0;
+  padding: 1rem 0 0.625rem;
+  border-radius: 0;
+  border: none;
+  transition: none;
+  transform: none;
 }
 
-@media only screen and (min-width: 481px) {
+/* Override the desktop translateY animation — on mobile the selector
+ * behaves like a tab swap (instant), not a sheet that slides up. */
+:where(html[data-sb-app-layout="mobile"])
+  .sb-selector-overlay.open
   .sb-selector-panel {
-    /* Cap to the viewport (minus the overlay's 1.25rem padding each side) so
-       the panel never extends past the screen edges at UI Size > M, where
-       the fixed rem width would otherwise scale wider than the viewport. No-op
-       when the viewport is wide enough to hold the full 40.625rem. */
-    width: min(40.625rem, calc(100vw - 2.5rem));
-    height: 80dvh;
-    bottom: 5rem;
-  }
+  transform: none;
+}
+
+:where(html:not([data-sb-app-layout="mobile"])) .sb-selector-panel {
+  /* Cap to the viewport (minus the overlay's 1.25rem padding each side) so
+     the panel never extends past the screen edges at UI Size > M, where
+     the fixed rem width would otherwise scale wider than the viewport. No-op
+     when the viewport is wide enough to hold the full 40.625rem. */
+  width: min(40.625rem, calc(100vw - 2.5rem));
+  height: 80dvh;
+  bottom: 5rem;
 }
 
 @media only screen and (min-width: 1201px) {
@@ -262,10 +257,8 @@
   text-transform: capitalize;
 }
 
-@media (min-width: 481px) {
-  .sb-selector-book-button {
-    width: 12.5rem;
-  }
+:where(html:not([data-sb-app-layout="mobile"])) .sb-selector-book-button {
+  width: 12.5rem;
 }
 
 .sb-selector-book-button-current {
@@ -312,15 +305,13 @@
   color: var(--sb-primary-font-color);
 }
 
-@media (min-width: 481px) {
-  .sb-selector-chapter-grid {
-    grid-template-columns: repeat(auto-fit, minmax(2.375rem, 1fr));
-  }
+:where(html:not([data-sb-app-layout="mobile"])) .sb-selector-chapter-grid {
+  grid-template-columns: repeat(auto-fit, minmax(2.375rem, 1fr));
+}
 
-  .sb-selector-chapter-button {
-    width: 2.375rem;
-    justify-self: center;
-  }
+:where(html:not([data-sb-app-layout="mobile"])) .sb-selector-chapter-button {
+  width: 2.375rem;
+  justify-self: center;
 }
 
 @media (min-width: 1201px) {
@@ -333,16 +324,14 @@
   }
 }
 
-@media (max-width: 480px) {
-  .sb-selector-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-selector-grid {
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
 
-  .sb-selector-column-divider {
-    border-right: none;
-    padding-right: 0;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-selector-column-divider {
+  border-right: none;
+  padding-right: 0;
 }
 
 /* Fills the panel below the header row: the panel's top padding (1.125rem),
@@ -431,42 +420,20 @@
   align-items: center;
 }
 
-.dropdown-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  padding: 0.5rem 2rem 0.5rem 0.875rem;
-  font-size: var(--sb-font-size-14);
-  height: 2.5rem;
-
-  border: none;
-  border-radius: var(--sb-radius-md);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%)
-    url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
-    no-repeat right 10px center;
-  background-size: 1rem;
-
-  cursor: pointer;
-  outline: none;
-  outline-width: 0px;
-  margin-right: 0;
-  font-family: system-ui, sans-serif;
-  color: var(--sb-font-color);
+.dropdown > .sb-select {
+  flex: 1;
 }
 
-.dropdown-select-icon {
-  position: absolute;
-  right: 0.625rem;
-  pointer-events: none;
-  font-size: 1.5rem;
-}
-
-.dropdown-option {
-  background: var(--sb-reader-toolbar-background);
-  color: var(--sb-font-color);
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
+/* Sits in a row with the translation button and the book search, which are
+   filled, 2.5rem boxes, so it takes their look. */
+.dropdown .sb-select-input {
+  --sb-text-input-height: 2.5rem;
+  --sb-text-input-background: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 94%
+  );
+  --sb-text-input-border-color: transparent;
 }
 
 /* The book search shares its row with the translation picker and the
@@ -561,17 +528,12 @@
   position: relative;
 }
 
-.custom-tr-in {
-  width: 100%;
-  height: 2.5rem;
-  border-radius: var(--sb-radius-sm);
-  padding-right: 5rem;
-  border: none;
-  padding-left: 0.3125rem;
-  font-size: var(--sb-font-size-16);
-  background-color: var(--sb-background);
-  color: var(--sb-font-color);
-  outline: none;
+/* The Import button sits over the right end of the box, so the box leaves room
+   for it. */
+.custom-tr-in-con .custom-tr-in {
+  --sb-text-input-background: var(--sb-background);
+
+  padding-inline-end: 5rem;
 }
 
 .import-btn {
@@ -754,23 +716,21 @@
   margin: 0;
 }
 
+/* `LoadingStatus` draws the spinner and its line; this centers it, with the
+   status box's own room and text. */
 .sb-selector-status--loading {
-  display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  --sb-loading-status-padding: 1.5rem 1rem;
+  --sb-loading-status-font-size: var(--sb-font-size-15);
+  --sb-loading-status-color: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 30%
+  );
 }
 
 .sb-selector-retry {
   margin-top: 0.75rem;
-  padding: 0.5625rem 1.125rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
-  border-radius: var(--sb-radius-full);
-  background: none;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  cursor: pointer;
 }
 
 .sidebar-itm {
@@ -914,63 +874,17 @@
   padding: 0;
   border: 0;
   background: none;
-  font: inherit;
   color: inherit;
   cursor: pointer;
 }
-.sb-apocrypha-info-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  background: rgba(0, 0, 0, 0.4);
-}
-/* Rendered beside .sb-selector-panel, not inside it, so it needs the same
-   switch to the reader toolbar colors. */
-.sb-apocrypha-info-overlay {
-  --sb-font-color: var(--sb-reader-toolbar-font-color);
-  --sb-background: var(--sb-reader-toolbar-background);
-
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 1rem 0.8rem 1rem 0.8rem;
-  /* stylelint-disable-next-line seed-bible/use-design-tokens -- local stacking inside the Books panel */
-  z-index: 1000;
-  width: min(85vw, 35rem);
-  max-height: 80vh;
-  box-sizing: border-box;
-  background: var(--sb-reader-toolbar-background);
-  color: var(--sb-reader-toolbar-font-color);
-  border-radius: var(--sb-radius-md);
-  overflow-y: auto;
-}
-
-.sb-apocrypha-info {
-  position: relative;
-  width: 100%;
-  box-sizing: border-box;
+/* About the Apocrypha (ApocryphaInfo.tsx). The window around it is drawn by
+   ModalHost, so its width is chosen from here. */
+.sb-dialog:has(.sb-apocrypha-info-content) {
+  --sb-dialog-width: min(35rem, 100%);
 }
 
 .sb-apocrypha-info-content {
-  font-size: clamp(0.875rem, 1.5vw, 1rem);
-  line-height: 1.5;
   overflow-wrap: anywhere;
-  word-break: normal;
-}
-
-.sb-apocrypha-info-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: auto;
-  min-height: 0;
-  margin-bottom: 1rem;
-}
-
-.sb-apocrypha-info-title {
-  margin: 0;
-  line-height: 1.2;
 }
 
 /* ─── Offline translation downloads ──────────────────────────────────────── */
@@ -1115,37 +1029,6 @@
   gap: 0.5rem;
 }
 
-.sb-offline-delete-cancel,
-.sb-offline-delete-confirm {
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: var(--sb-radius-md);
-  font-size: var(--sb-font-size-13);
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color var(--sb-duration-fast) ease;
-}
-
-.sb-offline-delete-cancel {
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-}
-
-.sb-offline-delete-cancel:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  color: var(--sb-font-color);
-}
-
-.sb-offline-delete-confirm {
-  background: #ef4444;
-  color: #ffffff;
-}
-
-.sb-offline-delete-confirm:hover {
-  background: #dc2626;
-}
-
 .filters-icon {
   height: 1.875rem;
   width: 1.875rem;
@@ -1196,206 +1079,208 @@
   }
 }
 
-@media only screen and (max-width: 480px) {
-  .dropdown {
-    /* display: none; */
-    width: 62%;
-  }
+:where(html[data-sb-app-layout="mobile"]) .dropdown {
+  /* display: none; */
+  width: 62%;
+}
 
-  .sidebar-translation-selector {
-    width: 5.625rem;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sidebar-translation-selector {
+  width: 5.625rem;
+}
 
-  .testament-selection {
-    padding: 0.3125rem 0.9375rem;
-  }
+:where(html[data-sb-app-layout="mobile"]) .testament-selection {
+  padding: 0.3125rem 0.9375rem;
+}
 
-  .sidebar-selected-title {
-    font-size: var(--sb-font-size-16);
-    font-weight: bold;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sidebar-selected-title {
+  font-size: var(--sb-font-size-16);
+  font-weight: bold;
+}
 
-  .sidebar {
-    transition: all 0.5s;
-    height: 80dvh;
-    padding-bottom: 2.5rem;
-    width: 20.625rem;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sidebar {
+  transition: all 0.5s;
+  height: 80dvh;
+  padding-bottom: 2.5rem;
+  width: 20.625rem;
+}
 
-  .sidebar-results {
-    height: calc(95dvh);
-  }
+:where(html[data-sb-app-layout="mobile"]) .sidebar-results {
+  height: calc(95dvh);
+}
 
-  .books-container {
-    height: calc(100dvh - 5rem);
-    flex-direction: column;
-    overflow: auto;
-  }
+:where(html[data-sb-app-layout="mobile"]) .books-container {
+  height: calc(100dvh - 5rem);
+  flex-direction: column;
+  overflow: auto;
+}
 
-  .dropdown-select {
-    width: 100%;
-    font-weight: bold;
-  }
+:where(html[data-sb-app-layout="mobile"]) .dropdown .sb-select-input {
+  font-weight: bold;
+}
 
-  .dropdown-option {
-    width: 100%;
-  }
+:where(html[data-sb-app-layout="mobile"]) .testament-title {
+  text-align: left;
+  padding-left: 0px;
+  width: 100%;
+}
 
-  .testament-title {
-    text-align: left;
-    padding-left: 0px;
-    width: 100%;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sidebar.experience_id-3 {
+  width: calc(100vw - 2.5rem);
+  height: 80dvh;
+}
 
-  .sidebar.experience_id-3 {
-    width: calc(100vw - 2.5rem);
-    height: 80dvh;
-  }
-
+:where(html[data-sb-app-layout="mobile"])
   .sidebar.experience_id-3.close-sideBar {
-    height: 45dvh;
-    width: 12.5rem;
-  }
+  height: 45dvh;
+  width: 12.5rem;
+}
 
-  .open-sideBar {
-    right: 0;
-    opacity: 1;
-    bottom: 2.8125rem;
-    height: calc(100dvh - 4.375rem);
-    width: 100dvw;
-    border-radius: 0px;
-    box-shadow: none;
-    top: 0px;
-  }
+:where(html[data-sb-app-layout="mobile"]) .open-sideBar {
+  right: 0;
+  opacity: 1;
+  bottom: 2.8125rem;
+  height: calc(100dvh - 4.375rem);
+  width: 100dvw;
+  border-radius: 0px;
+  box-shadow: none;
+  top: 0px;
+}
 
-  .close-sideBar {
-    right: -12.5rem;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
+:where(html[data-sb-app-layout="mobile"]) .close-sideBar {
+  right: -12.5rem;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
 
-  .sidebar-itm {
-    width: 100%;
-    font-size: var(--sb-font-size-16);
-  }
+:where(html[data-sb-app-layout="mobile"]) .sidebar-itm {
+  width: 100%;
+  font-size: var(--sb-font-size-16);
+}
 
-  .chapter-btn {
-    width: calc(20% - 0.625rem);
-  }
+:where(html[data-sb-app-layout="mobile"]) .chapter-btn {
+  width: calc(20% - 0.625rem);
+}
 
-  .show-sidebar-chapter {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    column-gap: 0.75rem;
-    row-gap: 0.8125rem;
-    height: fit-content;
-    justify-content: flex-start;
-    background: transparent;
-    margin-top: -0.625rem;
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-    width: 100%;
-  }
+:where(html[data-sb-app-layout="mobile"]) .show-sidebar-chapter {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: 0.75rem;
+  row-gap: 0.8125rem;
+  height: fit-content;
+  justify-content: flex-start;
+  background: transparent;
+  margin-top: -0.625rem;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  width: 100%;
+}
 
-  .sb-selector-panel .sidebar-selected-itm:hover {
-    background: transparent;
-    color: var(--sb-primary-color);
-  }
+:where(html[data-sb-app-layout="mobile"])
+  .sb-selector-panel
+  .sidebar-selected-itm:hover {
+  background: transparent;
+  color: var(--sb-primary-color);
+}
 
-  .psalms-btn {
-    width: 10.25rem;
-  }
+:where(html[data-sb-app-layout="mobile"]) .psalms-btn {
+  width: 10.25rem;
+}
 
-  .sidebar-select {
-    font-size: var(--sb-font-size-18);
-    padding-left: 0px;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sidebar-select {
+  font-size: var(--sb-font-size-18);
+  padding-left: 0px;
+}
 
-  .sidebar-selected-itm {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    color: var(--sb-primary-color);
-    font-weight: 600;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sidebar-selected-itm {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  color: var(--sb-primary-color);
+  font-weight: 600;
+}
 
-  .separator {
-    width: 100%;
-    height: 0.125rem;
-    position: relative;
-    left: 0px;
-    margin-right: 0px;
-    margin-top: 0.625rem;
-    display: block;
-  }
+:where(html[data-sb-app-layout="mobile"]) .separator {
+  width: 100%;
+  height: 0.125rem;
+  position: relative;
+  left: 0px;
+  margin-right: 0px;
+  margin-top: 0.625rem;
+  display: block;
+}
 
-  .modal {
-    width: 100%;
-    left: 0;
-    top: 0.3125rem;
-    height: calc(100% - 3.125rem);
-    border-radius: 0;
-    box-shadow: none;
-  }
+:where(html[data-sb-app-layout="mobile"]) .modal {
+  width: 100%;
+  left: 0;
+  top: 0.3125rem;
+  height: calc(100% - 3.125rem);
+  border-radius: 0;
+  box-shadow: none;
+}
 
-  .translationSettingsModal {
-    top: 3.4375rem;
-    padding: 0px 0.625rem;
-    height: fit-content;
-    width: 12.5rem;
-    left: auto;
-    right: 2.5rem;
-    box-shadow: 0 5px 10px
-      color-mix(
-        in srgb,
-        var(--sb-detached-pane-toolbar-background) 15%,
-        transparent
-      );
-    border-radius: var(--sb-radius-sm);
-  }
+:where(html[data-sb-app-layout="mobile"]) .translationSettingsModal {
+  top: 3.4375rem;
+  padding: 0px 0.625rem;
+  height: fit-content;
+  width: 12.5rem;
+  left: auto;
+  right: 2.5rem;
+  box-shadow: 0 5px 10px
+    color-mix(
+      in srgb,
+      var(--sb-detached-pane-toolbar-background) 15%,
+      transparent
+    );
+  border-radius: var(--sb-radius-sm);
+}
 
-  .translationInfoModal {
-    width: 15.625rem;
-    height: fit-content;
-    border-radius: var(--sb-radius-sm);
-    box-shadow: 0 5px 10px
-      color-mix(
-        in srgb,
-        var(--sb-detached-pane-toolbar-background) 15%,
-        transparent
-      );
-  }
+:where(html[data-sb-app-layout="mobile"]) .translationInfoModal {
+  width: 15.625rem;
+  height: fit-content;
+  border-radius: var(--sb-radius-sm);
+  box-shadow: 0 5px 10px
+    color-mix(
+      in srgb,
+      var(--sb-detached-pane-toolbar-background) 15%,
+      transparent
+    );
+}
 
-  /*
+/*
    * The mobile `.modal` rule above stretches the translation list to fill the
-   * screen; the delete confirmation must stay a centered dialog, so it restores
-   * its own box.
+ * screen; the delete confirmation must stay a centered dialog, so it restores
+ * its own box.
    */
-  .translationDeleteModal {
-    top: 50%;
-    left: 50%;
-    width: calc(100% - 2.5rem);
-    height: fit-content;
-    border-radius: var(--sb-radius-md);
-    box-shadow: 0 5px 10px
-      color-mix(
-        in srgb,
-        var(--sb-detached-pane-toolbar-background) 15%,
-        transparent
-      );
-  }
+:where(html[data-sb-app-layout="mobile"]) .translationDeleteModal {
+  top: 50%;
+  left: 50%;
+  width: calc(100% - 2.5rem);
+  height: fit-content;
+  border-radius: var(--sb-radius-md);
+  box-shadow: 0 5px 10px
+    color-mix(
+      in srgb,
+      var(--sb-detached-pane-toolbar-background) 15%,
+      transparent
+    );
+}
 
-  .footer {
-    bottom: -2.8125rem;
-  }
+:where(html[data-sb-app-layout="mobile"]) .footer {
+  bottom: -2.8125rem;
 }
 
 /* BibleSelector's testament columns stack full-width on mobile. Migrated from
    the former global legacy.css. */
-@media only screen and (max-width: 480px) {
-  .books-container .testament-container {
-    width: 100%;
-    color: var(--sb-font-color);
-  }
+:where(html[data-sb-app-layout="mobile"])
+  .books-container
+  .testament-container {
+  width: 100%;
+  color: var(--sb-font-color);
+}
+
+/* The phone Books header's Tabs button: its icon is drawn at 20px. */
+.sb-icon-button.sb-selector-mobile-tabs {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.25rem;
 }

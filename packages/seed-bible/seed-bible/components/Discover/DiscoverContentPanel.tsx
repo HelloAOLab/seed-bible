@@ -1,3 +1,4 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./DiscoverContentPanel.css";
 import type { ComponentChildren } from "preact";
 import { Signal, useSignal, useSignalEffect } from "@preact/signals";
@@ -35,6 +36,8 @@ import {
   readBottomChromeCover,
   readBottomChromeInset,
 } from "../BibleReader/readerViewport";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 type FilterKey =
   | "all"
@@ -173,8 +176,11 @@ function DiscoverCreateMenu(props: { state: SeedBibleState }) {
   return (
     <ContextMenuWithButton
       buttonClassName="sb-dcp-create-btn"
-      aria-label={t("create-menu", { defaultValue: "Create" })}
-      icon={<>+ {t("create-playlist", { defaultValue: "Create" })}</>}
+      trigger={(menu) => (
+        <Button {...menu} variant="primary" size="sm" shape="pill" icon="add">
+          {t("create-playlist", { defaultValue: "Create" })}
+        </Button>
+      )}
     >
       <ContextMenuItem onClick={() => void annotations.createNewAnnotation()}>
         <MaterialIcon className="sb-context-menu-item-icon">
@@ -401,19 +407,19 @@ function DiscoverFilters({
       }`}
     >
       {hasScrollableFilters.value && (
-        <button
-          type="button"
+        <IconButton
+          size="sm"
+          look="tinted"
           className="sb-dcp-filters-arrow"
           onClick={() => scrollFilters(-1)}
           aria-disabled={!canScrollStart.value}
-          aria-label={t("scroll-filters-start", {
+          icon={
+            <MaterialIcon className="rtl-mirror">chevron_left</MaterialIcon>
+          }
+          label={t("scroll-filters-start", {
             defaultValue: "Scroll filters toward start",
           })}
-        >
-          <MaterialIcon className="rtl-mirror" aria-hidden="true">
-            chevron_left
-          </MaterialIcon>
-        </button>
+        />
       )}
 
       <div className="sb-dcp-filters" role="tablist" ref={filtersRef}>
@@ -436,20 +442,134 @@ function DiscoverFilters({
       </div>
 
       {hasScrollableFilters.value && (
-        <button
-          type="button"
+        <IconButton
+          size="sm"
+          look="tinted"
           className="sb-dcp-filters-arrow"
           onClick={() => scrollFilters(1)}
           aria-disabled={!canScrollEnd.value}
-          aria-label={t("scroll-filters-end", {
+          icon={
+            <MaterialIcon className="rtl-mirror">chevron_right</MaterialIcon>
+          }
+          label={t("scroll-filters-end", {
             defaultValue: "Scroll filters toward end",
           })}
-        >
-          <MaterialIcon className="rtl-mirror" aria-hidden="true">
-            chevron_right
-          </MaterialIcon>
-        </button>
+        />
       )}
+    </div>
+  );
+}
+
+interface HiddenContentWarningProps {
+  handleAccept: () => void;
+  handleDismiss: () => void;
+}
+
+function ContentWarning(props: HiddenContentWarningProps) {
+  const { t } = useI18n();
+  return (
+    <div className="sb-dcp-hidden-notice">
+      <div className="sb-dcp-hidden-notice-icon" aria-hidden="true">
+        <MaterialIcon>visibility_off</MaterialIcon>
+      </div>
+      <p className="sb-dcp-hidden-notice-title">
+        {t("discover-hidden-in-session", {
+          defaultValue: "Discovered content is off in shared sessions",
+        })}
+      </p>
+      <p className="sb-dcp-hidden-notice-message">
+        {t("discover-hidden-in-session-reason", {
+          defaultValue:
+            "It's only visible to you, so it's hidden while you read with others.",
+        })}
+      </p>
+      <div className="sb-dcp-hidden-notice-actions">
+        <button
+          type="button"
+          className="sb-dcp-hidden-notice-dismiss"
+          onClick={props.handleDismiss}
+        >
+          {t("discover-hidden-in-session-not-now", {
+            defaultValue: "Not now",
+          })}
+        </button>
+        <button
+          type="button"
+          className="sb-dcp-hidden-notice-turn-on"
+          onClick={props.handleAccept}
+        >
+          {t("discover-hidden-in-session-turn-on", {
+            defaultValue: "Turn on",
+          })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InlineContentWarning(props: HiddenContentWarningProps) {
+  const { t } = useI18n();
+  return (
+    <div className="sb-dcp-hidden-banner">
+      <div className="sb-dcp-hidden-banner-text">
+        <MaterialIcon className="sb-dcp-hidden-banner-icon" aria-hidden="true">
+          visibility_off
+        </MaterialIcon>
+        <p>
+          {t("discover-hidden-in-session", {
+            defaultValue: "Discovered content is off in shared sessions",
+          })}
+        </p>
+      </div>
+      <div className="sb-dcp-hidden-banner-actions">
+        <button
+          type="button"
+          className="sb-dcp-hidden-banner-turn-on"
+          onClick={props.handleAccept}
+        >
+          {t("discover-hidden-in-session-turn-on", {
+            defaultValue: "Turn on",
+          })}
+        </button>
+        <TooltipTrigger>
+          <button
+            type="button"
+            className="sb-dcp-hidden-banner-close"
+            onClick={props.handleDismiss}
+            aria-label={t("dismiss", { defaultValue: "Dismiss" })}
+          >
+            <MaterialIcon>close</MaterialIcon>
+          </button>
+        </TooltipTrigger>
+      </div>
+    </div>
+  );
+}
+
+function SharedSessionHint(props: { onDismiss: () => void }) {
+  const { t } = useI18n();
+  return (
+    <div className="sb-dcp-session-hint" role="note">
+      <MaterialIcon className="sb-dcp-session-hint-icon" aria-hidden="true">
+        info
+      </MaterialIcon>
+      <div className="sb-dcp-session-hint-body">
+        <p>
+          {t("discover-shared-session-hint", {
+            defaultValue:
+              "Only you can see discovered content. Everything else in the session is shared.",
+          })}
+        </p>
+        <button
+          type="button"
+          className="sb-dcp-session-hint-dismiss"
+          onClick={props.onDismiss}
+        >
+          {t("discover-shared-session-hint-got-it", {
+            defaultValue: "Got it",
+          })}
+        </button>
+      </div>
     </div>
   );
 }
@@ -546,16 +666,18 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
             props.variant === "full" ? (
               <DiscoverCreateMenu state={state} />
             ) : (
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="sm"
+                shape="pill"
+                icon="add"
                 className="sb-dcp-create-btn"
                 onClick={() => void state.annotations.createNewAnnotation()}
               >
-                +{" "}
                 {t("create-playlist", {
                   defaultValue: "Create",
                 })}
-              </button>
+              </Button>
             )
           }
           onClose={props.variant === "full" ? props.onClose : undefined}
@@ -584,10 +706,8 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
       : null;
   }
 
-  const { hasAnnotations, showAnnotations, hasAny } = getDiscoverPanelContent(
-    tab.readingState,
-    state.annotations
-  );
+  const { hasAnnotations, showAnnotations, hasAny, showHiddenContentWarning } =
+    getDiscoverPanelContent(tab.readingState, state.annotations);
 
   // Only the full panel shows friends' playlists: they aren't tied to the
   // chapter, so they'd crowd the compact panel's chapter summary.
@@ -629,9 +749,13 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     typesWithResults.some((definition) => !definition.hiddenByDefault);
 
   // Results stream in after the chapter opens, so until discovery is done
-  // "nothing yet" can't be told apart from "nothing at all".
+  // "nothing yet" can't be told apart from "nothing at all". With discovered
+  // content turned off (a shared session) there's nothing to wait for, since
+  // whatever arrives stays hidden.
   const isDiscovering =
-    variant === "full" && tab.readingState.isDiscovering.value;
+    variant === "full" &&
+    tab.readingState.showDiscoveredContent.value &&
+    tab.readingState.isDiscovering.value;
 
   // The full panel never renders empty: when the chapter has nothing else to
   // show, not even behind a filter chip, the notes section's "Create a note"
@@ -647,6 +771,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     hasAnnotations ||
     showNotesAsEmptyState ||
     hasOtherContentUnderAll ||
+    showHiddenContentWarning ||
     isDiscovering;
 
   const filters: {
@@ -734,6 +859,11 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
 
   return panel(
     <>
+      {tab.readingState.showSharedSessionHint.value && (
+        <SharedSessionHint
+          onDismiss={() => tab.readingState.dismissSharedSessionHint()}
+        />
+      )}
       {showFilters && (
         <DiscoverFilters
           filters={filters}
@@ -742,6 +872,22 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
         />
       )}
       <div className="sb-discover-content-panel-scroll">
+        {showHiddenContentWarning &&
+          (showAnnotations || hasFriendPlaylists ? (
+            <InlineContentWarning
+              handleAccept={() => tab.readingState.turnOnDiscoveredContent()}
+              handleDismiss={() =>
+                tab.readingState.dismissHiddenContentWarning()
+              }
+            />
+          ) : (
+            <ContentWarning
+              handleAccept={() => tab.readingState.turnOnDiscoveredContent()}
+              handleDismiss={() =>
+                tab.readingState.dismissHiddenContentWarning()
+              }
+            />
+          ))}
         {(f === "all" || f === "annotations") && showNotes && (
           <AnnotationsSection
             tab={tab}
@@ -762,7 +908,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
             friends={state.friends}
             playlists={state.playlists}
             modals={state.modals}
-            toast={state.app.toast}
+            app={state.app}
           />
         )}
 
@@ -790,7 +936,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
         )}
 
         {f === "all" &&
-          variant === "full" &&
+          isDiscovering &&
           tab.readingState.showDiscoveryLoader.value && (
             <div className="sb-dcp-discovery-loader">
               <Spinner

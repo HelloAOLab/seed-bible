@@ -140,12 +140,10 @@
   flex-direction: column;
   gap: 14px;
 }
-
 .sb-rpd-empty {
-  margin: 8px 0;
+  --sb-empty-state-padding: 0.5rem 0;
+  --sb-empty-state-color: var(--rp-muted);
   text-align: center;
-  font-size: var(--sb-font-size-14);
-  color: var(--rp-muted);
 }
 
 /* Day tabs */
@@ -273,7 +271,6 @@
 
 .sb-rpd-reading-expand {
   flex: none;
-  color: var(--rp-muted);
 }
 
 /* One chip per chapter of a multi-chapter reading, so "six chapters into John
@@ -436,16 +433,11 @@
   gap: 10px;
 }
 
-.sb-rpd-footer-actions .sb-rp-button {
+.sb-rpd-footer-actions .sb-button {
   flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: auto;
 }
 
-.sb-rpd-footer .sb-rp-button {
+.sb-rpd-footer .sb-button {
   width: 100%;
 }
 
@@ -514,6 +506,6 @@
   color: var(--rp-muted);
 }
 
-.sb-rpd-celebration .sb-rp-button {
+.sb-rpd-celebration .sb-button {
   min-width: 180px;
 }
