@@ -262,7 +262,6 @@
    inherits, so a container covers its chips. The blanket `.sb-today-content *`
    this replaced also caught search-result verse text and the resume card's
    reference, which a reader has every reason to want to copy. */
-.sb-today-container .sb-today-bookmarks-section-container,
 .sb-today-container .reading-history-timeline-container,
 .sb-today-content button {
   user-select: none;
@@ -983,12 +982,14 @@
   > button {
   height: 3rem;
 }
+/* `min-width: 0` lets a long name wrap inside its grid column instead of
+   pushing the column wider than half the screen. */
 :where(html[data-sb-app-layout="mobile"])
   .sb-today-container
   .sb-today-bookmarks-section
   .sb-today-bookmarks-section-bookmark {
-  flex-shrink: 0;
-  max-width: 13rem;
+  min-width: 0;
+  max-width: none;
   padding: 0.5rem 0.75rem;
   font-size: var(--sb-font-size-13);
 }
@@ -1010,14 +1011,15 @@
   }
 }
 
+/* Two equal columns on a phone, so all five bookmarks show at once without
+   a sideways scroller. */
 :where(html[data-sb-app-layout="mobile"])
   .sb-today-container
   .sb-today-bookmarks-section
   .sb-today-bookmarks-section-container {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
-  flex-wrap: nowrap;
-  overflow-x: scroll;
-  scrollbar-width: none;
 }
 :where(html[data-sb-app-layout="mobile"])
   .sb-today-container

@@ -22,6 +22,7 @@
 
 ### 🔧 Changed
 
+- On phones, the Today screen shows your bookmarks in two columns, so all of them are visible at once instead of one at a time in a sideways-scrolling row. ([#2245](https://github.com/HelloAOLab/seed-bible/issues/2245))
 - Narrow what `useI18n` from `seed-bible/extensions` is typed to return to `t`, `ns`, `language` and `isRtl`, leaving out the app's own language prompts, which extensions can't use.
 
 ### 🐛 Fixed
