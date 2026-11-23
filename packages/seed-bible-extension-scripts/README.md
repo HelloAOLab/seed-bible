@@ -102,6 +102,12 @@ of Preact, the project's own, even if `seed-bible` depends on another
 version. CSS is bundled in too, since the extension's frame can't load a
 stylesheet: the CSS files the extension imports, and those of the shared
 components it uses, are added to the frame's page when the module loads.
+So is every other file it uses: an imported image or font, one a CSS
+`url()` points to, a file in `public/`, and a web worker are inlined as
+`data:` or `blob:` URLs. A file the build can't place in the module fails
+it rather than being written beside it. The frame has no origin of its own,
+where browsers don't run a `{ type: "module" }` worker from a `blob:` URL,
+so create workers without it (Vite builds them as plain scripts anyway).
 The scaffolded `src/css.d.ts` lets TypeScript accept those imports. A
 project made before it was added fails `check` with `Cannot find module or
 type declarations for side-effect import of './panel.css'`; add a
