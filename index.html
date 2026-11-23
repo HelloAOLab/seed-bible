@@ -8,13 +8,13 @@
     />
     <script>
       // Fills in `data-sb-app-layout` (see app/layoutAttribute.ts) when the
-      // server didn't: a branch preview rendered by an older build, or the
-      // unrendered page served when rendering fails. The styles treat anything
-      // but "mobile" as desktop, so without this a phone would paint with
-      // desktop styles until the app's script loads. Same rule as
-      // `isMobileViewport` in app/viewport.ts: a narrow window, or a phone (a
-      // finger pointer and a screen whose short side is 480 or less). Runs
-      // after the viewport tag so the width is the device's.
+      // server didn't: the native apps' page, a branch preview rendered by an
+      // older build, or the unrendered page served when rendering fails. The
+      // styles treat anything but "mobile" as desktop, so without this a phone
+      // would paint with desktop styles until the app's script loads. Same
+      // rule as `isMobileViewport` in app/viewport.ts: a narrow window, or a
+      // phone (a finger pointer and a screen whose short side is 480 or less).
+      // Runs after the viewport tag so the width is the device's.
       (function (root, win) {
         var layout = root.getAttribute("data-sb-app-layout");
         if (layout === "mobile" || layout === "desktop") {
