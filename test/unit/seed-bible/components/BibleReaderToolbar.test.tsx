@@ -3213,6 +3213,72 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     expect(readingState.selectedVerses.value).toHaveLength(0);
   });
 
+  it("slides the sheet out before ✕ clears the selection", async () => {
+    await renderSheet();
+    // The stylesheet sets this outside reduced motion; tests don't load it.
+    sheet()!.style.setProperty("--sb-bottom-sheet-exit-duration", "200ms");
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-bottom-sheet-close")!
+        .click();
+    });
+
+    expect(sheet()?.style.transform).toBe("translateY(100%)");
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+
+    await act(async () => {
+      const slid = new Event("transitionend", { bubbles: true });
+      Object.defineProperty(slid, "propertyName", { value: "transform" });
+      sheet()!.dispatchEvent(slid);
+    });
+
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+  });
+
+  it("keeps a verse picked while the sheet slides out", async () => {
+    await renderSheet();
+    sheet()!.style.setProperty("--sb-bottom-sheet-exit-duration", "200ms");
+    const chapter = readingState.chapterData.value!;
+    // renderSheet selected the first verse; pick the second mid-slide.
+    const second = chapter.chapter.content.filter(
+      (entry): entry is ChapterVerse =>
+        !!entry &&
+        typeof entry === "object" &&
+        (entry as { type?: string }).type === "verse"
+    )[1]!;
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-bottom-sheet-close")!
+        .click();
+    });
+    // The chapter stays tappable during the slide.
+    await act(async () => {
+      readingState.selectVerse(
+        {
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verse: second,
+          translationId: chapter.translation.id,
+        },
+        10,
+        10
+      );
+    });
+    await act(async () => {
+      const slid = new Event("transitionend", { bubbles: true });
+      Object.defineProperty(slid, "propertyName", { value: "transform" });
+      sheet()!.dispatchEvent(slid);
+    });
+
+    expect(
+      readingState.selectedVerses.value.map((v) => v.verse.number)
+    ).toEqual([second.number]);
+    // Back up, showing the verse just picked.
+    expect(sheet()!.classList).not.toContain("sb-bottom-sheet-closing");
+  });
+
   it("springs back and keeps the selection when the drag stops short", async () => {
     const handle = await renderSheet();
 

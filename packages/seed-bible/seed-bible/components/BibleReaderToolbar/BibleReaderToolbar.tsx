@@ -25,7 +25,10 @@ import {
 } from "../../managers/SettingsManager";
 import { highlightContainsVerse } from "../../managers/HighlightsManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
-import type { BibleReadingState } from "../../managers/BibleReadingManager";
+import type {
+  BibleReadingState,
+  BibleSelectedVerse,
+} from "../../managers/BibleReadingManager";
 import type { BibleReaderToolbarTool } from "../../managers/BibleToolsManager";
 import { ToolActionElement } from "../ToolActionElement";
 import { BottomSheet, type BottomSheetProps } from "../BottomSheet/BottomSheet";
@@ -1008,6 +1011,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const selectionState = useComputed(() =>
     selectedTab.value ? tabs.activeReadingState(selectedTab.value) : null
   );
+  /**
+   * What the verse sheet is closing on while it slides out. The chapter stays
+   * tappable then, so a verse picked mid-slide isn't one the close clears.
+   */
+  const closingSelection = useRef<{
+    state: BibleReadingState;
+    verses: BibleSelectedVerse[];
+  } | null>(null);
   const sessionState = useComputed(
     () => selectedTab.value?.sharedSession ?? null
   );
@@ -1971,15 +1982,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     ".sb-verse-toolbar-swatches, .sb-verse-toolbar-discovered, .sb-verse-toolbar-overflow-scrollable";
 
   /**
-   * The phone verse sheet's ✕ and Escape: in the highlight colors they go back
-   * to the verse actions, keeping the selection; otherwise they clear it.
+   * The phone verse sheet's ✕ and Escape while the highlight colors are open:
+   * back to the verse actions, keeping the selection.
    */
-  const leaveVerseSheetStep = () => {
-    if (isHighlightPickerOpen.value) {
-      isHighlightPickerOpen.value = false;
-      return;
-    }
-    selectionState.value?.clearSelectedVerses();
+  const leaveHighlightPicker = () => {
+    isHighlightPickerOpen.value = false;
   };
 
   // Verse toolbar highlight picker state
@@ -3431,9 +3438,32 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 : ""
             }`,
             label: t("verse-actions", { defaultValue: "Verse actions" }),
-            onClose: () => selectionState.value?.clearSelectedVerses(),
-            onCloseButton: leaveVerseSheetStep,
-            onEscape: leaveVerseSheetStep,
+            onCloseStart: () => {
+              const state = selectionState.value;
+              closingSelection.current = state
+                ? { state, verses: state.selectedVerses.peek() }
+                : null;
+            },
+            onClose: () => {
+              const closing = closingSelection.current;
+              closingSelection.current = null;
+              if (!closing) {
+                selectionState.value?.clearSelectedVerses();
+                return;
+              }
+              const { state, verses } = closing;
+              state.selectedVerses.value = state.selectedVerses.value.filter(
+                (verse) => !verses.includes(verse)
+              );
+            },
+            // Only in the picker, where ✕ and Escape go back a step. Otherwise
+            // they're left to the sheet, which slides out before `onClose`.
+            onCloseButton: isHighlightPickerOpen.value
+              ? leaveHighlightPicker
+              : undefined,
+            onEscape: isHighlightPickerOpen.value
+              ? leaveHighlightPicker
+              : undefined,
             closeLabel: isHighlightPickerOpen.value
               ? t("back", { defaultValue: "Back" })
               : t("close", { defaultValue: "Close" }),

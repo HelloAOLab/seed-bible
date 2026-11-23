@@ -1,7 +1,7 @@
 import "./BottomSheet.css";
 import type { ComponentChild, ComponentChildren, JSX, Ref } from "preact";
 import { createPortal } from "preact/compat";
-import { useCallback, useRef } from "preact/hooks";
+import { useCallback, useEffect, useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nContext";
 import { useOverlayDismiss } from "../useOverlayDismiss";
@@ -18,6 +18,12 @@ const DISMISS_THRESHOLD_PX = 64;
  * than the screen.
  */
 const EXPAND_SNAP_DISTANCE_PX = 50;
+
+/**
+ * Extra wait past the slide-out before closing anyway. `transitionend` never
+ * fires if the transition is interrupted or the sheet was already off screen.
+ */
+const EXIT_FALLBACK_SLACK_MS = 100;
 
 /** Things that keep their own tap/scroll behavior instead of starting a drag. */
 const DEFAULT_DRAG_IGNORE_SELECTOR =
@@ -49,7 +55,18 @@ export interface BottomSheetExpansion {
 }
 
 export interface BottomSheetProps {
+  /**
+   * Called when the user closes the sheet. When it closes itself (✕, Escape,
+   * the backdrop, or dragging it down), that's after it has slid out.
+   */
   onClose: () => void;
+  /**
+   * Called when the sheet starts sliding out on its own (✕, Escape, the
+   * backdrop, or dragging it down), before `onClose`. The page behind takes
+   * taps during the slide, so a caller whose `onClose` clears state can note
+   * here what to clear and leave anything the user picks meanwhile.
+   */
+  onCloseStart?: () => void;
   /** Accessible name of the dialog. */
   label: string;
   /** Visible title, shown in a header row with the close button. */
@@ -58,11 +75,15 @@ export interface BottomSheetProps {
   titleIcon?: string;
   /** Show the ✕ button. Defaults to true. */
   showClose?: boolean;
-  /** Overrides what the ✕ button does; defaults to `onClose`. */
+  /**
+   * Overrides what the ✕ button does; defaults to sliding the sheet out and
+   * then calling `onClose`. An override runs at once, with no slide.
+   */
   onCloseButton?: () => void;
   /**
-   * Overrides what Escape does; defaults to `onClose`. A sheet whose ✕ goes
-   * back a step should pass the same handler, so Escape goes back too.
+   * Overrides what Escape does; defaults to sliding out like the ✕. A sheet
+   * whose ✕ goes back a step should pass the same handler, so Escape goes back
+   * too.
    */
   onEscape?: () => void;
   /**
@@ -117,6 +138,19 @@ interface DragState {
   reveal: number;
 }
 
+/**
+ * How long the slide-out runs, from the sheet's --sb-bottom-sheet-exit-duration.
+ * 0 when it isn't set (reduced motion, or no stylesheet), which closes at once.
+ */
+function exitDurationMs(el: HTMLElement): number {
+  const value = getComputedStyle(el)
+    .getPropertyValue("--sb-bottom-sheet-exit-duration")
+    .trim();
+  const amount = parseFloat(value);
+  if (!Number.isFinite(amount) || amount <= 0) return 0;
+  return value.endsWith("ms") ? amount : amount * 1000;
+}
+
 function assignRef<T>(ref: Ref<T> | undefined, value: T | null): void {
   if (!ref) return;
   if (typeof ref === "function") ref(value);
@@ -166,8 +200,42 @@ export function BottomSheet(props: BottomSheetProps) {
    * the bottom and rise it again after every tap or drag.
    */
   const isRising = useSignal(true);
+  /** Sliding out; `onClose` runs once the slide finishes. */
+  const isClosing = useSignal(false);
+  const cancelExit = useRef<(() => void) | null>(null);
+  useEffect(() => () => cancelExit.current?.(), []);
+
   const close = () => {
-    if (dismissible) onClose();
+    if (!dismissible || isClosing.value) return;
+    const el = sheetEl.current;
+    const duration = el ? exitDurationMs(el) : 0;
+    if (!el || duration === 0) {
+      onClose();
+      return;
+    }
+    isClosing.value = true;
+    props.onCloseStart?.();
+    const finish = () => {
+      cancelExit.current?.();
+      try {
+        onClose();
+      } finally {
+        // Normally the caller has unmounted the sheet by now. If it kept it
+        // (or `onClose` threw), the sheet slides back up instead of staying
+        // hidden off screen and unclosable.
+        isClosing.value = false;
+      }
+    };
+    const onTransitionEnd = (event: TransitionEvent) => {
+      if (event.target === el && event.propertyName === "transform") finish();
+    };
+    const timer = setTimeout(finish, duration + EXIT_FALLBACK_SLACK_MS);
+    el.addEventListener("transitionend", onTransitionEnd);
+    cancelExit.current = () => {
+      clearTimeout(timer);
+      el.removeEventListener("transitionend", onTransitionEnd);
+      cancelExit.current = null;
+    };
   };
   const overlayDismiss = useOverlayDismiss(close);
   // Stable, so Preact doesn't detach and reattach the ref on every render
@@ -183,7 +251,9 @@ export function BottomSheet(props: BottomSheetProps) {
   // Escape is taken even when the sheet can't be closed, so it doesn't fall
   // through to whatever is behind.
   const onEscape = () => {
-    if (dismissible) (props.onEscape ?? onClose)();
+    if (!dismissible) return;
+    if (props.onEscape) props.onEscape();
+    else close();
   };
 
   useModalLayer(sheetEl, { enabled: modal, onEscape });
@@ -210,7 +280,7 @@ export function BottomSheet(props: BottomSheetProps) {
   };
 
   const handlePointerDown = (event: PointerEvent) => {
-    if (dragDisabled) return;
+    if (dragDisabled || isClosing.value) return;
     const sheet = sheetEl.current;
     const target = event.target as Element | null;
     if (!sheet || !target) return;
@@ -352,16 +422,25 @@ export function BottomSheet(props: BottomSheetProps) {
       icon={closeIcon}
       label={closeLabel}
       disabled={!dismissible}
-      onClick={onCloseButton ?? onClose}
+      onClick={onCloseButton ?? close}
     />
   );
 
   const offset = dismissOffset.value;
+  // Closing slides the sheet off the bottom from wherever it is, including
+  // partway down from a dismiss drag.
+  const transform = isClosing.value
+    ? "translateY(100%)"
+    : offset
+      ? `translateY(${offset}px)`
+      : undefined;
   const sheet = (
     <>
       {backdrop && (
         <div
-          className="sb-bottom-sheet-backdrop"
+          className={`sb-bottom-sheet-backdrop${
+            isClosing.value ? " sb-bottom-sheet-backdrop-closing" : ""
+          }`}
           aria-hidden="true"
           {...overlayDismiss}
         />
@@ -372,6 +451,8 @@ export function BottomSheet(props: BottomSheetProps) {
           dragSurface === "sheet" ? " sb-bottom-sheet-drag-anywhere" : ""
         }${modal ? " sb-bottom-sheet-modal" : ""}${isDragging.value ? " sb-bottom-sheet-dragging" : ""}${
           isRising.value ? " sb-bottom-sheet-rising" : ""
+        }${
+          isClosing.value ? " sb-bottom-sheet-closing" : ""
         }${className ? ` ${className}` : ""}`}
         role="dialog"
         aria-modal={modal ? "true" : undefined}
@@ -381,7 +462,7 @@ export function BottomSheet(props: BottomSheetProps) {
         tabIndex={-1}
         style={{
           ...style,
-          transform: offset ? `translateY(${offset}px)` : undefined,
+          transform,
         }}
         onKeyDown={handleSheetKeyDown}
         onPointerDown={handlePointerDown}

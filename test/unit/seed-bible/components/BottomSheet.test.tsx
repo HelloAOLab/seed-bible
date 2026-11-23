@@ -362,6 +362,232 @@ describe("BottomSheet", () => {
     });
   });
 
+  // The stylesheet sets the exit duration only when motion isn't reduced, and
+  // tests don't load it, so these set it on the sheet the way it would arrive.
+  describe("sliding out", () => {
+    const withExit = { style: { "--sb-bottom-sheet-exit-duration": "200ms" } };
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    function finishSlide(
+      target: HTMLElement = sheet()!,
+      property = "transform"
+    ) {
+      const event = new Event("transitionend", { bubbles: true });
+      Object.defineProperty(event, "propertyName", { value: property });
+      act(() => {
+        target.dispatchEvent(event);
+      });
+    }
+
+    function expectSlidingOut() {
+      expect(sheet()!.classList).toContain("sb-bottom-sheet-closing");
+      expect(sheet()!.style.transform).toBe("translateY(100%)");
+    }
+
+    it("slides off the bottom before closing from the ✕ button", () => {
+      const { onClose } = renderSheet({ title: "Participants", ...withExit });
+      act(() => {
+        closeButton()!.click();
+      });
+
+      expectSlidingOut();
+      expect(backdrop()!.classList).toContain(
+        "sb-bottom-sheet-backdrop-closing"
+      );
+      expect(onClose).not.toHaveBeenCalled();
+
+      finishSlide();
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(sheet()).toBeNull();
+    });
+
+    it("slides out on Escape and from the backdrop too", () => {
+      const escaped = renderSheet(withExit);
+      pressKey(document.querySelector(".first-action")!, "Escape");
+      expectSlidingOut();
+      finishSlide();
+      expect(escaped.onClose).toHaveBeenCalledTimes(1);
+
+      const tapped = renderSheet(withExit);
+      act(() => {
+        backdrop()!.dispatchEvent(
+          new MouseEvent("mousedown", { bubbles: true })
+        );
+        backdrop()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expectSlidingOut();
+      finishSlide();
+      expect(tapped.onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("carries on from where a dismiss drag let go instead of snapping back", () => {
+      const { onClose } = renderSheet(withExit);
+      drag(handle(), 500, 600);
+
+      expectSlidingOut();
+      // No longer following the finger, so the slide-out transition applies.
+      expect(sheet()!.classList).not.toContain("sb-bottom-sheet-dragging");
+      expect(onClose).not.toHaveBeenCalled();
+
+      finishSlide();
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("waits for its own slide, not a transition inside it", () => {
+      const { onClose } = renderSheet(withExit);
+      act(() => {
+        closeButton()!.click();
+      });
+
+      finishSlide(document.querySelector<HTMLElement>(".content")!);
+      finishSlide(sheet()!, "opacity");
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it("closes anyway if the slide never reports finishing", () => {
+      vi.useFakeTimers();
+      const { onClose } = renderSheet(withExit);
+      act(() => {
+        closeButton()!.click();
+      });
+
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+      expect(onClose).not.toHaveBeenCalled();
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(sheet()).toBeNull();
+    });
+
+    it("closes once, however often it's asked while sliding out", () => {
+      vi.useFakeTimers();
+      const { onClose } = renderSheet(withExit);
+      act(() => {
+        closeButton()!.click();
+      });
+      pressKey(document.querySelector(".first-action")!, "Escape");
+      drag(handle(), 500, 600);
+
+      finishSlide();
+      act(() => {
+        vi.runAllTimers();
+      });
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("doesn't close later if the caller removes it mid-slide", () => {
+      vi.useFakeTimers();
+      const { onClose, open } = renderSheet(withExit);
+      act(() => {
+        closeButton()!.click();
+      });
+      act(() => {
+        open.value = false;
+      });
+      act(() => {
+        vi.runAllTimers();
+      });
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it("slides back up if the caller keeps it open", () => {
+      const onClose = vi.fn();
+      act(() => {
+        render(
+          <BottomSheet label="Reading settings" onClose={onClose} {...withExit}>
+            <p className="content">Font size</p>
+          </BottomSheet>,
+          container
+        );
+      });
+      act(() => {
+        closeButton()!.click();
+      });
+      finishSlide();
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(sheet()!.classList).not.toContain("sb-bottom-sheet-closing");
+      expect(sheet()!.style.transform).toBe("");
+    });
+
+    it("tells the caller when the slide starts, before it closes", () => {
+      const onCloseStart = vi.fn();
+      const { onClose } = renderSheet({ onCloseStart, ...withExit });
+      act(() => {
+        closeButton()!.click();
+      });
+
+      expect(onCloseStart).toHaveBeenCalledTimes(1);
+      expect(onClose).not.toHaveBeenCalled();
+      finishSlide();
+      expect(onCloseStart).toHaveBeenCalledTimes(1);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("can still be closed after a close that threw", () => {
+      vi.useFakeTimers();
+      const onClose = vi
+        .fn()
+        .mockImplementationOnce(() => {
+          throw new Error("dismiss failed");
+        })
+        .mockImplementation(() => {});
+      act(() => {
+        render(
+          <BottomSheet label="Reading settings" onClose={onClose} {...withExit}>
+            <p className="content">Font size</p>
+          </BottomSheet>,
+          container
+        );
+      });
+      act(() => {
+        closeButton()!.click();
+      });
+      expect(() =>
+        act(() => {
+          vi.advanceTimersByTime(300);
+        })
+      ).toThrow("dismiss failed");
+
+      expect(sheet()!.classList).not.toContain("sb-bottom-sheet-closing");
+      act(() => {
+        closeButton()!.click();
+      });
+      expectSlidingOut();
+      finishSlide();
+      expect(onClose).toHaveBeenCalledTimes(2);
+    });
+
+    it("runs a ✕ override at once, with no slide", () => {
+      const onBack = vi.fn();
+      const { onClose } = renderSheet({ onCloseButton: onBack, ...withExit });
+      act(() => {
+        closeButton()!.click();
+      });
+
+      expect(onBack).toHaveBeenCalledTimes(1);
+      expect(sheet()!.classList).not.toContain("sb-bottom-sheet-closing");
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it("closes at once when the stylesheet sets no slide-out", () => {
+      const { onClose } = renderSheet({
+        style: { "--sb-bottom-sheet-exit-duration": "0s" },
+      });
+      act(() => {
+        closeButton()!.click();
+      });
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(sheet()).toBeNull();
+    });
+  });
+
   describe("focus", () => {
     it("moves focus into the sheet and hands it back to the opener on close", () => {
       const opener = document.createElement("button");
