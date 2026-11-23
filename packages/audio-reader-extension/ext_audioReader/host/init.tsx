@@ -1367,9 +1367,10 @@ export function isAudioPlayToolVisible(
   if (ctx.surface === "quick-toolbar" && ctx.app?.isMinimalEmbed?.value) {
     return false;
   }
-  // Hidden entirely while a playlist is running: the playlist owns the tab's
-  // navigation and the Audio Reader's controls come back once it ends.
-  if (ctx.playlists.playing.value) {
+  // During a playlist it reads scripture steps only; a step's own verses
+  // when it has them (see `stepPassage`).
+  const step = ctx.playlists.playing.value?.currentItem.value;
+  if (step && (step.type !== "bible-verse" || step.compare)) {
     return false;
   }
   return (
