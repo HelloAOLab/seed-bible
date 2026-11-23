@@ -116,7 +116,17 @@ describe("createTheographicDiscoverProvider", () => {
       results.map((result) =>
         result.type === "content" ? result.contentType : null
       )
-    ).toEqual(["person_profile", "person_profile", "place_profile"]);
+    ).toEqual(["person", "person", "place"]);
+  });
+
+  it("supplies whole cards, so they keep their look in a section shared with other providers", async () => {
+    const results = await discover(CONTEXT, createDeps());
+
+    expect(
+      results.map((result) =>
+        result.type === "content" ? result.layout : null
+      )
+    ).toEqual(["custom", "custom", "custom"]);
   });
 
   it("carries the entity's verses and a span covering them", async () => {

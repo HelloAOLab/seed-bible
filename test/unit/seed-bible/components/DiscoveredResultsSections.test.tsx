@@ -883,6 +883,29 @@ describe("ContentTypeSection", () => {
     expect(container.textContent).not.toContain("Aaron description");
   });
 
+  it("lets each result in a shared section keep its own layout", () => {
+    const tab = tabWith(
+      { ...typedResult("person", "Aaron"), layout: "custom" },
+      typedResult("person", "Nicodemus")
+    );
+
+    act(() => {
+      render(
+        <ContentTypeSection tab={tab} definition={definition("person")} />,
+        container
+      );
+    });
+
+    expect(container.textContent).toContain("Aaron card");
+    expect(container.textContent).not.toContain("Aaron description");
+    expect(
+      [...container.querySelectorAll(".sb-discover-item-title")].map(
+        (title) => title.textContent
+      )
+    ).toEqual(["Nicodemus"]);
+    expect(container.textContent).toContain("Nicodemus description");
+  });
+
   it("renders nothing when the chapter has none of that type", () => {
     const tab = tabWith(typedResult("other", "Elsewhere"));
 

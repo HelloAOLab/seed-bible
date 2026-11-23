@@ -1,10 +1,5 @@
 import { registerExtension, type SeedBibleState } from "seed-bible";
-import {
-  EVENT_CONTENT_TYPE,
-  PERSON_CONTENT_TYPE,
-  PLACE_CONTENT_TYPE,
-  THEOGRAPHIC_EXTENSION_ID,
-} from "./contentTypes";
+import { THEOGRAPHIC_EXTENSION_ID } from "./contentTypes";
 import type { VerseRef } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import {
   findLocation,
@@ -58,39 +53,7 @@ export default function initTheographicExtension() {
   registerExtension({
     id: THEOGRAPHIC_EXTENSION_ID,
     init: function* (context: SeedBibleState) {
-      yield context.discover.registerContentType({
-        id: PERSON_CONTENT_TYPE,
-        title: {
-          key: "people",
-          ns: "theographic-extension",
-          defaultValue: "People",
-        },
-        hiddenByDefault: true,
-        layout: "custom",
-        priority: 100,
-      });
-      yield context.discover.registerContentType({
-        id: PLACE_CONTENT_TYPE,
-        title: {
-          key: "places",
-          ns: "theographic-extension",
-          defaultValue: "Places",
-        },
-        hiddenByDefault: true,
-        layout: "custom",
-        priority: 110,
-      });
-      yield context.discover.registerContentType({
-        id: EVENT_CONTENT_TYPE,
-        title: {
-          key: "events",
-          ns: "theographic-extension",
-          defaultValue: "Events",
-        },
-        hiddenByDefault: true,
-        layout: "custom",
-        priority: 120,
-      });
+      yield context.discover.retainSharedContentTypes();
 
       yield context.discover.registerDiscoverProvider(
         createTheographicDiscoverProvider({

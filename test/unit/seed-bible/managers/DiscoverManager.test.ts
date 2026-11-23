@@ -722,3 +722,50 @@ describe("registerContentType", () => {
     expect(manager.contentTypes.value).toEqual([replacement]);
   });
 });
+
+describe("retainSharedContentTypes", () => {
+  const ids = (manager: ReturnType<typeof createDiscoverManager>) =>
+    manager.contentTypes.value.map((type) => type.id);
+
+  it("adds the shared sections, people and the like hidden by default", () => {
+    const manager = createDiscoverManager();
+
+    manager.retainSharedContentTypes();
+
+    expect(manager.contentTypes.value).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "person", hiddenByDefault: true }),
+        expect.objectContaining({ id: "place", hiddenByDefault: true }),
+        expect.objectContaining({ id: "event", hiddenByDefault: true }),
+        expect.objectContaining({ id: "video" }),
+        expect.objectContaining({ id: "website" }),
+      ])
+    );
+    expect(
+      manager.contentTypes.value.find((type) => type.id === "video")
+        ?.hiddenByDefault
+    ).toBeFalsy();
+  });
+
+  it("keeps them until the last holder lets go", () => {
+    const manager = createDiscoverManager();
+    const releaseFirst = manager.retainSharedContentTypes();
+    const releaseSecond = manager.retainSharedContentTypes();
+
+    releaseFirst();
+    releaseFirst();
+    expect(ids(manager)).toContain("person");
+
+    releaseSecond();
+    expect(ids(manager)).toEqual([]);
+  });
+
+  it("registers them again for a new holder after all were released", () => {
+    const manager = createDiscoverManager();
+    manager.retainSharedContentTypes()();
+
+    manager.retainSharedContentTypes();
+
+    expect(ids(manager)).toContain("person");
+  });
+});

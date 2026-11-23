@@ -250,35 +250,54 @@ export function ContentSection(props: {
   );
 }
 
-function ContentResultsList(props: { results: DiscoverContentResult[] }) {
+/**
+ * A `"custom"` result is its own whole card, so only its `content` is
+ * rendered; a `"standard"` one gets image, title, description, then
+ * `content`. A result's own `layout` wins over `defaultLayout`, which is its
+ * type's.
+ */
+function ContentResultsList(props: {
+  results: DiscoverContentResult[];
+  defaultLayout?: DiscoverContentTypeDefinition["layout"];
+}) {
   const { t } = useI18n();
 
   return (
     <ul className="sb-discover-list">
-      {props.results.map((result, index) => (
-        <li
-          key={index}
-          className={`sb-discover-item${result.onClick ? " sb-discover-item--clickable" : ""}`}
-          onClick={result.onClick}
-        >
-          {result.image ? (
-            <img className="sb-discover-item-image" src={result.image} alt="" />
-          ) : null}
-          <span className="sb-discover-item-title">{result.title}</span>
-          {result.description ? (
-            <ExpandableText
-              className="sb-discover-item-description"
-              readMoreLabel={t("read-more", { defaultValue: "Read more" })}
-              readLessLabel={t("read-less", { defaultValue: "Read less" })}
-            >
-              {result.description}
-            </ExpandableText>
-          ) : null}
-          {result.content ? (
-            <div className="sb-discover-item-content">{result.content}</div>
-          ) : null}
-        </li>
-      ))}
+      {props.results.map((result, index) =>
+        (result.layout ?? props.defaultLayout) === "custom" ? (
+          <li key={index} className="sb-discover-item">
+            {result.content}
+          </li>
+        ) : (
+          <li
+            key={index}
+            className={`sb-discover-item${result.onClick ? " sb-discover-item--clickable" : ""}`}
+            onClick={result.onClick}
+          >
+            {result.image ? (
+              <img
+                className="sb-discover-item-image"
+                src={result.image}
+                alt=""
+              />
+            ) : null}
+            <span className="sb-discover-item-title">{result.title}</span>
+            {result.description ? (
+              <ExpandableText
+                className="sb-discover-item-description"
+                readMoreLabel={t("read-more", { defaultValue: "Read more" })}
+                readLessLabel={t("read-less", { defaultValue: "Read less" })}
+              >
+                {result.description}
+              </ExpandableText>
+            ) : null}
+            {result.content ? (
+              <div className="sb-discover-item-content">{result.content}</div>
+            ) : null}
+          </li>
+        )
+      )}
     </ul>
   );
 }
@@ -305,7 +324,7 @@ export function ContentTypeSection(props: {
       title={translateTitle(t, definition.title)}
       count={results.length}
     >
-      <ContentTypeResultsList definition={definition} results={results} />
+      <ContentResultsList results={results} defaultLayout={definition.layout} />
     </DiscoverSection>
   );
 }
@@ -329,36 +348,16 @@ export function VerseTaggedResultsSections(props: {
           count={results.length}
         >
           {definition ? (
-            <ContentTypeResultsList definition={definition} results={results} />
+            <ContentResultsList
+              results={results}
+              defaultLayout={definition.layout}
+            />
           ) : (
             <ContentResultsList results={results} />
           )}
         </DiscoverSection>
       ))}
     </>
-  );
-}
-
-/**
- * `"custom"` types supply the whole card in each result's `content`, so only
- * that is rendered; `"standard"` ones get the same layout as ordinary content.
- */
-function ContentTypeResultsList(props: {
-  definition: DiscoverContentTypeDefinition;
-  results: DiscoverContentResult[];
-}) {
-  if (props.definition.layout !== "custom") {
-    return <ContentResultsList results={props.results} />;
-  }
-
-  return (
-    <ul className="sb-discover-list">
-      {props.results.map((result, index) => (
-        <li key={index} className="sb-discover-item">
-          {result.content}
-        </li>
-      ))}
-    </ul>
   );
 }
 
