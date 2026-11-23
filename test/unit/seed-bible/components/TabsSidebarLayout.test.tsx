@@ -86,7 +86,7 @@ describe("Sidebar collapsed layout", () => {
     expect(container.querySelector(".sb-sidebar-tabs-header")).toBeNull();
   });
 
-  it("names the full book on a collapsed tile's hover title and label", async () => {
+  it("shows the full book name in a tooltip when hovering a collapsed tile", async () => {
     const state = await createState({
       responses: {
         [makeUrl("/api/available_translations.json", PRIVATE_API_ENDPOINT)]:
@@ -112,8 +112,31 @@ describe("Sidebar collapsed layout", () => {
 
     const collapsedTile = container.querySelector(".sb-collapsed-tab-tile");
     expect(collapsedTile?.textContent).toContain("GEN 1");
-    expect(collapsedTile?.getAttribute("title")).toBe("Genesis 1");
     expect(collapsedTile?.getAttribute("aria-label")).toBe("Genesis 1");
+    // The styled tooltip replaces the browser's own hover label, which would
+    // otherwise appear on top of it.
+    expect(collapsedTile?.hasAttribute("title")).toBe(false);
+
+    vi.useFakeTimers({ now: Date.now() + 3_600_000 });
+    try {
+      act(() => {
+        collapsedTile!.dispatchEvent(
+          new PointerEvent("pointerenter", { pointerType: "mouse" })
+        );
+      });
+      expect(document.body.querySelector(".sb-tooltip")).toBeNull();
+      act(() => void vi.advanceTimersByTime(600));
+      expect(document.body.querySelector(".sb-tooltip")?.textContent).toBe(
+        "Genesis 1"
+      );
+    } finally {
+      act(() => {
+        collapsedTile!.dispatchEvent(
+          new PointerEvent("pointerleave", { pointerType: "mouse" })
+        );
+      });
+      vi.useRealTimers();
+    }
   });
 
   it("hides session options when sidebar is collapsed", async () => {
