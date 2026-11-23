@@ -6,6 +6,8 @@ import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import { sanitize } from "../../managers/Sanitization";
 import type { Editor } from "@tiptap/core";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
+import "../TextField/TextField.css";
 
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
 // actually opens the text editor; Suspense shows a placeholder meanwhile.
@@ -97,29 +99,29 @@ export const TextItemInput = forwardRef<
 
   return (
     <>
-      <input
-        className="sb-settings-text-input sb-playlist-input sb-playlist-add-title-input"
-        type="text"
+      <TextInput
+        className="sb-playlist-input sb-playlist-add-title-input"
         value={title}
         dir="auto"
+        aria-label={t("playlist-item-title-placeholder", {
+          defaultValue: "Title (optional)",
+        })}
         placeholder={t("playlist-item-title-placeholder", {
           defaultValue: "Title (optional)",
         })}
-        onInput={(event: Event) => {
-          setTitle((event.currentTarget as HTMLInputElement).value);
-        }}
+        onValueInput={setTitle}
       />
       <div className="sb-playlist-add-row sb-playlist-add-text-row">
         <Suspense
           fallback={
             <div
-              className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor sb-playlist-add-editor--loading"
+              className="sb-text-input sb-playlist-input sb-playlist-add-editor sb-playlist-add-editor--loading"
               aria-busy="true"
             />
           }
         >
           <TipTapEditor
-            className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor"
+            className="sb-text-input sb-playlist-input sb-playlist-add-editor"
             initialContent={initialItem?.html}
             onEditor={(editor) => {
               editorRef.current = editor;

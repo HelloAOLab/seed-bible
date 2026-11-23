@@ -358,7 +358,9 @@ describe("creating a plan from another screen", () => {
   }
 
   const nameInput = () =>
-    container.querySelector<HTMLInputElement>(".sb-rp-text-input");
+    Array.from(container.querySelectorAll("label")).find(
+      (label) => label.textContent?.trim() === "Name your plan"
+    )?.control as HTMLInputElement | undefined;
   const buttonLabels = () =>
     Array.from(container.querySelectorAll("button")).map(
       (el) => el.textContent

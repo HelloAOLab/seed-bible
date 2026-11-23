@@ -180,6 +180,14 @@ describe("ScriptureItemInput", () => {
     expect(input().value).toBe("Genesis 1");
   });
 
+  it("names the reference box, which only had placeholder text", () => {
+    act(() => {
+      render(<ScriptureItemInput books={BOOKS} onAdd={vi.fn()} />, container);
+    });
+
+    expect(input().getAttribute("aria-label")).toBe("Scripture reference");
+  });
+
   it("disables the submit button when the field is empty", () => {
     act(() => {
       render(<ScriptureItemInput books={BOOKS} onAdd={vi.fn()} />, container);

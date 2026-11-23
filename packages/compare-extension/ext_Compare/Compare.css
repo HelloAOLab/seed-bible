@@ -24,39 +24,6 @@
   overflow-y: auto;
   padding: 12px;
 }
-
-/* Shown when the only block is the translation being read. */
-.sb-compare-empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 24px 12px;
-  text-align: center;
-}
-
-.sb-compare-empty-icon {
-  font-size: 2.5rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 65%);
-}
-
-.sb-compare-empty-title {
-  margin: 0;
-  font-size: var(--sb-font-size-15);
-  font-weight: 600;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-}
-
-.sb-compare-empty-hint {
-  margin: 0;
-  max-width: 22rem;
-  font-size: var(--sb-font-size-13);
-  line-height: 1.5;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
-}
-
 .sb-compare-blocks {
   display: flex;
   flex-direction: column;
@@ -155,6 +122,11 @@
 }
 /* Bottom padding matches `.sb-compare-picker`'s padding, so "Add translation"
    and "Done" line up when switching screens. */
+.sb-compare-empty-note {
+  --sb-empty-state-padding: 0.75rem 0.5rem;
+  --sb-empty-state-font-size: var(--sb-font-size-13);
+}
+
 .sb-compare-add-bar {
   flex: 0 0 auto;
   padding: 8px 12px 12px;

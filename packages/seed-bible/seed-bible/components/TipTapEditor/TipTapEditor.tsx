@@ -1,3 +1,4 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import { Editor, Extension, type FocusPosition } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -203,21 +204,22 @@ interface MenuButtonProps {
 
 function MenuButton({ icon, label, active, onClick }: MenuButtonProps) {
   return (
-    <button
-      type="button"
-      className={
-        "sb-editor-toolbar-button" +
-        (active ? " sb-editor-toolbar-button--active" : "")
-      }
-      onClick={onClick}
-      // Keep focus in the document (the editor) so the command applies to the
-      // current selection rather than blurring it away.
-      onMouseDown={(event) => event.preventDefault()}
-      aria-label={label}
-      aria-pressed={active}
-      title={label}
-    >
-      <MaterialIcon>{icon}</MaterialIcon>
-    </button>
+    <TooltipTrigger>
+      <button
+        type="button"
+        className={
+          "sb-editor-toolbar-button" +
+          (active ? " sb-editor-toolbar-button--active" : "")
+        }
+        onClick={onClick}
+        // Keep focus in the document (the editor) so the command applies to the
+        // current selection rather than blurring it away.
+        onMouseDown={(event) => event.preventDefault()}
+        aria-label={label}
+        aria-pressed={active}
+      >
+        <MaterialIcon>{icon}</MaterialIcon>
+      </button>
+    </TooltipTrigger>
   );
 }

@@ -94,7 +94,7 @@ describe("extension permission dialogs", () => {
     }
 
     const switches = () => [
-      ...container.querySelectorAll<HTMLButtonElement>('[role="switch"]'),
+      ...container.querySelectorAll<HTMLInputElement>('[role="switch"]'),
     ];
     const status = () =>
       container.querySelector('[role="status"]')!.textContent;
@@ -116,13 +116,10 @@ describe("extension permission dialogs", () => {
         ["Connect to api.example.comlockNeeded"],
       ]);
       expect(
-        switches().map((s) => [
-          s.getAttribute("aria-label"),
-          s.getAttribute("aria-checked"),
-        ])
+        switches().map((s) => [s.getAttribute("aria-label"), s.checked])
       ).toEqual([
-        ["See your reading history", "false"],
-        ["Add notes, and change or delete the ones it added", "true"],
+        ["See your reading history", false],
+        ["Add notes, and change or delete the ones it added", true],
       ]);
       expect(container.textContent).toContain(
         "To take away something marked Needed, uninstall Demo."
@@ -142,7 +139,7 @@ describe("extension permission dialogs", () => {
         "reading:history",
         true
       );
-      expect(switches()[0]!.getAttribute("aria-checked")).toBe("true");
+      expect(switches()[0]!.checked).toBe(true);
       expect(status()).toContain(
         "Saved. Demo restarted with the new permissions."
       );
@@ -157,7 +154,7 @@ describe("extension permission dialogs", () => {
       });
 
       expect(status()).toContain("That didn't save. Try again.");
-      expect(switches()[1]!.getAttribute("aria-checked")).toBe("true");
+      expect(switches()[1]!.checked).toBe(true);
     });
   });
 

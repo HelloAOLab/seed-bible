@@ -64,6 +64,11 @@
   padding: 0.875rem 0.75rem;
   font-size: var(--sb-font-size-14);
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  --sb-loading-status-color: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 30%
+  );
 }
 
 .sb-floating-search-status-error {
@@ -565,31 +570,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .sb-floating-chat-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 0.5rem;
-  padding: 1.25rem 1rem 3.5rem;
-  flex: 1 1 auto;
+  --sb-empty-state-padding: 1.25rem 1rem 3.5rem;
 }
-
-.sb-floating-chat-empty-icon {
-  font-size: 2.25rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
-  margin-bottom: 0.25rem;
-}
-
-.sb-floating-chat-empty-title {
-  margin: 0;
-  font-size: var(--sb-font-size-16);
-  font-weight: 600;
-  color: var(--sb-font-color);
-}
-
 .sb-floating-chat-empty-body {
   margin: 0;
   font-size: var(--sb-font-size-13);

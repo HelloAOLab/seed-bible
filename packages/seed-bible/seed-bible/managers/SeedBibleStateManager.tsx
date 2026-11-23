@@ -34,13 +34,19 @@ import {
 } from "../components/SharedPageModal/SharedPageModal";
 import { PlaylistPagePane } from "../components/PlaylistPagePane/PlaylistPagePane";
 import { PlaylistFinishedPane } from "../components/PlaylistFinishedPane/PlaylistFinishedPane";
-import { openDeletePlaylistConfirm } from "../components/Discover/PlaylistRow";
+import {
+  openDeletePlaylistConfirm,
+  openPlaylistShareModal,
+} from "../components/Discover/PlaylistRow";
 import {
   buildSharedPagePath,
   parseSharedPagePath,
   type SharedPageKind,
 } from "../managers/SharedPagePath";
-import type { PlaylistPageSeed } from "../managers/PlaylistManager";
+import type {
+  FinishedPlaylist,
+  PlaylistPageSeed,
+} from "../managers/PlaylistManager";
 import {
   averageSessionMinutes,
   type ReadingPlanPageSeed,
@@ -107,7 +113,6 @@ import {
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import {
   createBibleToolsManager,
-  openShareModal,
   openReadingPlansPane,
   READING_PLANS_PANE_ID,
 } from "../managers/BibleToolsManager";
@@ -1063,7 +1068,8 @@ export function createSeedBibleState(
     saves,
     navigation,
     login,
-    i18n
+    i18n,
+    modals
   );
   const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
@@ -3867,6 +3873,7 @@ export function createSeedBibleState(
       login,
       gallery,
       toast,
+      app: state.app,
     });
     showReadingPlanDetailView();
   });
@@ -4275,6 +4282,7 @@ export function createSeedBibleState(
       login,
       gallery,
       toast,
+      app: state.app,
       onBack: () => {
         panes.closePane(READING_PLANS_PANE_ID);
         reopen();
@@ -4720,20 +4728,8 @@ export function createSeedBibleState(
     );
   };
 
-  const sharePlaylist = (
-    playlist: Parameters<typeof playlists.getPlaylistUrl>[0]
-  ) =>
-    openShareModal(
-      {
-        modals,
-        app: state.app,
-        toast: state.app.toast,
-        sharedSession: selectedTab.peek()?.sharedSession ?? null,
-        embedThemes: state.theme.themes,
-        customizationLocator: state.customizations.activeCustomizationLocator,
-      },
-      new URL(playlists.getPlaylistUrl(playlist))
-    );
+  const sharePlaylist = (playlist: FinishedPlaylist) =>
+    openPlaylistShareModal({ playlist, playlists, modals, app: state.app });
 
   const renderPlaylistFinishedPane = () => {
     const playlist = playlists.finishedPlaylist.value;

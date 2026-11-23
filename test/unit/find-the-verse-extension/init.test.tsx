@@ -666,6 +666,19 @@ describe("Find the Verse", () => {
     );
   }
 
+  it("names the game name and verse reference boxes, the first by its label", async () => {
+    await openEditor(playableGame());
+
+    const name = container.querySelector<HTMLInputElement>(
+      'input[aria-required="true"]'
+    );
+    expect(name?.labels?.[0]?.textContent).toContain("Game name");
+    const reference = container.querySelector<HTMLInputElement>(
+      'input[placeholder="e.g. John 1:1"]'
+    );
+    expect(reference?.getAttribute("aria-label")).toBe("Secret verse");
+  });
+
   it("saves a game with blank chances once 3 hints are filled in", async () => {
     await openEditor(playableGame());
     await act(async () => {
@@ -706,12 +719,9 @@ describe("Find the Verse", () => {
     expect(recordData).not.toHaveBeenCalled();
     expect(tabs.value).toHaveLength(1);
     const hints = [...container.querySelectorAll("textarea")];
-    expect(hints.map((hint) => hint.getAttribute("aria-invalid"))).toEqual([
-      "false",
-      "true",
-      "false",
-      "true",
-    ]);
+    expect(
+      hints.map((hint) => hint.getAttribute("aria-invalid") === "true")
+    ).toEqual([false, true, false, true]);
 
     await typeHint(3, "delta hint");
     expect(formErrors()).toEqual([]);
@@ -990,6 +1000,35 @@ describe("Find the Verse", () => {
     );
   });
 
+  it("keeps reading when Escape is pressed over the win", async () => {
+    await installAndPlay([
+      savedGame("one", "JHN", "In the beginning was the Word", "a hint"),
+    ]);
+    await closePane();
+    const round = roundTab().readingState;
+
+    await tap(
+      round,
+      selectedVerse("JHN", 1, 1, "In the beginning was the Word")
+    );
+    await act(async () => {
+      await vi.dynamicImportSettled();
+    });
+    await vi.waitFor(() => {
+      expect(document.body.querySelector(".ftv-celebration")).not.toBeNull();
+    });
+
+    await act(async () => {
+      document.activeElement!.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    expect(document.body.querySelector(".ftv-celebration")).toBeNull();
+    expect(tabs.value.length).toBeGreaterThan(1);
+    expect(bar()?.textContent).toContain("You found it!");
+  });
+
   it("celebrates a win over the reader with the panel closed, and marks the verse", async () => {
     await installAndPlay([
       savedGame("one", "JHN", "In the beginning was the Word", "a hint"),
@@ -1017,6 +1056,9 @@ describe("Find the Verse", () => {
     );
     expect(found).toMatchObject({ bookId: "JHN", chapterNumber: 1, verses: 1 });
     expect(found?.options.localOnly).toBe(true);
+    expect(celebration?.getAttribute("role")).toBe("dialog");
+    expect(celebration?.getAttribute("aria-label")).toBe("You found it!");
+    expect(document.activeElement?.textContent).toBe("Back to games");
 
     await act(async () => {
       clickButton(celebration!, "Keep reading");

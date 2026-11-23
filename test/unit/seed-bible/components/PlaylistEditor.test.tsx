@@ -190,6 +190,37 @@ describe("the playlist editor", () => {
       );
     });
 
+    it("names a titled compare step by its title once, with no note tag after it", () => {
+      openPanel([
+        {
+          type: "bible-verse",
+          ref: { bookId: "JHN", chapter: 1 },
+          compare: { ref: { bookId: "REV", chapter: 1 } },
+          noteTitle: "Word made flesh",
+        },
+      ]);
+
+      expect(
+        container.querySelector(".sb-pe-step .sb-discover-item-title")!
+          .textContent
+      ).toBe("Word made flesh");
+    });
+
+    it("names an untitled compare step by the passages it compares", () => {
+      openPanel([
+        {
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 1 },
+          compare: { ref: { bookId: "EXO", chapter: 2 } },
+        },
+      ]);
+
+      expect(
+        container.querySelector(".sb-pe-step .sb-discover-item-title")!
+          .textContent
+      ).toBe("Compare Genesis 1 to Exodus 2");
+    });
+
     it("opens a step when its row is clicked", () => {
       openPanel();
 
@@ -274,6 +305,29 @@ describe("the playlist editor", () => {
       click(byText(container, ".sb-pe-add-option", "Note"));
 
       expect(items()).toEqual([{ type: "html", html: "" }]);
+    });
+
+    it("leaves the add-step menu open, not closed and reopened, when its button is pressed again", () => {
+      openPanel([]);
+      const addButton = byText(
+        container.querySelector(".sb-pe-empty-list")!,
+        "button",
+        "Add a step"
+      )!;
+      click(addButton);
+      const note = byText(container, ".sb-pe-add-option", "Note");
+      expect(note).not.toBeNull();
+
+      // A press is a pointerdown and then a click. The menu closes itself on a
+      // press outside it, but not on the button that opens it.
+      act(() => {
+        addButton.dispatchEvent(
+          new PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+      click(addButton);
+
+      expect(byText(container, ".sb-pe-add-option", "Note")).toBe(note);
     });
   });
 
@@ -765,6 +819,42 @@ describe("the playlist editor", () => {
           expect(header().textContent).toContain("The Best Catan Strategy");
         }
       });
+
+      const describedBy = (box: Element | null) =>
+        (box?.getAttribute("aria-describedby") ?? "")
+          .split(" ")
+          .filter(Boolean)
+          .map((id) => document.getElementById(id)?.textContent);
+
+      it("reads each box's hint out with it", () => {
+        openWorkspace([VIDEO], 0, compact);
+
+        expect(describedBy(container.querySelector("#sb-pe-title-0"))).toEqual([
+          "Optional — a short heading",
+        ]);
+        expect(describedBy(container.querySelector("#sb-pe-link-0"))).toEqual([
+          "YouTube or Vimeo",
+        ]);
+      });
+
+      it("flags a link that isn't a link, and announces why", () => {
+        openWorkspace([VIDEO], 0, compact);
+        type(container.querySelector("#sb-pe-link-0"), "not a link");
+
+        const box = container.querySelector("#sb-pe-link-0")!;
+        const alert = container.querySelector('[role="alert"]')!;
+        expect(box.getAttribute("aria-invalid")).toBe("true");
+        expect(alert.textContent).toBe("That isn't a YouTube or Vimeo link.");
+        expect(box.getAttribute("aria-describedby")).toContain(alert.id);
+      });
+
+      it("doesn't flag a link that's fine", () => {
+        openWorkspace([VIDEO], 0, compact);
+
+        const box = container.querySelector("#sb-pe-link-0")!;
+        expect(box.getAttribute("aria-invalid")).toBeNull();
+        expect(container.querySelector('[role="alert"]')).toBeNull();
+      });
     });
 
     it("goes back to the list when the open step is deleted from its menu", () => {
@@ -794,6 +884,20 @@ describe("the playlist editor", () => {
       expect(sheet!.querySelector("#sb-pe-details-title")).not.toBeNull();
       expect(sheet!.querySelector("#sb-pe-details-description")).not.toBeNull();
       expect(sheet!.textContent).toContain("Cover image");
+    });
+
+    it("names the title and description boxes by their labels", () => {
+      const sheet = openDetails()!;
+
+      const title = sheet.querySelector<HTMLInputElement>(
+        "#sb-pe-details-title"
+      )!;
+      const description = sheet.querySelector<HTMLTextAreaElement>(
+        "#sb-pe-details-description"
+      )!;
+      expect(title.labels?.[0]?.textContent).toBe("Title");
+      expect(description.labels?.[0]?.textContent).toBe("Description");
+      expect(description.tagName).toBe("TEXTAREA");
     });
 
     it("saves the title and description to the draft as they're typed", () => {

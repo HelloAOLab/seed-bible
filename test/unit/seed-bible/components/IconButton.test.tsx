@@ -19,7 +19,7 @@ describe("IconButton", () => {
     return container.querySelector("button")!;
   }
 
-  it("is named by its label, for screen readers and the tooltip", () => {
+  it("is named by its label, for screen readers, and has no browser tooltip of its own", () => {
     act(() => {
       render(
         <IconButton icon="bookmark" label="Bookmark this chapter" />,
@@ -29,7 +29,8 @@ describe("IconButton", () => {
 
     expect(button().getAttribute("type")).toBe("button");
     expect(button().getAttribute("aria-label")).toBe("Bookmark this chapter");
-    expect(button().getAttribute("title")).toBe("Bookmark this chapter");
+    // The styled tooltip replaces the browser tooltip, which would show a second one.
+    expect(button().hasAttribute("title")).toBe(false);
   });
 
   it("hides the icon from screen readers, whether it's a symbol name or an element", () => {

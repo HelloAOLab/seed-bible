@@ -14,16 +14,14 @@ import {
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
 
-import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 import { createPortal } from "preact/compat";
 import {
   IconButton,
   type IconButtonLook,
   type IconButtonSize,
 } from "../IconButton/IconButton";
-
-/** Gap between the anchor and the menu, in px (matches the old 0.375rem). */
-const MENU_GAP_PX = 6;
+import { usePopover } from "../Popover/Popover";
 
 const activeContextMenuId = signal<string | null>(null);
 let nextContextMenuId = 0;
@@ -187,7 +185,6 @@ export function ContextMenuWithButton({
   ...button
 }: ContextMenuWithButtonProps) {
   const menuId = useSignal("");
-  const menuStyle = useSignal<ComponentProps<"div">["style"]>(undefined);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -203,90 +200,16 @@ export function ContextMenuWithButton({
 
   const currentIsOpen = activeContextMenuId.value === menuId.value;
 
-  // The menu is portaled to <body> and positioned in viewport (`fixed`)
-  // coordinates computed from the anchor's rect, so it can't be clipped by
-  // an ancestor's `overflow: hidden` or scroll container. Runs in a layout
-  // effect (not a rAF-deferred effect) so it's positioned before first
-  // paint — the menu no longer flows after the anchor, so there's no
-  // sane fallback position to show while waiting a frame.
-  useLayoutEffect(() => {
-    if (!currentIsOpen) {
-      menuStyle.value = undefined;
-      return;
-    }
-
-    const positionMenu = () => {
-      const anchor = anchorRef.current;
-      const menu = menuRef.current;
-      if (!anchor || !menu) {
-        return;
-      }
-
-      const anchorRect = anchor.getBoundingClientRect();
-      const style: ComponentProps<"div">["style"] = { position: "fixed" };
-
-      const distanceToRightEdge = window.innerWidth - anchorRect.right;
-      const distanceToLeftEdge = anchorRect.left;
-      const alignLeft = distanceToLeftEdge < distanceToRightEdge;
-      if (alignLeft) {
-        style.left = `${anchorRect.left}px`;
-      } else {
-        style.right = `${window.innerWidth - anchorRect.right}px`;
-      }
-
-      const spaceBelow = window.innerHeight - anchorRect.bottom;
-      const spaceAbove = anchorRect.top;
-      const openBelow = spaceBelow >= spaceAbove;
-      if (openBelow) {
-        style.top = `${anchorRect.bottom + MENU_GAP_PX}px`;
-      } else {
-        style.bottom = `${window.innerHeight - anchorRect.top + MENU_GAP_PX}px`;
-      }
-
-      // The opening animation grows the menu out of the corner by its button.
-      style.transformOrigin = `${alignLeft ? "left" : "right"} ${
-        openBelow ? "top" : "bottom"
-      }`;
-
-      menuStyle.value = style;
-    };
-
-    positionMenu();
-
-    const updateMenuPosition = () => {
-      requestAnimationFrame(positionMenu);
-    };
-
-    window.addEventListener("resize", updateMenuPosition);
-    window.addEventListener("scroll", updateMenuPosition, true);
-
-    return () => {
-      window.removeEventListener("resize", updateMenuPosition);
-      window.removeEventListener("scroll", updateMenuPosition, true);
-    };
-  }, [currentIsOpen]);
-
-  // Closes the menu on any click that isn't on the anchor (trigger button)
-  // or the menu itself. Needed because the menu is portaled to <body> — a
-  // click landing on it no longer bubbles through the app root, so the
-  // app-level "close all context menus" click handler (see main.tsx) can't
-  // see it.
-  useEffect(() => {
-    if (!currentIsOpen) return;
-
-    const handleOutsideMouseDown = (event: MouseEvent) => {
-      const target = event.target as Node | null;
-      if (!target) return;
-      if (anchorRef.current?.contains(target)) return;
-      if (menuRef.current?.contains(target)) return;
-      setIsOpen(false);
-    };
-
-    document.addEventListener("mousedown", handleOutsideMouseDown, true);
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideMouseDown, true);
-    };
-  }, [currentIsOpen]);
+  // Positioned, and closed by Escape, Tab or a press outside, by `usePopover`.
+  // The menu is portaled to <body>, so an ancestor's `overflow: hidden` or
+  // scroll area can't clip it.
+  const { style: menuStyle } = usePopover({
+    open: currentIsOpen,
+    anchorRef,
+    contentRef: menuRef,
+    onClose: () => setIsOpen(false),
+    returnFocusRef: triggerRef,
+  });
 
   const getMenuContainer = () => menuRef.current;
 
@@ -338,15 +261,8 @@ export function ContextMenuWithButton({
           <ContextMenu
             isOpen={currentIsOpen}
             menuElementRef={menuRef}
-            style={menuStyle.value}
+            style={menuStyle}
             className={joinClassNames("sb-context-menu", menuClassName)}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                setIsOpen(false);
-                triggerRef.current?.focus();
-              }
-            }}
           >
             {children}
           </ContextMenu>,

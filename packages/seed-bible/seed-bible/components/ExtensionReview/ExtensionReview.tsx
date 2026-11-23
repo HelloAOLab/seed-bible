@@ -9,6 +9,7 @@ import type {
 } from "../../managers/ExtensionReviewsManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import { Button } from "../Button/Button";
+import { TextField } from "../TextField/TextField";
 import { Tooltip, type TooltipAnchor } from "../Tooltip/Tooltip";
 
 /**
@@ -289,46 +290,32 @@ function VerifyExtensionModalContent(props: {
       <p className="sb-extension-review-modal-intro">
         {t("extension-review-modal-intro", { name: props.name })}
       </p>
-      <label className="sb-extension-review-field">
-        <span className="sb-extension-review-field-label">
-          {t("extension-review-modal-verified-at")}
-        </span>
-        <input
-          type="datetime-local"
-          name="verifiedAt"
-          value={verifiedAt.value}
-          onInput={(event) => (verifiedAt.value = event.currentTarget.value)}
-        />
-      </label>
-      <label className="sb-extension-review-field">
-        <span className="sb-extension-review-field-label">
-          {t("extension-review-modal-public-notes")}
-        </span>
-        <span className="sb-extension-review-field-hint">
-          {t("extension-review-modal-public-notes-hint")}
-        </span>
-        <textarea
-          name="publicNotes"
-          rows={3}
-          value={publicNotes.value}
-          onInput={(event) => (publicNotes.value = event.currentTarget.value)}
-        />
-      </label>
-      <label className="sb-extension-review-field">
-        <span className="sb-extension-review-field-label">
-          {t("extension-review-modal-internal-notes")}
-        </span>
-        <span className="sb-extension-review-field-hint">
-          {t("extension-review-modal-internal-notes-hint")}
-        </span>
-        <textarea
-          name="internalNotes"
-          rows={4}
-          value={internalNotes.value}
-          disabled={internalNotesLoaded.value !== true}
-          onInput={(event) => (internalNotes.value = event.currentTarget.value)}
-        />
-      </label>
+      <TextField
+        label={t("extension-review-modal-verified-at")}
+        type="datetime-local"
+        name="verifiedAt"
+        value={verifiedAt.value}
+        onValueInput={(value) => (verifiedAt.value = value)}
+      />
+      <TextField
+        label={t("extension-review-modal-public-notes")}
+        hint={t("extension-review-modal-public-notes-hint")}
+        multiline
+        name="publicNotes"
+        rows={3}
+        value={publicNotes.value}
+        onValueInput={(value) => (publicNotes.value = value)}
+      />
+      <TextField
+        label={t("extension-review-modal-internal-notes")}
+        hint={t("extension-review-modal-internal-notes-hint")}
+        multiline
+        name="internalNotes"
+        rows={4}
+        value={internalNotes.value}
+        disabled={internalNotesLoaded.value !== true}
+        onValueInput={(value) => (internalNotes.value = value)}
+      />
       {internalNotesLoaded.value === false && (
         <p className="sb-extension-review-error" role="alert">
           {t("extension-review-modal-internal-notes-failed")}

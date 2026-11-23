@@ -28,6 +28,11 @@ import type {
   SettingsManager,
 } from "../managers/SettingsManager";
 import { createSidebar } from "../managers/SidebarManager";
+import type { ModalManager } from "../managers/ModalManager";
+import {
+  closeApocryphaInfo,
+  openApocryphaInfo,
+} from "../components/BibleSelector/ApocryphaInfo";
 import type { NavigationManager } from "../managers/NavigationManager";
 import type { I18nManager } from "../i18n/I18nManager";
 import { type SavesManager } from "../managers/SavesManager";
@@ -57,10 +62,9 @@ export interface BibleSelectorSetOpenOptions {
    */
   forNewTab?: boolean;
   /**
-   * Called with the chapter the user picks, after the reader has opened it.
-   * Until then, switching translation in the selector doesn't move the reader
-   * or close the selector, so the pick isn't taken as made. Dropped if the
-   * selector closes without a pick.
+   * Makes the selector a picker: the chapter the user chooses is handed to
+   * this instead of opened, and the reader, its tabs and its translation are
+   * left as they were. Dropped if the selector closes without a pick.
    */
   onChapterPick?: (bookId: string, chapterNumber: number) => void;
   /**
@@ -212,6 +216,11 @@ export interface BibleSelectorState {
   selectedTestament: Signal<number>;
   apocryphaAvailable: Signal<boolean>;
   selectingTranslation: Signal<boolean>;
+  /**
+   * True while the selector is open as a picker (`onChapterPick`), which
+   * only chooses a chapter and so offers no translation switch.
+   */
+  picking: ReadonlySignal<boolean>;
   downloadedOnly: Signal<boolean>;
   openDownloadedTranslations: (slot?: TabSlot) => Promise<void>;
   lastBookClicked: Signal<number>;
@@ -264,7 +273,8 @@ export interface BibleSelectorState {
   handleTranslationAddition: () => void;
   openTabs: () => void;
   saves: SavesManager;
-  showApocryphaInfo: Signal<boolean>;
+  /** Opens "About the Apocrypha"; it closes when the selector does. */
+  openApocryphaInfo: () => void;
 }
 
 function groupBooks(translationBooks: TranslationBooks | null, search: string) {
@@ -315,14 +325,17 @@ export function createBibleSelectorState(
   saves: SavesManager,
   navigation: NavigationManager,
   login: LoginManager,
-  i18n: I18nManager
+  i18n: I18nManager,
+  modals: ModalManager
 ): BibleSelectorState {
   const isOpen = signal(false);
   const slot = signal<TabSlot | null>(null);
   const forceNewTab = signal(false);
-  let chapterPick: BibleSelectorSetOpenOptions["onChapterPick"] | null = null;
+  const chapterPick = signal<
+    BibleSelectorSetOpenOptions["onChapterPick"] | null
+  >(null);
+  const picking = computed(() => chapterPick.value !== null);
   let openOnBookId: string | null = null;
-  const showApocryphaInfo = signal(false);
   const availableSlots = computed(() => tabsLayoutManager.slots.value);
   const availableTranslations = computed(
     () => dataManager.availableTranslations.value
@@ -478,7 +491,7 @@ export function createBibleSelectorState(
 
       slot.value = effectiveSlot;
       forceNewTab.value = options?.forNewTab === true;
-      chapterPick = options?.onChapterPick ?? null;
+      chapterPick.value = options?.onChapterPick ?? null;
       openOnBookId = options?.bookId ?? null;
 
       // Opened before the sync so a load that has to reach the network shows
@@ -541,8 +554,9 @@ export function createBibleSelectorState(
     if (isOpen.value) {
       expandedBookId.value = openOnBookId ?? currentBookId.value;
     } else {
-      chapterPick = null;
+      chapterPick.value = null;
       openOnBookId = null;
+      closeApocryphaInfo(modals);
     }
   });
 
@@ -565,8 +579,13 @@ export function createBibleSelectorState(
   ) => {
     // Taken before the first await: some callers close the selector right
     // after calling this, which drops the pick.
-    const pick = chapterPick;
-    chapterPick = null;
+    const pick = chapterPick.peek();
+    chapterPick.value = null;
+    if (pick) {
+      void setOpen(false);
+      pick(selectedBookId, chapter);
+      return;
+    }
     if (!slot.value) {
       return;
     }
@@ -587,7 +606,6 @@ export function createBibleSelectorState(
         chapter
       );
       setOpen(false);
-      pick?.(selectedBookId, chapter);
       return;
     }
 
@@ -598,7 +616,6 @@ export function createBibleSelectorState(
     });
     tabsLayoutManager.openTabInSlot(slot.value.id, newTab.id);
     setOpen(false);
-    pick?.(selectedBookId, chapter);
   };
 
   /**
@@ -665,7 +682,7 @@ export function createBibleSelectorState(
       search.value = "";
       languageQuery.value = "";
       selectingTranslation.value = false;
-      if (previousTranslation && isOpen.value && !chapterPick) {
+      if (previousTranslation && isOpen.value && !chapterPick.peek()) {
         const currentBook = books.books.find(
           (b) => b.id === currentBookId.value
         );
@@ -1144,6 +1161,7 @@ export function createBibleSelectorState(
     selectedTestament,
     apocryphaAvailable,
     selectingTranslation,
+    picking,
     downloadedOnly,
     openDownloadedTranslations,
     lastBookClicked,
@@ -1174,6 +1192,6 @@ export function createBibleSelectorState(
     handleTranslationAddition,
     openTabs,
     saves,
-    showApocryphaInfo,
+    openApocryphaInfo: () => openApocryphaInfo(modals),
   };
 }

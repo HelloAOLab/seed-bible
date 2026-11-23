@@ -10,6 +10,11 @@ export interface AvailableTranslations {
   translations: Translation[];
 }
 
+/**
+ * A translation in the Free Use Bible API's catalog
+ * (`available_translations.json`), as the translation picker
+ * (`TranslationList`) lists it.
+ */
 export interface Translation {
   /**
    * The ID of the translation.
