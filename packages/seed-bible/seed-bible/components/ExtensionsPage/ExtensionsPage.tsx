@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./ExtensionsPage.css";
 import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -227,7 +228,9 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
           {title}
         </h2>
         {entries.length === 0 ? (
-          <p className="sb-extensions-page-empty">{emptyMessage}</p>
+          <EmptyState className="sb-extensions-page-empty">
+            {emptyMessage}
+          </EmptyState>
         ) : (
           <ul className="sb-extensions-page-grid">
             {entries.map((entry) => (
@@ -303,17 +306,17 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
             </p>
           )}
           {catalog.entries.length === 0 ? (
-            <p className="sb-extensions-page-empty">
+            <EmptyState className="sb-extensions-page-empty">
               {t("no-extensions-available", {
                 defaultValue: "No extensions available.",
               })}
-            </p>
+            </EmptyState>
           ) : shown.length === 0 && (query || filter.value !== "all") ? (
-            <p className="sb-extensions-page-empty" role="status">
+            <EmptyState className="sb-extensions-page-empty" role="status">
               {query
                 ? t("extensions-search-no-matches", { query })
                 : t("extensions-page-filter-empty")}
-            </p>
+            </EmptyState>
           ) : (
             <>
               {renderSection(

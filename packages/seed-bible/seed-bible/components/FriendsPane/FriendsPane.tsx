@@ -1,4 +1,5 @@
 import { LoadingStatus } from "../LoadingStatus/LoadingStatus";
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./FriendsPane.css";
 import { useEffect } from "preact/hooks";
 import { useSignal } from "@preact/signals";
@@ -506,12 +507,12 @@ export function FriendsPane(props: { state: SeedBibleState }) {
               {t("loading", { defaultValue: "Loading…" })}
             </LoadingStatus>
           ) : (
-            <p className="sb-friends-empty">
+            <EmptyState className="sb-friends-empty">
               {t("friends-empty", {
                 defaultValue:
                   "No friends yet. Share your friend link, or add someone by their user ID.",
               })}
-            </p>
+            </EmptyState>
           )}
         </section>
 

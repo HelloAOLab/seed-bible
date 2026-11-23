@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "../SettingsPage/SettingsPage.css";
 import "./CustomizationEditPane.css";
 // `.filters-icon` is defined here rather than in a shared stylesheet —
@@ -24,11 +25,14 @@ import {
   getExtensionAvailability,
   getExtensionSettingDefault,
   getFontPresetsForField,
+  getVariantDefaultRole,
+  isDefaultVariant,
   type CustomizationIconId,
   type CustomizationThemeVariant,
   type CustomizationsManager,
   type DefaultExtensionAvailability,
   type ExtensionAvailability,
+  type VariantDefaultRole,
 } from "../../managers/CustomizationsManager";
 import {
   DEFAULT_HIGHLIGHT_IDS,
@@ -46,7 +50,7 @@ import {
 import { UI_TO_BIBLE_LANGUAGE_CODES } from "../../managers/BibleReadingManager";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { i18n } from "../../i18n";
-import { useI18n } from "../../i18n/I18nManager";
+import { useI18n, type I18nHook } from "../../i18n/I18nManager";
 import {
   FiltersIcon,
   MaterialIcon,
@@ -844,7 +848,8 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           </h3>
           <ul className="sb-cz-theme-grid">
             {record.variants.map((variant) => {
-              const isDefault = variant.id === record.defaultVariantId;
+              const defaultRole = getVariantDefaultRole(variant);
+              const isDefault = isDefaultVariant(record, variant);
               const basePreset =
                 customizations.resolveVariantBaseTheme(variant);
               return (
@@ -861,18 +866,13 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                       <span className="sb-cz-card-title" dir="auto">
                         {variant.name}
                       </span>
-                      {isDefault ? (
-                        <span className="sb-cz-card-subtitle sb-cz-card-subtitle-accent">
-                          {t("default", { defaultValue: "Default" })}
-                        </span>
-                      ) : (
-                        <span className="sb-cz-card-subtitle">
-                          {t("based-on-theme", {
-                            name: localizedThemeName(t, basePreset),
-                            defaultValue: "Based on {{name}}",
-                          })}
-                        </span>
-                      )}
+                      <span className="sb-cz-card-subtitle">
+                        {t("based-on-theme", {
+                          name: localizedThemeName(t, basePreset),
+                          defaultValue: "Based on {{name}}",
+                        })}
+                      </span>
+                      {isDefault && <VariantDefaultChip role={defaultRole} />}
                     </span>
                   </button>
                   {(!isDefault || record.variants.length > 1) && (
@@ -891,12 +891,10 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                           }
                         >
                           <MaterialIcon className="sb-context-menu-item-icon">
-                            star
+                            {VARIANT_DEFAULT_ICONS[defaultRole]}
                           </MaterialIcon>
                           <span>
-                            {t("set-as-default-variant", {
-                              defaultValue: "Set as default",
-                            })}
+                            {setAsDefaultVariantLabel(t, defaultRole)}
                           </span>
                         </ContextMenuItem>
                       )}
@@ -1221,14 +1219,12 @@ function CustomizationNotFound(props: { message?: string }) {
   return (
     <div className="sb-settings-page">
       <section className="sb-settings-section">
-        <div className="sb-settings-empty-state">
-          <p>
-            {props.message ??
-              t("customization-not-found", {
-                defaultValue: "This Custom Branding could not be found.",
-              })}
-          </p>
-        </div>
+        <EmptyState className="sb-settings-empty-state">
+          {props.message ??
+            t("customization-not-found", {
+              defaultValue: "This Custom Branding could not be found.",
+            })}
+        </EmptyState>
       </section>
     </div>
   );
@@ -1409,13 +1405,11 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
           </li>
         </ul>
         {installableExtensions.length === 0 ? (
-          <div className="sb-settings-empty-state">
-            <p>
-              {t("no-extensions-available", {
-                defaultValue: "No extensions available.",
-              })}
-            </p>
-          </div>
+          <EmptyState className="sb-settings-empty-state">
+            {t("no-extensions-available", {
+              defaultValue: "No extensions available.",
+            })}
+          </EmptyState>
         ) : (
           <ul className="sb-cz-list">
             {installableExtensions.map((entry) => {
@@ -1632,13 +1626,11 @@ function DefaultTranslationPickerMenuContent(props: { state: SeedBibleState }) {
 
   if (!record) {
     return (
-      <div className="sb-settings-empty-state">
-        <p>
-          {t("customization-not-found", {
-            defaultValue: "This Custom Branding could not be found.",
-          })}
-        </p>
-      </div>
+      <EmptyState className="sb-settings-empty-state">
+        {t("customization-not-found", {
+          defaultValue: "This Custom Branding could not be found.",
+        })}
+      </EmptyState>
     );
   }
 
@@ -1783,7 +1775,8 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
     );
   }
 
-  const isDefault = variant.id === record.defaultVariantId;
+  const defaultRole = getVariantDefaultRole(variant);
+  const isDefault = isDefaultVariant(record, variant);
   const canDelete = record.variants.length > 1;
   const resolvedTheme = customizations.resolveEditingVariantTheme(variant);
 
@@ -2078,7 +2071,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
           <Button
             onClick={() => customizations.setEditingDefaultVariant(variant.id)}
           >
-            {t("set-as-default-variant", { defaultValue: "Set as default" })}
+            {setAsDefaultVariantLabel(t, defaultRole)}
           </Button>
         )}
         <SaveButton
@@ -2087,6 +2080,48 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
         />
       </footer>
     </div>
+  );
+}
+
+const VARIANT_DEFAULT_ICONS: Record<VariantDefaultRole, string> = {
+  light: "light_mode",
+  dark: "dark_mode",
+  fallback: "star",
+};
+
+function setAsDefaultVariantLabel(
+  t: I18nHook["t"],
+  role: VariantDefaultRole
+): string {
+  switch (role) {
+    case "light":
+      return t("set-as-light-default-variant", {
+        defaultValue: "Set as light default",
+      });
+    case "dark":
+      return t("set-as-dark-default-variant", {
+        defaultValue: "Set as dark default",
+      });
+    case "fallback":
+      return t("set-as-default-variant", { defaultValue: "Set as default" });
+  }
+}
+
+function VariantDefaultChip(props: { role: VariantDefaultRole }) {
+  const { t } = useI18n();
+  const label =
+    props.role === "light"
+      ? t("light-default-variant", { defaultValue: "Light default" })
+      : props.role === "dark"
+        ? t("dark-default-variant", { defaultValue: "Dark default" })
+        : t("default", { defaultValue: "Default" });
+  return (
+    <span className="sb-cz-default-chip">
+      <MaterialIcon aria-hidden="true">
+        {VARIANT_DEFAULT_ICONS[props.role]}
+      </MaterialIcon>
+      {label}
+    </span>
   );
 }
 

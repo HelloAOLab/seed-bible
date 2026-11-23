@@ -402,6 +402,7 @@ export function TabSessionParticipants({
           })}
         </span>
         <IconButton
+          size="sm"
           className="sb-tab-participants-collapse"
           aria-expanded="true"
           icon="expand_less"

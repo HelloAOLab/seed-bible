@@ -32,6 +32,7 @@ import { Avatar } from "../Avatar/Avatar";
 import { ChatParticipantsIcon, MaterialIcon } from "../icons";
 import { SearchBar } from "../SearchBar/SearchBar";
 import { CloseButton } from "../CloseButton/CloseButton";
+import { EmptyState } from "../EmptyState/EmptyState";
 import { IconButton } from "../IconButton/IconButton";
 import { Button } from "../Button/Button";
 
@@ -1004,40 +1005,29 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
 function NoChatsAvailable() {
   const { t } = useI18n();
   return (
-    <div className="sb-floating-chat-empty">
-      <span
-        className="material-symbols-outlined sb-floating-chat-empty-icon"
-        aria-hidden="true"
-      >
-        chat_bubble_outline
-      </span>
-      <p className="sb-floating-chat-empty-title">
-        {t("you-have-no-chats", {
-          defaultValue:
-            "You have no chats. Create one using the + button below.",
-        })}
-      </p>
-    </div>
+    <EmptyState
+      className="sb-floating-chat-empty"
+      size="panel"
+      icon="chat_bubble_outline"
+      title={t("you-have-no-chats", {
+        defaultValue: "You have no chats. Create one using the + button below.",
+      })}
+    />
   );
 }
 
 function NoProvidersAvailable() {
   const { t } = useI18n();
   return (
-    <div className="sb-floating-chat-empty">
-      <span
-        className="material-symbols-outlined sb-floating-chat-empty-icon"
-        aria-hidden="true"
-      >
-        chat_bubble_outline
-      </span>
-      <p className="sb-floating-chat-empty-title">
-        {t("no-chat-providers", {
-          defaultValue:
-            "No chat providers are available. Connect an AI or messaging provider to start chatting.",
-        })}
-      </p>
-    </div>
+    <EmptyState
+      className="sb-floating-chat-empty"
+      size="panel"
+      icon="chat_bubble_outline"
+      title={t("no-chat-providers", {
+        defaultValue:
+          "No chat providers are available. Connect an AI or messaging provider to start chatting.",
+      })}
+    />
   );
 }
 

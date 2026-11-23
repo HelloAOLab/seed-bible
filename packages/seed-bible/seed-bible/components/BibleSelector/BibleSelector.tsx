@@ -1,4 +1,5 @@
 import { LoadingStatus } from "../LoadingStatus/LoadingStatus";
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./BibleSelector.inline.css";
 import "./BibleSelector.css";
 import {
@@ -1310,25 +1311,26 @@ const OfflineTranslationControls = (props: {
             });
 
     return (
-      <button
-        type="button"
-        class="sb-offline-btn downloading flex-center"
-        title={label}
-        aria-label={label}
-        onClick={(e: MouseEvent) => {
-          e.stopPropagation();
-          offline.cancelDownload(translation.id);
-        }}
-      >
-        <span
-          class={`sb-offline-progress${percent === null ? " indeterminate" : ""}`}
-          style={{ "--sb-offline-progress": `${percent ?? 0}%` }}
+      <TooltipTrigger>
+        <button
+          type="button"
+          class="sb-offline-btn downloading flex-center"
+          aria-label={label}
+          onClick={(e: MouseEvent) => {
+            e.stopPropagation();
+            offline.cancelDownload(translation.id);
+          }}
         >
-          {percent !== null && (
-            <span class="sb-offline-progress-label">{percent}</span>
-          )}
-        </span>
-      </button>
+          <span
+            class={`sb-offline-progress${percent === null ? " indeterminate" : ""}`}
+            style={{ "--sb-offline-progress": `${percent ?? 0}%` }}
+          >
+            {percent !== null && (
+              <span class="sb-offline-progress-label">{percent}</span>
+            )}
+          </span>
+        </button>
+      </TooltipTrigger>
     );
   }
 
@@ -1358,55 +1360,58 @@ const OfflineTranslationControls = (props: {
   return (
     <>
       {summary?.updateAvailable && (
-        <button
-          type="button"
-          class="sb-offline-btn update flex-center"
-          title={updateLabel}
-          aria-label={updateLabel}
-          onClick={(e: MouseEvent) => {
-            e.stopPropagation();
-            void startDownload();
-          }}
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">
-            sync
-          </span>
-        </button>
+        <TooltipTrigger>
+          <button
+            type="button"
+            class="sb-offline-btn update flex-center"
+            aria-label={updateLabel}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              void startDownload();
+            }}
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">
+              sync
+            </span>
+          </button>
+        </TooltipTrigger>
       )}
       {summary ? (
-        <button
-          type="button"
-          ref={buttonRef}
-          class="sb-offline-btn downloaded flex-center"
-          style={highlightStyle}
-          title={downloadedLabel}
-          aria-label={downloadedLabel}
-          onClick={(e: MouseEvent) => {
-            e.stopPropagation();
-            pendingOfflineDelete.value = translation;
-          }}
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">
-            offline_pin
-          </span>
-        </button>
+        <TooltipTrigger>
+          <button
+            type="button"
+            ref={buttonRef}
+            class="sb-offline-btn downloaded flex-center"
+            style={highlightStyle}
+            aria-label={downloadedLabel}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              pendingOfflineDelete.value = translation;
+            }}
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">
+              offline_pin
+            </span>
+          </button>
+        </TooltipTrigger>
       ) : (
-        <button
-          type="button"
-          ref={buttonRef}
-          class={`sb-offline-btn flex-center${error ? " has-error" : ""}`}
-          style={highlightStyle}
-          title={downloadTitle}
-          aria-label={downloadTitle}
-          onClick={(e: MouseEvent) => {
-            e.stopPropagation();
-            void startDownload();
-          }}
-        >
-          <span class="material-symbols-outlined" aria-hidden="true">
-            download
-          </span>
-        </button>
+        <TooltipTrigger>
+          <button
+            type="button"
+            ref={buttonRef}
+            class={`sb-offline-btn flex-center${error ? " has-error" : ""}`}
+            style={highlightStyle}
+            aria-label={downloadTitle}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              void startDownload();
+            }}
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">
+              download
+            </span>
+          </button>
+        </TooltipTrigger>
       )}
     </>
   );

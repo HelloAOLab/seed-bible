@@ -1,3 +1,4 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./DiscoverContentPanel.css";
 import type { ComponentChildren } from "preact";
 import { Signal, useSignal, useSignalEffect } from "@preact/signals";
@@ -530,15 +531,16 @@ function InlineContentWarning(props: HiddenContentWarningProps) {
             defaultValue: "Turn on",
           })}
         </button>
-        <button
-          type="button"
-          className="sb-dcp-hidden-banner-close"
-          onClick={props.handleDismiss}
-          aria-label={t("dismiss", { defaultValue: "Dismiss" })}
-          title={t("dismiss", { defaultValue: "Dismiss" })}
-        >
-          <MaterialIcon>close</MaterialIcon>
-        </button>
+        <TooltipTrigger>
+          <button
+            type="button"
+            className="sb-dcp-hidden-banner-close"
+            onClick={props.handleDismiss}
+            aria-label={t("dismiss", { defaultValue: "Dismiss" })}
+          >
+            <MaterialIcon>close</MaterialIcon>
+          </button>
+        </TooltipTrigger>
       </div>
     </div>
   );

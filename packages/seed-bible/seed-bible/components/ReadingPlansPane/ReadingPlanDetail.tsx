@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./ReadingPlanDetail.css";
 import { useState } from "preact/hooks";
 import { MaterialIcon } from "../icons";
@@ -542,11 +543,11 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
 
         <div className="sb-rpd-body">
           {readingDays.length === 0 ? (
-            <p className="sb-rpd-empty">
+            <EmptyState className="sb-rpd-empty">
               {t("reading-plan-empty-sessions", {
                 defaultValue: "This plan doesn't have any readings yet.",
               })}
-            </p>
+            </EmptyState>
           ) : (
             <>
               <div className="sb-rpd-day-tabs" role="tablist">

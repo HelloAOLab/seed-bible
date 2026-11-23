@@ -76,10 +76,7 @@
 }
 
 .sb-friends-empty {
-  margin: 0;
-  color: var(--sb-friends-muted);
-  font-size: var(--sb-font-size-14);
-  line-height: 1.4;
+  --sb-empty-state-color: var(--sb-friends-muted);
 }
 
 .sb-friends-list {

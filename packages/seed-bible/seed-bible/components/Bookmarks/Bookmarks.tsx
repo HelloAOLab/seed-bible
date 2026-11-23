@@ -1,3 +1,5 @@
+import { EmptyState } from "../EmptyState/EmptyState";
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./Bookmarks.css";
 import { signal, useSignal, type Signal } from "@preact/signals";
 import { useId } from "preact/hooks";
@@ -319,20 +321,20 @@ export function BookmarkForm(props: {
         {BOOKMARK_COLOR_IDS.map((colorId) => {
           const isSelected = value.colorId === colorId;
           return (
-            <button
-              key={colorId}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              aria-label={bookmarkColorLabel(t, colorId)}
-              title={bookmarkColorLabel(t, colorId)}
-              disabled={disabled}
-              className={`sb-bookmark-form-color${
-                isSelected ? " sb-bookmark-form-color-selected" : ""
-              }`}
-              style={{ color: bookmarkColorValue(colorId) }}
-              onClick={() => onChange({ ...value, colorId })}
-            />
+            <TooltipTrigger key={colorId}>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                aria-label={bookmarkColorLabel(t, colorId)}
+                disabled={disabled}
+                className={`sb-bookmark-form-color${
+                  isSelected ? " sb-bookmark-form-color-selected" : ""
+                }`}
+                style={{ color: bookmarkColorValue(colorId) }}
+                onClick={() => onChange({ ...value, colorId })}
+              />
+            </TooltipTrigger>
           );
         })}
       </div>
@@ -833,12 +835,12 @@ export function BookmarksPanel(props: {
   return (
     <div className="sb-bookmarks-panel">
       {bookmarks.length === 0 && (
-        <p className="sb-bookmarks-panel-empty">
+        <EmptyState className="sb-bookmarks-panel-empty">
           {t("bookmarks-empty", {
             defaultValue:
               "No bookmarks yet. Use the bookmark button above a chapter to place one.",
           })}
-        </p>
+        </EmptyState>
       )}
 
       {bookmarks.map((bookmark) => (
