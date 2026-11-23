@@ -148,4 +148,53 @@ describe("Display & Theme settings view", () => {
     ).toBe("");
     expect(fontSelect().value).toBe("default");
   });
+
+  function switchNamed(name: string) {
+    const toggle = [
+      ...container.querySelectorAll<HTMLInputElement>('[role="switch"]'),
+    ].find((input) => input.labels?.[0]?.textContent === name);
+    if (!toggle) {
+      throw new Error(`No switch labelled "${name}"`);
+    }
+    return toggle;
+  }
+
+  it("names each switch by its own setting, and flipping one changes only that setting", () => {
+    renderView();
+    const before = settings.settings.value.scriptureElements;
+    const headings = switchNamed("Show headings");
+    expect(headings.checked).toBe(before.showHeadings);
+
+    act(() => headings.click());
+
+    const after = settings.settings.value.scriptureElements;
+    expect(after.showHeadings).toBe(!before.showHeadings);
+    expect(after.showFootnotes).toBe(before.showFootnotes);
+    expect(switchNamed("Show headings").checked).toBe(after.showHeadings);
+  });
+
+  it("reads out the shared-sessions explanation with its switch", () => {
+    renderView();
+    const toggle = switchNamed("Show in shared sessions");
+
+    expect(
+      document.getElementById(toggle.getAttribute("aria-describedby")!)
+        ?.textContent
+    ).toBe("Only you see it. Others in the session won't.");
+  });
+
+  it("turns Keep screen awake off from its switch", () => {
+    // Turning it on asks the browser for a wake lock, which tests don't have.
+    settings.settings.value = {
+      ...settings.settings.value,
+      keepScreenAwake: true,
+    };
+    renderView();
+    expect(switchNamed("Keep screen awake").checked).toBe(true);
+
+    act(() => switchNamed("Keep screen awake").click());
+
+    expect(settings.settings.value.keepScreenAwake).toBe(false);
+    expect(switchNamed("Keep screen awake").checked).toBe(false);
+  });
 });

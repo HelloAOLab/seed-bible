@@ -114,11 +114,15 @@
   gap: 1.75rem;
 }
 
-.sb-extensions-page-note,
-.sb-extensions-page-empty {
+.sb-extensions-page-note {
   margin: 0;
   font-size: var(--sb-font-size-15);
   color: var(--sb-extensions-page-muted);
+}
+
+.sb-extensions-page-empty {
+  --sb-empty-state-font-size: var(--sb-font-size-15);
+  --sb-empty-state-color: var(--sb-extensions-page-muted);
 }
 
 .sb-extensions-page-section {

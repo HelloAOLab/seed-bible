@@ -127,6 +127,22 @@ describe("ShareModal embed", () => {
     expect(writeText).toHaveBeenCalledWith(embedCode());
   });
 
+  it("names the theme dropdown and the embed code box, which can be copied but not edited", async () => {
+    await renderSheet({ shareUrl });
+    const embed = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent?.includes("Embed")
+    );
+    await act(async () => {
+      embed!.click();
+    });
+
+    const select = container.querySelector("select")!;
+    expect(select.labels?.[0]?.textContent).toBe("Theme");
+    const code = container.querySelector("textarea")!;
+    expect(code.getAttribute("aria-label")).toBe("Embed code");
+    expect(code.readOnly).toBe(true);
+  });
+
   it("leaves customization off the embed link when none is open", async () => {
     await renderSheet({ shareUrl });
 

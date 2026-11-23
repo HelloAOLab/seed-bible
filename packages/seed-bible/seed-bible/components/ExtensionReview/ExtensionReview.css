@@ -96,34 +96,6 @@
   font-size: var(--sb-font-size-14);
 }
 
-.sb-extension-review-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.sb-extension-review-field-label {
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-}
-
-.sb-extension-review-field-hint {
-  font-size: var(--sb-font-size-12);
-  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-}
-
-.sb-extension-review-field input,
-.sb-extension-review-field textarea {
-  padding: 0.5rem 0.625rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  border-radius: var(--sb-radius-md);
-  background: transparent;
-  color: inherit;
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  resize: vertical;
-}
-
 .sb-extension-review-error {
   margin: 0;
   font-size: var(--sb-font-size-13);

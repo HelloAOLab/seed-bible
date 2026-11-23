@@ -420,42 +420,20 @@
   align-items: center;
 }
 
-.dropdown-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  padding: 0.5rem 2rem 0.5rem 0.875rem;
-  font-size: var(--sb-font-size-14);
-  height: 2.5rem;
-
-  border: none;
-  border-radius: var(--sb-radius-md);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%)
-    url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
-    no-repeat right 10px center;
-  background-size: 1rem;
-
-  cursor: pointer;
-  outline: none;
-  outline-width: 0px;
-  margin-right: 0;
-  font-family: system-ui, sans-serif;
-  color: var(--sb-font-color);
+.dropdown > .sb-select {
+  flex: 1;
 }
 
-.dropdown-select-icon {
-  position: absolute;
-  right: 0.625rem;
-  pointer-events: none;
-  font-size: 1.5rem;
-}
-
-.dropdown-option {
-  background: var(--sb-reader-toolbar-background);
-  color: var(--sb-font-color);
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
+/* Sits in a row with the translation button and the book search, which are
+   filled, 2.5rem boxes, so it takes their look. */
+.dropdown .sb-select-input {
+  --sb-text-input-height: 2.5rem;
+  --sb-text-input-background: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 94%
+  );
+  --sb-text-input-border-color: transparent;
 }
 
 /* The book search shares its row with the translation picker and the
@@ -550,17 +528,12 @@
   position: relative;
 }
 
-.custom-tr-in {
-  width: 100%;
-  height: 2.5rem;
-  border-radius: var(--sb-radius-sm);
-  padding-right: 5rem;
-  border: none;
-  padding-left: 0.3125rem;
-  font-size: var(--sb-font-size-16);
-  background-color: var(--sb-background);
-  color: var(--sb-font-color);
-  outline: none;
+/* The Import button sits over the right end of the box, so the box leaves room
+   for it. */
+.custom-tr-in-con .custom-tr-in {
+  --sb-text-input-background: var(--sb-background);
+
+  padding-inline-end: 5rem;
 }
 
 .import-btn {
@@ -898,59 +871,14 @@
   color: inherit;
   cursor: pointer;
 }
-.sb-apocrypha-info-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  background: rgba(0, 0, 0, 0.4);
-}
-/* Rendered beside .sb-selector-panel, not inside it, so it needs the same
-   switch to the reader toolbar colors. */
-.sb-apocrypha-info-overlay {
-  --sb-font-color: var(--sb-reader-toolbar-font-color);
-  --sb-background: var(--sb-reader-toolbar-background);
-
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 1rem 0.8rem 1rem 0.8rem;
-  /* stylelint-disable-next-line seed-bible/use-design-tokens -- local stacking inside the Books panel */
-  z-index: 1000;
-  width: min(85vw, 35rem);
-  max-height: 80vh;
-  box-sizing: border-box;
-  background: var(--sb-reader-toolbar-background);
-  color: var(--sb-reader-toolbar-font-color);
-  border-radius: var(--sb-radius-md);
-  overflow-y: auto;
-}
-
-.sb-apocrypha-info {
-  position: relative;
-  width: 100%;
-  box-sizing: border-box;
+/* About the Apocrypha (ApocryphaInfo.tsx). The window around it is drawn by
+   ModalHost, so its width is chosen from here. */
+.sb-dialog:has(.sb-apocrypha-info-content) {
+  --sb-dialog-width: min(35rem, 100%);
 }
 
 .sb-apocrypha-info-content {
-  font-size: clamp(0.875rem, 1.5vw, 1rem);
-  line-height: 1.5;
   overflow-wrap: anywhere;
-  word-break: normal;
-}
-
-.sb-apocrypha-info-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: auto;
-  min-height: 0;
-  margin-bottom: 1rem;
-}
-
-.sb-apocrypha-info-title {
-  margin: 0;
-  line-height: 1.2;
 }
 
 /* ─── Offline translation downloads ──────────────────────────────────────── */
@@ -1180,13 +1108,8 @@
   overflow: auto;
 }
 
-:where(html[data-sb-app-layout="mobile"]) .dropdown-select {
-  width: 100%;
+:where(html[data-sb-app-layout="mobile"]) .dropdown .sb-select-input {
   font-weight: bold;
-}
-
-:where(html[data-sb-app-layout="mobile"]) .dropdown-option {
-  width: 100%;
 }
 
 :where(html[data-sb-app-layout="mobile"]) .testament-title {

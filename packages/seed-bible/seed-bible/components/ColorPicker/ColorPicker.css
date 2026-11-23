@@ -155,42 +155,31 @@
     color-mix(in srgb, var(--sb-font-color), transparent 80%);
 }
 
+/* The box is the shared one; the "#" is drawn over its left end, which the box
+   leaves room for. */
 .sb-color-picker-hex-label {
-  display: flex;
-  align-items: center;
+  position: relative;
+  display: block;
   flex: 1;
   min-width: 0;
-  border-radius: var(--sb-radius-md);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  padding: 0 0.5rem;
 }
 
 .sb-color-picker-hex-hash {
+  position: absolute;
+  inset-inline-start: 0.625rem;
+  top: 50%;
+  transform: translateY(-50%);
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: var(--sb-font-size-14);
+  pointer-events: none;
 }
 
-.sb-color-picker-hex {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  color: var(--sb-font-color);
+.sb-text-input.sb-color-picker-hex {
+  padding-inline-start: 1.375rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: var(--sb-font-size-14);
   letter-spacing: 0.04em;
   text-transform: lowercase;
-  padding: 0.5rem 0.25rem;
-}
-
-.sb-color-picker-hex:focus {
-  outline: none;
-}
-
-.sb-color-picker-hex-label:focus-within {
-  outline: 2px solid var(--sb-primary-color);
-  outline-offset: 1px;
 }
 
 .sb-color-picker-actions {

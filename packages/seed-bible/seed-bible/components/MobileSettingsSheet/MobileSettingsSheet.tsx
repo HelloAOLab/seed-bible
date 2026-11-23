@@ -8,6 +8,8 @@ import {
 import { useI18n } from "../../i18n/I18nManager";
 import { ScriptureLineHeightIcon, SettingsIcon } from "../icons";
 import { BottomSheet } from "../BottomSheet/BottomSheet";
+import { SettingRow } from "../SettingRow/SettingRow";
+import { Switch } from "../Switch/Switch";
 
 const FONT_SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
@@ -123,24 +125,17 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
         ))}
       </div>
 
-      <div className="sb-settings-toggle-row sb-mobile-settings-sheet-toggle-row">
-        <label
-          className="sb-settings-toggle-label"
-          htmlFor="sb-mobile-wake-lock-toggle"
-        >
-          {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
-        </label>
-        <input
-          id="sb-mobile-wake-lock-toggle"
-          type="checkbox"
+      <SettingRow
+        className="sb-mobile-settings-sheet-toggle-row"
+        label={t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
+      >
+        <Switch
           checked={current.keepScreenAwake}
-          onChange={(event: Event) => {
-            settings.setKeepScreenAwake(
-              (event.currentTarget as HTMLInputElement).checked
-            );
+          onToggled={(checked) => {
+            settings.setKeepScreenAwake(checked);
           }}
         />
-      </div>
+      </SettingRow>
 
       {!state.app.isMinimalEmbed?.value && (
         <>

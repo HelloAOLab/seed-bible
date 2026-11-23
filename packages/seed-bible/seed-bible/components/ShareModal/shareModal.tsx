@@ -23,6 +23,8 @@ import {
   type BibleReadingSession,
 } from "../../managers/SessionsManager";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
+import { SelectField } from "../Select/Select";
 
 export interface ShareModalProps {
   /** Called when the sheet should close (Cancel). */
@@ -231,25 +233,22 @@ export const ShareModal = (props: ShareModalProps) => {
             src={embedUrl.href}
             title={t("share-embed-preview", { defaultValue: "Preview" })}
           />
-          <label className="sb-share-embed-field">
-            <span>{t("share-embed-theme", { defaultValue: "Theme" })}</span>
-            <select
-              value={themeId}
-              onChange={(event) => {
-                setThemeId(event.currentTarget.value);
-              }}
-            >
-              <option value={SYSTEM_THEME_ID}>
-                {embedThemeLabel(t, { id: SYSTEM_THEME_ID, name: "System" })}
+          <SelectField
+            label={t("share-embed-theme", { defaultValue: "Theme" })}
+            value={themeId}
+            onValueChange={setThemeId}
+          >
+            <option value={SYSTEM_THEME_ID}>
+              {embedThemeLabel(t, { id: SYSTEM_THEME_ID, name: "System" })}
+            </option>
+            {themeChoices.map((theme) => (
+              <option key={theme.id} value={theme.id}>
+                {embedThemeLabel(t, theme)}
               </option>
-              {themeChoices.map((theme) => (
-                <option key={theme.id} value={theme.id}>
-                  {embedThemeLabel(t, theme)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <textarea
+            ))}
+          </SelectField>
+          <TextInput
+            multiline
             className="sb-share-embed-code"
             readOnly
             rows={4}

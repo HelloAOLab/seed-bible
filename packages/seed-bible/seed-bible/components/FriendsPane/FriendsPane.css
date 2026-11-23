@@ -70,12 +70,8 @@
   color: var(--sb-primary-color);
   font-size: 1.375rem;
 }
-
 .sb-friends-empty {
-  margin: 0;
-  color: var(--sb-friends-muted);
-  font-size: var(--sb-font-size-14);
-  line-height: 1.4;
+  --sb-empty-state-color: var(--sb-friends-muted);
 }
 
 .sb-friends-list {
@@ -171,14 +167,6 @@
 
 .sb-friends-add-input {
   flex: 1;
-  min-width: 0;
-  padding: 8px 12px;
-  border: 1px solid var(--sb-friends-border);
-  border-radius: var(--sb-radius-md);
-  background: transparent;
-  color: inherit;
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
 }
 
 .sb-friends-add-outcome {

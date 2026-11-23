@@ -370,6 +370,60 @@ export const DEFAULT_EXTENSION_AVAILABILITY_VALUES = [
 export type DefaultExtensionAvailability =
   (typeof DEFAULT_EXTENSION_AVAILABILITY_VALUES)[number];
 
+function pickSchemeDefault(
+  variants: readonly { id: string; baseTheme: string }[],
+  baseTheme: string,
+  current: string | undefined,
+  legacyDefaultId: string
+): string | undefined {
+  const ofScheme = variants.filter((v) => v.baseTheme === baseTheme);
+  if (ofScheme.some((v) => v.id === current)) {
+    return current;
+  }
+  return (ofScheme.find((v) => v.id === legacyDefaultId) ?? ofScheme[0])?.id;
+}
+
+function fillSchemeDefaults<
+  T extends {
+    variants: readonly { id: string; baseTheme: string }[];
+    defaultVariantId: string;
+    defaultLightVariantId?: string;
+    defaultDarkVariantId?: string;
+  },
+>(customization: T): T {
+  const defaultLightVariantId = pickSchemeDefault(
+    customization.variants,
+    LIGHT_THEME.id,
+    customization.defaultLightVariantId,
+    customization.defaultVariantId
+  );
+  const defaultDarkVariantId = pickSchemeDefault(
+    customization.variants,
+    DARK_THEME.id,
+    customization.defaultDarkVariantId,
+    customization.defaultVariantId
+  );
+  const fallback = customization.variants.find(
+    (v) => v.id === customization.defaultVariantId
+  );
+  const fallbackOfItsKind =
+    fallback?.baseTheme === LIGHT_THEME.id
+      ? defaultLightVariantId
+      : fallback?.baseTheme === DARK_THEME.id
+        ? defaultDarkVariantId
+        : fallback?.id;
+  return {
+    ...customization,
+    defaultLightVariantId,
+    defaultDarkVariantId,
+    defaultVariantId:
+      fallbackOfItsKind ??
+      defaultLightVariantId ??
+      defaultDarkVariantId ??
+      customization.variants[0]!.id,
+  };
+}
+
 /**
  * App icons a customization can replace with its own SVG. Each is the icon
  * of one navigation entry, wherever that entry appears (toolbar, mobile tab
@@ -424,6 +478,8 @@ const customizationSchema = z
     id: z.string().min(1),
     name: z.string().min(1),
     variants: z.array(customizationVariantSchema).min(1),
+    defaultLightVariantId: z.string().min(1).optional(),
+    defaultDarkVariantId: z.string().min(1).optional(),
     defaultVariantId: z.string().min(1),
     logoUrl: z.url().max(1024).optional().nullable(),
     /**
@@ -498,7 +554,8 @@ const customizationSchema = z
   })
   .refine((r) => r.variants.some((v) => v.id === r.defaultVariantId), {
     message: "defaultVariantId must reference an existing variant",
-  });
+  })
+  .transform(fillSchemeDefaults);
 
 export interface CustomizationThemeVariant {
   id: string;
@@ -528,8 +585,26 @@ export interface SeedBibleCustomization {
   name: string;
   /** Named theme variants (e.g. a "Light" and "Dark" pair) authored for this customization. Always has at least 1 entry. */
   variants: CustomizationThemeVariant[];
-  /** The variant id shown to a viewer who hasn't picked one for this customization yet. Always references an entry in `variants`. */
+  /**
+   * Id of the variant a viewer who hasn't picked one gets when the scheme in
+   * effect is light: the app theme is Light, or it is System and the device
+   * prefers light. Must reference a Light-based variant (`baseTheme` is the
+   * light preset). Absent when the customization has no Light-based variant.
+   */
+  defaultLightVariantId?: string;
+  /** Same as `defaultLightVariantId`, for the dark scheme and Dark-based variants. */
+  defaultDarkVariantId?: string;
+  /**
+   * Fallback default, used when the scheme in effect has no per-scheme
+   * default (e.g. white-label customizations whose variants are all
+   * brand-based). Set directly from the editor for brand-based variants;
+   * otherwise kept in step with the light or dark default of the kind it
+   * already points at, so older builds, which read only this field, follow
+   * the author's latest choice. Must reference an existing variant: older
+   * builds require it and skip any customization without it.
+   */
   defaultVariantId: string;
+
   logoUrl?: string | null;
   /** Uploaded SVG URLs replacing app icons. An id with no entry keeps the app's own icon. */
   icons?: CustomizationIcons;
@@ -557,6 +632,76 @@ export interface SeedBibleCustomization {
     string,
     Record<string, SensitiveProxyPointer>
   >;
+}
+
+/**
+ * Which default a variant can be: the Light or Dark default by its base
+ * theme, or the single fallback `defaultVariantId` for a variant based on
+ * anything else (a white-label brand theme).
+ */
+export type VariantDefaultRole = "light" | "dark" | "fallback";
+
+const DEFAULT_ROLE_FIELD_MAP: Record<
+  VariantDefaultRole,
+  "defaultLightVariantId" | "defaultDarkVariantId" | "defaultVariantId"
+> = {
+  light: "defaultLightVariantId",
+  dark: "defaultDarkVariantId",
+  fallback: "defaultVariantId",
+};
+
+function getThemeDefaultRole(themeId: string): VariantDefaultRole {
+  if (themeId === LIGHT_THEME.id) {
+    return "light";
+  }
+  if (themeId === DARK_THEME.id) {
+    return "dark";
+  }
+  return "fallback";
+}
+
+export function getVariantDefaultRole(
+  variant: CustomizationThemeVariant
+): VariantDefaultRole {
+  return getThemeDefaultRole(variant.baseTheme);
+}
+
+export function isDefaultVariant(
+  record: SeedBibleCustomization,
+  variant: CustomizationThemeVariant
+): boolean {
+  return (
+    record[DEFAULT_ROLE_FIELD_MAP[getVariantDefaultRole(variant)]] ===
+    variant.id
+  );
+}
+
+/**
+ * The Light or Dark default for `schemeThemeId`. `undefined` for any other
+ * theme: the fallback `defaultVariantId` is a separate, later step in
+ * `activeVariant`, not a scheme default.
+ */
+function getSchemeDefaultVariantId(
+  customization: SeedBibleCustomization,
+  schemeThemeId: string
+): string | undefined {
+  const role = getThemeDefaultRole(schemeThemeId);
+  return role === "fallback"
+    ? undefined
+    : customization[DEFAULT_ROLE_FIELD_MAP[role]];
+}
+
+function resolveDefaultVariant(
+  customization: SeedBibleCustomization,
+  schemeThemeId: string
+): CustomizationThemeVariant | undefined {
+  const byId = (id: string | undefined) =>
+    id ? customization.variants.find((v) => v.id === id) : undefined;
+  return (
+    byId(getSchemeDefaultVariantId(customization, schemeThemeId)) ??
+    byId(customization.defaultVariantId) ??
+    customization.variants[0]
+  );
 }
 
 function withExtensionSensitiveProxy(
@@ -833,7 +978,15 @@ export interface CustomizationsManager {
    * no record name to build a share link from).
    */
   activeCustomizationLocator: ReadonlySignal<string | null>;
-  /** The variant of the active customization currently in effect (the device's color scheme when `isFollowingSystemScheme`, else the viewer's own pick, else the customization's default, else its first variant). */
+  /**
+   * The variant of the active customization currently in effect: the
+   * viewer's own pick, else the default for the scheme in effect (the
+   * device's when `isFollowingSystemScheme` or the app theme is System,
+   * else the app theme's), else `defaultVariantId`, else the first variant.
+   * In a minimal embed the link's theme wins over the viewer's pick: its
+   * scheme's default, else `defaultVariantId` if based on that theme, else
+   * the first variant based on it, else `defaultVariantId`, else the first.
+   */
   activeVariant: ReadonlySignal<CustomizationThemeVariant | null>;
   /** Whether the active customization has both a Light-based and a Dark-based variant, and so can follow the device the way the app-wide System theme does. False when nothing is active. */
   canFollowSystemScheme: ReadonlySignal<boolean>;
@@ -868,6 +1021,14 @@ export interface CustomizationsManager {
   activeResolvedTheme: ReadonlySignal<BibleTheme | null>;
   /** Resolves a variant's `baseTheme` id to the actual preset, falling back to the viewer's current preset if the id is unrecognized (e.g. a preset was removed). */
   resolveVariantBaseTheme: (variant: CustomizationThemeVariant) => BibleTheme;
+  /**
+   * The variant that stands for `customization` in a list: its default for
+   * the app theme's scheme, else `defaultVariantId`. Ignores the viewer's
+   * own variant pick, which only applies to the active customization.
+   */
+  getPreviewVariant: (
+    customization: SeedBibleCustomization
+  ) => CustomizationThemeVariant | undefined;
   /**
    * `variant`'s resolved theme (base preset + its own overrides), with any
    * pending `previewEditingVariant*` override layered on top. This is what
@@ -1047,6 +1208,7 @@ export interface CustomizationsManager {
     highlightId: string,
     field: keyof ThemeHighlightColor
   ) => void;
+  /** Makes the variant the draft's default for its kind (see `getVariantDefaultRole`). No-op for an unknown id. */
   setEditingDefaultVariant: (variantId: string) => void;
   /** Removes a variant from the draft. No-op if it's the only remaining variant. */
   removeEditingVariant: (variantId: string) => void;
@@ -1454,6 +1616,15 @@ export function createCustomizationsManager(
   const isMinimalEmbed = computed(() =>
     isMinimalEmbedUrl(navigation.currentUrl.value)
   );
+  const deviceSchemeThemeId = computed(() =>
+    theme.prefersDarkScheme.value ? DARK_THEME.id : LIGHT_THEME.id
+  );
+  /** The app theme's id, with System resolved to the device's scheme. */
+  const appSchemeThemeId = computed(() =>
+    theme.selectedThemeId.value === SYSTEM_THEME_ID
+      ? deviceSchemeThemeId.value
+      : theme.selectedThemeId.value
+  );
   const activeVariant = computed<CustomizationThemeVariant | null>(() => {
     const customization = activeCustomization.value;
     if (!customization) {
@@ -1464,16 +1635,16 @@ export function createCustomizationsManager(
     // The embed link names the theme. A saved variant pick would leave the
     // preview on one look no matter which theme the link asked for.
     if (isMinimalEmbed.value) {
-      const themeId = theme.selectedThemeId.value;
-      const baseThemeId =
-        themeId === SYSTEM_THEME_ID
-          ? theme.prefersDarkScheme.value
-            ? DARK_THEME.id
-            : LIGHT_THEME.id
-          : themeId;
-      const linked = customization.variants.find(
-        (variant) => variant.baseTheme === baseThemeId
-      );
+      const linkThemeId = appSchemeThemeId.value;
+      const fallbackDefault = byId(customization.defaultVariantId);
+      const linked =
+        byId(getSchemeDefaultVariantId(customization, linkThemeId)) ??
+        (fallbackDefault?.baseTheme === linkThemeId
+          ? fallbackDefault
+          : undefined) ??
+        customization.variants.find(
+          (variant) => variant.baseTheme === linkThemeId
+        );
       if (linked) {
         return linked;
       }
@@ -1486,21 +1657,22 @@ export function createCustomizationsManager(
         null
       );
     }
-    const bySystemScheme = isFollowingSystemScheme.value
-      ? customization.variants.find(
-          (v) =>
-            v.baseTheme ===
-            (theme.prefersDarkScheme.value ? DARK_THEME.id : LIGHT_THEME.id)
-        )
-      : undefined;
+
+    const schemeThemeId = isFollowingSystemScheme.value
+      ? deviceSchemeThemeId.value
+      : appSchemeThemeId.value;
+
     return (
-      bySystemScheme ??
       byId(selectedVariantId.value) ??
-      byId(customization.defaultVariantId) ??
-      customization.variants[0] ??
+      resolveDefaultVariant(customization, schemeThemeId) ??
       null
     );
   });
+
+  const getPreviewVariant = (
+    customization: SeedBibleCustomization
+  ): CustomizationThemeVariant | undefined =>
+    resolveDefaultVariant(customization, appSchemeThemeId.value);
 
   const activeThemeOverrides = computed<ThemeOverrides>(
     () => activeVariant.value?.themes ?? {}
@@ -1643,7 +1815,7 @@ export function createCustomizationsManager(
     const now = Date.now();
     const preset = theme.basePresetTheme.value;
     const variant = buildVariant(preset.name, preset.id);
-    const record: SeedBibleCustomization = {
+    const record: SeedBibleCustomization = fillSchemeDefaults({
       id: `customization_${uuid()}`,
       name: `Custom Branding ${customizations.value.length + 1}`,
       variants: [variant],
@@ -1655,7 +1827,7 @@ export function createCustomizationsManager(
       extensionSettings: {},
       extensionSettingDefaults: {},
       extensionSensitiveProxies: {},
-    };
+    });
 
     await persist(userId, record);
     customizations.value = [...customizations.value, record];
@@ -1819,11 +1991,11 @@ export function createCustomizationsManager(
       : baseName;
     const variant = buildVariant(name, preset.id);
 
-    editingCustomization.value = {
+    editingCustomization.value = fillSchemeDefaults({
       ...current,
       variants: [...current.variants, variant],
       updatedAt: Date.now(),
-    };
+    });
     scheduleAutoSave();
     return variant;
   };
@@ -1850,7 +2022,7 @@ export function createCustomizationsManager(
       return;
     }
 
-    editingCustomization.value = {
+    editingCustomization.value = fillSchemeDefaults({
       ...current,
       variants: current.variants.map((v) =>
         v.id === variantId
@@ -1858,7 +2030,7 @@ export function createCustomizationsManager(
           : v
       ),
       updatedAt: Date.now(),
-    };
+    });
     scheduleAutoSave();
   };
 
@@ -2131,14 +2303,26 @@ export function createCustomizationsManager(
 
   const setEditingDefaultVariant = (variantId: string): void => {
     const current = editingCustomization.value;
-    if (!current || !current.variants.some((v) => v.id === variantId)) {
+    const variant = current?.variants.find((v) => v.id === variantId);
+    if (!current || !variant) {
       return;
     }
+
+    const role = getVariantDefaultRole(variant);
+    const fallbackDefault = current.variants.find(
+      (v) => v.id === current.defaultVariantId
+    );
+    const fallbackRole = fallbackDefault
+      ? getVariantDefaultRole(fallbackDefault)
+      : role;
+
     editingCustomization.value = {
       ...current,
-      defaultVariantId: variantId,
+      [DEFAULT_ROLE_FIELD_MAP[role]]: variantId,
+      ...(fallbackRole === role ? { defaultVariantId: variantId } : {}),
       updatedAt: Date.now(),
     };
+
     scheduleAutoSave();
   };
 
@@ -2147,22 +2331,27 @@ export function createCustomizationsManager(
     if (!current || current.variants.length <= 1) {
       return;
     }
-    if (!current.variants.some((v) => v.id === variantId)) {
+    const removed = current.variants.find((v) => v.id === variantId);
+    if (!removed) {
       return;
     }
 
     const remaining = current.variants.filter((v) => v.id !== variantId);
+    const removedRole = getVariantDefaultRole(removed);
     const nextDefaultVariantId =
       current.defaultVariantId === variantId
-        ? remaining[0]!.id
+        ? (
+            remaining.find((v) => getVariantDefaultRole(v) === removedRole) ??
+            remaining[0]!
+          ).id
         : current.defaultVariantId;
 
-    editingCustomization.value = {
+    editingCustomization.value = fillSchemeDefaults({
       ...current,
       variants: remaining,
       defaultVariantId: nextDefaultVariantId,
       updatedAt: Date.now(),
-    };
+    });
     scheduleAutoSave();
   };
 
@@ -2566,6 +2755,7 @@ export function createCustomizationsManager(
     activeHighlightOverrides,
     activeResolvedTheme,
     resolveVariantBaseTheme,
+    getPreviewVariant,
     resolveEditingVariantTheme,
     activeExtensionIds,
     linkedCustomization,
