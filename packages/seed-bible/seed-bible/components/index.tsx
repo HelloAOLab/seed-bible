@@ -17,6 +17,7 @@ export {
   type ContextMenuTriggerProps,
   type ContextMenuWithButtonProps,
 } from "./ContextMenu/ContextMenu";
+export * from "./Popover/Popover";
 export * from "./PortalComponent/PortalComponent";
 export * from "./Skeleton/Skeleton";
 export * from "./EmptyState/EmptyState";
