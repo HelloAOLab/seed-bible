@@ -26,6 +26,7 @@ export * from "./EmptyState/EmptyState";
 export * from "./ExpandableText/ExpandableText";
 export * from "./PlaylistLinkContent/PlaylistLinkContent";
 export * from "./SearchBar/SearchBar";
+export * from "./FilterPills/FilterPills";
 export * from "./ScreenshotViewer/ScreenshotViewer";
 export * from "./TranslationList/TranslationList";
 export * from "./TranslationList/TranslationViewModeMenu";

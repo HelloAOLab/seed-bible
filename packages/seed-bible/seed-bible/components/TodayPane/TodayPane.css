@@ -263,7 +263,6 @@
    this replaced also caught search-result verse text and the resume card's
    reference, which a reader has every reason to want to copy. */
 .sb-today-container .sb-today-bookmarks-section-container,
-.sb-today-container .sb-today-feed-kind-filter,
 .sb-today-container .reading-history-timeline-container,
 .sb-today-content button {
   user-select: none;
@@ -695,61 +694,15 @@
   .sb-today-feed-toolbar
   > .sb-today-feed-kind-filter {
   flex: 1 1 auto;
-  min-width: 0;
-}
-
-.sb-today-container .sb-today-feed-card .sb-today-feed-kind-filter {
-  --sb-today-feed-fade-left: 0px;
-  --sb-today-feed-fade-right: 0px;
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 0.5rem;
-  overflow-x: scroll;
-  scrollbar-width: none;
-  mask-image: linear-gradient(
-    to right,
-    transparent 0px,
-    black var(--sb-today-feed-fade-left),
-    black calc(100% - var(--sb-today-feed-fade-right)),
-    transparent 100%
+  --sb-filter-pills-padding: 0.5rem 0.875rem;
+  --sb-filter-pills-font-size: var(--sb-font-size-12);
+  --sb-filter-pills-min-width: 3.25rem;
+  --sb-filter-pills-background: var(--sb-today-surface);
+  --sb-filter-pills-hover-background: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 85%
   );
-}
-
-/* Each edge fades only while pills are hidden past it (`useScrollEdgeFade`). */
-.sb-today-container
-  .sb-today-feed-card
-  .sb-today-feed-kind-filter[data-fade-left] {
-  --sb-today-feed-fade-left: 0.5rem;
-}
-
-.sb-today-container
-  .sb-today-feed-card
-  .sb-today-feed-kind-filter[data-fade-right] {
-  --sb-today-feed-fade-right: 0.5rem;
-}
-
-.sb-today-container .sb-today-feed-card .sb-today-feed-kind-option {
-  border: none;
-  background-color: var(--sb-today-surface);
-  border-radius: var(--sb-radius-full);
-  padding: 0.5rem 0.875rem;
-  font-size: var(--sb-font-size-12);
-  min-width: 3.25rem;
-  font-weight: 500;
-  color: var(--sb-font-color);
-  flex-shrink: 0;
-}
-
-.sb-today-container .sb-today-feed-card .sb-today-feed-kind-option:hover {
-  background-color: color-mix(in srgb, var(--sb-font-color), transparent 85%);
-}
-
-.sb-today-container
-  .sb-today-feed-card
-  .sb-today-feed-kind-option.sb-today-feed-kind-option-selected {
-  color: var(--sb-primary-font-color);
-  background-color: var(--sb-primary-color);
 }
 
 .sb-today-container .sb-today-feed-card .sb-today-date-label {
@@ -1076,11 +1029,10 @@
 :where(html[data-sb-app-layout="mobile"])
   .sb-today-container
   .sb-today-feed-card
-  .sb-today-feed-kind-option {
-  padding: 0.4rem 0.65rem;
-  font-size: 0.6rem;
-  font-weight: 400;
-  min-width: 3.25rem;
+  .sb-today-feed-toolbar
+  > .sb-today-feed-kind-filter {
+  --sb-filter-pills-padding: 0.4rem 0.65rem;
+  --sb-filter-pills-font-size: 0.6rem;
 }
 
 :where(html[data-sb-app-layout="mobile"])

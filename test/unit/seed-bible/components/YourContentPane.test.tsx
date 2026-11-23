@@ -1333,7 +1333,7 @@ describe("YourContentPane", () => {
     renderPane(state);
 
     const chips = Array.from(
-      container.querySelectorAll(".sb-content-chip")
+      container.querySelectorAll(".sb-filter-pill")
     ) as HTMLButtonElement[];
     const savesChip = chips.find((c) => c.textContent === "Saves")!;
     act(() => {
@@ -1770,7 +1770,7 @@ describe("YourContentPane", () => {
     renderPane(state);
 
     const create = container.querySelector(".sb-content-create");
-    const chips = container.querySelector(".sb-content-chips");
+    const chips = container.querySelector(".sb-filter-pills-row");
     if (!create || !chips) throw new Error("The toolbar did not render.");
     expect(create.querySelector(".sb-button-label")?.textContent).toBe(
       "Create"
