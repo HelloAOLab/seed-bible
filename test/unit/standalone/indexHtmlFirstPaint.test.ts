@@ -19,7 +19,18 @@ import {
   UI_SIZE_SCALE_MAP,
 } from "@packages/seed-bible/seed-bible/managers/SettingsManager";
 import { LAYOUT_ATTRIBUTE } from "@packages/seed-bible/seed-bible/app/layoutAttribute";
-import { MOBILE_BREAKPOINT } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import {
+  isMobileViewport,
+  MOBILE_BREAKPOINT,
+  readViewport,
+} from "@packages/seed-bible/seed-bible/app/viewport";
+import {
+  restoreViewport,
+  SIDEWAYS_PHONE,
+  SIDEWAYS_TABLET,
+  stubViewport,
+  type StubbedDevice,
+} from "../seed-bible/testUtils/stubViewport";
 import {
   DARK_THEME,
   generateThemeCssVariables,
@@ -388,48 +399,97 @@ describe("index.html layout fallback script", () => {
     return script;
   }
 
-  /** Loads a page whose `<html>` came with `layout` and runs the script. */
+  /** Loads a page whose `<html>` came with `layout` on `device`, and runs the script. */
   function runLayoutFallback(
     layout: string,
-    windowWidth: number
+    device: StubbedDevice
   ): string | null {
     document.documentElement.setAttribute(LAYOUT_ATTRIBUTE, layout);
-    Object.defineProperty(window, "innerWidth", {
-      value: windowWidth,
-      configurable: true,
-    });
+    stubViewport(device);
     new Function(layoutFallbackScript())();
     return document.documentElement.getAttribute(LAYOUT_ATTRIBUTE);
   }
 
-  const originalWidth = window.innerWidth;
+  const desktopWindow = (width: number): StubbedDevice => ({
+    width,
+    height: 800,
+    screen: { width: 1920, height: 1080 },
+  });
+
   afterEach(() => {
     document.documentElement.removeAttribute(LAYOUT_ATTRIBUTE);
-    Object.defineProperty(window, "innerWidth", {
-      value: originalWidth,
-      configurable: true,
-    });
+    restoreViewport();
+    vi.unstubAllGlobals();
   });
 
   // A branch preview rendered by an older build, or the unrendered page sent
   // when rendering fails, leaves the server's placeholder in the attribute.
   it("picks the phone layout from the window width when the server didn't fill it in", () => {
-    expect(runLayoutFallback("<!-- HTML_LAYOUT -->", MOBILE_BREAKPOINT)).toBe(
-      "mobile"
-    );
+    expect(
+      runLayoutFallback(
+        "<!-- HTML_LAYOUT -->",
+        desktopWindow(MOBILE_BREAKPOINT)
+      )
+    ).toBe("mobile");
   });
 
   it("picks the desktop layout just above the phone breakpoint", () => {
     expect(
-      runLayoutFallback("<!-- HTML_LAYOUT -->", MOBILE_BREAKPOINT + 1)
+      runLayoutFallback(
+        "<!-- HTML_LAYOUT -->",
+        desktopWindow(MOBILE_BREAKPOINT + 1)
+      )
     ).toBe("desktop");
+  });
+
+  it("picks the phone layout for a phone held sideways", () => {
+    expect(runLayoutFallback("<!-- HTML_LAYOUT -->", SIDEWAYS_PHONE)).toBe(
+      "mobile"
+    );
   });
 
   // The server's answer matches the markup it rendered, so the first paint
   // keeps it even when the window disagrees; the app corrects it after mount.
-  it("keeps the layout the server wrote, whatever the window width", () => {
-    expect(runLayoutFallback("desktop", 400)).toBe("desktop");
-    expect(runLayoutFallback("mobile", 1200)).toBe("mobile");
+  it("keeps the layout the server wrote, whatever the window", () => {
+    expect(runLayoutFallback("desktop", desktopWindow(400))).toBe("desktop");
+    restoreViewport();
+    expect(runLayoutFallback("mobile", desktopWindow(1200))).toBe("mobile");
+  });
+
+  // The script can't import the app's code, so it repeats the rule.
+  it("agrees with the app's own rule on every kind of device", () => {
+    const devices: StubbedDevice[] = [
+      SIDEWAYS_PHONE,
+      { ...SIDEWAYS_PHONE, pointer: "fine" },
+      { ...SIDEWAYS_PHONE, screen: { width: 0, height: 0 } },
+      {
+        width: 390,
+        height: 844,
+        screen: { width: 390, height: 844 },
+        pointer: "coarse",
+      },
+      SIDEWAYS_TABLET,
+      {
+        width: 820,
+        height: 1180,
+        screen: { width: 820, height: 1180 },
+        pointer: "coarse",
+      },
+      desktopWindow(400),
+      desktopWindow(1280),
+      {
+        width: 1280,
+        height: 800,
+        screen: { width: 1280, height: 800 },
+        pointer: "coarse",
+      },
+    ];
+    for (const device of devices) {
+      const script = runLayoutFallback("<!-- HTML_LAYOUT -->", device);
+      const app = isMobileViewport(readViewport()) ? "mobile" : "desktop";
+      expect({ device, layout: script }).toEqual({ device, layout: app });
+      restoreViewport();
+    }
   });
 });
 

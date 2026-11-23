@@ -10,6 +10,7 @@ import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { setDefaultI18n } from "../i18n/I18nManager";
 import {
   decideStartupHydration,
+  hasServerRenderedContent,
   isRenderedByThisBuild,
   type HydrationDecision,
 } from "../app/hydrationGate";
@@ -67,6 +68,7 @@ console.log("Starting APP");
 // gets replaced.
 const state = createSeedBibleState({
   config,
+  measureViewport: !hasServerRenderedContent(config, container),
   apiResponseSnapshot,
   initialCustomizationSeed,
   revalidateInitialCustomizationSeed,
@@ -161,6 +163,9 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
         `Hydration skipped (${decision.reason}); falling back to render().`
       );
       recordPageLoadOutcome(`rendered:${decision.reason}`);
+      // No server markup to match, so draw for the real window rather than
+      // the server's guess (in the same task, so nothing paints in between).
+      state.app.applyViewport();
       render(app, container);
     }
   }
