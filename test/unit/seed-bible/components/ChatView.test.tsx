@@ -243,6 +243,18 @@ function submitForm(container: HTMLDivElement) {
   form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 }
 
+/**
+ * Moves focus into or out of `element` the way a browser does: `focus` and
+ * `focusin` (or `blur` and `focusout`). Preact listens for one or the other
+ * depending on whether `preact/compat` is loaded, which depends on which
+ * components the test file pulls in.
+ */
+function fireFocusChange(element: Element, kind: "focus" | "blur") {
+  const bubbling = kind === "focus" ? "focusin" : "focusout";
+  element.dispatchEvent(new FocusEvent(kind));
+  element.dispatchEvent(new FocusEvent(bubbling, { bubbles: true }));
+}
+
 describe("ChatView", () => {
   let container: HTMLDivElement;
   let originalScrollIntoView: typeof HTMLElement.prototype.scrollIntoView;
@@ -700,7 +712,7 @@ describe("ChatView", () => {
     expect(document.activeElement).not.toBe(input);
 
     act(() => {
-      input.dispatchEvent(new FocusEvent("focus", { bubbles: true }));
+      fireFocusChange(input, "focus");
     });
     expect(wrap?.classList.contains("sb-chat-view-input-wrap--hint")).toBe(
       false
@@ -708,7 +720,7 @@ describe("ChatView", () => {
 
     // Blurring an empty field brings the hint back…
     act(() => {
-      input.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
+      fireFocusChange(input, "blur");
     });
     expect(wrap?.classList.contains("sb-chat-view-input-wrap--hint")).toBe(
       true
@@ -716,10 +728,10 @@ describe("ChatView", () => {
 
     // …but not if the field has text — the fake caret would sit on top of it.
     act(() => {
-      input.dispatchEvent(new FocusEvent("focus", { bubbles: true }));
+      fireFocusChange(input, "focus");
       input.value = "Hi";
       input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
+      fireFocusChange(input, "blur");
     });
     expect(wrap?.classList.contains("sb-chat-view-input-wrap--hint")).toBe(
       false

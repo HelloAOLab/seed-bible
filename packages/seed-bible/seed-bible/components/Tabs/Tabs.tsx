@@ -1,3 +1,4 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./Tabs.inline.css";
 import "./Tabs.css";
 import { useSignal } from "@preact/signals";
@@ -1016,19 +1017,19 @@ export function TabsHeader(props: TabsHeaderProps) {
                   }}
                 >
                   {TAB_SLOT_LAYOUT_OPTIONS.map((layout) => (
-                    <button
-                      key={layout.id}
-                      onClick={() => setLayout(layout.id)}
-                      className={`sb-pane-layout-option${
-                        paneLayout === layout.id
-                          ? " sb-pane-layout-option-selected"
-                          : ""
-                      }`}
-                      aria-label={layout.label}
-                      title={layout.label}
-                    >
-                      {renderLayoutPreview(layout.id)}
-                    </button>
+                    <TooltipTrigger key={layout.id}>
+                      <button
+                        onClick={() => setLayout(layout.id)}
+                        className={`sb-pane-layout-option${
+                          paneLayout === layout.id
+                            ? " sb-pane-layout-option-selected"
+                            : ""
+                        }`}
+                        aria-label={layout.label}
+                      >
+                        {renderLayoutPreview(layout.id)}
+                      </button>
+                    </TooltipTrigger>
                   ))}
                 </div>
               </div>
@@ -2881,16 +2882,17 @@ function SelfAvatarButton(props: { state: SeedBibleState }) {
   const label = t("open-profile", { defaultValue: "Open profile" });
 
   return (
-    <button
-      className="sb-sidebar-self-avatar"
-      onClick={() => {
-        state.openProfile();
-      }}
-      aria-label={`${label} (${displayName})`}
-      title={displayName}
-    >
-      <SelfAvatarVisual state={state} />
-    </button>
+    <TooltipTrigger label={displayName}>
+      <button
+        className="sb-sidebar-self-avatar"
+        onClick={() => {
+          state.openProfile();
+        }}
+        aria-label={`${label} (${displayName})`}
+      >
+        <SelfAvatarVisual state={state} />
+      </button>
+    </TooltipTrigger>
   );
 }
 

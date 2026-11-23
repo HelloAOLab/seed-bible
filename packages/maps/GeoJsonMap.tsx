@@ -9,7 +9,7 @@ import type {
   GeoJsonObject,
   GeometryCollection,
 } from "geojson";
-import { MaterialIcon, Skeleton } from "seed-bible/components";
+import { MaterialIcon, Skeleton, TooltipTrigger } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import {
   leafletLoader,
@@ -334,21 +334,19 @@ export function GeoJsonMap(props: {
         <div className="sb-geojson-map-controls">
           {controls}
           {recenter.value ? (
-            <button
-              type="button"
-              className="sb-geojson-map-control sb-geojson-map-recenter"
-              title={t("recenter", {
-                ns: "maps",
-                defaultValue: "Back to the place",
-              })}
-              aria-label={t("recenter", {
-                ns: "maps",
-                defaultValue: "Back to the place",
-              })}
-              onClick={() => recenter.value?.()}
-            >
-              <MaterialIcon>my_location</MaterialIcon>
-            </button>
+            <TooltipTrigger>
+              <button
+                type="button"
+                className="sb-geojson-map-control sb-geojson-map-recenter"
+                aria-label={t("recenter", {
+                  ns: "maps",
+                  defaultValue: "Back to the place",
+                })}
+                onClick={() => recenter.value?.()}
+              >
+                <MaterialIcon>my_location</MaterialIcon>
+              </button>
+            </TooltipTrigger>
           ) : null}
         </div>
       ) : null}

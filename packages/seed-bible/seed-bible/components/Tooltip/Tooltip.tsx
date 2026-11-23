@@ -15,6 +15,8 @@ export interface TooltipProps {
   anchor: TooltipAnchor;
   /** Extra gap between the anchor and the tooltip, in pixels. */
   offsetY?: number;
+  /** A short one-line label's size (an icon button's name) rather than room for several lines of content. */
+  compact?: boolean;
   children?: preact.ComponentChildren;
 }
 
@@ -24,7 +26,12 @@ export interface TooltipProps {
  * viewport. It renders whatever children it is given and knows nothing about
  * their shape, so each caller owns its own content types.
  */
-export const Tooltip = ({ anchor, offsetY = 0, children }: TooltipProps) => {
+export const Tooltip = ({
+  anchor,
+  offsetY = 0,
+  compact = false,
+  children,
+}: TooltipProps) => {
   const tooltipRef = useRef<null | HTMLSpanElement>(null);
   const [style, setStyle] = useState<React.CSSProperties>({
     top: anchor.y + offsetY,
@@ -78,7 +85,7 @@ export const Tooltip = ({ anchor, offsetY = 0, children }: TooltipProps) => {
   return createPortal(
     <span
       ref={tooltipRef}
-      className={`sb-tooltip sb-tooltip-${direction}`}
+      className={`sb-tooltip sb-tooltip-${direction}${compact ? " sb-tooltip-compact" : ""}`}
       style={style}
     >
       {children}
