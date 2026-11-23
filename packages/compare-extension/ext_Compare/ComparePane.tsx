@@ -1,6 +1,11 @@
 import "./Compare.css";
 import type { SeedBibleState } from "seed-bible/managers";
-import { Button, IconButton, MaterialIcon } from "seed-bible/components";
+import {
+  Button,
+  EmptyState,
+  IconButton,
+  MaterialIcon,
+} from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { CompareSettings } from "./CompareSettings";
 import { CompareVerses } from "./CompareVerses";
@@ -114,22 +119,18 @@ export function ComparePane(props: {
       <div className="sb-compare-scroll">
         <CompareVerses context={context} state={state} />
         {hasNothingToCompareWith && (
-          <div className="sb-compare-empty">
-            <MaterialIcon className="sb-compare-empty-icon">
-              text_compare
-            </MaterialIcon>
-            <p className="sb-compare-empty-title">
-              {t("nothing-to-compare-title", {
-                defaultValue: "No translations to compare yet",
-              })}
-            </p>
-            <p className="sb-compare-empty-hint">
-              {t("nothing-to-compare-hint", {
-                defaultValue:
-                  "Add translations to compare the selected verses with",
-              })}
-            </p>
-          </div>
+          <EmptyState
+            size="panel"
+            icon="text_compare"
+            title={t("nothing-to-compare-title", {
+              defaultValue: "No translations to compare yet",
+            })}
+          >
+            {t("nothing-to-compare-hint", {
+              defaultValue:
+                "Add translations to compare the selected verses with",
+            })}
+          </EmptyState>
         )}
       </div>
       <div className="sb-compare-add-bar">

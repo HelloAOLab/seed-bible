@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import {
   useSignal,
   useSignalEffect,
@@ -386,7 +387,7 @@ function FeedCard(props: {
           ))}
         </ul>
       ) : props.ready ? (
-        <p className="sb-today-feed-empty">
+        <EmptyState className="sb-today-feed-empty">
           {props.kind === "notes"
             ? t("feed-empty-notes", {
                 defaultValue: "No notes in this time frame yet.",
@@ -398,7 +399,7 @@ function FeedCard(props: {
               : t("feed-empty", {
                   defaultValue: "No activity in this time frame yet.",
                 })}
-        </p>
+        </EmptyState>
       ) : null}
       {props.seeMore && (
         <button

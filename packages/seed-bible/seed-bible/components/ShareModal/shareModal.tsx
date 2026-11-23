@@ -6,6 +6,7 @@ import type { ModalManager } from "../../managers/ModalManager";
 import {
   SessionQRCode,
   openSessionQRCodeModal,
+  type QRCodeKind,
 } from "../SessionQRCode/SessionQRCode";
 import {
   buildEmbedIframeHtml,
@@ -22,6 +23,8 @@ import {
   type BibleReadingSession,
 } from "../../managers/SessionsManager";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
+import { SelectField } from "../Select/Select";
 
 export interface ShareModalProps {
   /** Called when the sheet should close (Cancel). */
@@ -45,6 +48,15 @@ export interface ShareModalProps {
   themes?: { readonly value: readonly EmbedThemeChoice[] };
   /** Active customization locator (`recordName.id`), if the viewer is in one. */
   customizationLocator?: { readonly value: string | null };
+  /**
+   * A link to show as a QR code when there's no session to show one for.
+   */
+  linkQRCode?: { url: string; kind: QRCodeKind };
+  /**
+   * Runs after "Start and share session" creates the session (and selects
+   * its tab), before the invite link is copied.
+   */
+  onSessionStarted?: (session: BibleReadingSession) => void;
 }
 
 function embedThemeLabel(
@@ -186,6 +198,7 @@ export const ShareModal = (props: ShareModalProps) => {
           onClick: async () => {
             try {
               const session = await props.app.createSharedSession();
+              props.onSessionStarted?.(session);
               await copySessionLink(session);
             } catch (error) {
               console.error("Failed to start and share a session.", error);
@@ -220,25 +233,22 @@ export const ShareModal = (props: ShareModalProps) => {
             src={embedUrl.href}
             title={t("share-embed-preview", { defaultValue: "Preview" })}
           />
-          <label className="sb-share-embed-field">
-            <span>{t("share-embed-theme", { defaultValue: "Theme" })}</span>
-            <select
-              value={themeId}
-              onChange={(event) => {
-                setThemeId(event.currentTarget.value);
-              }}
-            >
-              <option value={SYSTEM_THEME_ID}>
-                {embedThemeLabel(t, { id: SYSTEM_THEME_ID, name: "System" })}
+          <SelectField
+            label={t("share-embed-theme", { defaultValue: "Theme" })}
+            value={themeId}
+            onValueChange={setThemeId}
+          >
+            <option value={SYSTEM_THEME_ID}>
+              {embedThemeLabel(t, { id: SYSTEM_THEME_ID, name: "System" })}
+            </option>
+            {themeChoices.map((theme) => (
+              <option key={theme.id} value={theme.id}>
+                {embedThemeLabel(t, theme)}
               </option>
-              {themeChoices.map((theme) => (
-                <option key={theme.id} value={theme.id}>
-                  {embedThemeLabel(t, theme)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <textarea
+            ))}
+          </SelectField>
+          <TextInput
+            multiline
             className="sb-share-embed-code"
             readOnly
             rows={4}
@@ -287,12 +297,18 @@ export const ShareModal = (props: ShareModalProps) => {
           </button>
         ))}
       </div>
-      {props.session && (
+      {props.session ? (
         <SessionQRCode
           url={getSessionUrl(props.session).href}
           modals={props.modals}
         />
-      )}
+      ) : props.linkQRCode ? (
+        <SessionQRCode
+          url={props.linkQRCode.url}
+          kind={props.linkQRCode.kind}
+          modals={props.modals}
+        />
+      ) : null}
     </div>
   );
 };

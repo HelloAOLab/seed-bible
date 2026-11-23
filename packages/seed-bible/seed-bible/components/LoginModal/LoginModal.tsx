@@ -8,7 +8,9 @@ import { MaterialIcon } from "../icons";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import { Button } from "../Button/Button";
+import { Checkbox } from "../Checkbox/Checkbox";
 import { Dialog } from "../Dialog/Dialog";
+import { TextField } from "../TextField/TextField";
 
 type LoginStep = "email" | "code";
 
@@ -306,11 +308,14 @@ export function LoginModal({
           <form className="sb-login-form" onSubmit={submitCode}>
             <div className="sb-login-field">
               <div className="sb-login-code-row">
-                <input
-                  ref={codeInputRef}
+                <TextField
+                  inputRef={codeInputRef}
                   id="sb-login-code"
-                  className="sb-settings-text-input sb-login-input sb-login-code-input"
-                  type="text"
+                  className="sb-login-code-input"
+                  label={t("login-code-placeholder", {
+                    defaultValue: "Enter login code here",
+                  })}
+                  hideLabel
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   value={code.value}
@@ -318,10 +323,8 @@ export function LoginModal({
                   placeholder={t("login-code-placeholder", {
                     defaultValue: "Enter login code here",
                   })}
-                  onInput={(event: Event) => {
-                    code.value = (
-                      event.currentTarget as HTMLInputElement
-                    ).value;
+                  onValueInput={(value) => {
+                    code.value = value;
                   }}
                 />
                 <button
@@ -370,10 +373,13 @@ export function LoginModal({
         ) : (
           <form className="sb-login-form" onSubmit={submitEmail}>
             <div className="sb-login-field">
-              <input
-                ref={emailInputRef}
+              <TextField
+                inputRef={emailInputRef}
                 id="sb-login-email"
-                className="sb-settings-text-input sb-login-input"
+                label={t("login-email-title", {
+                  defaultValue: "Enter your email address",
+                })}
+                hideLabel
                 type="email"
                 autoComplete="email"
                 value={email.value}
@@ -381,38 +387,34 @@ export function LoginModal({
                 placeholder={t("login-email-title", {
                   defaultValue: "Enter your email address",
                 })}
-                onInput={(event: Event) => {
-                  email.value = (event.currentTarget as HTMLInputElement).value;
+                onValueInput={(value) => {
+                  email.value = value;
                 }}
               />
             </div>
 
-            <label className="sb-login-terms" htmlFor="sb-login-terms">
-              <input
-                id="sb-login-terms"
-                className="sb-login-terms-checkbox"
-                type="checkbox"
-                checked={agreed.value}
-                disabled={isSubmitting.value}
-                onChange={(event: Event) => {
-                  agreed.value = (
-                    event.currentTarget as HTMLInputElement
-                  ).checked;
-                }}
-              />
-              <span className="sb-login-terms-text">
-                {t("login-agree-prefix", { defaultValue: "I agree to the" })}{" "}
-                <a
-                  className="sb-login-link"
-                  href={termsOfServiceLink}
-                  onClick={(event: MouseEvent) => event.stopPropagation()}
-                >
-                  {t("terms-of-service", {
-                    defaultValue: "Terms of service",
-                  })}
-                </a>
-              </span>
-            </label>
+            <Checkbox
+              className="sb-login-terms"
+              checked={agreed.value}
+              disabled={isSubmitting.value}
+              onToggled={(checked) => {
+                agreed.value = checked;
+              }}
+              label={
+                <>
+                  {t("login-agree-prefix", { defaultValue: "I agree to the" })}{" "}
+                  <a
+                    className="sb-login-link"
+                    href={termsOfServiceLink}
+                    onClick={(event: MouseEvent) => event.stopPropagation()}
+                  >
+                    {t("terms-of-service", {
+                      defaultValue: "Terms of service",
+                    })}
+                  </a>
+                </>
+              }
+            />
 
             {error.value && (
               <p className="sb-login-error" role="alert">

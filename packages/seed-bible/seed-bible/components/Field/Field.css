@@ -1,0 +1,53 @@
+/* The text around a shared field's control (TextField, SelectField): its
+   label above, and its error, hint and character count below. The text takes
+   the surrounding font color. */
+.sb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.sb-field-label {
+  font-size: var(--sb-font-size-14);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--sb-font-color);
+}
+
+.sb-field-optional {
+  font-weight: 400;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-field-error,
+.sb-field-hint {
+  margin: 0;
+  font-size: var(--sb-font-size-13);
+  line-height: 1.4;
+}
+
+.sb-field-error {
+  color: var(--sb-danger-color);
+}
+
+.sb-field-footer {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.sb-field-hint {
+  flex: 1;
+  min-width: 0;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-field-count {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  font-size: var(--sb-font-size-12);
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}

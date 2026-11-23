@@ -1,3 +1,5 @@
+import { EmptyState } from "../EmptyState/EmptyState";
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./Bookmarks.css";
 import { signal, useSignal, type Signal } from "@preact/signals";
 import { useId } from "preact/hooks";
@@ -23,6 +25,7 @@ import {
 import { openReaderLocation } from "../Tabs/openReaderLocation";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
 import { IconButton } from "../IconButton/IconButton";
 
 type Translate = ReturnType<typeof useI18n>["t"];
@@ -295,19 +298,14 @@ export function BookmarkForm(props: {
 
   return (
     <div className="sb-bookmark-form">
-      <input
-        className="sb-bookmark-form-name"
-        type="text"
+      <TextInput
         autoFocus={autoFocus}
         disabled={disabled}
         maxLength={MAX_BOOKMARK_NAME_LENGTH}
         value={value.name}
         aria-label={t("bookmark-name", { defaultValue: "Bookmark name" })}
         placeholder={t("bookmark-name", { defaultValue: "Bookmark name" })}
-        onInput={(event: Event) => {
-          const target = event.target as HTMLInputElement;
-          onChange({ ...value, name: target.value });
-        }}
+        onValueInput={(name) => onChange({ ...value, name })}
         onKeyDown={(event: KeyboardEvent) => {
           if (event.key === "Enter" && onSubmit) {
             event.preventDefault();
@@ -323,20 +321,20 @@ export function BookmarkForm(props: {
         {BOOKMARK_COLOR_IDS.map((colorId) => {
           const isSelected = value.colorId === colorId;
           return (
-            <button
-              key={colorId}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              aria-label={bookmarkColorLabel(t, colorId)}
-              title={bookmarkColorLabel(t, colorId)}
-              disabled={disabled}
-              className={`sb-bookmark-form-color${
-                isSelected ? " sb-bookmark-form-color-selected" : ""
-              }`}
-              style={{ color: bookmarkColorValue(colorId) }}
-              onClick={() => onChange({ ...value, colorId })}
-            />
+            <TooltipTrigger key={colorId}>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                aria-label={bookmarkColorLabel(t, colorId)}
+                disabled={disabled}
+                className={`sb-bookmark-form-color${
+                  isSelected ? " sb-bookmark-form-color-selected" : ""
+                }`}
+                style={{ color: bookmarkColorValue(colorId) }}
+                onClick={() => onChange({ ...value, colorId })}
+              />
+            </TooltipTrigger>
           );
         })}
       </div>
@@ -837,12 +835,12 @@ export function BookmarksPanel(props: {
   return (
     <div className="sb-bookmarks-panel">
       {bookmarks.length === 0 && (
-        <p className="sb-bookmarks-panel-empty">
+        <EmptyState className="sb-bookmarks-panel-empty">
           {t("bookmarks-empty", {
             defaultValue:
               "No bookmarks yet. Use the bookmark button above a chapter to place one.",
           })}
-        </p>
+        </EmptyState>
       )}
 
       {bookmarks.map((bookmark) => (

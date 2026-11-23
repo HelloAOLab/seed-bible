@@ -75,7 +75,7 @@ Follow the writing style in `CLAUDE.md`: plain language, short answer first, and
   - A short title, with the file and line (`path/to/file.tsx:42`).
   - What's wrong and why it matters, in plain words.
   - **Steps to reproduce**, numbered, written so a human developer can see the problem in the app or a test. Include these only when the problem can actually be reproduced; don't invent steps for a theoretical issue.
-  - **Suggested fix**: concrete, with a short code snippet when that's clearer than prose.
+  - **Suggested fix**: concrete, with a short code snippet when that's clearer than prose. Check it against the most common way the code is used, not only the case that shows the bug. When there's more than one reasonable fix, give each one with what it would break and who would notice (a developer while building, a user in the app, nobody), and say which you recommend.
 
 **Gotchas**
 

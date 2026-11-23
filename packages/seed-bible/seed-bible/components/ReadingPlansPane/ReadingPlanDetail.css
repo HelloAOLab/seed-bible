@@ -140,12 +140,10 @@
   flex-direction: column;
   gap: 14px;
 }
-
 .sb-rpd-empty {
-  margin: 8px 0;
+  --sb-empty-state-padding: 0.5rem 0;
+  --sb-empty-state-color: var(--rp-muted);
   text-align: center;
-  font-size: var(--sb-font-size-14);
-  color: var(--rp-muted);
 }
 
 /* Day tabs */

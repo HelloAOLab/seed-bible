@@ -10,6 +10,7 @@ import type { StudioMember, StudioRole } from "../../managers/OsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
+import { TextInput } from "../TextField/TextField";
 
 type Translate = ReturnType<typeof useI18n>["t"];
 
@@ -307,17 +308,16 @@ function SharedPeople(props: {
           >
             {t("customization-people-add", { defaultValue: "Add someone" })}
           </label>
-          <input
+          <TextInput
             id="sb-customization-people-email"
             type="email"
-            className="sb-cz-input"
             autoComplete="off"
             placeholder={t("customization-people-email-placeholder", {
               defaultValue: "Their sign-in email",
             })}
             value={email.value}
-            onInput={(event: Event) => {
-              email.value = (event.currentTarget as HTMLInputElement).value;
+            onValueInput={(value) => {
+              email.value = value;
             }}
           />
           <div className="sb-cz-people-add-row">

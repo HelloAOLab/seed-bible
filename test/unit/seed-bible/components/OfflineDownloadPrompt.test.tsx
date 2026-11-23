@@ -69,12 +69,16 @@ describe("OfflineDownloadPrompt", () => {
     container.remove();
   });
 
-  async function mount(stub: OfflineStub, toast = vi.fn()) {
+  async function mount(stub: OfflineStub, toast = vi.fn(), isMobile = false) {
     const state = await createTestSeedBibleState();
     act(() => {
       render(
         <TestHost state={state}>
-          <OfflineDownloadPrompt offline={stub.offline} toast={toast} />
+          <OfflineDownloadPrompt
+            offline={stub.offline}
+            toast={toast}
+            isMobile={isMobile}
+          />
         </TestHost>,
         container
       );
@@ -85,19 +89,17 @@ describe("OfflineDownloadPrompt", () => {
   it("renders nothing when no translation is being offered", async () => {
     await mount(createOffline(null));
 
-    expect(container.querySelector(".sb-offline-prompt")).toBeNull();
+    expect(document.querySelector(".sb-offline-prompt")).toBeNull();
   });
 
   it("names the translation being offered and what it will cost", async () => {
     await mount(createOffline(BSB));
 
     expect(
-      container.querySelector(".sb-offline-prompt-title")?.textContent
+      document.querySelector(".sb-offline-prompt-title")?.textContent
     ).toBe("Save BSB for offline reading?");
 
-    const body = container.querySelector(
-      ".sb-offline-prompt-body"
-    )?.textContent;
+    const body = document.querySelector(".sb-offline-prompt-body")?.textContent;
     expect(body).toContain("Berean Standard Bible");
     // Derived rather than hardcoded: what matters is that the body quotes the
     // estimate, not what the bytes-per-verse calibration currently is.
@@ -109,9 +111,7 @@ describe("OfflineDownloadPrompt", () => {
   it("leaves out the size when the API reports no verse count", async () => {
     await mount(createOffline({ ...BSB, totalNumberOfVerses: 0 }));
 
-    const body = container.querySelector(
-      ".sb-offline-prompt-body"
-    )?.textContent;
+    const body = document.querySelector(".sb-offline-prompt-body")?.textContent;
     expect(body).toContain("Berean Standard Bible");
     expect(body).not.toContain("About");
   });
@@ -121,7 +121,7 @@ describe("OfflineDownloadPrompt", () => {
     const toast = await mount(stub);
 
     await act(async () => {
-      container
+      document
         .querySelector<HTMLButtonElement>(".sb-offline-prompt-btn-primary")
         ?.click();
     });
@@ -129,7 +129,7 @@ describe("OfflineDownloadPrompt", () => {
     expect(stub.downloadTranslation).toHaveBeenCalledWith("BSB");
     // Closes straight away rather than holding the user on a progress bar.
     expect(stub.dismissDownloadPrompt).toHaveBeenCalled();
-    expect(container.querySelector(".sb-offline-prompt")).toBeNull();
+    expect(document.querySelector(".sb-offline-prompt")).toBeNull();
 
     await waitFor(() => toast.mock.calls.length > 0);
     expect(toast).toHaveBeenCalledWith(expect.stringContaining("BSB"));
@@ -143,7 +143,7 @@ describe("OfflineDownloadPrompt", () => {
     const toast = await mount(stub);
 
     await act(async () => {
-      container
+      document
         .querySelector<HTMLButtonElement>(".sb-offline-prompt-btn-primary")
         ?.click();
     });
@@ -157,7 +157,7 @@ describe("OfflineDownloadPrompt", () => {
     const toast = await mount(stub);
 
     await act(async () => {
-      container
+      document
         .querySelector<HTMLButtonElement>(".sb-offline-prompt-btn-primary")
         ?.click();
     });
@@ -172,23 +172,21 @@ describe("OfflineDownloadPrompt", () => {
     await mount(stub);
 
     act(() => {
-      container
+      document
         .querySelector<HTMLButtonElement>(".sb-offline-prompt-btn-secondary")
         ?.click();
     });
 
     expect(stub.dismissDownloadPrompt).toHaveBeenCalled();
     expect(stub.downloadTranslation).not.toHaveBeenCalled();
-    expect(container.querySelector(".sb-offline-prompt")).toBeNull();
+    expect(document.querySelector(".sb-offline-prompt")).toBeNull();
   });
 
   it("closes without downloading when the backdrop is clicked", async () => {
     const stub = createOffline(BSB);
     await mount(stub);
 
-    const overlay = container.querySelector<HTMLElement>(
-      ".sb-offline-prompt-overlay"
-    )!;
+    const overlay = document.querySelector<HTMLElement>(".sb-dialog-backdrop")!;
     pressAndRelease(overlay, overlay);
 
     expect(stub.dismissDownloadPrompt).toHaveBeenCalled();
@@ -199,11 +197,11 @@ describe("OfflineDownloadPrompt", () => {
     const stub = createOffline(BSB);
     await mount(stub);
 
-    const card = container.querySelector<HTMLElement>(".sb-offline-prompt")!;
+    const card = document.querySelector<HTMLElement>(".sb-offline-prompt")!;
     pressAndRelease(card, card);
 
     expect(stub.dismissDownloadPrompt).not.toHaveBeenCalled();
-    expect(container.querySelector(".sb-offline-prompt")).not.toBeNull();
+    expect(document.querySelector(".sb-offline-prompt")).not.toBeNull();
   });
 
   it("closes without downloading when Escape is pressed", async () => {
@@ -211,10 +209,38 @@ describe("OfflineDownloadPrompt", () => {
     await mount(stub);
 
     act(() => {
-      document.dispatchEvent(
+      document.activeElement!.dispatchEvent(
         new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
       );
     });
+
+    expect(stub.dismissDownloadPrompt).toHaveBeenCalled();
+    expect(stub.downloadTranslation).not.toHaveBeenCalled();
+  });
+  it("is a dialog named by its title, with focus inside", async () => {
+    await mount(createOffline(BSB));
+
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    expect(dialog.getAttribute("aria-label")).toBe(
+      document.querySelector(".sb-offline-prompt-title")?.textContent
+    );
+    expect(dialog.contains(document.activeElement)).toBe(true);
+  });
+
+  it("opens as a bottom sheet on a phone, closed by its backdrop", async () => {
+    const stub = createOffline(BSB);
+    await mount(stub, vi.fn(), true);
+
+    expect(
+      document.querySelector(".sb-bottom-sheet.sb-offline-prompt")
+    ).not.toBeNull();
+    expect(document.querySelector(".sb-dialog")).toBeNull();
+
+    const backdrop = document.querySelector<HTMLElement>(
+      ".sb-bottom-sheet-backdrop"
+    )!;
+    pressAndRelease(backdrop, backdrop);
 
     expect(stub.dismissDownloadPrompt).toHaveBeenCalled();
     expect(stub.downloadTranslation).not.toHaveBeenCalled();

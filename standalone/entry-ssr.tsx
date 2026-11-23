@@ -2,6 +2,7 @@ import { renderToStringAsync } from "preact-render-to-string";
 import { Main } from "../packages/seed-bible/seed-bible/app/main";
 import type { AppConfig } from "../packages/seed-bible/seed-bible/app/appConfig";
 import { DEFAULT_APP_CONFIG } from "../packages/seed-bible/seed-bible/app/appConfig";
+import { layoutAttribute } from "../packages/seed-bible/seed-bible/app/layoutAttribute";
 import {
   createSeedBibleState,
   type SeedBibleState,
@@ -27,9 +28,7 @@ import {
   getUrlLanguage,
   i18n,
 } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
-import { loadTermsOfService } from "@packages/seed-bible/seed-bible/components/TermsOfServiceModal/TermsOfServiceModal";
-import { loadPrivacyPolicy } from "@packages/seed-bible/seed-bible/components/PrivacyPolicyModal/PrivacyPolicyModal";
-import { loadCodeOfConduct } from "@packages/seed-bible/seed-bible/components/CodeOfConductModal/CodeOfConductModal";
+import { loadLegalText } from "@packages/seed-bible/seed-bible/components/LegalDialog/LegalDialog";
 import { getTodayPageRedirect } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import {
   composeThemeStyleText,
@@ -87,6 +86,9 @@ export interface RenderOptions {
    * - `<!--META-->` where any additional meta tags should be injected (optional).
    * - `<!-- HTML_LANG -->` inside the root `<html lang="...">` attribute,
    *   where the detected page language should be injected.
+   * - `<!-- HTML_LAYOUT -->` inside the root `<html data-sb-app-layout="...">`
+   *   attribute, where the layout the markup was rendered for goes (see
+   *   `app/layoutAttribute.ts`), so the first paint's styles match it.
    *
    * The host server loads this from disk at startup and passes it to the render function on each request, allowing it to be customized or overridden per request if needed.
    * By default, it is just the contents of `index.html` in the project root.
@@ -756,9 +758,12 @@ async function renderState(
   await timer.wait(
     "ssr.wait.legalText",
     Promise.all([
-      state.isTermsOpen.value && loadTermsOfService(i18n, language),
-      state.isPrivacyOpen.value && loadPrivacyPolicy(i18n, language),
-      state.isCodeOfConductOpen.value && loadCodeOfConduct(i18n, language),
+      state.isTermsOpen.value &&
+        loadLegalText(i18n, "terms-of-service", language),
+      state.isPrivacyOpen.value &&
+        loadLegalText(i18n, "privacy-policy", language),
+      state.isCodeOfConductOpen.value &&
+        loadLegalText(i18n, "code-of-conduct", language),
     ])
   );
 
@@ -892,6 +897,7 @@ async function renderState(
   const substitutions: Array<[placeholder: string, value: string]> = [
     ["<!-- META -->", metaHtml], // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
     ["<!-- HTML_LANG -->", escapeForHtmlAttribute(state.i18n.language.value)],
+    ["<!-- HTML_LAYOUT -->", layoutAttribute(state.app.isMobile.value)],
     [
       "<!-- THEME_STYLE_TAG -->",
       composeThemeStyleText(state.theme.currentTheme.value),

@@ -1,8 +1,10 @@
-import { useImperativeHandle, useState } from "preact/hooks";
+import { useId, useImperativeHandle, useState } from "preact/hooks";
 import { forwardRef } from "preact/compat";
 import { useI18n } from "../i18n/I18nManager";
 import type { PlaylistItemData } from "../managers/PlaylistManager";
 import { Button } from "./Button/Button";
+import { Checkbox } from "./Checkbox/Checkbox";
+import { TextInput } from "./TextField/TextField";
 
 interface LinkItemInputProps {
   onAdd: (item: PlaylistItemData) => void;
@@ -35,6 +37,7 @@ export const LinkItemInput = forwardRef<
   const [title, setTitle] = useState(initialItem?.title ?? "");
   const [embed, setEmbed] = useState(initialItem?.embed ?? false);
   const [error, setError] = useState<string | null>(null);
+  const errorId = useId();
 
   /** Submits the current input. Returns whether it actually added an item. */
   const handleAdd = (): boolean => {
@@ -79,17 +82,17 @@ export const LinkItemInput = forwardRef<
 
   return (
     <>
-      <input
-        className="sb-settings-text-input sb-playlist-input sb-playlist-add-title-input"
-        type="text"
+      <TextInput
+        className="sb-playlist-input sb-playlist-add-title-input"
         value={title}
         dir="auto"
+        aria-label={t("playlist-item-title-placeholder", {
+          defaultValue: "Title (optional)",
+        })}
         placeholder={t("playlist-item-title-placeholder", {
           defaultValue: "Title (optional)",
         })}
-        onInput={(event: Event) => {
-          setTitle((event.currentTarget as HTMLInputElement).value);
-        }}
+        onValueInput={setTitle}
         onKeyDown={(event: KeyboardEvent) => {
           if (event.key === "Enter") {
             event.preventDefault();
@@ -98,16 +101,19 @@ export const LinkItemInput = forwardRef<
         }}
       />
       <div className="sb-playlist-add-row sb-playlist-add-link-row">
-        <input
-          className="sb-settings-text-input sb-playlist-input"
+        <TextInput
+          className="sb-playlist-input"
           type="url"
           value={value}
           dir="auto"
+          aria-label={t("playlist-add-link-label", { defaultValue: "Link" })}
           placeholder={t("playlist-add-link-placeholder", {
             defaultValue: "https://example.com",
           })}
-          onInput={(event: Event) => {
-            setValue((event.currentTarget as HTMLInputElement).value);
+          invalid={!!error}
+          aria-describedby={error ? errorId : undefined}
+          onValueInput={(next) => {
+            setValue(next);
             setError(null);
           }}
           onKeyDown={(event: KeyboardEvent) => {
@@ -119,20 +125,14 @@ export const LinkItemInput = forwardRef<
         />
       </div>
       <div className="sb-playlist-add-row sb-playlist-add-link-controls">
-        <label className="sb-playlist-embed-toggle">
-          <input
-            type="checkbox"
-            checked={embed}
-            onChange={(event: Event) => {
-              setEmbed((event.currentTarget as HTMLInputElement).checked);
-            }}
-          />
-          <span>
-            {t("playlist-add-link-embed", {
-              defaultValue: "Embed this link",
-            })}
-          </span>
-        </label>
+        <Checkbox
+          className="sb-playlist-embed-toggle"
+          label={t("playlist-add-link-embed", {
+            defaultValue: "Embed this link",
+          })}
+          checked={embed}
+          onToggled={setEmbed}
+        />
         <Button
           variant="primary"
           className="sb-settings-save-button"
@@ -143,7 +143,11 @@ export const LinkItemInput = forwardRef<
             t("playlist-add-button", { defaultValue: "Add item" })}
         </Button>
       </div>
-      {error ? <div className="sb-playlist-add-error">{error}</div> : null}
+      {error ? (
+        <div id={errorId} className="sb-playlist-add-error" role="alert">
+          {error}
+        </div>
+      ) : null}
     </>
   );
 });

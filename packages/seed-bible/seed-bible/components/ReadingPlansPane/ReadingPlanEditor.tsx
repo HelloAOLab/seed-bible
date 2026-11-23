@@ -37,7 +37,10 @@ import { readingLabel } from "./readingLabel";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { readingItemIcon, readingPreviewText } from "./readingPreview";
 import { Button } from "../Button/Button";
+import { TextField } from "../TextField/TextField";
+import "../Field/Field.css";
 import { IconButton } from "../IconButton/IconButton";
+import { CheckboxIndicator } from "../Checkbox/Checkbox";
 
 interface ReadingPlanEditorProps {
   readingPlans: ReadingPlansManager;
@@ -211,50 +214,34 @@ export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
 
       <div className="sb-rp-editor-body">
         <section className="sb-rp-editor-section">
-          <label className="sb-rp-field">
-            <span className="sb-rp-field-label">
-              {t("reading-plan-step-name-title", {
-                defaultValue: "Name your plan",
-              })}
-            </span>
-            <input
-              className="sb-rp-text-input"
-              type="text"
-              value={draft.plan.title ?? ""}
-              autoFocus={draft.isNew && totalReadings === 0}
-              onInput={(event: Event) =>
-                readingPlans.updateEditingReadingPlan({
-                  title: (event.currentTarget as HTMLInputElement).value,
-                })
-              }
-              placeholder={t("reading-plan-name-placeholder", {
-                defaultValue: "e.g. My Psalms Journey",
-              })}
-            />
-          </label>
-          <label className="sb-rp-field">
-            <span className="sb-rp-field-label">
-              {t("reading-plan-description-label", {
-                defaultValue: "Description (optional)",
-              })}
-            </span>
-            <input
-              className="sb-rp-text-input"
-              type="text"
-              value={draft.plan.description ?? ""}
-              onInput={(event: Event) =>
-                readingPlans.updateEditingReadingPlan({
-                  description: (event.currentTarget as HTMLInputElement).value,
-                })
-              }
-              placeholder={t("reading-plan-description_placeholder", {
-                defaultValue: "What is this plan about?",
-              })}
-            />
-          </label>
+          <TextField
+            label={t("reading-plan-step-name-title", {
+              defaultValue: "Name your plan",
+            })}
+            value={draft.plan.title ?? ""}
+            autoFocus={draft.isNew && totalReadings === 0}
+            onValueInput={(title) =>
+              readingPlans.updateEditingReadingPlan({ title })
+            }
+            placeholder={t("reading-plan-name-placeholder", {
+              defaultValue: "e.g. My Psalms Journey",
+            })}
+          />
+          <TextField
+            label={t("reading-plan-description-label", {
+              defaultValue: "Description (optional)",
+            })}
+            value={draft.plan.description ?? ""}
+            onValueInput={(description) =>
+              readingPlans.updateEditingReadingPlan({ description })
+            }
+            placeholder={t("reading-plan-description_placeholder", {
+              defaultValue: "What is this plan about?",
+            })}
+          />
           {modals ? (
             <div className="sb-rp-field">
-              <span className="sb-rp-field-label">
+              <span className="sb-field-label">
                 {t("hero-image", { defaultValue: "Cover image" })}
               </span>
               <HeroImageField
@@ -456,9 +443,11 @@ function CadencesSection(props: CadencesSectionProps) {
               disabled={selected && lastSelected}
               onChange={() => onToggle(option.id)}
             />
-            <span className="sb-rp-choice-box" aria-hidden="true">
-              {selected && <MaterialIcon>check</MaterialIcon>}
-            </span>
+            <CheckboxIndicator
+              className="sb-rp-choice-box"
+              checked={selected}
+              disabled={selected && lastSelected}
+            />
             <span className="sb-rp-choice-text">
               <span className="sb-rp-choice-title">
                 {cadenceOptionLabel(option, t)}

@@ -12,6 +12,7 @@ import { playlistItemLabel } from "../playlistItemLabel";
 import { NoteHeading } from "../ScriptureNote/ScriptureNote";
 import { PlaylistNoteComposer } from "./PlaylistNoteComposer";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
 
 type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 
@@ -86,17 +87,14 @@ export function PlaylistStepNoteSheet(props: {
             >
               {t("playlist-editor-title", { defaultValue: "Title" })}
             </label>
-            <input
+            <TextInput
               id="sb-pe-note-sheet-title"
-              className="sb-pe-input"
-              type="text"
               dir="auto"
               value={item.noteTitle ?? ""}
               placeholder={t("playlist-editor-note-title", {
                 defaultValue: "Note title",
               })}
-              onInput={(event) => {
-                const value = event.currentTarget.value;
+              onValueInput={(value) => {
                 update({ noteTitle: value.trim() ? value : undefined });
               }}
             />

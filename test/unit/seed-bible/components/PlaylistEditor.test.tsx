@@ -190,6 +190,37 @@ describe("the playlist editor", () => {
       );
     });
 
+    it("names a titled compare step by its title once, with no note tag after it", () => {
+      openPanel([
+        {
+          type: "bible-verse",
+          ref: { bookId: "JHN", chapter: 1 },
+          compare: { ref: { bookId: "REV", chapter: 1 } },
+          noteTitle: "Word made flesh",
+        },
+      ]);
+
+      expect(
+        container.querySelector(".sb-pe-step .sb-discover-item-title")!
+          .textContent
+      ).toBe("Word made flesh");
+    });
+
+    it("names an untitled compare step by the passages it compares", () => {
+      openPanel([
+        {
+          type: "bible-verse",
+          ref: { bookId: "GEN", chapter: 1 },
+          compare: { ref: { bookId: "EXO", chapter: 2 } },
+        },
+      ]);
+
+      expect(
+        container.querySelector(".sb-pe-step .sb-discover-item-title")!
+          .textContent
+      ).toBe("Compare Genesis 1 to Exodus 2");
+    });
+
     it("opens a step when its row is clicked", () => {
       openPanel();
 
@@ -274,6 +305,29 @@ describe("the playlist editor", () => {
       click(byText(container, ".sb-pe-add-option", "Note"));
 
       expect(items()).toEqual([{ type: "html", html: "" }]);
+    });
+
+    it("leaves the add-step menu open, not closed and reopened, when its button is pressed again", () => {
+      openPanel([]);
+      const addButton = byText(
+        container.querySelector(".sb-pe-empty-list")!,
+        "button",
+        "Add a step"
+      )!;
+      click(addButton);
+      const note = byText(container, ".sb-pe-add-option", "Note");
+      expect(note).not.toBeNull();
+
+      // A press is a pointerdown and then a click. The menu closes itself on a
+      // press outside it, but not on the button that opens it.
+      act(() => {
+        addButton.dispatchEvent(
+          new PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+      click(addButton);
+
+      expect(byText(container, ".sb-pe-add-option", "Note")).toBe(note);
     });
   });
 
@@ -663,13 +717,13 @@ describe("the playlist editor", () => {
       ).toEqual(["Item settings", "Delete"]);
       click(byText(document.body, ".sb-context-menu-item", "Item settings"));
 
-      const sheet = container.querySelector(".sb-pe-settings-sheet")!;
+      const sheet = document.querySelector(".sb-pe-settings-sheet")!;
       expect(sheet.textContent).toContain("Item settings");
       click(sheet.querySelector('[aria-label="More time"]'));
       expect(items()[0]).toMatchObject({ minutes: 2 });
 
       click(sheet.querySelector('[aria-label="Close"]'));
-      expect(container.querySelector(".sb-pe-settings-sheet")).toBeNull();
+      expect(document.querySelector(".sb-pe-settings-sheet")).toBeNull();
     });
 
     it("has no inline note or step settings on a phone", () => {
@@ -765,6 +819,42 @@ describe("the playlist editor", () => {
           expect(header().textContent).toContain("The Best Catan Strategy");
         }
       });
+
+      const describedBy = (box: Element | null) =>
+        (box?.getAttribute("aria-describedby") ?? "")
+          .split(" ")
+          .filter(Boolean)
+          .map((id) => document.getElementById(id)?.textContent);
+
+      it("reads each box's hint out with it", () => {
+        openWorkspace([VIDEO], 0, compact);
+
+        expect(describedBy(container.querySelector("#sb-pe-title-0"))).toEqual([
+          "Optional — a short heading",
+        ]);
+        expect(describedBy(container.querySelector("#sb-pe-link-0"))).toEqual([
+          "YouTube or Vimeo",
+        ]);
+      });
+
+      it("flags a link that isn't a link, and announces why", () => {
+        openWorkspace([VIDEO], 0, compact);
+        type(container.querySelector("#sb-pe-link-0"), "not a link");
+
+        const box = container.querySelector("#sb-pe-link-0")!;
+        const alert = container.querySelector('[role="alert"]')!;
+        expect(box.getAttribute("aria-invalid")).toBe("true");
+        expect(alert.textContent).toBe("That isn't a YouTube or Vimeo link.");
+        expect(box.getAttribute("aria-describedby")).toContain(alert.id);
+      });
+
+      it("doesn't flag a link that's fine", () => {
+        openWorkspace([VIDEO], 0, compact);
+
+        const box = container.querySelector("#sb-pe-link-0")!;
+        expect(box.getAttribute("aria-invalid")).toBeNull();
+        expect(container.querySelector('[role="alert"]')).toBeNull();
+      });
     });
 
     it("goes back to the list when the open step is deleted from its menu", () => {
@@ -784,7 +874,7 @@ describe("the playlist editor", () => {
     const openDetails = () => {
       openWorkspace(STEPS, -1, true);
       click(container.querySelector(".sb-pe-mobile-title-button"));
-      return container.querySelector(".sb-pe-details-sheet");
+      return document.querySelector(".sb-pe-details-sheet");
     };
 
     it("opens from the playlist's title, with its title, description and cover fields", () => {
@@ -794,6 +884,20 @@ describe("the playlist editor", () => {
       expect(sheet!.querySelector("#sb-pe-details-title")).not.toBeNull();
       expect(sheet!.querySelector("#sb-pe-details-description")).not.toBeNull();
       expect(sheet!.textContent).toContain("Cover image");
+    });
+
+    it("names the title and description boxes by their labels", () => {
+      const sheet = openDetails()!;
+
+      const title = sheet.querySelector<HTMLInputElement>(
+        "#sb-pe-details-title"
+      )!;
+      const description = sheet.querySelector<HTMLTextAreaElement>(
+        "#sb-pe-details-description"
+      )!;
+      expect(title.labels?.[0]?.textContent).toBe("Title");
+      expect(description.labels?.[0]?.textContent).toBe("Description");
+      expect(description.tagName).toBe("TEXTAREA");
     });
 
     it("saves the title and description to the draft as they're typed", () => {
@@ -817,11 +921,26 @@ describe("the playlist editor", () => {
     it("closes from its close button and its backdrop, leaving the editor open", () => {
       const sheet = openDetails()!;
       click(sheet.querySelector('[aria-label="Close"]'));
-      expect(container.querySelector(".sb-pe-details-sheet")).toBeNull();
+      expect(document.querySelector(".sb-pe-details-sheet")).toBeNull();
 
       click(container.querySelector(".sb-pe-mobile-title-button"));
-      click(container.querySelector(".sb-pe-sheet-scrim"));
-      expect(container.querySelector(".sb-pe-details-sheet")).toBeNull();
+      const backdrop = document.querySelector(".sb-bottom-sheet-backdrop")!;
+      act(() => {
+        backdrop.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+        backdrop.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expect(document.querySelector(".sb-pe-details-sheet")).toBeNull();
+      expect(state.playlists.editingPlaylist.value).not.toBeNull();
+    });
+
+    it("closes on Escape, leaving the editor open", () => {
+      openDetails();
+      act(() => {
+        document.activeElement!.dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+        );
+      });
+      expect(document.querySelector(".sb-pe-details-sheet")).toBeNull();
       expect(state.playlists.editingPlaylist.value).not.toBeNull();
     });
 
@@ -831,7 +950,7 @@ describe("the playlist editor", () => {
 
       openWorkspace(STEPS, -1, true);
 
-      expect(container.querySelector(".sb-pe-details-sheet")).toBeNull();
+      expect(document.querySelector(".sb-pe-details-sheet")).toBeNull();
     });
   });
 
@@ -1365,11 +1484,12 @@ describe("the playlist editor", () => {
           });
         }
 
+        // On a phone they're in a sheet, which renders into <body>.
         expect(
-          container.querySelector('[aria-label="More time"]')
+          document.querySelector('[aria-label="More time"]')
         ).not.toBeNull();
-        expect(container.textContent).not.toContain("Pause for group");
-        expect(container.textContent).not.toContain("Leader only");
+        expect(document.body.textContent).not.toContain("Pause for group");
+        expect(document.body.textContent).not.toContain("Leader only");
       }
     );
 

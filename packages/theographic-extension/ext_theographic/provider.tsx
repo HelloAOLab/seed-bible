@@ -18,6 +18,7 @@ import type { ModalManager } from "@packages/seed-bible/seed-bible/managers/Moda
 import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { ReadonlySignal } from "@preact/signals";
 import {
+  createDatabaseConnection,
   requestToPromise,
   transactionToPromise,
 } from "@packages/seed-bible/seed-bible/managers/indexedDbUtils";
@@ -254,51 +255,22 @@ export function createIndexedDbTheographicStore(): TheographicStore | null {
     return null;
   }
 
-  let databasePromise: Promise<IDBDatabase> | null = null;
-
-  const openDatabase = (): Promise<IDBDatabase> => {
-    if (databasePromise) {
-      return databasePromise;
+  const connection = createDatabaseConnection(
+    THEOGRAPHIC_DB_NAME,
+    THEOGRAPHIC_DB_VERSION,
+    (database) => {
+      if (!database.objectStoreNames.contains(RECORDS_STORE)) {
+        database.createObjectStore(RECORDS_STORE, { keyPath: "key" });
+      }
     }
-
-    databasePromise = new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open(
-        THEOGRAPHIC_DB_NAME,
-        THEOGRAPHIC_DB_VERSION
-      );
-
-      request.onupgradeneeded = () => {
-        const database = request.result;
-        if (!database.objectStoreNames.contains(RECORDS_STORE)) {
-          database.createObjectStore(RECORDS_STORE, { keyPath: "key" });
-        }
-      };
-
-      request.onsuccess = () => {
-        const database = request.result;
-        database.onversionchange = () => {
-          database.close();
-          databasePromise = null;
-        };
-        resolve(database);
-      };
-
-      request.onerror = () =>
-        reject(
-          request.error ?? new Error("Failed to open the Theographic cache.")
-        );
-    }).catch((error) => {
-      databasePromise = null;
-      throw error;
-    });
-
-    return databasePromise;
-  };
+  );
 
   return {
     async get(key: string): Promise<CachedRecord | null> {
-      const database = await openDatabase();
-      const transaction = database.transaction(RECORDS_STORE, "readonly");
+      const transaction = await connection.transaction(
+        RECORDS_STORE,
+        "readonly"
+      );
       const record = await requestToPromise<StoredRecord | undefined>(
         transaction.objectStore(RECORDS_STORE).get(key)
       );
@@ -306,8 +278,10 @@ export function createIndexedDbTheographicStore(): TheographicStore | null {
     },
 
     async put(key: string, record: CachedRecord): Promise<void> {
-      const database = await openDatabase();
-      const transaction = database.transaction(RECORDS_STORE, "readwrite");
+      const transaction = await connection.transaction(
+        RECORDS_STORE,
+        "readwrite"
+      );
       transaction
         .objectStore(RECORDS_STORE)
         .put({ ...record, key } satisfies StoredRecord);
@@ -315,8 +289,10 @@ export function createIndexedDbTheographicStore(): TheographicStore | null {
     },
 
     async prune(cutoffMs: number): Promise<void> {
-      const database = await openDatabase();
-      const transaction = database.transaction(RECORDS_STORE, "readwrite");
+      const transaction = await connection.transaction(
+        RECORDS_STORE,
+        "readwrite"
+      );
       const cursorRequest = transaction.objectStore(RECORDS_STORE).openCursor();
       cursorRequest.onsuccess = () => {
         const cursor = cursorRequest.result;
@@ -332,8 +308,10 @@ export function createIndexedDbTheographicStore(): TheographicStore | null {
     },
 
     async clear(): Promise<void> {
-      const database = await openDatabase();
-      const transaction = database.transaction(RECORDS_STORE, "readwrite");
+      const transaction = await connection.transaction(
+        RECORDS_STORE,
+        "readwrite"
+      );
       transaction.objectStore(RECORDS_STORE).clear();
       await transactionToPromise(transaction);
     },

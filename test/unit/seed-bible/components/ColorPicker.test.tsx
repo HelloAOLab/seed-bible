@@ -40,6 +40,7 @@ describe("ColorPicker", () => {
       onChange: (hex: string) => void;
       onPreview: (hex: string) => void;
       onCancel: () => void;
+      isMobile: boolean;
     }> = {}
   ) {
     const onChange = vi.fn(overrides.onChange);
@@ -53,6 +54,7 @@ describe("ColorPicker", () => {
           onPreview={onPreview}
           onCancel={onCancel}
           ariaLabel="Pick a color"
+          isMobile={overrides.isMobile ?? false}
         />,
         container
       );
@@ -76,7 +78,7 @@ describe("ColorPicker", () => {
 
   function hexInput() {
     const el = document.body.querySelector<HTMLInputElement>(
-      ".sb-color-picker-hex"
+      'input[aria-label="Hex color"]'
     );
     if (!el) throw new Error("hex input was not rendered");
     return el;
@@ -87,6 +89,31 @@ describe("ColorPicker", () => {
       trigger().dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
   }
+
+  // The window size is set against each layout on purpose: the picker follows
+  // the app's layout, not the window's width.
+  it("opens as a card above the bottom toolbar in the mobile layout, even in a wide window", () => {
+    setup({ isMobile: true });
+    open();
+
+    expect(dialog()!.classList).toContain("sb-color-picker-dialog-card");
+    expect(dialog()!.style.top).toBe("");
+    expect(dialog()!.style.left).toBe("");
+  });
+
+  it("opens as a popover beside its trigger in the desktop layout, even in a narrow window", () => {
+    Object.defineProperty(window, "innerWidth", {
+      value: 400,
+      writable: true,
+      configurable: true,
+    });
+    setup({ isMobile: false });
+    open();
+
+    expect(dialog()!.classList).not.toContain("sb-color-picker-dialog-card");
+    expect(dialog()!.style.top).not.toBe("");
+    expect(dialog()!.style.left).not.toBe("");
+  });
 
   it("does not open until the trigger is clicked", () => {
     setup();
@@ -183,7 +210,7 @@ describe("ColorPicker", () => {
       input.dispatchEvent(new Event("input", { bubbles: true }));
     });
     act(() => {
-      document.dispatchEvent(
+      document.activeElement!.dispatchEvent(
         new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
       );
     });
@@ -201,6 +228,62 @@ describe("ColorPicker", () => {
 
     expect(onChange).not.toHaveBeenCalled();
     expect(onCancel).toHaveBeenCalledTimes(2);
+  });
+
+  it("takes focus when it opens and gives it back to its swatch when it closes", () => {
+    setup();
+    // A click focuses the button it lands on; the synthetic one doesn't.
+    act(() => trigger().focus());
+    open();
+
+    expect(dialog()!.contains(document.activeElement)).toBe(true);
+
+    act(() => {
+      document.activeElement!.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    expect(dialog()).toBeNull();
+    expect(document.activeElement).toBe(trigger());
+  });
+
+  it("keeps Tab inside the picker", () => {
+    setup();
+    open();
+
+    const confirmButton = document.body.querySelector<HTMLButtonElement>(
+      ".sb-color-picker-confirm"
+    )!;
+    act(() => confirmButton.focus());
+    const tab = new KeyboardEvent("keydown", {
+      key: "Tab",
+      bubbles: true,
+      cancelable: true,
+    });
+    act(() => {
+      confirmButton.dispatchEvent(tab);
+    });
+
+    expect(tab.defaultPrevented).toBe(true);
+    expect(dialog()!.contains(document.activeElement)).toBe(true);
+    expect(document.activeElement).not.toBe(confirmButton);
+  });
+
+  it("cancels on Escape from the hex field", () => {
+    const { onChange, onCancel } = setup();
+    open();
+
+    act(() => hexInput().focus());
+    act(() => {
+      hexInput().dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(dialog()).toBeNull();
   });
 
   it("updates the saturation square from pointer drags without committing", () => {

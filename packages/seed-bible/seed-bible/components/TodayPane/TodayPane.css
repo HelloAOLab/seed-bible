@@ -608,6 +608,11 @@
   padding: 0.875rem 0.75rem;
   font-size: var(--sb-font-size-14);
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  --sb-loading-status-color: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 30%
+  );
 }
 
 .sb-today-container
@@ -843,11 +848,9 @@
   font-size: var(--sb-font-size-13);
   color: var(--sb-today-muted-font-color);
 }
-
 .sb-today-container .sb-today-feed-empty {
-  margin: 0.25rem 0 0.75rem;
-  font-size: var(--sb-font-size-14);
-  color: var(--sb-today-muted-font-color);
+  --sb-empty-state-padding: 0.25rem 0 0.75rem;
+  --sb-empty-state-color: var(--sb-today-muted-font-color);
 }
 
 /* Styled as a plain text link, like a section's "see all". */
@@ -973,103 +976,133 @@
   opacity: 0.8;
 }
 
-@media (width <= 480px) {
-  .sb-today-content,
-  .sb-today-welcome-screen {
-    margin-top: 1rem;
-    gap: 1rem;
-  }
-  .sb-today-header > h1 {
-    font-size: var(--sb-font-size-20);
-  }
-  .sb-today-welcome-screen .sb-today-welcome-screen-navigation {
-    flex-direction: column-reverse;
-    align-items: stretch;
-    gap: 1rem;
-  }
-  .sb-today-welcome-screen .sb-today-welcome-screen-actions {
-    align-items: stretch;
-  }
-  .sb-today-welcome-screen .sb-today-welcome-screen-tour-button {
-    height: 3rem;
-  }
-  /* The stacked mobile layout stretches both buttons to full width, so the
-     row-recentring above doesn't apply -- the leading margin would otherwise
-     misalign this button against its stretched sibling once it reveals, and
-     the desktop `max-width` cap would clip it short of the full stretch
-     width once enabled. `100%` rather than `none`: the disabled state
-     transitions from `0`, and CSS can't animate a length to the keyword
-     `none` (it just jumps), so the reveal wouldn't actually grow in here. */
-  .sb-today-welcome-screen .sb-today-welcome-screen-start-button {
-    margin-left: 0;
-    max-width: 100%;
-  }
-  .sb-today-welcome-screen .sb-today-welcome-screen-greeting {
-    font-size: var(--sb-font-size-32);
-  }
-  .sb-today-welcome-screen .sb-today-welcome-screen-book {
-    font-size: var(--sb-font-size-16);
-  }
-  .sb-today-welcome-screen .sb-today-welcome-screen-navigation > button {
-    height: 3rem;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-today-content,
+:where(html[data-sb-app-layout="mobile"]) .sb-today-welcome-screen {
+  margin-top: 1rem;
+  gap: 1rem;
+}
+:where(html[data-sb-app-layout="mobile"]) .sb-today-header > h1 {
+  font-size: var(--sb-font-size-20);
+}
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-welcome-screen
+  .sb-today-welcome-screen-navigation {
+  flex-direction: column-reverse;
+  align-items: stretch;
+  gap: 1rem;
+}
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-welcome-screen
+  .sb-today-welcome-screen-actions {
+  align-items: stretch;
+}
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-welcome-screen
+  .sb-today-welcome-screen-tour-button {
+  height: 3rem;
+}
+/* The stacked mobile layout stretches both buttons to full width, so the
+   row-recentring above doesn't apply -- the leading margin would otherwise
+   misalign this button against its stretched sibling once it reveals, and
+   the desktop `max-width` cap would clip it short of the full stretch
+   width once enabled. `100%` rather than `none`: the disabled state
+   transitions from `0`, and CSS can't animate a length to the keyword
+   `none` (it just jumps), so the reveal wouldn't actually grow in here. */
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-welcome-screen
+  .sb-today-welcome-screen-start-button {
+  margin-left: 0;
+  max-width: 100%;
+}
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-welcome-screen
+  .sb-today-welcome-screen-greeting {
+  font-size: var(--sb-font-size-32);
+}
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-welcome-screen
+  .sb-today-welcome-screen-book {
+  font-size: var(--sb-font-size-16);
+}
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-welcome-screen
+  .sb-today-welcome-screen-navigation
+  > button {
+  height: 3rem;
+}
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-container
-    .sb-today-bookmarks-section
-    .sb-today-bookmarks-section-bookmark {
-    flex-shrink: 0;
-    max-width: 13rem;
-    padding: 0.5rem 0.75rem;
-    font-size: var(--sb-font-size-13);
-  }
-  /* A touch smaller on a phone than the shared search bar's own sizes. */
-  .sb-today-container .sb-today-search-container .sb-today-searchbar {
-    .sb-search-bar {
-      gap: 0.3rem;
-    }
-
-    .sb-search-bar-icon {
-      font-size: 1.2rem;
-    }
-
-    .sb-search-bar-input {
-      font-size: var(--sb-font-size-14);
-    }
-  }
-
+  .sb-today-bookmarks-section
+  .sb-today-bookmarks-section-bookmark {
+  flex-shrink: 0;
+  max-width: 13rem;
+  padding: 0.5rem 0.75rem;
+  font-size: var(--sb-font-size-13);
+}
+/* A touch smaller on a phone than the shared search bar's own sizes. */
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-container
-    .sb-today-bookmarks-section
-    .sb-today-bookmarks-section-container {
-    gap: 0.5rem;
-    flex-wrap: nowrap;
-    overflow-x: scroll;
-    scrollbar-width: none;
-  }
-  .sb-today-container
-    .sb-today-search-container
-    .sb-today-book-selector-button {
-    font-size: var(--sb-font-size-14);
-    padding: 0.4rem 0.65rem;
-  }
-  .sb-today-container .sb-today-feed-card .sb-today-feed-kind-option {
-    padding: 0.4rem 0.65rem;
-    font-size: 0.6rem;
-    font-weight: 400;
-    min-width: 3.25rem;
+  .sb-today-search-container
+  .sb-today-searchbar {
+  .sb-search-bar {
+    gap: 0.3rem;
   }
 
-  .sb-today-container .sb-today-feed-sentence,
-  .sb-today-container .sb-today-feed-note-text {
+  .sb-search-bar-icon {
+    font-size: 1.2rem;
+  }
+
+  .sb-search-bar-input {
     font-size: var(--sb-font-size-14);
   }
+}
 
-  .sb-today-container .sb-today-feed-row-note > .sb-today-feed-time {
-    line-height: calc(0.875rem * 1.4);
-  }
-
+:where(html[data-sb-app-layout="mobile"])
   .sb-today-container
-    .sb-today-titled-section
-    .sb-today-titled-section-header
-    > button {
-    font-size: var(--sb-font-size-12);
-  }
+  .sb-today-bookmarks-section
+  .sb-today-bookmarks-section-container {
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  overflow-x: scroll;
+  scrollbar-width: none;
+}
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-container
+  .sb-today-search-container
+  .sb-today-book-selector-button {
+  font-size: var(--sb-font-size-14);
+  padding: 0.4rem 0.65rem;
+}
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-container
+  .sb-today-feed-card
+  .sb-today-feed-kind-option {
+  padding: 0.4rem 0.65rem;
+  font-size: 0.6rem;
+  font-weight: 400;
+  min-width: 3.25rem;
+}
+
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-container
+  .sb-today-feed-sentence,
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-container
+  .sb-today-feed-note-text {
+  font-size: var(--sb-font-size-14);
+}
+
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-container
+  .sb-today-feed-row-note
+  > .sb-today-feed-time {
+  line-height: calc(0.875rem * 1.4);
+}
+
+:where(html[data-sb-app-layout="mobile"])
+  .sb-today-container
+  .sb-today-titled-section
+  .sb-today-titled-section-header
+  > button {
+  font-size: var(--sb-font-size-12);
 }

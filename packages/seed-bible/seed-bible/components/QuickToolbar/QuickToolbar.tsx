@@ -1,3 +1,4 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./QuickToolbar.inline.css";
 import "./QuickToolbar.css";
 import "../visuallyHidden.inline.css";
@@ -102,17 +103,18 @@ export function QuickToolbar(props: QuickToolbarProps) {
             className={`sb-quick-toolbar-item${tool.className ? ` ${tool.className}` : ""}`}
           >
             {tool.display === "card" ? (
-              <button
-                type="button"
-                disabled={tool.disabled.value}
-                onClick={onSelect}
-                className="sb-quick-toolbar-card"
-                aria-label={title}
-                title={title}
-              >
-                <ToolIcon />
-                <span className="sb-visually-hidden">{title}</span>
-              </button>
+              <TooltipTrigger>
+                <button
+                  type="button"
+                  disabled={tool.disabled.value}
+                  onClick={onSelect}
+                  className="sb-quick-toolbar-card"
+                  aria-label={title}
+                >
+                  <ToolIcon />
+                  <span className="sb-visually-hidden">{title}</span>
+                </button>
+              </TooltipTrigger>
             ) : (
               <IconButton
                 icon={<ToolIcon />}

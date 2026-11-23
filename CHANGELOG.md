@@ -28,7 +28,11 @@
 
 ### 🔧 Changed
 
+- Narrow what `useI18n` from `seed-bible/extensions` is typed to return to `t`, `ns`, `language` and `isRtl`, leaving out the app's own language prompts, which extensions can't use.
+
 ### 🐛 Fixed
+
+- Let extension authors import every type the extension SDK uses in its own functions and components, such as `SandboxErrorCode`, `SandboxPanePlacement`, `CloseButtonProps` and, for tests, `SandboxState` and `SandboxMethods`.
 
 ### 🗑️ Removed
 

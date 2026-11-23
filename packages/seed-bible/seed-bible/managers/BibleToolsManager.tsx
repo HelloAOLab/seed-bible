@@ -1047,6 +1047,8 @@ export interface OpenReadingPlansPaneOptions {
   login?: Pick<LoginManager, "userId">;
   gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
   toast?: (message: string) => void;
+  /** Lets a plan's Share open the share sheet rather than only copy its link. */
+  app?: AppState;
   /**
    * Returns to the screen that opened the pane, from the plans list or from a
    * plan that screen opened directly. Without it the list has no back button,
@@ -1076,6 +1078,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
     login,
     gallery,
     toast,
+    app,
   } = options;
 
   // Scripture without a pinned translation previews in the one being read.
@@ -1139,6 +1142,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
           );
         }}
         toast={toast}
+        app={app}
         onBack={options.onBack}
       />
     ),
