@@ -7371,7 +7371,9 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
   ) {
     const { selectorState, readingState } = createFixture();
     if (options.discoveredContent) {
-      (readingState as any).discoveredCrossReferences = signal([
+      (
+        readingState as { discoveredCrossReferences: Signal<unknown> }
+      ).discoveredCrossReferences = signal([
         {
           providerId: "p1",
           results: [
@@ -8215,28 +8217,61 @@ describe("BibleReader — a playing playlist's text and link steps", () => {
       expect(panel()).toBeNull();
     });
 
-    it("is left out of a compare step", async () => {
-      const second = createFixture();
-      const playing = renderStep(
-        [
+    it("is left out of a note step on a phone too", () => {
+      renderStep([NOTE], { compact: true, discoveredContent: true });
+
+      expect(page()).not.toBeNull();
+      expect(panel()).toBeNull();
+    });
+
+    describe("on a compare step", () => {
+      async function renderCompareWithDiscover(inline: boolean) {
+        const second = createFixture();
+        const playing = renderStep(
+          [
+            {
+              type: "bible-verse",
+              ref: { bookId: "GEN", chapter: 1, verse: 1 },
+              compare: { ref: { bookId: "GEN", chapter: 1, verse: 2 } },
+            },
+          ],
           {
-            type: "bible-verse",
-            ref: { bookId: "GEN", chapter: 1, verse: 1 },
-            compare: { ref: { bookId: "GEN", chapter: 1, verse: 2 } },
-          },
-        ],
-        {
-          compact: false,
-          compareReadingState: second.readingState,
-          discoveredContent: true,
-        }
-      );
-      await act(async () => {
-        await playing.jumpTo(0);
+            compact: false,
+            compareReadingState: second.readingState,
+            discoveredContent: true,
+          }
+        );
+        act(() => {
+          stepTab.readingState.discoverContentPanelInline.value = inline;
+        });
+        await act(async () => {
+          await playing.jumpTo(0);
+        });
+        return playing;
+      }
+      const below = () =>
+        container
+          .querySelector(".sb-bible-reader-content")
+          ?.classList.contains("sb-bible-reader-content--discover-below");
+
+      it("shows below the two passages, even when set to sit beside the reader", async () => {
+        await renderCompareWithDiscover(true);
+
+        expect(container.querySelector(".sb-playlist-compare")).not.toBeNull();
+        expect(panel()).not.toBeNull();
+        expect(below()).toBe(true);
       });
 
-      expect(container.querySelector(".sb-playlist-compare")).not.toBeNull();
-      expect(panel()).toBeNull();
+      it("goes back beside the reader once a link takes the reader to another passage", async () => {
+        const playing = await renderCompareWithDiscover(true);
+        await act(async () => {
+          await playing.visitReference({ book: "GEN", chapter: 1 });
+        });
+
+        expect(container.querySelector(".sb-playlist-compare")).toBeNull();
+        expect(panel()).not.toBeNull();
+        expect(below()).toBe(false);
+      });
     });
   });
 });
