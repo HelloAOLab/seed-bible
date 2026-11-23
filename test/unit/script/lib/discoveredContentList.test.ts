@@ -221,4 +221,36 @@ describe("buildDiscoveredContentList", () => {
       'Missing required column "Bible Reference"; no items produced.',
     ]);
   });
+
+  it("marks a row to play inline when its Play Inline cell is ticked", async () => {
+    const csv = [
+      `${header},Play Inline`,
+      "Inline Video,Author,Genesis 1,https://example.com/a,Desc,TRUE",
+      "Modal Video,Author,Genesis 2,https://example.com/b,Desc,FALSE",
+      "Blank Video,Author,Genesis 3,https://example.com/c,Desc,",
+    ].join("\n");
+
+    const { items, warnings } = await buildDiscoveredContentList(
+      csv,
+      fetchLinkPreview
+    );
+
+    expect(warnings).toEqual([]);
+    expect(items.map((item) => [item.title, item.playInline])).toEqual([
+      ["Inline Video", true],
+      ["Modal Video", undefined],
+      ["Blank Video", undefined],
+    ]);
+  });
+
+  it("leaves every row playing in a modal when there's no Play Inline column", async () => {
+    const csv = [
+      header,
+      "Some Video,Author,Genesis 1,https://example.com/a,Desc",
+    ].join("\n");
+
+    const { items } = await buildDiscoveredContentList(csv, fetchLinkPreview);
+
+    expect(items[0]).not.toHaveProperty("playInline");
+  });
 });

@@ -92,6 +92,7 @@ import {
 import { VerseReferenceText } from "../../app/verseReferenceLink";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import { DiscoverContentPanel } from "../Discover/DiscoverContentPanel";
+import { InlineVideoPanel } from "../Discover/InlineVideoPanel";
 import {
   ReturnToStepButton,
   ScriptureNotePopover,
@@ -4169,6 +4170,26 @@ export function BibleReader(props: BibleReaderProps) {
       />
     ) : null;
 
+  // A video chosen to play inline shows in the selected tab's reader only, so
+  // a split view doesn't play it twice.
+  const playingInlineVideo =
+    state && !isMinimalEmbed ? state.discover.inlineVideo.value : null;
+  const inlineVideo =
+    playingInlineVideo &&
+    currentSlot.tab != null &&
+    state?.tabs.selectedTabId.value === currentSlot.tab.id
+      ? playingInlineVideo
+      : null;
+  const inlineVideoPanel =
+    state && inlineVideo ? (
+      <InlineVideoPanel
+        key={inlineVideo.id}
+        video={inlineVideo}
+        onClose={state.discover.closeInlineVideo}
+      />
+    ) : null;
+  const discoverBelow = readingState.discoverContentPanelInline.value === false;
+
   // Playback opens on the selected tab only. Other slots in a split view
   // must not show this loader.
   const playlistOpeningHere =
@@ -4377,51 +4398,64 @@ export function BibleReader(props: BibleReaderProps) {
             </div>
           </div>
 
+          {/* Always rendered, so opening a video doesn't remount the swipe
+            viewport and lose the reader's scroll position. */}
           <div
-            ref={mobileChrome?.swipeViewportRef}
-            className="sb-reader-swipe-viewport"
+            className={`sb-reader-mobile-body${
+              inlineVideoPanel ? " sb-reader-mobile-body--inline-video" : ""
+            }`}
           >
+            {inlineVideoPanel ? (
+              <div className="sb-reader-mobile-inline-video">
+                {inlineVideoPanel}
+              </div>
+            ) : null}
             <div
-              ref={mobileChrome?.swipeTrackRef}
-              className="sb-reader-swipe-track"
+              ref={mobileChrome?.swipeViewportRef}
+              className="sb-reader-swipe-viewport"
             >
               <div
-                className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
-                aria-hidden="true"
+                ref={mobileChrome?.swipeTrackRef}
+                className="sb-reader-swipe-track"
               >
-                {mobileChrome?.prevChapterPreview &&
-                  renderMobileChapterTitle(
-                    mobileChrome.prevChapterPreview.book.name,
-                    mobileChrome.prevChapterPreview.chapter.number
-                  )}
-                <div className="sb-chapter-content sb-chapter-content-note-gutter">
-                  {renderStaticChapterContent(
-                    mobileChrome?.prevChapterPreview ?? null,
-                    scriptureElements
-                  )}
+                <div
+                  className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
+                  aria-hidden="true"
+                >
+                  {mobileChrome?.prevChapterPreview &&
+                    renderMobileChapterTitle(
+                      mobileChrome.prevChapterPreview.book.name,
+                      mobileChrome.prevChapterPreview.chapter.number
+                    )}
+                  <div className="sb-chapter-content sb-chapter-content-note-gutter">
+                    {renderStaticChapterContent(
+                      mobileChrome?.prevChapterPreview ?? null,
+                      scriptureElements
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div
-                ref={mobileChrome?.currentScrollerRefCallback}
-                className="sb-reader-swipe-panel sb-reader-swipe-panel-current"
-              >
-                {renderMainContent()}
-                {extraContent}
-              </div>
-              <div
-                className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
-                aria-hidden="true"
-              >
-                {mobileChrome?.nextChapterPreview &&
-                  renderMobileChapterTitle(
-                    mobileChrome.nextChapterPreview.book.name,
-                    mobileChrome.nextChapterPreview.chapter.number
-                  )}
-                <div className="sb-chapter-content sb-chapter-content-note-gutter">
-                  {renderStaticChapterContent(
-                    mobileChrome?.nextChapterPreview ?? null,
-                    scriptureElements
-                  )}
+                <div
+                  ref={mobileChrome?.currentScrollerRefCallback}
+                  className="sb-reader-swipe-panel sb-reader-swipe-panel-current"
+                >
+                  {renderMainContent()}
+                  {extraContent}
+                </div>
+                <div
+                  className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
+                  aria-hidden="true"
+                >
+                  {mobileChrome?.nextChapterPreview &&
+                    renderMobileChapterTitle(
+                      mobileChrome.nextChapterPreview.book.name,
+                      mobileChrome.nextChapterPreview.chapter.number
+                    )}
+                  <div className="sb-chapter-content sb-chapter-content-note-gutter">
+                    {renderStaticChapterContent(
+                      mobileChrome?.nextChapterPreview ?? null,
+                      scriptureElements
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -4528,15 +4562,19 @@ export function BibleReader(props: BibleReaderProps) {
           </div>
           <div
             className={`sb-bible-reader-content${
-              readingState.discoverContentPanelInline.value === false
-                ? " sb-bible-reader-content--discover-below"
-                : ""
-            }`}
+              discoverBelow ? " sb-bible-reader-content--discover-below" : ""
+            }${inlineVideoPanel ? " sb-bible-reader-content--inline-video" : ""}`}
           >
             <div className="sb-bible-reader-main-content">
               {renderMainContent()}
             </div>
-            {extraContent}
+            {/* Without a video this column is `display: contents`, so the
+              Discover panel lays out exactly as a direct child. It's always
+              rendered so opening a video doesn't remount (and reset) it. */}
+            <div className="sb-bible-reader-side-column">
+              {inlineVideoPanel}
+              {extraContent}
+            </div>
           </div>
         </Fragment>
       )}

@@ -42,6 +42,7 @@
    base cap is fine there. */
 @media (min-width: 1024px) {
   .sb-bible-reader-content:not(.sb-bible-reader-content--discover-below)
+    > .sb-bible-reader-side-column
     > .sb-bible-reader-discover-panel
     > .sb-discover-content-panel {
     max-height: var(--sb-dcp-side-max-height, calc(100vh - 2rem));
