@@ -1,3 +1,4 @@
+import { MAX_RUNNING_PER_JOB } from "./jobs";
 import type { Env, ImportMessage } from "./platform";
 
 /** Messages per `sendBatch`, the queue's own limit. */
@@ -27,14 +28,21 @@ export async function sendAll<T>(
   }
 }
 
-/** Queues one message per link of an import. */
-export async function enqueue(
+/**
+ * Gets an import's links going: one message per slot, each of which works
+ * through the links one at a time (see `processImportMessage`). Queuing a
+ * message per link instead had every link waiting for a slot re-sent every
+ * few seconds, and each send counts towards the queue's daily limit.
+ */
+export async function startLinks(
   env: Env,
   jobId: string,
-  itemIds: readonly string[]
+  waitingLinks: number
 ): Promise<void> {
   await sendAll<ImportMessage>(
     env.IMPORT_QUEUE,
-    itemIds.map((itemId) => ({ jobId, itemId }))
+    Array.from({ length: Math.min(waitingLinks, MAX_RUNNING_PER_JOB) }, () => ({
+      jobId,
+    }))
   );
 }

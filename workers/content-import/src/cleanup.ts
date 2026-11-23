@@ -9,8 +9,10 @@ import {
   jobsPastExpiry,
   requeueExpiredLeases,
   setJobStatus,
+  stalledJobs,
 } from "./jobs";
 import type { Env } from "./platform";
+import { startLinks } from "./queue";
 import { decryptSessionKey } from "./sessionKeys";
 import {
   failQueuedLookups,
@@ -26,7 +28,9 @@ export const LISTING_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 /**
  * The scheduled tidy-up (a Cron Trigger):
- * - links whose consumer died mid-way get back in line once their lease ends;
+ * - links whose consumer died mid-way get back in line once their lease ends,
+ *   and an import whose messages were lost (the queue refused a send, say)
+ *   gets new ones;
  * - imports past their lifetime end, erasing the session key they held,
  *   including ones paused and never resumed. A website lookup waiting for
  *   the owner to pick pages never expires;
@@ -36,18 +40,31 @@ export const LISTING_LIFETIME_MS = 24 * 60 * 60 * 1000;
  * - finished imports' rows are deleted after a while. The library keeps its
  *   own record of the import in `importStatus`.
  */
+/** Sends an import's links new messages; a refused send is tried at the next run. */
+async function restart(env: Env, jobId: string, links: number): Promise<void> {
+  try {
+    await startLinks(env, jobId, links);
+  } catch (error) {
+    console.warn(`Couldn't restart import ${jobId}:`, error);
+  }
+}
+
 export async function runCleanup(env: Env, deps: WorkerDeps): Promise<void> {
   const now = deps.now();
 
-  const requeued = await requeueExpiredLeases(env.DB, now);
-  const running = new Map<string, boolean>();
-  for (const { job_id, item_id } of requeued) {
-    if (!running.has(job_id)) {
-      running.set(job_id, (await getJob(env.DB, job_id))?.status === "running");
+  // Each link that was running had a message that would have carried its
+  // import on; it died with the consumer, so it's replaced.
+  const requeued = new Map<string, number>();
+  for (const { job_id } of await requeueExpiredLeases(env.DB, now)) {
+    requeued.set(job_id, (requeued.get(job_id) ?? 0) + 1);
+  }
+  for (const [jobId, links] of requeued) {
+    if ((await getJob(env.DB, jobId))?.status === "running") {
+      await restart(env, jobId, links);
     }
-    if (running.get(job_id)) {
-      await env.IMPORT_QUEUE.send({ jobId: job_id, itemId: item_id });
-    }
+  }
+  for (const job of await stalledJobs(env.DB, now)) {
+    await restart(env, job.id, job.queued);
   }
 
   for (const job of await jobsPastExpiry(env.DB, now)) {

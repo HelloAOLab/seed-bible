@@ -17,9 +17,10 @@ import {
 } from "./casualos";
 import { writeImportStatus } from "./importStatus";
 import {
-  claimItem,
+  MAX_ITEM_ATTEMPTS,
+  claimNextItem,
+  countQueued,
   finishIfComplete,
-  getItem,
   getJob,
   gaveUpReason,
   jobProgress,
@@ -43,15 +44,15 @@ import { processLookupDeadLetter, processLookupMessage } from "./siteImports";
 import { decryptSessionKey } from "./sessionKeys";
 import type { WorkerDeps } from "./deps";
 
-/** How long a link waits before trying again when its import's slots are all taken. */
-const SLOT_WAIT_SECONDS = 10;
-
 export type MessageOutcome =
   /** Finished with, one way or another. */
   | { kind: "ack" }
   /** Failed for a passing reason: try again later, counting towards the retry limit. */
   | { kind: "retry"; delaySeconds: number }
-  /** Not started (no free slot): send again later, without counting it as a failure. */
+  /**
+   * Finished with, and the import has more to do: send a fresh message for
+   * it after `delaySeconds`, which doesn't count as a failure.
+   */
   | { kind: "later"; delaySeconds: number };
 
 const ACK: MessageOutcome = { kind: "ack" };
@@ -215,32 +216,39 @@ async function finishJob(
   }
 }
 
-/** Works on one link of an import. Never throws: every failure becomes an outcome. */
+/**
+ * Works on an import's next link that's ready, then hands on to a fresh
+ * message for the link after it. An import keeps one message per slot this
+ * way, however many links it has. A message that finds every slot taken is
+ * dropped: the links running will each hand on when they finish.
+ *
+ * Retries are counted on the link's row rather than by the queue, because
+ * the next message may well take a different link. Never throws: every
+ * failure becomes an outcome.
+ */
 export async function processImportMessage(
   env: Env,
   deps: WorkerDeps,
-  message: ImportItemMessage,
-  attempts: number
+  message: ImportItemMessage
 ): Promise<MessageOutcome> {
   const now = deps.now();
   const job = await getJob(env.DB, message.jobId);
-  // Paused imports re-send their queued links when they resume; cancelled
-  // and expired ones are over. Either way this message has nothing to do.
+  // Paused imports start new messages when they resume; cancelled and
+  // expired ones are over. Either way this message has nothing to do.
   if (!job || job.status !== "running" || !job.session_key_enc) {
     return ACK;
   }
-  const row = await getItem(env.DB, message.jobId, message.itemId);
-  if (!row || row.state === "done" || row.state === "failed") {
+  const claim = await claimNextItem(env.DB, job.id, now);
+  if (claim.kind === "waiting") {
+    return {
+      kind: "later",
+      delaySeconds: Math.max(1, Math.ceil((claim.retryAt - now) / 1000)),
+    };
+  }
+  if (claim.kind !== "claimed") {
     return ACK;
   }
-  if (!(await claimItem(env.DB, job.id, row.item_id, now))) {
-    const current = await getItem(env.DB, job.id, row.item_id);
-    // Still queued means every slot was taken. Running means another
-    // delivery of this same message has it.
-    return current?.state === "queued"
-      ? { kind: "later", delaySeconds: SLOT_WAIT_SECONDS }
-      : ACK;
-  }
+  const row = claim.item;
 
   const sessionKey = await decryptSessionKey(
     job.session_key_enc,
@@ -272,55 +280,31 @@ export async function processImportMessage(
       error instanceof ArchiveError
         ? `${code}: ${error.message}`.slice(0, 1000)
         : code;
-    if (isTransientError(code)) {
-      await releaseItem(env.DB, job.id, row.item_id, reason);
-      return { kind: "retry", delaySeconds: retryDelay(attempts) };
+    if (isTransientError(code) && row.attempts < MAX_ITEM_ATTEMPTS) {
+      await releaseItem(env.DB, job.id, row.item_id, {
+        lastError: reason,
+        retryAt: now + retryDelay(row.attempts) * 1000,
+      });
+    } else {
+      await settleItem(env.DB, job.id, row.item_id, {
+        state: "failed",
+        error: isTransientError(code) ? gaveUpReason(reason) : reason,
+      });
     }
-    await settleItem(env.DB, job.id, row.item_id, {
-      state: "failed",
-      error: reason,
-    });
   }
 
   await finishJob(env, client, job, now);
-  return ACK;
+  return (await countQueued(env.DB, job.id)) > 0
+    ? { kind: "later", delaySeconds: 0 }
+    : ACK;
 }
 
 /**
- * A link that ran out of retries: marks it failed with the reason, so
- * nothing disappears silently, and finishes the import if it was the last.
+ * The queue handler: links and lookups from the import queue, or from its
+ * dead-letter queue. A link's message only gets there after failing
+ * unexpectedly five times over; its links are still on their rows, and
+ * cleanup restarts the import if no other message carries it on.
  */
-export async function processDeadLetter(
-  env: Env,
-  deps: WorkerDeps,
-  message: ImportItemMessage
-): Promise<void> {
-  const now = deps.now();
-  const row = await getItem(env.DB, message.jobId, message.itemId);
-  if (!row || row.state === "done" || row.state === "failed") {
-    return;
-  }
-  await settleItem(env.DB, message.jobId, message.itemId, {
-    state: "failed",
-    error: gaveUpReason(row.error),
-  });
-  const job = await getJob(env.DB, message.jobId);
-  if (!job?.session_key_enc) {
-    return;
-  }
-  const sessionKey = await decryptSessionKey(
-    job.session_key_enc,
-    env.SESSION_KEY_SECRET
-  );
-  await finishJob(
-    env,
-    createCasualOSClient(env, sessionKey, deps.fetch),
-    job,
-    now
-  );
-}
-
-/** The queue handler: links from the import queue, or from its dead-letter queue. */
 export async function handleQueueBatch(
   batch: MessageBatch<ImportMessage>,
   env: Env,
@@ -332,9 +316,9 @@ export async function handleQueueBatch(
       try {
         const body = message.body;
         if (deadLetters) {
-          await (body.kind === "lookup"
-            ? processLookupDeadLetter(env, deps, body)
-            : processDeadLetter(env, deps, body));
+          if (body.kind === "lookup") {
+            await processLookupDeadLetter(env, deps, body);
+          }
           message.ack();
           return;
         }
@@ -346,11 +330,11 @@ export async function handleQueueBatch(
                 body,
                 retryDelay(message.attempts)
               )
-            : await processImportMessage(env, deps, body, message.attempts);
+            : await processImportMessage(env, deps, body);
         if (outcome.kind === "retry") {
           message.retry({ delaySeconds: outcome.delaySeconds });
         } else if (outcome.kind === "later") {
-          // A fresh message, so waiting for a slot doesn't use up retries.
+          // A fresh message, so carrying on doesn't use up retries.
           await env.IMPORT_QUEUE.send(message.body, {
             delaySeconds: outcome.delaySeconds,
           });
