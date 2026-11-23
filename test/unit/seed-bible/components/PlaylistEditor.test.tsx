@@ -306,6 +306,29 @@ describe("the playlist editor", () => {
 
       expect(items()).toEqual([{ type: "html", html: "" }]);
     });
+
+    it("leaves the add-step menu open, not closed and reopened, when its button is pressed again", () => {
+      openPanel([]);
+      const addButton = byText(
+        container.querySelector(".sb-pe-empty-list")!,
+        "button",
+        "Add a step"
+      )!;
+      click(addButton);
+      const note = byText(container, ".sb-pe-add-option", "Note");
+      expect(note).not.toBeNull();
+
+      // A press is a pointerdown and then a click. The menu closes itself on a
+      // press outside it, but not on the button that opens it.
+      act(() => {
+        addButton.dispatchEvent(
+          new PointerEvent("pointerdown", { bubbles: true })
+        );
+      });
+      click(addButton);
+
+      expect(byText(container, ".sb-pe-add-option", "Note")).toBe(note);
+    });
   });
 
   describe("playlist name", () => {

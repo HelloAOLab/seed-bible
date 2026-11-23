@@ -11,13 +11,6 @@
   font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
-
-.sb-photo-chooser-empty {
-  margin: 0;
-  font-size: var(--sb-font-size-14);
-  color: color-mix(in srgb, var(--sb-font-color) 70%, transparent);
-}
-
 .sb-photo-gallery-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

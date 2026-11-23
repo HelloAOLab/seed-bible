@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "../TextField/TextField.css";
 import "../Select/Select.css";
 import "./SearchableSelect.css";
@@ -157,7 +158,9 @@ export function SearchableSelect(props: {
               />
             </div>
             {filtered.length === 0 ? (
-              <div className="sb-language-picker-empty">{emptyLabel}</div>
+              <EmptyState className="sb-language-picker-empty">
+                {emptyLabel}
+              </EmptyState>
             ) : (
               filtered.map((option) => {
                 const isSelected = option.id === value;

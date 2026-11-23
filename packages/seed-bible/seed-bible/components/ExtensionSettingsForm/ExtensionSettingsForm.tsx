@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import { useSignal } from "@preact/signals";
 import {
   numberFieldLimits,
@@ -142,13 +143,11 @@ export function ExtensionSettingsForm(props: {
 
   if (entries.length === 0) {
     return (
-      <div className="sb-settings-empty-state">
-        <p>
-          {t("no-extension-settings", {
-            defaultValue: "This extension has no configurable settings.",
-          })}
-        </p>
-      </div>
+      <EmptyState className="sb-settings-empty-state">
+        {t("no-extension-settings", {
+          defaultValue: "This extension has no configurable settings.",
+        })}
+      </EmptyState>
     );
   }
 

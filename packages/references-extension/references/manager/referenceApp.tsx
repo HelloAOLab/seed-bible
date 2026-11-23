@@ -28,6 +28,7 @@ import { signal, useSignal } from "@preact/signals";
 import type { Signal } from "@preact/signals";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "preact/hooks";
 import {
+  EmptyState,
   IconButton,
   Skeleton,
   SkeletonContainer,
@@ -443,7 +444,7 @@ const ReferenceApp = (props: {
   const renderContent = () => {
     if (listFailed.value) {
       return (
-        <EmptyState
+        <ReferencesEmpty
           message={t("references-unavailable", {
             defaultValue: "Could not load the references for this verse.",
           })}
@@ -471,7 +472,7 @@ const ReferenceApp = (props: {
 
     if (topReferences.length === 0) {
       return (
-        <EmptyState
+        <ReferencesEmpty
           message={t("no-references", {
             defaultValue: "No cross references for this verse.",
           })}
@@ -507,17 +508,15 @@ const ReferenceApp = (props: {
   );
 };
 
-function EmptyState(props: { message: string }) {
+function ReferencesEmpty(props: { message: string }) {
   return (
-    <div className="sb-references-pane sb-references-pane--empty">
-      <span
-        className="material-symbols-outlined sb-references-empty-icon"
-        aria-hidden="true"
-      >
-        quick_reference_all
-      </span>
-      <p className="sb-references-empty-text">{props.message}</p>
-    </div>
+    <EmptyState
+      className="sb-references-pane sb-references-empty"
+      size="panel"
+      icon="quick_reference_all"
+    >
+      {props.message}
+    </EmptyState>
   );
 }
 

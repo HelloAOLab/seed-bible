@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./Bookmarks.css";
 import { signal, useSignal, type Signal } from "@preact/signals";
@@ -834,12 +835,12 @@ export function BookmarksPanel(props: {
   return (
     <div className="sb-bookmarks-panel">
       {bookmarks.length === 0 && (
-        <p className="sb-bookmarks-panel-empty">
+        <EmptyState className="sb-bookmarks-panel-empty">
           {t("bookmarks-empty", {
             defaultValue:
               "No bookmarks yet. Use the bookmark button above a chapter to place one.",
           })}
-        </p>
+        </EmptyState>
       )}
 
       {bookmarks.map((bookmark) => (

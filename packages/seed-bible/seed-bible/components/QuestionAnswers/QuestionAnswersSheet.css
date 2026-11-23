@@ -58,11 +58,8 @@
     list-style: none;
   }
 }
-
 .sb-question-answers-empty {
-  margin: 0;
-  opacity: 0.7;
-  font-size: 0.9375rem;
+  --sb-empty-state-font-size: var(--sb-font-size-15);
 }
 
 .sb-question-answer {

@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./ReadingPlansPane.css";
 import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
@@ -629,12 +630,12 @@ function ReadingPlansList(props: ReadingPlansListProps) {
     <div className="sb-reading-plans-pane">
       <div className="sb-reading-plans-scroll">
         {rows.length === 0 && drafts.length === 0 ? (
-          <div className="sb-reading-plans-empty">
+          <EmptyState className="sb-reading-plans-empty" size="panel">
             {t("reading-plans-empty", {
               defaultValue:
                 "You don't have any reading plans yet. Create one to get started.",
             })}
-          </div>
+          </EmptyState>
         ) : (
           <>
             {hero && hero.summary?.next ? (

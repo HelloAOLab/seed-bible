@@ -312,11 +312,9 @@
   gap: 0.25rem;
   padding-inline-start: 1.5rem;
 }
-
 .sb-save-category-empty {
-  padding: 0.375rem 0.5rem;
-  font-size: var(--sb-font-size-12);
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  --sb-empty-state-padding: 0.375rem 0.5rem;
+  --sb-empty-state-font-size: var(--sb-font-size-12);
 }
 
 .sb-save-item {

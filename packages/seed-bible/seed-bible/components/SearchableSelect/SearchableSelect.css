@@ -75,12 +75,10 @@
 .sb-language-picker-search-input::placeholder {
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
-
 .sb-language-picker-empty {
-  padding: 0.75rem 0.625rem;
-  font-size: var(--sb-font-size-13);
+  --sb-empty-state-padding: 0.75rem 0.625rem;
+  --sb-empty-state-font-size: var(--sb-font-size-13);
   text-align: center;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
 .sb-language-picker-item {
