@@ -1,3 +1,4 @@
+import { LoadingStatus } from "../LoadingStatus/LoadingStatus";
 import "./FloatingReaderPanels.css";
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
@@ -583,7 +584,9 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
 
           {searchLoading.value && (
             <div className="sb-floating-search-status">
-              {t("searching", { defaultValue: "Searching..." })}
+              <LoadingStatus>
+                {t("searching", { defaultValue: "Searching..." })}
+              </LoadingStatus>
             </div>
           )}
 

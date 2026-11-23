@@ -19,6 +19,8 @@ export {
 } from "./ContextMenu/ContextMenu";
 export * from "./Popover/Popover";
 export * from "./PortalComponent/PortalComponent";
+export * from "./Spinner/Spinner";
+export * from "./LoadingStatus/LoadingStatus";
 export * from "./Skeleton/Skeleton";
 export * from "./EmptyState/EmptyState";
 export * from "./ExpandableText/ExpandableText";

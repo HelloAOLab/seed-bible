@@ -865,6 +865,12 @@
 .sb-pe-compare-status {
   margin: 0;
   color: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
+  --sb-loading-status-color: color-mix(
+    in srgb,
+    var(--sb-font-color) 55%,
+    transparent
+  );
+  --sb-loading-status-font-size: inherit;
 }
 
 /* The pick bar and the note, under the page: as the toolbar stack holds them

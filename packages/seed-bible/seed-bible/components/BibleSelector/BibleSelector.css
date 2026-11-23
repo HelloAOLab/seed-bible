@@ -716,11 +716,17 @@
   margin: 0;
 }
 
+/* `LoadingStatus` draws the spinner and its line; this centers it, with the
+   status box's own room and text. */
 .sb-selector-status--loading {
-  display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  --sb-loading-status-padding: 1.5rem 1rem;
+  --sb-loading-status-font-size: var(--sb-font-size-15);
+  --sb-loading-status-color: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 30%
+  );
 }
 
 .sb-selector-retry {

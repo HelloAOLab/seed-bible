@@ -164,19 +164,6 @@
   font-size: var(--sb-font-size-14);
 }
 
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
 .toggle-wrapper {
   display: flex;
   flex-direction: column;

@@ -74,6 +74,7 @@ import {
   type ExtensionListEntry,
 } from "../../managers/ExtensionManager";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import { ContentViewLoading } from "./ContentViewLoading";
 import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
 import { normalizeHex } from "../ColorPicker/color";
 import {
@@ -661,21 +662,6 @@ export function CustomizationEditPane(props: { state: SeedBibleState }) {
     return <CustomizationEditVariantView state={state} />;
   }
   return <CustomizationEditMainView state={state} />;
-}
-
-function ContentViewLoading() {
-  const { t } = useI18n();
-  return (
-    <div className="sb-settings-page sb-cz-page">
-      <SkeletonContainer
-        label={t("custom-content-loading", {
-          defaultValue: "Loading the content library…",
-        })}
-      >
-        <Skeleton width="100%" height="12rem" radius="var(--sb-radius-md)" />
-      </SkeletonContainer>
-    </div>
-  );
 }
 
 function CustomizationEditMainView(props: { state: SeedBibleState }) {

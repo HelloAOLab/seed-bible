@@ -18,16 +18,12 @@ const Login = (props: { state: TwitchPubState }) => {
             size="lg"
             onClick={() => getDeviceAuthUrl(props.state)}
             disabled={!twitchConfig.value.clientId.value || loading.value}
+            loading={loading.value}
           >
-            {loading.value
-              ? t("loading", {
-                  ns: "ext_twitchPub",
-                  defaultValue: "Loading...",
-                })
-              : t("loginWithTwitch", {
-                  ns: "ext_twitchPub",
-                  defaultValue: "Login with Twitch",
-                })}
+            {t("loginWithTwitch", {
+              ns: "ext_twitchPub",
+              defaultValue: "Login with Twitch",
+            })}
           </Button>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { LoadingStatus } from "../LoadingStatus/LoadingStatus";
 import { useSignal, type ReadonlySignal } from "@preact/signals";
 import { useRef, useEffect } from "preact/hooks";
 import { TitledSection } from "./TitledSection";
@@ -152,7 +153,9 @@ function VerseSearch(props: {
         <div className="sb-today-searchbar-dropdown">
           {loading.value && (
             <div className="sb-today-searchbar-status">
-              {t("searching", { defaultValue: "Searching..." })}
+              <LoadingStatus>
+                {t("searching", { defaultValue: "Searching..." })}
+              </LoadingStatus>
             </div>
           )}
 
