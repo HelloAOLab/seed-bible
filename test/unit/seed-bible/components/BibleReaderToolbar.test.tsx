@@ -2979,7 +2979,24 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     await release(hintEl, 500);
 
     expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
-    expect(hint()).toBeNull();
+    // Collapsed in place rather than unmounted, so the sheet doesn't lose its
+    // height all at once and drop before the overflow row grows back past it.
+    expect(hint()?.style.gridTemplateRows).toBe("0fr");
+    expect(hint()?.className).toContain("sb-verse-toolbar-swipe-hint-closed");
+  });
+
+  it("shrinks the swipe-up hint in step with the drawer opening", async () => {
+    const handle = await renderSheet();
+
+    expect(hint()?.style.gridTemplateRows).toBe("1fr");
+
+    await press(handle, 500);
+    await moveTo(handle, 500 - OVERFLOW_HEIGHT / 4);
+
+    expect(hint()?.style.gridTemplateRows).toBe("0.75fr");
+    expect(hint()?.className).not.toContain(
+      "sb-verse-toolbar-swipe-hint-closed"
+    );
   });
 
   it("opens the drawer by the distance the finger has travelled when dragging the swipe-up hint", async () => {
@@ -3090,8 +3107,9 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
 
     expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
     expect(sheet()?.className).not.toContain("sb-verse-sheet-dragging");
-    // Nothing left to reveal, so the hint stands down.
-    expect(hint()).toBeNull();
+    // Nothing left to reveal, so the hint is collapsed out of the way.
+    expect(hint()?.style.gridTemplateRows).toBe("0fr");
+    expect(hint()?.className).toContain("sb-verse-toolbar-swipe-hint-closed");
   });
 
   it("falls back closed when released short of that drag", async () => {
@@ -3102,7 +3120,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     await release(handle, 500 - 49);
 
     expect(overflow()?.style.height).toBe("0px");
-    expect(hint()).not.toBeNull();
+    expect(hint()?.style.gridTemplateRows).toBe("1fr");
   });
 
   it("closes an open drawer when dragged back down", async () => {

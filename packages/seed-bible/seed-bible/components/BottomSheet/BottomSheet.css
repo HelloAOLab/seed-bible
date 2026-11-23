@@ -68,8 +68,10 @@
   touch-action: var(--sb-bottom-sheet-touch-action, none);
 }
 
+/* Only while opening (see `isRising` in BottomSheet.tsx), so the rise plays
+ * once rather than again whenever a drag lets go. */
 @media (prefers-reduced-motion: no-preference) {
-  .sb-bottom-sheet {
+  .sb-bottom-sheet-rising {
     animation: sb-bottom-sheet-rise var(--sb-duration-slow) ease-out;
   }
 }
