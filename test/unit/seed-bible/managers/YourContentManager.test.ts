@@ -12,6 +12,8 @@ import {
   sortAnnotationsByRecency,
   type CreateYourContentManagerOptions,
 } from "@packages/seed-bible/seed-bible/managers/YourContentManager";
+import type { ListAllResult } from "@packages/seed-bible/seed-bible/managers/OfflineRecordStore";
+import { signal } from "@preact/signals";
 
 function annotation(
   id: string,
@@ -55,15 +57,31 @@ function createManager(
     /** Answer every chapter from the synchronous cache instead of a fetch. */
     cachedChapters?: boolean;
     chapterError?: Error;
+    /** Signed in as this account; null for signed out. */
+    userId?: string | null;
+    /** False when the annotations came from the device alone. */
+    annotationsComplete?: boolean;
   } = {}
 ) {
-  const listAllAnnotations = vi.fn(async () => {
-    if (options.annotationsError) {
-      throw options.annotationsError;
+  const listAllAnnotations = vi.fn(
+    async (): Promise<ListAllResult<Annotation>> => {
+      if (options.annotationsError) {
+        throw options.annotationsError;
+      }
+      return {
+        items: options.annotations ?? [],
+        complete: options.annotationsComplete ?? true,
+      };
     }
-    return options.annotations ?? [];
-  });
-  const listAllHighlights = vi.fn(async () => options.highlights ?? []);
+  );
+  const listAllHighlights = vi.fn(
+    async (): Promise<ListAllResult<StoredHighlight>> => ({
+      items: options.highlights ?? [],
+      complete: true,
+    })
+  );
+  const { login, adoptions, annotationsManager, highlightsManager } =
+    createAccount(options.userId, listAllAnnotations, listAllHighlights);
 
   // A stand-in chapter reader. Every verse reads "verse N of BOOK CHAPTER"
   // unless `verseWords` plants something searchable in one of them.
@@ -98,16 +116,47 @@ function createManager(
       getTranslationBookChapter,
       getCachedTranslationBookChapter,
     } as unknown as CreateYourContentManagerOptions["bibleData"],
-    annotations: { listAllAnnotations } as unknown as AnnotationsManager,
-    highlights: { listAllHighlights } as unknown as HighlightsManager,
+    annotations: annotationsManager,
+    highlights: highlightsManager,
+    login,
   });
 
   return {
     manager,
+    login,
+    adoptions,
     listAllAnnotations,
     listAllHighlights,
     getTranslationBookChapter,
     getCachedTranslationBookChapter,
+  };
+}
+
+/**
+ * The account the screen belongs to, and the two managers it reads from.
+ * `adoptions` stands in for the sync engine finishing an "add to your
+ * account?" answer.
+ */
+function createAccount(
+  userId: string | null | undefined,
+  listAllAnnotations: AnnotationsManager["listAllAnnotations"],
+  listAllHighlights: HighlightsManager["listAllHighlights"]
+) {
+  const login = {
+    userId: signal<string | null>(userId === undefined ? "user-1" : userId),
+  };
+  const adoptions = signal(0);
+  return {
+    login,
+    adoptions,
+    annotationsManager: {
+      listAllAnnotations,
+      sync: { adoptions },
+    } as unknown as AnnotationsManager,
+    highlightsManager: {
+      listAllHighlights,
+      sync: { adoptions: signal(0) },
+    } as unknown as HighlightsManager,
   };
 }
 
@@ -123,19 +172,33 @@ function createHoldableManager() {
   }> = [];
   const listAllAnnotations = vi.fn(
     () =>
-      new Promise<Annotation[]>((resolve, reject) => {
-        pending.push({ resolve, reject });
+      new Promise<ListAllResult<Annotation>>((resolve, reject) => {
+        pending.push({
+          resolve: (items) => resolve({ items, complete: true }),
+          reject,
+        });
       })
   );
-  const listAllHighlights = vi.fn(async () => [] as StoredHighlight[]);
+  const listAllHighlights = vi.fn(
+    async (): Promise<ListAllResult<StoredHighlight>> => ({
+      items: [],
+      complete: true,
+    })
+  );
+  const { login, annotationsManager, highlightsManager } = createAccount(
+    "user-1",
+    listAllAnnotations,
+    listAllHighlights
+  );
 
   const manager = createYourContentManager({
     bibleData: {
       getTranslationBookChapter: vi.fn(),
       getCachedTranslationBookChapter: vi.fn(() => null),
     } as unknown as CreateYourContentManagerOptions["bibleData"],
-    annotations: { listAllAnnotations } as unknown as AnnotationsManager,
-    highlights: { listAllHighlights } as unknown as HighlightsManager,
+    annotations: annotationsManager,
+    highlights: highlightsManager,
+    login,
   });
 
   /** The nth load's controls, once that load has actually been issued. */
@@ -147,7 +210,7 @@ function createHoldableManager() {
     return controls;
   };
 
-  return { manager, listAllAnnotations, settle };
+  return { manager, login, listAllAnnotations, settle };
 }
 
 describe("createYourContentManager", () => {
@@ -522,6 +585,98 @@ describe("createYourContentManager", () => {
       void manager.load({ force: true });
       expect(manager.status.value).toBe("loading");
       consoleError.mockRestore();
+    });
+  });
+
+  describe("where the content came from", () => {
+    it("is the device for a signed-out user", async () => {
+      const { manager } = createManager({
+        userId: null,
+        annotations: [annotation("a")],
+      });
+
+      await manager.load();
+
+      expect(manager.status.value).toBe("ready");
+      expect(manager.source.value).toBe("device");
+      expect(manager.annotations.value.map((a) => a.id)).toEqual(["a"]);
+    });
+
+    // Offline, the screen shows what the device has rather than an error,
+    // and says that's what it is showing.
+    it("is the device when the account's server copy couldn't be read", async () => {
+      const { manager } = createManager({
+        annotations: [annotation("a")],
+        annotationsComplete: false,
+      });
+
+      await manager.load();
+
+      expect(manager.status.value).toBe("ready");
+      expect(manager.source.value).toBe("device");
+    });
+
+    it("is the account once the server copy was read", async () => {
+      const { manager } = createManager({ annotations: [annotation("a")] });
+
+      await manager.load();
+
+      expect(manager.source.value).toBe("account");
+    });
+  });
+
+  describe("a change of account", () => {
+    it("clears the last account's content at once and reloads", async () => {
+      const { manager, login, settle } = createHoldableManager();
+      const first = manager.load();
+      settle(0).resolve([annotation("theirs")]);
+      await first;
+
+      login.userId.value = null;
+
+      expect(manager.annotations.value).toEqual([]);
+      expect(manager.status.value).toBe("loading");
+      settle(1).resolve([annotation("mine")]);
+      await vi.waitFor(() =>
+        expect(manager.annotations.value.map((a) => a.id)).toEqual(["mine"])
+      );
+    });
+
+    it("drops a load that finishes after the account changed", async () => {
+      const { manager, login, settle } = createHoldableManager();
+      void manager.load();
+
+      login.userId.value = "user-2";
+      settle(0).resolve([annotation("user-1-note")]);
+      settle(1).resolve([annotation("user-2-note")]);
+
+      await vi.waitFor(() => expect(manager.status.value).toBe("ready"));
+      expect(manager.annotations.value.map((a) => a.id)).toEqual([
+        "user-2-note",
+      ]);
+    });
+
+    it("reads nothing if the screen was never opened", () => {
+      const { login, listAllAnnotations } = createManager();
+
+      login.userId.value = null;
+
+      expect(listAllAnnotations).not.toHaveBeenCalled();
+    });
+
+    // Signed-out notes join the account after the "add to your account?"
+    // answer, which lands well after the sign-in itself.
+    it("reloads once signed-out content has been added to the account", async () => {
+      const { manager, adoptions, listAllAnnotations } = createManager({
+        annotations: [annotation("a")],
+      });
+      await manager.load();
+
+      adoptions.value++;
+
+      await vi.waitFor(() =>
+        expect(listAllAnnotations).toHaveBeenCalledTimes(2)
+      );
     });
   });
 

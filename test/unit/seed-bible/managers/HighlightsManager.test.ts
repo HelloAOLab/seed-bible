@@ -12,6 +12,8 @@ import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/Logi
 import {
   createInMemoryRecordStore,
   LOCAL_OWNER,
+  pendingRow,
+  syncedRow,
   type OfflineRecordStore,
 } from "@packages/seed-bible/seed-bible/managers/OfflineRecordStore";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
@@ -1393,12 +1395,15 @@ describe("HighlightsManager", () => {
   });
 
   describe("listAllHighlights()", () => {
-    it("returns nothing when signed out — there is no record to read", async () => {
+    it("returns nothing when signed out with no local storage", async () => {
       login.userId.value = null;
       const listAllData = vi.spyOn(os, "listAllData");
       const manager = createHighlightsManager(os, login);
 
-      expect(await manager.listAllHighlights()).toEqual([]);
+      expect(await manager.listAllHighlights()).toEqual({
+        items: [],
+        complete: true,
+      });
       expect(listAllData).not.toHaveBeenCalled();
     });
 
@@ -1423,7 +1428,7 @@ describe("HighlightsManager", () => {
       });
       const manager = createHighlightsManager(os, login);
 
-      expect(await manager.listAllHighlights()).toEqual([
+      expect((await manager.listAllHighlights()).items).toEqual([
         {
           translationId: "BSB",
           bookId: "GEN",
@@ -1464,9 +1469,9 @@ describe("HighlightsManager", () => {
       });
       const manager = createHighlightsManager(os, login);
 
-      const result = await manager.listAllHighlights();
-      expect(result).toHaveLength(1);
-      expect(result[0]?.bookId).toBe("GEN");
+      const { items } = await manager.listAllHighlights();
+      expect(items).toHaveLength(1);
+      expect(items[0]?.bookId).toBe("GEN");
     });
 
     it("skips a highlights record whose payload is malformed", async () => {
@@ -1482,10 +1487,99 @@ describe("HighlightsManager", () => {
       });
       const manager = createHighlightsManager(os, login);
 
-      const result = await manager.listAllHighlights();
-      expect(result).toHaveLength(1);
-      expect(result[0]?.chapterNumber).toBe(2);
+      const { items } = await manager.listAllHighlights();
+      expect(items).toHaveLength(1);
+      expect(items[0]?.chapterNumber).toBe(2);
       expect(warnSpy).toHaveBeenCalled();
+    });
+
+    it("lists the highlights saved on this device while signed out", async () => {
+      login.userId.value = null;
+      const listAllData = vi.spyOn(os, "listAllData");
+      const manager = createManager();
+      await manager.highlightVerse("BSB", "GEN", 1, {
+        colorId: "color-1",
+        verse: 2,
+      });
+
+      const result = await manager.listAllHighlights();
+
+      expect(result).toEqual({
+        items: [
+          {
+            translationId: "BSB",
+            bookId: "GEN",
+            chapterNumber: 1,
+            highlight: { colorId: "color-1", verse: 2 },
+          },
+        ],
+        complete: true,
+      });
+      expect(listAllData).not.toHaveBeenCalled();
+    });
+
+    it("lists this device's highlights offline instead of failing", async () => {
+      const listAllData = vi.spyOn(os, "listAllData");
+      const manager = createManager();
+      window.dispatchEvent(new Event("offline"));
+      await manager.highlightVerse("BSB", "JHN", 3, {
+        colorId: "color-2",
+        verse: 16,
+      });
+
+      const result = await manager.listAllHighlights();
+
+      expect(result.items.map((h) => h.highlight.verse)).toEqual([16]);
+      expect(result.complete).toBe(false);
+      expect(listAllData).not.toHaveBeenCalled();
+      window.dispatchEvent(new Event("online"));
+      manager.sync.dispose();
+    });
+
+    it("falls back to this device's highlights when the server can't be read", async () => {
+      vi.spyOn(os, "listAllData").mockRejectedValue(new Error("network"));
+      await store.put(
+        syncedRow("user-1", "highlights:BSB/GEN/1", "highlights:BSB/GEN/1", {
+          highlights: [{ colorId: "color-1", verse: 4 }],
+        })
+      );
+      const manager = createManager();
+
+      const result = await manager.listAllHighlights();
+
+      expect(result.items.map((h) => h.highlight.verse)).toEqual([4]);
+      expect(result.complete).toBe(false);
+    });
+
+    it("shows an unsent change over the server's copy of that chapter", async () => {
+      const address = "highlights:BSB/GEN/1";
+      vi.spyOn(os, "listAllData").mockResolvedValue({
+        success: true,
+        items: [
+          {
+            address,
+            data: { highlights: [{ colorId: "color-1", verse: 1 }] },
+          },
+        ],
+      });
+      const manager = createManager();
+      await flushPromises();
+      await store.put(
+        pendingRow({
+          owner: "user-1",
+          address,
+          collection: address,
+          payload: { highlights: [{ colorId: "color-2", verse: 9 }] },
+          base: { highlights: [{ colorId: "color-1", verse: 1 }] },
+        })
+      );
+
+      const result = await manager.listAllHighlights();
+
+      expect(result.items.map((h) => h.highlight)).toEqual([
+        { colorId: "color-2", verse: 9 },
+      ]);
+      expect(result.complete).toBe(true);
     });
   });
 });

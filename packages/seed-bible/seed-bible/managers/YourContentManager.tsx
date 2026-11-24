@@ -1,12 +1,15 @@
 import {
   computed,
+  effect,
   signal,
+  untracked,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
 import type { Annotation, AnnotationsManager } from "./AnnotationsManager";
 import type { HighlightsManager, StoredHighlight } from "./HighlightsManager";
 import type { BibleDataManager } from "./BibleDataManager";
+import type { LoginManager } from "./LoginManager";
 import { extractContentText } from "./ChapterText";
 
 /**
@@ -43,6 +46,13 @@ export const CONTENT_FILTERS: ContentFilter[] = [
 /** How far a load has got. `error` keeps a failure from looking like "empty". */
 export type ContentLoadStatus = "idle" | "loading" | "ready" | "error";
 
+/**
+ * Where the loaded annotations and highlights came from. `device` means only
+ * what this device holds: always so signed out, and for a signed-in user when
+ * the server couldn't be read, in which case the lists may be incomplete.
+ */
+export type ContentSource = "account" | "device";
+
 export interface YourContentManager {
   /** Free-text filter typed into the search box. */
   query: Signal<string>;
@@ -53,6 +63,8 @@ export interface YourContentManager {
   /** Every highlight the user has, in record order. */
   highlights: ReadonlySignal<StoredHighlight[]>;
   status: ReadonlySignal<ContentLoadStatus>;
+  /** Where the last successful load's lists came from. */
+  source: ReadonlySignal<ContentSource>;
   /**
    * Loads annotations and highlights. Safe to call on every open: an
    * in-flight load is shared, and a completed one is reused unless `force`
@@ -108,6 +120,8 @@ export interface YourContentManager {
 export interface CreateYourContentManagerOptions {
   annotations: AnnotationsManager;
   highlights: HighlightsManager;
+  /** Followed so a change of account never leaves the last one's content up. */
+  login: Pick<LoginManager, "userId">;
   /**
    * Reads the chapters that highlighted verses live in. Only the two chapter
    * accessors are used, so tests can pass a narrower object.
@@ -143,6 +157,7 @@ export function createYourContentManager(
     annotations: annotationsManager,
     highlights: highlightsManager,
     bibleData,
+    login,
   } = options;
 
   const query = signal("");
@@ -150,10 +165,18 @@ export function createYourContentManager(
   const annotations = signal<Annotation[]>([]);
   const highlights = signal<StoredHighlight[]>([]);
   const status = signal<ContentLoadStatus>("idle");
+  const source = signal<ContentSource>("account");
 
   let inFlight: Promise<void> | null = null;
+  /**
+   * Bumped whenever the account changes. Work started under an earlier
+   * account checks it before publishing, so a response for the account that
+   * just signed out can never land on the screen of the one now using it.
+   */
+  let generation = 0;
 
   const runLoad = async (quiet: boolean): Promise<void> => {
+    const startedIn = generation;
     if (!quiet) {
       status.value = "loading";
     }
@@ -164,11 +187,23 @@ export function createYourContentManager(
         annotationsManager.listAllAnnotations(),
         highlightsManager.listAllHighlights(),
       ]);
+      if (startedIn !== generation) {
+        return;
+      }
 
-      annotations.value = sortAnnotationsByRecency(loadedAnnotations);
-      highlights.value = loadedHighlights;
+      annotations.value = sortAnnotationsByRecency(loadedAnnotations.items);
+      highlights.value = loadedHighlights.items;
+      source.value =
+        login.userId.peek() &&
+        loadedAnnotations.complete &&
+        loadedHighlights.complete
+          ? "account"
+          : "device";
       status.value = "ready";
     } catch (error) {
+      if (startedIn !== generation) {
+        return;
+      }
       console.error("Error loading your content:", error);
       if (!quiet) {
         status.value = "error";
@@ -184,10 +219,14 @@ export function createYourContentManager(
     if (alreadyLoaded && !loadOptions?.force) {
       return Promise.resolve();
     }
-    inFlight = runLoad(alreadyLoaded).finally(() => {
-      inFlight = null;
+    const run = runLoad(alreadyLoaded).finally(() => {
+      // A change of account may already have replaced this run.
+      if (inFlight === run) {
+        inFlight = null;
+      }
     });
-    return inFlight;
+    inFlight = run;
+    return run;
   };
 
   const removeAnnotation = (annotationId: string) => {
@@ -262,7 +301,7 @@ export function createYourContentManager(
     return texts;
   };
 
-  const runVerseTextRead = async (): Promise<void> => {
+  const runVerseTextRead = async (startedIn: number): Promise<void> => {
     // One entry per distinct chapter: several highlights in one chapter cost
     // one read between them.
     const groups = new Map<string, StoredHighlight[]>();
@@ -289,6 +328,9 @@ export function createYourContentManager(
           })
         )
       );
+      if (startedIn !== generation) {
+        return;
+      }
       const merged = new Map(verseText.value);
       for (const result of results) {
         for (const [key, text] of result) {
@@ -309,16 +351,69 @@ export function createYourContentManager(
       return verseTextRun;
     }
     isReadingVerseText.value = true;
-    verseTextRun = runVerseTextRead()
+    const startedIn = generation;
+    const run: Promise<void> = runVerseTextRead(startedIn)
       .then(() => {
-        verseTextDone = true;
+        if (startedIn === generation) {
+          verseTextDone = true;
+        }
       })
       .finally(() => {
-        verseTextRun = null;
-        isReadingVerseText.value = false;
+        if (verseTextRun === run) {
+          verseTextRun = null;
+          isReadingVerseText.value = false;
+        }
       });
-    return verseTextRun;
+    verseTextRun = run;
+    return run;
   };
+
+  // A different account (or none) has different content. Whatever the last
+  // one had is cleared at once rather than left up behind a quiet refresh —
+  // a refresh that failed would otherwise keep the previous account's notes
+  // on screen for whoever is using the device now.
+  let lastOwner = login.userId.peek();
+  effect(() => {
+    const owner = login.userId.value;
+    if (owner === lastOwner) {
+      return;
+    }
+    lastOwner = owner;
+    generation++;
+    inFlight = null;
+    annotations.value = [];
+    highlights.value = [];
+    verseText.value = new Map();
+    verseTextDone = false;
+    verseTextRun = null;
+    isReadingVerseText.value = false;
+    // Back to idle so the reload shows as loading, not as an empty list.
+    const wasOpened = status.peek() !== "idle";
+    status.value = "idle";
+    if (wasOpened) {
+      void load();
+    }
+  });
+
+  // Signed-out content joins the account only once the "add to your
+  // account?" prompt is answered, after the reload above has already run.
+  const adoptionCount = () =>
+    annotationsManager.sync.adoptions.value +
+    highlightsManager.sync.adoptions.value;
+  let seenAdoptions = untracked(adoptionCount);
+  effect(() => {
+    const count = adoptionCount();
+    if (count === seenAdoptions) {
+      return;
+    }
+    seenAdoptions = count;
+    if (status.peek() === "idle") {
+      return;
+    }
+    // A load already running may have read the device before the adoption
+    // moved anything, so wait it out and read again.
+    void (inFlight ?? Promise.resolve()).then(() => load({ force: true }));
+  });
 
   const removeHighlight = (highlight: StoredHighlight) => {
     const key = highlightKey(highlight);
@@ -346,6 +441,7 @@ export function createYourContentManager(
     annotations: computed(() => annotations.value),
     highlights: computed(() => highlights.value),
     status: computed(() => status.value),
+    source: computed(() => source.value),
     load,
     removeAnnotation,
     restoreAnnotation,

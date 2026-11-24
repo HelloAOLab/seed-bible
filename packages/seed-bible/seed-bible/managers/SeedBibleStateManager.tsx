@@ -1102,6 +1102,7 @@ export function createSeedBibleState(
     annotations,
     highlights,
     bibleData: data,
+    login,
   });
   const sessions = createSessionsManager(
     os,

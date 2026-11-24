@@ -125,6 +125,18 @@ export interface ServerRecord<T> {
   payload: T;
 }
 
+/** Everything an owner has, for screens that list it all at once. */
+export interface ListAllResult<T> {
+  items: T[];
+  /**
+   * False when a signed-in account's server copy couldn't be read (offline,
+   * or the request failed), so `items` is only what this device holds and may
+   * be missing records it has never seen. Always true signed out: the device
+   * is the only place that content lives.
+   */
+  complete: boolean;
+}
+
 /**
  * What a feature has to say about its records for the engine to sync them.
  * One object per feature; the engine never imports feature code.
@@ -153,6 +165,9 @@ export interface OfflineRecordStore<T> {
     owner: string,
     collection: string
   ): Promise<StoredRecord<T>[]>;
+
+  /** Every row an owner has, across all collections, tombstones included. */
+  listForOwner(owner: string): Promise<StoredRecord<T>[]>;
 
   /** One row, or null if this device has never seen that record. */
   get(owner: string, address: string): Promise<StoredRecord<T> | null>;
@@ -297,6 +312,47 @@ export function pendingRow<T>({
     pendingOp: payload === null ? "delete" : "upsert",
     attempts: 0,
   };
+}
+
+/**
+ * The records an owner has, combining what the server listed with what this
+ * device holds.
+ *
+ * With no server list (signed out, offline, or the read failed) the device is
+ * all there is, so every live local row counts. With one, the server is the
+ * truth except where a local row still has a change to push: that change is
+ * newer than anything the server holds, so a pending upsert replaces the
+ * server's copy and a pending delete hides it. A synced local row the server
+ * no longer lists was deleted elsewhere and is left out.
+ */
+export function mergeServerWithLocal<T>(
+  server: ServerRecord<T>[] | null,
+  local: StoredRecord<T>[]
+): ServerRecord<T>[] {
+  if (!server) {
+    return local
+      .filter(
+        (row): row is StoredRecord<T> & { payload: T } =>
+          !row.deleted && row.payload !== null
+      )
+      .map((row) => ({ address: row.address, payload: row.payload }));
+  }
+
+  const byAddress = new Map(server.map((record) => [record.address, record]));
+  for (const row of local) {
+    if (!row.pendingOp) {
+      continue;
+    }
+    if (row.deleted || row.payload === null) {
+      byAddress.delete(row.address);
+    } else {
+      byAddress.set(row.address, {
+        address: row.address,
+        payload: row.payload,
+      });
+    }
+  }
+  return [...byAddress.values()];
 }
 
 /**
@@ -469,6 +525,20 @@ export function createIndexedDbRecordStore<T>(
     return rows as StoredRecord<T>[];
   };
 
+  const listForOwner = async (owner: string): Promise<StoredRecord<T>[]> => {
+    const transaction = await connection.transaction(RECORDS_STORE, "readonly");
+    // IndexedDB orders every array after every string, so `[owner, []]` sorts
+    // after `[owner, <any collection>]` and this range spans all of them. Reusing
+    // the collection index this way avoids a schema bump for an owner index.
+    const rows = await requestToPromise(
+      transaction
+        .objectStore(RECORDS_STORE)
+        .index(COLLECTION_INDEX)
+        .getAll(IDBKeyRange.bound([owner], [owner, []]))
+    );
+    return rows as StoredRecord<T>[];
+  };
+
   const get = async (
     owner: string,
     address: string
@@ -622,6 +692,7 @@ export function createIndexedDbRecordStore<T>(
 
   return {
     listForCollection,
+    listForOwner,
     get,
     put,
     delete: deleteRow,
@@ -808,6 +879,10 @@ export function createInMemoryRecordStore<T>(): OfflineRecordStore<T> {
 
   return {
     listForCollection,
+
+    async listForOwner(owner) {
+      return [...rows.values()].filter((row) => row.owner === owner);
+    },
 
     async get(owner, address) {
       return rows.get(recordKey(owner, address)) ?? null;

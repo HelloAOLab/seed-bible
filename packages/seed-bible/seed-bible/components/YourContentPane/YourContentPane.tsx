@@ -54,6 +54,8 @@ import { useScrollEdgeFade } from "../useScrollEdgeFade";
 import { useHorizontalScroll } from "../useHorizontalScroll";
 import { UserImagesGrid } from "./UserImages";
 import { CustomizationCard } from "../CustomizationEditPane/CustomizationCard";
+import { EmptyState } from "../EmptyState/EmptyState";
+import "../visuallyHidden.inline.css";
 import "./YourContentPane.css";
 import { Button } from "../Button/Button";
 
@@ -61,6 +63,20 @@ export const YOUR_CONTENT_PANE_ID = "your-content-pane";
 
 /** How many items each section shows before "See all" opens the full list. */
 const PREVIEW_LIMIT = 3;
+
+/**
+ * Sections whose content is stored only on an account, so a signed-out user
+ * has none of it. Annotations and highlights aren't here: those are kept on
+ * the device until there is an account to add them to.
+ */
+const ACCOUNT_ONLY_SECTIONS: ReadonlySet<ContentFilter> = new Set([
+  "saves",
+  "bookmarks",
+  "playlists",
+  "reading-plans",
+  "branding",
+  "images",
+]);
 
 export interface YourContentScreenProps {
   state: SeedBibleState;
@@ -745,6 +761,74 @@ function readingPlanStatusLabel(
   });
 }
 
+function SignInButton(props: { state: SeedBibleState }) {
+  const { t } = useI18n();
+  const signIn = async () => {
+    try {
+      await props.state.login.login();
+    } catch (error) {
+      console.error("Sign-in failed:", error);
+    }
+  };
+  return (
+    <Button
+      variant="primary"
+      shape="pill"
+      className="sb-content-sign-in"
+      onClick={() => void signIn()}
+    >
+      {t("log-in", { defaultValue: "Log in" })}
+    </Button>
+  );
+}
+
+/**
+ * Says the list is only what this device holds: for a signed-out reader,
+ * with a way to sign in; for a signed-in one whose account couldn't be
+ * reached, with no action, since there is nothing to do but reconnect.
+ */
+function DeviceContentCard(props: {
+  state: SeedBibleState;
+  signedIn: boolean;
+}) {
+  const { t } = useI18n();
+  return (
+    <section
+      className="sb-content-device-card"
+      aria-label={t("your-content-device-card-label", {
+        defaultValue: "Where this content is saved",
+      })}
+    >
+      <span className="sb-content-device-card-icon" aria-hidden="true">
+        <MaterialIcon>{props.signedIn ? "cloud_off" : "devices"}</MaterialIcon>
+      </span>
+      <div className="sb-content-device-card-text">
+        <p className="sb-content-device-card-title">
+          {props.signedIn
+            ? t("your-content-device-only-offline-title", {
+                defaultValue: "Showing content saved on this device",
+              })
+            : t("your-content-device-only-title", {
+                defaultValue: "Saved on this device only",
+              })}
+        </p>
+        <p className="sb-content-device-card-message">
+          {props.signedIn
+            ? t("your-content-device-only-offline", {
+                defaultValue:
+                  "Connect to the internet to see everything in your account.",
+              })
+            : t("your-content-device-only", {
+                defaultValue:
+                  "Sign in to back up your notes and highlights, and to use bookmarks, saves, playlists and reading plans.",
+              })}
+        </p>
+      </div>
+      {props.signedIn ? null : <SignInButton state={props.state} />}
+    </section>
+  );
+}
+
 /* ------------------------------------------------------------------ screen */
 
 /**
@@ -819,6 +903,7 @@ export function YourContentPane(props: YourContentScreenProps) {
 
   const filter = yourContent.filter.value;
   const status = yourContent.status.value;
+  const source = yourContent.source.value;
   const rawQuery = yourContent.query.value;
 
   const needle = useComputed(() =>
@@ -974,11 +1059,21 @@ export function YourContentPane(props: YourContentScreenProps) {
     bookmarksLoad.value === "failed" &&
     sectionCounts.bookmarks === 0;
 
+  // A signed-out user on a section that needs an account gets the sign-in
+  // prompt in place of that section's empty message.
+  const needsAccount = !userId && ACCOUNT_ONLY_SECTIONS.has(filter);
+  // A signed-out list is always only this device's, so it says so wherever
+  // it shows one; a signed-in list only once the account couldn't be reached.
+  const showDeviceCard = userId
+    ? status === "ready" && source === "device"
+    : !needsAccount;
+
   const nothingToShow =
     status === "ready" &&
     !stillSearching &&
     !bookmarksPending &&
     !bookmarksFailed &&
+    !needsAccount &&
     (filter === "all"
       ? Object.values(sectionCounts).every((count) => count === 0)
       : sectionCounts[filter] === 0);
@@ -1025,12 +1120,84 @@ export function YourContentPane(props: YourContentScreenProps) {
             "Images you upload as covers for playlists and reading plans will show up here.",
         });
       case "all":
-        return t("your-content-empty", {
-          defaultValue:
-            "Notes, highlights, bookmarks, saves, playlists and reading plans you make will show up here.",
-        });
+        return userId
+          ? t("your-content-empty", {
+              defaultValue:
+                "Notes, highlights, bookmarks, saves, playlists and reading plans you make will show up here.",
+            })
+          : t("your-content-empty-signed-out", {
+              defaultValue: "Notes and highlights you make will show up here.",
+            });
     }
   };
+
+  const needsAccountMessage = (): { title: string; hint: string } => {
+    switch (filter) {
+      case "saves":
+        return {
+          title: t("your-content-needs-account-saves", {
+            defaultValue: "Saves need an account",
+          }),
+          hint: t("your-content-sign-in-saves", {
+            defaultValue:
+              "Sign in to save passages and find them again on any device.",
+          }),
+        };
+      case "playlists":
+        return {
+          title: t("your-content-needs-account-playlists", {
+            defaultValue: "Playlists need an account",
+          }),
+          hint: t("your-content-sign-in-playlists", {
+            defaultValue:
+              "Sign in to create playlists and play them on any device.",
+          }),
+        };
+      case "reading-plans":
+        return {
+          title: t("your-content-needs-account-reading-plans", {
+            defaultValue: "Reading plans need an account",
+          }),
+          hint: t("your-content-sign-in-reading-plans", {
+            defaultValue:
+              "Sign in to create reading plans and follow them on any device.",
+          }),
+        };
+      case "branding":
+        return {
+          title: t("your-content-needs-account-branding", {
+            defaultValue: "Custom branding needs an account",
+          }),
+          hint: t("your-content-sign-in-branding", {
+            defaultValue:
+              "Sign in to create custom branding for your playlists and reading plans.",
+          }),
+        };
+      case "images":
+        return {
+          title: t("your-content-needs-account-images", {
+            defaultValue: "Images need an account",
+          }),
+          hint: t("your-content-sign-in-images", {
+            defaultValue:
+              "Sign in to upload covers for your playlists and reading plans.",
+          }),
+        };
+      case "bookmarks":
+      default:
+        return {
+          title: t("your-content-needs-account-bookmarks", {
+            defaultValue: "Bookmarks need an account",
+          }),
+          hint: t("your-content-sign-in-bookmarks", {
+            defaultValue:
+              "Sign in to place bookmarks and pick up where you left off on any device.",
+          }),
+        };
+    }
+  };
+
+  const needsAccountCopy = needsAccount ? needsAccountMessage() : null;
 
   return (
     <div className="sb-content-screen">
@@ -1096,22 +1263,35 @@ export function YourContentPane(props: YourContentScreenProps) {
           <span className="sb-content-toolbar-divider" aria-hidden="true" />
 
           <div className="sb-content-chips" role="tablist" ref={chipsRef}>
-            {CONTENT_FILTERS.map((value) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={filter === value}
-                className={`sb-content-chip${
-                  filter === value ? " sb-content-chip-active" : ""
-                }`}
-                onClick={() => {
-                  yourContent.filter.value = value;
-                }}
-              >
-                {chipLabel(value)}
-              </button>
-            ))}
+            {CONTENT_FILTERS.map((value) => {
+              const locked = !userId && ACCOUNT_ONLY_SECTIONS.has(value);
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === value}
+                  className={`sb-content-chip${
+                    filter === value ? " sb-content-chip-active" : ""
+                  }${locked ? " sb-content-chip-locked" : ""}`}
+                  onClick={() => {
+                    yourContent.filter.value = value;
+                  }}
+                >
+                  {locked ? (
+                    <MaterialIcon aria-hidden="true">lock</MaterialIcon>
+                  ) : null}
+                  {chipLabel(value)}
+                  {locked ? (
+                    <span className="sb-visually-hidden">
+                      {t("your-content-chip-needs-account", {
+                        defaultValue: "(needs an account)",
+                      })}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -1158,8 +1338,23 @@ export function YourContentPane(props: YourContentScreenProps) {
           </div>
         ) : null}
 
+        {showDeviceCard ? (
+          <DeviceContentCard state={state} signedIn={!!userId} />
+        ) : null}
+
         {nothingToShow ? (
           <p className="sb-content-status">{emptyMessage()}</p>
+        ) : null}
+
+        {needsAccountCopy ? (
+          <EmptyState
+            size="panel"
+            className="sb-content-needs-account"
+            title={needsAccountCopy.title}
+            action={<SignInButton state={state} />}
+          >
+            {needsAccountCopy.hint}
+          </EmptyState>
         ) : null}
 
         {showing("annotations") && visibleAnnotations.length > 0 ? (

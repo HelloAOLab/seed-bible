@@ -655,6 +655,26 @@ describe("ProfilePane", () => {
     expect(login).toHaveBeenCalledTimes(1);
   });
 
+  // Highlights and notes made signed out are kept on the device, so a
+  // signed-out visitor needs a way in to see and manage them.
+  it("opens the your content screen for a signed-out visitor", () => {
+    const { state } = createState({ userId: null, name: null, email: null });
+    renderPane(state);
+
+    const row = Array.from(container.querySelectorAll(".sb-profile-row")).find(
+      (el) => el.textContent?.includes("Your content")
+    ) as HTMLButtonElement | undefined;
+    expect(row?.textContent).toContain(
+      "Highlights and notes saved on this device"
+    );
+
+    act(() => {
+      row?.click();
+    });
+
+    expect(onOpenYourContent).toHaveBeenCalledTimes(1);
+  });
+
   it("invites the user to start a plan when they have none in progress", () => {
     const { state } = createState();
     renderPane(state);

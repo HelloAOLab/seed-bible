@@ -2,6 +2,8 @@
    sets these custom properties on it instead of overriding the rules:
    - `--sb-empty-state-color`: the text, for a screen with its own muted grey.
    - `--sb-empty-state-font-size`: the text size, for a dense or roomy list.
+   - `--sb-empty-state-title-font-size`: the panel title's size, for a screen
+     whose empty state leads with a bigger headline.
    - `--sb-empty-state-padding`: the room around it. An inline note has none,
      since the list or section it sits in already pads it.
    - `--sb-empty-state-background`, `-border`, `-radius`: for one that sits in
@@ -41,7 +43,7 @@
 }
 
 .sb-empty-state-panel .sb-empty-state-title {
-  font-size: var(--sb-font-size-15);
+  font-size: var(--sb-empty-state-title-font-size, var(--sb-font-size-15));
 }
 
 .sb-empty-state-panel .sb-empty-state-hint {

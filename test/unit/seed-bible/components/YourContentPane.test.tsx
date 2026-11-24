@@ -15,7 +15,10 @@ import {
 import type { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { Playlist } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
-import type { ContentLoadStatus } from "@packages/seed-bible/seed-bible/managers/YourContentManager";
+import type {
+  ContentLoadStatus,
+  ContentSource,
+} from "@packages/seed-bible/seed-bible/managers/YourContentManager";
 import type { GalleryPhoto } from "@packages/seed-bible/seed-bible/managers/UserGalleryManager";
 import type { SeedBibleCustomization } from "@packages/seed-bible/seed-bible/managers/CustomizationsManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
@@ -196,6 +199,8 @@ interface StateOptions {
   highlightVerseText?: Record<string, string>;
   isReadingHighlightVerseText?: boolean;
   status?: ContentLoadStatus;
+  /** Where the loaded annotations and highlights came from. */
+  source?: ContentSource;
   /** Makes the server delete fail, so the optimistic removal has to roll back. */
   deleteError?: Error;
   /** Full plans; the screen reads them as the list and as the loaded plans. */
@@ -243,6 +248,7 @@ function createState(options: StateOptions = {}) {
   const removeSave = vi.fn(async (_id: string) => {});
   const login = {
     userId: signal(options.userId === undefined ? "user-1" : options.userId),
+    login: vi.fn(async () => undefined),
   };
   // Bookmarks run on the real manager; the records server under it is the
   // one boundary faked.
@@ -368,6 +374,7 @@ function createState(options: StateOptions = {}) {
       annotations: signal(options.annotations ?? []),
       highlights: signal(options.highlights ?? []),
       status: signal(options.status ?? "ready"),
+      source: signal(options.source ?? "account"),
       load,
       removeAnnotation,
       restoreAnnotation,
@@ -1301,6 +1308,130 @@ describe("YourContentPane", () => {
     expect(
       container.querySelector(".sb-content-status")?.textContent
     ).toContain("will show up here");
+  });
+
+  describe("signed out", () => {
+    const deviceCard = () => container.querySelector(".sb-content-device-card");
+    const needsAccount = () =>
+      container.querySelector(".sb-content-needs-account");
+    const chip = (label: string) =>
+      Array.from(
+        container.querySelectorAll<HTMLButtonElement>(".sb-content-chip")
+      ).find((el) => el.textContent?.includes(label))!;
+
+    it("shows the notes and highlights saved on this device, and says that's where they are", () => {
+      const { state } = createState({
+        userId: null,
+        source: "device",
+        annotations: [annotation("a", "<p>my note</p>")],
+        highlights: [highlight("JHN")],
+      });
+      renderPane(state);
+
+      expect(sectionTitles()).toEqual(["Annotations", "Highlights"]);
+      expect(deviceCard()?.textContent).toContain("Saved on this device only");
+    });
+
+    it("signs in from the device card", () => {
+      const { state } = createState({ userId: null, source: "device" });
+      renderPane(state);
+
+      act(() => {
+        deviceCard()!
+          .querySelector<HTMLButtonElement>(".sb-content-sign-in")!
+          .click();
+      });
+
+      expect(state.login.login).toHaveBeenCalledTimes(1);
+    });
+
+    it("says what will show up when the device has nothing yet", () => {
+      const { state } = createState({ userId: null, source: "device" });
+      renderPane(state);
+
+      expect(container.querySelector(".sb-content-status")?.textContent).toBe(
+        "Notes and highlights you make will show up here."
+      );
+    });
+
+    it("marks the sections that need an account, and only those", () => {
+      const { state } = createState({ userId: null, source: "device" });
+      renderPane(state);
+
+      const locked = Array.from(
+        container.querySelectorAll(".sb-content-chip-locked")
+      ).map((el) => el.textContent);
+      expect(locked).toEqual([
+        "lockBookmarks(needs an account)",
+        "lockSaves(needs an account)",
+        "lockPlaylists(needs an account)",
+        "lockReading plans(needs an account)",
+        "lockBranding(needs an account)",
+        "lockImages(needs an account)",
+      ]);
+    });
+
+    it("says a section needs an account, not that it's empty, and signs in from there", () => {
+      const { state } = createState({ userId: null, source: "device" });
+      renderPane(state);
+
+      act(() => {
+        chip("Bookmarks").click();
+      });
+
+      expect(needsAccount()?.textContent).toContain(
+        "Bookmarks need an account"
+      );
+      expect(container.textContent).not.toContain("No bookmarks yet");
+      // The section's own prompt replaces the card, so there is one button.
+      expect(deviceCard()).toBeNull();
+      act(() => {
+        needsAccount()!
+          .querySelector<HTMLButtonElement>(".sb-content-sign-in")!
+          .click();
+      });
+      expect(state.login.login).toHaveBeenCalledTimes(1);
+    });
+
+    it("says what will show up on a section the device keeps", () => {
+      const { state, filter } = createState({ userId: null, source: "device" });
+      renderPane(state);
+
+      act(() => {
+        filter.value = "annotations";
+      });
+
+      expect(needsAccount()).toBeNull();
+      expect(deviceCard()).not.toBeNull();
+      expect(
+        container.querySelector(".sb-content-status")?.textContent
+      ).toContain("Notes you write will show up here.");
+    });
+  });
+
+  it("says it's showing this device's content when the account couldn't be reached", () => {
+    const { state } = createState({
+      source: "device",
+      annotations: [annotation("a", "<p>note</p>")],
+    });
+    renderPane(state);
+
+    expect(
+      container.querySelector(".sb-content-device-card")?.textContent
+    ).toBe(
+      "cloud_offShowing content saved on this deviceConnect to the internet to see everything in your account."
+    );
+    expect(container.querySelector(".sb-content-sign-in")).toBeNull();
+    expect(container.querySelector(".sb-content-chip-locked")).toBeNull();
+  });
+
+  it("adds no device card when the account's content loaded", () => {
+    const { state } = createState({
+      annotations: [annotation("a", "<p>note</p>")],
+    });
+    renderPane(state);
+
+    expect(container.querySelector(".sb-content-device-card")).toBeNull();
   });
 
   it("says a failed load failed, rather than showing an empty screen", () => {
