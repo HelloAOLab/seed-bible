@@ -4317,8 +4317,8 @@ export function createSeedBibleState(
         content: () => <NotificationsFeed state={state} />,
         mobileSheet: true,
         useCasualOSApp: false,
-        // The X and the backdrop. Escape and Back reach `closeFeed` by other
-        // routes: the list listens for Escape, and Back drops the URL param.
+        // The X, the backdrop and Escape. Back reaches `closeFeed` by
+        // dropping the URL param.
         onDismiss: () => notifications.closeFeed(),
       });
     } else if (!open && shown) {

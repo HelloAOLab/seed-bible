@@ -137,7 +137,9 @@ describe("NotificationsFeed", () => {
     ]);
     expect(unreadRows()).toHaveLength(3);
     // The dot is drawn by CSS; screen readers get a word instead.
-    expect(rows()[0]!.querySelector(".sr-only")?.textContent).toBe("New");
+    expect(rows()[0]!.querySelector(".sb-visually-hidden")?.textContent).toBe(
+      "New"
+    );
   });
 
   it("marks only what's arrived since the list was last opened", async () => {
@@ -154,7 +156,7 @@ describe("NotificationsFeed", () => {
     expect(unreadRows().map((row) => row.textContent)).toEqual([
       expect.stringContaining("Bob"),
     ]);
-    expect(rowFor("Ada")!.querySelector(".sr-only")).toBeNull();
+    expect(rowFor("Ada")!.querySelector(".sb-visually-hidden")).toBeNull();
   });
 
   describe("a friend request", () => {
@@ -348,47 +350,5 @@ describe("NotificationsFeed", () => {
     expect(rows()).toHaveLength(1);
     expect(text()).not.toContain("You're all caught up.");
     expect(button(container, "Log in")).toBeDefined();
-  });
-
-  describe("Escape", () => {
-    const pressEscape = () =>
-      act(() => {
-        document.dispatchEvent(
-          new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
-        );
-      });
-
-    it("closes the list", async () => {
-      await openFeed();
-
-      pressEscape();
-
-      expect(notifications.isFeedOpen.value).toBe(false);
-    });
-
-    it("leaves the list open while a profile opened from it is on top", async () => {
-      harness.server.requestFrom(ADA_ID);
-      await openFeed();
-      await vi.waitFor(() => expect(rowFor("Ada")).toBeDefined());
-      await click(
-        rowFor("Ada")!.querySelector<HTMLButtonElement>(
-          ".sb-friends-person-button"
-        ) ?? undefined
-      );
-
-      pressEscape();
-
-      expect(notifications.isFeedOpen.value).toBe(true);
-    });
-
-    it("stops listening once the list is gone", async () => {
-      await openFeed();
-      act(() => render(null, container));
-      act(() => notifications.openFeed());
-
-      pressEscape();
-
-      expect(notifications.isFeedOpen.value).toBe(true);
-    });
   });
 });

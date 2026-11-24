@@ -1,4 +1,5 @@
 import "./PushNotificationsCard.css";
+import "../visuallyHidden.inline.css";
 import type { ComponentChildren } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
 import type { PushNotificationsManager } from "../../managers/PushNotificationsManager";
@@ -143,7 +144,7 @@ export function PushNotificationsCard(props: {
             >
               ios_share
             </MaterialIcon>
-            <span className="sr-only">
+            <span className="sb-visually-hidden">
               {t("push-notifications-share-button", { defaultValue: "Share" })}
             </span>
             {t("onboarding.iosStepsPost", {

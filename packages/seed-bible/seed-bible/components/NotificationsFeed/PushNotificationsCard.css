@@ -1,7 +1,7 @@
 /*
  * The push notifications card at the top of the notifications list. Colours
  * come from the `--sb-*` theme variables, so it follows the theme
- * ThemeManager injects on `body`. Its buttons are the Friends screen's.
+ * ThemeManager injects on `body`.
  */
 .sb-push-card {
   display: flex;
@@ -10,7 +10,7 @@
   gap: 12px;
   padding: 12px 16px;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 12px;
+  border-radius: var(--sb-radius-lg);
   background: color-mix(in srgb, var(--sb-font-color), transparent 95%);
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
@@ -34,7 +34,7 @@
 
 .sb-push-card-title {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 700;
   line-height: 1.3;
 }
@@ -42,7 +42,7 @@
 .sb-push-card-body {
   margin: 0;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.4;
 }
 
@@ -55,7 +55,7 @@
 .sb-push-card-error {
   margin: 0;
   color: var(--sb-error-color, #d64545);
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   line-height: 1.4;
 }
 

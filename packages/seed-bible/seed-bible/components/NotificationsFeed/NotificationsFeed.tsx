@@ -1,5 +1,5 @@
 import "./NotificationsFeed.css";
-import { useEffect } from "preact/hooks";
+import "../visuallyHidden.inline.css";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import {
   describeNotification,
@@ -11,6 +11,8 @@ import {
 import { useI18n } from "../../i18n/I18nManager";
 import { MaterialIcon } from "../icons";
 import { Button } from "../Button/Button";
+import { EmptyState } from "../EmptyState/EmptyState";
+import { IconButton } from "../IconButton/IconButton";
 import { FriendRequestActions } from "../FriendsPane/FriendsPane";
 import { PersonButton } from "../FriendsPane/PersonCard";
 import { formatFeedTime } from "../TodayPane/SocialSection";
@@ -25,24 +27,8 @@ export const NOTIFICATIONS_MODAL_ID = "notifications";
  */
 export function NotificationsFeed(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { notifications, login, modals } = state;
+  const { notifications, login } = state;
   const { t } = useI18n();
-
-  // The modal host doesn't close modals on Escape, so the list does it for
-  // itself — but only while it's on top, so Escape over a profile opened from
-  // it doesn't close the list underneath.
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.key === "Escape" &&
-        modals.modals.peek().at(-1)?.id === NOTIFICATIONS_MODAL_ID
-      ) {
-        notifications.closeFeed();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
 
   const items = notifications.items.value;
 
@@ -51,13 +37,13 @@ export function NotificationsFeed(props: { state: SeedBibleState }) {
       <PushNotificationsCard push={state.pushNotifications} />
       {items.length > 1 ? (
         <div className="sb-notifications-feed-actions">
-          <button
-            type="button"
-            className="sb-notifications-text-button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => notifications.dismissAll()}
           >
             {t("notifications-dismiss-all", { defaultValue: "Dismiss all" })}
-          </button>
+          </Button>
         </div>
       ) : null}
       {items.length > 0 ? (
@@ -71,10 +57,13 @@ export function NotificationsFeed(props: { state: SeedBibleState }) {
           ))}
         </ul>
       ) : (
-        <p className="sb-notifications-empty">
-          <MaterialIcon aria-hidden="true">notifications</MaterialIcon>
+        <EmptyState
+          size="panel"
+          icon="notifications"
+          className="sb-notifications-empty"
+        >
           {t("notifications-empty", { defaultValue: "You're all caught up." })}
-        </p>
+        </EmptyState>
       )}
       {login.userId.value ? null : (
         <div className="sb-notifications-sign-in">
@@ -114,25 +103,22 @@ function NotificationRow(props: {
     >
       {/* The dot that marks it is decoration; this says it out loud. */}
       {isUnread ? (
-        <span className="sr-only">
+        <span className="sb-visually-hidden">
           {t("notification-new", { defaultValue: "New" })}
         </span>
       ) : null}
       <div className="sb-notifications-row-body">
         <NotificationBody notification={notification} state={state} />
       </div>
-      <button
-        type="button"
+      <IconButton
+        icon="close"
         className="sb-notifications-dismiss"
-        aria-label={t("dismiss-notification", {
+        label={t("dismiss-notification", {
           notification: describeNotification(notification, t),
           defaultValue: "Dismiss notification: {{notification}}",
         })}
-        title={t("dismiss", { defaultValue: "Dismiss" })}
         onClick={() => state.notifications.dismiss(notification.id)}
-      >
-        <MaterialIcon aria-hidden="true">close</MaterialIcon>
-      </button>
+      />
     </li>
   );
 }

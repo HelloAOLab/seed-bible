@@ -137,17 +137,45 @@ describe("the notifications modal", () => {
     await expectClosed(state);
   });
 
-  it("closes the list with Escape", async () => {
-    const state = await createTestSeedBibleState({ todayOpen: true });
-    await openList(state);
+  describe("Escape", () => {
+    // Where a real key press goes: an opening window takes focus.
+    const pressEscape = () =>
+      act(() => {
+        (document.activeElement ?? document.body).dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+        );
+      });
 
-    act(() => {
-      document.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
-      );
+    it("closes the list", async () => {
+      const state = await createTestSeedBibleState({ todayOpen: true });
+      await openList(state);
+
+      pressEscape();
+
+      await expectClosed(state);
     });
 
-    await expectClosed(state);
+    // A profile opened from a friend request is a window over the list.
+    it("closes only the window on top of the list", async () => {
+      const state = await createTestSeedBibleState({ todayOpen: true });
+      await openList(state);
+      act(() => {
+        state.modals.openModal({
+          id: "profile",
+          title: "Ada",
+          content: () => <p>Ada's profile</p>,
+          useCasualOSApp: false,
+        });
+      });
+      renderModals(state);
+
+      pressEscape();
+
+      expect(state.modals.modals.value.map((modal) => modal.id)).toEqual([
+        NOTIFICATIONS_MODAL_ID,
+      ]);
+      expect(state.notifications.isFeedOpen.value).toBe(true);
+    });
   });
 
   it("closes the list with Back", async () => {
