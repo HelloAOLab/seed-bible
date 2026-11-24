@@ -726,9 +726,14 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     };
   }, [isCompactReader, readingState]);
 
-  // Keyboard chapter navigation for the selected slot. Left/Right move between
-  // chapters (respecting text direction, like the swipe gesture and toolbar
-  // chevrons), and Up surfaces the search panel. Down is intentionally unbound.
+  // Keyboard shortcuts for the selected slot:
+  //   Up / Down  — scroll the reader
+  //   Left / Right — move between chapters (respects RTL)
+  // These shortcuts must not fire when the user is interacting with a widget
+  // that owns arrow-key semantics (menus, dialogs, the tutorial, toolbars,
+  // sliders). Those widgets either call event.preventDefault() themselves (so
+  // the defaultPrevented guard below catches them) or carry an ARIA role that
+  // the explicit closest() guard catches.
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -753,9 +758,26 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
-      if (event.key === "ArrowUp") {
+      // Don't fire when focus is inside a widget that uses arrow keys for its
+      // own navigation — dialogs (including the tutorial and floating panels),
+      // menus, toolbars, and sliders. Widgets that call event.preventDefault()
+      // are already stopped by the defaultPrevented check above; this guard
+      // covers the rest (e.g. the tutorial which has no arrow handler of its own).
+      if (
+        target?.closest(
+          '[role="dialog"], [role="menu"], [role="toolbar"], [role="slider"]'
+        )
+      ) {
+        return;
+      }
+
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        if (!scroller) return;
         event.preventDefault();
-        state.sidebar.openSearch();
+        scroller.scrollBy({
+          top: event.key === "ArrowDown" ? 120 : -120,
+          behavior: "smooth",
+        });
         return;
       }
 
@@ -790,7 +812,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [readingState, state, slot.id]);
+  }, [readingState, state, slot.id, scroller]);
 
   // Drop the inline transform on a translation change so the track falls back
   // to the stylesheet's centred rest (which flips for RTL). In `useEffect`

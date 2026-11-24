@@ -911,7 +911,21 @@ function renderChapterContent(
   sharedSession?: BibleReadingSession | null,
   verseSelectionEffects: VerseSelectionEffects = "default",
   prefersReducedMotionValue?: boolean,
-  hideHighlights = false
+  hideHighlights = false,
+  /**
+   * The verse number that owns tabIndex=0 (roving-tabindex pattern). When
+   * null the first verse in the chapter gets tabIndex=0 so the chapter is
+   * always reachable by Tab. All other verses get tabIndex=-1 so the whole
+   * chapter costs one Tab stop instead of one per verse.
+   */
+  rovingVerseNumber: number | null = null,
+  /**
+   * Verse numbers staged for selection via Shift+Arrow. These get the same
+   * visual highlight as selected verses but do NOT go into selectedVerses
+   * until the user confirms with Enter/Space, so the verse toolbar stays
+   * hidden while the selection is being built.
+   */
+  stagedVerseNums: ReadonlySet<number> = new Set()
 ) {
   if (!chapterData) {
     return null;
@@ -1217,6 +1231,10 @@ function renderChapterContent(
     );
   };
 
+  // Tracks whether the next verse call is the first one in the chapter so we
+  // can assign it tabIndex=0 when no specific rovingVerseNumber is set.
+  let isFirstVerse = true;
+
   // Renders a single verse's `<span class="sb-verse">`. The highlight background
   // is never painted here — an enclosing run wrapper (below) carries it and the
   // ribbon layer draws it behind the text. Verse decorations still apply here.
@@ -1228,12 +1246,13 @@ function renderChapterContent(
       translationId: chapterData.translation.id,
     };
     const verseFlare = getVerseFlare(value.number);
-    const isSelected = selectedVerses.some(
-      (v) =>
-        v.verse.number === value.number &&
-        v.bookId === chapterData.book.id &&
-        v.chapterNumber === chapterData.chapter.number
-    );
+    const isSelected =
+      selectedVerses.some(
+        (v) =>
+          v.verse.number === value.number &&
+          v.bookId === chapterData.book.id &&
+          v.chapterNumber === chapterData.chapter.number
+      ) || stagedVerseNums.has(value.number);
     const content = reorderFootnoteBeforeLineBreak(value.content);
     const segments = splitVerseIntoSegments(content);
     const hasPoetry = segments.some((s) => s.type === "poetry");
@@ -1268,6 +1287,15 @@ function renderChapterContent(
     const verseDecoratorStyle = {
       ...(decorationPresentation.style ?? {}),
     };
+
+    // Roving-tabindex: exactly one verse in the chapter has tabIndex=0 at a
+    // time. When rovingVerseNumber is null, the first verse gets it by
+    // default so the chapter always has one reachable Tab stop.
+    const verseIsRoving =
+      rovingVerseNumber != null
+        ? rovingVerseNumber === value.number
+        : isFirstVerse;
+    if (isFirstVerse) isFirstVerse = false;
 
     if (hasPoetry) {
       return (
@@ -1304,7 +1332,7 @@ function renderChapterContent(
             cursor: "pointer",
           }}
           role="button"
-          tabIndex={0}
+          tabIndex={verseIsRoving ? 0 : -1}
         >
           {segments.map((segment, segIndex) => {
             if (segment.type === "inline") {
@@ -1383,7 +1411,7 @@ function renderChapterContent(
           cursor: "pointer",
         }}
         role="button"
-        tabIndex={0}
+        tabIndex={verseIsRoving ? 0 : -1}
       >
         <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
           {renderVerseNumberOrIcon(value.number, verse, verseFlare)}
@@ -2443,6 +2471,195 @@ function ChapterContent(props: ChapterContentProps) {
       : [];
 
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Roving-tabindex state: the verse number whose span holds tabIndex=0.
+  // Null means "auto" — renderChapterContent gives it to the first verse.
+  const [rovingVerseNumber, setRovingVerseNumber] = useState<number | null>(
+    null
+  );
+
+  // Verse numbers staged by Shift+Arrow. They render highlighted (like
+  // selected) but do not enter selectedVerses until Enter confirms, so the
+  // verse toolbar stays hidden while the user is building the selection.
+  const [stagedVerseNums, setStagedVerseNums] = useState<ReadonlySet<number>>(
+    () => new Set()
+  );
+
+  // Reset to "auto-first" whenever the reader moves to a different chapter so
+  // the new chapter's first verse always starts as the Tab entry point.
+  useEffect(() => {
+    let lastChapterId = "";
+    return effect(() => {
+      const data = chapterData.value;
+      const id = data
+        ? `${data.translation.id}:${data.book.id}:${data.chapter.number}`
+        : "";
+      if (id !== lastChapterId) {
+        lastChapterId = id;
+        setRovingVerseNumber(null);
+        setStagedVerseNums(new Set());
+      }
+    });
+  }, []);
+
+  // Keyboard handler on the chapter content container. Handles:
+  //   Enter / Space       — confirm selection and open verse toolbar
+  //   Escape              — clear everything, keep focus on the verse
+  //   ArrowUp/Down        — move between verses
+  //   Shift+ArrowUp/Down  — build a staged multi-verse selection without
+  //                         opening the toolbar; Enter then confirms it
+  const handleChapterKeyDown = (event: KeyboardEvent) => {
+    const target = event.target as HTMLElement | null;
+    const verseEl = target?.closest<HTMLElement>(
+      ".sb-verse[data-verse-number]"
+    );
+    if (!verseEl) return;
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setStagedVerseNums(new Set());
+      selectedVerses.value = [];
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      const data = chapterData.value;
+      if (!data) return;
+
+      // If the user built a staged selection with Shift+Arrow, commit all
+      // staged verses at once and open the toolbar. Skip verses already in
+      // selectedVerses so we don't toggle them back off.
+      if (stagedVerseNums.size > 0) {
+        const content = contentRef.current;
+        for (const num of stagedVerseNums) {
+          const alreadySelected = selectedVerses.value.some(
+            (v) =>
+              v.verse.number === num &&
+              v.bookId === data.book.id &&
+              v.chapterNumber === data.chapter.number
+          );
+          if (alreadySelected) continue;
+          const verseData = data.chapter.content.find(
+            (e): e is ChapterVerse =>
+              !!e &&
+              typeof e === "object" &&
+              (e as { type?: unknown }).type === "verse" &&
+              (e as ChapterVerse).number === num
+          );
+          if (!verseData) continue;
+          const verse: BibleSelectedVerse = {
+            bookId: data.book.id,
+            chapterNumber: data.chapter.number,
+            verse: verseData,
+            translationId: data.translation.id,
+          };
+          const el = content?.querySelector<HTMLElement>(
+            `.sb-verse[data-verse-number="${num}"]`
+          );
+          const rect = el?.getBoundingClientRect() ?? new DOMRect();
+          selectVerse(verse, rect.left + rect.width / 2, rect.top);
+          onHostVerseClick(verse);
+        }
+        setStagedVerseNums(new Set());
+        requestAnimationFrame(() => {
+          document
+            .querySelector<HTMLElement>(
+              ".sb-verse-toolbar button:not([disabled])"
+            )
+            ?.focus();
+        });
+        return;
+      }
+
+      const verseNum = parseInt(verseEl.dataset.verseNumber ?? "", 10);
+      if (isNaN(verseNum)) return;
+      const verseData = data.chapter.content.find(
+        (e): e is ChapterVerse =>
+          !!e &&
+          typeof e === "object" &&
+          (e as { type?: unknown }).type === "verse" &&
+          (e as ChapterVerse).number === verseNum
+      );
+      if (!verseData) return;
+      const verse: BibleSelectedVerse = {
+        bookId: data.book.id,
+        chapterNumber: data.chapter.number,
+        verse: verseData,
+        translationId: data.translation.id,
+      };
+      // Anchor the verse toolbar at the top-centre of the focused verse span,
+      // the same way a mouse click passes event.clientX / clientY.
+      const rect = verseEl.getBoundingClientRect();
+      const wasSelected = selectedVerses.value.some(
+        (v) =>
+          v.verse.number === verseNum &&
+          v.bookId === data.book.id &&
+          v.chapterNumber === data.chapter.number
+      );
+      selectVerse(verse, rect.left + rect.width / 2, rect.top);
+      if (!wasSelected) {
+        onHostVerseClick(verse);
+      }
+      // Move focus into the verse toolbar once it renders on the next frame.
+      requestAnimationFrame(() => {
+        document
+          .querySelector<HTMLElement>(
+            ".sb-verse-toolbar button:not([disabled])"
+          )
+          ?.focus();
+      });
+      return;
+    }
+
+    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+      event.preventDefault();
+      const content = contentRef.current;
+      if (!content) return;
+      const verses = Array.from(
+        content.querySelectorAll<HTMLElement>(".sb-verse[data-verse-number]")
+      );
+      const currentIdx = verses.indexOf(verseEl);
+      const nextIdx =
+        event.key === "ArrowDown" ? currentIdx + 1 : currentIdx - 1;
+      if (nextIdx < 0 || nextIdx >= verses.length) return;
+
+      const nextEl = verses[nextIdx]!;
+      nextEl.focus();
+
+      if (event.shiftKey) {
+        // Stage both the anchor verse and the destination. Staged verses are
+        // highlighted visually but do not go into selectedVerses — the toolbar
+        // stays hidden until Enter confirms the selection.
+        const currentNum = parseInt(verseEl.dataset.verseNumber ?? "", 10);
+        const nextNum = parseInt(nextEl.dataset.verseNumber ?? "", 10);
+        setStagedVerseNums((prev) => {
+          const next = new Set(prev);
+          if (!isNaN(currentNum)) next.add(currentNum);
+          if (!isNaN(nextNum)) next.add(nextNum);
+          return next;
+        });
+      } else {
+        // Plain arrow clears any staged selection.
+        if (stagedVerseNums.size > 0) setStagedVerseNums(new Set());
+      }
+    }
+  };
+
+  // Keep rovingVerseNumber in sync whenever a verse gains focus (from arrow
+  // key navigation, a mouse click that also focuses, or assistive tech).
+  const handleChapterFocusIn = (event: FocusEvent) => {
+    const target = event.target as HTMLElement | null;
+    const verseEl = target?.closest<HTMLElement>(
+      ".sb-verse[data-verse-number]"
+    );
+    if (!verseEl) return;
+    const verseNum = parseInt(verseEl.dataset.verseNumber ?? "", 10);
+    if (!isNaN(verseNum)) {
+      setRovingVerseNumber(verseNum);
+    }
+  };
+
   const [ribbons, setRibbons] = useState<Ribbon[]>([]);
   // What's on screen (including ribbons fading out) so the reconcile can diff.
   const renderedRef = useRef<Ribbon[]>([]);
@@ -2930,6 +3147,8 @@ function ChapterContent(props: ChapterContentProps) {
         justConvertedSelectionRef.current = false;
       }}
       onPointerUp={selectVersesFromTextSelection}
+      onKeyDown={handleChapterKeyDown}
+      onFocusIn={handleChapterFocusIn}
     >
       <svg className="sb-highlight-layer" aria-hidden="true">
         {ribbons.map((ribbon) => (
@@ -3037,7 +3256,9 @@ function ChapterContent(props: ChapterContentProps) {
         sharedSession,
         verseSelectionEffects,
         prefersReducedMotionValue,
-        hideHighlights
+        hideHighlights,
+        rovingVerseNumber,
+        stagedVerseNums
       )}
     </div>
   );

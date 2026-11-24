@@ -3381,6 +3381,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       {isVerseToolbarVisible.value && verseToolbarTools.value.length > 0 && (
         <VerseToolbarFrame
           mobile={isSmallScreen.value}
+          onEscape={() => {
+            // Remember which verse was selected so we can return focus to it
+            // after the toolbar closes, instead of stranding the user mid-page.
+            const verseNum =
+              selectionState.value?.selectedVerses.value[0]?.verse.number;
+            leaveVerseSheetStep();
+            if (verseNum != null) {
+              document
+                .querySelector<HTMLElement>(
+                  `.sb-verse[data-verse-number="${verseNum}"]`
+                )
+                ?.focus();
+            }
+          }}
           floating={{
             ref: verseToolbarRef,
             className:
@@ -3726,7 +3740,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               {(() => {
                 const renderTool = (
                   tool: (typeof verseToolbarTools.value)[number],
-                  floatingMenu = false
+                  floatingMenu = false,
+                  // Called just before the tool's onSelect fires. Use it to
+                  // capture state (e.g. selected verse) that the action will
+                  // clear, or to schedule post-action focus.
+                  beforeAction?: () => void
                 ) => {
                   const ToolIcon = tool.icon;
                   const menuItems =
@@ -3784,6 +3802,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           }
 
                           selectedVerseToolId.value = null;
+                          beforeAction?.();
                           void handleVerseAction(
                             tool.onSelect,
                             tool.preserveSelection
@@ -3949,7 +3968,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       {highlightCard}
                       {saveCard}
                       {nonCancel.map((tool) => renderTool(tool))}
-                      {cancelTools.map((tool) => renderTool(tool))}
+                      {cancelTools.map((tool) =>
+                        renderTool(tool, false, () => {
+                          // Capture the verse number now — clearSelectedVerses
+                          // runs immediately after and empties the signal.
+                          const verseNum =
+                            selectionState.value?.selectedVerses.value[0]?.verse
+                              .number;
+                          if (verseNum != null) {
+                            requestAnimationFrame(() => {
+                              document
+                                .querySelector<HTMLElement>(
+                                  `.sb-verse[data-verse-number="${verseNum}"]`
+                                )
+                                ?.focus();
+                            });
+                          }
+                        })
+                      )}
                     </>
                   );
                 }
@@ -4170,9 +4206,67 @@ function VerseToolbarFrame(props: {
     ref: Ref<HTMLDivElement>;
   };
   sheet: Omit<BottomSheetProps, "children">;
+  /** Called when the user presses Escape on the floating toolbar (desktop). */
+  onEscape: () => void;
   children: ComponentChildren;
 }) {
-  const { mobile, floating, sheet, children } = props;
+  const { mobile, floating, sheet, onEscape, children } = props;
   if (mobile) return <BottomSheet {...sheet}>{children}</BottomSheet>;
-  return <div {...floating}>{children}</div>;
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    // ArrowLeft/Right navigate between the toolbar's buttons. This also
+    // blocks the global chapter-navigation shortcut in TabsLayout (which
+    // checks event.defaultPrevented). ArrowUp/Down are swallowed so the
+    // global "open search" shortcut doesn't fire while focus is here.
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      handleHorizontalListKeyNav(event, event.currentTarget as HTMLElement);
+      // handleHorizontalListKeyNav calls preventDefault when it moves focus;
+      // call it here too so the global handler is blocked even on the edges.
+      event.preventDefault();
+      return;
+    }
+    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+      event.preventDefault();
+      return;
+    }
+
+    // Close the toolbar on Escape, same as the mobile sheet.
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onEscape();
+      return;
+    }
+
+    // Focus trap: Tab and Shift+Tab cycle within the toolbar so the
+    // background Bible text and app chrome are unreachable by keyboard
+    // while the toolbar is open.
+    if (event.key === "Tab") {
+      const toolbar = event.currentTarget as HTMLElement;
+      const focusable = Array.from(
+        toolbar.querySelectorAll<HTMLElement>(
+          "button:not([disabled]), [href], input:not([disabled])"
+        )
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      if (event.shiftKey) {
+        if (document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    }
+  };
+
+  return (
+    <div {...floating} onKeyDown={handleKeyDown}>
+      {children}
+    </div>
+  );
 }
