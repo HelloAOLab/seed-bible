@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect } from "preact/hooks";
 import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { Annotation } from "../../managers/AnnotationsManager";
@@ -50,8 +50,7 @@ import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal
 import { Spinner } from "../Spinner/Spinner";
 import { ReadingPlanOptionsMenu } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
 import { useI18n } from "../../i18n";
-import { useScrollEdgeFade } from "../useScrollEdgeFade";
-import { useHorizontalScroll } from "../useHorizontalScroll";
+import { FilterPills } from "../FilterPills/FilterPills";
 import { UserImagesGrid } from "./UserImages";
 import { CustomizationCard } from "../CustomizationEditPane/CustomizationCard";
 import { EmptyState } from "../EmptyState/EmptyState";
@@ -853,11 +852,6 @@ export function YourContentPane(props: YourContentScreenProps) {
   } = state;
   const { t } = useI18n();
   const userId = state.login.userId.value;
-  // The filter chips scroll horizontally with the vertical wheel, and fade at
-  // an edge only while chips are hidden past it.
-  const chipsRef = useRef<HTMLDivElement | null>(null);
-  useHorizontalScroll(chipsRef);
-  useScrollEdgeFade(chipsRef);
 
   // Every open refreshes, so a verse highlighted or annotated in the reader
   // since the last visit shows up. It's quiet when content is already
@@ -1262,37 +1256,36 @@ export function YourContentPane(props: YourContentScreenProps) {
 
           <span className="sb-content-toolbar-divider" aria-hidden="true" />
 
-          <div className="sb-content-chips" role="tablist" ref={chipsRef}>
-            {CONTENT_FILTERS.map((value) => {
+          <FilterPills
+            className="sb-content-filters"
+            aria-label={t("your-content-filters", {
+              defaultValue: "Filter your content",
+            })}
+            options={CONTENT_FILTERS.map((value) => {
               const locked = !userId && ACCOUNT_ONLY_SECTIONS.has(value);
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  role="tab"
-                  aria-selected={filter === value}
-                  className={`sb-content-chip${
-                    filter === value ? " sb-content-chip-active" : ""
-                  }${locked ? " sb-content-chip-locked" : ""}`}
-                  onClick={() => {
-                    yourContent.filter.value = value;
-                  }}
-                >
-                  {locked ? (
+              return {
+                value,
+                label: locked ? (
+                  <span className="sb-content-filter-locked-label">
                     <MaterialIcon aria-hidden="true">lock</MaterialIcon>
-                  ) : null}
-                  {chipLabel(value)}
-                  {locked ? (
+                    {chipLabel(value)}
                     <span className="sb-visually-hidden">
                       {t("your-content-chip-needs-account", {
                         defaultValue: "(needs an account)",
                       })}
                     </span>
-                  ) : null}
-                </button>
-              );
+                  </span>
+                ) : (
+                  chipLabel(value)
+                ),
+                className: locked ? "sb-content-filter-locked" : undefined,
+              };
             })}
-          </div>
+            value={filter}
+            onChange={(value) => {
+              yourContent.filter.value = value;
+            }}
+          />
         </div>
 
         {status === "loading" || stillSearching || bookmarksPending ? (

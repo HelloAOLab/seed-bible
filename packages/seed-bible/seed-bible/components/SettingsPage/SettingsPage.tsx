@@ -48,6 +48,7 @@ import { useExtensionCatalog } from "./useExtensionCatalog";
 export { AddExtensionFromLink } from "./useExtensionCatalog";
 import { ExtensionTile } from "../ExtensionConsentModal/ExtensionConsentModal";
 import { Button } from "../Button/Button";
+import { SEED_BIBLE_DOCS_URL } from "../../app/publicLinks";
 import { IconButton } from "../IconButton/IconButton";
 import { SettingRow } from "../SettingRow/SettingRow";
 import { Switch } from "../Switch/Switch";
@@ -1084,6 +1085,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           onClick={openAddFromLink}
         >
           {t("extension-add-link-label")}
+        </Button>
+        <Button
+          size="lg"
+          shape="pill"
+          icon="menu_book"
+          className="sb-extensions-add-link-button"
+          href={SEED_BIBLE_DOCS_URL}
+          target="_blank"
+        >
+          {t("docs-link-label", { defaultValue: "Docs" })}
         </Button>
       </section>
     </div>

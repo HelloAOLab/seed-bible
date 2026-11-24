@@ -3,8 +3,14 @@
   "version": "1.0.0",
   "icon": "icon.svg",
   "screenshots": [
-    { "src": "screenshot-greeting.webp", "caption": "screenshot-greeting" },
-    { "src": "screenshot-settings.webp", "caption": "screenshot-settings" }
+    {
+      "src": "screenshot-greeting.webp",
+      "caption": "screenshot-greeting"
+    },
+    {
+      "src": "screenshot-settings.webp",
+      "caption": "screenshot-settings"
+    }
   ],
   "permissions": ["reading:position"],
   "optionalPermissions": ["embed:casualos"],
@@ -130,7 +136,11 @@
       "example-banner": "Hierdie is die voorbeeldbanier. Skakel dit af in hierdie uitbreiding se instellings.",
       "portal-permission-declined": "Om 'n CasualOS-portaal te wys, benodig jy jou toestemming.",
       "sensitive-result": "Voorbeelddiens: {{status}}",
-      "item-clicked": "{{item}} het geklik!"
+      "item-clicked": "{{item}} het geklik!",
+      "screenshot-greeting": "Voorbeeld van 'n groetvenster langs die leser",
+      "screenshot-settings": "Voorbeeld groetinstellings",
+      "greeting-shown_one": "Die groet word een keer getoon.",
+      "greeting-shown_other": "Die groet word {{count}} keer gewys."
     },
     "am": {
       "title": "የሳንድቦክስ የተደረገበት ምሳሌ ቅጥያ",
@@ -166,7 +176,11 @@
       "example-banner": "ይህ የምሳሌው ባነር ነው። በዚህ ቅጥያ ቅንብሮች ውስጥ ያጥፉት።",
       "portal-permission-declined": "የCasualOS ፖርታል ማሳየት የእርስዎ ፈቃድ ያስፈልገዋል።",
       "sensitive-result": "የምሳሌ አገልግሎት፦ {{status}}",
-      "item-clicked": "{{item}} ጠቅ አድርጓል!"
+      "item-clicked": "{{item}} ጠቅ አድርጓል!",
+      "screenshot-greeting": "ከአንባቢው አጠገብ የሰላምታ ፓነል ምሳሌ",
+      "screenshot-settings": "የምሳሌ ሰላምታ ቅንብሮች",
+      "greeting-shown_one": "ሰላምታው አንድ ጊዜ ይታያል።",
+      "greeting-shown_other": "ሰላምታው {{count}} ጊዜ ይታያል።"
     },
     "ar": {
       "title": "مثال امتداد معزول",
@@ -202,7 +216,11 @@
       "example-banner": "هذا مثال على الشعار. قم بإيقاف تشغيله من إعدادات هذه الإضافة.",
       "portal-permission-declined": "يتطلب عرض بوابة CasualOS إذنك.",
       "sensitive-result": "مثال على الخدمة: {{status}}",
-      "item-clicked": "تم النقر على {{item}} !"
+      "item-clicked": "تم النقر على {{item}} !",
+      "screenshot-greeting": "مثال على لوحة الترحيب بجانب القارئ",
+      "screenshot-settings": "مثال على إعدادات الترحيب",
+      "greeting-shown_one": "يتم عرض التحية مرة واحدة.",
+      "greeting-shown_other": "تظهر التحية {{count}} مرة."
     },
     "az": {
       "title": "Sandboxed Nümunə Genişləndirməsi",
@@ -238,7 +256,11 @@
       "example-banner": "Bu nümunə bannerdir. Bu genişləndirmənin parametrlərində onu söndürün.",
       "portal-permission-declined": "CasualOS portalını göstərmək üçün icazəniz lazımdır.",
       "sensitive-result": "Nümunə xidmət: {{status}}",
-      "item-clicked": "{{item}} kliklədi!"
+      "item-clicked": "{{item}} kliklədi!",
+      "screenshot-greeting": "Oxucunun yanındakı nümunə salamlama paneli",
+      "screenshot-settings": "Nümunə salamlama parametrləri",
+      "greeting-shown_one": "Salamlama bir dəfə göstərilir.",
+      "greeting-shown_other": "Salamlama {{count}} dəfə göstərilir."
     },
     "be": {
       "title": "Прыклад пашырэння для пясочніцы",
@@ -274,7 +296,11 @@
       "example-banner": "Гэта прыклад банера. Выключыце яго ў наладах гэтага пашырэння.",
       "portal-permission-declined": "Для паказу партала CasualOS патрабуецца ваш дазвол.",
       "sensitive-result": "Прыклад паслугі: {{status}}",
-      "item-clicked": "Націснута {{item}} !"
+      "item-clicked": "Націснута {{item}} !",
+      "screenshot-greeting": "Прыклад прывітальнай панэлі побач з чытачом",
+      "screenshot-settings": "Прыклады налад прывітання",
+      "greeting-shown_one": "Прывітанне паказваецца адзін раз.",
+      "greeting-shown_other": "Прывітанне паказваецца {{count}} разоў."
     },
     "bg": {
       "title": "Примерно разширение в пясъчник",
@@ -310,7 +336,11 @@
       "example-banner": "Това е примерният банер. Изключете го в настройките на това разширение.",
       "portal-permission-declined": "Показването на портал на CasualOS изисква вашето разрешение.",
       "sensitive-result": "Примерна услуга: {{status}}",
-      "item-clicked": "Кликнато върху {{item}} !"
+      "item-clicked": "Кликнато върху {{item}} !",
+      "screenshot-greeting": "Примерен прозорец за поздрав до четеца",
+      "screenshot-settings": "Примерни настройки за поздрав",
+      "greeting-shown_one": "Поздравът се показва веднъж.",
+      "greeting-shown_other": "Поздравът се показва {{count}} пъти."
     },
     "bn": {
       "title": "স্যান্ডবক্সড উদাহরণ এক্সটেনশন",
@@ -346,7 +376,11 @@
       "example-banner": "এটি একটি নমুনা ব্যানার। এই এক্সটেনশনের সেটিংসে এটি বন্ধ করুন।",
       "portal-permission-declined": "CasualOS পোর্টাল দেখাতে আপনার অনুমতির প্রয়োজন।",
       "sensitive-result": "উদাহরণ পরিষেবা: {{status}}",
-      "item-clicked": "{{item}} ক্লিক করা হয়েছে!"
+      "item-clicked": "{{item}} ক্লিক করা হয়েছে!",
+      "screenshot-greeting": "রিডারের পাশে অভিবাদন প্যানেলের উদাহরণ",
+      "screenshot-settings": "অভিবাদন সেটিংসের উদাহরণ",
+      "greeting-shown_one": "শুভেচ্ছাবার্তাটি একবার দেখানো হয়।",
+      "greeting-shown_other": "শুভেচ্ছাবার্তাটি {{count}} বার দেখানো হয়।"
     },
     "bs": {
       "title": "Primjer proširenja u sandboxu",
@@ -382,7 +416,11 @@
       "example-banner": "Ovo je primjer banera. Isključite ga u postavkama ove ekstenzije.",
       "portal-permission-declined": "Za prikazivanje CasualOS portala potrebna je vaša dozvola.",
       "sensitive-result": "Primjer usluge: {{status}}",
-      "item-clicked": "Kliknuto na {{item}} !"
+      "item-clicked": "Kliknuto na {{item}} !",
+      "screenshot-greeting": "Primjer pozdravnog okna pored čitača",
+      "screenshot-settings": "Primjer postavki pozdrava",
+      "greeting-shown_one": "Pozdrav se prikazuje jednom.",
+      "greeting-shown_other": "Pozdravna poruka je prikazana {{count}} puta."
     },
     "ca": {
       "title": "Extensió d'exemple en espai de proves",
@@ -418,7 +456,11 @@
       "example-banner": "Aquest és el bàner d'exemple. Desactiveu-lo a la configuració d'aquesta extensió.",
       "portal-permission-declined": "Mostrar un portal de CasualOS necessita el vostre permís.",
       "sensitive-result": "Servei d'exemple: {{status}}",
-      "item-clicked": "S'ha fet clic a {{item}} !"
+      "item-clicked": "S'ha fet clic a {{item}} !",
+      "screenshot-greeting": "Exemple de panell de salutació al costat del lector",
+      "screenshot-settings": "Exemple de configuració de salutació",
+      "greeting-shown_one": "La salutació es mostra una vegada.",
+      "greeting-shown_other": "La salutació es mostra {{count}} vegades."
     },
     "cs": {
       "title": "Příklad rozšíření v sandboxu",
@@ -454,7 +496,11 @@
       "example-banner": "Toto je ukázkový banner. Vypněte ho v nastavení tohoto rozšíření.",
       "portal-permission-declined": "Zobrazení portálu CasualOS vyžaduje váš souhlas.",
       "sensitive-result": "Příklad služby: {{status}}",
-      "item-clicked": "Kliknuto na {{item}} !"
+      "item-clicked": "Kliknuto na {{item}} !",
+      "screenshot-greeting": "Příklad uvítacího panelu vedle čtečky",
+      "screenshot-settings": "Příklad nastavení pozdravu",
+      "greeting-shown_one": "Pozdrav se zobrazí jednou.",
+      "greeting-shown_other": "Pozdrav se zobrazuje {{count}} krát."
     },
     "cy": {
       "title": "Estyniad Enghraifft Blwch Tywod",
@@ -490,7 +536,11 @@
       "example-banner": "Dyma'r baner enghreifftiol. Diffoddwch hi yng ngosodiadau'r estyniad hwn.",
       "portal-permission-declined": "Mae angen eich caniatâd i ddangos porth CasualOS.",
       "sensitive-result": "Gwasanaeth enghreifftiol: {{status}}",
-      "item-clicked": "Cliciodd {{item}} !"
+      "item-clicked": "Cliciodd {{item}} !",
+      "screenshot-greeting": "Panel cyfarch enghreifftiol wrth ymyl y darllenydd",
+      "screenshot-settings": "Gosodiadau cyfarch enghreifftiol",
+      "greeting-shown_one": "Dangosir y cyfarchiad unwaith.",
+      "greeting-shown_other": "Dangosir y cyfarchiad {{count}} o weithiau."
     },
     "da": {
       "title": "Eksempel på sandbox-udvidelse",
@@ -526,7 +576,11 @@
       "example-banner": "Dette er et eksempel på et banner. Slå det fra i indstillingerne for denne udvidelse.",
       "portal-permission-declined": "Visning af en CasualOS-portal kræver din tilladelse.",
       "sensitive-result": "Eksempel på tjeneste: {{status}}",
-      "item-clicked": "{{item}} klikkede!"
+      "item-clicked": "{{item}} klikkede!",
+      "screenshot-greeting": "Eksempel på hilsensrude ved siden af ​​læseren",
+      "screenshot-settings": "Eksempel på hilsenindstillinger",
+      "greeting-shown_one": "Hilsenen vises én gang.",
+      "greeting-shown_other": "Hilsenen vises {{count}} gange."
     },
     "de": {
       "title": "Sandboxed Example Extension",
@@ -562,7 +616,11 @@
       "example-banner": "Dies ist ein Beispielbanner. Sie können es in den Einstellungen dieser Erweiterung deaktivieren.",
       "portal-permission-declined": "Für die Anzeige eines CasualOS-Portals ist Ihre Zustimmung erforderlich.",
       "sensitive-result": "Beispieldienst: {{status}}",
-      "item-clicked": "{{item}} wurde angeklickt!"
+      "item-clicked": "{{item}} wurde angeklickt!",
+      "screenshot-greeting": "Beispiel eines Begrüßungsfelds neben dem Leser",
+      "screenshot-settings": "Beispielhafte Begrüßungseinstellungen",
+      "greeting-shown_one": "Die Begrüßung wird einmal angezeigt.",
+      "greeting-shown_other": "Die Begrüßung wird {{count}} Mal angezeigt."
     },
     "el": {
       "title": "Παράδειγμα επέκτασης σε περιβάλλον δοκιμών",
@@ -598,7 +656,11 @@
       "example-banner": "Αυτό είναι το παράδειγμα banner. Απενεργοποιήστε το στις ρυθμίσεις αυτής της επέκτασης.",
       "portal-permission-declined": "Η εμφάνιση μιας πύλης CasualOS απαιτεί την άδειά σας.",
       "sensitive-result": "Παράδειγμα υπηρεσίας: {{status}}",
-      "item-clicked": "{{item}} κλικ!"
+      "item-clicked": "{{item}} κλικ!",
+      "screenshot-greeting": "Παράδειγμα παραθύρου χαιρετισμού δίπλα στον αναγνώστη",
+      "screenshot-settings": "Παράδειγμα ρυθμίσεων χαιρετισμού",
+      "greeting-shown_one": "Ο χαιρετισμός εμφανίζεται μία φορά.",
+      "greeting-shown_other": "Ο χαιρετισμός εμφανίζεται {{count}} φορές."
     },
     "es": {
       "title": "Extensión de ejemplo en entorno aislado",
@@ -634,7 +696,11 @@
       "example-banner": "Este es un ejemplo de banner. Desactívalo en la configuración de esta extensión.",
       "portal-permission-declined": "Para mostrar un portal de CasualOS se necesita tu permiso.",
       "sensitive-result": "Servicio de ejemplo: {{status}}",
-      "item-clicked": "¡Se ha hecho clic en {{item}} !"
+      "item-clicked": "¡Se ha hecho clic en {{item}} !",
+      "screenshot-greeting": "Ejemplo de panel de saludo junto al lector",
+      "screenshot-settings": "Ejemplo de configuración de saludo",
+      "greeting-shown_one": "El saludo se muestra una sola vez.",
+      "greeting-shown_other": "El saludo se muestra {{count}} veces."
     },
     "et": {
       "title": "Liivakasti näidislaiendus",
@@ -670,7 +736,11 @@
       "example-banner": "See on näidisbänner. Lülitage see laienduse seadetes välja.",
       "portal-permission-declined": "CasualOS portaali kuvamiseks on vaja teie luba.",
       "sensitive-result": "Näidisteenus: {{status}}",
-      "item-clicked": "{{item}} klõpsatud!"
+      "item-clicked": "{{item}} klõpsatud!",
+      "screenshot-greeting": "Näidis lugeja kõrval olevast tervituspaanist",
+      "screenshot-settings": "Näidis tervituse sätetest",
+      "greeting-shown_one": "Tervitus kuvatakse üks kord.",
+      "greeting-shown_other": "Tervitust kuvatakse {{count}} korda."
     },
     "fa": {
       "title": "افزونه نمونه سندباکس",
@@ -706,7 +776,11 @@
       "example-banner": "این بنر نمونه است. آن را در تنظیمات این افزونه غیرفعال کنید.",
       "portal-permission-declined": "نمایش پورتال CasualOS به اجازه شما نیاز دارد.",
       "sensitive-result": "نمونه سرویس: {{status}}",
-      "item-clicked": "{{item}} کلیک شد!"
+      "item-clicked": "{{item}} کلیک شد!",
+      "screenshot-greeting": "نمونه پنجره خوشامدگویی در کنار خواننده",
+      "screenshot-settings": "تنظیمات خوشامدگویی نمونه",
+      "greeting-shown_one": "پیام تبریک یک بار نمایش داده می‌شود.",
+      "greeting-shown_other": "این پیام خوشامدگویی {{count}} بار نمایش داده می‌شود."
     },
     "fi": {
       "title": "Hiekkalaatikkoesimerkkilaajennus",
@@ -742,7 +816,11 @@
       "example-banner": "Tämä on esimerkkibanneri. Poista se käytöstä tämän laajennuksen asetuksista.",
       "portal-permission-declined": "CasualOS-portaalin näyttämiseen tarvitaan lupasi.",
       "sensitive-result": "Esimerkkipalvelu: {{status}}",
-      "item-clicked": "{{item}} klikattiin!"
+      "item-clicked": "{{item}} klikattiin!",
+      "screenshot-greeting": "Esimerkki lukijan vieressä olevasta tervehdysruudusta",
+      "screenshot-settings": "Esimerkki tervehdysasetuksista",
+      "greeting-shown_one": "Tervehdys näytetään kerran.",
+      "greeting-shown_other": "Tervehdys näytetään {{count}} kertaa."
     },
     "fil": {
       "title": "Halimbawang Extension na Naka-sandbox",
@@ -778,7 +856,11 @@
       "example-banner": "Ito ang halimbawang banner. I-off ito sa mga setting ng extension na ito.",
       "portal-permission-declined": "Kailangan ng iyong pahintulot ang pagpapakita ng CasualOS portal.",
       "sensitive-result": "Halimbawang serbisyo: {{status}}",
-      "item-clicked": "Na-click ang {{item}} !"
+      "item-clicked": "Na-click ang {{item}} !",
+      "screenshot-greeting": "Halimbawang pane ng pagbati sa tabi ng mambabasa",
+      "screenshot-settings": "Halimbawang mga setting ng pagbati",
+      "greeting-shown_one": "Ang pagbati ay ipinapakita nang isang beses.",
+      "greeting-shown_other": "Ang pagbati ay ipinapakita nang {{count}} beses."
     },
     "fr": {
       "title": "Exemple d'extension en mode bac à sable",
@@ -814,7 +896,11 @@
       "example-banner": "Voici un exemple de bannière. Désactivez-la dans les paramètres de cette extension.",
       "portal-permission-declined": "L'affichage d'un portail CasualOS nécessite votre autorisation.",
       "sensitive-result": "Exemple de service : {{status}}",
-      "item-clicked": "{{item}} cliqué !"
+      "item-clicked": "{{item}} cliqué !",
+      "screenshot-greeting": "Exemple de volet de salutation à côté du lecteur",
+      "screenshot-settings": "Exemple de paramètres de salutation",
+      "greeting-shown_one": "Le message de bienvenue n'est affiché qu'une seule fois.",
+      "greeting-shown_other": "Le message de bienvenue est affiché {{count}} fois."
     },
     "fy": {
       "title": "Foarbyld fan útwreiding yn in sânbak",
@@ -850,7 +936,11 @@
       "example-banner": "Dit is de foarbyldbanner. Skeakelje it út yn 'e ynstellings fan dizze útwreiding.",
       "portal-permission-declined": "It werjaan fan in CasualOS-portaal hat jo tastimming nedich.",
       "sensitive-result": "Foarbyldtsjinst: {{status}}",
-      "item-clicked": "{{item}} hat klikt!"
+      "item-clicked": "{{item}} hat klikt!",
+      "screenshot-greeting": "Foarbyld fan groetnispaniel neist de lêzer",
+      "screenshot-settings": "Foarbyld fan groetynstellingen",
+      "greeting-shown_one": "De groetnis wurdt ien kear werjûn.",
+      "greeting-shown_other": "De groetnis wurdt {{count}} kear werjûn."
     },
     "gl": {
       "title": "Extensión de exemplo en contorna de probas",
@@ -886,7 +976,11 @@
       "example-banner": "Este é o banner de exemplo. Desactívao na configuración desta extensión.",
       "portal-permission-declined": "Mostrar un portal de CasualOS require o teu permiso.",
       "sensitive-result": "Servizo de exemplo: {{status}}",
-      "item-clicked": "Fixéches clic en {{item}} !"
+      "item-clicked": "Fixéches clic en {{item}} !",
+      "screenshot-greeting": "Exemplo de panel de saúdo xunto ao lector",
+      "screenshot-settings": "Exemplo de configuración de saúdos",
+      "greeting-shown_one": "A saúdo móstrase unha vez.",
+      "greeting-shown_other": "A saúdo móstrase {{count}} veces."
     },
     "gn": {
       "title": "Sandboxed Tembiecharã Extensión",
@@ -922,7 +1016,11 @@
       "example-banner": "Péva ha’e pe pancarta techapyrã. Embogue ko extensión ñembohekorãme.",
       "portal-permission-declined": "Ohechauka peteĩ portal CasualOS oikotevẽ ne permiso.",
       "sensitive-result": "Tembiecharã tembipuru: {{status}}",
-      "item-clicked": "{{item}} ojepyso!"
+      "item-clicked": "{{item}} ojepyso!",
+      "screenshot-greeting": "Tembiecharã vore maitei rehegua moñe’ẽhára ykére",
+      "screenshot-settings": "Tembiecharã ñemboheko maitei rehegua",
+      "greeting-shown_one": "Pe maitei ojehechauka peteĩ jey.",
+      "greeting-shown_other": "Pe maitei ojehechauka {{count}} jey."
     },
     "gu": {
       "title": "સેન્ડબોક્સ્ડ ઉદાહરણ એક્સટેન્શન",
@@ -958,7 +1056,11 @@
       "example-banner": "આ ઉદાહરણ બેનર છે. આ એક્સટેન્શનની સેટિંગ્સમાં તેને બંધ કરો.",
       "portal-permission-declined": "CasualOS પોર્ટલ બતાવવા માટે તમારી પરવાનગીની જરૂર છે.",
       "sensitive-result": "ઉદાહરણ સેવા: {{status}}",
-      "item-clicked": "{{item}} ક્લિક કર્યું!"
+      "item-clicked": "{{item}} ક્લિક કર્યું!",
+      "screenshot-greeting": "રીડરની બાજુમાં શુભેચ્છા ફલકનું ઉદાહરણ",
+      "screenshot-settings": "શુભેચ્છા સેટિંગ્સનું ઉદાહરણ",
+      "greeting-shown_one": "શુભેચ્છા એકવાર બતાવવામાં આવે છે.",
+      "greeting-shown_other": "શુભેચ્છા {{count}} વખત બતાવવામાં આવી છે."
     },
     "he": {
       "title": "הרחבת דוגמה בארגז חול",
@@ -994,7 +1096,11 @@
       "example-banner": "זוהי דוגמה לבאנר. כבה אותו בהגדרות של התוסף הזה.",
       "portal-permission-declined": "הצגת פורטל CasualOS דורשת את אישורך.",
       "sensitive-result": "שירות לדוגמה: {{status}}",
-      "item-clicked": "{{item}} לחץ!"
+      "item-clicked": "{{item}} לחץ!",
+      "screenshot-greeting": "דוגמה לחלונית ברכה ליד הקורא",
+      "screenshot-settings": "הגדרות ברכה לדוגמה",
+      "greeting-shown_one": "הברכה מוצגת פעם אחת.",
+      "greeting-shown_other": "הברכה מוצגת {{count}} פעמים."
     },
     "hi": {
       "title": "सैंडबॉक्स उदाहरण एक्सटेंशन",
@@ -1030,7 +1136,11 @@
       "example-banner": "यह एक उदाहरण बैनर है। इसे इस एक्सटेंशन की सेटिंग्स में बंद कर दें।",
       "portal-permission-declined": "CasualOS पोर्टल दिखाने के लिए आपकी अनुमति आवश्यक है।",
       "sensitive-result": "उदाहरण सेवा: {{status}}",
-      "item-clicked": "{{item}} पर क्लिक किया गया!"
+      "item-clicked": "{{item}} पर क्लिक किया गया!",
+      "screenshot-greeting": "पाठक के बगल में अभिवादन फलक का उदाहरण",
+      "screenshot-settings": "अभिवादन सेटिंग्स के उदाहरण",
+      "greeting-shown_one": "अभिवादन एक बार दिखाया जाता है।",
+      "greeting-shown_other": "अभिवादन {{count}} बार दिखाया जाता है।"
     },
     "hr": {
       "title": "Primjer proširenja u sigurnosnom okruženju",
@@ -1066,7 +1176,11 @@
       "example-banner": "Ovo je primjer bannera. Isključite ga u postavkama ovog proširenja.",
       "portal-permission-declined": "Za prikazivanje CasualOS portala potrebno je vaše dopuštenje.",
       "sensitive-result": "Primjer usluge: {{status}}",
-      "item-clicked": "Kliknuto na {{item}} !"
+      "item-clicked": "Kliknuto na {{item}} !",
+      "screenshot-greeting": "Primjer pozdravnog okna pored čitača",
+      "screenshot-settings": "Primjer postavki pozdrava",
+      "greeting-shown_one": "Pozdrav se prikazuje jednom.",
+      "greeting-shown_other": "Pozdrav se prikazuje {{count}} puta."
     },
     "hu": {
       "title": "Sandbox példabővítmény",
@@ -1102,7 +1216,11 @@
       "example-banner": "Ez a példa banner. Kapcsold ki a bővítmény beállításaiban.",
       "portal-permission-declined": "Egy CasualOS portál megjelenítéséhez az Ön engedélye szükséges.",
       "sensitive-result": "Példa szolgáltatás: {{status}}",
-      "item-clicked": "{{item}} kattintás!"
+      "item-clicked": "{{item}} kattintás!",
+      "screenshot-greeting": "Példa az üdvözlő ablaktáblára az olvasó mellett",
+      "screenshot-settings": "Példa üdvözlő beállításokra",
+      "greeting-shown_one": "A köszönés egyszer jelenik meg.",
+      "greeting-shown_other": "Az üdvözlés {{count}} alkalommal jelenik meg."
     },
     "ind": {
       "title": "Ekstensi Contoh Sandbox",
@@ -1138,7 +1256,11 @@
       "example-banner": "Ini adalah contoh banner. Matikan banner ini di pengaturan ekstensi ini.",
       "portal-permission-declined": "Menampilkan portal CasualOS memerlukan izin Anda.",
       "sensitive-result": "Contoh layanan: {{status}}",
-      "item-clicked": "{{item}} diklik!"
+      "item-clicked": "{{item}} diklik!",
+      "screenshot-greeting": "Contoh panel sapaan di samping pembaca",
+      "screenshot-settings": "Contoh pengaturan sapaan",
+      "greeting-shown_one": "Ucapan salam ditampilkan sekali.",
+      "greeting-shown_other": "Ucapan salam ditampilkan {{count}} kali."
     },
     "is": {
       "title": "Dæmi um viðbót í sandkassa",
@@ -1174,7 +1296,11 @@
       "example-banner": "Þetta er dæmi um borða. Slökktu á því í stillingum þessarar viðbótar.",
       "portal-permission-declined": "Þú þarft leyfi til að sýna CasualOS gátt.",
       "sensitive-result": "Dæmi um þjónustu: {{status}}",
-      "item-clicked": "{{item}} smellti!"
+      "item-clicked": "{{item}} smellti!",
+      "screenshot-greeting": "Dæmi um kveðjuglugga við hliðina á lesandanum",
+      "screenshot-settings": "Dæmi um kveðjustillingar",
+      "greeting-shown_one": "Kveðjan er sýnd einu sinni.",
+      "greeting-shown_other": "Kveðjan er sýnd {{count}} sinnum."
     },
     "it": {
       "title": "Estensione di esempio in ambiente sandbox",
@@ -1210,7 +1336,11 @@
       "example-banner": "Questo è il banner di esempio. Disattivalo nelle impostazioni di questa estensione.",
       "portal-permission-declined": "Per visualizzare un portale CasualOS è necessaria la tua autorizzazione.",
       "sensitive-result": "Esempio di servizio: {{status}}",
-      "item-clicked": "{{item}} cliccato!"
+      "item-clicked": "{{item}} cliccato!",
+      "screenshot-greeting": "Esempio di riquadro di saluto accanto al lettore",
+      "screenshot-settings": "Esempio di impostazioni di saluto",
+      "greeting-shown_one": "Il saluto viene visualizzato una sola volta.",
+      "greeting-shown_other": "Il saluto viene mostrato {{count}} volte."
     },
     "iw": {
       "title": "הרחבת דוגמה בארגז חול",
@@ -1246,7 +1376,11 @@
       "example-banner": "זוהי דוגמה לבאנר. כבה אותו בהגדרות של התוסף הזה.",
       "portal-permission-declined": "הצגת פורטל CasualOS דורשת את אישורך.",
       "sensitive-result": "שירות לדוגמה: {{status}}",
-      "item-clicked": "{{item}} לחץ!"
+      "item-clicked": "{{item}} לחץ!",
+      "screenshot-greeting": "דוגמה לחלונית ברכה ליד הקורא",
+      "screenshot-settings": "הגדרות ברכה לדוגמה",
+      "greeting-shown_one": "הברכה מוצגת פעם אחת.",
+      "greeting-shown_other": "הברכה מוצגת {{count}} פעמים."
     },
     "ja": {
       "title": "サンドボックス化されたサンプル拡張機能",
@@ -1282,7 +1416,11 @@
       "example-banner": "これはサンプルバナーです。この拡張機能の設定でオフにできます。",
       "portal-permission-declined": "CasualOSポータルを表示するには、お客様の許可が必要です。",
       "sensitive-result": "サービス例： {{status}}",
-      "item-clicked": "{{item}}がクリックされました！"
+      "item-clicked": "{{item}}がクリックされました！",
+      "screenshot-greeting": "読者の横にある挨拶パネルの例",
+      "screenshot-settings": "挨拶設定例",
+      "greeting-shown_one": "挨拶文は一度だけ表示されます。",
+      "greeting-shown_other": "挨拶は{{count}}回表示されます。"
     },
     "ka": {
       "title": "სანდბოქსის ტიპის გაფართოების მაგალითი",
@@ -1318,7 +1456,11 @@
       "example-banner": "ეს არის ბანერის მაგალითი. გამორთეთ ის ამ გაფართოების პარამეტრებში.",
       "portal-permission-declined": "CasualOS პორტალის ჩვენებას თქვენი ნებართვა სჭირდება.",
       "sensitive-result": "სერვისის მაგალითი: {{status}}",
-      "item-clicked": "{{item}} დააწკაპუნეთ!"
+      "item-clicked": "{{item}} დააწკაპუნეთ!",
+      "screenshot-greeting": "მკითხველის გვერდით მისასალმებელი პანელის მაგალითი",
+      "screenshot-settings": "მისასალმებელი პარამეტრების მაგალითი",
+      "greeting-shown_one": "მისალმება ერთხელ არის ნაჩვენები.",
+      "greeting-shown_other": "მისალმება ნაჩვენებია {{count}} -ჯერ."
     },
     "km": {
       "title": "ផ្នែកបន្ថែមឧទាហរណ៍ Sandboxed",
@@ -1354,7 +1496,11 @@
       "example-banner": "នេះ​ជា​បដា​ឧទាហរណ៍។ បិទ​វា​នៅ​ក្នុង​ការ​កំណត់​របស់​ផ្នែក​បន្ថែម​នេះ។",
       "portal-permission-declined": "ការបង្ហាញវិបផតថល CasualOS ត្រូវការការអនុញ្ញាតពីអ្នក។",
       "sensitive-result": "សេវាកម្មឧទាហរណ៍៖ {{status}}",
-      "item-clicked": "ចុច {{item}} ហើយ!"
+      "item-clicked": "ចុច {{item}} ហើយ!",
+      "screenshot-greeting": "ឧទាហរណ៍នៃផ្ទាំងស្វាគមន៍នៅក្បែរអ្នកអាន",
+      "screenshot-settings": "ឧទាហរណ៍នៃការកំណត់ការស្វាគមន៍",
+      "greeting-shown_one": "ការស្វាគមន៍ត្រូវបានបង្ហាញម្តង។",
+      "greeting-shown_other": "ការស្វាគមន៍ត្រូវបានបង្ហាញ {{count}} ដង។"
     },
     "kn": {
       "title": "ಸ್ಯಾಂಡ್‌ಬಾಕ್ಸ್ ಮಾಡಲಾದ ಉದಾಹರಣೆ ವಿಸ್ತರಣೆ",
@@ -1390,7 +1536,11 @@
       "example-banner": "ಇದು ಉದಾಹರಣೆ ಬ್ಯಾನರ್. ಈ ವಿಸ್ತರಣೆಯ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಅದನ್ನು ಆಫ್ ಮಾಡಿ.",
       "portal-permission-declined": "CasualOS ಪೋರ್ಟಲ್ ತೋರಿಸಲು ನಿಮ್ಮ ಅನುಮತಿಯ ಅಗತ್ಯವಿದೆ.",
       "sensitive-result": "ಉದಾಹರಣೆ ಸೇವೆ: {{status}}",
-      "item-clicked": "{{item}} ಕ್ಲಿಕ್ ಮಾಡಲಾಗಿದೆ!"
+      "item-clicked": "{{item}} ಕ್ಲಿಕ್ ಮಾಡಲಾಗಿದೆ!",
+      "screenshot-greeting": "ಓದುಗರ ಪಕ್ಕದಲ್ಲಿರುವ ಶುಭಾಶಯ ಫಲಕದ ಉದಾಹರಣೆ",
+      "screenshot-settings": "ಉದಾಹರಣೆ ಶುಭಾಶಯ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+      "greeting-shown_one": "ಶುಭಾಶಯವನ್ನು ಒಮ್ಮೆ ತೋರಿಸಲಾಗುತ್ತದೆ.",
+      "greeting-shown_other": "ಶುಭಾಶಯವನ್ನು {{count}} ಬಾರಿ ತೋರಿಸಲಾಗಿದೆ."
     },
     "ko": {
       "title": "샌드박스 예제 확장",
@@ -1426,7 +1576,11 @@
       "example-banner": "이것은 예시 배너입니다. 이 확장 프로그램 설정에서 배너를 끄세요.",
       "portal-permission-declined": "CasualOS 포털을 표시하려면 사용자의 권한이 필요합니다.",
       "sensitive-result": "예시 서비스: {{status}}",
-      "item-clicked": "{{item}} 님이 클릭했습니다!"
+      "item-clicked": "{{item}} 님이 클릭했습니다!",
+      "screenshot-greeting": "읽기 옆에 있는 인사말 창 예시",
+      "screenshot-settings": "인사말 설정 예시",
+      "greeting-shown_one": "인사말은 한 번만 표시됩니다.",
+      "greeting-shown_other": "인사말은 {{count}} 번 표시됩니다."
     },
     "ky": {
       "title": "Sandboxed үлгү кеңейтүүсү",
@@ -1462,7 +1616,11 @@
       "example-banner": "Бул үлгү баннер. Аны бул кеңейтүүнүн жөндөөлөрүнөн өчүрүңүз.",
       "portal-permission-declined": "CasualOS порталын көрсөтүү үчүн сиздин уруксатыңыз керек.",
       "sensitive-result": "Мисал кызмат: {{status}}",
-      "item-clicked": "{{item}} чыкылдатылды!"
+      "item-clicked": "{{item}} чыкылдатылды!",
+      "screenshot-greeting": "Окурмандын жанындагы саламдашуу тилкесинин үлгүсү",
+      "screenshot-settings": "Саламдашуу жөндөөлөрүнүн үлгүсү",
+      "greeting-shown_one": "Куттуктоо бир жолу көрсөтүлөт.",
+      "greeting-shown_other": "Саламдашуу {{count}} жолу көрсөтүлдү."
     },
     "ln": {
       "title": "Ndakisa ya Sandboxed Extension",
@@ -1498,7 +1656,11 @@
       "example-banner": "Oyo ezali ndakisa ya bendele. Boma yango na ba paramètres ya extension oyo.",
       "portal-permission-declined": "Kolakisa portail ya CasualOS esengeli na ndingisa na yo.",
       "sensitive-result": "Ndakisa ya mosala: {{status}}",
-      "item-clicked": "{{item}} esili kofina!"
+      "item-clicked": "{{item}} esili kofina!",
+      "screenshot-greeting": "Ndakisa ya panneau ya mbote pembeni ya motángi",
+      "screenshot-settings": "Ndakisa ya ba paramètres ya mbote",
+      "greeting-shown_one": "Mbote elakisami mbala moko.",
+      "greeting-shown_other": "Mbote elakisami {{count}} mbala."
     },
     "lo": {
       "title": "ສ່ວນຂະຫຍາຍຕົວຢ່າງ Sandboxed",
@@ -1534,7 +1696,11 @@
       "example-banner": "ນີ້ແມ່ນຕົວຢ່າງປ້າຍໂຄສະນາ. ປິດມັນໃນການຕັ້ງຄ່າຂອງສ່ວນຂະຫຍາຍນີ້.",
       "portal-permission-declined": "ການສະແດງພອດທອລ CasualOS ຕ້ອງການການອະນຸຍາດຈາກທ່ານ.",
       "sensitive-result": "ຕົວຢ່າງການບໍລິການ: {{status}}",
-      "item-clicked": "ຄລິກ {{item}} ແລ້ວ!"
+      "item-clicked": "ຄລິກ {{item}} ແລ້ວ!",
+      "screenshot-greeting": "ຕົວຢ່າງແຜງທັກທາຍຂ້າງໂປຣແກຣມອ່ານ",
+      "screenshot-settings": "ຕົວຢ່າງການຕັ້ງຄ່າການທັກທາຍ",
+      "greeting-shown_one": "ຄຳທັກທາຍຈະສະແດງຄັ້ງດຽວ.",
+      "greeting-shown_other": "ຄຳທັກທາຍຖືກສະແດງ {{count}} ເທື່ອ."
     },
     "lt": {
       "title": "Smėlio dėžės pavyzdžio plėtinys",
@@ -1570,7 +1736,11 @@
       "example-banner": "Tai yra reklamjuostės pavyzdys. Išjunkite ją šio plėtinio nustatymuose.",
       "portal-permission-declined": "Norint rodyti „CasualOS“ portalą, reikia jūsų leidimo.",
       "sensitive-result": "Paslaugos pavyzdys: {{status}}",
-      "item-clicked": "{{item}} spustelėjo!"
+      "item-clicked": "{{item}} spustelėjo!",
+      "screenshot-greeting": "Pasisveikinimo lango šalia skaitytuvo pavyzdys",
+      "screenshot-settings": "Pasisveikinimo nustatymų pavyzdžiai",
+      "greeting-shown_one": "Sveikinimas rodomas vieną kartą.",
+      "greeting-shown_other": "Sveikinimas rodomas {{count}} kartų."
     },
     "lv": {
       "title": "Smilškastes paplašinājuma piemērs",
@@ -1606,7 +1776,11 @@
       "example-banner": "Šis ir reklāmkaroga piemērs. Izslēdziet to šī paplašinājuma iestatījumos.",
       "portal-permission-declined": "CasualOS portāla rādīšanai ir nepieciešama jūsu atļauja.",
       "sensitive-result": "Pakalpojuma piemērs: {{status}}",
-      "item-clicked": "{{item}} noklikšķināts!"
+      "item-clicked": "{{item}} noklikšķināts!",
+      "screenshot-greeting": "Sveiciena rūts piemērs blakus lasītājam",
+      "screenshot-settings": "Apsveikuma iestatījumu piemēri",
+      "greeting-shown_one": "Sveiciens tiek parādīts vienreiz.",
+      "greeting-shown_other": "Sveiciens tiek parādīts {{count}} reizes."
     },
     "mk": {
       "title": "Пример за екстензија со песочна кутија",
@@ -1642,7 +1816,11 @@
       "example-banner": "Ова е примерниот банер. Исклучете го во поставките на оваа екстензија.",
       "portal-permission-declined": "За прикажување на CasualOS портал е потребна ваша дозвола.",
       "sensitive-result": "Пример за услуга: {{status}}",
-      "item-clicked": "{{item}} кликнато!"
+      "item-clicked": "{{item}} кликнато!",
+      "screenshot-greeting": "Пример за поздравен панел покрај читачот",
+      "screenshot-settings": "Пример за поставки за поздравување",
+      "greeting-shown_one": "Поздравот се прикажува еднаш.",
+      "greeting-shown_other": "Поздравот е прикажан {{count}} пати."
     },
     "ml": {
       "title": "സാൻഡ്‌ബോക്‌സ് ചെയ്‌ത ഉദാഹരണ വിപുലീകരണം",
@@ -1678,7 +1856,11 @@
       "example-banner": "ഇതാണ് ഉദാഹരണ ബാനർ. ഈ വിപുലീകരണത്തിന്റെ ക്രമീകരണങ്ങളിൽ ഇത് ഓഫാക്കുക.",
       "portal-permission-declined": "ഒരു CasualOS പോർട്ടൽ കാണിക്കുന്നതിന് നിങ്ങളുടെ അനുമതി ആവശ്യമാണ്.",
       "sensitive-result": "ഉദാഹരണ സേവനം: {{status}}",
-      "item-clicked": "{{item}} ക്ലിക്ക് ചെയ്തു!"
+      "item-clicked": "{{item}} ക്ലിക്ക് ചെയ്തു!",
+      "screenshot-greeting": "റീഡറിന് സമീപമുള്ള ഗ്രീറ്റിംഗ് പാളിയുടെ ഉദാഹരണം",
+      "screenshot-settings": "ആശംസാ ക്രമീകരണങ്ങളുടെ ഉദാഹരണം",
+      "greeting-shown_one": "ആശംസ ഒരിക്കൽ കാണിക്കുന്നു.",
+      "greeting-shown_other": "ആശംസ {{count}} തവണ കാണിച്ചിരിക്കുന്നു."
     },
     "mn": {
       "title": "Sandboxed Жишээ Өргөтгөл",
@@ -1714,7 +1896,11 @@
       "example-banner": "Энэ бол жишээ баннер юм. Үүнийг энэ өргөтгөлийн тохиргооноос унтраана уу.",
       "portal-permission-declined": "CasualOS портал харуулахад таны зөвшөөрөл шаардлагатай.",
       "sensitive-result": "Жишээ үйлчилгээ: {{status}}",
-      "item-clicked": "{{item}} дарсан!"
+      "item-clicked": "{{item}} дарсан!",
+      "screenshot-greeting": "Уншигчийн хажууд байгаа мэндчилгээний самбарын жишээ",
+      "screenshot-settings": "Мэндчилгээний тохиргооны жишээ",
+      "greeting-shown_one": "Мэндчилгээг нэг удаа харуулна.",
+      "greeting-shown_other": "Мэндчилгээг {{count}} удаа харуулсан."
     },
     "mr": {
       "title": "सँडबॉक्स केलेले उदाहरण विस्तार",
@@ -1750,7 +1936,11 @@
       "example-banner": "हे उदाहरणादाखल दिलेले बॅनर आहे. या एक्सटेन्शनच्या सेटिंग्जमध्ये जाऊन ते बंद करा.",
       "portal-permission-declined": "कॅज्युअलओएस पोर्टल दाखवण्यासाठी तुमच्या परवानगीची आवश्यकता आहे.",
       "sensitive-result": "उदाहरण सेवा: {{status}}",
-      "item-clicked": "{{item}} क्लिक केले!"
+      "item-clicked": "{{item}} क्लिक केले!",
+      "screenshot-greeting": "रीडरच्या बाजूला असलेल्या स्वागत फलकाचे उदाहरण",
+      "screenshot-settings": "अभिवादन सेटिंग्जचे उदाहरण",
+      "greeting-shown_one": "अभिवादन एकदाच दाखवले जाते.",
+      "greeting-shown_other": "अभिवादन {{count}} वेळा दाखवले आहे."
     },
     "ms": {
       "title": "Sambungan Contoh Kotak Pasir",
@@ -1786,7 +1976,11 @@
       "example-banner": "Ini ialah contoh sepanduk. Matikannya dalam tetapan sambungan ini.",
       "portal-permission-declined": "Memaparkan portal CasualOS memerlukan kebenaran anda.",
       "sensitive-result": "Contoh perkhidmatan: {{status}}",
-      "item-clicked": "{{item}} diklik!"
+      "item-clicked": "{{item}} diklik!",
+      "screenshot-greeting": "Contoh panel ucapan di sebelah pembaca",
+      "screenshot-settings": "Contoh tetapan ucapan",
+      "greeting-shown_one": "Ucapan sapaan ditunjukkan sekali.",
+      "greeting-shown_other": "Ucapan itu ditunjukkan {{count}} kali."
     },
     "my": {
       "title": "Sandboxed ဥပမာ Extension",
@@ -1822,7 +2016,11 @@
       "example-banner": "ဒါက နမူနာ ဘန်နာပါ။ ဒီ extension ရဲ့ setting မှာ ပိတ်ပါ။",
       "portal-permission-declined": "CasualOS portal ကိုပြသခြင်းသည် သင့်ခွင့်ပြုချက်လိုအပ်သည်။",
       "sensitive-result": "ဥပမာဝန်ဆောင်မှု- {{status}}",
-      "item-clicked": "{{item}} နှိပ်ပြီးပါပြီ။"
+      "item-clicked": "{{item}} နှိပ်ပြီးပါပြီ။",
+      "screenshot-greeting": "စာဖတ်သူဘေးရှိ နှုတ်ခွန်းဆက်စကားပုံ နမူနာ",
+      "screenshot-settings": "နှုတ်ခွန်းဆက်သမှု ဆက်တင်များ ဥပမာ",
+      "greeting-shown_one": "နှုတ်ဆက်စကားကို တစ်ကြိမ်သာ ပြသထားသည်။",
+      "greeting-shown_other": "နှုတ်ခွန်းဆက်သမှုကို {{count}} ကြိမ် ပြသထားသည်။"
     },
     "nb": {
       "title": "Eksempel på utvidelse i sandkasse",
@@ -1858,7 +2056,11 @@
       "example-banner": "Dette er et eksempel på en banner. Slå den av i innstillingene for denne utvidelsen.",
       "portal-permission-declined": "Det kreves din tillatelse for å vise en CasualOS-portal.",
       "sensitive-result": "Eksempeltjeneste: {{status}}",
-      "item-clicked": "{{item}} klikket!"
+      "item-clicked": "{{item}} klikket!",
+      "screenshot-greeting": "Eksempel på hilsenrute ved siden av leseren",
+      "screenshot-settings": "Eksempel på hilseninnstillinger",
+      "greeting-shown_one": "Hilsenen vises én gang.",
+      "greeting-shown_other": "Hilsenen vises {{count}} ganger."
     },
     "ne": {
       "title": "स्यान्डबक्स गरिएको उदाहरण एक्सटेन्सन",
@@ -1894,7 +2096,11 @@
       "example-banner": "यो उदाहरण ब्यानर हो। यो एक्सटेन्सनको सेटिङहरूमा गई यसलाई बन्द गर्नुहोस्।",
       "portal-permission-declined": "CasualOS पोर्टल देखाउन तपाईंको अनुमति चाहिन्छ।",
       "sensitive-result": "उदाहरण सेवा: {{status}}",
-      "item-clicked": "{{item}} क्लिक गरियो!"
+      "item-clicked": "{{item}} क्लिक गरियो!",
+      "screenshot-greeting": "पाठकको छेउमा रहेको अभिवादन फलकको उदाहरण",
+      "screenshot-settings": "अभिवादन सेटिङहरूको उदाहरण",
+      "greeting-shown_one": "अभिवादन एक पटक देखाइएको छ।",
+      "greeting-shown_other": "अभिवादन {{count}} पटक देखाइएको छ।"
     },
     "nl": {
       "title": "Voorbeelduitbreiding in een afgeschermde omgeving",
@@ -1930,7 +2136,11 @@
       "example-banner": "Dit is de voorbeeldbanner. Schakel deze uit in de instellingen van deze extensie.",
       "portal-permission-declined": "Om een ​​CasualOS-portaal te tonen, hebben we uw toestemming nodig.",
       "sensitive-result": "Voorbeeldservice: {{status}}",
-      "item-clicked": "{{item}} is aangeklikt!"
+      "item-clicked": "{{item}} is aangeklikt!",
+      "screenshot-greeting": "Voorbeeld van een begroetingsvenster naast de lezer",
+      "screenshot-settings": "Voorbeelden van begroetingsinstellingen",
+      "greeting-shown_one": "De begroeting wordt eenmaal getoond.",
+      "greeting-shown_other": "De begroeting wordt {{count}} keer getoond."
     },
     "no": {
       "title": "Eksempel på utvidelse i sandkasse",
@@ -1966,7 +2176,11 @@
       "example-banner": "Dette er et eksempel på en banner. Slå den av i innstillingene for denne utvidelsen.",
       "portal-permission-declined": "Det kreves din tillatelse for å vise en CasualOS-portal.",
       "sensitive-result": "Eksempeltjeneste: {{status}}",
-      "item-clicked": "{{item}} klikket!"
+      "item-clicked": "{{item}} klikket!",
+      "screenshot-greeting": "Eksempel på hilsenrute ved siden av leseren",
+      "screenshot-settings": "Eksempel på hilseninnstillinger",
+      "greeting-shown_one": "Hilsenen vises én gang.",
+      "greeting-shown_other": "Hilsenen vises {{count}} ganger."
     },
     "pa": {
       "title": "ਸੈਂਡਬਾਕਸਡ ਉਦਾਹਰਨ ਐਕਸਟੈਂਸ਼ਨ",
@@ -2002,7 +2216,11 @@
       "example-banner": "ਇਹ ਉਦਾਹਰਣ ਬੈਨਰ ਹੈ। ਇਸਨੂੰ ਇਸ ਐਕਸਟੈਂਸ਼ਨ ਦੀਆਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਬੰਦ ਕਰੋ।",
       "portal-permission-declined": "CasualOS ਪੋਰਟਲ ਦਿਖਾਉਣ ਲਈ ਤੁਹਾਡੀ ਇਜਾਜ਼ਤ ਦੀ ਲੋੜ ਹੈ।",
       "sensitive-result": "ਉਦਾਹਰਨ ਸੇਵਾ: {{status}}",
-      "item-clicked": "{{item}} ਕਲਿੱਕ ਕੀਤਾ!"
+      "item-clicked": "{{item}} ਕਲਿੱਕ ਕੀਤਾ!",
+      "screenshot-greeting": "ਰੀਡਰ ਦੇ ਨਾਲ ਸਵਾਗਤ ਕਰਨ ਵਾਲੇ ਪੈਨ ਦੀ ਉਦਾਹਰਣ",
+      "screenshot-settings": "ਉਦਾਹਰਨ ਸਵਾਗਤ ਸੈਟਿੰਗਾਂ",
+      "greeting-shown_one": "ਸਵਾਗਤ ਇੱਕ ਵਾਰ ਦਿਖਾਇਆ ਜਾਂਦਾ ਹੈ।",
+      "greeting-shown_other": "ਸਵਾਗਤ {{count}} ਵਾਰ ਦਿਖਾਇਆ ਗਿਆ ਹੈ।"
     },
     "pl": {
       "title": "Przykładowe rozszerzenie w trybie piaskownicy",
@@ -2038,7 +2256,11 @@
       "example-banner": "To jest przykładowy baner. Wyłącz go w ustawieniach tego rozszerzenia.",
       "portal-permission-declined": "Aby wyświetlić portal CasualOS, wymagane jest Twoje pozwolenie.",
       "sensitive-result": "Przykładowa usługa: {{status}}",
-      "item-clicked": "{{item}} kliknięto!"
+      "item-clicked": "{{item}} kliknięto!",
+      "screenshot-greeting": "Przykładowy panel powitalny obok czytnika",
+      "screenshot-settings": "Przykładowe ustawienia powitania",
+      "greeting-shown_one": "Powitanie wyświetlane jest jeden raz.",
+      "greeting-shown_other": "Powitanie jest wyświetlane {{count}} razy."
     },
     "ps": {
       "title": "د سانډ باکس شوي مثال توسیع",
@@ -2074,7 +2296,11 @@
       "example-banner": "دا د مثال بینر دی. دا د دې توسیع په ترتیباتو کې بند کړئ.",
       "portal-permission-declined": "د CasualOS پورټل ښودلو لپاره ستاسو اجازې ته اړتیا ده.",
       "sensitive-result": "د خدمت مثال: {{status}}",
-      "item-clicked": "{{item}} کلیک شوی!"
+      "item-clicked": "{{item}} کلیک شوی!",
+      "screenshot-greeting": "د لوستونکي تر څنګ د سلام کولو کړکۍ مثال",
+      "screenshot-settings": "د سلام کولو ترتیباتو مثال",
+      "greeting-shown_one": "سلام یو ځل ښودل کیږي.",
+      "greeting-shown_other": "سلام {{count}} ځله ښودل شوی دی."
     },
     "pt": {
       "title": "Extensão de exemplo em sandbox",
@@ -2110,7 +2336,11 @@
       "example-banner": "Este é um banner de exemplo. Desative-o nas configurações desta extensão.",
       "portal-permission-declined": "Exibir um portal CasualOS requer sua permissão.",
       "sensitive-result": "Exemplo de serviço: {{status}}",
-      "item-clicked": "{{item}} clicado!"
+      "item-clicked": "{{item}} clicado!",
+      "screenshot-greeting": "Exemplo de painel de saudação ao lado do leitor",
+      "screenshot-settings": "Exemplo de configurações de saudação",
+      "greeting-shown_one": "A saudação é exibida uma única vez.",
+      "greeting-shown_other": "A saudação é exibida {{count}} vezes."
     },
     "ro": {
       "title": "Extensie exemplu în mediu de testare",
@@ -2146,7 +2376,11 @@
       "example-banner": "Acesta este exemplul de banner. Dezactivați-l din setările acestei extensii.",
       "portal-permission-declined": "Afișarea unui portal CasualOS necesită permisiunea ta.",
       "sensitive-result": "Serviciu exemplu: {{status}}",
-      "item-clicked": "{{item}} a fost dat clic!"
+      "item-clicked": "{{item}} a fost dat clic!",
+      "screenshot-greeting": "Exemplu de panou de întâmpinare lângă cititor",
+      "screenshot-settings": "Exemplu de setări de salut",
+      "greeting-shown_one": "Salutul este afișat o singură dată.",
+      "greeting-shown_other": "Salutul este afișat de {{count}} ori."
     },
     "ru": {
       "title": "Пример расширения в изолированной среде",
@@ -2182,7 +2416,11 @@
       "example-banner": "Это пример баннера. Отключите его в настройках расширения.",
       "portal-permission-declined": "Для отображения портала CasualOS требуется ваше разрешение.",
       "sensitive-result": "Пример сервиса: {{status}}",
-      "item-clicked": "{{item}} кликнут!"
+      "item-clicked": "{{item}} кликнут!",
+      "screenshot-greeting": "Пример приветственной панели рядом с окном чтения.",
+      "screenshot-settings": "Пример настроек приветствия",
+      "greeting-shown_one": "Приветствие отображается один раз.",
+      "greeting-shown_other": "Приветствие отображается {{count}} раз."
     },
     "sk": {
       "title": "Príklad rozšírenia v sandboxe",
@@ -2218,7 +2456,11 @@
       "example-banner": "Toto je vzorový banner. Vypnite ho v nastaveniach tohto rozšírenia.",
       "portal-permission-declined": "Zobrazenie portálu CasualOS vyžaduje vaše povolenie.",
       "sensitive-result": "Príklad služby: {{status}}",
-      "item-clicked": "{{item}} kliknuté!"
+      "item-clicked": "{{item}} kliknuté!",
+      "screenshot-greeting": "Príklad uvítacieho panela vedľa čítačky",
+      "screenshot-settings": "Príklad nastavení pozdravu",
+      "greeting-shown_one": "Pozdrav sa zobrazí raz.",
+      "greeting-shown_other": "Pozdrav sa zobrazí {{count}} -krát."
     },
     "sl": {
       "title": "Primer razširitve v peskovniku",
@@ -2254,7 +2496,11 @@
       "example-banner": "To je primer pasice. Izklopite jo v nastavitvah te razširitve.",
       "portal-permission-declined": "Za prikaz portala CasualOS je potrebno vaše dovoljenje.",
       "sensitive-result": "Primer storitve: {{status}}",
-      "item-clicked": "Kliknili ste na {{item}} !"
+      "item-clicked": "Kliknili ste na {{item}} !",
+      "screenshot-greeting": "Primer pozdravnega podokna poleg bralnika",
+      "screenshot-settings": "Primeri nastavitev pozdrava",
+      "greeting-shown_one": "Pozdrav se prikaže enkrat.",
+      "greeting-shown_other": "Pozdrav je prikazan {{count}} krat."
     },
     "sq": {
       "title": "Shembull i Zgjerimit të Sandbox-it",
@@ -2290,7 +2536,11 @@
       "example-banner": "Ky është shembulli i banderolës. Çaktivizojeni në cilësimet e kësaj shtese.",
       "portal-permission-declined": "Shfaqja e një portali CasualOS kërkon lejen tuaj.",
       "sensitive-result": "Shembull shërbimi: {{status}}",
-      "item-clicked": "{{item}} klikuar!"
+      "item-clicked": "{{item}} klikuar!",
+      "screenshot-greeting": "Shembull i panelit të përshëndetjes pranë lexuesit",
+      "screenshot-settings": "Shembull i cilësimeve të përshëndetjes",
+      "greeting-shown_one": "Përshëndetja shfaqet një herë.",
+      "greeting-shown_other": "Përshëndetja shfaqet {{count}} herë."
     },
     "sv": {
       "title": "Exempel på sandlådans tillägg",
@@ -2326,7 +2576,11 @@
       "example-banner": "Detta är exempelbannern. Stäng av den i inställningarna för den här tillägget.",
       "portal-permission-declined": "För att visa en CasualOS-portal krävs din tillåtelse.",
       "sensitive-result": "Exempeltjänst: {{status}}",
-      "item-clicked": "{{item}} klickade!"
+      "item-clicked": "{{item}} klickade!",
+      "screenshot-greeting": "Exempel på hälsningsruta bredvid läsaren",
+      "screenshot-settings": "Exempel på hälsningsinställningar",
+      "greeting-shown_one": "Hälsningen visas en gång.",
+      "greeting-shown_other": "Hälsningen visas {{count}} gånger."
     },
     "sw": {
       "title": "Kiendelezi cha Mfano chenye Sandbox",
@@ -2362,7 +2616,11 @@
       "example-banner": "Hii ndiyo bango la mfano. Lizime katika mipangilio ya kiendelezi hiki.",
       "portal-permission-declined": "Kuonyesha lango la CasualOS kunahitaji ruhusa yako.",
       "sensitive-result": "Mfano wa huduma: {{status}}",
-      "item-clicked": "{{item}} imebofya!"
+      "item-clicked": "{{item}} imebofya!",
+      "screenshot-greeting": "Mfano wa kidirisha cha salamu kando ya msomaji",
+      "screenshot-settings": "Mfano wa mipangilio ya salamu",
+      "greeting-shown_one": "Salamu huonyeshwa mara moja.",
+      "greeting-shown_other": "Salamu huonyeshwa mara {{count}} ."
     },
     "ta": {
       "title": "சாண்ட்பாக்ஸ் செய்யப்பட்ட எடுத்துக்காட்டு நீட்டிப்பு",
@@ -2398,7 +2656,11 @@
       "example-banner": "இது மாதிரி பேனர். இந்த நீட்டிப்பின் அமைப்புகளில் இதை அணைத்துவிடவும்.",
       "portal-permission-declined": "CasualOS போர்ட்டலைக் காண்பிக்க உங்கள் அனுமதி தேவை.",
       "sensitive-result": "எடுத்துக்காட்டு சேவை: {{status}}",
-      "item-clicked": "{{item}} கிளிக் செய்யப்பட்டது!"
+      "item-clicked": "{{item}} கிளிக் செய்யப்பட்டது!",
+      "screenshot-greeting": "வாசகருக்கு அருகில் உள்ள வாழ்த்துப் பலகத்தின் எடுத்துக்காட்டு",
+      "screenshot-settings": "எடுத்துக்காட்டு வாழ்த்து அமைப்புகள்",
+      "greeting-shown_one": "வாழ்த்து ஒருமுறை காட்டப்படுகிறது.",
+      "greeting-shown_other": "வாழ்த்து {{count}} முறை காட்டப்பட்டுள்ளது."
     },
     "te": {
       "title": "శాండ్‌బాక్స్‌డ్ ఉదాహరణ పొడిగింపు",
@@ -2434,7 +2696,11 @@
       "example-banner": "ఇది ఉదాహరణ బ్యానర్. ఈ ఎక్స్టెన్షన్ సెట్టింగ్స్‌లో దీన్ని ఆఫ్ చేయండి.",
       "portal-permission-declined": "CasualOS పోర్టల్‌ను చూపించడానికి మీ అనుమతి అవసరం.",
       "sensitive-result": "ఉదాహరణ సేవ: {{status}}",
-      "item-clicked": "{{item}} క్లిక్ చేయబడింది!"
+      "item-clicked": "{{item}} క్లిక్ చేయబడింది!",
+      "screenshot-greeting": "రీడర్ పక్కన ఉన్న గ్రీటింగ్ పేన్‌కు ఉదాహరణ",
+      "screenshot-settings": "ఉదాహరణ శుభాకాంక్షల సెట్టింగ్‌లు",
+      "greeting-shown_one": "పలకరింపు ఒకసారి చూపబడుతుంది.",
+      "greeting-shown_other": "శుభాకాంక్షలు {{count}} సార్లు చూపబడతాయి."
     },
     "th": {
       "title": "ส่วนขยายตัวอย่างแบบแซนด์บ็อกซ์",
@@ -2470,7 +2736,11 @@
       "example-banner": "นี่คือแบนเนอร์ตัวอย่าง คุณสามารถปิดใช้งานได้ในการตั้งค่าของส่วนขยายนี้",
       "portal-permission-declined": "การแสดงพอร์ทัล CasualOS ต้องได้รับอนุญาตจากคุณก่อน",
       "sensitive-result": "ตัวอย่างบริการ: {{status}}",
-      "item-clicked": "คลิก {{item}} แล้ว!"
+      "item-clicked": "คลิก {{item}} แล้ว!",
+      "screenshot-greeting": "ตัวอย่างช่องแสดงคำทักทายที่อยู่ข้างๆ โปรแกรมอ่าน",
+      "screenshot-settings": "ตัวอย่างการตั้งค่าคำทักทาย",
+      "greeting-shown_one": "คำทักทายจะแสดงเพียงครั้งเดียว",
+      "greeting-shown_other": "คำทักทายนี้จะแสดง {{count}} ครั้ง"
     },
     "ti": {
       "title": "ሳንድቦክስ ኣብነት መቐጸልታ",
@@ -2506,7 +2776,11 @@
       "example-banner": "እዚ ኣብነት ባነር እዩ። ኣብ ቅጥዕታት ናይዚ ኤክስቴንሽን ኣጥፍእዎ።",
       "portal-permission-declined": "CasualOS ፖርታል ምርኣይ ፍቓድካ የድልዮ።",
       "sensitive-result": "ኣብነት ኣገልግሎት {{status}}",
-      "item-clicked": "{{item}} ጠዊቑ!"
+      "item-clicked": "{{item}} ጠዊቑ!",
+      "screenshot-greeting": "ኣብነት ናይ ሰላምታ መስኮት ኣብ ጎኒ ኣንባቢ",
+      "screenshot-settings": "ኣብነት ናይ ሰላምታ ቅጥዕታት",
+      "greeting-shown_one": "እቲ ሰላምታ ሓንሳብ እዩ ዝረአ።",
+      "greeting-shown_other": "እቲ ሰላምታ {{count}} ግዜ ይርአ።"
     },
     "tl": {
       "title": "Halimbawang Extension na Naka-sandbox",
@@ -2542,7 +2816,11 @@
       "example-banner": "Ito ang halimbawang banner. I-off ito sa mga setting ng extension na ito.",
       "portal-permission-declined": "Kailangan ng iyong pahintulot ang pagpapakita ng CasualOS portal.",
       "sensitive-result": "Halimbawang serbisyo: {{status}}",
-      "item-clicked": "Na-click ang {{item}} !"
+      "item-clicked": "Na-click ang {{item}} !",
+      "screenshot-greeting": "Halimbawang pane ng pagbati sa tabi ng mambabasa",
+      "screenshot-settings": "Halimbawang mga setting ng pagbati",
+      "greeting-shown_one": "Ang pagbati ay ipinapakita nang isang beses.",
+      "greeting-shown_other": "Ang pagbati ay ipinapakita nang {{count}} beses."
     },
     "tr": {
       "title": "Korumalı Alanda Örnek Uzantısı",
@@ -2578,7 +2856,11 @@
       "example-banner": "Bu örnek bir banner'dır. Bu eklentinin ayarlarından kapatabilirsiniz.",
       "portal-permission-declined": "CasualOS portalını göstermek için izniniz gerekiyor.",
       "sensitive-result": "Örnek servis: {{status}}",
-      "item-clicked": "{{item}} tıklandı!"
+      "item-clicked": "{{item}} tıklandı!",
+      "screenshot-greeting": "Okuyucunun yanında örnek bir karşılama paneli.",
+      "screenshot-settings": "Örnek karşılama ayarları",
+      "greeting-shown_one": "Selamlama mesajı bir kez gösterilir.",
+      "greeting-shown_other": "Selamlama {{count}} kez gösteriliyor."
     },
     "ug": {
       "title": "قۇم قۇتىسىدىكى ئۈلگە كېڭەيتىلمىسى",
@@ -2614,7 +2896,11 @@
       "example-banner": "بۇ ئۈلگە لېنتا. بۇ كېڭەيتىلمىنىڭ تەڭشەكلىرىدىن ئۇنى ئېتىۋېتىڭ.",
       "portal-permission-declined": "CasualOS پورتالىنى كۆرسىتىش ئۈچۈن سىزنىڭ رۇخسىتىڭىز كېرەك.",
       "sensitive-result": "ئۈلگە مۇلازىمەت: {{status}}",
-      "item-clicked": "{{item}} چېكىلدى!"
+      "item-clicked": "{{item}} چېكىلدى!",
+      "screenshot-greeting": "ئوقۇرمەننىڭ يېنىدىكى سالاملىشىش رامكىسىنىڭ مىسالى",
+      "screenshot-settings": "سالاملىشىش تەڭشەكلىرىنىڭ ئۈلگىسى",
+      "greeting-shown_one": "سالام بىر قېتىم كۆرسىتىلىدۇ.",
+      "greeting-shown_other": "سالاملىشىش {{count}} قېتىم كۆرسىتىلدى."
     },
     "uk": {
       "title": "Приклад розширення для ізольованого середовища",
@@ -2650,7 +2936,11 @@
       "example-banner": "Це приклад банера. Вимкніть його в налаштуваннях цього розширення.",
       "portal-permission-declined": "Для відображення порталу CasualOS потрібен ваш дозвіл.",
       "sensitive-result": "Приклад послуги: {{status}}",
-      "item-clicked": "{{item}} натиснуто!"
+      "item-clicked": "{{item}} натиснуто!",
+      "screenshot-greeting": "Приклад панелі привітання поруч із читачем",
+      "screenshot-settings": "Приклади налаштувань привітання",
+      "greeting-shown_one": "Привітання відображається один раз.",
+      "greeting-shown_other": "Привітання відображається {{count}} разів."
     },
     "ur": {
       "title": "سینڈ باکس شدہ مثال کی توسیع",
@@ -2686,7 +2976,11 @@
       "example-banner": "یہ مثال بینر ہے۔ اس ایکسٹینشن کی سیٹنگز میں اسے آف کریں۔",
       "portal-permission-declined": "CasualOS پورٹل دکھانے کے لیے آپ کی اجازت درکار ہے۔",
       "sensitive-result": "مثال کی خدمت: {{status}}",
-      "item-clicked": "{{item}} کلک کیا گیا!"
+      "item-clicked": "{{item}} کلک کیا گیا!",
+      "screenshot-greeting": "مثال کے طور پر ریڈر کے ساتھ گریٹنگ پین",
+      "screenshot-settings": "مبارکباد کی ترتیبات کی مثال",
+      "greeting-shown_one": "سلام ایک بار دکھایا گیا ہے۔",
+      "greeting-shown_other": "سلام {{count}} بار دکھایا گیا ہے۔"
     },
     "uz": {
       "title": "Sandboxed namunaviy kengaytmasi",
@@ -2722,7 +3016,11 @@
       "example-banner": "Bu namunaviy banner. Uni ushbu kengaytma sozlamalarida o'chirib qo'ying.",
       "portal-permission-declined": "CasualOS portalini ko'rsatish uchun sizning ruxsatingiz kerak.",
       "sensitive-result": "Namunaviy xizmat: {{status}}",
-      "item-clicked": "{{item}} bosildi!"
+      "item-clicked": "{{item}} bosildi!",
+      "screenshot-greeting": "O'quvchi yonidagi namunaviy salomlashish paneli",
+      "screenshot-settings": "Namunaviy salomlashish sozlamalari",
+      "greeting-shown_one": "Tabriknoma bir marta ko'rsatiladi.",
+      "greeting-shown_other": "Salomlashish {{count}} marta ko'rsatiladi."
     },
     "vi": {
       "title": "Ví dụ mở rộng trong môi trường biệt lập",
@@ -2758,7 +3056,11 @@
       "example-banner": "Đây là ví dụ về banner. Hãy tắt nó trong phần cài đặt của tiện ích mở rộng này.",
       "portal-permission-declined": "Việc hiển thị cổng thông tin CasualOS cần sự cho phép của bạn.",
       "sensitive-result": "Ví dụ về dịch vụ: {{status}}",
-      "item-clicked": "{{item}} đã được nhấp!"
+      "item-clicked": "{{item}} đã được nhấp!",
+      "screenshot-greeting": "Ví dụ về khung chào mừng bên cạnh trình đọc",
+      "screenshot-settings": "Ví dụ về cài đặt lời chào",
+      "greeting-shown_one": "Lời chào chỉ được hiển thị một lần.",
+      "greeting-shown_other": "Lời chào được hiển thị {{count}} lần."
     },
     "zh": {
       "title": "沙盒示例扩展",
@@ -2794,7 +3096,11 @@
       "example-banner": "这是示例横幅。请在扩展程序的设置中将其关闭。",
       "portal-permission-declined": "显示 CasualOS 门户需要您的许可。",
       "sensitive-result": "示例服务： {{status}}",
-      "item-clicked": "点击了{{item}} ！"
+      "item-clicked": "点击了{{item}} ！",
+      "screenshot-greeting": "阅读器旁边的示例问候窗格",
+      "screenshot-settings": "示例问候语设置",
+      "greeting-shown_one": "问候语显示一次。",
+      "greeting-shown_other": "问候语显示{{count}}次。"
     },
     "zu": {
       "title": "Isandiso Sesibonelo Esine-Sandbox",
@@ -2830,7 +3136,11 @@
       "example-banner": "Lesi yisibonelo sesibhengezo. Sicime kuzilungiselelo zalesi sandiso.",
       "portal-permission-declined": "Ukubonisa iphothali ye-CasualOS kudinga imvume yakho.",
       "sensitive-result": "Isibonelo sesevisi: {{status}}",
-      "item-clicked": "Kuchofozwe u {{item}} !"
+      "item-clicked": "Kuchofozwe u {{item}} !",
+      "screenshot-greeting": "Isibonelo sephaneli yokubingelela eceleni komfundi",
+      "screenshot-settings": "Izilungiselelo zokubingelela zesibonelo",
+      "greeting-shown_one": "Ukubingelela kuboniswa kanye.",
+      "greeting-shown_other": "Ukubingelela kuboniswa izikhathi ezingu {{count}} ."
     }
   }
 }

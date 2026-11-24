@@ -1316,7 +1316,7 @@ describe("YourContentPane", () => {
       container.querySelector(".sb-content-needs-account");
     const chip = (label: string) =>
       Array.from(
-        container.querySelectorAll<HTMLButtonElement>(".sb-content-chip")
+        container.querySelectorAll<HTMLButtonElement>(".sb-filter-pill")
       ).find((el) => el.textContent?.includes(label))!;
 
     it("shows the notes and highlights saved on this device, and says that's where they are", () => {
@@ -1359,7 +1359,7 @@ describe("YourContentPane", () => {
       renderPane(state);
 
       const locked = Array.from(
-        container.querySelectorAll(".sb-content-chip-locked")
+        container.querySelectorAll(".sb-content-filter-locked")
       ).map((el) => el.textContent);
       expect(locked).toEqual([
         "lockBookmarks(needs an account)",
@@ -1422,7 +1422,7 @@ describe("YourContentPane", () => {
       "cloud_offShowing content saved on this deviceConnect to the internet to see everything in your account."
     );
     expect(container.querySelector(".sb-content-sign-in")).toBeNull();
-    expect(container.querySelector(".sb-content-chip-locked")).toBeNull();
+    expect(container.querySelector(".sb-content-filter-locked")).toBeNull();
   });
 
   it("adds no device card when the account's content loaded", () => {
@@ -1464,7 +1464,7 @@ describe("YourContentPane", () => {
     renderPane(state);
 
     const chips = Array.from(
-      container.querySelectorAll(".sb-content-chip")
+      container.querySelectorAll(".sb-filter-pill")
     ) as HTMLButtonElement[];
     const savesChip = chips.find((c) => c.textContent === "Saves")!;
     act(() => {
@@ -1901,7 +1901,7 @@ describe("YourContentPane", () => {
     renderPane(state);
 
     const create = container.querySelector(".sb-content-create");
-    const chips = container.querySelector(".sb-content-chips");
+    const chips = container.querySelector(".sb-filter-pills-row");
     if (!create || !chips) throw new Error("The toolbar did not render.");
     expect(create.querySelector(".sb-button-label")?.textContent).toBe(
       "Create"

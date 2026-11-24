@@ -70,85 +70,39 @@
   background: var(--sb-divider-color);
 }
 
-.sb-content-chips {
-  --sb-content-chips-fade-left: 0px;
-  --sb-content-chips-fade-right: 0px;
-  display: flex;
+.sb-content-filters {
   flex: 1;
-  min-width: 0;
-  gap: 8px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  mask-image: linear-gradient(
-    to right,
-    transparent 0px,
-    black var(--sb-content-chips-fade-left),
-    black calc(100% - var(--sb-content-chips-fade-right)),
-    transparent 100%
-  );
-}
-
-/* Each edge fades only while chips are hidden past it (`useScrollEdgeFade`),
-   like Today's filter pills. */
-.sb-content-chips[data-fade-left] {
-  --sb-content-chips-fade-left: 1.25rem;
-}
-
-.sb-content-chips[data-fade-right] {
-  --sb-content-chips-fade-right: 1.25rem;
-}
-
-.sb-content-chips::-webkit-scrollbar {
-  display: none;
-}
-
-.sb-content-chip {
-  flex-shrink: 0;
-  padding: 7px 16px;
-  border: none;
-  border-radius: var(--sb-radius-full);
-  background: var(--sb-content-surface-strong);
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-14);
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background-color var(--sb-duration-fast) ease;
-}
-
-/* The same step up as Today's filter pills. */
-@media (hover: hover) {
-  .sb-content-chip:not(.sb-content-chip-active):hover {
-    background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  }
-}
-
-.sb-content-chip-active {
-  background: var(--sb-content-accent);
-  color: var(--sb-primary-font-color);
-  font-weight: 600;
+  --sb-filter-pills-font-size: var(--sb-font-size-14);
+  --sb-filter-pills-padding: 7px 16px;
+  --sb-filter-pills-background: var(--sb-content-surface-strong);
+  --sb-filter-pills-selected-background: var(--sb-content-accent);
 }
 
 /* A section a signed-out reader can't have yet: dashed and padlocked, so it
-   reads as "needs an account" rather than as an empty section. */
-.sb-content-chip-locked {
+   reads as "needs an account" rather than as an empty section. The padding
+   gives back what the border takes, so it is the size of the other pills. */
+.sb-content-filter-locked {
+  --sb-filter-pills-border: 1.5px dashed
+    color-mix(in srgb, var(--sb-font-color), transparent 70%);
+  --sb-filter-pills-padding: calc(7px - 1.5px) calc(16px - 1.5px);
+  --sb-filter-pills-background: transparent;
+  --sb-filter-pills-color: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 20%
+  );
+  --sb-filter-pills-selected-background: transparent;
+  --sb-filter-pills-selected-color: var(--sb-content-accent);
+  --sb-filter-pills-selected-border-color: var(--sb-content-accent);
+}
+
+.sb-content-filter-locked-label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: calc(7px - 1.5px) calc(16px - 1.5px);
-  border: 1.5px dashed color-mix(in srgb, var(--sb-font-color), transparent 70%);
-  background: transparent;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
 }
 
-.sb-content-chip-locked.sb-content-chip-active {
-  border-color: var(--sb-content-accent);
-  background: transparent;
-  color: var(--sb-content-accent);
-}
-
-.sb-content-chip-locked > span.material-symbols-outlined {
+.sb-content-filter-locked-label > span.material-symbols-outlined {
   /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
   font-size: 1rem;
 }

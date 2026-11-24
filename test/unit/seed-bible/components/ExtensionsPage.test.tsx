@@ -349,7 +349,7 @@ describe("ExtensionsPage", () => {
       ReturnType<SeedBibleState["extensions"]["discoverExtensionSet"]>
     >);
 
-    act(() => button(".sb-extensions-page-add-link")!.click());
+    act(() => button(".sb-extensions-page-toolbar-actions button")!.click());
     const registration = vi.mocked(state.modals.openModal).mock.calls[0]![0];
     const dialog = document.createElement("div");
     document.body.appendChild(dialog);

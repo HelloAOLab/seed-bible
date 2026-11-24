@@ -17,12 +17,16 @@ export {
   type ContextMenuTriggerProps,
   type ContextMenuWithButtonProps,
 } from "./ContextMenu/ContextMenu";
+export * from "./Popover/Popover";
 export * from "./PortalComponent/PortalComponent";
+export * from "./Spinner/Spinner";
+export * from "./LoadingStatus/LoadingStatus";
 export * from "./Skeleton/Skeleton";
 export * from "./EmptyState/EmptyState";
 export * from "./ExpandableText/ExpandableText";
 export * from "./PlaylistLinkContent/PlaylistLinkContent";
 export * from "./SearchBar/SearchBar";
+export * from "./FilterPills/FilterPills";
 export * from "./ScreenshotViewer/ScreenshotViewer";
 export * from "./TranslationList/TranslationList";
 export * from "./TranslationList/TranslationViewModeMenu";

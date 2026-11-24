@@ -114,7 +114,7 @@ describe("extension screenshot strip", () => {
 
   const thumbnails = () => {
     const heading = [...root.querySelectorAll("h2")].find(
-      (element) => element.textContent === "Screenshots"
+      (element) => element.textContent === i18n.t("extension-screenshots")
     );
     return [
       ...(heading?.parentElement?.querySelectorAll<HTMLButtonElement>(

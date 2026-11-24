@@ -1,0 +1,132 @@
+/* The shared filter pill row. A surface that needs it to look different sets
+   these custom properties on the `className` it passes (or anything around
+   it) instead of overriding the rules:
+   - `--sb-filter-pills-font-size` / `--sb-filter-pills-padding`: the pills'
+     text size and padding.
+   - `--sb-filter-pills-gap`: the space between pills.
+   - `--sb-filter-pills-min-width`: the narrowest a pill gets, so short
+     labels ("All") still make a comfortable target.
+   - `--sb-filter-pills-background` / `--sb-filter-pills-hover-background`:
+     an unselected pill, at rest and under the pointer.
+   - `--sb-filter-pills-color`: an unselected pill's text.
+   - `--sb-filter-pills-border`: the pills' border, none by default.
+   - `--sb-filter-pills-selected-background` / `--sb-filter-pills-selected-color`
+     / `--sb-filter-pills-selected-border-color`: the selected pill.
+   The defaults are fallbacks where each is used rather than declared here, so
+   a value set on a parent reaches the pills. */
+.sb-filter-pills {
+  width: 100%;
+  min-width: 0;
+}
+
+/* The arrows only show while the pills overflow, and take fixed columns so
+   the row between them can't push them off the end. */
+.sb-filter-pills--scrollable {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) 2.2rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sb-filter-pills-row {
+  --sb-filter-pills-fade-left: 0px;
+  --sb-filter-pills-fade-right: 0px;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--sb-filter-pills-gap, 0.5rem);
+  width: 100%;
+  min-width: 0;
+  /* Room for the selected pill's border without clipping it. */
+  padding: 0.25rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0px,
+    black var(--sb-filter-pills-fade-left),
+    black calc(100% - var(--sb-filter-pills-fade-right)),
+    transparent 100%
+  );
+}
+
+.sb-filter-pills-row::-webkit-scrollbar {
+  display: none;
+}
+
+/* Each edge fades only while pills are hidden past it. */
+.sb-filter-pills-row[data-fade-left] {
+  --sb-filter-pills-fade-left: 1.25rem;
+}
+
+.sb-filter-pills-row[data-fade-right] {
+  --sb-filter-pills-fade-right: 1.25rem;
+}
+
+.sb-filter-pill {
+  flex-shrink: 0;
+  min-width: var(--sb-filter-pills-min-width, 0);
+  padding: var(--sb-filter-pills-padding, 0.4375rem 0.875rem);
+  border: var(--sb-filter-pills-border, none);
+  border-radius: var(--sb-radius-full);
+  background: var(
+    --sb-filter-pills-background,
+    color-mix(in srgb, var(--sb-font-color), transparent 90%)
+  );
+  color: var(--sb-filter-pills-color, var(--sb-font-color));
+  font-family: inherit;
+  font-size: var(--sb-filter-pills-font-size, var(--sb-font-size-13));
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--sb-duration-fast) ease;
+}
+
+@media (hover: hover) {
+  .sb-filter-pill:not(.sb-filter-pill--selected):hover {
+    background: var(
+      --sb-filter-pills-hover-background,
+      color-mix(in srgb, var(--sb-font-color), transparent 82%)
+    );
+  }
+}
+
+.sb-filter-pill:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+}
+
+.sb-filter-pill--selected {
+  background: var(
+    --sb-filter-pills-selected-background,
+    var(--sb-primary-color)
+  );
+  border-color: var(--sb-filter-pills-selected-border-color, currentColor);
+  color: var(--sb-filter-pills-selected-color, var(--sb-primary-font-color));
+  font-weight: 600;
+}
+
+.sb-icon-button.sb-filter-pills-arrow {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  --sb-icon-button-icon-size: 1.375rem;
+}
+
+/* `chevron_left`/`_right` are fixed glyphs; flip them so "toward start"
+   points the way the row reads. */
+[dir="rtl"] .sb-filter-pills-arrow-icon {
+  transform: scaleX(-1);
+}
+
+/* Touch screens swipe the row, so the arrows would only take room. */
+@media (pointer: coarse) {
+  .sb-filter-pills--scrollable {
+    display: block;
+  }
+
+  .sb-icon-button.sb-filter-pills-arrow {
+    display: none;
+  }
+}

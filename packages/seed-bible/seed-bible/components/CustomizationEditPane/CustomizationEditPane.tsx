@@ -74,6 +74,7 @@ import {
   type ExtensionListEntry,
 } from "../../managers/ExtensionManager";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import { ContentViewLoading } from "./ContentViewLoading";
 import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
 import { normalizeHex } from "../ColorPicker/color";
 import {
@@ -661,21 +662,6 @@ export function CustomizationEditPane(props: { state: SeedBibleState }) {
     return <CustomizationEditVariantView state={state} />;
   }
   return <CustomizationEditMainView state={state} />;
-}
-
-function ContentViewLoading() {
-  const { t } = useI18n();
-  return (
-    <div className="sb-settings-page sb-cz-page">
-      <SkeletonContainer
-        label={t("custom-content-loading", {
-          defaultValue: "Loading the content library…",
-        })}
-      >
-        <Skeleton width="100%" height="12rem" radius="var(--sb-radius-md)" />
-      </SkeletonContainer>
-    </div>
-  );
 }
 
 function CustomizationEditMainView(props: { state: SeedBibleState }) {
@@ -1935,6 +1921,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
               variantId={variant.id}
               fieldKey={field.key}
               value={resolvedTheme.variables[field.key] ?? ""}
+              selectedValue={variant.themes[field.key]}
               isOverridden={variant.themes[field.key] !== undefined}
               label={t(`customization-${field.key}`, {
                 defaultValue: field.label,
@@ -2286,25 +2273,36 @@ function CustomizationFontFieldRow(props: {
   variantId: string;
   fieldKey: ThemeFontFamilyKey;
   value: string;
+  selectedValue?: string;
   isOverridden: boolean;
   label: string;
   customizations: CustomizationsManager;
 }) {
-  const { variantId, fieldKey, value, isOverridden, label, customizations } =
-    props;
+  const {
+    variantId,
+    fieldKey,
+    value,
+    selectedValue,
+    isOverridden,
+    label,
+    customizations,
+  } = props;
   const { t } = useI18n();
   const forcedCustom = useSignal(false);
 
   const fieldPresets = getFontPresetsForField(fieldKey);
-  const matchedPreset = value
-    ? fieldPresets.find((p) => p.value === value)
+
+  const matchedPreset = selectedValue
+    ? fieldPresets.find(
+        (p) => p.name !== "Default" && p.value === selectedValue
+      )
     : fieldPresets[0];
   // A stored value that doesn't match any preset is a real custom font
   // (e.g. reopening an editor that already has one saved) — show custom
   // mode for it even before the user has touched the select this session.
-  const isCustom = forcedCustom.value || (!!value && !matchedPreset);
+  const isCustom = forcedCustom.value || (!!selectedValue && !matchedPreset);
   const preset = isCustom ? undefined : matchedPreset;
-  const customName = value.split(",")[0]?.trim() ?? "";
+  const customName = (selectedValue ?? "").split(",")[0]?.trim() ?? "";
   const selectId = `sb-customization-font-${fieldKey}`;
 
   return (
@@ -2335,15 +2333,21 @@ function CustomizationFontFieldRow(props: {
             value={preset ? preset.name : "__custom__"}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLSelectElement;
+
               if (target.value === "__custom__") {
                 forcedCustom.value = true;
                 return;
               }
+
               forcedCustom.value = false;
+
               const nextPreset = fieldPresets.find(
                 (p) => p.name === target.value
               );
-              if (nextPreset) {
+
+              if (nextPreset?.name === "Default") {
+                customizations.resetEditingVariantField(variantId, fieldKey);
+              } else if (nextPreset) {
                 customizations.setEditingVariantFont(
                   variantId,
                   fieldKey,

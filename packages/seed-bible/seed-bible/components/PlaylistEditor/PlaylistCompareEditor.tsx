@@ -1,3 +1,4 @@
+import { LoadingStatus } from "../LoadingStatus/LoadingStatus";
 import "../PlaylistStepPage/PlaylistStepPage.css";
 import "../PlaylistCompareStep/PlaylistCompareStep.css";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
@@ -295,9 +296,11 @@ function PassageVerses(props: {
   }
   if (!chapter) {
     return (
-      <p className="sb-pe-compare-status">
-        {t("loading", { defaultValue: "Loading…" })}
-      </p>
+      <div className="sb-pe-compare-status">
+        <LoadingStatus>
+          {t("loading", { defaultValue: "Loading…" })}
+        </LoadingStatus>
+      </div>
     );
   }
 

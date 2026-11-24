@@ -1,3 +1,4 @@
+import { Popover } from "../Popover/Popover";
 import { EmptyState } from "../EmptyState/EmptyState";
 import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./Tabs.inline.css";
@@ -59,7 +60,7 @@ import {
   sortUsersByRole,
 } from "../Avatar/Avatar";
 import type { ComponentChildren } from "preact";
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useId, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
 import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
 import { useAppConfig } from "../../app/appConfig";
@@ -103,6 +104,8 @@ interface TabsHeaderProps {
   panelsEnabled: boolean;
   paneLayout: TabSlotLayoutId | "single";
   isLayoutMenuOpen: boolean;
+  /** The tour step that points at the picker is holding it open. */
+  layoutMenuHeldByTour: boolean;
   toggleLayoutMenu: () => void;
   closeLayoutMenu: () => void;
   setLayout: (layout: TabSlotLayoutId) => void;
@@ -927,6 +930,7 @@ export function TabsHeader(props: TabsHeaderProps) {
     panelsEnabled,
     paneLayout,
     isLayoutMenuOpen,
+    layoutMenuHeldByTour,
     toggleLayoutMenu,
     closeLayoutMenu,
     setLayout,
@@ -937,21 +941,8 @@ export function TabsHeader(props: TabsHeaderProps) {
   const activeLogoUrl = customizations.activeCustomization.value?.logoUrl;
   const { t } = useI18n();
   const layoutAnchorRef = useRef<HTMLDivElement | null>(null);
-
-  // Close the pane-layout menu when clicking anywhere outside its anchor.
-  useEffect(() => {
-    if (!isLayoutMenuOpen) return;
-    const handlePointerDown = (event: PointerEvent) => {
-      const anchor = layoutAnchorRef.current;
-      if (anchor && !anchor.contains(event.target as Node)) {
-        closeLayoutMenu();
-      }
-    };
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isLayoutMenuOpen, closeLayoutMenu]);
+  const layoutTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const layoutMenuId = useId();
 
   return (
     <div className="sb-sidebar-top-row">
@@ -997,7 +988,11 @@ export function TabsHeader(props: TabsHeaderProps) {
         {panelsEnabled && !effectivelyCollapsed && (
           <div className="sb-pane-layout-anchor" ref={layoutAnchorRef}>
             <IconButton
+              buttonRef={layoutTriggerRef}
               onClick={toggleLayoutMenu}
+              aria-haspopup="dialog"
+              aria-expanded={isLayoutMenuOpen}
+              aria-controls={isLayoutMenuOpen ? layoutMenuId : undefined}
               className="sb-sidebar-top-icon-button"
               icon="dashboard"
               label={t("select-pane-layout", {
@@ -1005,8 +1000,22 @@ export function TabsHeader(props: TabsHeaderProps) {
               })}
             />
 
-            {isLayoutMenuOpen && (
-              <div className="sb-pane-layout-menu">
+            <Popover
+              id={layoutMenuId}
+              open={isLayoutMenuOpen}
+              onClose={closeLayoutMenu}
+              // While the tour holds it open the tip has the keyboard: the
+              // picker neither takes focus from it nor answers its keys.
+              initialFocus={layoutMenuHeldByTour ? false : undefined}
+              dismissible={!layoutMenuHeldByTour}
+              anchorRef={layoutAnchorRef}
+              returnFocusRef={layoutTriggerRef}
+              role="dialog"
+              aria-label={t("panels", { defaultValue: "Panels" })}
+              className="sb-pane-layout-menu"
+              gap={8}
+            >
+              <div>
                 <div className="sb-pane-layout-menu-title">
                   {t("panels", { defaultValue: "Panels" })}
                 </div>
@@ -1026,6 +1035,8 @@ export function TabsHeader(props: TabsHeaderProps) {
                             ? " sb-pane-layout-option-selected"
                             : ""
                         }`}
+                        role="radio"
+                        aria-checked={paneLayout === layout.id}
                         aria-label={layout.label}
                       >
                         {renderLayoutPreview(layout.id)}
@@ -1034,7 +1045,7 @@ export function TabsHeader(props: TabsHeaderProps) {
                   ))}
                 </div>
               </div>
-            )}
+            </Popover>
           </div>
         )}
 
@@ -2384,66 +2395,66 @@ export function Tabs(props: TabsProps) {
               : fullTitle;
 
           return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                closeContextMenus();
-                closeLayoutMenu();
-                app.selectTab(tab.id);
-              }}
-              className={`sb-collapsed-tab-tile${
-                isSelected ? " sb-collapsed-tab-tile-selected" : ""
-              }`}
-              aria-label={
-                isPlayingAudio
-                  ? t("collapsed-tab-playing-label", {
-                      label,
-                      defaultValue: "{{label}} — playing audio",
-                    })
-                  : label
-              }
-              title={fullTitle}
-            >
-              <span className="sb-collapsed-tab-title">{shortTitle}</span>
-              {isPlayingAudio && (
-                <MaterialIcon
-                  className="sb-collapsed-tab-audio-icon"
-                  aria-hidden="true"
-                >
-                  volume_up
-                </MaterialIcon>
-              )}
-              {session &&
-                sessionUsers.length > 0 &&
-                (() => {
-                  const options = session.options.value;
-                  const sorted = sortUsersByRole(sessionUsers, options);
-                  const shown = sorted.slice(0, 3);
-                  const extra = sorted.length - shown.length;
-                  return (
-                    <span
-                      className="sb-collapsed-tab-presence"
-                      aria-hidden="true"
-                    >
-                      {shown.map((user) => {
-                        const role = getUserSessionRole(options, user);
-                        return (
-                          <span
-                            key={user.connectionId}
-                            className={`sb-collapsed-tab-presence-dot${role ? ` sb-collapsed-tab-presence-dot-${role === "co-host" ? "cohost" : "host"}` : ""}`}
-                            style={{ backgroundColor: user.visual.color }}
-                          />
-                        );
-                      })}
-                      {extra > 0 && (
-                        <span className="sb-collapsed-tab-presence-more">
-                          +{extra}
-                        </span>
-                      )}
-                    </span>
-                  );
-                })()}
-            </button>
+            <TooltipTrigger key={tab.id} label={fullTitle}>
+              <button
+                onClick={() => {
+                  closeContextMenus();
+                  closeLayoutMenu();
+                  app.selectTab(tab.id);
+                }}
+                className={`sb-collapsed-tab-tile${
+                  isSelected ? " sb-collapsed-tab-tile-selected" : ""
+                }`}
+                aria-label={
+                  isPlayingAudio
+                    ? t("collapsed-tab-playing-label", {
+                        label,
+                        defaultValue: "{{label}} — playing audio",
+                      })
+                    : label
+                }
+              >
+                <span className="sb-collapsed-tab-title">{shortTitle}</span>
+                {isPlayingAudio && (
+                  <MaterialIcon
+                    className="sb-collapsed-tab-audio-icon"
+                    aria-hidden="true"
+                  >
+                    volume_up
+                  </MaterialIcon>
+                )}
+                {session &&
+                  sessionUsers.length > 0 &&
+                  (() => {
+                    const options = session.options.value;
+                    const sorted = sortUsersByRole(sessionUsers, options);
+                    const shown = sorted.slice(0, 3);
+                    const extra = sorted.length - shown.length;
+                    return (
+                      <span
+                        className="sb-collapsed-tab-presence"
+                        aria-hidden="true"
+                      >
+                        {shown.map((user) => {
+                          const role = getUserSessionRole(options, user);
+                          return (
+                            <span
+                              key={user.connectionId}
+                              className={`sb-collapsed-tab-presence-dot${role ? ` sb-collapsed-tab-presence-dot-${role === "co-host" ? "cohost" : "host"}` : ""}`}
+                              style={{ backgroundColor: user.visual.color }}
+                            />
+                          );
+                        })}
+                        {extra > 0 && (
+                          <span className="sb-collapsed-tab-presence-more">
+                            +{extra}
+                          </span>
+                        )}
+                      </span>
+                    );
+                  })()}
+              </button>
+            </TooltipTrigger>
           );
         })}
         <IconButton
@@ -2915,8 +2926,8 @@ export function Sidebar(props: SidebarProps) {
 
   // Only an expand or collapse the user asked for animates (see
   // `isUserResize`); the rest snap. While it animates the sidebar clips its
-  // contents (see Tabs.css), and only then: the pane-layout menu hangs out
-  // over the reader the rest of the time. A timer rather than
+  // contents (see Tabs.css), and only then, so nothing is cut off the rest of
+  // the time. A timer rather than
   // `transitionend`, which never fires when there's no transition (mobile,
   // reduced motion) and would leave it clipped. `animateToggle` covers the
   // render that flips it, so the very first frame is already clipped; an
@@ -2976,6 +2987,7 @@ export function Sidebar(props: SidebarProps) {
             panelsEnabled={panelsEnabled}
             paneLayout={paneLayout}
             isLayoutMenuOpen={isLayoutMenuOpen.value || tourWantsLayoutMenu}
+            layoutMenuHeldByTour={tourWantsLayoutMenu}
             toggleLayoutMenu={() => {
               closeContextMenus();
               const willOpen = !isLayoutMenuOpen.value;
