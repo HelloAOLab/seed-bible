@@ -1174,13 +1174,20 @@ export interface BibleReadingSession {
   stopListeningAlong: () => void;
 
   /**
-   * Audio someone else is sharing on the chapter this reader is on, while
-   * this reader hasn't answered yet: what the "listen along" banner offers.
+   * Audio someone else is sharing on the chapter this reader is on, playing
+   * or paused, while this reader hasn't answered yet: what the "listen along"
+   * banner offers.
    */
   audioOffer: ReadonlySignal<SharedAudioPlayback | null>;
 
   /** Answers the audio offer with "not now". */
   dismissAudioOffer: () => void;
+
+  /** True while the shared audio is this client's own: they're leading it. */
+  leadsSharedAudio: ReadonlySignal<boolean>;
+
+  /** Other connected readers who have agreed to listen along. */
+  audioListeners: ReadonlySignal<ConnectedSessionUser[]>;
 }
 
 /**
@@ -1272,6 +1279,20 @@ async function createBibleReadingSession(
   // never land here.
   const audioPlaybackMap =
     document.getMap<SharedAudioPlayback>("audio_playback");
+  // Who has agreed to hear the shared audio, keyed by connection and written
+  // only by that connection, so a host can see who is with them.
+  const audioListenersMap = document.getMap<boolean>("audio_listeners");
+  const audioListenerIds = signal<ReadonlySet<string>>(new Set());
+  const syncAudioListeners = () => {
+    const ids = new Set<string>();
+    audioListenersMap.forEach((value, connectionId) => {
+      if (value === true) ids.add(connectionId);
+    });
+    audioListenerIds.value = ids;
+  };
+  syncAudioListeners();
+  const audioListenersSubscription =
+    audioListenersMap.changes.subscribe(syncAudioListeners);
   const sharedAudio = signal<SharedAudioPlayback | null>(
     parseSharedAudioPlayback(audioPlaybackMap.get(AUDIO_PLAYBACK_KEY))
   );
@@ -2567,6 +2588,8 @@ async function createBibleReadingSession(
     userProfilesSubscription.unsubscribe();
     readingPositionsSubscription.unsubscribe();
     audioPlaybackSubscription.unsubscribe();
+    audioListenersSubscription.unsubscribe();
+    stopPublishingListenAlong();
     questionAnswersSubscription.unsubscribe();
     comeBackRequestsSubscription.unsubscribe();
     stopSettlingComeBackRequests();
@@ -2596,6 +2619,7 @@ async function createBibleReadingSession(
         userProfilesMap.delete(localConnectionId);
         readingPositionsMap.delete(localConnectionId);
         comeBackRequestsMap.delete(localConnectionId);
+        audioListenersMap.delete(localConnectionId);
       });
     } catch {
       // Best-effort — the entry will simply linger in the CRDT.
@@ -2778,11 +2802,39 @@ async function createBibleReadingSession(
     });
   });
 
+  const stopPublishingListenAlong = effect(() => {
+    const listening = isListeningAlong.value;
+    untracked(() => {
+      if (audioListenersMap.get(localConnectionId) === (listening || undefined))
+        return;
+      try {
+        document.transact(() => {
+          if (listening) audioListenersMap.set(localConnectionId, true);
+          else audioListenersMap.delete(localConnectionId);
+        });
+      } catch {
+        // The document can already be gone; the entry is dropped on dispose.
+      }
+    });
+  });
+
+  const leadsSharedAudio = computed(
+    () => sharedAudio.value?.fromConnectionId === localConnectionId
+  );
+
+  const audioListeners = computed(() => {
+    const ids = audioListenerIds.value;
+    return connectedUsers.value.filter(
+      (user) => !user.isSelf && ids.has(user.connectionId)
+    );
+  });
+
+  // Offered whether it's playing yet or not: a host may set the chapter up
+  // paused and wait for people to join before pressing play.
   const audioOffer = computed(() => {
     const playback = sharedAudio.value;
     if (
       !playback ||
-      !playback.playing ||
       playback.fromConnectionId === localConnectionId ||
       isListeningAlong.value ||
       declinedAudioOffer.value === audioChapterKey(playback) ||
@@ -2855,6 +2907,8 @@ async function createBibleReadingSession(
     },
     audioOffer,
     dismissAudioOffer,
+    leadsSharedAudio,
+    audioListeners,
     getDecorationOwner: (decorationId: string) =>
       decorationOwners.get(decorationId),
   };

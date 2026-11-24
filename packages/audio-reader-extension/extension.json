@@ -11,7 +11,7 @@
       "no-audio": "No audio is available for this chapter.",
       "tap-to-listen": "Tap to listen along",
       "share-audio-title": "Play for everyone?",
-      "share-audio-message": "Everyone in this session will be asked whether they'd like to hear {{passage}} on their own device along with you.",
+      "share-audio-message": "Everyone in this session will be asked whether they'd like to hear {{passage}} on their own device. The player opens paused, so you can wait for people to join before pressing play.",
       "share-audio-this-device": "Only on my device",
       "share-audio-everyone": "Play for everyone"
     },

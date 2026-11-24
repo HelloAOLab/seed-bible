@@ -2181,7 +2181,8 @@ export default function initAudioReaderExtension() {
               `${chapter.book.name} ${chapter.chapter.number}`,
               (choice) => {
                 shared.setAudioShareChoice(choice);
-                toggleListening(readingState);
+                if (choice === "everyone") openSharedListening(readingState);
+                else toggleListening(readingState);
               }
             );
             return;
@@ -2189,6 +2190,18 @@ export default function initAudioReaderExtension() {
           toggleListening(readingState);
         }, TOGGLE_DEBOUNCE_MS),
       });
+
+      /**
+       * Opens the player paused and offers the chapter to the session, so
+       * the host can wait for people to join before pressing play.
+       */
+      function openSharedListening(readingState: BibleReadingState): void {
+        const chapter = readingState.chapterData.peek();
+        if (!chapter || sessions.has(readingState)) return;
+        const passage = untracked(() => stepPassage?.(readingState) ?? null);
+        const session = startListening(context, readingState, chapter, passage);
+        if (session) publishSharedIntent(session, false);
+      }
 
       /** The Listen button: pauses or resumes this tab, or starts it. */
       function toggleListening(readingState: BibleReadingState): void {

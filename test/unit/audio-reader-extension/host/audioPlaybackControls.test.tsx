@@ -916,7 +916,7 @@ describe("audio-reader playback controls", () => {
       }
     }
 
-    it("asks the host the first time they press play, then plays for everyone", () => {
+    it("asks the host the first time they press play, then opens the player paused for everyone", () => {
       const { publish, audioShareChoice, readingState } = attachSession(true, {
         shareChoice: null,
       });
@@ -931,8 +931,18 @@ describe("audio-reader playback controls", () => {
 
       expect(sharePrompt()).toBeNull();
       expect(audioShareChoice.value).toBe("everyone");
+      // Paused, so the host can wait for people to join before pressing play.
+      const controller = state.audioPlayback.controllerFor(readingState);
+      expect(controller).not.toBeNull();
+      expect(controller!.isPlaying.value).toBe(false);
+      expect(playSpy).not.toHaveBeenCalled();
+      expect(publish).toHaveBeenLastCalledWith(
+        expect.objectContaining({ playing: false, position: 0 })
+      );
+
+      pressPlay();
       expect(playSpy).toHaveBeenCalled();
-      expect(publish).toHaveBeenCalledWith(
+      expect(publish).toHaveBeenLastCalledWith(
         expect.objectContaining({ playing: true })
       );
 
@@ -996,6 +1006,31 @@ describe("audio-reader playback controls", () => {
       expect(
         state.audioPlayback.controllerFor(readingState)?.isPlaying.value
       ).toBe(true);
+    });
+
+    it("opens a guest's player paused at the host's place when the host hasn't pressed play yet", () => {
+      const { sharedAudio, readingState, isListeningAlong } = attachSession(
+        false,
+        { listeningAlong: false }
+      );
+      reportDuration(120);
+      sharedAudio.value = hostCommand(readingState, {
+        playing: false,
+        position: 0,
+        id: "host-ready",
+      });
+
+      isListeningAlong.value = true;
+
+      const controller = state.audioPlayback.controllerFor(readingState);
+      expect(controller).not.toBeNull();
+      expect(controller!.isPlaying.value).toBe(false);
+      expect(playSpy).not.toHaveBeenCalled();
+
+      sharedAudio.value = hostCommand(readingState, { id: "host-go" });
+
+      expect(playSpy).toHaveBeenCalled();
+      expect(controller!.isPlaying.value).toBe(true);
     });
 
     it("stops listening along when the guest stops the host's audio themselves", () => {

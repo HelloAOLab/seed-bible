@@ -8,9 +8,16 @@ import { Button } from "../Button/Button";
 /** How many of the people leading the group are shown beside the label. */
 const MAX_LEADER_AVATARS = 2;
 
+/** How many listeners' faces the host's audio bar shows before "+N". */
+const MAX_LISTENER_AVATARS = 4;
+
 /** Whether {@link SessionGroupBar} has anything to show right now. */
 export function isSessionGroupBarShown(session: BibleReadingSession): boolean {
-  return session.isAwayFromGroup.value || session.audioOffer.value !== null;
+  return (
+    session.isAwayFromGroup.value ||
+    session.audioOffer.value !== null ||
+    session.leadsSharedAudio.value
+  );
 }
 
 /**
@@ -18,7 +25,8 @@ export function isSessionGroupBarShown(session: BibleReadingSession): boolean {
  * the group and has wandered off to another chapter: says where the group is
  * and takes them back there. When a host has asked them to come back, it
  * grows into that request until they answer it. While they're with the group
- * it instead offers the audio a host is sharing, until they answer that.
+ * it instead offers the audio a host is sharing, until they answer that, and
+ * shows the host who is sharing audio who has joined them.
  * Renders nothing otherwise.
  */
 export function SessionGroupBar({
@@ -34,6 +42,68 @@ export function SessionGroupBar({
 
   if (!session.isAwayFromGroup.value) {
     const offer = session.audioOffer.value;
+    const shared =
+      !offer && session.leadsSharedAudio.value
+        ? session.sharedAudio.value
+        : null;
+    if (shared) {
+      const listeners = sortUsersByRole(
+        session.audioListeners.value,
+        session.options.value
+      );
+      const shown = listeners.slice(0, MAX_LISTENER_AVATARS);
+      const hidden = listeners.length - shown.length;
+      return (
+        <div
+          className={`sb-session-group-bar sb-session-group-bar-${layout} sb-session-group-bar-audio`}
+          dir={isRtl ? "rtl" : "ltr"}
+          role="status"
+        >
+          <MaterialIcon className="sb-session-group-bar-audio-icon">
+            campaign
+          </MaterialIcon>
+          <span className="sb-session-group-bar-request-text">
+            <span className="sb-session-group-bar-audio-title">
+              {t("session-audio-leading-title", {
+                defaultValue: "You're playing {{passage}} for everyone",
+                passage: `${resolveBookName(shared.bookId)} ${shared.chapterNumber}`,
+              })}
+            </span>
+            <span className="sb-session-group-bar-request-subtitle">
+              {listeners.length === 0
+                ? t("session-audio-leading-waiting", {
+                    defaultValue: "Waiting for people to listen along",
+                  })
+                : t("session-audio-leading-listening", {
+                    defaultValue: "{{count}} listening along",
+                    count: listeners.length,
+                  })}
+            </span>
+          </span>
+          {shown.length > 0 && (
+            <span className="sb-session-group-bar-leaders">
+              {shown.map((user) => (
+                <span
+                  key={user.connectionId}
+                  className="sb-session-group-bar-leader"
+                >
+                  <Avatar
+                    imageUrl={user.profile?.pictureUrl ?? null}
+                    visual={user.visual}
+                    title={getUserDisplayName(user)}
+                  />
+                </span>
+              ))}
+              {hidden > 0 && (
+                <span className="sb-session-group-bar-more" aria-hidden="true">
+                  +{hidden}
+                </span>
+              )}
+            </span>
+          )}
+        </div>
+      );
+    }
     if (!offer) return null;
     const sender =
       session.connectedUsers.value.find(

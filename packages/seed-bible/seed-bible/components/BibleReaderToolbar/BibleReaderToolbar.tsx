@@ -2954,7 +2954,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 !!sessionState.value &&
                 (!playing ||
                   !!sessionState.value.incomingComeBackRequest.value ||
-                  !!sessionState.value.audioOffer.value);
+                  !!sessionState.value.audioOffer.value ||
+                  sessionState.value.leadsSharedAudio.value);
 
               return (
                 <div

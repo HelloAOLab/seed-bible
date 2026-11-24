@@ -370,6 +370,7 @@ describe("SessionsManager", () => {
   let mockReadingPositionsMap: ReturnType<typeof createMockSharedMap>;
   let mockExtensionsMap: ReturnType<typeof createMockSharedMap>;
   let mockAudioMap: ReturnType<typeof createMockSharedMap>;
+  let mockAudioListenersMap: ReturnType<typeof createMockSharedMap>;
   let mockQuestionAnswersMap: ReturnType<typeof createMockSharedMap>;
   let mockComeBackRequestsMap: ReturnType<typeof createMockSharedMap>;
   let mockHighlightsManager: {
@@ -412,6 +413,7 @@ describe("SessionsManager", () => {
     mockReadingPositionsMap = createMockSharedMap();
     mockExtensionsMap = createMockSharedMap();
     mockAudioMap = createMockSharedMap();
+    mockAudioListenersMap = createMockSharedMap();
     mockQuestionAnswersMap = createMockSharedMap();
     mockComeBackRequestsMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
@@ -440,6 +442,10 @@ describe("SessionsManager", () => {
 
         if (name === "audio_playback") {
           return mockAudioMap;
+        }
+
+        if (name === "audio_listeners") {
+          return mockAudioListenersMap;
         }
 
         if (name === "question_answers") {
@@ -3654,11 +3660,19 @@ describe("SessionsManager", () => {
       expect(session.isListeningAlong.value).toBe(true);
     });
 
-    it("does not offer paused audio, another chapter's audio, or the reader's own", async () => {
+    it("offers audio the host has set up paused", async () => {
       const { session, play } = await joinWithHostAudio();
 
-      play("host:1", { playing: false });
-      expect(session.audioOffer.value).toBeNull();
+      play("host:1", { playing: false, position: 0 });
+
+      expect(session.audioOffer.value).toMatchObject({
+        id: "host:1",
+        playing: false,
+      });
+    });
+
+    it("does not offer another chapter's audio, or the reader's own", async () => {
+      const { session, play } = await joinWithHostAudio();
 
       play("host:2", { bookId: "EXO", chapterNumber: 3 });
       expect(session.audioOffer.value).toBeNull();
@@ -3702,6 +3716,64 @@ describe("SessionsManager", () => {
 
       expect(session.isListeningAlong.value).toBe(false);
       expect(session.audioOffer.value).toBeNull();
+    });
+
+    it("tells everyone who is listening along, and stops when they do", async () => {
+      const { session, play } = await joinWithHostAudio();
+      play("host:1");
+
+      session.listenAlong();
+      expect(mockAudioListenersMap.get(os.connectionId)).toBe(true);
+
+      session.stopListeningAlong();
+      expect(mockAudioListenersMap.get(os.connectionId)).toBeUndefined();
+
+      session.listenAlong();
+      session.dispose();
+      expect(mockAudioListenersMap.get(os.connectionId)).toBeUndefined();
+    });
+
+    it("drops this reader from the listeners when the host stops sharing", async () => {
+      const { session, play } = await joinWithHostAudio();
+      play("host:1");
+      session.listenAlong();
+
+      mockAudioMap.delete("current");
+
+      expect(mockAudioListenersMap.get(os.connectionId)).toBeUndefined();
+    });
+
+    it("shows the host who has joined, leaving out anyone who disconnected", async () => {
+      const session = await manager().createSession();
+      expect(session.publishAudioPlayback(playing)).not.toBe(false);
+      expect(session.leadsSharedAudio.value).toBe(true);
+      for (const connectionId of ["conn-ruth", "conn-boaz"]) {
+        mockRemoteClients.emit({
+          type: "client_connected",
+          isSelf: false,
+          client: { connectionId, userId: null },
+        });
+      }
+      await waitFor(() => session.connectedUsers.value.length === 2);
+
+      mockAudioListenersMap.setEmitOnSet(true);
+      mockAudioListenersMap.set("conn-ruth", true);
+      // Listening once, but no longer in the session.
+      mockAudioListenersMap.set("conn-gone", true);
+
+      expect(
+        session.audioListeners.value.map((user) => user.connectionId)
+      ).toEqual(["conn-ruth"]);
+
+      mockAudioListenersMap.delete("conn-ruth");
+      expect(session.audioListeners.value).toEqual([]);
+    });
+
+    it("does not count someone else's audio as this host's own", async () => {
+      const { session, play } = await joinWithHostAudio();
+      play("host:1");
+
+      expect(session.leadsSharedAudio.value).toBe(false);
     });
 
     it("stamps the host's connection on what it publishes", async () => {

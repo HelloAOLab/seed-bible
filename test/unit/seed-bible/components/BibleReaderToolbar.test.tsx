@@ -1,3 +1,4 @@
+import type { ConnectedSessionUser } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
@@ -779,6 +780,7 @@ describe("BibleReaderToolbar — clearing highlights", () => {
       isAwayFromGroup: signal(false),
       incomingComeBackRequest: signal(null),
       audioOffer: signal(null),
+      leadsSharedAudio: signal(false),
       document: {} as never,
       updateOptions: vi.fn(),
       dispose: vi.fn(),
@@ -6329,6 +6331,7 @@ describe("BibleReaderToolbar — answers to a playing question in a shared sessi
         isAwayFromGroup: signal(false),
         incomingComeBackRequest: signal(null),
         audioOffer: signal(null),
+        leadsSharedAudio: signal(false),
         document: {} as never,
         updateOptions: vi.fn(),
         dispose: vi.fn(),
@@ -6418,7 +6421,7 @@ describe("BibleReaderToolbar — away from the session group", () => {
   async function renderInSession(
     viewportWidth: number,
     away: boolean,
-    { askedToComeBack = false, offeredAudio = false } = {}
+    { askedToComeBack = false, offeredAudio = false, leadingAudio = false } = {}
   ) {
     window.innerWidth = viewportWidth;
     const state = await createTestSeedBibleState({
@@ -6470,6 +6473,24 @@ describe("BibleReaderToolbar — away from the session group", () => {
     const dismissAudioOffer = vi.fn(() => {
       audioOffer.value = null;
     });
+    const leadsSharedAudio = signal(leadingAudio);
+    const sharedAudio = signal(
+      leadingAudio
+        ? {
+            playing: false,
+            bookId: "EXO",
+            chapterNumber: 2,
+            translationId: "AAB",
+            position: 0,
+            unit: "seconds" as const,
+            verseNumber: null,
+            updatedAtMs: Date.now(),
+            id: "audio-mine",
+            fromConnectionId: "conn-self",
+          }
+        : null
+    );
+    const audioListeners = signal<ConnectedSessionUser[]>([]);
     tab.sharedSession = {
       id: "group-abc",
       options: signal({
@@ -6516,6 +6537,9 @@ describe("BibleReaderToolbar — away from the session group", () => {
       audioOffer,
       listenAlong,
       dismissAudioOffer,
+      leadsSharedAudio,
+      sharedAudio,
+      audioListeners,
       document: {} as never,
       updateOptions: vi.fn(),
       dispose: vi.fn(),
@@ -6536,6 +6560,7 @@ describe("BibleReaderToolbar — away from the session group", () => {
       dismissComeBackRequest,
       listenAlong,
       dismissAudioOffer,
+      audioListeners,
     };
   }
 
@@ -6670,6 +6695,35 @@ describe("BibleReaderToolbar — away from the session group", () => {
     expect(toolbar().classList).not.toContain(
       "sb-reader-toolbar-has-group-bar"
     );
+  });
+
+  it("tells a host sharing audio who has joined them", async () => {
+    const { audioListeners } = await renderInSession(1200, false, {
+      leadingAudio: true,
+    });
+
+    const bar = groupBar()!;
+    expect(bar.textContent).toContain("You're playing Exodus 2 for everyone");
+    expect(bar.textContent).toContain("Waiting for people to listen along");
+    expect(bar.querySelectorAll(".sb-tab-user-icon")).toHaveLength(0);
+
+    await act(async () => {
+      audioListeners.value = Array.from({ length: 5 }, (_, i) => ({
+        isSelf: false,
+        connectionId: `conn-${i}`,
+        userId: `user-${i}`,
+        profile: { name: `Listener ${i}` },
+        visual: { defaultIcon: "pets", color: "#8B5CF6", colorName: "purple" },
+        isActive: true,
+        joinedAtMs: null,
+      })) as unknown as ConnectedSessionUser[];
+    });
+
+    expect(groupBar()!.textContent).toContain("5 listening along");
+    expect(
+      groupBar()!.querySelectorAll(".sb-session-group-bar-leader")
+    ).toHaveLength(4);
+    expect(groupBar()!.textContent).toContain("+1");
   });
 
   it("shows nothing while the reader is with the group", async () => {

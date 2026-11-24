@@ -31,7 +31,7 @@ export function openShareAudioPrompt(
         <p className="ext-audio-reader-share-message">
           {t("share-audio-message", {
             defaultValue:
-              "Everyone in this session will be asked whether they'd like to hear {{passage}} on their own device along with you.",
+              "Everyone in this session will be asked whether they'd like to hear {{passage}} on their own device. The player opens paused, so you can wait for people to join before pressing play.",
             passage,
             ns: "ext_audioReader",
           })}
