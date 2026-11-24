@@ -7,7 +7,7 @@
   background: var(--sb-reader-background);
   overflow: hidden;
   scrollbar-width: none;
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
 }
 
 .sb-panes-layout {
@@ -22,11 +22,11 @@
 /* Desktop only: the gutter around the reader slots, pulled left to tuck
    against the docked sidebar. Phones and compact embeds (which render the
    phone reader at any frame width, with no sidebar) stay flush. */
-@media (min-width: 481px) {
-  .sb-app-root:not(.sb-embed-minimal) .sb-panes-layout {
-    padding: 0.3125rem;
-    margin-left: -0.625rem;
-  }
+:where(html:not([data-sb-app-layout="mobile"]))
+  .sb-app-root:not(.sb-embed-minimal)
+  .sb-panes-layout {
+  padding: 0.3125rem;
+  margin-left: -0.625rem;
 }
 
 .sb-pane-component,

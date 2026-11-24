@@ -483,6 +483,96 @@ describe("SavesManager", () => {
       expect(recordDataMock.mock.calls[0]![2].saves).toHaveLength(2);
     });
 
+    it("survives a load whose request never gets an answer, and retries it", async () => {
+      // `fetch` rejects outright when the connection drops. The load starts
+      // from an effect with nothing awaiting it, so a rejection escaping
+      // here becomes an uncaught error rather than a failed read.
+      let attempt = 0;
+      getDataMock.mockImplementation(
+        async (_userId: string, address: string) => {
+          if (address !== "saves") {
+            return {
+              success: false,
+              errorCode: "data_not_found",
+              errorMessage: "Data not found",
+            };
+          }
+          attempt += 1;
+          if (attempt === 1) {
+            throw new TypeError("Failed to fetch");
+          }
+          return {
+            success: true,
+            data: {
+              saves: [createSave({ id: "already-filed" })],
+              categories: [{ name: DEFAULT_SAVE_CATEGORY }],
+            },
+          };
+        }
+      );
+      const unhandled: unknown[] = [];
+      const onUnhandled = (reason: unknown) => unhandled.push(reason);
+      process.on("unhandledRejection", onUnhandled);
+
+      try {
+        const manager = createSavesManager(os, login);
+        await flushPromises();
+        await new Promise((resolve) => setImmediate(resolve));
+
+        expect(unhandled).toEqual([]);
+        expect(manager.saves.value).toEqual([]);
+
+        await manager.addSave("BSB", "JHN", 3);
+
+        expect(manager.saves.value.map((save) => save.id)).toContain(
+          "already-filed"
+        );
+        expect(recordDataMock.mock.calls[0]![2].saves).toHaveLength(2);
+      } finally {
+        process.off("unhandledRejection", onUnhandled);
+      }
+    });
+
+    it("still shows the saves when only the legacy request gets no answer", async () => {
+      // The legacy read is only there for a telemetry check. A dropped
+      // connection on it must not hold back the `saves` record that arrived.
+      getDataMock.mockImplementation(
+        async (_userId: string, address: string) => {
+          if (address === "bookmarks") {
+            throw new TypeError("Failed to fetch");
+          }
+          return {
+            success: true,
+            data: {
+              saves: [createSave({ id: "already-filed" })],
+              categories: [{ name: DEFAULT_SAVE_CATEGORY }],
+            },
+          };
+        }
+      );
+
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+
+      expect(manager.saves.value.map((save) => save.id)).toEqual([
+        "already-filed",
+      ]);
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("reports that nothing was saved while the saves still can't load", async () => {
+      // Still offline when the user saves: the retry fails too. The caller
+      // has to be told, or it closes the save window as if it worked.
+      getDataMock.mockRejectedValue(new TypeError("Failed to fetch"));
+
+      const manager = createSavesManager(os, login);
+      await flushPromises();
+
+      await expect(manager.addSave("BSB", "JHN", 3)).resolves.toBe(false);
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(manager.isLocationSaved("BSB", "JHN", 3)).toBe(false);
+    });
+
     it("waits rather than starting fresh when the legacy read fails", async () => {
       // Neither address answered usefully, so whether there is a legacy record
       // to copy forward is still unknown. Applying an empty list here would

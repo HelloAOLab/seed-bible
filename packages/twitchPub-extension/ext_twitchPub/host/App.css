@@ -6,34 +6,19 @@
   height: 100%;
   width: 100%;
   padding: 10px 15px 15px 15px;
-  transition: all 0.3s ease;
+  transition: all var(--sb-duration-slow) ease;
   color: var(--sb-font-color);
 }
 
 .qr-container {
   box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
 }
 
-.twitchBtn {
-  margin-top: 5px;
-  padding: 10px 20px;
-  font-size: 16px;
-  background-color: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  width: max-content;
-  margin-left: auto;
-  margin-right: auto;
+.sb-button.twitchBtn {
+  align-self: center;
+  margin: 5px auto 0;
 }
-
-.twitchBtn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
 .twitchPub-header {
   display: flex;
   height: fit-content;
@@ -45,7 +30,7 @@
 
 .twitchPub-title {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--sb-font-size-16);
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -115,16 +100,16 @@
   padding: 6px 12px;
   max-width: 90%;
   box-sizing: border-box;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-secondary-color, #e6e6e6);
-  color: #fff;
-  font-size: 13px;
+  color: var(--sb-secondary-font-color, #333);
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   text-align: center;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--sb-shadow-popover);
   overflow: hidden;
-  animation: twitchPub-nav-notice-in 0.2s ease;
+  animation: twitchPub-nav-notice-in var(--sb-duration-base) ease;
 }
 
 /* Progress fill that advances over the 2s navigation delay. Painted above the
@@ -173,23 +158,10 @@
 
 #clientId {
   height: 48px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   border: var(--sb-reader-toolbar-border);
   padding: 8px;
-  font-size: 14px;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  font-size: var(--sb-font-size-14);
 }
 
 .toggle-wrapper {
@@ -199,41 +171,8 @@
   gap: 12px;
 }
 
-.toggle {
-  position: relative;
-  width: 50px;
-  height: 28px;
-  cursor: pointer;
-}
-
-.toggle input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.track {
-  position: absolute;
-  inset: 0;
-  background: #ccc;
-  border-radius: 999px;
-  transition: background 0.25s;
-}
-
-.thumb {
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  width: 18px;
-  height: 18px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  transition: transform 0.25s;
-}
-
 .label {
-  font-size: 14px;
+  font-size: var(--sb-font-size-14);
   color: #555;
   user-select: none;
 }
@@ -272,16 +211,16 @@
   padding: 8px 10px;
   background: rgba(20, 20, 20, 0.95);
   color: #fff;
-  font-size: 12px;
+  font-size: var(--sb-font-size-12);
   font-weight: normal;
   line-height: 1.4;
   text-align: left;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-radius: var(--sb-radius-sm);
+  box-shadow: var(--sb-shadow-popover);
   z-index: 20;
   visibility: hidden;
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--sb-duration-fast) ease;
   pointer-events: none;
 }
 
@@ -292,33 +231,17 @@
 }
 
 .twitch-select-box {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  justify-content: center;
-  align-items: center;
-  height: 24px;
-  padding: 3px 0px 0px 0px;
-  width: 65px;
-  font-size: 12px;
-  outline: none;
+  width: 6.5rem;
 }
 
 .qr-drag-handle:hover {
   opacity: 1;
 }
 
-.twitch-custom-timer-input {
-  width: 60px;
-  height: 24px;
-  padding: 0px 20px 0px 3px;
-  -moz-appearance: textfield;
-}
-
-.twitch-custom-timer-input::-webkit-outer-spin-button,
-.twitch-custom-timer-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+/* The box leaves room for the "m" drawn over its right end. */
+.sb-text-input.twitch-custom-timer-input {
+  width: 4.5rem;
+  padding-inline-end: 1.5rem;
 }
 
 .twitch-custom-timer-wrapper {
@@ -330,28 +253,28 @@
 .twitch-custom-timer-suffix {
   position: absolute;
   right: 10px;
-  font-size: 14px;
+  font-size: var(--sb-font-size-14);
   color: #888;
   pointer-events: none;
 }
 
 /* Primary heading shown on the QR-share screen. */
 .twitchPub-qr-title {
-  font-size: 20px;
+  font-size: var(--sb-font-size-20);
   font-weight: bold;
   text-align: center;
-  transition: opacity 0.3s ease;
+  transition: opacity var(--sb-duration-slow) ease;
 }
 
 /* Secondary/instructional text (QR-share and authorization screens). */
 .twitchPub-subtitle {
-  font-size: 14px;
+  font-size: var(--sb-font-size-14);
   text-align: center;
-  transition: opacity 0.3s ease;
+  transition: opacity var(--sb-duration-slow) ease;
 }
 
 .twitchPub-auth-title {
-  font-size: 20px;
+  font-size: var(--sb-font-size-20);
   font-weight: bold;
   margin-top: 16px;
   text-align: center;
@@ -371,16 +294,6 @@
   display: flex;
   align-items: center;
   gap: 3px;
-}
-
-.twitchPub-logout-btn {
-  padding: 6px 14px;
-  font-size: 14px;
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
 }
 
 /* When the QR interface auto-hides (pointer left the QR), dissolve the floating

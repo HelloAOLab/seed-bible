@@ -10,6 +10,7 @@ import {
 } from "../../managers/NotificationsManager";
 import { useI18n } from "../../i18n/I18nManager";
 import { MaterialIcon } from "../icons";
+import { Button } from "../Button/Button";
 import { FriendRequestActions } from "../FriendsPane/FriendsPane";
 import { PersonButton } from "../FriendsPane/PersonCard";
 import { formatFeedTime } from "../TodayPane/SocialSection";
@@ -82,13 +83,13 @@ export function NotificationsFeed(props: { state: SeedBibleState }) {
               defaultValue: "Sign in to see friend requests here.",
             })}
           </p>
-          <button
-            type="button"
-            className="sb-friends-button sb-friends-button--primary"
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => void login.login()}
           >
             {t("log-in", { defaultValue: "Log in" })}
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -212,15 +213,15 @@ function AppUpdateBody(props: { notification: AppUpdateNotification }) {
         </span>
       </span>
       <span className="sb-friends-row-actions">
-        <a
-          className="sb-friends-button sb-notifications-link"
+        <Button
+          size="sm"
           href={notification.releaseNotesUrl}
           target="_blank"
-          rel="noopener noreferrer"
+          icon="open_in_new"
+          iconPosition="end"
         >
           {t("notification-see-whats-new", { defaultValue: "See what's new" })}
-          <MaterialIcon aria-hidden="true">open_in_new</MaterialIcon>
-        </a>
+        </Button>
       </span>
     </>
   );

@@ -11,6 +11,9 @@ import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import { computeSuggestions } from "./scriptureSuggestions";
 import { sanitize } from "../../managers/Sanitization";
 import { MaterialIcon } from "../icons";
+import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
+import "../TextField/TextField.css";
 
 const TipTapEditor = lazy(() => import("../TipTapEditor/TipTapEditor"));
 
@@ -261,11 +264,13 @@ export const ScriptureItemInput = forwardRef<
     <>
       <div className="sb-scripture-input">
         <div className="sb-playlist-add-row">
-          <input
-            className="sb-settings-text-input sb-playlist-input"
-            type="text"
+          <TextInput
+            className="sb-playlist-input"
             value={value}
             dir="auto"
+            aria-label={t("playlist-add-scripture-label", {
+              defaultValue: "Scripture reference",
+            })}
             placeholder={t("playlist-add-scripture-placeholder", {
               defaultValue: "e.g. John 3 or John 3:16",
             })}
@@ -332,15 +337,15 @@ export const ScriptureItemInput = forwardRef<
               }
             }}
           />
-          <button
-            type="button"
+          <Button
+            variant="primary"
             className="sb-settings-save-button"
             onClick={() => void handleSubmit()}
             disabled={!value.trim()}
           >
             {submitLabel ??
               t("playlist-add-button", { defaultValue: "Add item" })}
-          </button>
+          </Button>
         </div>
 
         {showSuggestions ? (
@@ -408,9 +413,8 @@ export const ScriptureItemInput = forwardRef<
               })}
             </button>
           </div>
-          <input
-            className="sb-settings-text-input sb-playlist-input sb-scripture-note-title-input"
-            type="text"
+          <TextInput
+            className="sb-playlist-input sb-scripture-note-title-input"
             value={noteTitle}
             dir="auto"
             placeholder={t("playlist-scripture-note-title-placeholder", {
@@ -419,20 +423,18 @@ export const ScriptureItemInput = forwardRef<
             aria-label={t("playlist-scripture-note-title-label", {
               defaultValue: "Note title",
             })}
-            onInput={(event: Event) => {
-              setNoteTitle((event.currentTarget as HTMLInputElement).value);
-            }}
+            onValueInput={setNoteTitle}
           />
           <Suspense
             fallback={
               <div
-                className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor sb-playlist-add-editor--loading"
+                className="sb-text-input sb-playlist-input sb-playlist-add-editor sb-playlist-add-editor--loading"
                 aria-busy="true"
               />
             }
           >
             <TipTapEditor
-              className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor"
+              className="sb-text-input sb-playlist-input sb-playlist-add-editor"
               initialContent={noteSeed}
               autofocus={focusNote ? "end" : false}
               onEditor={(editor) => {

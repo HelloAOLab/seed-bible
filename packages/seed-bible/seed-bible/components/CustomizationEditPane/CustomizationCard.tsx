@@ -67,10 +67,7 @@ export function CustomizationCard(props: {
   const { state, customization } = props;
   const { customizations } = state;
   const { t } = useI18n();
-  const previewVariant =
-    customization.variants.find(
-      (v) => v.id === customization.defaultVariantId
-    ) ?? customization.variants[0];
+  const previewVariant = customizations.getPreviewVariant(customization);
 
   return (
     <li className="sb-cz-card">
@@ -107,7 +104,8 @@ export function CustomizationCard(props: {
       <ContextMenuWithButton
         anchorClassName="sb-cz-card-menu"
         buttonClassName="sb-cz-icon-button"
-        aria-label={t("customization-options", {
+        size="md"
+        label={t("customization-options", {
           defaultValue: "Custom Branding options",
         })}
       >

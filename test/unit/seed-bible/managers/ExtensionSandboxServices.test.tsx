@@ -345,6 +345,27 @@ describe("sandboxed extension services", () => {
       ).toBe("unavailable");
       expect(h.host.saves.value).toEqual([]);
     });
+
+    it("says the save failed when the user's saves couldn't load", async () => {
+      // Offline, say. Answering `null` here would tell the extension it saved.
+      h.host.savesRecord.loaded = false;
+      const extension = await install({
+        id: "ext.offline-saver",
+        optionalPermissions: ["saves:write"],
+      });
+      const sb = await allowInSettings(
+        extension,
+        sourced("ext.offline-saver"),
+        "saves:write"
+      );
+
+      expect(
+        await codeOf(
+          sb.saves.add({ translationId: "BSB", bookId: "JHN", chapter: 3 })
+        )
+      ).toBe("unavailable");
+      expect(h.host.saves.value).toEqual([]);
+    });
   });
 
   describe("reading history and Bible text", () => {
@@ -816,6 +837,17 @@ describe("sandboxed extension services", () => {
       );
       expect(csp).toContain("font-src data: https://fonts.gstatic.com;");
       expect(csp).toContain("connect-src 'none'");
+    });
+  });
+
+  describe("theme", () => {
+    it("gives frames the shared corner scale along with the theme", async () => {
+      await install({ id: "ext.theme" });
+
+      const themeCss = h.frames[0]!.init.state.themeCss;
+      expect(themeCss).toContain("--sb-radius-md: 0.5rem;");
+      expect(themeCss).toContain("--sb-radius-full: 999px;");
+      expect(themeCss).toContain("--sb-font-color: #111;");
     });
   });
 

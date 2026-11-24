@@ -43,6 +43,8 @@ export interface CreateTestSeedBibleStateOptions {
   offlineStore?: OfflineTranslationStore | null;
   /** Deployment config passed through to `createSeedBibleState`. */
   config?: AppConfig;
+  /** Passed through to `createSeedBibleState`: start from the real window. */
+  measureViewport?: boolean;
   /**
    * Whether the app boots on the Today page, as it does in production for a
    * URL with no reading position. Defaults to `false` so the fixture models a
@@ -252,8 +254,25 @@ if (typeof afterEach === "function") {
     // cross-origin `replaceState` is a SecurityError).
     if (typeof window !== "undefined") {
       window.history.replaceState(null, "", "/");
+      forgetPlaylistDrafts();
     }
   });
+}
+
+/**
+ * Removes the unsaved playlist drafts the editor keeps in localStorage, which
+ * would otherwise be restored into a later test's editor.
+ */
+export function forgetPlaylistDrafts(): void {
+  const storage = window.localStorage;
+  if (!storage) {
+    return;
+  }
+  for (const key of Object.keys(storage)) {
+    if (key.startsWith("sb-playlist-draft:")) {
+      storage.removeItem(key);
+    }
+  }
 }
 
 export async function createTestSeedBibleState(
@@ -328,6 +347,7 @@ export async function createTestSeedBibleState(
   const state = createSeedBibleState({
     offlineStore: options.offlineStore,
     config: options.config,
+    measureViewport: options.measureViewport,
     initialPlaylistPageSeed: options.initialPlaylistPageSeed,
     initialReadingPlanPageSeed: options.initialReadingPlanPageSeed,
   });

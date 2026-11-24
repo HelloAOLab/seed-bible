@@ -1,9 +1,10 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import {
   useSignal,
   useSignalEffect,
   type ReadonlySignal,
 } from "@preact/signals";
-import { useMemo, useEffect, useRef, useCallback } from "preact/hooks";
+import { useMemo, useEffect, useCallback } from "preact/hooks";
 import { Fragment, type ComponentChildren } from "preact";
 import {
   SocialSectionProvider,
@@ -18,8 +19,7 @@ import {
 } from "./useReadingHistoryTimeline";
 import { MaterialIcon } from "../icons";
 import { ReadingHistoryTimeline } from "../ReadingHistoryTimeline/ReadingHistoryTimeline";
-import { useHorizontalScroll } from "../useHorizontalScroll";
-import { useScrollEdgeFade } from "../useScrollEdgeFade";
+import { FilterPills } from "../FilterPills/FilterPills";
 import { useTimeContext } from "./TimeContext";
 import { useI18n } from "../../i18n";
 import {
@@ -48,6 +48,7 @@ import type {
 } from "../../managers/TodayManager";
 import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
 import { htmlToPlainText } from "../CreateAnnotationForm/PlainTextAnnotationEditor";
+import { IconButton } from "../IconButton/IconButton";
 
 const FEED_KINDS = ["all", "notes", "reading"] as const;
 
@@ -313,12 +314,6 @@ function FeedCard(props: {
   const { t, language } = useI18n();
   const { timespan } = useSocialSectionContext();
 
-  // The kind pills scroll horizontally with the vertical wheel, and fade at
-  // an edge only while pills are hidden past it.
-  const kindFilterRef = useRef<HTMLDivElement | null>(null);
-  useHorizontalScroll(kindFilterRef);
-  useScrollEdgeFade(kindFilterRef);
-
   const kindLabels: Record<CommunityFeedKind, string> = {
     all: t("all", { defaultValue: "All" }),
     notes: t("notes", { defaultValue: "Notes" }),
@@ -338,33 +333,23 @@ function FeedCard(props: {
   return (
     <div className="sb-today-feed-card">
       <div className="sb-today-feed-toolbar">
-        <div className="sb-today-feed-kind-filter" ref={kindFilterRef}>
-          {FEED_KINDS.map((id) => (
-            <button
-              key={id}
-              type="button"
-              aria-pressed={props.kind === id}
-              onClick={() => props.onSelectKind(id)}
-              className={`sb-today-feed-kind-option${
-                props.kind === id ? " sb-today-feed-kind-option-selected" : ""
-              } sb-today-clickable`}
-            >
-              {kindLabels[id]}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          aria-pressed={props.historyOpen}
-          aria-label={historyLabel}
-          title={historyLabel}
+        <FilterPills
+          className="sb-today-feed-kind-filter"
+          aria-label={t("feed-filters", { defaultValue: "Filter activity" })}
+          options={FEED_KINDS.map((id) => ({
+            value: id,
+            label: kindLabels[id],
+          }))}
+          value={props.kind}
+          onChange={props.onSelectKind}
+        />
+        <IconButton
+          icon="history"
+          label={historyLabel}
+          pressed={props.historyOpen}
           onClick={props.onToggleHistory}
-          className={`sb-today-feed-history-button${
-            props.historyOpen ? " sb-today-feed-history-button-selected" : ""
-          } sb-today-clickable`}
-        >
-          <MaterialIcon>history</MaterialIcon>
-        </button>
+          className="sb-today-feed-history-button"
+        />
       </div>
       {props.historyOpen && (
         <Fragment>
@@ -390,7 +375,7 @@ function FeedCard(props: {
           ))}
         </ul>
       ) : props.ready ? (
-        <p className="sb-today-feed-empty">
+        <EmptyState className="sb-today-feed-empty">
           {props.kind === "notes"
             ? t("feed-empty-notes", {
                 defaultValue: "No notes in this time frame yet.",
@@ -402,7 +387,7 @@ function FeedCard(props: {
               : t("feed-empty", {
                   defaultValue: "No activity in this time frame yet.",
                 })}
-        </p>
+        </EmptyState>
       ) : null}
       {props.seeMore && (
         <button

@@ -268,7 +268,7 @@ export function createNotificationsManager(
     isReady: computed(
       () =>
         !login.userId.value ||
-        (friends.isLoaded.value && !friends.isLoadingProfiles.value)
+        (friends.hasLoaded.value && !friends.isLoadingProfiles.value)
     ),
   };
 

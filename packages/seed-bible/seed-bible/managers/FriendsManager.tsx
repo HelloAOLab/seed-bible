@@ -123,10 +123,11 @@ export interface FriendsManager {
   isLoadingProfiles: ReadonlySignal<boolean>;
 
   /**
-   * True once the lists have been read for the signed-in account, so an empty
-   * list means "none" rather than "not loaded yet". False when signed out.
+   * True once the lists have been read for the signed-in account, and through
+   * later refreshes. Until then (or when every read so far has failed) empty
+   * lists don't mean someone isn't a friend.
    */
-  isLoaded: ReadonlySignal<boolean>;
+  hasLoaded: ReadonlySignal<boolean>;
 
   /**
    * Re-reads friends and requests from the server. Profiles are only fetched
@@ -305,8 +306,9 @@ export function createFriendsManager(
     toRequests(outgoing.value, (request) => request.targetUserId)
   );
   const isLoading = computed(() => loading.value);
-  const isLoaded = computed(
-    () => !!login.userId.value && loadedUserId.value === login.userId.value
+  const hasLoaded = computed(
+    () =>
+      loadedUserId.value !== null && loadedUserId.value === login.userId.value
   );
 
   const loadProfiles = async (userIds: string[], reload: boolean) => {
@@ -768,7 +770,7 @@ export function createFriendsManager(
     incomingRequests,
     outgoingRequests,
     isLoading,
-    isLoaded,
+    hasLoaded,
     isLoadingProfiles: computed(() => profilesPending.value > 0),
     refresh,
     sendRequest,

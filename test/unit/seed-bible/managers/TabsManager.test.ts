@@ -241,6 +241,7 @@ function createMockSharedSession(
       shareTranslation: false,
       coHostUserIds: [],
       verseSelectionEffectVisibility: "hosts-only",
+      viewingAreaVisibility: "auto",
     }),
     updateOptions: vi.fn(),
     removeSharedDecoration: vi.fn(),
@@ -249,6 +250,22 @@ function createMockSharedSession(
     allUsers: signal([]),
     connectedUsers: signal([]),
     participantPositions: signal(new Map()),
+    questionAnswers: signal([]),
+    setQuestionAnswer: vi.fn(),
+    groupPosition: signal({
+      translationId: null,
+      bookId: null,
+      chapterNumber: null,
+      scrollToVerse: null,
+    }),
+    isAwayFromGroup: signal(false),
+    participantsAwayFromGroup: signal(new Set()),
+    rejoinGroup: vi.fn(async () => undefined),
+    comeBackRequests: signal(new Map()),
+    comeBackCooldownRemainingMs: () => 0,
+    incomingComeBackRequest: signal(null),
+    askToComeBack: vi.fn(),
+    dismissComeBackRequest: vi.fn(),
     localSessionId: signal(id),
     userCanDecorate: vi.fn().mockReturnValue(true),
     userCanNavigate: vi.fn().mockReturnValue(true),
@@ -1901,6 +1918,107 @@ describe("createTabs", () => {
 
     await waitFor(() => new URL(window.location.href).pathname !== "/en/about");
     expect(new URL(window.location.href).pathname).toBe("/en/NIV/matthew/1");
+  });
+
+  // Only the focus change leaves a page with its own address; the focused
+  // tab's later moves never replace it (the playlist editor relies on this
+  // while it moves the reader behind it).
+  it("keeps a static page's URL when a tab focused after mount moves on its own", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/en/NIV/matthew/1");
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 1,
+          },
+          {
+            id: "tab-2",
+            translationId: "AAB",
+            bookId: "GEN",
+            chapterNumber: 1,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "split-2v",
+        slotTabIds: ["tab-1", "tab-2"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+    manager.hydrateStoredTabs();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    manager.selectTab("tab-2");
+    await waitFor(
+      () => new URL(window.location.href).pathname === "/en/AAB/genesis/1"
+    );
+
+    navigation.push("/en/about");
+    const tab = manager.tabs.value.find(
+      (candidate) => candidate.id === "tab-2"
+    )!;
+    await tab.readingState.selectTranslationAndChapter("NIV", "MAT", 1);
+
+    expect(tab.readingState.bookId.value).toBe("MAT");
+    expect(new URL(window.location.href).pathname).toBe("/en/about");
+  });
+
+  // The playlist editor stays open over whichever tab is selected and reads
+  // its screen from the address, so selecting another tab keeps it; the
+  // editor's own `leaveStaticPage()` call on closing still leaves it.
+  it("keeps the playlist editor's URL when the user selects a different tab", async () => {
+    const editorPath = "/en/playlist/user_1.playlist_1/study/edit/step/1";
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/en/NIV/matthew/1");
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 1,
+          },
+          {
+            id: "tab-2",
+            translationId: "AAB",
+            bookId: "GEN",
+            chapterNumber: 1,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "split-2v",
+        slotTabIds: ["tab-1", "tab-2"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+    manager.hydrateStoredTabs();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    navigation.push(editorPath);
+    manager.selectTab("tab-2");
+
+    expect(manager.selectedTabId.value).toBe("tab-2");
+    expect(new URL(window.location.href).pathname).toBe(editorPath);
+
+    manager.leaveStaticPage();
+
+    expect(new URL(window.location.href).pathname).toBe("/en/AAB/genesis/1");
   });
 
   // `leaveStaticPage()` is the public escape hatch for callers outside the

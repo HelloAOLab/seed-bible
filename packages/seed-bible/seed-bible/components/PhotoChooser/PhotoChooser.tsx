@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./PhotoChooser.css";
 import "../ProfilePictureModal/ProfilePictureModal.css";
 import { useRef } from "preact/hooks";
@@ -9,6 +10,7 @@ import {
   type UserGalleryManager,
 } from "../../managers/UserGalleryManager";
 import { MaterialIcon } from "../icons";
+import { Button } from "../Button/Button";
 
 export type PhotoChooserPhoto = { id: string; url: string };
 
@@ -77,11 +79,11 @@ export function PhotoChooserContent(props: {
             {t("recent-uploads", { defaultValue: "Recent uploads" })}
           </h3>
           {recent.length === 0 ? (
-            <p className="sb-photo-chooser-empty">
+            <EmptyState>
               {t("no-photos-yet", {
                 defaultValue: "No photos yet. Upload a picture to get started.",
               })}
-            </p>
+            </EmptyState>
           ) : (
             <div className="sb-photo-gallery-grid">
               {recent.map((photo) => (
@@ -107,15 +109,14 @@ export function PhotoChooserContent(props: {
             </div>
           )}
           <div className="sb-photo-modal-actions">
-            <button
-              type="button"
-              className="sb-photo-modal-button"
+            <Button
+              variant="secondary"
               onClick={() => {
                 step.value = "source";
               }}
             >
               {t("back", { defaultValue: "Back" })}
-            </button>
+            </Button>
           </div>
         </>
       ) : (

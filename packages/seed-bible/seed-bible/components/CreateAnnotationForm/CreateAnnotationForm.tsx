@@ -15,7 +15,6 @@ import {
   annotationLocationLabel,
 } from "../Discover/AnnotationsSection";
 import { DiscoverPanelLayout } from "../Discover/DiscoverPanelHeader";
-import { MaterialIcon } from "../icons";
 import type { ChapterVerse } from "../../managers/FreeUseBibleAPI";
 import type { TabsManager } from "../../managers/TabsManager";
 import { sanitize } from "../../managers/Sanitization";
@@ -26,6 +25,9 @@ import {
   type AnnotationEditorProps,
 } from "./PlainTextAnnotationEditor";
 import { retryChunkImport } from "./retryChunkImport";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
+import "../TextField/TextField.css";
 
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
 // actually opens the annotation composer. If that fetch fails (e.g. offline
@@ -97,14 +99,11 @@ function CreateAnnotationTitle(props: {
 
   return (
     <div className="sb-discover-title-row">
-      <button
-        type="button"
-        className="sb-pane-header-button"
-        aria-label={t("back", { defaultValue: "Back" })}
+      <IconButton
+        icon="arrow_back"
+        label={t("back", { defaultValue: "Back" })}
         onClick={() => annotations.cancelEditingAnnotation()}
-      >
-        <MaterialIcon>arrow_back</MaterialIcon>
-      </button>
+      />
       <span className="sb-discover-title" dir="auto">
         {t("annotate-title", {
           location: annotationLocationLabel(editing, tabs),
@@ -214,13 +213,13 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
       <Suspense
         fallback={
           <div
-            className="sb-settings-text-input sb-annotation-editor sb-annotation-editor--loading"
+            className="sb-text-input sb-annotation-editor sb-annotation-editor--loading"
             aria-busy="true"
           />
         }
       >
         <EditorComponent
-          className="sb-settings-text-input sb-annotation-editor"
+          className="sb-text-input sb-annotation-editor"
           initialContent={editing.data.html}
           autofocus="end"
           onEditor={(editor) => {
@@ -236,18 +235,18 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
       {error ? <p className="sb-playlist-add-error">{error}</p> : null}
 
       <div>
-        <button
-          type="button"
+        <Button
           className="sb-reading-plans-back"
           onClick={() => annotations.cancelEditingAnnotation()}
         >
           {t("cancel", { defaultValue: "Cancel" })}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="primary"
           className="sb-settings-save-button"
           onClick={() => void doSave()}
-          disabled={saving || editorEmpty}
+          disabled={editorEmpty}
+          loading={saving}
           title={
             isApplePlatform()
               ? t("save-annotation-shortcut-mac", {
@@ -262,7 +261,7 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
           {saving
             ? t("saving", { defaultValue: "Saving…" })
             : t("save", { defaultValue: "Save" })}
-        </button>
+        </Button>
       </div>
     </DiscoverPanelLayout>
   );

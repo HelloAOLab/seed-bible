@@ -1,6 +1,11 @@
 import "./Compare.css";
 import type { SeedBibleState } from "seed-bible/managers";
-import { MaterialIcon } from "seed-bible/components";
+import {
+  Button,
+  EmptyState,
+  IconButton,
+  MaterialIcon,
+} from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { CompareSettings } from "./CompareSettings";
 import { CompareVerses } from "./CompareVerses";
@@ -28,17 +33,14 @@ export function ComparePaneTitle(props: { state: CompareState }) {
 
     return (
       <div className="sb-discover-title-row">
-        <button
-          type="button"
-          className="sb-pane-header-button"
-          aria-label={t("back", { defaultValue: "Back" })}
+        <IconButton
+          icon={<MaterialIcon className="rtl-mirror">arrow_back</MaterialIcon>}
+          label={t("back", { defaultValue: "Back" })}
           onClick={() => {
             state.view.value =
               view === "add" ? state.addReturnTo.value : "compare";
           }}
-        >
-          <MaterialIcon>arrow_back</MaterialIcon>
-        </button>
+        />
         <span className="sb-discover-title">{label}</span>
       </div>
     );
@@ -77,17 +79,14 @@ export function ComparePaneHeader(props: { state: CompareState }) {
   }
 
   return (
-    <button
-      type="button"
+    <IconButton
       className="sb-compare-settings-button"
-      aria-label={t("compare-settings", { defaultValue: "Compare settings" })}
-      title={t("compare-settings", { defaultValue: "Compare settings" })}
+      icon="settings"
+      label={t("compare-settings", { defaultValue: "Compare settings" })}
       onClick={() => {
         state.view.value = "settings";
       }}
-    >
-      <MaterialIcon>settings</MaterialIcon>
-    </button>
+    />
   );
 }
 
@@ -120,36 +119,34 @@ export function ComparePane(props: {
       <div className="sb-compare-scroll">
         <CompareVerses context={context} state={state} />
         {hasNothingToCompareWith && (
-          <div className="sb-compare-empty">
-            <MaterialIcon className="sb-compare-empty-icon">
-              text_compare
-            </MaterialIcon>
-            <p className="sb-compare-empty-title">
-              {t("nothing-to-compare-title", {
-                defaultValue: "No translations to compare yet",
-              })}
-            </p>
-            <p className="sb-compare-empty-hint">
-              {t("nothing-to-compare-hint", {
-                defaultValue:
-                  "Add translations to compare the selected verses with",
-              })}
-            </p>
-          </div>
+          <EmptyState
+            size="panel"
+            icon="text_compare"
+            title={t("nothing-to-compare-title", {
+              defaultValue: "No translations to compare yet",
+            })}
+          >
+            {t("nothing-to-compare-hint", {
+              defaultValue:
+                "Add translations to compare the selected verses with",
+            })}
+          </EmptyState>
         )}
       </div>
       <div className="sb-compare-add-bar">
-        <button
-          type="button"
+        <Button
           className="sb-compare-add-button"
+          variant="primary"
+          size="lg"
+          shape="pill"
+          icon="add"
           onClick={() => {
             state.addReturnTo.value = "compare";
             state.view.value = "add";
           }}
         >
-          <MaterialIcon>add</MaterialIcon>
           {t("add-translation", { defaultValue: "Add translation" })}
-        </button>
+        </Button>
       </div>
     </div>
   );

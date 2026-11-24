@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "../SettingsPage/SettingsPage.css";
 import "./CustomizationEditPane.css";
 // `.filters-icon` is defined here rather than in a shared stylesheet —
@@ -7,24 +8,31 @@ import "../BibleSelector/BibleSelector.css";
 import { signal, useSignal } from "@preact/signals";
 import { lazy, Suspense } from "preact/compat";
 import { useMemo, useRef } from "preact/hooks";
+import type { ComponentChildren } from "preact";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import {
   CUSTOMIZATION_COLOR_GROUPS,
   CUSTOMIZATION_CONTRAST_PAIRS,
   CUSTOMIZATION_FONT_FIELDS,
+  CUSTOMIZATION_ICON_IDS,
   EXTENSION_AVAILABILITY_VALUES,
   MIN_READABLE_CONTRAST_RATIO,
   buildCustomFontValue,
   getContrastRatio,
+  getCustomIconFileProblem,
   getDefaultExtensionAvailability,
   getExtensionAvailability,
   getExtensionSettingDefault,
   getFontPresetsForField,
+  getVariantDefaultRole,
+  isDefaultVariant,
+  type CustomizationIconId,
   type CustomizationThemeVariant,
   type CustomizationsManager,
   type DefaultExtensionAvailability,
   type ExtensionAvailability,
+  type VariantDefaultRole,
 } from "../../managers/CustomizationsManager";
 import {
   DEFAULT_HIGHLIGHT_IDS,
@@ -42,8 +50,16 @@ import {
 import { UI_TO_BIBLE_LANGUAGE_CODES } from "../../managers/BibleReadingManager";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { i18n } from "../../i18n";
-import { useI18n } from "../../i18n/I18nManager";
-import { FiltersIcon, MaterialIcon, TickIcon } from "../icons";
+import { useI18n, type I18nHook } from "../../i18n/I18nManager";
+import {
+  FiltersIcon,
+  MaterialIcon,
+  SeedBibleIcon,
+  TickIcon,
+  TodayIcon,
+} from "../icons";
+import { CustomIconImage } from "../CustomizableIcon/CustomizableIcon";
+import { IconButton } from "../IconButton/IconButton";
 import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSettingsForm";
 import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
 import { SearchBar } from "../SearchBar/SearchBar";
@@ -58,6 +74,7 @@ import {
   type ExtensionListEntry,
 } from "../../managers/ExtensionManager";
 import { Skeleton, SkeletonContainer } from "../Skeleton/Skeleton";
+import { ContentViewLoading } from "./ContentViewLoading";
 import { LazyColorPicker } from "../ColorPicker/LazyColorPicker";
 import { normalizeHex } from "../ColorPicker/color";
 import {
@@ -74,6 +91,9 @@ import {
   DockableThemeLivePreview,
   ThemeThumbnail,
 } from "./CustomizationPreviews";
+import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
+import "../Field/Field.css";
 
 // The picture editor pulls in `react-avatar-editor`, so it's only fetched on
 // the "Upload logo" click rather than at boot, same as SettingsPage does.
@@ -83,7 +103,19 @@ const LogoCropModalContent = lazy(() =>
   }))
 );
 
-type CustomizationEditView = "edit" | "edit-variant" | "edit-extensions";
+// Only owners building a content library see this screen, so it (and its
+// import and AI-suggestion code) isn't part of every reader's first load.
+const loadContentView = () => import("./CustomizationContentView");
+const CustomizationContentView = lazy(() =>
+  loadContentView().then((m) => ({ default: m.CustomizationContentView }))
+);
+
+type CustomizationEditView =
+  | "edit"
+  | "edit-variant"
+  | "edit-extensions"
+  | "edit-icons"
+  | "edit-content";
 
 /**
  * Whether `foregroundKey` (e.g. `primaryFontColor`) has a known reading
@@ -210,7 +242,7 @@ export function buildCustomizationTutorialSteps(
       titleDefault: "Brand colors",
       bodyKey: "tutorial.themeBrandBody",
       bodyDefault:
-        "Your primary, secondary, and link colors — the colors that carry your site's identity.",
+        "Your primary, secondary, and link colors — the colors that carry your site's identity — and the red used for delete buttons.",
       placement: "right",
       onEnter: enterVariantEditor,
       onLeave: leaveVariantEditor,
@@ -352,6 +384,14 @@ export function CustomizationEditPaneTitle(props: {
   if (view === "edit-extensions") {
     return <>{t("customization-extensions", { defaultValue: "Extensions" })}</>;
   }
+  if (view === "edit-icons") {
+    return <>{t("customization-icons", { defaultValue: "Icons" })}</>;
+  }
+  if (view === "edit-content") {
+    return (
+      <>{t("custom-content-library", { defaultValue: "Content library" })}</>
+    );
+  }
   if (view === "edit-variant") {
     const variant = record.variants.find(
       (v) => v.id === props.customizations.editingVariantId.value
@@ -361,6 +401,44 @@ export function CustomizationEditPaneTitle(props: {
   return <span dir="auto">{record.name}</span>;
 }
 
+/**
+ * Pane header help button: replays the editor tour on the open Custom
+ * Branding, whether or not it was seen before. The tour starts on the main
+ * screen, so it goes back there first.
+ */
+export function CustomizationEditPaneHelp(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { t } = useI18n();
+  const record = state.customizations.editingCustomization.value;
+  if (!record) {
+    return null;
+  }
+  return (
+    <IconButton
+      icon="help"
+      label={t("take-a-tour", { defaultValue: "Take a tour" })}
+      onClick={() => {
+        // Tour the theme being edited, if there is one, so the walk-through
+        // shows the colors the user is actually working on.
+        const editing = state.customizations.editingVariantId.value;
+        const variantId =
+          editing && record.variants.some((v) => v.id === editing)
+            ? editing
+            : record.defaultVariantId;
+        // Only once the tour has started: it refuses while another tour runs,
+        // and that tour may be pointing at the screen the user is on.
+        const started = state.tutorial.replayContextual(
+          "customization-created",
+          buildCustomizationTutorialSteps(state, variantId)
+        );
+        if (started) {
+          customizationEditView.value = "edit";
+        }
+      }}
+    />
+  );
+}
+
 /** Pane header back button, shown on every screen except the main editor. */
 export function CustomizationEditPaneLeading() {
   const { t } = useI18n();
@@ -368,17 +446,13 @@ export function CustomizationEditPaneLeading() {
     return null;
   }
   return (
-    <button
-      type="button"
-      className="sb-pane-header-button"
+    <IconButton
+      icon="arrow_back"
+      label={t("back", { defaultValue: "Back" })}
       onClick={() => {
         customizationEditView.value = "edit";
       }}
-      aria-label={t("back", { defaultValue: "Back" })}
-      title={t("back", { defaultValue: "Back" })}
-    >
-      <span className="material-symbols-outlined">arrow_back</span>
-    </button>
+    />
   );
 }
 
@@ -410,27 +484,15 @@ function UnsavedChangesConfirmModalContent(props: {
         })}
       </p>
       <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onKeepEditing}
-        >
+        <Button onClick={onKeepEditing}>
           {t("keep-editing", { defaultValue: "Keep editing" })}
-        </button>
-        <button
-          type="button"
-          className="sb-unsaved-changes-discard"
-          onClick={onDiscard}
-        >
+        </Button>
+        <Button variant="ghost" tone="danger" onClick={onDiscard}>
           {t("discard-changes", { defaultValue: "Discard changes" })}
-        </button>
-        <button
-          type="button"
-          className="sb-friends-button sb-friends-button--primary"
-          onClick={onSaveAndLeave}
-        >
+        </Button>
+        <Button variant="primary" onClick={onSaveAndLeave}>
           {t("save-and-leave", { defaultValue: "Save and leave" })}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -540,6 +602,7 @@ export function openCustomizationEditPane(
     ),
     icon: () => <CustomizationEditPaneIcon />,
     leading: () => <CustomizationEditPaneLeading />,
+    header: () => <CustomizationEditPaneHelp state={state} />,
     component: () => <CustomizationEditPane state={state} />,
     onClose: () => {
       state.customizations.stopEditing();
@@ -585,6 +648,16 @@ export function CustomizationEditPane(props: { state: SeedBibleState }) {
   if (view === "edit-extensions") {
     return <CustomizationEditExtensionsView state={state} />;
   }
+  if (view === "edit-icons") {
+    return <CustomizationEditIconsView state={state} />;
+  }
+  if (view === "edit-content") {
+    return (
+      <Suspense fallback={<ContentViewLoading />}>
+        <CustomizationContentView state={state} />
+      </Suspense>
+    );
+  }
   if (view === "edit-variant") {
     return <CustomizationEditVariantView state={state} />;
   }
@@ -628,7 +701,11 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                 defaultValue: "Loading the picture editor…",
               })}
             >
-              <Skeleton width="100%" height="16rem" radius="0.625rem" />
+              <Skeleton
+                width="100%"
+                height="16rem"
+                radius="var(--sb-radius-md)"
+              />
             </SkeletonContainer>
           }
         >
@@ -661,6 +738,10 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
     bibleData.availableTranslations.value
   );
 
+  const customIconCount = CUSTOMIZATION_ICON_IDS.filter(
+    (iconId) => !!record.icons?.[iconId]
+  ).length;
+
   const availabilityCounts = { available: 0, "auto-installed": 0, hidden: 0 };
   for (const entry of extensions.extensions.value) {
     if (entry.extension !== null) {
@@ -675,16 +756,11 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           className="sb-settings-field-row"
           data-tutorial="customization-name"
         >
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-customization-name"
-          >
+          <label className="sb-field-label" htmlFor="sb-customization-name">
             {t("customization-name", { defaultValue: "Name" })}
           </label>
-          <input
+          <TextInput
             id="sb-customization-name"
-            type="text"
-            className="sb-cz-input"
             value={record.name}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLInputElement;
@@ -697,7 +773,7 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           className="sb-settings-field-row"
           data-tutorial="customization-logo"
         >
-          <span className="sb-settings-field-label">
+          <span className="sb-field-label">
             {t("logo", { defaultValue: "Logo" })}
           </span>
           {record.logoUrl ? (
@@ -708,22 +784,18 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                 alt={t("logo", { defaultValue: "Logo" })}
               />
               <div className="sb-cz-logo-actions">
-                <button
-                  type="button"
-                  className="sb-cz-button"
+                <Button
                   onClick={handleUploadLogo}
                   disabled={isUploadingLogo.value}
                 >
                   {t("replace-logo", { defaultValue: "Replace" })}
-                </button>
-                <button
-                  type="button"
-                  className="sb-cz-button"
+                </Button>
+                <Button
                   onClick={() => void customizations.removeEditingLogo()}
                   disabled={isUploadingLogo.value}
                 >
                   {t("remove-logo", { defaultValue: "Remove logo" })}
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
@@ -751,20 +823,21 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
         </div>
 
         <ContextMenuWithButton
-          type="button"
           buttonClassName="sb-cz-row"
           menuClassName="sb-customization-translation-picker-menu"
-          icon={
-            <>
+          trigger={({ buttonRef, ...menu }) => (
+            <button {...menu} ref={buttonRef} type="button">
               <span className="sb-cz-row-label">
                 {t("customization-default-translation", {
                   defaultValue: "Default translation",
                 })}
               </span>
               <span className="sb-cz-row-value">{defaultTranslationLabel}</span>
-              <span className="material-symbols-outlined">expand_more</span>
-            </>
-          }
+              <span className="material-symbols-outlined" aria-hidden="true">
+                expand_more
+              </span>
+            </button>
+          )}
         >
           <DefaultTranslationPickerMenuContent state={state} />
         </ContextMenuWithButton>
@@ -775,7 +848,8 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           </h3>
           <ul className="sb-cz-theme-grid">
             {record.variants.map((variant) => {
-              const isDefault = variant.id === record.defaultVariantId;
+              const defaultRole = getVariantDefaultRole(variant);
+              const isDefault = isDefaultVariant(record, variant);
               const basePreset =
                 customizations.resolveVariantBaseTheme(variant);
               return (
@@ -792,25 +866,21 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                       <span className="sb-cz-card-title" dir="auto">
                         {variant.name}
                       </span>
-                      {isDefault ? (
-                        <span className="sb-cz-card-subtitle sb-cz-card-subtitle-accent">
-                          {t("default", { defaultValue: "Default" })}
-                        </span>
-                      ) : (
-                        <span className="sb-cz-card-subtitle">
-                          {t("based-on-theme", {
-                            name: localizedThemeName(t, basePreset),
-                            defaultValue: "Based on {{name}}",
-                          })}
-                        </span>
-                      )}
+                      <span className="sb-cz-card-subtitle">
+                        {t("based-on-theme", {
+                          name: localizedThemeName(t, basePreset),
+                          defaultValue: "Based on {{name}}",
+                        })}
+                      </span>
+                      {isDefault && <VariantDefaultChip role={defaultRole} />}
                     </span>
                   </button>
                   {(!isDefault || record.variants.length > 1) && (
                     <ContextMenuWithButton
                       anchorClassName="sb-cz-card-menu"
                       buttonClassName="sb-cz-icon-button"
-                      aria-label={t("variant-options", {
+                      size="md"
+                      label={t("variant-options", {
                         defaultValue: "Theme options",
                       })}
                     >
@@ -821,12 +891,10 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                           }
                         >
                           <MaterialIcon className="sb-context-menu-item-icon">
-                            star
+                            {VARIANT_DEFAULT_ICONS[defaultRole]}
                           </MaterialIcon>
                           <span>
-                            {t("set-as-default-variant", {
-                              defaultValue: "Set as default",
-                            })}
+                            {setAsDefaultVariantLabel(t, defaultRole)}
                           </span>
                         </ContextMenuItem>
                       )}
@@ -864,6 +932,33 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
           type="button"
           className="sb-cz-row sb-cz-row-tall"
           onClick={() => {
+            customizationEditView.value = "edit-icons";
+          }}
+        >
+          <span className="material-symbols-outlined sb-cz-row-icon">
+            category
+          </span>
+          <span className="sb-cz-row-text">
+            <span className="sb-cz-row-label">
+              {t("customization-icons", { defaultValue: "Icons" })}
+            </span>
+            <span className="sb-cz-row-hint">
+              {t("customization-icons-summary", {
+                count: customIconCount,
+                total: CUSTOMIZATION_ICON_IDS.length,
+                defaultValue: "{{count}} of {{total}} customized",
+              })}
+            </span>
+          </span>
+          <span className="material-symbols-outlined rtl-mirror">
+            chevron_right
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className="sb-cz-row sb-cz-row-tall"
+          onClick={() => {
             customizationEditView.value = "edit-extensions";
           }}
         >
@@ -888,21 +983,53 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
             chevron_right
           </span>
         </button>
+
+        <button
+          type="button"
+          className="sb-cz-row sb-cz-row-tall"
+          onPointerEnter={() => void loadContentView()}
+          onFocus={() => void loadContentView()}
+          onClick={() => {
+            customizationEditView.value = "edit-content";
+          }}
+        >
+          <span className="material-symbols-outlined sb-cz-row-icon">
+            video_library
+          </span>
+          <span className="sb-cz-row-text">
+            <span className="sb-cz-row-label">
+              {t("custom-content-library", {
+                defaultValue: "Content library",
+              })}
+            </span>
+            <span className="sb-cz-row-hint">
+              {record.contentRecordName
+                ? t("custom-content-row-hint-ready", {
+                    defaultValue: "Your videos and articles in Discover",
+                  })
+                : t("custom-content-row-hint-empty", {
+                    defaultValue: "Add your videos and articles to Discover",
+                  })}
+            </span>
+          </span>
+          <span className="material-symbols-outlined rtl-mirror">
+            chevron_right
+          </span>
+        </button>
       </section>
 
       <footer className="sb-cz-footer">
-        <button
-          type="button"
-          className="sb-cz-button sb-cz-button-danger sb-cz-button-quiet"
+        <Button
+          variant="ghost"
+          tone="danger"
+          icon="delete"
           onClick={() => confirmDeleteCustomization(state, record)}
         >
-          <span className="material-symbols-outlined">delete</span>
           {t("delete-customization", { defaultValue: "Delete" })}
-        </button>
+        </Button>
         <span className="sb-cz-footer-spacer" />
-        <button
-          type="button"
-          className="sb-cz-button"
+        <Button
+          icon="share"
           onClick={() => {
             navigator.clipboard.writeText(customizations.getShareLink(record));
             state.app.toast(
@@ -912,14 +1039,160 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
             );
           }}
         >
-          <span className="material-symbols-outlined">share</span>
           {t("share", { defaultValue: "Share" })}
-        </button>
+        </Button>
         <SaveButton
           hasUnsavedChanges={customizations.hasUnsavedChanges.value}
           onSave={() => void handleSave()}
         />
       </footer>
+    </div>
+  );
+}
+
+const DEFAULT_CUSTOMIZATION_ICONS: Record<
+  CustomizationIconId,
+  ComponentChildren
+> = {
+  books: <SeedBibleIcon size={24} />,
+  search: <MaterialIcon>search</MaterialIcon>,
+  today: <TodayIcon />,
+  share: <MaterialIcon>share</MaterialIcon>,
+  chat: <MaterialIcon>chat_bubble_outline</MaterialIcon>,
+  discover: <MaterialIcon>explore</MaterialIcon>,
+};
+
+function CustomizationEditIconsView(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { customizations } = state;
+  const { t } = useI18n();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pickingIconId = useRef<CustomizationIconId | null>(null);
+  const uploadingIconId = useSignal<CustomizationIconId | null>(null);
+  const record = customizations.editingCustomization.value;
+  if (!record) {
+    return <CustomizationNotFound />;
+  }
+
+  const iconLabels: Record<CustomizationIconId, string> = {
+    books: t("books", { defaultValue: "Books" }),
+    search: t("search", { defaultValue: "Search" }),
+    today: t("today", { defaultValue: "Today" }),
+    share: t("share", { defaultValue: "Share" }),
+    chat: t("chat", { defaultValue: "Chat" }),
+    discover: t("discover", { defaultValue: "Discover" }),
+  };
+
+  const pickFile = (iconId: CustomizationIconId) => {
+    pickingIconId.current = iconId;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChosen = async (event: Event) => {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    const iconId = pickingIconId.current;
+    // Cleared so picking the same file again still fires `change`.
+    input.value = "";
+    pickingIconId.current = null;
+    if (!file || !iconId) {
+      return;
+    }
+    const problem = getCustomIconFileProblem(file);
+    if (problem === "not-svg") {
+      state.app.toast(
+        t("custom-icon-must-be-svg", {
+          defaultValue: "Icons must be SVG files.",
+        })
+      );
+      return;
+    }
+    if (problem === "too-large") {
+      state.app.toast(
+        t("custom-icon-too-large", {
+          defaultValue: "That SVG is too large. Icons can be up to 256 KB.",
+        })
+      );
+      return;
+    }
+    uploadingIconId.value = iconId;
+    try {
+      await customizations.uploadIcon(iconId, file);
+    } catch (error) {
+      console.error("Failed to upload icon.", error);
+      state.app.toast(
+        t("custom-icon-upload-failed", {
+          defaultValue: "Couldn't upload that icon. Please try again.",
+        })
+      );
+    } finally {
+      uploadingIconId.value = null;
+    }
+  };
+
+  return (
+    <div className="sb-settings-page sb-cz-page">
+      <section className="sb-settings-section sb-cz-body">
+        <p className="sb-cz-intro">
+          {t("customization-icons-hint", {
+            defaultValue:
+              "Upload an SVG to replace any of these icons. Icons are drawn as a single shape in the theme's icon color.",
+          })}
+        </p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".svg,image/svg+xml"
+          hidden
+          onChange={(event) => void handleFileChosen(event)}
+        />
+        <ul className="sb-cz-icon-list">
+          {CUSTOMIZATION_ICON_IDS.map((iconId) => {
+            const url = record.icons?.[iconId];
+            const isBusy = uploadingIconId.value !== null;
+            return (
+              <li key={iconId} className="sb-cz-icon-row">
+                <span className="sb-cz-icon-preview" aria-hidden="true">
+                  {url ? (
+                    <CustomIconImage url={url} />
+                  ) : (
+                    DEFAULT_CUSTOMIZATION_ICONS[iconId]
+                  )}
+                </span>
+                <span className="sb-cz-icon-name">{iconLabels[iconId]}</span>
+                <Button
+                  size="sm"
+                  onClick={() => pickFile(iconId)}
+                  disabled={isBusy}
+                  loading={uploadingIconId.value === iconId}
+                  aria-label={t("upload-custom-icon-for", {
+                    name: iconLabels[iconId],
+                    defaultValue: "Upload an SVG for {{name}}",
+                  })}
+                >
+                  {url
+                    ? t("replace-logo", { defaultValue: "Replace" })
+                    : t("upload-custom-icon", { defaultValue: "Upload SVG" })}
+                </Button>
+                {url && (
+                  <IconButton
+                    size="sm"
+                    icon="close"
+                    label={t("reset-custom-icon", {
+                      name: iconLabels[iconId],
+                      defaultValue: "Use the default {{name}} icon",
+                    })}
+                    onClick={() =>
+                      void customizations.removeEditingIcon(iconId)
+                    }
+                    disabled={isBusy}
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </div>
   );
 }
@@ -931,14 +1204,13 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
 function SaveButton(props: { hasUnsavedChanges: boolean; onSave: () => void }) {
   const { t } = useI18n();
   return (
-    <button
-      type="button"
-      className="sb-cz-button sb-cz-button-primary"
+    <Button
+      variant="primary"
       disabled={!props.hasUnsavedChanges}
       onClick={props.onSave}
     >
       {t("save", { defaultValue: "Save" })}
-    </button>
+    </Button>
   );
 }
 
@@ -947,14 +1219,12 @@ function CustomizationNotFound(props: { message?: string }) {
   return (
     <div className="sb-settings-page">
       <section className="sb-settings-section">
-        <div className="sb-settings-empty-state">
-          <p>
-            {props.message ??
-              t("customization-not-found", {
-                defaultValue: "This Custom Branding could not be found.",
-              })}
-          </p>
-        </div>
+        <EmptyState className="sb-settings-empty-state">
+          {props.message ??
+            t("customization-not-found", {
+              defaultValue: "This Custom Branding could not be found.",
+            })}
+        </EmptyState>
       </section>
     </div>
   );
@@ -1135,13 +1405,11 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
           </li>
         </ul>
         {installableExtensions.length === 0 ? (
-          <div className="sb-settings-empty-state">
-            <p>
-              {t("no-extensions-available", {
-                defaultValue: "No extensions available.",
-              })}
-            </p>
-          </div>
+          <EmptyState className="sb-settings-empty-state">
+            {t("no-extensions-available", {
+              defaultValue: "No extensions available.",
+            })}
+          </EmptyState>
         ) : (
           <ul className="sb-cz-list">
             {installableExtensions.map((entry) => {
@@ -1163,19 +1431,13 @@ function CustomizationEditExtensionsView(props: { state: SeedBibleState }) {
                   </span>
                   {Object.keys(entry.extension?.meta.settings ?? {}).length >
                     0 && (
-                    <button
-                      type="button"
-                      className="sb-cz-icon-button"
+                    <IconButton
+                      icon="tune"
+                      label={t("configure-extension-defaults", {
+                        defaultValue: "Configure defaults",
+                      })}
                       onClick={() => handleConfigureDefaults(entry)}
-                      aria-label={t("configure-extension-defaults", {
-                        defaultValue: "Configure defaults",
-                      })}
-                      title={t("configure-extension-defaults", {
-                        defaultValue: "Configure defaults",
-                      })}
-                    >
-                      <span className="material-symbols-outlined">tune</span>
-                    </button>
+                    />
                   )}
                   <ExtensionAvailabilitySelect
                     id={selectId}
@@ -1364,13 +1626,11 @@ function DefaultTranslationPickerMenuContent(props: { state: SeedBibleState }) {
 
   if (!record) {
     return (
-      <div className="sb-settings-empty-state">
-        <p>
-          {t("customization-not-found", {
-            defaultValue: "This Custom Branding could not be found.",
-          })}
-        </p>
-      </div>
+      <EmptyState className="sb-settings-empty-state">
+        {t("customization-not-found", {
+          defaultValue: "This Custom Branding could not be found.",
+        })}
+      </EmptyState>
     );
   }
 
@@ -1515,7 +1775,8 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
     );
   }
 
-  const isDefault = variant.id === record.defaultVariantId;
+  const defaultRole = getVariantDefaultRole(variant);
+  const isDefault = isDefaultVariant(record, variant);
   const canDelete = record.variants.length > 1;
   const resolvedTheme = customizations.resolveEditingVariantTheme(variant);
 
@@ -1533,15 +1794,13 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
           data-tutorial="theme-variant-name"
         >
           <label
-            className="sb-settings-field-label"
+            className="sb-field-label"
             htmlFor="sb-customization-variant-name"
           >
             {t("variant-name", { defaultValue: "Name" })}
           </label>
-          <input
+          <TextInput
             id="sb-customization-variant-name"
-            type="text"
-            className="sb-cz-input"
             value={variant.name}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLInputElement;
@@ -1552,7 +1811,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
 
         <div className="sb-settings-field-row" data-tutorial="theme-base">
           <span
-            className="sb-settings-field-label"
+            className="sb-field-label"
             id="sb-customization-variant-base-theme"
           >
             {t("based-on", { defaultValue: "Based on" })}
@@ -1612,6 +1871,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                   <ColorTile
                     key={field.key}
                     label={label}
+                    isMobile={state.app.isMobile.value}
                     value={resolvedTheme.variables[field.key] ?? ""}
                     isOverridden={variant.themes[field.key] !== undefined}
                     contrastWarning={getContrastWarning(
@@ -1661,6 +1921,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
               variantId={variant.id}
               fieldKey={field.key}
               value={resolvedTheme.variables[field.key] ?? ""}
+              selectedValue={variant.themes[field.key]}
               isOverridden={variant.themes[field.key] !== undefined}
               label={t(`customization-${field.key}`, {
                 defaultValue: field.label,
@@ -1704,6 +1965,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                       <LazyColorPicker
                         value={normalizeHex(bg)}
                         className="sb-cz-highlight-picker"
+                        isMobile={state.app.isMobile.value}
                         ariaLabel={t("id_highlight-background-color", { id })}
                         onOpenChange={(open) => {
                           if (open) previewHighlightId.value = id;
@@ -1733,6 +1995,7 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
                       <LazyColorPicker
                         value={normalizeHex(fg)}
                         className="sb-cz-highlight-picker"
+                        isMobile={state.app.isMobile.value}
                         ariaLabel={t("id_highlight-text-color", { id })}
                         onOpenChange={(open) => {
                           if (open) previewHighlightId.value = id;
@@ -1791,28 +2054,26 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
 
       <footer className="sb-cz-footer">
         {canDelete && (
-          <button
-            type="button"
-            className="sb-cz-button sb-cz-button-danger sb-cz-button-quiet"
+          <Button
+            variant="ghost"
+            tone="danger"
+            icon="delete"
             onClick={() =>
               confirmDeleteVariant(state, variant, () => {
                 customizationEditView.value = "edit";
               })
             }
           >
-            <span className="material-symbols-outlined">delete</span>
             {t("delete-variant", { defaultValue: "Delete" })}
-          </button>
+          </Button>
         )}
         <span className="sb-cz-footer-spacer" />
         {!isDefault && (
-          <button
-            type="button"
-            className="sb-cz-button"
+          <Button
             onClick={() => customizations.setEditingDefaultVariant(variant.id)}
           >
-            {t("set-as-default-variant", { defaultValue: "Set as default" })}
-          </button>
+            {setAsDefaultVariantLabel(t, defaultRole)}
+          </Button>
         )}
         <SaveButton
           hasUnsavedChanges={customizations.hasUnsavedChanges.value}
@@ -1823,25 +2084,61 @@ function CustomizationEditVariantView(props: { state: SeedBibleState }) {
   );
 }
 
+const VARIANT_DEFAULT_ICONS: Record<VariantDefaultRole, string> = {
+  light: "light_mode",
+  dark: "dark_mode",
+  fallback: "star",
+};
+
+function setAsDefaultVariantLabel(
+  t: I18nHook["t"],
+  role: VariantDefaultRole
+): string {
+  switch (role) {
+    case "light":
+      return t("set-as-light-default-variant", {
+        defaultValue: "Set as light default",
+      });
+    case "dark":
+      return t("set-as-dark-default-variant", {
+        defaultValue: "Set as dark default",
+      });
+    case "fallback":
+      return t("set-as-default-variant", { defaultValue: "Set as default" });
+  }
+}
+
+function VariantDefaultChip(props: { role: VariantDefaultRole }) {
+  const { t } = useI18n();
+  const label =
+    props.role === "light"
+      ? t("light-default-variant", { defaultValue: "Light default" })
+      : props.role === "dark"
+        ? t("dark-default-variant", { defaultValue: "Dark default" })
+        : t("default", { defaultValue: "Default" });
+  return (
+    <span className="sb-cz-default-chip">
+      <MaterialIcon aria-hidden="true">
+        {VARIANT_DEFAULT_ICONS[props.role]}
+      </MaterialIcon>
+      {label}
+    </span>
+  );
+}
+
 /** Small "back to the base theme's value" button for a field the user has overridden. */
 function ResetButton(props: { label: string; onReset: () => void }) {
   const { t } = useI18n();
-  const title = t("reset-to-base-theme", {
-    defaultValue: "Reset to base theme",
-  });
   return (
-    <button
-      type="button"
-      className="sb-cz-reset"
-      title={title}
-      aria-label={t("reset-field", {
+    <IconButton
+      size="sm"
+      icon="restart_alt"
+      label={t("reset-field", {
         label: props.label,
         defaultValue: "Reset {{label}}",
       })}
       onClick={props.onReset}
-    >
-      <span className="material-symbols-outlined">restart_alt</span>
-    </button>
+    />
   );
 }
 
@@ -1854,6 +2151,7 @@ function ResetButton(props: { label: string; onReset: () => void }) {
 function ColorTile(props: {
   label: string;
   value: string;
+  isMobile: boolean;
   isOverridden: boolean;
   contrastWarning: { ratio: number; label: string } | null;
   onChange: (color: string) => void;
@@ -1903,6 +2201,7 @@ function ColorTile(props: {
           isOpen.value = open;
         }}
         anchorRef={swatchRef}
+        isMobile={props.isMobile}
         ariaLabel={label}
         onChange={props.onChange}
         onPreview={props.onPreview}
@@ -1974,30 +2273,41 @@ function CustomizationFontFieldRow(props: {
   variantId: string;
   fieldKey: ThemeFontFamilyKey;
   value: string;
+  selectedValue?: string;
   isOverridden: boolean;
   label: string;
   customizations: CustomizationsManager;
 }) {
-  const { variantId, fieldKey, value, isOverridden, label, customizations } =
-    props;
+  const {
+    variantId,
+    fieldKey,
+    value,
+    selectedValue,
+    isOverridden,
+    label,
+    customizations,
+  } = props;
   const { t } = useI18n();
   const forcedCustom = useSignal(false);
 
   const fieldPresets = getFontPresetsForField(fieldKey);
-  const matchedPreset = value
-    ? fieldPresets.find((p) => p.value === value)
+
+  const matchedPreset = selectedValue
+    ? fieldPresets.find(
+        (p) => p.name !== "Default" && p.value === selectedValue
+      )
     : fieldPresets[0];
   // A stored value that doesn't match any preset is a real custom font
   // (e.g. reopening an editor that already has one saved) — show custom
   // mode for it even before the user has touched the select this session.
-  const isCustom = forcedCustom.value || (!!value && !matchedPreset);
+  const isCustom = forcedCustom.value || (!!selectedValue && !matchedPreset);
   const preset = isCustom ? undefined : matchedPreset;
-  const customName = value.split(",")[0]?.trim() ?? "";
+  const customName = (selectedValue ?? "").split(",")[0]?.trim() ?? "";
   const selectId = `sb-customization-font-${fieldKey}`;
 
   return (
     <div className="sb-settings-field-row">
-      <label className="sb-settings-field-label" htmlFor={selectId}>
+      <label className="sb-field-label" htmlFor={selectId}>
         {label}
       </label>
       <div className="sb-cz-font-row">
@@ -2023,15 +2333,21 @@ function CustomizationFontFieldRow(props: {
             value={preset ? preset.name : "__custom__"}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLSelectElement;
+
               if (target.value === "__custom__") {
                 forcedCustom.value = true;
                 return;
               }
+
               forcedCustom.value = false;
+
               const nextPreset = fieldPresets.find(
                 (p) => p.name === target.value
               );
-              if (nextPreset) {
+
+              if (nextPreset?.name === "Default") {
+                customizations.resetEditingVariantField(variantId, fieldKey);
+              } else if (nextPreset) {
                 customizations.setEditingVariantFont(
                   variantId,
                   fieldKey,
@@ -2060,19 +2376,19 @@ function CustomizationFontFieldRow(props: {
         </span>
       </div>
       {isCustom && (
-        <input
-          type="text"
-          className="sb-cz-input"
+        <TextInput
+          aria-label={t("custom-font-name-placeholder", {
+            defaultValue: "Google Font name",
+          })}
           placeholder={t("custom-font-name-placeholder", {
             defaultValue: "Google Font name",
           })}
           value={customName}
-          onInput={(event: Event) => {
-            const target = event.currentTarget as HTMLInputElement;
+          onValueInput={(name) => {
             customizations.setEditingVariantFont(
               variantId,
               fieldKey,
-              buildCustomFontValue(target.value)
+              buildCustomFontValue(name)
             );
           }}
         />

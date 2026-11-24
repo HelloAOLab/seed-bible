@@ -240,10 +240,8 @@ describe("SocialSection", () => {
   const historyButton = () =>
     q<HTMLButtonElement>(".sb-today-feed-history-button")!;
   const seeMoreLink = () => q<HTMLButtonElement>(".sb-today-feed-see-more");
-  const kindButtons = () =>
-    qa(".sb-today-feed-kind-option") as HTMLButtonElement[];
-  const selectedKind = () =>
-    q(".sb-today-feed-kind-option-selected")!.textContent;
+  const kindButtons = () => qa(".sb-filter-pill") as HTMLButtonElement[];
+  const selectedKind = () => q(".sb-filter-pill--selected")!.textContent;
   const rows = () => qa(".sb-today-feed-row");
   const sentences = () =>
     qa(".sb-today-feed-sentence").map((el) => el.textContent);
@@ -328,7 +326,7 @@ describe("SocialSection", () => {
         "Reading",
       ]);
       expect(selectedKind()).toBe("All");
-      expect(kindButtons()[0]!.getAttribute("aria-pressed")).toBe("true");
+      expect(kindButtons()[0]!.getAttribute("aria-selected")).toBe("true");
     });
 
     it("scrolls the pill row horizontally with the wheel", () => {

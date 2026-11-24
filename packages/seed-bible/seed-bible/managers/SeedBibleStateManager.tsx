@@ -36,12 +36,21 @@ import {
   SharedPageNotFoundModalContent,
   type SharedPageModalAction,
 } from "../components/SharedPageModal/SharedPageModal";
+import { PlaylistPagePane } from "../components/PlaylistPagePane/PlaylistPagePane";
+import { PlaylistFinishedPane } from "../components/PlaylistFinishedPane/PlaylistFinishedPane";
+import {
+  openDeletePlaylistConfirm,
+  openPlaylistShareModal,
+} from "../components/Discover/PlaylistRow";
 import {
   buildSharedPagePath,
   parseSharedPagePath,
   type SharedPageKind,
 } from "../managers/SharedPagePath";
-import type { PlaylistPageSeed } from "../managers/PlaylistManager";
+import type {
+  FinishedPlaylist,
+  PlaylistPageSeed,
+} from "../managers/PlaylistManager";
 import {
   averageSessionMinutes,
   type ReadingPlanPageSeed,
@@ -81,6 +90,7 @@ import {
 import {
   openReadingPlanDetail,
   openReadingPlanEditor,
+  openPlanCreate,
 } from "../components/ReadingPlansPane/ReadingPlansPane";
 import {
   FRIENDS_PANE_ID,
@@ -144,6 +154,11 @@ import type {
   ThemeFontFamilyKey,
 } from "../managers/ThemeManager";
 import {
+  createCustomContentManager,
+  type CustomContentManager,
+} from "../managers/CustomContentManager";
+import { createContentImportClient } from "../managers/customContent/importClient";
+import {
   createCustomizationsManager,
   CUSTOMIZATION_FONT_FIELDS,
   CUSTOMIZATION_FONT_PRESETS,
@@ -159,6 +174,7 @@ import {
   computed,
   effect,
   signal,
+  untracked,
   type ReadonlySignal,
 } from "@preact/signals";
 import {
@@ -170,6 +186,10 @@ import {
   setupExtensionContext,
   type ExtensionManager,
 } from "../managers/ExtensionManager";
+import {
+  createExtensionReviewsManager,
+  type ExtensionReviewsManager,
+} from "../managers/ExtensionReviewsManager";
 import {
   createExtensionSettingsManager,
   type ExtensionSettingsManager,
@@ -207,7 +227,7 @@ import {
 } from "./ChatsManager";
 import {
   createSessionsManager,
-  isSessionHost,
+  isConnectedUserHost,
   type BibleReadingSession,
   type SessionsManager,
   type SessionStartPosition,
@@ -238,6 +258,13 @@ import {
 } from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
 import { type AppConfig } from "../app/appConfig";
+import { LAYOUT_ATTRIBUTE, layoutAttribute } from "../app/layoutAttribute";
+import {
+  isMobileViewport,
+  MOBILE_BREAKPOINT,
+  readViewport,
+  type ViewportMeasurement,
+} from "../app/viewport";
 import {
   createI18nManager,
   getBrandedAppText,
@@ -274,21 +301,17 @@ import {
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
 
-/**
- * App-wide mobile breakpoint, in pixels. Viewports at or below this width use
- * the mobile layout (drawer sidebar, mobile header, full-screen selector);
- * above it the docked desktop layout applies. This is the single source of
- * truth for the JS side — the matching `@media (max-width: 480px)` /
- * `(min-width: 481px)` rules in components/Tabs/Tabs.css must be kept in sync by hand.
- */
-export const MOBILE_BREAKPOINT = 480;
+export { MOBILE_BREAKPOINT };
+
+/** Widest viewport (CSS px) the playlist editor uses its phone layout on. */
+export const PLAYLIST_EDITOR_COMPACT_BREAKPOINT = 768;
 
 /**
  * Upper bound of the "compact desktop" band. For viewports above
  * {@link MOBILE_BREAKPOINT} but at or below this width the screen is too narrow
  * to dock a 320px sidebar beside the reader, so an *expanded* sidebar floats
  * over the reader instead of splitting the layout row. Kept in sync with the
- * matching `@media (min-width: 481px) and (max-width: 768px)` rules in
+ * matching `@media (max-width: 768px)` desktop-layout rule in
  * components/Tabs/Tabs.css by hand.
  */
 export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
@@ -304,6 +327,11 @@ const APP_META_DESCRIPTION =
 /** Pane id for the "/{lang}/about" page's fullscreen pane (see `isAboutPage`). */
 export const ABOUT_PANE_ID = "about-page-pane";
 export const SHARED_PAGE_MODAL_ID = "shared-page";
+/** The fullscreen pane a shared playlist link opens on. */
+export const PLAYLIST_PAGE_PANE_ID = "playlist-page-pane";
+
+/** The fullscreen page a playlist ends on. */
+export const PLAYLIST_FINISHED_PANE_ID = "playlist-finished-pane";
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -379,7 +407,11 @@ export interface AppState {
    */
   hydrateFromStorage: () => void;
 
-  /** True when viewport width is at or below the mobile breakpoint (480px). */
+  /**
+   * Whether the app uses its mobile layout: the window is at or below the
+   * mobile breakpoint (480px), or the device is a phone, held either way (see
+   * `isMobileViewport` in `app/viewport.ts`).
+   */
   isMobile: ReadonlySignal<boolean>;
   /**
    * Compact partner-site embed (`?embed=minimal` or `?embed=true`). The
@@ -392,12 +424,23 @@ export interface AppState {
    * header, and floating chapter nav — not pane placement or the sidebar.
    */
   isCompactReader: ReadonlySignal<boolean>;
-  /** True when on a phone-sized viewport held in landscape orientation. */
+  /**
+   * Whether the playlist editor uses its phone layout (its list of steps in
+   * the reader's place, no side pane): wherever the reader is compact, and
+   * on screens up to {@link PLAYLIST_EDITOR_COMPACT_BREAKPOINT} wide, too
+   * narrow for the side pane beside a step.
+   */
+  isCompactPlaylistEditor: ReadonlySignal<boolean>;
+  /**
+   * True for a short, wide window: up to 600px tall and wider than it is
+   * tall. That's a phone held sideways, but also a short desktop window, so
+   * for a sideways phone specifically check `isMobile` too.
+   */
   isMobileLandscape: ReadonlySignal<boolean>;
   /**
    * True in the "compact desktop" band (just above the mobile breakpoint) where
    * an expanded sidebar floats over the reader as an overlay rather than
-   * docking beside it.
+   * docking beside it. Desktop layout only: never true alongside `isMobile`.
    */
   isCompactDesktop: ReadonlySignal<boolean>;
 
@@ -609,6 +652,8 @@ export interface SeedBibleState {
   readingPlans: ReadingPlansManager;
   /** Discover manager for contextual content providers. */
   discover: DiscoverManager;
+  /** Customization content libraries: the editor's open library, and Discover for the active one. */
+  customContent: CustomContentManager;
   /** The Today screen: its open state and the data its cards read. */
   today: TodayManager;
   /**
@@ -646,6 +691,8 @@ export interface SeedBibleState {
   app: AppState;
   /** Extension loading and runtime manager. */
   extensions: ExtensionManager;
+  /** Which extensions are verified, and verifying them for admins. */
+  extensionReviews: ExtensionReviewsManager;
   /** Per-viewer values for extensions' declared settings, resolved against the active Customization's defaults. */
   extensionSettings: ExtensionSettingsManager;
 
@@ -774,6 +821,7 @@ import {
   DiscoverPane,
   DISCOVER_PANE_ID,
 } from "../components/Discover/DiscoverPane";
+import { PlaylistDraftChoice } from "../components/PlaylistEditor/PlaylistDraftChoice";
 import {
   AIBibleVerseRefSchema,
   convertToPlaylistItem,
@@ -855,6 +903,14 @@ export interface CreateSeedBibleStateOptions {
 
   /** Same as `initialPlaylistPageSeed`, for an `?addFriend=` link's profile. */
   initialFriendLinkSeed?: FriendLinkSeed;
+
+  /**
+   * Start from the real window instead of `config.renderedAsMobile`. Only for
+   * a page with no server markup on screen for the first render to match
+   * (see `hasServerRenderedContent` in `app/hydrationGate.ts`): the native
+   * apps, and a page whose server render was empty or failed.
+   */
+  measureViewport?: boolean;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -1007,6 +1063,21 @@ export function createSeedBibleState(
   const chats = createChatsManager(login, i18n, selectedTabTranslationBooks);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
+  const contentImportUrl = import.meta.env.VITE_CONTENT_IMPORT_URL;
+  const customContent = createCustomContentManager({
+    os,
+    login,
+    customizations,
+    discover,
+    modals,
+    chats,
+    // Set at build time; without it bulk import is off and publishing
+    // happens in the browser.
+    importService:
+      typeof contentImportUrl === "string" && contentImportUrl
+        ? createContentImportClient(contentImportUrl)
+        : null,
+  });
   const readingExtensions = createBibleReadingExtensionManager();
   const tabs = createTabs(
     navigation,
@@ -1032,23 +1103,53 @@ export function createSeedBibleState(
     saves,
     navigation,
     login,
-    i18n
+    i18n,
+    modals
   );
   const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
 
   const renderedAsMobile = options.config?.renderedAsMobile ?? false;
 
-  // Seeded from the SAME `renderedAsMobile` guess the server made — never
-  // `window.innerWidth`/`.innerHeight` here — so the client's first
-  // render/hydrate pass produces the identical viewport-derived layout the
-  // server rendered, regardless of the device's actual screen size.
-  // `applyViewport` (below, exposed on `AppState`) corrects this to the real
-  // dimensions once, from a post-mount effect in `MainBody` — see
-  // `app/main.tsx`.
-  const viewportWidth = signal(renderedAsMobile ? MOBILE_BREAKPOINT : 1000);
-  const viewportHeight = signal(renderedAsMobile ? 800 : 1000);
-  const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
+  // Seeded from the SAME `renderedAsMobile` guess the server made — never the
+  // real window here — so the client's first render/hydrate pass produces the
+  // identical viewport-derived layout the server rendered, regardless of the
+  // device's actual screen size. `applyViewport` (below, exposed on
+  // `AppState`) corrects this to the real window once, from a post-mount
+  // effect in `MainBody` — see `app/main.tsx`. With no server markup to match
+  // (`measureViewport`), the real window is used from the start instead.
+  const initialViewport: ViewportMeasurement =
+    options.measureViewport && typeof window !== "undefined"
+      ? readViewport()
+      : {
+          width: renderedAsMobile ? MOBILE_BREAKPOINT : 1000,
+          height: renderedAsMobile ? 800 : 1000,
+          // Unknown until measured; the width alone carries the guess.
+          coarsePointer: false,
+          screenShortSide: 0,
+        };
+  const viewportWidth = signal(initialViewport.width);
+  const viewportHeight = signal(initialViewport.height);
+  const coarsePointer = signal(initialViewport.coarsePointer);
+  const screenShortSide = signal(initialViewport.screenShortSide);
+  const isMobile = computed(() =>
+    isMobileViewport({
+      width: viewportWidth.value,
+      coarsePointer: coarsePointer.value,
+      screenShortSide: screenShortSide.value,
+    })
+  );
+  // Hydration never touches `<html>`, so this is what keeps the stylesheet's
+  // layout in step once the real viewport is measured.
+  const disposeLayoutAttribute = effect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+    document.documentElement.setAttribute(
+      LAYOUT_ATTRIBUTE,
+      layoutAttribute(isMobile.value)
+    );
+  });
 
   const annotationRecordKey =
     navigation.currentUrl.value.searchParams.get("annotationRecordKey") ??
@@ -1076,16 +1177,24 @@ export function createSeedBibleState(
     login,
     highlights,
     i18n,
+    discover,
     readingExtensions,
-    () => annotations
+    () => annotations,
+    settings
   );
+  const extensionReviews = createExtensionReviewsManager(os, login);
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
     requestSandboxConsent: (request) =>
-      openExtensionConsentModal(modals, request, {
-        userId: login.userId,
-        friends,
-      }),
+      openExtensionConsentModal(
+        modals,
+        request,
+        {
+          userId: login.userId,
+          friends,
+        },
+        extensionReviews
+      ),
     records: os,
     fileRecords: os,
   });
@@ -1110,7 +1219,7 @@ export function createSeedBibleState(
     if (targetIds === null && !hasEnteredCustomizationExtensionMode) {
       return;
     }
-    const key = targetIds === null ? " default" : [...targetIds].sort().join("");
+    const key = targetIds === null ? "default" : [...targetIds].sort().join("");
     if (key === previousExtensionTargetKey) {
       return;
     }
@@ -1470,6 +1579,11 @@ export function createSeedBibleState(
   const isCompactReader = computed(
     () => isMobile.value || isMinimalEmbed.value
   );
+  const isCompactPlaylistEditor = computed(
+    () =>
+      isCompactReader.value ||
+      viewportWidth.value <= PLAYLIST_EDITOR_COMPACT_BREAKPOINT
+  );
 
   // Created after `isMobile` so panes can enforce a single fullscreen pane:
   // on mobile every pane is displayed fullscreen, so opening one closes the
@@ -1486,8 +1600,23 @@ export function createSeedBibleState(
     readingExtensions,
     discover,
     chats,
+    audioPlayback,
     options.initialPlaylistPageSeed,
-    { friendReads }
+    {
+      friendReads,
+      pickChapter: (onPick, bookId) => {
+        const slot = tabsLayout.slots
+          .peek()
+          .find(
+            (candidate) => candidate.id === tabsLayout.selectedSlotId.peek()
+          );
+        if (!slot) {
+          return;
+        }
+        selector.selectingTranslation.value = false;
+        void selector.setOpen(true, slot, { onChapterPick: onPick, bookId });
+      },
+    }
   );
   // True only while `hydrateFromStorage` below is applying the saved tab state.
   // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits
@@ -1538,6 +1667,16 @@ export function createSeedBibleState(
     // baseline above is updated first in both cases, so the restored position
     // becomes the position everything after it is compared against.
     if (restoringStoredState || tabs.isRestoringProfileTranslation()) {
+      return;
+    }
+    // A phone starts a playlist on its list of steps, which fills the screen,
+    // while the reader moves to the first step behind it. Only the playlist
+    // can move the reader then: opening a step puts the list away first.
+    if (
+      isMobile.peek() &&
+      playlists.view.peek() === "play_playlist" &&
+      playlists.playing.peek()
+    ) {
       return;
     }
     panes.closeFullscreenPanes();
@@ -1672,18 +1811,24 @@ export function createSeedBibleState(
   );
 
   /**
-   * Re-reads the real `window.innerWidth`/`.innerHeight` and applies them.
-   * Shared by the resize listener below and a one-time post-mount correction
-   * (`MainBody` in `app/main.tsx`) — one place reads `window.inner*` into
-   * these signals. No-op on the server.
+   * Re-reads the real window and applies it. Shared by the listeners below
+   * and a one-time post-mount correction (`MainBody` in `app/main.tsx`) — one
+   * place reads the window into these signals. No-op on the server.
    */
   const applyViewport = () => {
     if (typeof window === "undefined") {
       return;
     }
+    const viewport = readViewport();
+    // All at once: a phone turned sideways is only still a phone once its
+    // pointer and screen are read along with the new width. In between it
+    // would read as desktop, long enough for the effects below to close the
+    // tabs drawer and collapse the sidebar.
     batch(() => {
-      viewportWidth.value = window.innerWidth;
-      viewportHeight.value = window.innerHeight;
+      viewportWidth.value = viewport.width;
+      viewportHeight.value = viewport.height;
+      coarsePointer.value = viewport.coarsePointer;
+      screenShortSide.value = viewport.screenShortSide;
     });
   };
 
@@ -1692,8 +1837,16 @@ export function createSeedBibleState(
       return;
     }
     window.addEventListener("resize", applyViewport);
+    // The main pointer can change without a resize, e.g. a tablet docked to
+    // a keyboard.
+    const pointerQuery =
+      typeof window.matchMedia === "function"
+        ? window.matchMedia("(pointer: coarse)")
+        : null;
+    pointerQuery?.addEventListener("change", applyViewport);
     return () => {
       window.removeEventListener("resize", applyViewport);
+      pointerQuery?.removeEventListener("change", applyViewport);
     };
   });
 
@@ -1720,9 +1873,11 @@ export function createSeedBibleState(
   // expanded sidebar would overlay the reader rather than dock beside it
   // (see components/Tabs/Tabs.css), so start collapsed to a rail when entering the band.
   // Same once-per-transition pattern as the landscape collapse above, so the
-  // user can still expand the floating sidebar afterwards.
+  // user can still expand the floating sidebar afterwards. A phone turned
+  // sideways is often this wide, but it has the mobile layout, not this one.
   const isCompactDesktop = computed(
     () =>
+      !isMobile.value &&
       viewportWidth.value > MOBILE_BREAKPOINT &&
       viewportWidth.value <= SIDEBAR_OVERLAY_MAX_WIDTH
   );
@@ -2944,8 +3099,10 @@ export function createSeedBibleState(
         locallyHostedSessionIds.has(session.id) ||
         (hostUserId !== null &&
           (hostUserId === localId || hostUserId === localConnectionId)) ||
-        isSessionHost(options, localId) ||
-        isSessionHost(options, localConnectionId);
+        isConnectedUserHost(options, {
+          userId: localId,
+          connectionId: localConnectionId,
+        });
 
       // Only end the session for everyone when the leaving client is the
       // LAST connected host/co-host. If another host/co-host is still
@@ -2953,10 +3110,7 @@ export function createSeedBibleState(
       // of ending it. Explicit "End session" writes `endedAt` directly, so
       // it bypasses this heuristic.
       const anotherHostStillConnected = session.connectedUsers.value.some(
-        (user) =>
-          !user.isSelf &&
-          (isSessionHost(options, user.userId) ||
-            isSessionHost(options, user.connectionId))
+        (user) => !user.isSelf && isConnectedUserHost(options, user)
       );
 
       if (isHost && !anotherHostStillConnected && options.endedAt === null) {
@@ -3080,18 +3234,13 @@ export function createSeedBibleState(
     return false;
   };
   const sessionHostIsConnected = (session: BibleReadingSession): boolean =>
-    session.connectedUsers.value.some(
-      (user) =>
-        isSessionHost(session.options.value, user.userId) ||
-        isSessionHost(session.options.value, user.connectionId)
+    session.connectedUsers.value.some((user) =>
+      isConnectedUserHost(session.options.value, user)
     );
   const sessionWeAreHost = (session: BibleReadingSession): boolean =>
     locallyHostedSessionIds.has(session.id) ||
     session.connectedUsers.value.some(
-      (user) =>
-        user.isSelf &&
-        (isSessionHost(session.options.value, user.userId) ||
-          isSessionHost(session.options.value, user.connectionId))
+      (user) => user.isSelf && isConnectedUserHost(session.options.value, user)
     );
   // Whether this client's view of who's present is worth acting on. We are
   // definitionally present in our own session, so a list that doesn't even
@@ -3322,8 +3471,10 @@ export function createSeedBibleState(
 
   const handleCreateSharedSession = async () => {
     closeSidebarAndSettings();
-    // Start the session where the user is reading, not at the default book.
+    // Start the session where the user is reading, not at the default book,
+    // and carry on with the playlist they're playing, from the same step.
     const activeReadingState = selectedTab.value?.readingState ?? null;
+    const carriedPlayback = playlists.playbackToCarry();
     const session = await sessions.createSession(
       activeReadingState
         ? getSessionStartPosition(activeReadingState)
@@ -3340,6 +3491,9 @@ export function createSeedBibleState(
     void invitations.publishSession(session);
     const tab = tabs.addTab(session);
     tabsLayout.setSelectedSlotTab(tab.id);
+    if (carriedPlayback) {
+      playlists.carryPlaybackToActiveTab(carriedPlayback);
+    }
     return session;
   };
 
@@ -3800,6 +3954,7 @@ export function createSeedBibleState(
       login,
       gallery,
       toast,
+      app: state.app,
     });
     showReadingPlanDetailView();
   });
@@ -3888,11 +4043,13 @@ export function createSeedBibleState(
     navigation,
     i18n,
     discover,
+    customContent,
     today,
     notifications,
     pushNotifications,
     readingExtensions,
     extensions,
+    extensionReviews,
     extensionSettings,
     readingPlans,
     playlists,
@@ -3941,6 +4098,7 @@ export function createSeedBibleState(
       }
       i18n.dispose();
       disposeReadingTicker();
+      disposeLayoutAttribute();
     },
     app: {
       createSharedSession: handleCreateSharedSession,
@@ -3957,6 +4115,7 @@ export function createSeedBibleState(
       isMobile,
       isMinimalEmbed,
       isCompactReader,
+      isCompactPlaylistEditor,
       isMobileLandscape,
       isCompactDesktop,
       currentReadingState,
@@ -3994,6 +4153,34 @@ export function createSeedBibleState(
   // which sub-view shows inside it; DiscoverPane routes discover/create/play
   // internally off the same signal.
 
+  // Going to edit a playlist with unsaved edits kept from before asks first
+  // whether to carry on from them (see `playlists.editorDraftChoice`).
+  const PLAYLIST_DRAFT_CHOICE_MODAL_ID = "playlist-draft-choice";
+  effect(() => {
+    const choice = playlists.editorDraftChoice.value;
+    if (!choice) {
+      modals.closeModal(PLAYLIST_DRAFT_CHOICE_MODAL_ID);
+      return;
+    }
+    untracked(() =>
+      modals.openModal({
+        id: PLAYLIST_DRAFT_CHOICE_MODAL_ID,
+        title: {
+          key: "playlist-editor-draft-found",
+          defaultValue: "Continue your draft?",
+        },
+        content: () => (
+          <PlaylistDraftChoice
+            editedAtMs={choice.editedAtMs}
+            onContinue={playlists.continueEditorDraft}
+            onDiscard={playlists.discardEditorDraft}
+          />
+        ),
+        onDismiss: playlists.dismissEditorDraftChoice,
+      })
+    );
+  });
+
   // view -> pane: open (or refresh, by reusing the id) while a view is set,
   // close when it clears. The pane commands read pane state via peek()
   // internally (see PanesManager), so this effect does NOT subscribe to
@@ -4001,12 +4188,18 @@ export function createSeedBibleState(
   // this effect and re-open the pane mid-update, which would trip preact's
   // "Cycle detected". The pane -> view effect below clears `view` on close.
   effect(() => {
-    if (playlists.view.value) {
+    const view = playlists.view.value;
+    if (
+      view &&
+      !(view === "create_playlist" && isCompactPlaylistEditor.value)
+    ) {
+      const editingPlaylist = view === "create_playlist";
       panes.openPane({
         id: DISCOVER_PANE_ID,
         placement: "side",
         // Never shown: each Discover view renders its own header.
         title: "Discover",
+        shellClassName: editingPlaylist ? "sb-pe-pane-shell" : undefined,
         onClose: (reason) => {
           if (reason !== "user") {
             return;
@@ -4028,6 +4221,13 @@ export function createSeedBibleState(
         ),
         showHeader: false,
       });
+    } else if (view === "create_playlist") {
+      // On a phone (or a narrow tablet) the editor takes over the reader, with
+      // its steps in its place, rather than filling the screen as a pane — so every pane is
+      // closed, or one already on screen (Today, say) would cover the editor.
+      for (const pane of panes.panes.peek()) {
+        panes.closePane(pane.id, "displaced");
+      }
     } else {
       panes.closePane(DISCOVER_PANE_ID); // no-op when already closed
     }
@@ -4041,7 +4241,11 @@ export function createSeedBibleState(
     const paneOpen = panes.panes.value.some(
       (pane) => pane.id === DISCOVER_PANE_ID
     );
-    if (!paneOpen && playlists.view.peek()) {
+    const view = playlists.view.peek();
+    // On a phone (or a narrow tablet) the editor runs without the pane.
+    const editingOnPhone =
+      view === "create_playlist" && isCompactPlaylistEditor.peek();
+    if (!paneOpen && view && !editingOnPhone) {
       playlists.view.value = null;
     }
   });
@@ -4087,8 +4291,8 @@ export function createSeedBibleState(
         placement: "fullscreen",
         title: renderTodayPaneTitle,
         component: renderTodayPane,
-        // Today's own close button (TodayCloseButton) stands in for the
-        // header's.
+        // Today's own close button (in its Header) stands in for the
+        // pane header's.
         showHeader: false,
       });
     } else {
@@ -4188,6 +4392,7 @@ export function createSeedBibleState(
       login,
       gallery,
       toast,
+      app: state.app,
       onBack: () => {
         panes.closePane(READING_PLANS_PANE_ID);
         reopen();
@@ -4289,19 +4494,23 @@ export function createSeedBibleState(
     closeProfile();
     openTodayPassage(state, today, target);
   };
-  const playPlaylistFromContent = (playlist: Playlist) => {
-    closeYourContent();
-    closeProfile();
-    playlists.startPlaying(playlist, 0);
-  };
-  const editPlaylistFromContent = (playlist: Playlist) => {
-    closeYourContent();
-    closeProfile();
-    // `editPlaylist` only sets the Discover pane's view, and that pane docks
-    // beside the reader — so the fullscreen screens above it have to close
-    // first, or the editor opens behind them.
-    playlists.editPlaylist(playlist, { onBack: openYourContent });
-  };
+  // One history entry for closing these screens and opening the playlist, so
+  // Back returns straight to them.
+  const playPlaylistFromContent = (playlist: Playlist) =>
+    navigation.batchWrites(() => {
+      closeYourContent();
+      closeProfile();
+      playlists.openPlaylistPage(playlist);
+    });
+  const editPlaylistFromContent = (playlist: Playlist) =>
+    navigation.batchWrites(() => {
+      closeYourContent();
+      closeProfile();
+      // `editPlaylist` only sets the Discover pane's view, and that pane docks
+      // beside the reader — so the fullscreen screens above it have to close
+      // first, or the editor opens behind them.
+      playlists.editPlaylist(playlist, { onBack: openYourContent });
+    });
   const editAnnotationFromContent = (annotation: Annotation) => {
     closeYourContent();
     closeProfile();
@@ -4347,9 +4556,9 @@ export function createSeedBibleState(
       buildCustomizationTutorialSteps(state, created.defaultVariantId)
     );
   };
-  // Both land in the plans pane, opened the way the Profile card opens it,
-  // and then drill straight into the plan so the user doesn't have
-  // to find it in the list a second time.
+  // All three land in the plans pane, opened the way the Profile card opens
+  // it, and then go straight to what the user picked (a plan, or the editor
+  // on a new one) so they don't have to find it in the list.
   const openReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
     if (!openReadingPlansFromScreen(openYourContent)) {
       return;
@@ -4372,6 +4581,12 @@ export function createSeedBibleState(
     }
     void openReadingPlanEditor(readingPlans, plan, { fromAnotherScreen: true });
   };
+  const createReadingPlanFromContent = () => {
+    if (!openReadingPlansFromScreen(openYourContent)) {
+      return;
+    }
+    openPlanCreate(readingPlans, { fromAnotherScreen: true });
+  };
   const renderYourContentPane = () => (
     <YourContentPane
       state={state}
@@ -4382,6 +4597,7 @@ export function createSeedBibleState(
       onCreatePlaylist={createPlaylistFromContent}
       onOpenReadingPlan={openReadingPlanFromContent}
       onEditReadingPlan={editReadingPlanFromContent}
+      onCreateReadingPlan={createReadingPlanFromContent}
       onEditCustomization={editCustomizationFromContent}
       onCreateCustomization={() => void createCustomizationFromContent()}
     />
@@ -4573,7 +4789,95 @@ export function createSeedBibleState(
     }
   }
 
-  // A shared playlist or reading plan link opens on a modal describing it.
+  const renderPlaylistPagePane = () => {
+    const page = playlists.playlistPage.value;
+    if (!page) {
+      return null;
+    }
+    const books =
+      selectedTab.value?.readingState.translationBooks.value?.books ?? [];
+    const playlist = page.item;
+    // Back where it was opened from in the app (My content, say), whose
+    // address it replaced; else closing it leaves for the reader.
+    const leave = () => {
+      if (!playlists.backFromPlaylistPage()) {
+        panes.closePane(PLAYLIST_PAGE_PANE_ID, "user");
+      }
+    };
+    const isOwner =
+      !!login.userId.value && playlist.authorUserId === login.userId.value;
+    return (
+      <PlaylistPagePane
+        playlist={playlist}
+        authorName={page.authorName}
+        resolveBookName={(bookId) => {
+          const book = books.find((b) => b.id === bookId);
+          return book?.name ?? book?.commonName ?? bookId;
+        }}
+        onStart={startSharedPage}
+        onBack={leave}
+        onShare={() => sharePlaylist(playlist)}
+        {...(isOwner
+          ? {
+              // As Start Reading does, so Back from the editor returns here.
+              onEdit: () => {
+                tabs.leaveStaticPage({ push: true });
+                playlists.editPlaylist(playlist);
+              },
+              onDelete: () =>
+                openDeletePlaylistConfirm(
+                  modals,
+                  playlists,
+                  playlist,
+                  state.app.toast,
+                  leave
+                ),
+            }
+          : {})}
+      />
+    );
+  };
+
+  const sharePlaylist = (playlist: FinishedPlaylist) =>
+    openPlaylistShareModal({ playlist, playlists, modals, app: state.app });
+
+  const renderPlaylistFinishedPane = () => {
+    const playlist = playlists.finishedPlaylist.value;
+    if (!playlist) {
+      return null;
+    }
+    return (
+      <PlaylistFinishedPane
+        playlist={playlist}
+        authorName={playlists.playingAuthorName.value}
+        onDone={() => playlists.closeFinishedPlaylist()}
+        onShare={() => sharePlaylist(playlist)}
+      />
+    );
+  };
+
+  // A finished playlist ends on its own fullscreen page. Done (or its back
+  // button) leaves the playlist; anything else taking the page away, such as
+  // another pane on a phone, only puts it away.
+  effect(() => {
+    if (playlists.finishedPlaylist.value) {
+      panes.openPane({
+        id: PLAYLIST_FINISHED_PANE_ID,
+        placement: "fullscreen",
+        title: i18n.t("playlist-finished", {
+          defaultValue: "Playlist finished",
+        }),
+        showHeader: false,
+        component: renderPlaylistFinishedPane,
+        onClose: () => playlists.dismissFinishedPlaylist(),
+      });
+    } else {
+      panes.closePane(PLAYLIST_FINISHED_PANE_ID);
+    }
+  });
+
+  // A shared playlist link opens on a fullscreen page describing it, and a
+  // reading plan link on a modal.
   // Start begins it; closing it any other way (Close, the header's X, the
   // backdrop) leaves for the home screen. A link to one that doesn't exist
   // opens a "not found" modal in the same place, and one that failed to load
@@ -4653,107 +4957,109 @@ export function createSeedBibleState(
       ) {
         modals.closeModal(SHARED_PAGE_MODAL_ID);
       }
+      panes.closePane(PLAYLIST_PAGE_PANE_ID); // no-op when already closed
       return;
     }
     const { t } = i18n;
     const playlistPage = playlists.playlistPage.value;
+    // A playlist opens on its own fullscreen page rather than the modal.
+    if (playlistPage) {
+      if (
+        modals.modals.peek().some((modal) => modal.id === SHARED_PAGE_MODAL_ID)
+      ) {
+        modals.closeModal(SHARED_PAGE_MODAL_ID);
+      }
+      panes.openPane({
+        id: PLAYLIST_PAGE_PANE_ID,
+        placement: "fullscreen",
+        title: name,
+        showHeader: false,
+        component: renderPlaylistPagePane,
+      });
+      return;
+    }
     const planPage = readingPlans.readingPlanPage.value;
     let lengthLabel: string;
     let status: string | null = null;
     let actions: SharedPageModalAction[];
-    if (playlistPage) {
-      lengthLabel = t("playlist-page-item-count", {
-        count: playlistPage.item.items.length,
-        defaultValue: "{{count}} items",
+    const plan = planPage?.item;
+    const sessionCount = t("reading-plan-session-count-sessions", {
+      count: plan?.sessions.length ?? 0,
+      defaultValue: "{{count}} sessions",
+    });
+    // Estimated at the loaded translation's own chapter lengths when its
+    // catalog is there, else at a typical chapter length.
+    const books =
+      selectedTab.value?.readingState.translationBooks.value?.books ?? [];
+    const minutes = plan
+      ? averageSessionMinutes(plan, (bookId) =>
+          books.find((book) => book.id === bookId)
+        )
+      : null;
+    lengthLabel =
+      minutes != null
+        ? `${sessionCount} · ${t("reading-plan-page-minutes-per-session", {
+            count: minutes,
+            defaultValue: "About {{count}} min per session",
+          })}`
+        : sessionCount;
+
+    const startFresh = {
+      label: t("reading-plan-page-start", {
+        defaultValue: "Start Reading Plan",
+      }),
+      primary: true,
+      disabled: minutes == null,
+      onClick: startSharedPage,
+    };
+    const place = readingPlans.readingPlanPageProgress.value;
+    if (!place) {
+      actions = [startFresh];
+    } else if (place.resumeAt == null) {
+      status = t("reading-plan-page-finished", {
+        defaultValue: "You've finished this plan.",
       });
       actions = [
         {
-          label: t("playlist-page-start", { defaultValue: "Start Playlist" }),
-          primary: true,
-          disabled: playlistPage.item.items.length === 0,
-          onClick: startSharedPage,
+          ...startFresh,
+          label: t("reading-plan-page-start-over", {
+            defaultValue: "Start from beginning",
+          }),
         },
       ];
     } else {
-      const plan = planPage?.item;
-      const sessionCount = t("reading-plan-session-count-sessions", {
-        count: plan?.sessions.length ?? 0,
-        defaultValue: "{{count}} sessions",
-      });
-      // Estimated at the loaded translation's own chapter lengths when its
-      // catalog is there, else at a typical chapter length.
-      const books =
-        selectedTab.value?.readingState.translationBooks.value?.books ?? [];
-      const minutes = plan
-        ? averageSessionMinutes(plan, (bookId) =>
-            books.find((book) => book.id === bookId)
-          )
-        : null;
-      lengthLabel =
-        minutes != null
-          ? `${sessionCount} · ${t("reading-plan-page-minutes-per-session", {
-              count: minutes,
-              defaultValue: "About {{count}} min per session",
-            })}`
-          : sessionCount;
-
-      const startFresh = {
-        label: t("reading-plan-page-start", {
-          defaultValue: "Start Reading Plan",
-        }),
-        primary: true,
-        disabled: minutes == null,
-        onClick: startSharedPage,
-      };
-      const place = readingPlans.readingPlanPageProgress.value;
-      if (!place) {
-        actions = [startFresh];
-      } else if (place.resumeAt == null) {
-        status = t("reading-plan-page-finished", {
-          defaultValue: "You've finished this plan.",
-        });
-        actions = [
-          {
-            ...startFresh,
-            label: t("reading-plan-page-start-over", {
-              defaultValue: "Start from beginning",
-            }),
-          },
-        ];
-      } else {
-        const isDay = place.unit === "day";
-        status = isDay
-          ? t("reading-plan-page-on-day", {
-              day: place.resumeAt,
-              defaultValue: "You're on day {{day}}",
-            })
-          : t("reading-plan-page-on-session", {
-              session: place.resumeAt,
-              defaultValue: "You're on session {{session}}",
-            });
-        actions = [
-          {
-            ...startFresh,
-            primary: false,
-            label: t("reading-plan-page-start-over", {
-              defaultValue: "Start from beginning",
-            }),
-          },
-          {
-            label: isDay
-              ? t("reading-plan-page-resume-day", {
-                  day: place.resumeAt,
-                  defaultValue: "Resume day {{day}}",
-                })
-              : t("reading-plan-page-resume-session", {
-                  session: place.resumeAt,
-                  defaultValue: "Resume session {{session}}",
-                }),
-            primary: true,
-            onClick: resumeSharedPage,
-          },
-        ];
-      }
+      const isDay = place.unit === "day";
+      status = isDay
+        ? t("reading-plan-page-on-day", {
+            day: place.resumeAt,
+            defaultValue: "You're on day {{day}}",
+          })
+        : t("reading-plan-page-on-session", {
+            session: place.resumeAt,
+            defaultValue: "You're on session {{session}}",
+          });
+      actions = [
+        {
+          ...startFresh,
+          primary: false,
+          label: t("reading-plan-page-start-over", {
+            defaultValue: "Start from beginning",
+          }),
+        },
+        {
+          label: isDay
+            ? t("reading-plan-page-resume-day", {
+                day: place.resumeAt,
+                defaultValue: "Resume day {{day}}",
+              })
+            : t("reading-plan-page-resume-session", {
+                session: place.resumeAt,
+                defaultValue: "Resume session {{session}}",
+              }),
+          primary: true,
+          onClick: resumeSharedPage,
+        },
+      ];
     }
     modals.openModal({
       id: SHARED_PAGE_MODAL_ID,
@@ -4779,7 +5085,9 @@ export function createSeedBibleState(
   const closedSharedPageForHome = signal(false);
 
   // Starting leaves the shared page (a playlist for its first step's path)
-  // before the modal closes, so this only sees a close that should go home.
+  // before its pane or modal closes, so this only sees a close that should go
+  // home: the page's back button, the modal's Close, or another fullscreen
+  // pane displacing the playlist page.
   // Going home is what a fresh visit to "/"
   // would do: the reader takes the address bar back, Today opens over it
   // when a visit to "/" would open it, and a visit that began on this page
@@ -4788,9 +5096,13 @@ export function createSeedBibleState(
     const modalOpen = modals.modals.value.some(
       (modal) => modal.id === SHARED_PAGE_MODAL_ID
     );
+    const pageOpen = panes.panes.value.some(
+      (pane) => pane.id === PLAYLIST_PAGE_PANE_ID
+    );
     const onSharedPage = !!sharedPage.peek() && sharedPageStep.peek() == null;
     if (
       modalOpen ||
+      pageOpen ||
       !(
         onSharedPage ||
         sharedPageNotFoundKind.peek() ||

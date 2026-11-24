@@ -50,6 +50,7 @@ import type {
   SandboxReference,
   SandboxState,
 } from "../extensions/protocol";
+import { Button } from "../components/Button/Button";
 
 /**
  * An id for a person that's stable per extension but reveals neither: the
@@ -510,13 +511,15 @@ function SandboxMessage({
     <div className="sb-confirm-delete">
       <p className="sb-confirm-delete-message">{message}</p>
       <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="lg"
+          shape="pill"
           className="sb-extension-consent-allow"
           onClick={onClose}
         >
           {t("extension-modal-ok")}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -869,10 +872,21 @@ export function createSandboxServices(
         params as Params<"saves.add">;
       // Checked first: `addSave` would otherwise prompt the user to sign in.
       requireSignedIn();
-      await context.saves.addSave(translationId, bookId, chapter, {
-        verse,
-        categories,
-      });
+      const saved = await context.saves.addSave(
+        translationId,
+        bookId,
+        chapter,
+        {
+          verse,
+          categories,
+        }
+      );
+      if (!saved) {
+        throw new SandboxBrokerError(
+          "unavailable",
+          "Couldn't save: the user's saves couldn't be loaded."
+        );
+      }
       return null;
     },
 

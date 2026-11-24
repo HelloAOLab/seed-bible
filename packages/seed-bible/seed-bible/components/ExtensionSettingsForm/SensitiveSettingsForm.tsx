@@ -14,6 +14,10 @@ import type {
   UnusedSensitiveProxy,
 } from "../../managers/ExtensionSensitiveSettings";
 import type { I18nHook } from "../../i18n/I18nManager";
+import { Button } from "../Button/Button";
+import "../Field/Field.css";
+import { TextInput } from "../TextField/TextField";
+import { Select } from "../Select/Select";
 
 /**
  * Whose values the form edits: the viewer's own, or those of the
@@ -87,7 +91,7 @@ function SensitiveProxyGroup(props: {
 
   return (
     <fieldset className="sb-extension-sensitive-group" disabled={busy.value}>
-      <legend className="sb-settings-field-label">
+      <legend className="sb-field-label">
         {t(`sensitive-${proxyId}-title`, {
           ns: extensionId,
           defaultValue: proxy.host,
@@ -114,7 +118,7 @@ function SensitiveProxyGroup(props: {
       </p>
       <div className="sb-settings-field-row">
         <div className="sb-settings-field-title-row">
-          <label className="sb-settings-field-label" htmlFor={hostFieldId}>
+          <label className="sb-field-label" htmlFor={hostFieldId}>
             {t("sensitive-settings-host", { defaultValue: "Host" })}
           </label>
         </div>
@@ -126,16 +130,14 @@ function SensitiveProxyGroup(props: {
             })}
           </p>
         )}
-        <input
+        <TextInput
           id={hostFieldId}
-          className="sb-settings-text-input"
-          type="text"
           autoComplete="off"
           spellcheck={false}
-          aria-invalid={!hostValid}
+          invalid={!hostValid}
           value={hostDraft.value ?? destination.host}
-          onInput={(event: Event) => {
-            hostDraft.value = (event.currentTarget as HTMLInputElement).value;
+          onValueInput={(next) => {
+            hostDraft.value = next;
           }}
         />
         {!hostValid && (
@@ -149,21 +151,16 @@ function SensitiveProxyGroup(props: {
       </div>
       <div className="sb-settings-field-row">
         <div className="sb-settings-field-title-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor={visibilityFieldId}
-          >
+          <label className="sb-field-label" htmlFor={visibilityFieldId}>
             {t("sensitive-settings-visibility", {
               defaultValue: "Who can use it",
             })}
           </label>
         </div>
-        <select
+        <Select
           id={visibilityFieldId}
-          className="sb-settings-language-select"
           value={visibility}
-          onChange={(event: Event) => {
-            const next = (event.currentTarget as HTMLSelectElement).value;
+          onValueChange={(next) => {
             if (next === "private" || next === "public") {
               visibilityDraft.value = next;
             }
@@ -183,7 +180,7 @@ function SensitiveProxyGroup(props: {
                   defaultValue: "Anyone with the proxy's address",
                 })}
           </option>
-        </select>
+        </Select>
       </div>
       {settingKeys.map((key) => {
         const fieldId = `sb-extension-setting-${extensionId}-${key}`;
@@ -194,7 +191,7 @@ function SensitiveProxyGroup(props: {
         return (
           <div className="sb-settings-field-row" key={key}>
             <div className="sb-settings-field-title-row">
-              <label className="sb-settings-field-label" htmlFor={fieldId}>
+              <label className="sb-field-label" htmlFor={fieldId}>
                 {t(`setting-${key}-title`, {
                   ns: extensionId,
                   defaultValue: key,
@@ -213,17 +210,13 @@ function SensitiveProxyGroup(props: {
                     })
                   : t("sensitive-setting-not-set", { defaultValue: "Not set" })}
             </p>
-            <input
+            <TextInput
               id={fieldId}
-              className="sb-settings-text-input"
               type="password"
               autoComplete="off"
               value={drafts.value[key] ?? ""}
-              onInput={(event: Event) => {
-                drafts.value = {
-                  ...drafts.value,
-                  [key]: (event.currentTarget as HTMLInputElement).value,
-                };
+              onValueInput={(next) => {
+                drafts.value = { ...drafts.value, [key]: next };
               }}
             />
           </div>
@@ -246,9 +239,8 @@ function SensitiveProxyGroup(props: {
         </p>
       )}
       <div className="sb-extension-sensitive-actions">
-        <button
-          type="button"
-          className="sb-settings-action-button"
+        <Button
+          variant="primary"
           disabled={!anyTyped || !hostValid}
           onClick={() =>
             void run(() => onSave(drafts.value, { host, visibility }))
@@ -257,15 +249,11 @@ function SensitiveProxyGroup(props: {
           {anySet
             ? t("sensitive-settings-replace", { defaultValue: "Replace" })
             : t("sensitive-settings-save", { defaultValue: "Save" })}
-        </button>
+        </Button>
         {hasStored && (
-          <button
-            type="button"
-            className="sb-settings-action-button"
-            onClick={() => void run(onClear)}
-          >
+          <Button tone="danger" onClick={() => void run(onClear)}>
             {t("sensitive-settings-clear", { defaultValue: "Clear" })}
-          </button>
+          </Button>
         )}
       </div>
       {failed.value && (
@@ -376,7 +364,7 @@ export function UnusedSensitiveSettingsList(props: {
 
   return (
     <section className="sb-extension-sensitive-group">
-      <h3 className="sb-settings-field-label">
+      <h3 className="sb-field-label">
         {t("sensitive-settings-unused-title", {
           defaultValue: "Saved secrets no extension is using",
         })}
@@ -398,10 +386,10 @@ export function UnusedSensitiveSettingsList(props: {
                 host,
               })}
             </span>
-            <button
-              type="button"
-              className="sb-settings-action-button"
-              disabled={clearing.value === id}
+            <Button
+              tone="danger"
+              size="sm"
+              loading={clearing.value === id}
               onClick={async () => {
                 clearing.value = id;
                 failed.value = null;
@@ -411,7 +399,7 @@ export function UnusedSensitiveSettingsList(props: {
               }}
             >
               {t("sensitive-settings-clear", { defaultValue: "Clear" })}
-            </button>
+            </Button>
             {failed.value === id && (
               <p className="sb-settings-save-error" role="alert">
                 {t("extension-settings-save-failed", {

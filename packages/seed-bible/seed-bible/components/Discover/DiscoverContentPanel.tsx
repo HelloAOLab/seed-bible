@@ -1,7 +1,8 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./DiscoverContentPanel.css";
 import type { ComponentChildren } from "preact";
-import { Signal, useSignal, useSignalEffect } from "@preact/signals";
-import { useCallback, useLayoutEffect, useRef } from "preact/hooks";
+import { useSignal, useSignalEffect } from "@preact/signals";
+import { useCallback, useMemo, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import { getDiscoverPanelContent } from "../../managers/BibleReadingManager";
@@ -28,13 +29,14 @@ import {
   ContextMenuWithButton,
   ContextMenuItem,
 } from "../ContextMenu/ContextMenu";
-import { useHorizontalScroll } from "../useHorizontalScroll";
 import { translateTitle } from "../../app/utils";
 import {
   findScrollContainer,
   readBottomChromeCover,
   readBottomChromeInset,
 } from "../BibleReader/readerViewport";
+import { Button } from "../Button/Button";
+import { FilterPills } from "../FilterPills/FilterPills";
 
 type FilterKey =
   | "all"
@@ -50,12 +52,6 @@ type FilterKey =
  * windows, even if that means its bottom edge dips under the toolbar.
  */
 const MIN_SIDE_PANEL_HEIGHT_PX = 192;
-
-/**
- * How long after an arrow click the next one steps on from that click's
- * destination. Longer than a browser's smooth scroll, which is about 300–500ms.
- */
-const PENDING_SCROLL_MS = 600;
 
 /**
  * Publishes `--sb-dcp-side-max-height` on the panel: the height of the part of
@@ -173,8 +169,11 @@ function DiscoverCreateMenu(props: { state: SeedBibleState }) {
   return (
     <ContextMenuWithButton
       buttonClassName="sb-dcp-create-btn"
-      aria-label={t("create-menu", { defaultValue: "Create" })}
-      icon={<>+ {t("create-playlist", { defaultValue: "Create" })}</>}
+      trigger={(menu) => (
+        <Button {...menu} variant="primary" size="sm" shape="pill" icon="add">
+          {t("create-playlist", { defaultValue: "Create" })}
+        </Button>
+      )}
     >
       <ContextMenuItem onClick={() => void annotations.createNewAnnotation()}>
         <MaterialIcon className="sb-context-menu-item-icon">
@@ -190,12 +189,6 @@ function DiscoverCreateMenu(props: { state: SeedBibleState }) {
       </ContextMenuItem>
     </ContextMenuWithButton>
   );
-}
-
-interface DiscoverFiltersProps {
-  filters: { key: FilterKey; label: string }[];
-  activeFilter: Signal<FilterKey>;
-  displayFilter: FilterKey;
 }
 
 type DiscoverPanelVariant = "full" | "compact";
@@ -218,238 +211,116 @@ interface FullDiscoverContentPanelProps extends BaseDiscoverContentPanelProps {
 type DiscoverContentPanelProps =
   | CompactDiscoverContentPanelProps
   | FullDiscoverContentPanelProps;
-/**
- * Renders the filters for discover content and provides horizontal
- * scrolling controls when the filters do not fit within the available width.
- *
- * On smaller/coarse-pointer devices, the filters can be scrolled normally.
- * The active filter is controlled through the provided signal.
- */
-function DiscoverFilters({
-  filters,
-  activeFilter,
-  displayFilter,
-}: DiscoverFiltersProps) {
+interface HiddenContentWarningProps {
+  handleAccept: () => void;
+  handleDismiss: () => void;
+}
+
+function ContentWarning(props: HiddenContentWarningProps) {
   const { t } = useI18n();
-  // The pills scroll horizontally with the vertical wheel, and fade at an
-  // edge only while pills are hidden past it (see `updateScrollState`).
-  const filtersRef = useRef<HTMLDivElement>(null);
-  useHorizontalScroll(filtersRef);
-  // Where the arrows' last smooth scroll is headed, and when it was asked for.
-  const pendingScrollRef = useRef<{ left: number; at: number } | null>(null);
-
-  const hasScrollableFilters = useSignal(false);
-  const canScrollStart = useSignal(false);
-  const canScrollEnd = useSignal(false);
-  const filtersKey = filters
-    .map((filter) => `${filter.key}:${filter.label}`)
-    .join("|");
-
-  // The arrows and the edge fades both follow this, so they never disagree
-  // about whether there's more to scroll.
-  const updateScrollState = useCallback((isRtl: boolean) => {
-    const container = filtersRef.current;
-    const wrapper = container?.parentElement;
-    const setScrollable = (start: boolean, end: boolean) => {
-      canScrollStart.value = start;
-      canScrollEnd.value = end;
-      // The fades are physical sides; the start is on the right in RTL.
-      container?.toggleAttribute("data-fade-left", isRtl ? end : start);
-      container?.toggleAttribute("data-fade-right", isRtl ? start : end);
-    };
-    if (!container || !wrapper) {
-      hasScrollableFilters.value = false;
-      setScrollable(false, false);
-      return;
-    }
-    const hasOverflow = container.scrollWidth > wrapper.clientWidth + 1;
-    hasScrollableFilters.value = hasOverflow;
-    if (!hasOverflow) {
-      setScrollable(false, false);
-      return;
-    }
-    const maxScroll = Math.max(
-      0,
-      container.scrollWidth - container.clientWidth
-    );
-    const position = isRtl
-      ? Math.abs(container.scrollLeft)
-      : container.scrollLeft;
-
-    setScrollable(position > 1, position < maxScroll - 1);
-  }, []);
-
-  const scrollFilters = useCallback((direction: -1 | 1) => {
-    if (direction === -1 && !canScrollStart.value) return;
-    if (direction === 1 && !canScrollEnd.value) return;
-
-    const container = filtersRef.current;
-    if (!container) return;
-
-    const pills = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
-    );
-
-    if (pills.length === 0) return;
-
-    const isRtl = getComputedStyle(container).direction === "rtl";
-    const containerRect = container.getBoundingClientRect();
-    const current = container.scrollLeft;
-
-    // Pills in `scrollLeft` units, where the visible stretch runs from
-    // `scrollLeft` to `scrollLeft + clientWidth` (RTL's `scrollLeft` is
-    // negative, which this handles too).
-    const spans = pills.map((pill) => {
-      const rect = pill.getBoundingClientRect();
-      const start = rect.left - containerRect.left + current;
-      return { start, end: start + rect.width };
-    });
-
-    // Steps from where an earlier click's smooth scroll is headed rather than
-    // from where it has got to, so quick clicks each move on another pill.
-    const pending = pendingScrollRef.current;
-    const base =
-      pending && performance.now() - pending.at < PENDING_SCROLL_MS
-        ? pending.left
-        : current;
-    const viewStart = base;
-    const viewEnd = base + container.clientWidth;
-
-    // Toward the end is right in LTR, left in RTL. Bring the nearest pill
-    // hidden past that edge fully into view.
-    let next: number | undefined;
-    if ((direction === 1) !== isRtl) {
-      const hidden = spans.filter((span) => span.end > viewEnd + 1);
-      if (hidden.length > 0) {
-        next = base + Math.min(...hidden.map((span) => span.end)) - viewEnd;
-      }
-    } else {
-      const hidden = spans.filter((span) => span.start < viewStart - 1);
-      if (hidden.length > 0) {
-        next =
-          base - (viewStart - Math.max(...hidden.map((span) => span.start)));
-      }
-    }
-    if (next === undefined) return;
-
-    const maxScroll = container.scrollWidth - container.clientWidth;
-    next = isRtl
-      ? Math.min(0, Math.max(-maxScroll, next))
-      : Math.min(maxScroll, Math.max(0, next));
-    pendingScrollRef.current = { left: next, at: performance.now() };
-
-    container.scrollBy({
-      left: next - current,
-      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
-        ? "auto"
-        : "smooth",
-    });
-  }, []);
-  const showArrows = hasScrollableFilters.value;
-  useLayoutEffect(() => {
-    const container = filtersRef.current;
-    if (!container) return;
-
-    const active = container.querySelector<HTMLElement>(".sb-dcp-chip--active");
-
-    if (active) {
-      const row = container.getBoundingClientRect();
-      const chip = active.getBoundingClientRect();
-
-      if (chip.left < row.left) {
-        container.scrollLeft -= row.left - chip.left;
-      } else if (chip.right > row.right) {
-        container.scrollLeft += chip.right - row.right;
-      }
-    }
-
-    const update = () =>
-      updateScrollState(getComputedStyle(container).direction === "rtl");
-
-    update();
-    container.addEventListener("scroll", update);
-
-    const resizeObserver =
-      typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
-
-    if (resizeObserver) {
-      resizeObserver.observe(container);
-
-      const wrapper = container.parentElement;
-      if (wrapper) resizeObserver.observe(wrapper);
-
-      container
-        .querySelectorAll<HTMLElement>(".sb-dcp-chip")
-        .forEach((chip) => resizeObserver.observe(chip));
-    }
-
-    // Recheck when the viewport resizes. This also supports test
-    // environments where ResizeObserver is unavailable.
-    window.addEventListener("resize", update);
-
-    return () => {
-      container.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-      resizeObserver?.disconnect();
-    };
-  }, [filtersKey, updateScrollState, showArrows]);
-
   return (
-    <div
-      className={`sb-dcp-filters-wrapper${
-        hasScrollableFilters.value ? " sb-dcp-filters-wrapper--scrollable" : ""
-      }`}
-    >
-      {hasScrollableFilters.value && (
-        <button
-          type="button"
-          className="sb-dcp-filters-arrow"
-          onClick={() => scrollFilters(-1)}
-          aria-disabled={!canScrollStart.value}
-          aria-label={t("scroll-filters-start", {
-            defaultValue: "Scroll filters toward start",
-          })}
-        >
-          <MaterialIcon className="rtl-mirror" aria-hidden="true">
-            chevron_left
-          </MaterialIcon>
-        </button>
-      )}
-
-      <div className="sb-dcp-filters" role="tablist" ref={filtersRef}>
-        {filters.map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={displayFilter === key}
-            className={`sb-dcp-chip${
-              displayFilter === key ? " sb-dcp-chip--active" : ""
-            }`}
-            onClick={() => {
-              activeFilter.value = key;
-            }}
-          >
-            {label}
-          </button>
-        ))}
+    <div className="sb-dcp-hidden-notice">
+      <div className="sb-dcp-hidden-notice-icon" aria-hidden="true">
+        <MaterialIcon>visibility_off</MaterialIcon>
       </div>
-
-      {hasScrollableFilters.value && (
+      <p className="sb-dcp-hidden-notice-title">
+        {t("discover-hidden-in-session", {
+          defaultValue: "Discovered content is off in shared sessions",
+        })}
+      </p>
+      <p className="sb-dcp-hidden-notice-message">
+        {t("discover-hidden-in-session-reason", {
+          defaultValue:
+            "It's only visible to you, so it's hidden while you read with others.",
+        })}
+      </p>
+      <div className="sb-dcp-hidden-notice-actions">
         <button
           type="button"
-          className="sb-dcp-filters-arrow"
-          onClick={() => scrollFilters(1)}
-          aria-disabled={!canScrollEnd.value}
-          aria-label={t("scroll-filters-end", {
-            defaultValue: "Scroll filters toward end",
-          })}
+          className="sb-dcp-hidden-notice-dismiss"
+          onClick={props.handleDismiss}
         >
-          <MaterialIcon className="rtl-mirror" aria-hidden="true">
-            chevron_right
-          </MaterialIcon>
+          {t("discover-hidden-in-session-not-now", {
+            defaultValue: "Not now",
+          })}
         </button>
-      )}
+        <button
+          type="button"
+          className="sb-dcp-hidden-notice-turn-on"
+          onClick={props.handleAccept}
+        >
+          {t("discover-hidden-in-session-turn-on", {
+            defaultValue: "Turn on",
+          })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InlineContentWarning(props: HiddenContentWarningProps) {
+  const { t } = useI18n();
+  return (
+    <div className="sb-dcp-hidden-banner">
+      <div className="sb-dcp-hidden-banner-text">
+        <MaterialIcon className="sb-dcp-hidden-banner-icon" aria-hidden="true">
+          visibility_off
+        </MaterialIcon>
+        <p>
+          {t("discover-hidden-in-session", {
+            defaultValue: "Discovered content is off in shared sessions",
+          })}
+        </p>
+      </div>
+      <div className="sb-dcp-hidden-banner-actions">
+        <button
+          type="button"
+          className="sb-dcp-hidden-banner-turn-on"
+          onClick={props.handleAccept}
+        >
+          {t("discover-hidden-in-session-turn-on", {
+            defaultValue: "Turn on",
+          })}
+        </button>
+        <TooltipTrigger>
+          <button
+            type="button"
+            className="sb-dcp-hidden-banner-close"
+            onClick={props.handleDismiss}
+            aria-label={t("dismiss", { defaultValue: "Dismiss" })}
+          >
+            <MaterialIcon>close</MaterialIcon>
+          </button>
+        </TooltipTrigger>
+      </div>
+    </div>
+  );
+}
+
+function SharedSessionHint(props: { onDismiss: () => void }) {
+  const { t } = useI18n();
+  return (
+    <div className="sb-dcp-session-hint" role="note">
+      <MaterialIcon className="sb-dcp-session-hint-icon" aria-hidden="true">
+        info
+      </MaterialIcon>
+      <div className="sb-dcp-session-hint-body">
+        <p>
+          {t("discover-shared-session-hint", {
+            defaultValue:
+              "Only you can see discovered content. Everything else in the session is shared.",
+          })}
+        </p>
+        <button
+          type="button"
+          className="sb-dcp-session-hint-dismiss"
+          onClick={props.onDismiss}
+        >
+          {t("discover-shared-session-hint-got-it", {
+            defaultValue: "Got it",
+          })}
+        </button>
+      </div>
     </div>
   );
 }
@@ -473,7 +344,21 @@ function DiscoverFilters({
  *   annotation.
  */
 export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
-  const { tab, state, variant } = props;
+  const { state, variant } = props;
+  // In a compare step the user may be working in the passage shown beside the
+  // tab's own; Discover shows that passage's content then.
+  const activeReadingState = props.tab
+    ? state.tabs.activeReadingState(props.tab)
+    : null;
+  const tab = useMemo(
+    () =>
+      props.tab && activeReadingState
+        ? activeReadingState === props.tab.readingState
+          ? props.tab
+          : { ...props.tab, readingState: activeReadingState }
+        : null,
+    [props.tab, activeReadingState]
+  );
 
   const { t } = useI18n();
 
@@ -532,16 +417,18 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
             props.variant === "full" ? (
               <DiscoverCreateMenu state={state} />
             ) : (
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="sm"
+                shape="pill"
+                icon="add"
                 className="sb-dcp-create-btn"
                 onClick={() => void state.annotations.createNewAnnotation()}
               >
-                +{" "}
                 {t("create-playlist", {
                   defaultValue: "Create",
                 })}
-              </button>
+              </Button>
             )
           }
           onClose={props.variant === "full" ? props.onClose : undefined}
@@ -570,10 +457,8 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
       : null;
   }
 
-  const { hasAnnotations, showAnnotations, hasAny } = getDiscoverPanelContent(
-    tab.readingState,
-    state.annotations
-  );
+  const { hasAnnotations, showAnnotations, hasAny, showHiddenContentWarning } =
+    getDiscoverPanelContent(tab.readingState, state.annotations);
 
   // Only the full panel shows friends' playlists: they aren't tied to the
   // chapter, so they'd crowd the compact panel's chapter summary.
@@ -615,9 +500,13 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     typesWithResults.some((definition) => !definition.hiddenByDefault);
 
   // Results stream in after the chapter opens, so until discovery is done
-  // "nothing yet" can't be told apart from "nothing at all".
+  // "nothing yet" can't be told apart from "nothing at all". With discovered
+  // content turned off (a shared session) there's nothing to wait for, since
+  // whatever arrives stays hidden.
   const isDiscovering =
-    variant === "full" && tab.readingState.isDiscovering.value;
+    variant === "full" &&
+    tab.readingState.showDiscoveredContent.value &&
+    tab.readingState.isDiscovering.value;
 
   // The full panel never renders empty: when the chapter has nothing else to
   // show, not even behind a filter chip, the notes section's "Create a note"
@@ -633,6 +522,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
     hasAnnotations ||
     showNotesAsEmptyState ||
     hasOtherContentUnderAll ||
+    showHiddenContentWarning ||
     isDiscovering;
 
   const filters: {
@@ -720,14 +610,41 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
 
   return panel(
     <>
+      {tab.readingState.showSharedSessionHint.value && (
+        <SharedSessionHint
+          onDismiss={() => tab.readingState.dismissSharedSessionHint()}
+        />
+      )}
       {showFilters && (
-        <DiscoverFilters
-          filters={filters}
-          activeFilter={activeFilter}
-          displayFilter={f}
+        <FilterPills
+          className="sb-dcp-filters"
+          aria-label={t("discover-filters", {
+            defaultValue: "Filter discovered content",
+          })}
+          options={filters.map(({ key, label }) => ({ value: key, label }))}
+          value={f}
+          onChange={(key) => {
+            activeFilter.value = key;
+          }}
         />
       )}
       <div className="sb-discover-content-panel-scroll">
+        {showHiddenContentWarning &&
+          (showAnnotations || hasFriendPlaylists ? (
+            <InlineContentWarning
+              handleAccept={() => tab.readingState.turnOnDiscoveredContent()}
+              handleDismiss={() =>
+                tab.readingState.dismissHiddenContentWarning()
+              }
+            />
+          ) : (
+            <ContentWarning
+              handleAccept={() => tab.readingState.turnOnDiscoveredContent()}
+              handleDismiss={() =>
+                tab.readingState.dismissHiddenContentWarning()
+              }
+            />
+          ))}
         {(f === "all" || f === "annotations") && showNotes && (
           <AnnotationsSection
             tab={tab}
@@ -748,7 +665,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
             friends={state.friends}
             playlists={state.playlists}
             modals={state.modals}
-            toast={state.app.toast}
+            app={state.app}
           />
         )}
 
@@ -776,7 +693,7 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
         )}
 
         {f === "all" &&
-          variant === "full" &&
+          isDiscovering &&
           tab.readingState.showDiscoveryLoader.value && (
             <div className="sb-dcp-discovery-loader">
               <Spinner

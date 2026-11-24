@@ -6,23 +6,23 @@
   height: 100%;
   width: 100%;
   padding: 10px 15px 15px 15px;
-  transition: all 0.3s ease;
+  transition: all var(--sb-duration-slow) ease;
   color: var(--sb-font-color);
 }
 
 .qr-container {
   box-shadow: 0px 0px 4px 0px rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
 }
 
 .twitchBtn {
   margin-top: 5px;
   padding: 10px 20px;
-  font-size: 16px;
+  font-size: var(--sb-font-size-16);
   background-color: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   border: none;
-  border-radius: 5px;
+  border-radius: var(--sb-radius-sm);
   cursor: pointer;
   width: max-content;
   margin-left: auto;
@@ -66,23 +66,10 @@
 
 #clientId {
   height: 48px;
-  border-radius: 6px;
+  border-radius: var(--sb-radius-sm);
   border: 1px solid var(--sb-reader-toolbar-border);
   padding: 8px;
-  font-size: 14px;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  font-size: var(--sb-font-size-14);
 }
 
 .toggle-wrapper {
@@ -92,41 +79,8 @@
   gap: 12px;
 }
 
-.toggle {
-  position: relative;
-  width: 50px;
-  height: 28px;
-  cursor: pointer;
-}
-
-.toggle input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.track {
-  position: absolute;
-  inset: 0;
-  background: #ccc;
-  border-radius: 999px;
-  transition: background 0.25s;
-}
-
-.thumb {
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  width: 18px;
-  height: 18px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  transition: transform 0.25s;
-}
-
 .label {
-  font-size: 14px;
+  font-size: var(--sb-font-size-14);
   color: #555;
   user-select: none;
 }
@@ -147,43 +101,12 @@
   height: 24px;
   padding: 3px 0px 0px 0px;
   width: 65px;
-  font-size: 12px;
+  font-size: var(--sb-font-size-12);
   outline: none;
 }
 
 .qr-drag-handle:hover {
   opacity: 1;
-}
-
-.twitch-custom-timer-input {
-  width: 60px;
-  height: 24px;
-  padding: 0px 20px 0px 3px;
-  -moz-appearance: textfield;
-}
-
-.twitch-custom-timer-input::-webkit-outer-spin-button,
-.twitch-custom-timer-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.session-btn {
-  padding: 3px 6px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-}
-
-.leave-session-btn {
-  background-color: #eb5a4a;
-}
-.rejoin-session-btn {
-  background-color: lightgreen;
 }
 
 .twitch-tooltip {
@@ -213,16 +136,16 @@
   padding: 8px 10px;
   background: rgba(20, 20, 20, 0.95);
   color: #fff;
-  font-size: 12px;
+  font-size: var(--sb-font-size-12);
   font-weight: normal;
   line-height: 1.4;
   text-align: left;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-radius: var(--sb-radius-sm);
+  box-shadow: var(--sb-shadow-popover);
   z-index: 20;
   visibility: hidden;
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--sb-duration-fast) ease;
   pointer-events: none;
 }
 

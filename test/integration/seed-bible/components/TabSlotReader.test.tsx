@@ -1,3 +1,4 @@
+import { createAttachedReadingStates } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { createDiscoverManager } from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
@@ -177,6 +178,13 @@ function createFixture(): ReaderFixture {
     disableExtension: vi.fn(async () => undefined),
     enableExtension: vi.fn(async () => undefined),
     isShared: signal(false),
+    showDiscoveredContent: signal(true),
+    userDismissedHiddenContentWarning: signal(false),
+    turnOnDiscoveredContent: vi.fn(),
+    hasHiddenDiscoveredContent: signal(false),
+    dismissHiddenContentWarning: vi.fn(),
+    showSharedSessionHint: signal(false),
+    dismissSharedSessionHint: vi.fn(),
     dispose: vi.fn(async () => undefined),
     enabledExtensions: signal<ReadingExtensionRuntime[]>([]),
     isExtensionEnabled: vi.fn(() => false),
@@ -191,6 +199,7 @@ function createFixture(): ReaderFixture {
     selectionAnnotations: signal([]),
     pendingAnnotationScrollVerse: signal<number | null>(null),
     visibleVerseRange: signal<VisibleVerseRange | null>(null),
+    visibleAreas: signal<ReadonlyMap<string, VisibleVerseRange>>(new Map()),
   } as BibleReadingState;
 
   const selectorState = {
@@ -223,7 +232,7 @@ function createSavesStub() {
   return {
     isLocationSaved: vi.fn(() => false),
     getSaveForLocation: vi.fn(() => undefined),
-    addSave: vi.fn(async () => undefined),
+    addSave: vi.fn(async () => true),
   };
 }
 
@@ -266,7 +275,7 @@ function createMobileState(): SeedBibleState {
     tools: createBibleToolsManager(testBranding),
     saves: createSavesStub(),
     bookmarks: createBookmarksStub(),
-    tabs: {} as any,
+    tabs: createAttachedReadingStates() as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,
@@ -328,7 +337,7 @@ function createDesktopState(): SeedBibleState {
     tools: createBibleToolsManager(testBranding),
     saves: createSavesStub(),
     bookmarks: createBookmarksStub(),
-    tabs: {} as any,
+    tabs: createAttachedReadingStates() as any,
     panes: {} as any,
     modals: { openModal: vi.fn(), closeModal: vi.fn() },
     discover,

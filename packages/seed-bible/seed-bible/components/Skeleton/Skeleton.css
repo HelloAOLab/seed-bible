@@ -2,14 +2,13 @@
 /* A shimmering placeholder used wherever content is still loading, so a slow
    surface reads as "loading" rather than blank or a deceptively-ready UI.
    Dimensions are authored in `rem`/`%` by callers so blocks scale with the
-   "UI Size" setting (see app/styles/base.css). Only depends on the global
-   `--sb-font-color` token and the `.sr-only` utility (app/styles/utilities.css),
-   both already loaded globally by app/main.tsx. */
+   "UI Size" setting (see app/styles/base.css). Only depends on the
+   `--sb-font-color` token, which sandboxed extension frames also define. */
 
 .sb-skeleton {
   position: relative;
   overflow: hidden;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
 }
 
@@ -36,7 +35,7 @@
 /* Shape defaults — callers can still override height/radius inline. */
 .sb-skeleton--line {
   height: 0.8125rem;
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
 }
 
 .sb-skeleton--circle {
@@ -45,7 +44,7 @@
 }
 
 .sb-skeleton--button {
-  border-radius: 0.25rem;
+  border-radius: var(--sb-radius-xs);
 }
 
 /* `.sb-skeleton--block` keeps the base 0.5rem radius (no override needed). */

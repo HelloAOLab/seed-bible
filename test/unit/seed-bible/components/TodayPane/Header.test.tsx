@@ -246,10 +246,15 @@ describe("Header", () => {
       setup();
 
       const buttons = Array.from(header().querySelectorAll(":scope > button"));
-      expect(buttons.map((button) => button.className)).toEqual([
-        "sb-today-notifications-button",
-        "sb-today-close-button",
-      ]);
+      expect(
+        buttons.map((button) =>
+          button.classList.contains("sb-today-notifications-button")
+            ? "bell"
+            : button.classList.contains("sb-today-close-button")
+              ? "close"
+              : button.className
+        )
+      ).toEqual(["bell", "close"]);
     });
 
     // Update notices reach signed-out visitors too.

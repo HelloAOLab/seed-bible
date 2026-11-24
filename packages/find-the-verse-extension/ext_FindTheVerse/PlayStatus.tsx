@@ -1,3 +1,4 @@
+import { IconButton } from "seed-bible/components";
 import type { GameStep } from "./types";
 
 export function chanceView(steps: readonly GameStep[], guessCount: number) {
@@ -43,14 +44,13 @@ export function HintControl({
     ns: "find-the-verse-extension",
   });
   return (
-    <button
-      type="button"
+    <IconButton
       className="ftv-hint-button"
-      title={label}
-      aria-label={label}
+      size="sm"
+      look="tinted"
+      icon="question_mark"
+      label={label}
       onClick={onShow}
-    >
-      ?
-    </button>
+    />
   );
 }

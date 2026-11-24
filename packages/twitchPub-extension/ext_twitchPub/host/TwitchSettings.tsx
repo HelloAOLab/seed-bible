@@ -1,5 +1,6 @@
 import { type TwitchPubState } from "./interface";
 import { useState, useRef, useEffect } from "preact/hooks";
+import { Button, Select, Switch, TextInput } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 
 const TwitchSettings = (props: { state: TwitchPubState }) => {
@@ -9,6 +10,7 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
 
   const [customTimerFlag, setCustomTimerFlag] = useState<string>("");
   const [customTimer, setCustomTimer] = useState<string | null>(null);
+  const customTimerBox = useRef<HTMLInputElement>(null);
 
   // useEffect(() => {
   //   setTagMask(thisBot, "customTimerFlag", customTimerFlag, "local");
@@ -30,10 +32,12 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
           <div className="twitchPub-content">
             <div className="twitchPub-settings-item">
               <span className="twitchPub-settings-label">
-                {t("twitchSettings.broadcastTranslationEvents", {
-                  ns: "ext_twitchPub",
-                  defaultValue: "Broadcast translation events",
-                })}
+                <label htmlFor="twitchPub-translationToggle">
+                  {t("twitchSettings.broadcastTranslationEvents", {
+                    ns: "ext_twitchPub",
+                    defaultValue: "Broadcast translation events",
+                  })}
+                </label>
                 <InfoTooltip
                   text={t("twitchSettings.broadcastTranslationEventsTooltip", {
                     ns: "ext_twitchPub",
@@ -50,15 +54,17 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                     enabled: value,
                   })
                 }
-                id={"translationToggle"}
+                id="twitchPub-translationToggle"
               />
             </div>
             <div className="twitchPub-settings-item">
               <span className="twitchPub-settings-label">
-                {t("twitchSettings.broadcastHighlightEvents", {
-                  ns: "ext_twitchPub",
-                  defaultValue: "Broadcast highlight events",
-                })}
+                <label htmlFor="twitchPub-highlightToggle">
+                  {t("twitchSettings.broadcastHighlightEvents", {
+                    ns: "ext_twitchPub",
+                    defaultValue: "Broadcast highlight events",
+                  })}
+                </label>
                 <InfoTooltip
                   text={t("twitchSettings.broadcastHighlightEventsTooltip", {
                     ns: "ext_twitchPub",
@@ -75,15 +81,17 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                     enabled: value,
                   })
                 }
-                id={"highlightToggle"}
+                id="twitchPub-highlightToggle"
               />
             </div>
             <div className="twitchPub-settings-item">
               <span className="twitchPub-settings-label">
-                {t("twitchSettings.broadcastAiFollowEvents", {
-                  ns: "ext_twitchPub",
-                  defaultValue: "Broadcast verse reference events",
-                })}
+                <label htmlFor="twitchPub-aiFollowToggle">
+                  {t("twitchSettings.broadcastAiFollowEvents", {
+                    ns: "ext_twitchPub",
+                    defaultValue: "Broadcast verse reference events",
+                  })}
+                </label>
                 <InfoTooltip
                   text={t("twitchSettings.broadcastAiFollowEventsTooltip", {
                     ns: "ext_twitchPub",
@@ -100,7 +108,7 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                     enabled: value,
                   })
                 }
-                id={"aiFollowToggle"}
+                id="twitchPub-aiFollowToggle"
               />
             </div>
             <div className="twitchPub-settings-item">
@@ -118,16 +126,21 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                 />
               </span>
               <div className="twitchPub-timer-control">
-                <select
+                <Select
+                  size="sm"
+                  aria-label={t("twitchSettings.announcementTimer", {
+                    ns: "ext_twitchPub",
+                    defaultValue: "Announcement Timer",
+                  })}
                   value={
                     customTimerFlag === "custom"
                       ? "custom"
                       : settings.value.announcementTimer.value.interval?.toString() ||
                         "0"
                   }
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                    e.stopPropagation();
-                    if (e.currentTarget.value === "custom") {
+                  onChange={(e: Event) => e.stopPropagation()}
+                  onValueChange={(choice) => {
+                    if (choice === "custom") {
                       settings.value.announcementTimer.value = {
                         ...settings.value.announcementTimer.value,
                         interval: null,
@@ -136,7 +149,7 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                     } else {
                       settings.value.announcementTimer.value = {
                         ...settings.value.announcementTimer.value,
-                        interval: Number(e.currentTarget.value),
+                        interval: Number(choice),
                       };
                       setCustomTimerFlag("");
                     }
@@ -181,17 +194,20 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                       defaultValue: "Custom",
                     })}
                   </option>
-                </select>
+                </Select>
                 {customTimerFlag === "custom" && (
                   <div className="twitch-custom-timer-wrapper">
-                    <input
-                      type="text"
+                    <TextInput
+                      size="sm"
+                      aria-label={t("twitchSettings.announcementTimer", {
+                        ns: "ext_twitchPub",
+                        defaultValue: "Announcement Timer",
+                      })}
                       inputMode="decimal"
                       placeholder="0"
+                      inputRef={customTimerBox}
                       value={customTimer !== null ? customTimer : ""}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const value = e.currentTarget.value;
-
+                      onValueInput={(value) => {
                         // Allow empty, digits, and decimal point
                         if (value === "" || /^\d*\.?\d*$/.test(value)) {
                           setCustomTimer(value);
@@ -211,6 +227,10 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                               interval: 0,
                             };
                           }
+                        } else if (customTimerBox.current) {
+                          // Nothing re-renders for a rejected key, so the box
+                          // would keep showing it.
+                          customTimerBox.current.value = customTimer ?? "";
                         }
                       }}
                       onMouseDown={(e) => e.stopPropagation()}
@@ -230,12 +250,12 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
           </div>
           <div className="twitchPub-settings-item">
             <span className="twitchPub-settings-label"></span>
-            <button onClick={resetState} className="twitchPub-logout-btn">
+            <Button size="sm" onClick={resetState}>
               {t("twitchSettings.logout", {
                 ns: "ext_twitchPub",
                 defaultValue: "Logout",
               })}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -298,43 +318,17 @@ const ToggleBtn = ({
 }: {
   toggle: boolean;
   setToggle: (value: boolean) => void;
+  /** Its `<label>` points at this id. */
   id: string;
 }) => {
   return (
-    <>
-      <style>
-        {toggle
-          ? `
-            .track-${id} {
-                background: var(--sb-primary-color);
-            }
-            .thumb-${id} {
-                transform: translateX(23px);
-            }
-        `
-          : ``}
-      </style>
-      <div
-        className="toggle-wrapper"
-        onMouseDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-      >
-        <label className="toggle">
-          <input
-            type="checkbox"
-            checked={toggle}
-            id={id}
-            onChange={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setToggle(!toggle);
-            }}
-          />
-          <span className={`track-${id} track`}></span>
-          <span className={`thumb-${id} thumb`}></span>
-        </label>
-      </div>
-    </>
+    <div
+      className="toggle-wrapper"
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
+      <Switch id={id} checked={toggle} onToggled={setToggle} />
+    </div>
   );
 };
 

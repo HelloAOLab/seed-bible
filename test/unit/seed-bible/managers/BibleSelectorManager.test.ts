@@ -32,6 +32,7 @@ import {
   makeCompleteTranslation,
 } from "./testUtils/mockBibleApiData";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { Mock } from "vitest";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
 
@@ -142,7 +143,8 @@ function createSelectorState(
     createSavesManagerMock() as any,
     createNavigationManager(),
     login as any,
-    i18n as any
+    i18n as any,
+    createModalManager()
   );
 }
 
@@ -780,6 +782,76 @@ describe("createBibleSelectorState", () => {
     expect(readingState.translationId.value).toBe("NIV");
     expect(readingState.bookId.value).toBe("MAT");
     expect(readingState.chapterNumber.value).toBe(1);
+  });
+
+  describe("setOpen({onChapterPick})", () => {
+    const openForPick = async () => {
+      setWebResponses(createExampleManagerResponseMap());
+      const managers = await createManagersWithSelectedSlot();
+      const selector = createSelectorState(
+        managers.dataManager,
+        managers.tabsManager,
+        managers.tabsLayoutManager
+      );
+      const onChapterPick = vi.fn();
+      await selector.setOpen(true, managers.slot, { onChapterPick });
+      return { ...managers, selector, onChapterPick };
+    };
+
+    it("reports the pick and closes, leaving the reader where it was", async () => {
+      const { selector, readingState, tabsManager, onChapterPick } =
+        await openForPick();
+      const tabCount = tabsManager.tabs.value.length;
+      const position = () => [
+        readingState.translationId.value,
+        readingState.bookId.value,
+        readingState.chapterNumber.value,
+      ];
+      const before = position();
+
+      await selector.selectChapter("EXO", 2);
+
+      expect(onChapterPick).toHaveBeenCalledExactlyOnceWith("EXO", 2);
+      expect(selector.isOpen.value).toBe(false);
+      expect(before.slice(1)).not.toEqual(["EXO", 2]);
+      expect(position()).toEqual(before);
+      expect(tabsManager.tabs.value).toHaveLength(tabCount);
+    });
+
+    it("opens no tab for a pick made from a pane without one", async () => {
+      const { selector, tabsManager, tabsLayoutManager, onChapterPick } =
+        await openForPick();
+      await selector.setOpen(false);
+      const emptySlot = { ...tabsLayoutManager.slots.value[0]!, tab: null };
+      const tabCount = tabsManager.tabs.value.length;
+
+      await selector.setOpen(true, emptySlot, { onChapterPick });
+      await selector.selectChapter("EXO", 2);
+
+      expect(onChapterPick).toHaveBeenCalledExactlyOnceWith("EXO", 2);
+      expect(tabsManager.tabs.value).toHaveLength(tabCount);
+    });
+
+    it("is picking only while open as a picker", async () => {
+      const { selector, slot } = await openForPick();
+      expect(selector.picking.value).toBe(true);
+
+      await selector.setOpen(false);
+      expect(selector.picking.value).toBe(false);
+
+      await selector.setOpen(true, slot);
+      expect(selector.picking.value).toBe(false);
+    });
+
+    it("drops the pick when the selector closes without one", async () => {
+      const { selector, slot, onChapterPick } = await openForPick();
+
+      await selector.setOpen(false);
+      await selector.setOpen(true, slot);
+      await selector.selectChapter("EXO", 2);
+
+      expect(onChapterPick).not.toHaveBeenCalled();
+    });
   });
 
   it("setOpen({forNewTab}) flips forceNewTab and selectChapter creates a new tab bound to the slot", async () => {

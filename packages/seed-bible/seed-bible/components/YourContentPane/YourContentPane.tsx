@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect } from "preact/hooks";
 import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { Annotation } from "../../managers/AnnotationsManager";
@@ -50,11 +50,11 @@ import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal
 import { Spinner } from "../Spinner/Spinner";
 import { ReadingPlanOptionsMenu } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
 import { useI18n } from "../../i18n";
-import { useScrollEdgeFade } from "../useScrollEdgeFade";
-import { useHorizontalScroll } from "../useHorizontalScroll";
+import { FilterPills } from "../FilterPills/FilterPills";
 import { UserImagesGrid } from "./UserImages";
 import { CustomizationCard } from "../CustomizationEditPane/CustomizationCard";
 import "./YourContentPane.css";
+import { Button } from "../Button/Button";
 
 export const YOUR_CONTENT_PANE_ID = "your-content-pane";
 
@@ -81,6 +81,8 @@ export interface YourContentScreenProps {
   onOpenReadingPlan: (plan: ReadingPlanMetadata) => void;
   /** Opens a reading plan in the plan editor and leaves this screen. */
   onEditReadingPlan: (plan: ReadingPlanMetadata) => void;
+  /** Opens the plan editor on a new reading plan and leaves this screen. */
+  onCreateReadingPlan: () => void;
   /** Opens a customization in its editor and leaves this screen. */
   onEditCustomization: (customizationId: string) => void;
   /** Creates a new customization, opens it in the editor and leaves this screen. */
@@ -285,7 +287,7 @@ function AnnotationCard(props: {
         <ContextMenuWithButton
           icon="more_horiz"
           buttonClassName="sb-content-kebab"
-          aria-label={t("more-options", { defaultValue: "More options" })}
+          label={t("more-options", { defaultValue: "More options" })}
         >
           <ContextMenuItem onClick={props.onEdit}>
             <MaterialIcon
@@ -426,7 +428,7 @@ function HighlightRow(props: {
       <ContextMenuWithButton
         icon="more_horiz"
         buttonClassName="sb-content-kebab"
-        aria-label={t("more-options", { defaultValue: "More options" })}
+        label={t("more-options", { defaultValue: "More options" })}
       >
         <ContextMenuItem onClick={confirmDelete}>
           <MaterialIcon
@@ -545,8 +547,7 @@ function SavePill(props: {
       </button>
       <ContextMenuWithButton
         buttonClassName="sb-content-save-menu"
-        aria-label={t("save-options", { defaultValue: "Save options" })}
-        title={t("save-options", { defaultValue: "Save options" })}
+        label={t("save-options", { defaultValue: "Save options" })}
       >
         <ContextMenuItem
           onClick={() => openSaveModalForLocation(state, location)}
@@ -615,11 +616,10 @@ function BookmarkRow(props: {
       </button>
       <ContextMenuWithButton
         buttonClassName="sb-content-save-menu"
-        aria-label={t("bookmark-options-named", {
+        label={t("bookmark-options-named", {
           defaultValue: "Options for {{name}}",
           name: bookmark.name,
         })}
-        title={t("bookmark-options", { defaultValue: "Bookmark options" })}
       >
         <ContextMenuItem onClick={() => openEditBookmarkModal(state, bookmark)}>
           <MaterialIcon
@@ -682,6 +682,7 @@ function ReadingPlanRow(props: {
         fullPlan={plan.status === "draft" ? null : full}
         onEdit={props.onEdit}
         modals={state.modals}
+        app={state.app}
         toast={state.app.toast}
         buttonClassName="sb-discover-item-menu"
       />
@@ -767,11 +768,6 @@ export function YourContentPane(props: YourContentScreenProps) {
   } = state;
   const { t } = useI18n();
   const userId = state.login.userId.value;
-  // The filter chips scroll horizontally with the vertical wheel, and fade at
-  // an edge only while chips are hidden past it.
-  const chipsRef = useRef<HTMLDivElement | null>(null);
-  useHorizontalScroll(chipsRef);
-  useScrollEdgeFade(chipsRef);
 
   // Every open refreshes, so a verse highlighted or annotated in the reader
   // since the last visit shows up. It's quiet when content is already
@@ -1049,8 +1045,17 @@ export function YourContentPane(props: YourContentScreenProps) {
           {/* Outside the chip strip so it stays put while the chips scroll. */}
           <ContextMenuWithButton
             buttonClassName="sb-content-create"
-            aria-label={t("create-menu", { defaultValue: "Create" })}
-            icon={<>+ {t("create-playlist", { defaultValue: "Create" })}</>}
+            trigger={(menu) => (
+              <Button
+                {...menu}
+                variant="primary"
+                size="sm"
+                shape="pill"
+                icon="add"
+              >
+                {t("create-playlist", { defaultValue: "Create" })}
+              </Button>
+            )}
           >
             <ContextMenuItem onClick={props.onCreatePlaylist}>
               <MaterialIcon className="sb-context-menu-item-icon">
@@ -1058,6 +1063,18 @@ export function YourContentPane(props: YourContentScreenProps) {
               </MaterialIcon>
               {t("create-playlist-menu-item", { defaultValue: "Playlist" })}
             </ContextMenuItem>
+            {/* Both save to the user's account, so a signed-out user can't
+                keep what they make. */}
+            {userId ? (
+              <ContextMenuItem onClick={props.onCreateReadingPlan}>
+                <MaterialIcon className="sb-context-menu-item-icon">
+                  menu_book
+                </MaterialIcon>
+                {t("create-reading-plan-menu-item", {
+                  defaultValue: "Reading Plan",
+                })}
+              </ContextMenuItem>
+            ) : null}
             {userId ? (
               <ContextMenuItem onClick={props.onCreateCustomization}>
                 <MaterialIcon className="sb-context-menu-item-icon">
@@ -1072,24 +1089,20 @@ export function YourContentPane(props: YourContentScreenProps) {
 
           <span className="sb-content-toolbar-divider" aria-hidden="true" />
 
-          <div className="sb-content-chips" role="tablist" ref={chipsRef}>
-            {CONTENT_FILTERS.map((value) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={filter === value}
-                className={`sb-content-chip${
-                  filter === value ? " sb-content-chip-active" : ""
-                }`}
-                onClick={() => {
-                  yourContent.filter.value = value;
-                }}
-              >
-                {chipLabel(value)}
-              </button>
-            ))}
-          </div>
+          <FilterPills
+            className="sb-content-filters"
+            aria-label={t("your-content-filters", {
+              defaultValue: "Filter your content",
+            })}
+            options={CONTENT_FILTERS.map((value) => ({
+              value,
+              label: chipLabel(value),
+            }))}
+            value={filter}
+            onChange={(value) => {
+              yourContent.filter.value = value;
+            }}
+          />
         </div>
 
         {status === "loading" || stillSearching || bookmarksPending ? (
@@ -1108,13 +1121,13 @@ export function YourContentPane(props: YourContentScreenProps) {
                 defaultValue: "Your content couldn't be loaded.",
               })}
             </p>
-            <button
-              type="button"
+            <Button
+              shape="pill"
               className="sb-content-retry"
               onClick={() => void yourContent.load({ force: true })}
             >
               {t("try-again", { defaultValue: "Try again" })}
-            </button>
+            </Button>
           </div>
         ) : null}
 
@@ -1125,13 +1138,13 @@ export function YourContentPane(props: YourContentScreenProps) {
                 defaultValue: "Couldn't load your bookmarks. Please try again.",
               })}
             </p>
-            <button
-              type="button"
+            <Button
+              shape="pill"
               className="sb-content-retry"
               onClick={loadBookmarks}
             >
               {t("try-again", { defaultValue: "Try again" })}
-            </button>
+            </Button>
           </div>
         ) : null}
 
@@ -1269,7 +1282,7 @@ export function YourContentPane(props: YourContentScreenProps) {
                   playlist={p}
                   playlists={playlists}
                   modals={state.modals}
-                  toast={state.app.toast}
+                  app={state.app}
                   onPlay={props.onPlayPlaylist}
                   onEdit={props.onEditPlaylist}
                 />

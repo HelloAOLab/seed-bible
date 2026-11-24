@@ -16,26 +16,25 @@
   width: 100%;
   height: 100%;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-divider-color);
 }
 
 .sb-play-playlist-content-video {
   width: 100%;
   height: 100%;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: #000;
 }
 
 .sb-play-playlist-content-link {
-  font-size: 13px;
+  font-size: var(--sb-font-size-13);
   color: var(--sb-primary-color);
   overflow-wrap: anywhere;
 }
 
 .sb-play-playlist-open-button {
   align-self: flex-start;
-  text-decoration: none;
 }
 
 .sb-play-playlist-link-preview {
@@ -48,17 +47,17 @@
   width: 100%;
   max-height: 240px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--sb-radius-md);
   background: var(--sb-divider-color);
 }
 
 .sb-play-playlist-link-preview-site {
-  font-size: 12px;
+  font-size: var(--sb-font-size-12);
   color: var(--sb-secondary-font-color);
 }
 
 .sb-play-playlist-link-preview-title {
-  font-size: 16px;
+  font-size: var(--sb-font-size-16);
   font-weight: 600;
   color: var(--sb-font-color);
   overflow-wrap: anywhere;
@@ -66,8 +65,18 @@
 
 .sb-play-playlist-link-preview-description {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--sb-font-size-14);
   color: var(--sb-font-color);
   opacity: 0.8;
   overflow-wrap: anywhere;
+}
+
+/* Embedded links and videos want a large share of the screen rather than the
+ * small default dialog, so a dialog showing one grows (and its body
+ * stretches) to fit. */
+.sb-dialog:has(.sb-play-playlist-content-embed) {
+  --sb-dialog-width: min(94vw, 1400px);
+  --sb-dialog-height: min(92dvh, 900px);
+  --sb-dialog-max-height: min(92dvh, 900px);
+  --sb-dialog-body-display: flex;
 }

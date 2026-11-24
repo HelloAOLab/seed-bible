@@ -1,3 +1,6 @@
+import { Popover } from "../Popover/Popover";
+import { EmptyState } from "../EmptyState/EmptyState";
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./Tabs.inline.css";
 import "./Tabs.css";
 import { useSignal } from "@preact/signals";
@@ -21,12 +24,23 @@ import {
 } from "../../components/ContextMenu/ContextMenu";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { MaterialIcon, SettingsIcon, StarIcon } from "../../components/icons";
+import { CustomizableIcon } from "../CustomizableIcon/CustomizableIcon";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
 import { ShareModal } from "../ShareModal/shareModal";
+import {
+  AskToComeBackButton,
+  getParticipantLocation,
+} from "../SessionParticipants/participantLocations";
+import {
+  TabSessionParticipants,
+  isTabParticipantsListExpanded,
+} from "../SessionParticipants/SessionParticipants";
 import { getShareUrl, openShareModal } from "../../managers/BibleToolsManager";
 import {
-  isSessionHost,
+  isConnectedUserHost,
+  VIEWING_AREA_HOSTS_ONLY_MIN_USERS,
   type BibleReadingSession,
+  type ViewingAreaVisibility,
   getConnectedUserVisualKey,
   getUserAnimalVisual,
   getSessionUrl,
@@ -42,27 +56,37 @@ import {
   SessionUserAvatar,
   getUserDisplayName,
   getUserSessionRole,
-  sessionRoleRank,
+  sessionRoleLabel,
+  sortUsersByRole,
 } from "../Avatar/Avatar";
 import type { ComponentChildren } from "preact";
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useId, useRef } from "preact/hooks";
 import { chatHasOtherPeople } from "../../managers/ChatsManager";
 import { displayNameOf, trimmedOrNull } from "../../managers/Utils";
 import { useAppConfig } from "../../app/appConfig";
 import { SessionQRCode } from "../SessionQRCode/SessionQRCode";
 import {
   ParticipantFriendButton,
+  ParticipantName,
   rowsWithFriendButton,
 } from "../FriendsPane/ParticipantFriendButton";
 import { openReaderLocation } from "./openReaderLocation";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
 import { useScrollEdgeFadeRef } from "../useScrollEdgeFade";
+import { durationMs } from "../../app/styles/sharedTokens";
 import {
   BookmarkGlyph,
   BookmarkStackIcon,
   BookmarksPanel,
   bookmarkButtonLabel,
 } from "../Bookmarks/Bookmarks";
+import { CloseButton } from "../CloseButton/CloseButton";
+import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
+import { IconButton } from "../IconButton/IconButton";
+import { SettingRow } from "../SettingRow/SettingRow";
+import { Checkbox } from "../Checkbox/Checkbox";
+import { Switch, SwitchIndicator } from "../Switch/Switch";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -80,6 +104,8 @@ interface TabsHeaderProps {
   panelsEnabled: boolean;
   paneLayout: TabSlotLayoutId | "single";
   isLayoutMenuOpen: boolean;
+  /** The tour step that points at the picker is holding it open. */
+  layoutMenuHeldByTour: boolean;
   toggleLayoutMenu: () => void;
   closeLayoutMenu: () => void;
   setLayout: (layout: TabSlotLayoutId) => void;
@@ -123,6 +149,9 @@ const HIGHLIGHT_DURATION_OPTIONS: { label: string; value: number | null }[] = [
  *   (everyone) and `[hostUserId]` (host only).
  * - "Only Host can highlight" toggles `allowedDecorators` the same way.
  * - Highlight duration picker writes `highlightDurationSeconds`.
+ * - "Viewing areas" writes `viewingAreaVisibility`: everyone, hosts only, or
+ *   automatic (everyone below `VIEWING_AREA_HOSTS_ONLY_MIN_USERS`, hosts only
+ *   from that many on).
  * - "End Session" removes the tab (which disposes the session and removes
  *   its registry entry automatically via `wrapSessionLifecycle`).
  *
@@ -150,17 +179,10 @@ export function isLocalSessionHost(
   state: SeedBibleState,
   session: BibleReadingSession
 ): boolean {
-  const options = session.options.value;
-  return (
-    isSessionHost(options, state.login.userId.value) ||
-    isSessionHost(
-      options,
-      getConnectedUserVisualKey({
-        userId: state.login.userId.value,
-        connectionId: state.os.connectionId,
-      })
-    )
-  );
+  return isConnectedUserHost(session.options.value, {
+    userId: state.login.userId.value,
+    connectionId: state.os.connectionId,
+  });
 }
 
 function SessionSettingsModalContent(props: {
@@ -221,6 +243,12 @@ function SessionSettingsModalContent(props: {
     session.updateOptions({ shareTranslation: share });
   };
 
+  const viewingAreaVisibility = options.viewingAreaVisibility ?? "auto";
+  const setViewingAreaVisibility = (visibility: ViewingAreaVisibility) => {
+    if (!isHost) return;
+    session.updateOptions({ viewingAreaVisibility: visibility });
+  };
+
   const setCoHost = (coHostKey: string, makeCoHost: boolean) => {
     if (!isHost) return;
     const existing = options.coHostUserIds ?? [];
@@ -232,16 +260,9 @@ function SessionSettingsModalContent(props: {
     session.updateOptions({ coHostUserIds: next });
   };
 
-  // Everyone connected, host first, then co-hosts, then peers (Array.sort is
-  // stable so peers keep their existing order within a rank — matches the
-  // sidebar tab row and the mobile sheet). The host is listed like any other
-  // user, with a "Host" badge, but can't be promoted, so their row shows no
-  // co-host action.
-  const participants = [...session.connectedUsers.value].sort(
-    (a, b) =>
-      sessionRoleRank(getUserSessionRole(options, a)) -
-      sessionRoleRank(getUserSessionRole(options, b))
-  );
+  // The host is listed like any other user, with a "Host" badge, but can't be
+  // promoted, so their row shows no co-host action.
+  const participants = sortUsersByRole(session.connectedUsers.value, options);
   const friendButtonRows = rowsWithFriendButton(participants);
 
   return (
@@ -258,21 +279,16 @@ function SessionSettingsModalContent(props: {
             >
               {sessionUrl.href}
             </span>
-            <button
-              type="button"
+            <IconButton
               className="sb-session-settings-copy-url"
-              onClick={copySessionUrl}
-              aria-label={t("copy", { defaultValue: "Copy" })}
-              title={
+              icon={urlCopied.value ? "check" : "content_copy"}
+              label={
                 urlCopied.value
                   ? t("copied", { defaultValue: "Copied" })
                   : t("copy", { defaultValue: "Copy" })
               }
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                {urlCopied.value ? "check" : "content_copy"}
-              </span>
-            </button>
+              onClick={copySessionUrl}
+            />
           </div>
         </div>
 
@@ -293,69 +309,53 @@ function SessionSettingsModalContent(props: {
             })}
           </div>
 
-          <div className="sb-session-settings-row">
-            <label
-              className="sb-session-settings-label"
-              htmlFor="sb-session-only-host-navigate"
-            >
-              {t("session-settings-host-only_navigate", {
-                defaultValue: "Only host can navigate",
-              })}
-            </label>
-            <input
-              id="sb-session-only-host-navigate"
-              type="checkbox"
+          <SettingRow
+            label={t("session-settings-host-only_navigate", {
+              defaultValue: "Only host can navigate",
+            })}
+            description={
+              onlyHostNavigate
+                ? t("session-settings-navigate-desc_host", {
+                    defaultValue:
+                      "Only the host can change the passage for everyone.",
+                  })
+                : t("session-settings-navigate-desc_all", {
+                    defaultValue:
+                      "Everyone in the session can change the passage.",
+                  })
+            }
+          >
+            <Switch
               checked={onlyHostNavigate}
               disabled={!isHost}
-              onChange={(event: Event) => {
-                setNavigatorsOnlyHost(
-                  (event.currentTarget as HTMLInputElement).checked
-                );
+              onToggled={(checked) => {
+                setNavigatorsOnlyHost(checked);
               }}
             />
-          </div>
-          <p className="sb-session-settings-description">
-            {onlyHostNavigate
-              ? t("session-settings-navigate-desc_host", {
-                  defaultValue:
-                    "Only the host can change the passage for everyone.",
-                })
-              : t("session-settings-navigate-desc_all", {
-                  defaultValue:
-                    "Everyone in the session can change the passage.",
-                })}
-          </p>
+          </SettingRow>
 
-          <div className="sb-session-settings-row">
-            <label
-              className="sb-session-settings-label"
-              htmlFor="sb-session-only-host-highlight"
-            >
-              {t("session-settings-host-only_highlight", {
-                defaultValue: "Only host can highlight",
-              })}
-            </label>
-            <input
-              id="sb-session-only-host-highlight"
-              type="checkbox"
+          <SettingRow
+            label={t("session-settings-host-only_highlight", {
+              defaultValue: "Only host can highlight",
+            })}
+            description={
+              onlyHostHighlight
+                ? t("session-settings-highlight-desc_host", {
+                    defaultValue: "Only the host can highlight for everyone.",
+                  })
+                : t("session-settings-highlight-desc_all", {
+                    defaultValue: "Everyone in the session can highlight.",
+                  })
+            }
+          >
+            <Switch
               checked={onlyHostHighlight}
               disabled={!isHost}
-              onChange={(event: Event) => {
-                setDecoratorsOnlyHost(
-                  (event.currentTarget as HTMLInputElement).checked
-                );
+              onToggled={(checked) => {
+                setDecoratorsOnlyHost(checked);
               }}
             />
-          </div>
-          <p className="sb-session-settings-description">
-            {onlyHostHighlight
-              ? t("session-settings-highlight-desc_host", {
-                  defaultValue: "Only the host can highlight for everyone.",
-                })
-              : t("session-settings-highlight-desc_all", {
-                  defaultValue: "Everyone in the session can highlight.",
-                })}
-          </p>
+          </SettingRow>
 
           <div className="sb-session-settings-duration">
             <div className="sb-session-settings-duration-title">
@@ -462,41 +462,106 @@ function SessionSettingsModalContent(props: {
 
         <div className="sb-session-settings-section">
           <div className="sb-session-settings-section-title">
+            {t("session-settings-viewing-areas", {
+              defaultValue: "Viewing areas",
+            })}
+          </div>
+
+          <div
+            className="sb-session-settings-duration-options"
+            role="group"
+            aria-label={t("session-settings-viewing-areas", {
+              defaultValue: "Viewing areas",
+            })}
+          >
+            {(
+              [
+                {
+                  value: "auto",
+                  label: t("session-settings-viewing-areas-auto", {
+                    defaultValue: "Automatic",
+                  }),
+                },
+                {
+                  value: "everyone",
+                  label: t("session-settings-viewing-areas-everyone", {
+                    defaultValue: "Everyone",
+                  }),
+                },
+                {
+                  value: "hosts-only",
+                  label: t("session-settings-viewing-areas-hosts-only", {
+                    defaultValue: "Hosts only",
+                  }),
+                },
+              ] as const
+            ).map((option) => {
+              const selected = viewingAreaVisibility === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`sb-session-settings-duration-option${
+                    selected
+                      ? " sb-session-settings-duration-option-selected"
+                      : ""
+                  }`}
+                  aria-pressed={selected}
+                  disabled={!isHost}
+                  onClick={() => setViewingAreaVisibility(option.value)}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="sb-session-settings-description">
+            {viewingAreaVisibility === "everyone"
+              ? t("session-settings-viewing-areas-desc-everyone", {
+                  defaultValue:
+                    "Show where everyone is reading. Each person can still hide the other bars on their own screen.",
+                })
+              : viewingAreaVisibility === "hosts-only"
+                ? t("session-settings-viewing-areas-desc-hosts", {
+                    defaultValue: "Show where the hosts are reading.",
+                  })
+                : t("session-settings-viewing-areas-desc-auto", {
+                    count: VIEWING_AREA_HOSTS_ONLY_MIN_USERS,
+                    defaultValue:
+                      "Show everyone's place when fewer than {{count}} people are here, and only hosts when there are {{count}} or more.",
+                  })}
+          </p>
+        </div>
+
+        <div className="sb-session-settings-section">
+          <div className="sb-session-settings-section-title">
             {t("session-settings-section-sharing", { defaultValue: "Sharing" })}
           </div>
 
-          <div className="sb-session-settings-row">
-            <label
-              className="sb-session-settings-label"
-              htmlFor="sb-session-share-translation"
-            >
-              {t("session-settings-share-translation", {
-                defaultValue: "Share translation",
-              })}
-            </label>
-            <input
-              id="sb-session-share-translation"
-              type="checkbox"
+          <SettingRow
+            label={t("session-settings-share-translation", {
+              defaultValue: "Share translation",
+            })}
+            description={
+              shareTranslation
+                ? t("session-settings-share-translation-desc_shared", {
+                    defaultValue:
+                      "Everyone reads the same translation. Changing it updates it for everyone.",
+                  })
+                : t("session-settings-share-translation-desc_unique", {
+                    defaultValue:
+                      "Each person keeps their own translation. Changing yours won't affect others.",
+                  })
+            }
+          >
+            <Switch
               checked={shareTranslation}
               disabled={!isHost}
-              onChange={(event: Event) => {
-                setShareTranslation(
-                  (event.currentTarget as HTMLInputElement).checked
-                );
+              onToggled={(checked) => {
+                setShareTranslation(checked);
               }}
             />
-          </div>
-          <p className="sb-session-settings-description">
-            {shareTranslation
-              ? t("session-settings-share-translation-desc_shared", {
-                  defaultValue:
-                    "Everyone reads the same translation. Changing it updates it for everyone.",
-                })
-              : t("session-settings-share-translation-desc_unique", {
-                  defaultValue:
-                    "Each person keeps their own translation. Changing yours won't affect others.",
-                })}
-          </p>
+          </SettingRow>
         </div>
 
         {participants.length > 0 && (
@@ -514,6 +579,7 @@ function SessionSettingsModalContent(props: {
                 const isCoHost = role === "co-host";
                 const visual = getUserAnimalVisual(coHostKey);
                 const imageUrl = user.profile?.pictureUrl ?? null;
+                const location = getParticipantLocation(session, user);
                 return (
                   <li
                     key={user.connectionId}
@@ -539,18 +605,29 @@ function SessionSettingsModalContent(props: {
                       className="sb-session-participant-name"
                       title={getUserDisplayName(user)}
                     >
-                      {getUserDisplayName(user)}
-                      {isHostUser && (
+                      <ParticipantName
+                        state={state}
+                        userId={user.userId}
+                        displayName={getUserDisplayName(user)}
+                      />
+                      {role && (
                         <span className="sb-session-participant-badge">
-                          {t("host", { defaultValue: "Host" })}
+                          {sessionRoleLabel(role, t)}
                         </span>
                       )}
-                      {isCoHost && (
-                        <span className="sb-session-participant-badge">
-                          {t("co-host", { defaultValue: "Co-host" })}
+                      {location.isElsewhere && location.passage && (
+                        <span className="sb-session-participant-location">
+                          {location.passage}
                         </span>
                       )}
                     </span>
+                    {isHost &&
+                      location.isElsewhere &&
+                      !isHostUser &&
+                      !isCoHost &&
+                      !user.isSelf && (
+                        <AskToComeBackButton session={session} user={user} />
+                      )}
                     {friendButtonRows.has(user.connectionId) && (
                       <ParticipantFriendButton
                         state={state}
@@ -559,9 +636,10 @@ function SessionSettingsModalContent(props: {
                       />
                     )}
                     {isHost && !isHostUser && (
-                      <button
-                        type="button"
-                        className={`sb-session-participant-action${isCoHost ? " sb-session-participant-action-active" : ""}`}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="sb-session-participant-action"
                         onClick={() => setCoHost(coHostKey, !isCoHost)}
                       >
                         {isCoHost
@@ -569,7 +647,7 @@ function SessionSettingsModalContent(props: {
                               defaultValue: "Remove co-host",
                             })
                           : t("make-co-host", { defaultValue: "Make co-host" })}
-                      </button>
+                      </Button>
                     )}
                   </li>
                 );
@@ -580,8 +658,9 @@ function SessionSettingsModalContent(props: {
       </div>
 
       <div className="sb-session-settings-actions">
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          tone="danger"
           className="sb-session-settings-end"
           onClick={() => {
             onEndSession();
@@ -589,14 +668,14 @@ function SessionSettingsModalContent(props: {
           }}
         >
           {t("end-session", { defaultValue: "End Session" })}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="secondary"
           className="sb-session-settings-cancel"
           onClick={onClose}
         >
           {t("close", { defaultValue: "Close" })}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -650,10 +729,7 @@ function SessionCloseConfirmModalContent(props: {
 
   const options = session.options.value;
   const candidates = session.connectedUsers.value.filter(
-    (user) =>
-      !user.isSelf &&
-      !isSessionHost(options, user.userId) &&
-      !isSessionHost(options, user.connectionId)
+    (user) => !user.isSelf && !isConnectedUserHost(options, user)
   );
 
   return (
@@ -688,42 +764,37 @@ function SessionCloseConfirmModalContent(props: {
       ) : (
         <>
           {candidates.length > 0 && (
-            <label className="sb-session-close-confirm-dontshow">
-              <input
-                type="checkbox"
-                checked={dontShowAgain.value}
-                onChange={(event: Event) => {
-                  dontShowAgain.value = (
-                    event.currentTarget as HTMLInputElement
-                  ).checked;
-                }}
-              />
-              <span>
-                {t("dont-show-again", {
-                  defaultValue: "Don't show this again",
-                })}
-              </span>
-            </label>
+            <Checkbox
+              className="sb-session-close-confirm-dontshow"
+              label={t("dont-show-again", {
+                defaultValue: "Don't show this again",
+              })}
+              checked={dontShowAgain.value}
+              onToggled={(checked) => {
+                dontShowAgain.value = checked;
+              }}
+            />
           )}
           <div className="sb-session-close-confirm-actions">
             {candidates.length > 0 && (
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 className="sb-session-settings-cancel"
                 onClick={() => {
                   showCoHostPicker.value = true;
                 }}
               >
                 {t("appoint-co-host", { defaultValue: "Appoint a co-host" })}
-              </button>
+              </Button>
             )}
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              tone="danger"
               className="sb-session-settings-end"
               onClick={endForEveryone}
             >
               {t("end-session-for-everyone", { defaultValue: "End session" })}
-            </button>
+            </Button>
           </div>
         </>
       )}
@@ -859,6 +930,7 @@ export function TabsHeader(props: TabsHeaderProps) {
     panelsEnabled,
     paneLayout,
     isLayoutMenuOpen,
+    layoutMenuHeldByTour,
     toggleLayoutMenu,
     closeLayoutMenu,
     setLayout,
@@ -869,38 +941,23 @@ export function TabsHeader(props: TabsHeaderProps) {
   const activeLogoUrl = customizations.activeCustomization.value?.logoUrl;
   const { t } = useI18n();
   const layoutAnchorRef = useRef<HTMLDivElement | null>(null);
-
-  // Close the pane-layout menu when clicking anywhere outside its anchor.
-  useEffect(() => {
-    if (!isLayoutMenuOpen) return;
-    const handlePointerDown = (event: PointerEvent) => {
-      const anchor = layoutAnchorRef.current;
-      if (anchor && !anchor.contains(event.target as Node)) {
-        closeLayoutMenu();
-      }
-    };
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isLayoutMenuOpen, closeLayoutMenu]);
+  const layoutTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const layoutMenuId = useId();
 
   return (
     <div className="sb-sidebar-top-row">
       <div className="sb-sidebar-top-start">
-        <button
+        <IconButton
           onClick={sidebar.toggleSidebarCollapsed}
           className="sb-sidebar-collapse-button"
-          aria-label={
-            effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"
+          label={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          icon={
+            // Mirrored in RTL, where the sidebar is on the right.
+            <span className="material-symbols-outlined rtl-mirror">
+              {effectivelyCollapsed ? "left_panel_open" : "left_panel_close"}
+            </span>
           }
-          title={effectivelyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {/* Mirrored in RTL, where the sidebar is on the right. */}
-          <span className="material-symbols-outlined rtl-mirror">
-            {effectivelyCollapsed ? "left_panel_open" : "left_panel_close"}
-          </span>
-        </button>
+        />
 
         {activeLogoUrl ? (
           <span
@@ -930,19 +987,35 @@ export function TabsHeader(props: TabsHeaderProps) {
       <div className="sb-sidebar-top-actions">
         {panelsEnabled && !effectivelyCollapsed && (
           <div className="sb-pane-layout-anchor" ref={layoutAnchorRef}>
-            <button
+            <IconButton
+              buttonRef={layoutTriggerRef}
               onClick={toggleLayoutMenu}
+              aria-haspopup="dialog"
+              aria-expanded={isLayoutMenuOpen}
+              aria-controls={isLayoutMenuOpen ? layoutMenuId : undefined}
               className="sb-sidebar-top-icon-button"
-              aria-label={t("select-pane-layout", {
+              icon="dashboard"
+              label={t("select-pane-layout", {
                 defaultValue: "Select pane layout",
               })}
-              title={t("pane-layout", { defaultValue: "Pane layout" })}
-            >
-              <span className="material-symbols-outlined">dashboard</span>
-            </button>
+            />
 
-            {isLayoutMenuOpen && (
-              <div className="sb-pane-layout-menu">
+            <Popover
+              id={layoutMenuId}
+              open={isLayoutMenuOpen}
+              onClose={closeLayoutMenu}
+              // While the tour holds it open the tip has the keyboard: the
+              // picker neither takes focus from it nor answers its keys.
+              initialFocus={layoutMenuHeldByTour ? false : undefined}
+              dismissible={!layoutMenuHeldByTour}
+              anchorRef={layoutAnchorRef}
+              returnFocusRef={layoutTriggerRef}
+              role="dialog"
+              aria-label={t("panels", { defaultValue: "Panels" })}
+              className="sb-pane-layout-menu"
+              gap={8}
+            >
+              <div>
                 <div className="sb-pane-layout-menu-title">
                   {t("panels", { defaultValue: "Panels" })}
                 </div>
@@ -954,23 +1027,25 @@ export function TabsHeader(props: TabsHeaderProps) {
                   }}
                 >
                   {TAB_SLOT_LAYOUT_OPTIONS.map((layout) => (
-                    <button
-                      key={layout.id}
-                      onClick={() => setLayout(layout.id)}
-                      className={`sb-pane-layout-option${
-                        paneLayout === layout.id
-                          ? " sb-pane-layout-option-selected"
-                          : ""
-                      }`}
-                      aria-label={layout.label}
-                      title={layout.label}
-                    >
-                      {renderLayoutPreview(layout.id)}
-                    </button>
+                    <TooltipTrigger key={layout.id}>
+                      <button
+                        onClick={() => setLayout(layout.id)}
+                        className={`sb-pane-layout-option${
+                          paneLayout === layout.id
+                            ? " sb-pane-layout-option-selected"
+                            : ""
+                        }`}
+                        role="radio"
+                        aria-checked={paneLayout === layout.id}
+                        aria-label={layout.label}
+                      >
+                        {renderLayoutPreview(layout.id)}
+                      </button>
+                    </TooltipTrigger>
                   ))}
                 </div>
               </div>
-            )}
+            </Popover>
           </div>
         )}
 
@@ -980,20 +1055,26 @@ export function TabsHeader(props: TabsHeaderProps) {
               closeContextMenus();
             }}
             buttonClassName="sb-sidebar-top-icon-button"
-            aria-label={t("more", { defaultValue: "More" })}
-            title={t("more", { defaultValue: "More" })}
+            size="md"
+            label={t("more", { defaultValue: "More" })}
           >
             <ContextMenuItem
               onClick={() => {
                 openShareSheetForCurrentTab(state);
               }}
             >
-              <MaterialIcon
+              <CustomizableIcon
+                id="share"
+                size={18}
                 className="sb-context-menu-item-icon"
-                aria-hidden="true"
               >
-                share
-              </MaterialIcon>
+                <MaterialIcon
+                  className="sb-context-menu-item-icon"
+                  aria-hidden="true"
+                >
+                  share
+                </MaterialIcon>
+              </CustomizableIcon>
               <span>
                 {t("share", {
                   defaultValue: "Share",
@@ -1039,10 +1120,7 @@ export function TabsHeader(props: TabsHeaderProps) {
                   })}
                 </span>
               </span>
-              <span
-                className={`sb-pill-toggle${isAwake ? " is-on" : ""}`}
-                aria-hidden="true"
-              />
+              <SwitchIndicator on={isAwake} />
             </ContextMenuItem>
             {/* <ContextMenuItem
               onClick={() => {
@@ -1057,14 +1135,11 @@ export function TabsHeader(props: TabsHeaderProps) {
         )}
       </div>
 
-      <button
-        onClick={sidebar.closeSidebar}
+      <CloseButton
         className="sb-sidebar-close-button"
-        aria-label={t("close-sidebar", { defaultValue: "Close sidebar" })}
-        title={t("close-sidebar", { defaultValue: "Close sidebar" })}
-      >
-        <span className="material-symbols-outlined">close</span>
-      </button>
+        label={t("close-sidebar", { defaultValue: "Close sidebar" })}
+        onClose={sidebar.closeSidebar}
+      />
     </div>
   );
 }
@@ -1078,14 +1153,10 @@ export function Settings(props: SettingsProps) {
     <div className="sb-sidebar-settings-view">
       <div className="sb-sidebar-tabs-header">
         <h3 className="sb-sidebar-tabs-title">{t("settings")}</h3>
-        <button
-          onClick={sidebar.closeSettings}
-          className="sb-sidebar-tabs-header-icon-button"
-          aria-label={t("close-settings", { defaultValue: "Close Settings" })}
-          title={t("close-settings", { defaultValue: "Close Settings" })}
-        >
-          <span className="material-symbols-outlined">close</span>
-        </button>
+        <CloseButton
+          label={t("close-settings", { defaultValue: "Close Settings" })}
+          onClose={sidebar.closeSettings}
+        />
       </div>
 
       <div className="sb-sidebar-settings-content">
@@ -1220,6 +1291,10 @@ function TabRow(props: TabRowProps) {
   const title = tab.readingState.title.value;
   const isPlayingAudio = isTabPlayingAudio(state, tab);
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
+  const hasSessionUsers = !!tab.sharedSession && connectedUsers.length > 0;
+  // Phones have their own participants sheet in the reader header, so the
+  // drawer's tabs keep just the avatar row.
+  const showsTabParticipants = hasSessionUsers && !app.isMobile.value;
   // Fills the star, and decides whether pressing it files or edits.
   const isChapterSaved = saves.isLocationSaved(
     tab.readingState.translationId.value,
@@ -1237,7 +1312,11 @@ function TabRow(props: TabRowProps) {
   };
 
   return (
-    <div className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}`}>
+    <div
+      className={`sb-tab-row${isSelected ? " sb-tab-row-selected" : ""}${
+        hasSessionUsers ? " sb-tab-row-session" : ""
+      }`}
+    >
       <button
         onClick={() => {
           closeContextMenus();
@@ -1281,58 +1360,57 @@ function TabRow(props: TabRowProps) {
           )}
         </div>
 
-        {tab.sharedSession && connectedUsers.length > 0 && (
-          <div className="sb-tab-users-section">
-            <div className="sb-tab-users-list">
-              {(() => {
-                const sessionOptions = tab.sharedSession.options.value;
-                // Host first, then co-hosts, then everyone else — Array.sort
-                // is stable so peers keep their existing order within a rank.
-                const sortedUsers = [...connectedUsers].sort(
-                  (a, b) =>
-                    sessionRoleRank(getUserSessionRole(sessionOptions, a)) -
-                    sessionRoleRank(getUserSessionRole(sessionOptions, b))
-                );
-                return sortedUsers.map((user) => {
-                  const role = getUserSessionRole(sessionOptions, user);
-                  const roleLabel =
-                    role === "host"
-                      ? t("host", { defaultValue: "Host" })
-                      : role === "co-host"
-                        ? t("co-host", { defaultValue: "Co-host" })
-                        : undefined;
-                  return (
-                    <SessionUserAvatar
-                      key={user.connectionId}
-                      user={user}
-                      role={role}
-                      roleLabel={roleLabel}
-                    />
+        {tab.sharedSession &&
+          hasSessionUsers &&
+          !(showsTabParticipants && isTabParticipantsListExpanded.value) && (
+            <div className="sb-tab-users-section">
+              <div className="sb-tab-users-list">
+                {(() => {
+                  const session = tab.sharedSession;
+                  const sessionOptions = session.options.value;
+                  const sortedUsers = sortUsersByRole(
+                    connectedUsers,
+                    sessionOptions
                   );
-                });
-              })()}
+                  return sortedUsers.map((user) => {
+                    const role = getUserSessionRole(sessionOptions, user);
+                    const roleLabel = sessionRoleLabel(role, t);
+                    const location = getParticipantLocation(session, user);
+                    return (
+                      <SessionUserAvatar
+                        key={user.connectionId}
+                        user={user}
+                        role={role}
+                        roleLabel={roleLabel}
+                        elsewherePassage={
+                          location.isElsewhere
+                            ? (location.passage ?? undefined)
+                            : undefined
+                        }
+                      />
+                    );
+                  });
+                })()}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </button>
 
       {isSelected && !tab.sharedSession && (
-        <button
-          type="button"
+        <IconButton
+          size="sm"
           className={`sb-tab-save-button${
             isChapterSaved ? " sb-tab-save-button-saved" : ""
           }`}
-          aria-label={saveChapterLabel(t, isChapterSaved)}
-          title={saveChapterLabel(t, isChapterSaved)}
+          icon={<SaveStarIcon isSaved={isChapterSaved} size={18} />}
+          label={saveChapterLabel(t, isChapterSaved)}
           onClick={(event: MouseEvent) => {
             event.stopPropagation();
             closeContextMenus();
             closeLayoutMenu();
             handleSaveAction();
           }}
-        >
-          <SaveStarIcon isSaved={isChapterSaved} size={18} />
-        </button>
+        />
       )}
 
       <ContextMenuWithButton
@@ -1342,9 +1420,7 @@ function TabRow(props: TabRowProps) {
         anchorClassName="sb-tab-menu-anchor"
         buttonClassName="sb-tab-menu-button"
         menuClassName="sb-tab-menu"
-        iconClassName="sb-tab-more-icon"
-        aria-label={t("open-tab-menu", { defaultValue: "Open tab menu" })}
-        title={t("tab-options", { defaultValue: "Tab options" })}
+        label={t("open-tab-menu", { defaultValue: "Open tab menu" })}
       >
         {tab.sharedSession && (
           <>
@@ -1473,6 +1549,12 @@ function TabRow(props: TabRowProps) {
           <span>{t("close", { defaultValue: "Close" })}</span>
         </ContextMenuItem>
       </ContextMenuWithButton>
+
+      {/* Outside the tab button: the list holds buttons of its own, which
+          can't sit inside another button. */}
+      {showsTabParticipants && tab.sharedSession && (
+        <TabSessionParticipants state={state} session={tab.sharedSession} />
+      )}
     </div>
   );
 }
@@ -1588,6 +1670,9 @@ function SaveCategoryPickerContent(props: {
     const nextSelection = [...selectedCategories.value];
     if (nextSelection.length === 0) return;
 
+    const failureMessage = t("save-failed", {
+      defaultValue: "Couldn't save. Please try again.",
+    });
     isSaving.value = true;
     try {
       // New staged folder names are created as part of addSave /
@@ -1597,7 +1682,7 @@ function SaveCategoryPickerContent(props: {
         if (!saveId) return;
         await saves.setSaveCategories(saveId, nextSelection);
       } else {
-        await saves.addSave(
+        const saved = await saves.addSave(
           location.translationId,
           location.bookId,
           location.chapterNumber,
@@ -1606,8 +1691,17 @@ function SaveCategoryPickerContent(props: {
             ...(location.verse !== undefined ? { verse: location.verse } : {}),
           }
         );
+        // Declining to sign in is the user's own choice, not a failure to
+        // report; the window just closes as it always has.
+        if (!saved && state.login.userId.value) {
+          state.app.toast(failureMessage);
+          return;
+        }
       }
       onClose();
+    } catch (error) {
+      console.warn("Failed to save:", error);
+      state.app.toast(failureMessage);
     } finally {
       isSaving.value = false;
     }
@@ -1669,16 +1763,17 @@ function SaveCategoryPickerContent(props: {
 
           {isAddingNew.value ? (
             <div className="sb-save-picker-new-row">
-              <input
+              <TextInput
                 autoFocus
-                className="sb-save-picker-new-input"
+                aria-label={t("new-folder-placeholder", {
+                  defaultValue: "New folder name",
+                })}
                 placeholder={t("new-folder-placeholder", {
                   defaultValue: "New folder name",
                 })}
                 value={newCategoryName.value}
-                onInput={(event: Event) => {
-                  const target = event.target as HTMLInputElement;
-                  newCategoryName.value = target.value;
+                onValueInput={(name) => {
+                  newCategoryName.value = name;
                 }}
                 onKeyDown={(event: KeyboardEvent) => {
                   if (event.key === "Enter") {
@@ -1726,8 +1821,9 @@ function SaveCategoryPickerContent(props: {
 
       <div className="sb-save-picker-actions">
         {isEdit && saveId && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            tone="danger"
             className="sb-save-picker-remove"
             disabled={isSaving.value}
             onClick={() => {
@@ -1737,11 +1833,11 @@ function SaveCategoryPickerContent(props: {
             {t("remove-save-from-all-folders", {
               defaultValue: "Remove from all folders",
             })}
-          </button>
+          </Button>
         )}
         {isAddingNew.value && (
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             className="sb-save-picker-stage-folder"
             disabled={!canStageNew}
             onClick={() => {
@@ -1749,12 +1845,13 @@ function SaveCategoryPickerContent(props: {
             }}
           >
             {t("create-folder", { defaultValue: "Create folder" })}
-          </button>
+          </Button>
         )}
-        <button
-          type="button"
+        <Button
+          variant="primary"
           className="sb-save-picker-save"
           disabled={!canSave}
+          loading={isSaving.value}
           onClick={() => {
             void handleSave();
           }}
@@ -1762,7 +1859,7 @@ function SaveCategoryPickerContent(props: {
           {isSaving.value
             ? t("saving", { defaultValue: "Saving…" })
             : t("save", { defaultValue: "Save" })}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -1990,13 +2087,16 @@ function SavesSection(props: SavesSectionProps) {
                   <SaveStarIcon isSaved size={16} />
                 </span>
                 {isRenaming ? (
-                  <input
+                  <TextInput
+                    size="sm"
                     className="sb-save-category-rename-input"
                     autoFocus
+                    aria-label={t("new-folder-placeholder", {
+                      defaultValue: "Folder name",
+                    })}
                     value={renameValue.value}
-                    onInput={(event: Event) => {
-                      const target = event.target as HTMLInputElement;
-                      renameValue.value = target.value;
+                    onValueInput={(name) => {
+                      renameValue.value = name;
                     }}
                     onKeyDown={(event: KeyboardEvent) => {
                       if (event.key === "Enter") {
@@ -2028,11 +2128,7 @@ function SavesSection(props: SavesSectionProps) {
                 anchorClassName="sb-save-category-menu-anchor"
                 buttonClassName="sb-save-category-menu-button"
                 menuClassName="sb-tab-menu"
-                iconClassName="sb-tab-more-icon"
-                aria-label={t("category-options", {
-                  defaultValue: "Folder options",
-                })}
-                title={t("category-options", {
+                label={t("category-options", {
                   defaultValue: "Folder options",
                 })}
               >
@@ -2074,11 +2170,11 @@ function SavesSection(props: SavesSectionProps) {
             {isExpanded && (
               <div className="sb-save-category-items">
                 {items.length === 0 ? (
-                  <div className="sb-save-category-empty">
+                  <EmptyState className="sb-save-category-empty">
                     {t("save-folder-empty", {
                       defaultValue: "No saves here yet.",
                     })}
-                  </div>
+                  </EmptyState>
                 ) : (
                   items.map((save) => {
                     // Saves are pure links — they always render as a
@@ -2128,11 +2224,7 @@ function SavesSection(props: SavesSectionProps) {
                           anchorClassName="sb-tab-menu-anchor"
                           buttonClassName="sb-tab-menu-button"
                           menuClassName="sb-tab-menu"
-                          iconClassName="sb-tab-more-icon"
-                          aria-label={t("save-options", {
-                            defaultValue: "Save options",
-                          })}
-                          title={t("save-options", {
+                          label={t("save-options", {
                             defaultValue: "Save options",
                           })}
                         >
@@ -2245,17 +2337,13 @@ function MobileScreen(props: {
   return (
     <div className="sb-mobile-screen">
       <div className="sb-mobile-screen-header">
-        <button
-          type="button"
+        <IconButton
+          size="lg"
           className="sb-mobile-screen-header-button"
+          icon={isClose ? "close" : "arrow_back"}
+          label={closeLabel}
           onClick={onClose}
-          aria-label={closeLabel}
-          title={closeLabel}
-        >
-          <span className="material-symbols-outlined">
-            {isClose ? "close" : "arrow_back"}
-          </span>
-        </button>
+        />
         <h2 className="sb-mobile-screen-title">{title}</h2>
         {actions}
       </div>
@@ -2277,9 +2365,6 @@ export function Tabs(props: TabsProps) {
   const isBookmarksPanelOpen = bookmarks.isPanelOpen.value;
   const { t } = useI18n();
 
-  const bookmarksToggleLabel = isBookmarksPanelOpen
-    ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
-    : t("show-bookmarks", { defaultValue: "Show bookmarks" });
   // The toggle draws the same stack as the reader's button, but for all of
   // the user's bookmarks: most recently moved in front, at most three shown.
   // Like the saves star beside it, it is an outline while off and filled in
@@ -2310,82 +2395,76 @@ export function Tabs(props: TabsProps) {
               : fullTitle;
 
           return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                closeContextMenus();
-                closeLayoutMenu();
-                app.selectTab(tab.id);
-              }}
-              className={`sb-collapsed-tab-tile${
-                isSelected ? " sb-collapsed-tab-tile-selected" : ""
-              }`}
-              aria-label={
-                isPlayingAudio
-                  ? t("collapsed-tab-playing-label", {
-                      label,
-                      defaultValue: "{{label}} — playing audio",
-                    })
-                  : label
-              }
-              title={fullTitle}
-            >
-              <span className="sb-collapsed-tab-title">{shortTitle}</span>
-              {isPlayingAudio && (
-                <MaterialIcon
-                  className="sb-collapsed-tab-audio-icon"
-                  aria-hidden="true"
-                >
-                  volume_up
-                </MaterialIcon>
-              )}
-              {session &&
-                sessionUsers.length > 0 &&
-                (() => {
-                  const options = session.options.value;
-                  const sorted = [...sessionUsers].sort(
-                    (a, b) =>
-                      sessionRoleRank(getUserSessionRole(options, a)) -
-                      sessionRoleRank(getUserSessionRole(options, b))
-                  );
-                  const shown = sorted.slice(0, 3);
-                  const extra = sorted.length - shown.length;
-                  return (
-                    <span
-                      className="sb-collapsed-tab-presence"
-                      aria-hidden="true"
-                    >
-                      {shown.map((user) => {
-                        const role = getUserSessionRole(options, user);
-                        return (
-                          <span
-                            key={user.connectionId}
-                            className={`sb-collapsed-tab-presence-dot${role ? ` sb-collapsed-tab-presence-dot-${role === "co-host" ? "cohost" : "host"}` : ""}`}
-                            style={{ backgroundColor: user.visual.color }}
-                          />
-                        );
-                      })}
-                      {extra > 0 && (
-                        <span className="sb-collapsed-tab-presence-more">
-                          +{extra}
-                        </span>
-                      )}
-                    </span>
-                  );
-                })()}
-            </button>
+            <TooltipTrigger key={tab.id} label={fullTitle}>
+              <button
+                onClick={() => {
+                  closeContextMenus();
+                  closeLayoutMenu();
+                  app.selectTab(tab.id);
+                }}
+                className={`sb-collapsed-tab-tile${
+                  isSelected ? " sb-collapsed-tab-tile-selected" : ""
+                }`}
+                aria-label={
+                  isPlayingAudio
+                    ? t("collapsed-tab-playing-label", {
+                        label,
+                        defaultValue: "{{label}} — playing audio",
+                      })
+                    : label
+                }
+              >
+                <span className="sb-collapsed-tab-title">{shortTitle}</span>
+                {isPlayingAudio && (
+                  <MaterialIcon
+                    className="sb-collapsed-tab-audio-icon"
+                    aria-hidden="true"
+                  >
+                    volume_up
+                  </MaterialIcon>
+                )}
+                {session &&
+                  sessionUsers.length > 0 &&
+                  (() => {
+                    const options = session.options.value;
+                    const sorted = sortUsersByRole(sessionUsers, options);
+                    const shown = sorted.slice(0, 3);
+                    const extra = sorted.length - shown.length;
+                    return (
+                      <span
+                        className="sb-collapsed-tab-presence"
+                        aria-hidden="true"
+                      >
+                        {shown.map((user) => {
+                          const role = getUserSessionRole(options, user);
+                          return (
+                            <span
+                              key={user.connectionId}
+                              className={`sb-collapsed-tab-presence-dot${role ? ` sb-collapsed-tab-presence-dot-${role === "co-host" ? "cohost" : "host"}` : ""}`}
+                              style={{ backgroundColor: user.visual.color }}
+                            />
+                          );
+                        })}
+                        {extra > 0 && (
+                          <span className="sb-collapsed-tab-presence-more">
+                            +{extra}
+                          </span>
+                        )}
+                      </span>
+                    );
+                  })()}
+              </button>
+            </TooltipTrigger>
           );
         })}
-        <button
+        <IconButton
           onClick={() => {
             app.addTab();
           }}
           className="sb-tab-add-button sb-collapsed-tab-add-button"
-          aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
-          title={t("new-tab", { defaultValue: "New tab" })}
-        >
-          <span className="material-symbols-outlined">add</span>
-        </button>
+          icon="add"
+          label={t("create-new-tab", { defaultValue: "Create new tab" })}
+        />
       </div>
     );
   }
@@ -2447,17 +2526,13 @@ export function Tabs(props: TabsProps) {
           }
         }}
         actions={
-          <button
-            type="button"
+          <IconButton
+            size="lg"
             className="sb-mobile-screen-header-button"
+            icon="create_new_folder"
+            label={t("new-save-folder", { defaultValue: "New folder" })}
             onClick={createNewCategory}
-            aria-label={t("new-save-folder", {
-              defaultValue: "New folder",
-            })}
-            title={t("new-save-folder", { defaultValue: "New folder" })}
-          >
-            <span className="material-symbols-outlined">create_new_folder</span>
-          </button>
+          />
         }
       >
         <SavesSection state={state} closeLayoutMenu={closeLayoutMenu} />
@@ -2508,71 +2583,59 @@ export function Tabs(props: TabsProps) {
         }}
         actions={
           <>
-            <button
-              type="button"
+            <IconButton
+              size="lg"
               className="sb-mobile-screen-header-button sb-sidebar-tabs-header-bookmarks-button"
-              aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
-              aria-pressed={isBookmarksPanelOpen}
-              title={bookmarksToggleLabel}
+              icon={
+                <BookmarkStackIcon
+                  bookmarks={allBookmarks}
+                  size={24}
+                  paint={isBookmarksPanelOpen ? "current" : "outline"}
+                />
+              }
+              label={t("bookmarks", { defaultValue: "Bookmarks" })}
+              pressed={isBookmarksPanelOpen}
               onClick={() => {
                 // Opened from the Tabs header, so it gets a Back arrow.
                 bookmarks.openedFromToolbar.value = false;
                 bookmarks.togglePanel();
               }}
-            >
-              <BookmarkStackIcon
-                bookmarks={allBookmarks}
-                size={24}
-                paint={isBookmarksPanelOpen ? "current" : "outline"}
-              />
-            </button>
-            <button
-              type="button"
+            />
+            <IconButton
+              size="lg"
               className="sb-mobile-screen-header-button sb-sidebar-tabs-header-saves-button"
-              aria-label={t("saves", { defaultValue: "Saves" })}
-              aria-pressed={isSavesFilterActive}
-              title={
-                isSavesFilterActive
-                  ? t("hide-saves", { defaultValue: "Hide saves" })
-                  : t("show-saves", { defaultValue: "Show saves" })
-              }
+              icon={<SaveStarIcon isSaved={isSavesFilterActive} size={24} />}
+              label={t("saves", { defaultValue: "Saves" })}
+              pressed={isSavesFilterActive}
               onClick={() => {
                 // Opened from the Tabs header: backing out of the saves
                 // view should return here, so it gets a Back arrow (not an X).
                 saves.openedFromToolbar.value = false;
                 saves.toggleFilter();
               }}
-            >
-              <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
-            </button>
-            <button
-              type="button"
+            />
+            <IconButton
+              size="lg"
               className="sb-mobile-screen-header-button sb-sidebar-tabs-header-share-button"
-              aria-label={t("share", {
-                defaultValue: "Share",
-              })}
-              title={t("share", {
-                defaultValue: "Share",
-              })}
+              icon={
+                <CustomizableIcon id="share">
+                  <MaterialIcon aria-hidden="true">share</MaterialIcon>
+                </CustomizableIcon>
+              }
+              label={t("share", { defaultValue: "Share" })}
               onClick={() => {
                 openShareSheetForCurrentTab(state);
               }}
-            >
-              <MaterialIcon aria-hidden="true">share</MaterialIcon>
-            </button>
-            <button
-              type="button"
+            />
+            <IconButton
+              size="lg"
               className="sb-mobile-screen-header-button sb-tab-add-button"
+              icon="add"
+              label={t("create-new-tab", { defaultValue: "Create new tab" })}
               onClick={() => {
                 app.addTab();
               }}
-              aria-label={t("create-new-tab", {
-                defaultValue: "Create new tab",
-              })}
-              title={t("new-tab", { defaultValue: "New tab" })}
-            >
-              <span className="material-symbols-outlined">add</span>
-            </button>
+            />
           </>
         }
       >
@@ -2588,68 +2651,43 @@ export function Tabs(props: TabsProps) {
           {t("tabs", { defaultValue: "Tabs" })}
         </h3>
         <div className="sb-sidebar-tabs-header-actions">
-          <button
-            type="button"
-            className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
-              isBookmarksPanelOpen
-                ? " sb-sidebar-tabs-header-bookmarks-button-active"
-                : ""
-            }`}
-            aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
-            aria-pressed={isBookmarksPanelOpen}
-            title={bookmarksToggleLabel}
+          <IconButton
+            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button"
+            icon={
+              <BookmarkStackIcon
+                bookmarks={allBookmarks}
+                size={24}
+                paint={isBookmarksPanelOpen ? "current" : "outline"}
+              />
+            }
+            label={t("bookmarks", { defaultValue: "Bookmarks" })}
+            pressed={isBookmarksPanelOpen}
             onClick={() => {
               bookmarks.openedFromToolbar.value = false;
               bookmarks.togglePanel();
             }}
-          >
-            <BookmarkStackIcon
-              bookmarks={allBookmarks}
-              size={24}
-              paint={isBookmarksPanelOpen ? "current" : "outline"}
-            />
-          </button>
-          <button
-            type="button"
-            className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-saves-button${
-              isSavesFilterActive
-                ? " sb-sidebar-tabs-header-saves-button-active"
-                : ""
-            }`}
-            aria-label={t("saves", { defaultValue: "Saves" })}
-            aria-pressed={isSavesFilterActive}
-            title={
-              isSavesFilterActive
-                ? t("hide-saves", { defaultValue: "Hide saves" })
-                : t("show-saves", { defaultValue: "Show saves" })
-            }
+          />
+          <IconButton
+            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-saves-button"
+            icon={<SaveStarIcon isSaved={isSavesFilterActive} size={24} />}
+            label={t("saves", { defaultValue: "Saves" })}
+            pressed={isSavesFilterActive}
             onClick={() => {
               saves.toggleFilter();
             }}
-          >
-            <SaveStarIcon isSaved={isSavesFilterActive} size={24} />
-          </button>
-          <button
-            type="button"
-            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
-            onClick={state.sidebar.closeSidebar}
-            aria-label={t("close", { defaultValue: "Close" })}
-            title={t("close", { defaultValue: "Close" })}
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
-          <button
+          />
+          <CloseButton
+            className="sb-sidebar-tabs-header-close-button"
+            onClose={state.sidebar.closeSidebar}
+          />
+          <IconButton
             onClick={() => {
               app.addTab();
             }}
             className="sb-sidebar-tabs-header-icon-button sb-tab-add-button"
-            aria-label={t("create-new-tab", {
-              defaultValue: "Create new tab",
-            })}
-            title={t("new-tab", { defaultValue: "New tab" })}
-          >
-            <span className="material-symbols-outlined">add</span>
-          </button>
+            icon="add"
+            label={t("create-new-tab", { defaultValue: "Create new tab" })}
+          />
         </div>
       </div>
 
@@ -2737,17 +2775,15 @@ export function SharedSessionsToasts(props: { state: SeedBibleState }) {
                 </span>
               </div>
             </button>
-            <button
+            <CloseButton
               className="sb-shared-toast-dismiss"
-              aria-label={t("dismiss", { defaultValue: "Dismiss" })}
-              title={t("dismiss", { defaultValue: "Dismiss" })}
-              onClick={(event: Event) => {
+              size="sm"
+              label={t("dismiss", { defaultValue: "Dismiss" })}
+              onClose={(event) => {
                 event.stopPropagation();
                 invitations.dismissAvailableSession(entry);
               }}
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
+            />
           </div>
         );
       })}
@@ -2775,14 +2811,20 @@ export function SelfAvatarVisual(props: { state: SeedBibleState }) {
     connectionId: state.os.connectionId,
   });
   const visual = getUserAnimalVisual(visualKey);
-  const imageUrl = profile?.pictureUrl ?? null;
+  // The server can't see the session saved on this device, so it renders the
+  // signed-out icon. Keep rendering that until mount: Preact keeps the
+  // server's classes while hydrating, so a picture that loaded before then
+  // would sit in the signed-out icon's box — square, with no border — until
+  // the next reload.
+  const isMounted = login.isLocalConfigHydrated.value;
+  const imageUrl = isMounted ? (profile?.pictureUrl ?? null) : null;
 
   return (
     <Avatar
       imageUrl={imageUrl}
       visual={visual}
-      title={getSelfDisplayName(state, t)}
-      genericFallback={!isInMultiUserIdentityContext(state)}
+      title={getSelfDisplayNameAfterMount(state, t)}
+      genericFallback={!isInMultiUserIdentityContext(state, isMounted)}
     />
   );
 }
@@ -2792,14 +2834,37 @@ export function SelfAvatarVisual(props: { state: SeedBibleState }) {
  * them — a shared reading session, or a chat that includes another person
  * (including someone who is currently inactive). That's when the
  * animal+color fallback is needed to tell people apart.
+ *
+ * Chats only count once mounted: they load for the signed-in account, which
+ * the server never sees (see `SelfAvatarVisual`).
  */
-function isInMultiUserIdentityContext(state: SeedBibleState): boolean {
+function isInMultiUserIdentityContext(
+  state: SeedBibleState,
+  isMounted: boolean
+): boolean {
   const tabs = state.tabs?.tabs?.value;
   if (tabs?.some((tab) => tab.sharedSession != null)) {
     return true;
   }
+  if (!isMounted) {
+    return false;
+  }
   const chats = state.chats?.chats?.value;
   return chats?.some((chat) => chatHasOtherPeople(chat)) ?? false;
+}
+
+/**
+ * {@link getSelfDisplayName}, but signed-out until mount, for attributes the
+ * server renders: Preact keeps the server's attribute values while hydrating,
+ * so a name known earlier would leave a stale "Anonymous" in place.
+ */
+function getSelfDisplayNameAfterMount(
+  state: SeedBibleState,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  return state.login.isLocalConfigHydrated.value
+    ? getSelfDisplayName(state, t)
+    : t("anonymous", { defaultValue: "Anonymous" });
 }
 
 /** Display name for the current user — used as the avatar tooltip / aria-label. */
@@ -2825,25 +2890,26 @@ export function getSelfDisplayName(
 function SelfAvatarButton(props: { state: SeedBibleState }) {
   const { state } = props;
   const { t } = useI18n();
-  const displayName = getSelfDisplayName(state, t);
+  const displayName = getSelfDisplayNameAfterMount(state, t);
   const label = t("open-profile", { defaultValue: "Open profile" });
 
   return (
-    <button
-      className="sb-sidebar-self-avatar"
-      onClick={() => {
-        state.openProfile();
-      }}
-      aria-label={`${label} (${displayName})`}
-      title={displayName}
-    >
-      <SelfAvatarVisual state={state} />
-    </button>
+    <TooltipTrigger label={displayName}>
+      <button
+        className="sb-sidebar-self-avatar"
+        onClick={() => {
+          state.openProfile();
+        }}
+        aria-label={`${label} (${displayName})`}
+      >
+        <SelfAvatarVisual state={state} />
+      </button>
+    </TooltipTrigger>
   );
 }
 
-/** How long the sidebar's width transition runs; matches Tabs.css. */
-const SIDEBAR_RESIZE_MS = 250;
+/** How long the sidebar's width transition runs (the CSS uses the same token). */
+const SIDEBAR_RESIZE_MS = durationMs("--sb-duration-slow");
 
 export function Sidebar(props: SidebarProps) {
   const { state } = props;
@@ -2860,8 +2926,8 @@ export function Sidebar(props: SidebarProps) {
 
   // Only an expand or collapse the user asked for animates (see
   // `isUserResize`); the rest snap. While it animates the sidebar clips its
-  // contents (see Tabs.css), and only then: the pane-layout menu hangs out
-  // over the reader the rest of the time. A timer rather than
+  // contents (see Tabs.css), and only then, so nothing is cut off the rest of
+  // the time. A timer rather than
   // `transitionend`, which never fires when there's no transition (mobile,
   // reduced motion) and would leave it clipped. `animateToggle` covers the
   // render that flips it, so the very first frame is already clipped; an
@@ -2921,6 +2987,7 @@ export function Sidebar(props: SidebarProps) {
             panelsEnabled={panelsEnabled}
             paneLayout={paneLayout}
             isLayoutMenuOpen={isLayoutMenuOpen.value || tourWantsLayoutMenu}
+            layoutMenuHeldByTour={tourWantsLayoutMenu}
             toggleLayoutMenu={() => {
               closeContextMenus();
               const willOpen = !isLayoutMenuOpen.value;
@@ -2953,19 +3020,14 @@ export function Sidebar(props: SidebarProps) {
             effectivelyCollapsed ? " sb-sidebar-bottom-actions-collapsed" : ""
           }`}
         >
-          <button
+          <IconButton
             onClick={sidebar.toggleSettings}
             data-tutorial="settings"
-            className={`sb-sidebar-icon-button${
-              isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
-            }`}
-            aria-label={t("open-settings", {
-              defaultValue: "Open settings",
-            })}
-            title={t("settings", { defaultValue: "Settings" })}
-          >
-            <SettingsIcon />
-          </button>
+            className="sb-sidebar-icon-button"
+            icon={<SettingsIcon />}
+            label={t("settings", { defaultValue: "Settings" })}
+            pressed={isSettingsOpen}
+          />
           <SelfAvatarButton state={state} />
         </div>
       </aside>

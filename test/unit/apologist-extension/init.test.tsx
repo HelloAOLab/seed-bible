@@ -376,6 +376,23 @@ describe("initApologistExtension discover provider", () => {
       });
     });
 
+    it("treats a blank name in the link as unset", () => {
+      const overSaved = install(
+        "?apologistName=",
+        undefined,
+        signal({ name: "Saved Bot" })
+      );
+      expect(findChatProvider(overSaved).name).toBe("Saved Bot");
+      unregisterExtension("ext_Apologist");
+
+      const alone = install("?apologistName=%20%20");
+      expect(findChatProvider(alone).name).toEqual({
+        key: "title",
+        defaultValue: "Apologist",
+        ns: "ext_Apologist",
+      });
+    });
+
     it("uses the icon in the link, and the default icon when the link's value is blank", () => {
       const fromLink = install(
         "?apologistIconUrl=https%3A%2F%2Fexample.com%2Fbot.png"
@@ -408,7 +425,7 @@ describe("initApologistExtension discover provider", () => {
       expect(removedFromChats(context)).toEqual(["apologist-chat-provider"]);
     });
 
-    it("sends the saved model, the link's model over it, and the default with neither", async () => {
+    it("sends the saved model, the link's model over it, and no model with neither", async () => {
       fetchMock.mockImplementation(() => Promise.resolve(chatReply()));
 
       await sendChatMessage(
@@ -428,7 +445,7 @@ describe("initApologistExtension discover provider", () => {
       expect(sentModels()).toEqual([
         "anthropic/claude",
         "openai/gpt/5.4-nano",
-        "openai/gpt/5-mini",
+        undefined,
       ]);
     });
 
@@ -441,7 +458,23 @@ describe("initApologistExtension discover provider", () => {
       saved.value = { model: "anthropic/claude" };
       await sendChatMessage(context);
 
-      expect(sentModels()).toEqual(["openai/gpt/5-mini", "anthropic/claude"]);
+      expect(sentModels()).toEqual([undefined, "anthropic/claude"]);
+    });
+
+    it("treats a blank model in the link as unset", async () => {
+      fetchMock.mockImplementation(() => Promise.resolve(chatReply()));
+
+      await sendChatMessage(
+        install(
+          "?apologistModel=",
+          undefined,
+          signal({ model: "anthropic/claude" })
+        )
+      );
+      unregisterExtension("ext_Apologist");
+      await sendChatMessage(install("?apologistModel=%20"));
+
+      expect(sentModels()).toEqual(["anthropic/claude", undefined]);
     });
 
     it("regroups the open chapter's results when the saved content author changes", async () => {
@@ -974,6 +1007,21 @@ describe("initApologistExtension discover provider", () => {
     expect(init.headers).toEqual({ "x-api-key": "url_key" });
   });
 
+  it("uses the default domain when the link's domain is blank", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        'data: {"choices":[{"delta":{"content":"Hi"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n',
+        { status: 200 }
+      )
+    );
+    const context = install("?apologistDomain=&apologistApiKey=url_key");
+
+    await sendChatMessage(context);
+
+    const [url] = fetchMock.mock.calls[0]!;
+    expect(url).toBe("https://apologist.seedbible.io/api/v1/chat/completions");
+  });
+
   it.each(["not_set", "signed_out", "not_loaded"] as const)(
     "makes a regular request to the configured domain when the proxy reports %s",
     async (code) => {
@@ -1031,5 +1079,104 @@ describe("initApologistExtension discover provider", () => {
     await expect(
       findDiscoverProvider(context)!.discover(discoverContext)
     ).resolves.toEqual([]);
+  });
+});
+
+describe("Apologist content classification", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    unregisterExtension("ext_Apologist");
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  const request = {
+    content: {
+      url: "https://example.org/a",
+      title: "The Good Shepherd",
+      description: "",
+    },
+    categories: [{ id: "sermons", name: "Sermons" }],
+    knownPassages: [],
+    instructions: "Classify this.",
+    input: '{"title":"The Good Shepherd"}',
+  };
+
+  function installWithProxy(fetchWithSensitiveValues: Mock) {
+    const context = createFakeContext(
+      "",
+      fetchWithSensitiveValues,
+      signal({}),
+      // A Customization that configures the agent, as owners do today.
+      { model: "anthropic/claude" }
+    );
+    setupExtensionContext(context);
+    initApologistExtension();
+    return findChatProvider(context);
+  }
+
+  it("asks the agent through the Customization's saved key, and reads its JSON answer", async () => {
+    const fetchWithSensitiveValues = vi.fn(async () =>
+      Response.json({
+        choices: [
+          {
+            message: {
+              content:
+                '```json\n{"categoryIds":["sermons"],"passages":[{"reference":"John 10","confidence":0.9}]}\n```',
+            },
+          },
+        ],
+      })
+    );
+    const provider = installWithProxy(fetchWithSensitiveValues);
+
+    const result = await provider.classifyContent!(request);
+
+    expect(result).toEqual({
+      categoryIds: ["sermons"],
+      passages: [{ reference: "John 10", confidence: 0.9 }],
+    });
+    const [extensionId, sent] = fetchWithSensitiveValues.mock.calls[0]! as [
+      string,
+      { url: string; method: string; body: Record<string, unknown> },
+    ];
+    expect(extensionId).toBe("ext_Apologist");
+    expect(sent.url).toBe(
+      "https://apologist.seedbible.io/api/v1/chat/completions"
+    );
+    expect(sent.body).toMatchObject({
+      model: "anthropic/claude",
+      stream: false,
+      messages: [
+        { role: "developer", content: "Classify this." },
+        { role: "user", content: '{"title":"The Good Shepherd"}' },
+      ],
+    });
+  });
+
+  it("fails clearly when the agent refuses", async () => {
+    const provider = installWithProxy(
+      vi.fn(async () => new Response("over quota", { status: 429 }))
+    );
+    await expect(provider.classifyContent!(request)).rejects.toThrow(
+      "Apologist couldn't suggest categories (429): over quota"
+    );
+  });
+
+  it("fails clearly when the agent's answer has no suggestions in it", async () => {
+    const provider = installWithProxy(
+      vi.fn(async () =>
+        Response.json({
+          choices: [{ message: { content: "Sorry, I can't." } }],
+        })
+      )
+    );
+    await expect(provider.classifyContent!(request)).rejects.toThrow(
+      "The AI's answer wasn't JSON."
+    );
   });
 });

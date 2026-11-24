@@ -8,16 +8,9 @@
 
 .sb-photo-chooser-heading {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--sb-font-size-15);
   font-weight: 600;
 }
-
-.sb-photo-chooser-empty {
-  margin: 0;
-  font-size: 0.875rem;
-  color: color-mix(in srgb, var(--sb-font-color) 70%, transparent);
-}
-
 .sb-photo-gallery-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -29,7 +22,7 @@
   width: 100%;
   padding: 0;
   border: 2px solid transparent;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   overflow: hidden;
   background: var(--sb-divider-color);
   cursor: pointer;

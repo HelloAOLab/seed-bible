@@ -1,7 +1,12 @@
-import { useI18n } from "../../i18n";
+import { i18n, useI18n } from "../../i18n";
 import type { ModalManager } from "../../managers/ModalManager";
-import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
-import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import type {
+  FinishedPlaylist,
+  Playlist,
+  PlaylistManager,
+} from "../../managers/PlaylistManager";
+import type { AppState } from "../../managers/SeedBibleStateManager";
+import { openLinkShareModal } from "../ShareModal/openLinkShareModal";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
 import {
@@ -10,6 +15,7 @@ import {
 } from "../ContextMenu/ContextMenu";
 import { MaterialIcon } from "../icons";
 import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal";
+import { IconButton } from "../IconButton/IconButton";
 
 /**
  * One playlist in a `sb-discover-list`: title, description, a play button,
@@ -24,7 +30,7 @@ export function PlaylistRow(props: {
   playlist: Playlist;
   playlists: PlaylistManager;
   modals: ModalManager;
-  toast: SeedBibleState["app"]["toast"];
+  app: AppState;
   /**
    * Play and Edit each replace what is on screen — playback takes over, and
    * editing opens the Discover pane beside the reader. A caller showing this
@@ -38,32 +44,12 @@ export function PlaylistRow(props: {
   /** Someone else's playlist: Share stays, Edit and Delete don't. */
   readOnly?: boolean;
 }) {
-  const { playlist, playlists, modals, toast } = props;
+  const { playlist, playlists, modals, app } = props;
   const { t } = useI18n();
   const play =
-    props.onPlay ?? ((target: Playlist) => playlists.startPlaying(target));
+    props.onPlay ?? ((target: Playlist) => playlists.openPlaylistPage(target));
   const edit =
     props.onEdit ?? ((target: Playlist) => playlists.editPlaylist(target));
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(playlists.getPlaylistUrl(playlist));
-    } catch (error) {
-      // Also covers no clipboard at all (an insecure origin, some webviews).
-      console.error("Failed to copy the playlist link.", error);
-      toast(
-        t("playlist-url-copy-failed", {
-          defaultValue: "Couldn't copy the playlist link",
-        })
-      );
-      return;
-    }
-    toast(
-      t("playlist-url-copied", {
-        defaultValue: "Playlist URL copied to clipboard",
-      })
-    );
-  };
-
   return (
     <li
       className="sb-discover-item sb-discover-item--row sb-playlist-item"
@@ -94,22 +80,21 @@ export function PlaylistRow(props: {
           </ExpandableText>
         ) : null}
       </div>
-      <button
-        type="button"
+      <IconButton
+        size="sm"
         className="sb-discover-item-play"
-        aria-label={t("play-playlist", {
+        icon="play_arrow"
+        label={t("play-playlist", {
           defaultValue: "Play playlist",
         })}
         onClick={(e) => {
           e.stopPropagation();
           play(playlist);
         }}
-      >
-        <MaterialIcon>play_arrow</MaterialIcon>
-      </button>
+      />
       <ContextMenuWithButton
         buttonClassName="sb-discover-item-menu"
-        aria-label={t("playlist-options", {
+        label={t("playlist-options", {
           defaultValue: "Playlist options",
         })}
         onClick={(e) => e.stopPropagation()}
@@ -117,7 +102,7 @@ export function PlaylistRow(props: {
         <ContextMenuItem
           onClick={(e) => {
             e.stopPropagation();
-            void copyLink();
+            openPlaylistShareModal({ playlist, playlists, modals, app });
           }}
         >
           <MaterialIcon className="sb-context-menu-item-icon">
@@ -142,7 +127,12 @@ export function PlaylistRow(props: {
               className="sb-context-menu-item--danger"
               onClick={(e) => {
                 e.stopPropagation();
-                openDeletePlaylistConfirm(modals, playlists, playlist, toast);
+                openDeletePlaylistConfirm(
+                  modals,
+                  playlists,
+                  playlist,
+                  app.toast
+                );
               }}
             >
               <MaterialIcon className="sb-context-menu-item-icon">
@@ -157,12 +147,16 @@ export function PlaylistRow(props: {
   );
 }
 
-/** Opens the delete-playlist confirmation modal. */
-function openDeletePlaylistConfirm(
+/**
+ * Opens the delete-playlist confirmation modal. `onDeleted` runs once it's
+ * gone, for a caller showing the playlist itself.
+ */
+export function openDeletePlaylistConfirm(
   modals: ModalManager,
   playlists: PlaylistManager,
   playlist: Playlist,
-  toast: SeedBibleState["app"]["toast"]
+  toast: AppState["toast"],
+  onDeleted?: () => void
 ) {
   openConfirmDeleteModal(modals, {
     id: `delete-playlist-confirm-${playlist.id}`,
@@ -177,11 +171,50 @@ function openDeletePlaylistConfirm(
           t("untitled-playlist", { defaultValue: "Untitled playlist" }),
         defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
       }),
-    onConfirm: () => playlists.deletePlaylist(playlist),
+    onConfirm: async () => {
+      await playlists.deletePlaylist(playlist);
+      onDeleted?.();
+    },
     failedMessage: (t) =>
       t("delete-playlist-failed", {
         defaultValue: "Couldn't delete the playlist.",
       }),
     toast,
+  });
+}
+
+/**
+ * Opens the share sheet for a playlist. Starting a session from it plays the
+ * playlist in that session, for everyone who joins.
+ */
+export function openPlaylistShareModal(options: {
+  playlist: FinishedPlaylist;
+  playlists: PlaylistManager;
+  modals: ModalManager;
+  app: AppState;
+}) {
+  const { playlist, playlists, modals, app } = options;
+  openLinkShareModal({
+    id: `share-playlist-${playlist.recordName}-${playlist.id}`,
+    modals,
+    app,
+    url: playlists.getPlaylistUrl(playlist),
+    title:
+      playlist.title ??
+      i18n.t("untitled-playlist", { defaultValue: "Untitled playlist" }),
+    kind: "playlist",
+    copiedMessage: i18n.t("playlist-url-copied", {
+      defaultValue: "Playlist URL copied to clipboard",
+    }),
+    copyFailedMessage: i18n.t("playlist-url-copy-failed", {
+      defaultValue: "Couldn't copy the playlist link",
+    }),
+    // Plays rather than opening the playlist page, so everyone who joins
+    // lands in the playlist itself. Shared from the finished page, that page
+    // would otherwise stay over the new session's playback.
+    onSessionStarted: () => {
+      playlists.dismissFinishedPlaylist();
+      playlists.startPlaying(playlist);
+    },
   });
 }

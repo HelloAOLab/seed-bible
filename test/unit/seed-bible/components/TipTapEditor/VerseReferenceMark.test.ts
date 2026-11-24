@@ -1,6 +1,7 @@
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import VerseReferenceMark from "@packages/seed-bible/seed-bible/components/TipTapEditor/VerseReferenceMark";
+import { injectNativeAppConfig } from "../../testUtils/nativeAppConfig";
 
 function createEditor(): Editor {
   return new Editor({
@@ -37,6 +38,22 @@ describe("VerseReferenceMark", () => {
     // Surrounding text stays outside the link.
     expect(html).toContain("See ");
     expect(html).toContain("for more");
+  });
+
+  // The link is saved with the note and opened on other devices.
+  it("links to the public website when typed in the native apps", () => {
+    jsdom.reconfigure({ url: "https://localhost/en/AAB/genesis/1" });
+    const remove = injectNativeAppConfig();
+    try {
+      editor = createEditor();
+      editor.commands.insertContent("See John 3:16");
+
+      expect(getReferenceLinks(editor.getHTML())[0]?.getAttribute("href")).toBe(
+        "https://seedbible.org/en/AAB/john/3?verse=16"
+      );
+    } finally {
+      remove();
+    }
   });
 
   it("links multiple references in the same paragraph with distinct hrefs", () => {

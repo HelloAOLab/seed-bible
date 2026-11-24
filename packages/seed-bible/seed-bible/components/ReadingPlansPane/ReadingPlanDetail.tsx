@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./ReadingPlanDetail.css";
 import { useState } from "preact/hooks";
 import { MaterialIcon } from "../icons";
@@ -22,6 +23,7 @@ import type {
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { AppState } from "../../managers/SeedBibleStateManager";
 import {
   canPreviewPlaylistItem,
   openPlaylistItemPreview,
@@ -36,6 +38,8 @@ import {
 } from "./readingPreview";
 import { HeroImageBanner } from "../HeroImageField/HeroImageField";
 import { ReadingPlanOptionsMenu } from "./ReadingPlanOptionsMenu";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 
 interface ReadingPlanDetailProps {
   readingPlans: ReadingPlansManager;
@@ -59,6 +63,8 @@ interface ReadingPlanDetailProps {
   /** Called after the plan has been deleted, so the pane can leave this view. */
   onDeleted?: () => void;
   toast?: (message: string) => void;
+  /** Lets Share open the share sheet rather than only copy the plan's link. */
+  app?: AppState;
 }
 
 function formatShortDate(ms: number): string {
@@ -90,6 +96,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
     onEdit,
     onDeleted,
     toast,
+    app,
   } = props;
   const { t } = useI18n();
 
@@ -137,6 +144,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
         onEdit={canEdit && onEdit ? onEdit : undefined}
         onDeleted={onDeleted}
         modals={modals}
+        app={app}
         toast={toast}
       />
     </div>
@@ -239,14 +247,15 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
           </div>
         </div>
         <footer className="sb-rpd-footer">
-          <button
-            type="button"
-            className="sb-rp-button sb-rp-button-primary"
+          <Button
+            variant="primary"
+            size="lg"
             onClick={() => void handleStart()}
-            disabled={starting || plan.sessions.length === 0}
+            disabled={plan.sessions.length === 0}
+            loading={starting}
           >
             {t("reading-plan-start", { defaultValue: "Start plan" })}
-          </button>
+          </Button>
         </footer>
       </div>
     );
@@ -388,13 +397,13 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
               defaultValue: "Great work. Keep the momentum going.",
             })}
           </p>
-          <button
-            type="button"
-            className="sb-rp-button sb-rp-button-primary"
+          <Button
+            variant="primary"
+            size="lg"
             onClick={() => setCelebrationDay(null)}
           >
             {t("reading-plan-back-to-plan", { defaultValue: "Back to plan" })}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -534,11 +543,11 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
 
         <div className="sb-rpd-body">
           {readingDays.length === 0 ? (
-            <p className="sb-rpd-empty">
+            <EmptyState className="sb-rpd-empty">
               {t("reading-plan-empty-sessions", {
                 defaultValue: "This plan doesn't have any readings yet.",
               })}
-            </p>
+            </EmptyState>
           ) : (
             <>
               <div className="sb-rpd-day-tabs" role="tablist">
@@ -652,18 +661,17 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
         <footer className="sb-rpd-footer">
           <div className="sb-rpd-footer-actions">
             {onPlayReadings && activeDayReadings.length > 0 ? (
-              <button
-                type="button"
-                className="sb-rp-button sb-rp-button-primary"
+              <Button
+                variant="primary"
+                size="lg"
+                icon="play_arrow"
                 onClick={playActiveDay}
               >
-                <MaterialIcon>play_arrow</MaterialIcon>
                 {t("reading-plan-read-day", { defaultValue: "Read" })}
-              </button>
+              </Button>
             ) : null}
-            <button
-              type="button"
-              className="sb-rp-button sb-rp-button-secondary"
+            <Button
+              size="lg"
               disabled={!activeDayAllDone}
               onClick={() => void completeDay(activeDay, activeIndex + 1)}
             >
@@ -676,7 +684,7 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
                     defaultValue: "Mark Day {{day}} complete",
                     day: activeIndex + 1,
                   })}
-            </button>
+            </Button>
           </div>
           {!activeDayAllDone ? (
             <p className="sb-rpd-footer-note">
@@ -816,22 +824,16 @@ function ReadingRow(props: ReadingRowProps) {
         </button>
 
         {multiChapter ? (
-          <button
-            type="button"
-            className="sb-rp-icon-button sb-rpd-reading-expand"
+          <IconButton
+            size="sm"
+            className="sb-rpd-reading-expand"
             onClick={onToggleExpanded}
             aria-expanded={expanded}
-            aria-label={t("reading-plan-reading-chapters", {
+            icon={expanded ? "expand_less" : "expand_more"}
+            label={t("reading-plan-reading-chapters", {
               defaultValue: "Chapters",
             })}
-            title={t("reading-plan-reading-chapters", {
-              defaultValue: "Chapters",
-            })}
-          >
-            <MaterialIcon>
-              {expanded ? "expand_less" : "expand_more"}
-            </MaterialIcon>
-          </button>
+          />
         ) : null}
       </div>
 

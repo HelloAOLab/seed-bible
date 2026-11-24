@@ -4,6 +4,7 @@
     "noEmit": false,
     "emitDeclarationOnly": true,
     "declaration": true,
+    "stripInternal": true,
     "module": "esnext",
     "moduleResolution": "bundler",
     "rootDir": "./seed-bible",

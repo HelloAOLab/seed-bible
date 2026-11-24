@@ -22,9 +22,18 @@ export interface SavedGame {
   targetVerse: TargetVerse;
   steps: GameStep[];
   createdAtMs: number;
+  shared: boolean;
 }
 
 export type GameDraft = Pick<SavedGame, "name" | "targetVerse" | "steps">;
+
+/** The game a share link opened, as the panel shows it. */
+export type SharedGameView =
+  | { status: "loading" }
+  | { status: "ok"; game: SavedGame; creatorName: string | null }
+  | { status: "not_shared" }
+  | { status: "privacy_blocked" }
+  | { status: "error" };
 
 export interface VersePosition {
   bookId: string;

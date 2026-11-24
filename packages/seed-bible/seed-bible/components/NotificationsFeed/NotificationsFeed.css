@@ -161,17 +161,6 @@
   font-size: 0.8125rem;
 }
 
-.sb-notifications-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  text-decoration: none;
-}
-
-.sb-notifications-link .material-symbols-outlined {
-  font-size: 1rem;
-}
-
 .sb-notifications-empty {
   display: flex;
   flex-direction: column;

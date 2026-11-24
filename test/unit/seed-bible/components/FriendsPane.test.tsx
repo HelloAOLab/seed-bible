@@ -101,9 +101,7 @@ describe("FriendsPane", () => {
   const visibleLabel = (el: Element) => {
     const copy = el.cloneNode(true) as Element;
     copy
-      .querySelectorAll(
-        ".sb-friends-copy-label--hidden, .sb-friends-busy-spinner"
-      )
+      .querySelectorAll(".sb-friends-copy-label--hidden, .sb-spinner")
       .forEach((hidden) => hidden.remove());
     return copy.textContent;
   };
@@ -172,6 +170,20 @@ describe("FriendsPane", () => {
     );
     await click(button(container, "Log in"));
     expect(login.login).toHaveBeenCalled();
+  });
+
+  it("shows a loading line, not the empty note, while the friends are first read", async () => {
+    act(() => {
+      render(<FriendsPane state={createState()} />, container);
+    });
+
+    expect(container.querySelector(".sb-friends-loading")).not.toBeNull();
+    expect(text()).not.toContain("No friends yet.");
+
+    await waitForIdle();
+
+    expect(container.querySelector(".sb-friends-loading")).toBeNull();
+    expect(text()).toContain("No friends yet.");
   });
 
   it("shows an empty friends list with a way to add someone", async () => {
@@ -405,8 +417,7 @@ describe("FriendsPane", () => {
       }) as never);
       return () => release();
     };
-    const spinnerIn = (el: Element) =>
-      el.querySelector(".sb-friends-busy-spinner");
+    const spinnerIn = (el: Element) => el.querySelector(".sb-spinner");
 
     it("spins only the answer being sent, and keeps its label in place", async () => {
       const state = createState();
@@ -422,7 +433,7 @@ describe("FriendsPane", () => {
       expect(accept.getAttribute("aria-busy")).toBe("true");
       expect(spinnerIn(accept)).not.toBeNull();
       // The label stays in the button under the spinner, so its size holds.
-      expect(accept.querySelector(".sb-friends-busy-label")?.textContent).toBe(
+      expect(accept.querySelector(".sb-button-label")?.textContent).toBe(
         "Accept"
       );
       expect(decline.disabled).toBe(true);

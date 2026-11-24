@@ -56,6 +56,7 @@ import {
   serveNotificationsApi,
   type NotificationsRelay,
 } from "./notifications";
+import { appLinksConfigFromEnv, appLinksFileFor } from "./appLinks";
 import { SpanKind, type Span } from "@opentelemetry/api";
 import {
   expressSpanMiddleware,
@@ -107,6 +108,7 @@ const SSR_LOAD_FAILURE_TTL_MS = Number(
 );
 
 const INVALIDATION_SECRET = process.env.INVALIDATION_SECRET ?? "";
+const APP_LINKS = appLinksConfigFromEnv(process.env);
 
 /**
  * Comma-separated whitelist of branches that are server-side rendered by their
@@ -710,6 +712,20 @@ async function handle(
   }
 
   const parsedUrl = new URL(url, "http://localhost");
+
+  // Also answered untraced: only Apple's and Google's verifiers fetch these.
+  // Must come before the asset proxy, which would otherwise claim
+  // `assetlinks.json` by its extension and forward it to the CDN.
+  const appLinksFile = appLinksFileFor(parsedUrl.pathname, APP_LINKS);
+  if (appLinksFile !== null) {
+    res.writeHead(200, {
+      "content-type": "application/json",
+      "cache-control": "public, max-age=3600",
+    });
+    res.end(appLinksFile);
+    return;
+  }
+
   const isAssetRequest =
     Boolean(ASSET_HOST) && ASSET_PATH_RE.test(parsedUrl.pathname);
   const method = req.method ?? "GET";

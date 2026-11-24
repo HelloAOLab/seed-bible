@@ -1,3 +1,4 @@
+import { Button, Switch } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { type TwitchSubInterface } from "./interface";
 import type { SeedBibleState } from "seed-bible";
@@ -42,10 +43,12 @@ const TwitchSettings = (props: {
                   gap: "4px",
                 }}
               >
-                {t("followTranslationEvent", {
-                  ns: "ext_twitchSub",
-                  defaultValue: "Follow translation event",
-                })}
+                <label htmlFor="twitchSub-translationToggle">
+                  {t("followTranslationEvent", {
+                    ns: "ext_twitchSub",
+                    defaultValue: "Follow translation event",
+                  })}
+                </label>
                 <InfoTooltip
                   text={t("followTranslationEventTooltip", {
                     ns: "ext_twitchSub",
@@ -59,8 +62,8 @@ const TwitchSettings = (props: {
                 setToggle={(value) =>
                   (settings.value.translationEnabled.value = value)
                 }
-                id={"translationToggle"}
-                wsActive={wsPaused.value}
+                id="twitchSub-translationToggle"
+                disabled={wsPaused.value}
               />
             </div>
             <div className="twitchSub-settings-item">
@@ -71,10 +74,12 @@ const TwitchSettings = (props: {
                   gap: "4px",
                 }}
               >
-                {t("followChapterEvent", {
-                  ns: "ext_twitchSub",
-                  defaultValue: "Follow chapter event",
-                })}
+                <label htmlFor="twitchSub-chapterFollowToggle">
+                  {t("followChapterEvent", {
+                    ns: "ext_twitchSub",
+                    defaultValue: "Follow chapter event",
+                  })}
+                </label>
                 <InfoTooltip
                   text={t("followChapterEventTooltip", {
                     ns: "ext_twitchSub",
@@ -88,8 +93,8 @@ const TwitchSettings = (props: {
                 setToggle={(value) =>
                   (settings.value.chapterFollowEnabled.value = value)
                 }
-                id={"chapterFollowToggle"}
-                wsActive={wsPaused.value}
+                id="twitchSub-chapterFollowToggle"
+                disabled={wsPaused.value}
               />
             </div>
             <div className="twitchSub-settings-item">
@@ -100,10 +105,12 @@ const TwitchSettings = (props: {
                   gap: "4px",
                 }}
               >
-                {t("followHighlightEvent", {
-                  ns: "ext_twitchSub",
-                  defaultValue: "Follow highlight event",
-                })}
+                <label htmlFor="twitchSub-highlightToggle">
+                  {t("followHighlightEvent", {
+                    ns: "ext_twitchSub",
+                    defaultValue: "Follow highlight event",
+                  })}
+                </label>
                 <InfoTooltip
                   text={t("followHighlightEventTooltip", {
                     ns: "ext_twitchSub",
@@ -116,8 +123,8 @@ const TwitchSettings = (props: {
                 setToggle={(value) =>
                   (settings.value.highlightEnabled.value = value)
                 }
-                id={"highlightToggle"}
-                wsActive={wsPaused.value}
+                id="twitchSub-highlightToggle"
+                disabled={wsPaused.value}
               />
             </div>
             <div className="twitchSub-settings-item">
@@ -128,10 +135,12 @@ const TwitchSettings = (props: {
                   gap: "4px",
                 }}
               >
-                {t("followRefEvent", {
-                  ns: "ext_twitchSub",
-                  defaultValue: "Follow reference event",
-                })}
+                <label htmlFor="twitchSub-refFollowToggle">
+                  {t("followRefEvent", {
+                    ns: "ext_twitchSub",
+                    defaultValue: "Follow reference event",
+                  })}
+                </label>
                 <InfoTooltip
                   text={t("followRefEventTooltip", {
                     ns: "ext_twitchSub",
@@ -145,8 +154,8 @@ const TwitchSettings = (props: {
                 setToggle={(value) =>
                   (settings.value.refFollowEnabled.value = value)
                 }
-                id={"refFollowToggle"}
-                wsActive={wsPaused.value}
+                id="twitchSub-refFollowToggle"
+                disabled={wsPaused.value}
               />
             </div>
             <div
@@ -159,13 +168,13 @@ const TwitchSettings = (props: {
           </div>
           <div className="twitchSub-settings-item">
             <div></div>
-            <button
-              className={`session-btn ${wsPaused.value ? "rejoin-session-btn" : "leave-session-btn"}`}
+            <Button
+              size="sm"
+              shape="pill"
+              tone={wsPaused.value ? "neutral" : "danger"}
+              icon={wsPaused.value ? "link" : "link_off"}
               onClick={() => (wsPaused.value = !wsPaused.value)}
             >
-              <span className="material-symbols-outlined">
-                {wsPaused.value ? "link" : "link_off"}
-              </span>
               {wsPaused.value
                 ? t("rejoinSession", {
                     ns: "ext_twitchSub",
@@ -175,7 +184,7 @@ const TwitchSettings = (props: {
                     ns: "ext_twitchSub",
                     defaultValue: "Leave session",
                   })}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -236,52 +245,28 @@ const ToggleBtn = ({
   toggle,
   setToggle,
   id,
-  wsActive,
+  disabled,
 }: {
   toggle: boolean;
   setToggle: (value: boolean) => void;
+  /** Its `<label>` points at this id. */
   id: string;
-  wsActive: boolean;
+  disabled?: boolean;
 }) => {
   return (
-    <>
-      <style>
-        {toggle
-          ? `
-            .track-${id} {
-                background: var(--sb-primary-color);
-                }
-            .thumb-${id} {
-                transform: translateX(23px);
-            }
-        `
-          : ``}
-      </style>
-      <div
-        className="toggle-wrapper"
-        onMouseDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-      >
-        <label className="toggle">
-          <input
-            type="checkbox"
-            checked={toggle}
-            id={id}
-            onChange={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setToggle(!toggle);
-            }}
-            disabled={wsActive}
-          />
-          <span
-            className={`track-${id} track`}
-            style={wsActive ? { background: "var(--sb-tertiary-color)" } : {}}
-          ></span>
-          <span className={`thumb-${id} thumb`}></span>
-        </label>
-      </div>
-    </>
+    <div
+      className="toggle-wrapper"
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
+      <Switch
+        id={id}
+        checked={toggle}
+        disabled={disabled}
+        onToggled={setToggle}
+      />
+    </div>
   );
 };
+
 export default TwitchSettings;

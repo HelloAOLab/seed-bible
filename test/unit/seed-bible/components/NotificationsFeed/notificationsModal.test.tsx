@@ -40,7 +40,7 @@ describe("the notifications modal", () => {
     act(() => {
       render(
         <TestHost state={state}>
-          <ModalHost manager={state.modals} />
+          <ModalHost manager={state.modals} isMobile={state.app.isMobile} />
         </TestHost>,
         container
       );
@@ -51,8 +51,12 @@ describe("the notifications modal", () => {
     renderModals(state);
     await waitFor(() => urlParam() === "open");
   };
+  // Opened after the first render, so the window is drawn at the end of
+  // <body>, outside the container.
   const overlay = () =>
-    container.querySelector<HTMLElement>(".sb-footnote-modal-overlay");
+    document.querySelector<HTMLElement>(
+      ".sb-dialog-backdrop, .sb-bottom-sheet-backdrop"
+    );
   const expectClosed = async (state: SeedBibleState) => {
     expect(state.notifications.isFeedOpen.value).toBe(false);
     expect(feedModal(state)).toBeUndefined();
@@ -69,10 +73,11 @@ describe("the notifications modal", () => {
     expect(modal.mobileSheet).toBe(true);
     expect(modal.useCasualOSApp).toBe(false);
     expect(
-      container.querySelector(".sb-footnote-modal-title")?.textContent
+      document.querySelector(".sb-dialog-title, .sb-bottom-sheet-title")
+        ?.textContent
     ).toBe("Notifications");
     expect(
-      container.querySelector(".sb-notifications-feed")?.textContent
+      document.querySelector(".sb-notifications-feed")?.textContent
     ).toContain("You're all caught up.");
   });
 
@@ -113,8 +118,10 @@ describe("the notifications modal", () => {
     await openList(state);
 
     act(() =>
-      container
-        .querySelector<HTMLButtonElement>(".sb-footnote-modal-close")!
+      document
+        .querySelector<HTMLButtonElement>(
+          ".sb-dialog-close, .sb-bottom-sheet-close"
+        )!
         .click()
     );
 

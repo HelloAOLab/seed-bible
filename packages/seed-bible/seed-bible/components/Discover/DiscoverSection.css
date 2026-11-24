@@ -4,17 +4,15 @@
 
 .sb-discover-section-title {
   margin: 0 0 6px;
-  font-size: 0.8125rem;
+  font-size: var(--sb-font-size-13);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
-
 .sb-discover-empty {
-  padding: 12px 8px;
-  font-size: 0.8125rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  --sb-empty-state-padding: 0.75rem 0.5rem;
+  --sb-empty-state-font-size: var(--sb-font-size-13);
 }
 
 .sb-discover-empty-action {

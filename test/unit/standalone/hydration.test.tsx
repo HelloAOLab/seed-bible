@@ -1,5 +1,5 @@
 import { render as ssrRender } from "../../../standalone/entry-ssr";
-import { hydrate } from "preact";
+import { hydrate, render } from "preact";
 import { act } from "preact/test-utils";
 import { Main } from "@packages/seed-bible/seed-bible/app/main";
 import {
@@ -13,6 +13,7 @@ import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/S
 import { SIDEBAR_COLLAPSED_STORAGE_KEY } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
 import {
   decideHydration,
+  hasServerRenderedContent,
   decideStartupHydration,
 } from "@packages/seed-bible/seed-bible/app/hydrationGate";
 import { waitForInitialChapterLoads } from "@packages/seed-bible/seed-bible/app/initialChapterLoadWait";
@@ -317,6 +318,37 @@ describe("client hydration", () => {
     );
   });
 
+  // A link to the terms has the server draw them open, so the policy text is
+  // in the page before any script runs; the browser must keep that dialog
+  // where the server put it rather than drawing its own somewhere else.
+  it("server-renders a link to the terms with them open and hydrates onto it without changing the DOM", async () => {
+    const { container, beforeHtml } = await installSsrDocument(
+      `${PATH}&terms=open`
+    );
+    expect(beforeHtml).toContain("AO Lab Web Services Terms of Service");
+
+    const { config, state } = await createClientState();
+    expect(state.isTermsOpen.value).toBe(true);
+    expect(
+      decideHydration({
+        config,
+        pathname: location.pathname,
+        search: location.search,
+        container,
+        clientCommit: __GIT_COMMIT__,
+      })
+    ).toEqual({ hydrate: true });
+
+    hydrate(<Main initialState={state} config={config} />, container);
+
+    expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
+    expect(normalizeKnownSsrClientDivergences(container.innerHTML)).toBe(
+      normalizeKnownSsrClientDivergences(beforeHtml)
+    );
+
+    render(null, container);
+  });
+
   it("hydrates cleanly when the visitor already has this chapter's tab saved", async () => {
     // The reported repro: load a chapter, then refresh. The refresh finds an
     // `sb-tabs-state` entry describing the tab the previous load persisted.
@@ -433,6 +465,69 @@ describe("client hydration", () => {
   // reader (and gets its address rewritten to the reading path) with
   // `?today=closed`.
   const ROOT_READER_PATH = "/?today=closed&useFreeBibleAPI=true";
+
+  // The server can't see the session in `localStorage`, so it renders the
+  // signed-out account icon. When the profile load wins the race against
+  // `hydrate()`, the picture must still arrive as a change after mount:
+  // Preact keeps the server's classes while hydrating, which left the photo
+  // inside the generic icon's box, square and without its round clip.
+  it("rounds a signed-in reader's profile picture that loaded before hydration", async () => {
+    const { container } = await installSsrDocument();
+    const ssrFetch = globalThis.fetch;
+    globalThis.fetch = (async (url: string, init?: RequestInit) => {
+      if (url === "https://auth.seedbible.org/api/v3/callProcedure") {
+        const body = JSON.parse(String(init?.body)) as {
+          procedure: string;
+          input: { address?: string };
+        };
+        const isProfileRead =
+          body.procedure === "getData" && body.input.address === "profile";
+        return new Response(
+          JSON.stringify(
+            isProfileRead
+              ? {
+                  success: true,
+                  data: {
+                    name: "Reader",
+                    pictureUrl: "https://example.com/reader.png",
+                  },
+                }
+              : {
+                  success: false,
+                  errorCode: "data_not_found",
+                  errorMessage: "Not found",
+                }
+          ),
+          { headers: { "Content-Type": "application/json" } }
+        );
+      }
+      return ssrFetch(url, init);
+    }) as typeof globalThis.fetch;
+    localStorage.setItem(
+      "sessionKey",
+      formatV1SessionKey("user-1", "session-1", "secret-1", Date.now() + 864e5)
+    );
+
+    const { config, state } = await createClientState();
+    await state.login.profilePromise;
+    expect(state.login.profile.value?.pictureUrl).toBe(
+      "https://example.com/reader.png"
+    );
+
+    await act(async () => {
+      hydrate(<Main initialState={state} config={config} />, container);
+    });
+
+    const pictures = Array.from(
+      container.querySelectorAll<HTMLImageElement>(".sb-tab-user-icon-image")
+    );
+    expect(pictures.length).toBeGreaterThan(0);
+    for (const picture of pictures) {
+      expect(picture.parentElement?.className).toContain(
+        "sb-tab-user-icon-has-image"
+      );
+    }
+  });
 
   it("hydrates a load of / even though startup rewrites the address bar to the reading path", async () => {
     const { container, beforeHtml } =
@@ -594,6 +689,43 @@ describe("client hydration", () => {
       clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "no-ssr-content" });
+  });
+
+  // Decides, before the app state exists, whether the first draw can use the
+  // real window rather than the server's phone/desktop guess.
+  describe("hasServerRenderedContent", () => {
+    it("is true for markup the server rendered for this page", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<div>Verse 1</div>";
+
+      expect(
+        hasServerRenderedContent(
+          { ...DEFAULT_APP_CONFIG, renderedForPath: "/en/AAB/genesis/1" },
+          container
+        )
+      ).toBe(true);
+    });
+
+    it("is false for a shell whose markup was never filled in", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<!-- APP_HTML -->";
+
+      expect(
+        hasServerRenderedContent(
+          { ...DEFAULT_APP_CONFIG, renderedForPath: "/" },
+          container
+        )
+      ).toBe(false);
+    });
+
+    it("is false for a config that never went through a real render()", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<div>some stale build-time snapshot</div>";
+
+      expect(hasServerRenderedContent(DEFAULT_APP_CONFIG, container)).toBe(
+        false
+      );
+    });
   });
 
   it("declines to hydrate when the SSR HTML was rendered by a different commit's bundle", () => {

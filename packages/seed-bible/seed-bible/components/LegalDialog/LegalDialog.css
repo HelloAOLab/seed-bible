@@ -1,0 +1,29 @@
+/* Terms of service, privacy policy and code of conduct ----------------------- */
+
+/* Level with the login window, which links to them: drawn in place after it,
+   they land on top of it, and above any window at the end of <body>. */
+.sb-dialog-backdrop:has(> .sb-legal-dialog) {
+  --sb-dialog-layer: calc(var(--sb-layer-modal) + 2);
+}
+
+.sb-legal-dialog-content {
+  font-size: var(--sb-font-size-14);
+}
+
+.sb-legal-dialog-content h1,
+.sb-legal-dialog-content h2,
+.sb-legal-dialog-content h3 {
+  font-family: var(--sb-chapter-heading-font-family), sans-serif;
+  color: var(--sb-chapter-heading-font-color);
+  line-height: 1.3;
+}
+
+.sb-legal-dialog-content a {
+  color: var(--sb-primary-color);
+  text-decoration: underline;
+}
+
+.sb-legal-dialog-content ul,
+.sb-legal-dialog-content ol {
+  padding-left: 1.4em;
+}

@@ -1,9 +1,13 @@
 import { render } from "preact";
+import { useState } from "preact/hooks";
 import { act } from "preact/test-utils";
 import { computed, signal } from "@preact/signals";
+import type { ComponentChildren } from "preact";
+import type { Mock } from "vitest";
 import {
   DiscoverPane,
   DISCOVER_PANE_ID,
+  EditPlaylistWithAiButton,
 } from "@packages/seed-bible/seed-bible/components/Discover/DiscoverPane";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import {
@@ -17,25 +21,45 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { TabsManager } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { createMockChats } from "../testUtils/mockChats";
+import {
+  createMockChats,
+  createMockProvider,
+  type MockChatsResult,
+} from "../testUtils/mockChats";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
   return mockI18nManager();
 });
 
+// The editor's step list has its own tests; here it only has to show up.
+vi.mock(
+  "@packages/seed-bible/seed-bible/components/PlaylistEditor/PlaylistEditorPanel",
+  () => ({
+    PlaylistEditorPanel: ({
+      headerActions,
+    }: {
+      headerActions?: ComponentChildren;
+    }) => <div className="stub-playlist-editor-panel">{headerActions}</div>,
+  })
+);
+
 vi.mock(
   "@packages/seed-bible/seed-bible/components/CreateAnnotationForm/CreateAnnotationForm",
   () => ({
+    // Remember the id the form was first rendered with, mirroring what the
+    // real editors do: they seed from initialContent on mount and never
+    // re-read it. The key={editingAnnotation.id} in DiscoverPane must force a
+    // fresh mount when the note changes, otherwise this stub (and the real
+    // editors) would keep showing the previous note's content.
     CreateAnnotationForm: ({
       annotations,
     }: {
       annotations: AnnotationsManager;
-    }) => (
-      <div className="stub-create-annotation-form">
-        {annotations.editingAnnotation.value?.id}
-      </div>
-    ),
+    }) => {
+      const [firstId] = useState(annotations.editingAnnotation.value?.id);
+      return <div className="stub-create-annotation-form">{firstId}</div>;
+    },
   })
 );
 
@@ -83,6 +107,7 @@ function createMockPlaylists(
     editingPlaylist,
     playing: signal(overrides.playing ?? null),
     openingPlayback: signal(false),
+    isMobile: signal(false),
     playingAuthorName: signal(null),
     isEditingPlaylistDirty: vi.fn(() => false),
     cancelEditingPlaylist: vi.fn(),
@@ -139,7 +164,7 @@ describe("DiscoverPane", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders CreatePlaylistForm when view is create_playlist", () => {
+  it("renders the playlist editor's step list when view is create_playlist", () => {
     const { playlists } = createMockPlaylists({
       view: "create_playlist",
       editingPlaylist: createPlaylist(),
@@ -163,9 +188,9 @@ describe("DiscoverPane", () => {
       );
     });
 
-    // The form renders its own header (with the title input) and its Save
-    // button.
-    expect(container.querySelector(".sb-settings-save-button")).not.toBeNull();
+    expect(
+      container.querySelector(".stub-playlist-editor-panel")
+    ).not.toBeNull();
     expect(container.querySelector(".sb-dcp-create-btn")).toBeNull();
   });
 
@@ -293,7 +318,7 @@ describe("DiscoverPane", () => {
     expect(closePane).toHaveBeenCalledWith(DISCOVER_PANE_ID, "user");
   });
 
-  it("closes the pane as the user from a sub-view's close button", () => {
+  it("has no close button on the playing playlist's view", () => {
     const closePane = vi.fn();
     const { playlists } = createMockPlaylists({
       view: "play_playlist",
@@ -316,15 +341,10 @@ describe("DiscoverPane", () => {
       );
     });
 
-    act(() => {
-      container
-        .querySelector(".sb-discover-panel-header-close")!
-        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    // "user" (not "programmatic") is what makes the pane's onClose stop the
-    // playing playlist.
-    expect(closePane).toHaveBeenCalledWith(DISCOVER_PANE_ID, "user");
+    expect(container.querySelector(".sb-play-playlist")).not.toBeNull();
+    expect(
+      container.querySelector(".sb-discover-panel-header-close")
+    ).toBeNull();
   });
 
   it("leaves the play view when playback stops without `view` being reset (tab switch)", () => {
@@ -366,9 +386,9 @@ describe("DiscoverPane", () => {
         container
       );
     });
-    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
-      "Evening Reading"
-    );
+    expect(
+      container.querySelector(".sb-playlist-page-title")?.textContent
+    ).toBe("Evening Reading");
 
     // Simulate switching to a non-playlist tab: `playing` clears, but nothing
     // ever resets the raw `view` signal away from "play_playlist".
@@ -378,5 +398,242 @@ describe("DiscoverPane", () => {
 
     expect(container.querySelector(".sb-play-playlist")).toBeNull();
     expect(container.querySelector('button[aria-label="Back"]')).toBeNull();
+  });
+
+  it("remounts CreateAnnotationForm with the new note's content when editingAnnotation switches to a different note", () => {
+    const { playlists } = createMockPlaylists({ view: "create_annotation" });
+    const { annotations } = createMockAnnotations({
+      editingAnnotation: createAnnotation({ id: "ann-1" }),
+    });
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".stub-create-annotation-form")?.textContent
+    ).toBe("ann-1");
+
+    act(() => {
+      annotations.editingAnnotation.value = createAnnotation({ id: "ann-2" });
+    });
+
+    // A fresh form instance must mount for ann-2 — it must show ann-2, not ann-1.
+    // Without key={editingAnnotation.id} on CreateAnnotationForm, Preact reuses
+    // the same instance and firstId stays "ann-1", causing this assertion to fail.
+    expect(
+      container.querySelector(".stub-create-annotation-form")?.textContent
+    ).toBe("ann-2");
+  });
+
+  it("keeps the same CreateAnnotationForm instance when only the verse changes on the same note", () => {
+    const { playlists } = createMockPlaylists({ view: "create_annotation" });
+    const { annotations } = createMockAnnotations({
+      editingAnnotation: createAnnotation({ id: "ann-1" }),
+    });
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      // Same id, different verse — the reader's selection moved while drafting.
+      annotations.editingAnnotation.value = createAnnotation({
+        id: "ann-1",
+        verseNumber: 5,
+      });
+    });
+
+    // The key hasn't changed, so the same form instance is kept. firstId is
+    // still "ann-1", confirming typing isn't interrupted by verse re-targeting.
+    expect(
+      container.querySelector(".stub-create-annotation-form")?.textContent
+    ).toBe("ann-1");
+  });
+});
+
+describe("EditPlaylistWithAiButton", () => {
+  let container: HTMLDivElement;
+  let chatsFixture: MockChatsResult;
+  let openChatPanel: Mock<() => void>;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    chatsFixture = createMockChats();
+    openChatPanel = vi.fn<() => void>();
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    vi.restoreAllMocks();
+  });
+
+  it("hides the AI button when no agent can edit playlists", () => {
+    function renderTitle() {
+      act(() => {
+        render(
+          <EditPlaylistWithAiButton
+            chats={chatsFixture.chats}
+            openChatPanel={openChatPanel}
+          />,
+          container
+        );
+      });
+    }
+
+    renderTitle();
+    expect(container.querySelector(".sb-discover-title-ai")).toBeNull();
+
+    // An installed agent that cannot call tools (e.g. Bonfire) still cannot
+    // edit the playlist, so the button stays hidden.
+    chatsFixture.providers.value = [
+      createMockProvider("bonfire", "Bonfire", false),
+    ];
+    renderTitle();
+    expect(container.querySelector(".sb-discover-title-ai")).toBeNull();
+    expect(chatsFixture.createLocalSession).not.toHaveBeenCalled();
+    expect(openChatPanel).not.toHaveBeenCalled();
+  });
+
+  it("with exactly one AI provider, the AI button adds it automatically without showing a menu", () => {
+    chatsFixture = createMockChats([createMockProvider("provider-1")]);
+
+    act(() => {
+      render(
+        <EditPlaylistWithAiButton
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+
+    const aiButton = container.querySelector(
+      ".sb-discover-title-ai"
+    ) as HTMLButtonElement;
+    expect(aiButton).not.toBeNull();
+    act(() => {
+      aiButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+    const history = chatsFixture.createLocalSession.mock.calls[0]![0];
+    expect(history.messages).toHaveLength(1);
+    expect(history.messages[0]).toMatchObject({
+      authors: ["provider-1"],
+      type: "text",
+      text: "What do you want to add/change?",
+    });
+    expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-1");
+    expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
+    expect(openChatPanel).toHaveBeenCalledTimes(1);
+  });
+
+  it("with multiple AI providers, the AI button shows a menu and starts the chat with the selected provider", () => {
+    chatsFixture = createMockChats([
+      createMockProvider("provider-1", "Provider One"),
+      createMockProvider("provider-2", "Provider Two"),
+    ]);
+
+    act(() => {
+      render(
+        <EditPlaylistWithAiButton
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
+    });
+
+    const aiButton = container.querySelector(
+      ".sb-discover-title-ai"
+    ) as HTMLButtonElement;
+    expect(aiButton).not.toBeNull();
+    // Not yet started: opening the menu shouldn't create a chat by itself.
+    expect(chatsFixture.createLocalSession).not.toHaveBeenCalled();
+
+    act(() => {
+      aiButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    // The menu opens in a portal, outside the container.
+    const menuItems = Array.from(
+      document.querySelectorAll('[role="menuitem"]')
+    ) as HTMLButtonElement[];
+    expect(menuItems.map((item) => item.textContent)).toEqual([
+      "Provider One",
+      "Provider Two",
+    ]);
+
+    act(() => {
+      menuItems[1]!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+    expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-2");
+    expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
+    expect(openChatPanel).toHaveBeenCalledTimes(1);
+  });
+
+  it("excludes AI providers that don't support tool calling from the AI button", () => {
+    chatsFixture = createMockChats([
+      createMockProvider("provider-1", "Provider One"),
+      createMockProvider("provider-2", "No Tools", false),
+    ]);
+
+    act(() => {
+      render(
+        <EditPlaylistWithAiButton
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
+    });
+
+    // Only one tool-calling provider remains, so no menu is shown and it's
+    // added automatically, same as the single-provider case.
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+
+    const aiButton = container.querySelector(
+      ".sb-discover-title-ai"
+    ) as HTMLButtonElement;
+    act(() => {
+      aiButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+    expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-1");
+    expect(chatsFixture.addParticipant).not.toHaveBeenCalledWith("provider-2");
   });
 });

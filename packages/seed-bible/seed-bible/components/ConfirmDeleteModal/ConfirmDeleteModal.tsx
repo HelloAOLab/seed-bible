@@ -1,12 +1,11 @@
 import { signal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
-import { MaterialIcon } from "../icons";
-import { Spinner } from "../Spinner/Spinner";
 import type {
   ModalContentProps,
   ModalManager,
 } from "../../managers/ModalManager";
 import type { TranslatableTitle } from "../../managers/BibleToolsManager";
+import { Button } from "../Button/Button";
 
 type Translate = ModalContentProps["t"];
 
@@ -68,28 +67,24 @@ function ConfirmDeleteModalContent(
     <div className="sb-confirm-delete">
       <p className="sb-confirm-delete-message">{message(t)}</p>
       <div className="sb-confirm-delete-actions">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           className="sb-session-settings-cancel"
           onClick={onClose}
           disabled={isDeleting}
         >
           {t("cancel")}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="primary"
+          tone="danger"
+          icon="delete"
           className="sb-session-settings-end sb-delete-button"
           onClick={() => void confirm()}
-          disabled={isDeleting}
-          aria-busy={isDeleting}
+          loading={isDeleting}
         >
-          {isDeleting ? (
-            <Spinner size="1.125rem" />
-          ) : (
-            <MaterialIcon aria-hidden="true">delete</MaterialIcon>
-          )}
           {t("delete")}
-        </button>
+        </Button>
       </div>
     </div>
   );

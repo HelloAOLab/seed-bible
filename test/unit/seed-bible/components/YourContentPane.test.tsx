@@ -387,6 +387,7 @@ function createState(options: StateOptions = {}) {
       remove: removeCustomization,
       editingCustomization,
       resolveEditingVariantTheme: () => LIGHT_THEME,
+      getPreviewVariant: (c: SeedBibleCustomization) => c.variants[0],
       getShareLink: (c: SeedBibleCustomization) =>
         `https://example.com/?customization=${c.id}`,
     },
@@ -501,6 +502,7 @@ describe("YourContentPane", () => {
   let onCreatePlaylist: Mock<() => void>;
   let onOpenReadingPlan: Mock<(plan: unknown) => void>;
   let onEditReadingPlan: Mock<(plan: unknown) => void>;
+  let onCreateReadingPlan: Mock<() => void>;
   let onEditCustomization: Mock<(customizationId: string) => void>;
   let onCreateCustomization: Mock<() => void>;
 
@@ -514,6 +516,7 @@ describe("YourContentPane", () => {
     onCreatePlaylist = vi.fn(() => {});
     onOpenReadingPlan = vi.fn((_plan: unknown) => {});
     onEditReadingPlan = vi.fn((_plan: unknown) => {});
+    onCreateReadingPlan = vi.fn(() => {});
     onEditCustomization = vi.fn((_customizationId: string) => {});
     onCreateCustomization = vi.fn(() => {});
   });
@@ -535,6 +538,7 @@ describe("YourContentPane", () => {
           onCreatePlaylist={onCreatePlaylist}
           onOpenReadingPlan={onOpenReadingPlan}
           onEditReadingPlan={onEditReadingPlan}
+          onCreateReadingPlan={onCreateReadingPlan}
           onEditCustomization={onEditCustomization}
           onCreateCustomization={onCreateCustomization}
         />,
@@ -1129,7 +1133,7 @@ describe("YourContentPane", () => {
       choose(rows()[0]!, "Edit");
       const dialog = renderOpenedModal(openModal);
       const nameInput = dialog.querySelector<HTMLInputElement>(
-        ".sb-bookmark-form-name"
+        'input[aria-label="Bookmark name"]'
       )!;
       expect(nameInput.value).toBe("Sermon prep");
 
@@ -1168,7 +1172,9 @@ describe("YourContentPane", () => {
       choose(rows()[0]!, "Edit");
       const dialog = renderOpenedModal(openModal);
       type(
-        dialog.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!,
+        dialog.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!,
         "Advent"
       );
       await act(async () => {
@@ -1184,7 +1190,9 @@ describe("YourContentPane", () => {
       );
       expect(closeModal).not.toHaveBeenCalled();
       expect(
-        dialog.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+        dialog.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!.value
       ).toBe("Advent");
       // The manager put the old name back when the write failed.
       expect(names()).toEqual(["Sermon prep"]);
@@ -1325,7 +1333,7 @@ describe("YourContentPane", () => {
     renderPane(state);
 
     const chips = Array.from(
-      container.querySelectorAll(".sb-content-chip")
+      container.querySelectorAll(".sb-filter-pill")
     ) as HTMLButtonElement[];
     const savesChip = chips.find((c) => c.textContent === "Saves")!;
     act(() => {
@@ -1762,26 +1770,30 @@ describe("YourContentPane", () => {
     renderPane(state);
 
     const create = container.querySelector(".sb-content-create");
-    const chips = container.querySelector(".sb-content-chips");
+    const chips = container.querySelector(".sb-filter-pills-row");
     if (!create || !chips) throw new Error("The toolbar did not render.");
-    expect(create.textContent).toBe("+ Create");
+    expect(create.querySelector(".sb-button-label")?.textContent).toBe(
+      "Create"
+    );
     expect(
       create.compareDocumentPosition(chips) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
   });
 
-  it("offers Playlist and Custom Branding from the Create menu", () => {
+  it("offers Playlist, Reading Plan and Custom Branding from the Create menu", () => {
     const { state } = createState();
     renderPane(state);
     openCreateMenu();
 
     expect(menuItems().map((item) => item.textContent)).toEqual([
       "queue_musicPlaylist",
+      "menu_bookReading Plan",
       "paletteCustom Branding",
     ]);
   });
 
-  it("leaves Custom Branding out of the Create menu when signed out", () => {
+  // Both save to the user's account, which a signed-out user doesn't have.
+  it("leaves Reading Plan and Custom Branding out of the Create menu when signed out", () => {
     const { state } = createState({ userId: null });
     renderPane(state);
     openCreateMenu();
@@ -1791,12 +1803,27 @@ describe("YourContentPane", () => {
     ]);
   });
 
-  it("starts new custom branding from the Create menu", () => {
+  it("starts a new reading plan from the Create menu", () => {
     const { state } = createState();
     renderPane(state);
     openCreateMenu();
 
     const item = menuItems()[1];
+    if (!item) throw new Error("Reading Plan was not in the menu.");
+    act(() => {
+      item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(onCreateReadingPlan).toHaveBeenCalledTimes(1);
+    expect(onCreatePlaylist).not.toHaveBeenCalled();
+  });
+
+  it("starts new custom branding from the Create menu", () => {
+    const { state } = createState();
+    renderPane(state);
+    openCreateMenu();
+
+    const item = menuItems()[2];
     if (!item) throw new Error("Custom Branding was not in the menu.");
     act(() => {
       item.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -2350,6 +2377,7 @@ describe("YourContentPane save options", () => {
           onCreatePlaylist={vi.fn()}
           onOpenReadingPlan={vi.fn()}
           onEditReadingPlan={vi.fn()}
+          onCreateReadingPlan={vi.fn()}
           onEditCustomization={vi.fn()}
           onCreateCustomization={vi.fn()}
         />,
@@ -2447,6 +2475,7 @@ describe("YourContentPane save options", () => {
           onCreatePlaylist={vi.fn()}
           onOpenReadingPlan={vi.fn()}
           onEditReadingPlan={vi.fn()}
+          onCreateReadingPlan={vi.fn()}
           onEditCustomization={vi.fn()}
           onCreateCustomization={vi.fn()}
         />,
@@ -2476,6 +2505,7 @@ describe("YourContentPane save options", () => {
           onCreatePlaylist={vi.fn()}
           onOpenReadingPlan={vi.fn()}
           onEditReadingPlan={vi.fn()}
+          onCreateReadingPlan={vi.fn()}
           onEditCustomization={vi.fn()}
           onCreateCustomization={vi.fn()}
         />,
@@ -2509,6 +2539,7 @@ describe("YourContentPane save options", () => {
           onCreatePlaylist={vi.fn()}
           onOpenReadingPlan={vi.fn()}
           onEditReadingPlan={vi.fn()}
+          onCreateReadingPlan={vi.fn()}
           onEditCustomization={vi.fn()}
           onCreateCustomization={vi.fn()}
         />,
@@ -2553,6 +2584,7 @@ describe("YourContentPane clearing a highlight", () => {
           onCreatePlaylist={vi.fn()}
           onOpenReadingPlan={vi.fn()}
           onEditReadingPlan={vi.fn()}
+          onCreateReadingPlan={vi.fn()}
           onEditCustomization={vi.fn()}
           onCreateCustomization={vi.fn()}
         />,
@@ -2647,6 +2679,7 @@ describe("YourContentPane clearing a highlight", () => {
           onCreatePlaylist={vi.fn()}
           onOpenReadingPlan={vi.fn()}
           onEditReadingPlan={vi.fn()}
+          onCreateReadingPlan={vi.fn()}
           onEditCustomization={vi.fn()}
           onCreateCustomization={vi.fn()}
         />,

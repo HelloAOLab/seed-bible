@@ -2,28 +2,28 @@
 .sb-tour-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: var(--sb-layer-tour);
   font-family: var(--sb-font-family);
 }
 
-/* Contextual tips can fire while a high z-index panel/sheet (e.g. mobile
- * settings) is open, which would otherwise hide the tip. `elevated` steps lift
- * the overlay above those panels so the spotlight + popover land on top. */
+/* Contextual tips can fire while a panel or sheet (e.g. mobile settings) is
+ * open. `elevated` steps sit just above the selector-group tour popover too, so
+ * nothing else in the tour can cover them. */
 .sb-tour-overlay-raised {
-  z-index: 10001;
+  z-index: calc(var(--sb-layer-tour) + 2);
 }
 
 .sb-tour-spotlight {
   position: absolute;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
   border: 2px solid var(--sb-primary-color);
   pointer-events: none;
   transition:
-    top 0.2s ease,
-    left 0.2s ease,
-    width 0.2s ease,
-    height 0.2s ease;
+    top var(--sb-duration-base) ease,
+    left var(--sb-duration-base) ease,
+    width var(--sb-duration-base) ease,
+    height var(--sb-duration-base) ease;
 }
 
 .sb-tour-popover {
@@ -31,9 +31,9 @@
   box-sizing: border-box;
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  border-radius: 0.875rem;
+  border-radius: var(--sb-radius-xl);
   padding: 1.125rem;
-  box-shadow: 0 16px 40px #00000040;
+  box-shadow: var(--sb-shadow-modal);
   pointer-events: auto;
 }
 
@@ -50,19 +50,24 @@
   margin-bottom: 0.75rem;
 }
 
+/* A dot shrinks toward a short tick when a long tour's row doesn't fit
+   between back and next. */
 .sb-tour-dot {
-  width: 1rem;
+  flex: 0 1 1rem;
+  min-width: 0.25rem;
   height: 0.1875rem;
-  border-radius: 0.09375rem;
+  border-radius: var(--sb-radius-full);
   background: var(--sb-font-color);
   transition:
-    width 0.2s ease,
-    background 0.2s ease;
+    flex-basis var(--sb-duration-base) ease,
+    background var(--sb-duration-base) ease;
   opacity: 0.2;
 }
 
+/* Keeps its full length when the others shrink, so the current step stays easy to spot. */
 .sb-tour-dot-active {
-  width: 1.125rem;
+  flex-basis: 1.125rem;
+  flex-shrink: 0;
   background: var(--sb-primary-color);
   opacity: 1;
 }
@@ -84,7 +89,7 @@
 .sb-tour-popover-title {
   margin: 0;
   font-family: system-ui, sans-serif;
-  font-size: 1rem;
+  font-size: var(--sb-font-size-16);
   line-height: 1;
   font-weight: 700;
 }
@@ -122,6 +127,7 @@
   align-items: center;
   justify-content: center;
   flex: 1 1 auto;
+  min-width: 0;
   gap: 0.3125rem;
 }
 
@@ -130,21 +136,10 @@
   gap: 0.5rem;
 }
 
-.sb-tour-btn-back {
-  background: transparent;
-  color: var(--sb-font-color);
-  opacity: 0.75;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding-left: 0.125rem;
-  padding-right: 0.125rem;
-}
-
 .sb-tour-btn {
   appearance: none;
   border: 1px solid transparent;
-  border-radius: 0.625rem;
+  border-radius: var(--sb-radius-md);
   padding: 0.5rem 1rem;
   font-family: var(--sb-font-family);
   font-size: 0.9em;
@@ -176,6 +171,19 @@
   padding-right: 0.125rem;
 }
 
+/* After `.sb-tour-btn`, so its tight side padding wins over the shared
+   padding, as next's does: both sit flush with the card's edges. */
+.sb-tour-btn-back {
+  background: transparent;
+  color: var(--sb-font-color);
+  opacity: 0.75;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-left: 0.125rem;
+  padding-right: 0.125rem;
+}
+
 .sb-tour-btn-next {
   background: transparent;
   color: var(--sb-primary-color);
@@ -189,14 +197,16 @@
   margin-inline-start: auto;
 }
 
+.sb-tour-back-arrow,
 .sb-tour-next-arrow {
   font-size: 1.05em;
   line-height: 1;
 }
 
-/* RTL reverses the button's flex row, which would park the right-pointing
-   arrow on the label's left. Reverse it back so the arrow stays trailing the
-   label and pointing right, as it does in LTR. */
+/* RTL reverses the buttons' flex rows, which would swap each arrow to the
+   other side of its label. Reverse them back so the buttons look as they do
+   in LTR: ← before Back, → after Next. */
+[dir="rtl"] .sb-tour-btn-back,
 [dir="rtl"] .sb-tour-btn-next {
   flex-direction: row-reverse;
 }

@@ -371,6 +371,15 @@ export interface BibleReadingState {
   visibleVerseRange: Signal<VisibleVerseRange | null>;
 
   /**
+   * What else is on screen in this reader besides the chapter's verses, by
+   * area: a playing playlist's note or question page, or a compare step's
+   * second passage. Each range counts that area's own units (its blocks of
+   * text, or its verses). Broadcast alongside `visibleVerseRange` so peers on
+   * the same step can see whereabouts in it this reader is.
+   */
+  visibleAreas: Signal<ReadonlyMap<string, VisibleVerseRange>>;
+
+  /**
    * Toggles a verse in the current selection.
    * If the verse is already selected, it is removed; otherwise it is added with
    * menu anchor coordinates and a timestamp.
@@ -627,6 +636,21 @@ export interface BibleReadingState {
    * Called when the owning tab is closed.
    */
   dispose: () => void;
+
+  showDiscoveredContent: ReadonlySignal<boolean>;
+  userDismissedHiddenContentWarning: ReadonlySignal<boolean>;
+  turnOnDiscoveredContent: () => void;
+  hasHiddenDiscoveredContent: ReadonlySignal<boolean>;
+  dismissHiddenContentWarning: () => void;
+
+  /**
+   * Whether to show the hint that only this reader can see the discovered
+   * content in a shared session: true while some is on screen, until the
+   * reader acknowledges it once.
+   */
+  showSharedSessionHint: ReadonlySignal<boolean>;
+  /** Acknowledges the shared-session hint so it never shows again. */
+  dismissSharedSessionHint: () => void;
 }
 
 export interface TranslationWithLanguage {
@@ -1044,6 +1068,12 @@ export interface SelectTranslationAndChapterOptions {
    * heading — scroll is restored for browser history alone.
    */
   scrollPosition?: number;
+
+  /**
+   * Replace the current history entry instead of pushing a new one, for a
+   * navigation that belongs to an entry something else has just made.
+   */
+  replace?: boolean;
 }
 
 /** Options describing how a reading-state navigation should affect the URL. */
@@ -1391,6 +1421,7 @@ export interface DiscoverPanelContent {
   showAnnotations: boolean;
   hasDiscoverResults: boolean;
   hasAny: boolean;
+  showHiddenContentWarning: boolean;
 }
 
 /**
@@ -1419,12 +1450,16 @@ export function getDiscoverPanelContent(
   const showAnnotations = hasAnnotations || pendingAnnotationChanges > 0;
 
   const hasDiscoverResults = hasAnyDiscoverResults(readingState);
+  const showHiddenContentWarning =
+    readingState.hasHiddenDiscoveredContent.value &&
+    !readingState.userDismissedHiddenContentWarning.value;
 
   return {
     hasAnnotations,
     showAnnotations,
     hasDiscoverResults,
-    hasAny: showAnnotations || hasDiscoverResults,
+    showHiddenContentWarning,
+    hasAny: showAnnotations || hasDiscoverResults || showHiddenContentWarning,
   };
 }
 
@@ -1444,9 +1479,10 @@ export function createBibleReadingState(
    */
   getAnnotationsManager?: () => AnnotationsManager | undefined,
   /**
-   * Backs `discoverContentPanelInline` with the user's persisted setting when
-   * provided. Omitted for reading states that shouldn't persist it (e.g.
-   * shared sessions), which fall back to an in-memory-only signal.
+   * The user's settings. Outside shared sessions, backs
+   * `discoverContentPanelInline` with the persisted setting; a shared session
+   * keeps that toggle in memory only. In shared sessions, decides whether
+   * discovered content shows and whether its hint has been seen.
    */
   settingsManager?: SettingsManager
 ): BibleReadingState {
@@ -1583,11 +1619,35 @@ export function createBibleReadingState(
   const readAlongVerse = signal<{ verse: number } | null>(null);
   const pendingAnnotationScrollVerse = signal<number | null>(null);
   const visibleVerseRange = signal<VisibleVerseRange | null>(null);
+  const visibleAreas = signal<ReadonlyMap<string, VisibleVerseRange>>(
+    new Map()
+  );
 
   // Reading-extension enablement (per reading state). Extensions are registered
   // globally on the BibleReadingExtensionManager but never enabled by default;
   // `enableExtension` turns one on for this state only.
   const isShared = signal<boolean>(options.isShared ?? false);
+  // Without a settings manager there is nowhere to persist "Turn on", so
+  // it only lasts for this reading state.
+  const showDiscoveredContentHere = signal(false);
+  const showDiscoveredContent = computed(
+    () =>
+      !isShared.value ||
+      (settingsManager
+        ? settingsManager.settings.value.discoveredContent.showInSharedSessions
+        : showDiscoveredContentHere.value)
+  );
+  const userDismissedHiddenContentWarning = signal<boolean>(false);
+  const turnOnDiscoveredContent = () => {
+    if (settingsManager) {
+      settingsManager.setDiscoveredContent({ showInSharedSessions: true });
+    } else {
+      showDiscoveredContentHere.value = true;
+    }
+  };
+  const dismissHiddenContentWarning = () => {
+    userDismissedHiddenContentWarning.value = true;
+  };
   const enabledRuntimes = signal<Map<string, ReadingExtensionRuntime>>(
     new Map()
   );
@@ -2968,6 +3028,7 @@ export function createBibleReadingState(
         scrollToVerse: options?.scrollToVerse ?? null,
         updateUrl: options?.updateUrl,
         scrollPosition: options?.scrollPosition,
+        replace: options?.replace,
       });
       await whenContentSettled(target);
     } catch (err) {
@@ -3191,7 +3252,7 @@ export function createBibleReadingState(
   // passed through each enabled extension's `transformDiscoveredContent` hook in
   // priority order. Extensions can add content, filter it, or return `[]` to
   // suppress everything. The three by-type computeds below read this.
-  const discoveredResultsForDisplay = computed<
+  const discoveredResultsTransformed = computed<
     DiscoverTypedProviderResults<DiscoverResultWithBookData>[]
   >(() => {
     let results = discoveredResultsFiltered.value;
@@ -3208,6 +3269,29 @@ export function createBibleReadingState(
     }
     return results;
   });
+
+  const discoveredResultsForDisplay = computed(() =>
+    showDiscoveredContent.value ? discoveredResultsTransformed.value : []
+  );
+
+  const hasHiddenDiscoveredContent = computed(
+    () =>
+      !showDiscoveredContent.value &&
+      discoveredResultsTransformed.value.length > 0
+  );
+
+  const sharedSessionHintDismissedHere = signal(false);
+  const showSharedSessionHint = computed(
+    () =>
+      isShared.value &&
+      discoveredResultsForDisplay.value.length > 0 &&
+      !sharedSessionHintDismissedHere.value &&
+      !settingsManager?.settings.value.discoveredContent.sharedSessionHintSeen
+  );
+  const dismissSharedSessionHint = () => {
+    sharedSessionHintDismissedHere.value = true;
+    settingsManager?.setDiscoveredContent({ sharedSessionHintSeen: true });
+  };
 
   const discoveredCrossReferences = computed<
     DiscoverTypedProviderResults<DiscoverCrossReferenceResultWithBookData>[]
@@ -3251,11 +3335,12 @@ export function createBibleReadingState(
       .filter((providerResults) => providerResults.results.length > 0);
   });
 
+  const inlineSettings = isShared.value ? undefined : settingsManager;
   const discoverContentPanelInline = signal<boolean>(
-    settingsManager?.settings.value.discoverContentPanelInline ?? true
+    inlineSettings?.settings.value.discoverContentPanelInline ?? true
   );
 
-  if (settingsManager) {
+  if (inlineSettings) {
     // Persists every local change (the quick tool's explicit toggle, and
     // BibleReader's "force inline to reveal a note" nudge alike) to the
     // user's settings, mirroring how other per-tab UI toggles write through.
@@ -3281,11 +3366,11 @@ export function createBibleReadingState(
         // re-trigger this same effect, forever.
         untracked(() => {
           if (
-            settingsManager.settings.value.discoverContentPanelInline === value
+            inlineSettings.settings.value.discoverContentPanelInline === value
           ) {
             return;
           }
-          settingsManager.setDiscoverContentPanelInline(value);
+          inlineSettings.setDiscoverContentPanelInline(value);
         });
       })
     );
@@ -3296,7 +3381,7 @@ export function createBibleReadingState(
     effectDisposers.push(
       effect(() => {
         const settingValue =
-          settingsManager.settings.value.discoverContentPanelInline;
+          inlineSettings.settings.value.discoverContentPanelInline;
         untracked(() => {
           if (discoverContentPanelInline.value !== settingValue) {
             discoverContentPanelInline.value = settingValue;
@@ -3695,6 +3780,7 @@ export function createBibleReadingState(
     selectionAnnotations,
     pendingAnnotationScrollVerse,
     visibleVerseRange,
+    visibleAreas,
     selectedFootnote,
     loading,
     error,
@@ -3741,6 +3827,13 @@ export function createBibleReadingState(
     getUrlPathOverride,
     requestUrlUpdate,
     onNavigate,
+    showDiscoveredContent,
+    turnOnDiscoveredContent,
+    userDismissedHiddenContentWarning,
+    dismissHiddenContentWarning,
+    hasHiddenDiscoveredContent,
+    showSharedSessionHint,
+    dismissSharedSessionHint,
   };
 
   return readingStateRef;

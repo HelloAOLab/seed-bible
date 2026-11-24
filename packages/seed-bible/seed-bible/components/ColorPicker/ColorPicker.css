@@ -3,7 +3,7 @@
   height: 2.25rem;
   padding: 0.125rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   background: transparent;
   cursor: pointer;
   display: inline-flex;
@@ -24,7 +24,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  border-radius: 0.375rem;
+  border-radius: var(--sb-radius-sm);
   box-shadow: inset 0 0 0 1px
     color-mix(in srgb, var(--sb-font-color), transparent 85%);
 }
@@ -39,23 +39,23 @@
 .sb-color-picker-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1100;
+  z-index: var(--sb-layer-prompt);
   background: color-mix(in srgb, #000, transparent 55%);
 }
 
 .sb-color-picker-dialog {
   position: fixed;
-  z-index: 1102;
+  z-index: calc(var(--sb-layer-prompt) + 2);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   width: min(16.5rem, calc(100vw - 2rem));
   padding: 0.75rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 0.75rem;
+  border-radius: var(--sb-radius-lg);
   background: var(--sb-menu-background, var(--sb-reader-background, #fff));
   color: var(--sb-menu-font-color, var(--sb-font-color));
-  box-shadow: 0 10px 30px #00000024;
+  box-shadow: var(--sb-shadow-modal);
   box-sizing: border-box;
 }
 
@@ -63,7 +63,9 @@
   outline: none;
 }
 
-.sb-color-picker-dialog-sheet {
+/* In the mobile layout the picker is a card centered just above the bottom
+   toolbar rather than a popover beside the color it edits. */
+.sb-color-picker-dialog-card {
   left: 50%;
   /* Sit above the verse toolbar / bottom chrome instead of stacking on it. */
   bottom: calc(var(--sb-reader-bottom-inset, 0px) + 0.75rem);
@@ -71,14 +73,14 @@
   transform: translateX(-50%);
   width: min(22rem, calc(100vw - 1.5rem));
   padding: 1rem 0.875rem;
-  border-radius: 1rem;
+  border-radius: var(--sb-radius-xl);
 }
 
 .sb-color-picker-sv {
   position: relative;
   width: 100%;
   aspect-ratio: 1.15 / 1;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   touch-action: none;
   cursor: crosshair;
   overflow: hidden;
@@ -104,7 +106,7 @@
 .sb-color-picker-hue {
   position: relative;
   height: 0.875rem;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   touch-action: none;
   cursor: pointer;
   background: linear-gradient(
@@ -147,48 +149,37 @@
 .sb-color-picker-preview {
   width: 2rem;
   height: 2rem;
-  border-radius: 0.5rem;
+  border-radius: var(--sb-radius-md);
   flex-shrink: 0;
   box-shadow: inset 0 0 0 1px
     color-mix(in srgb, var(--sb-font-color), transparent 80%);
 }
 
+/* The box is the shared one; the "#" is drawn over its left end, which the box
+   leaves room for. */
 .sb-color-picker-hex-label {
-  display: flex;
-  align-items: center;
+  position: relative;
+  display: block;
   flex: 1;
   min-width: 0;
-  border-radius: 0.5rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  padding: 0 0.5rem;
 }
 
 .sb-color-picker-hex-hash {
+  position: absolute;
+  inset-inline-start: 0.625rem;
+  top: 50%;
+  transform: translateY(-50%);
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.875rem;
+  font-size: var(--sb-font-size-14);
+  pointer-events: none;
 }
 
-.sb-color-picker-hex {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  color: var(--sb-font-color);
+.sb-text-input.sb-color-picker-hex {
+  padding-inline-start: 1.375rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.875rem;
   letter-spacing: 0.04em;
   text-transform: lowercase;
-  padding: 0.5rem 0.25rem;
-}
-
-.sb-color-picker-hex:focus {
-  outline: none;
-}
-
-.sb-color-picker-hex-label:focus-within {
-  outline: 2px solid var(--sb-primary-color);
-  outline-offset: 1px;
 }
 
 .sb-color-picker-actions {
@@ -197,55 +188,26 @@
   gap: 0.5rem;
 }
 
-.sb-color-picker-cancel,
-.sb-color-picker-confirm {
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.875rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
+/* The phone card is for fingers: bigger handles and full-width buttons.
+   `:where()` keeps each rule at the strength it has without the card. */
+:where(.sb-color-picker-dialog-card) .sb-color-picker-sv {
+  aspect-ratio: 1 / 0.85;
 }
 
-.sb-color-picker-cancel {
-  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 10%);
-  background: transparent;
-  color: var(--sb-primary-color);
+:where(.sb-color-picker-dialog-card) .sb-color-picker-hue {
+  height: 1.25rem;
 }
 
-.sb-color-picker-cancel:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+:where(.sb-color-picker-dialog-card) .sb-color-picker-hue-thumb,
+:where(.sb-color-picker-dialog-card) .sb-color-picker-sv-thumb {
+  width: 1.375rem;
+  height: 1.375rem;
 }
 
-.sb-color-picker-confirm {
-  border: 1px solid var(--sb-primary-color);
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color, var(--sb-reader-background, #fff));
-}
-
-.sb-color-picker-confirm:hover {
-  background: color-mix(in srgb, var(--sb-primary-color), #000 12%);
-}
-
-@media (max-width: 480px) {
-  .sb-color-picker-sv {
-    aspect-ratio: 1 / 0.85;
-  }
-
-  .sb-color-picker-hue {
-    height: 1.25rem;
-  }
-
-  .sb-color-picker-hue-thumb,
-  .sb-color-picker-sv-thumb {
-    width: 1.375rem;
-    height: 1.375rem;
-  }
-
-  .sb-color-picker-cancel,
-  .sb-color-picker-confirm {
-    flex: 1;
-    padding: 0.75rem 0.875rem;
-    font-size: 0.875rem;
-  }
+/* Two classes, to outrank the Button's own size. */
+:where(.sb-color-picker-dialog-card) .sb-button.sb-color-picker-cancel,
+:where(.sb-color-picker-dialog-card) .sb-button.sb-color-picker-confirm {
+  flex: 1;
+  --sb-button-height: 2.75rem;
+  --sb-button-font-size: var(--sb-font-size-14);
 }

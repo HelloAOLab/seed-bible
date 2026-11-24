@@ -52,7 +52,7 @@ describe("PushNotificationsCard", () => {
   // Matched on its label alone: while busy, the button also holds a spinner.
   const button = (label: string) =>
     [...container.querySelectorAll("button")].find(
-      (b) => b.querySelector(".sb-friends-busy-label")?.textContent === label
+      (b) => b.querySelector(".sb-button-label")?.textContent === label
     );
   const alert = () => container.querySelector('[role="alert"]')?.textContent;
 

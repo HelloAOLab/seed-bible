@@ -158,7 +158,7 @@ describe("NotificationsManager", () => {
       const friends = createFriends();
 
       const notifications = create({ friends });
-      await vi.waitFor(() => expect(friends.isLoaded.value).toBe(true));
+      await vi.waitFor(() => expect(friends.hasLoaded.value).toBe(true));
 
       expect(notifications.items.value).toEqual([]);
       expect(notifications.unreadCount.value).toBe(0);
@@ -230,7 +230,7 @@ describe("NotificationsManager", () => {
       try {
         const friends = createFriends();
         start({ friends });
-        await vi.waitFor(() => expect(friends.isLoaded.value).toBe(true));
+        await vi.waitFor(() => expect(friends.hasLoaded.value).toBe(true));
         await flush();
         expect(toast).not.toHaveBeenCalled();
 

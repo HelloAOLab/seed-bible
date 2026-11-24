@@ -2,7 +2,7 @@ import "./PushNotificationsCard.css";
 import type { ComponentChildren } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
 import type { PushNotificationsManager } from "../../managers/PushNotificationsManager";
-import { BusyButton } from "../FriendsPane/FriendsPane";
+import { Button } from "../Button/Button";
 import { MaterialIcon } from "../icons";
 
 function Card(props: {
@@ -69,13 +69,14 @@ export function PushNotificationsCard(props: {
                 : null
           }
           action={
-            <BusyButton
-              busy={busy}
-              className="sb-friends-button sb-friends-button--primary"
+            <Button
+              variant="primary"
+              size="sm"
+              loading={busy}
               onClick={() => void push.enable()}
             >
               {t("push-notifications-turn-on", { defaultValue: "Turn on" })}
-            </BusyButton>
+            </Button>
           }
         >
           <p className="sb-push-card-body">
@@ -102,13 +103,13 @@ export function PushNotificationsCard(props: {
               : null
           }
           action={
-            <BusyButton
-              busy={busy}
-              className="sb-friends-button"
+            <Button
+              size="sm"
+              loading={busy}
               onClick={() => void push.disable()}
             >
               {t("push-notifications-turn-off", { defaultValue: "Turn off" })}
-            </BusyButton>
+            </Button>
           }
         >
           <p className="sb-push-card-body">

@@ -18,6 +18,10 @@ import {
   createI18nManager,
 } from "@packages/seed-bible/seed-bible/i18n";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers";
+import {
+  createExtensionReviewsManager,
+  type ExtensionReviewsManager,
+} from "@packages/seed-bible/seed-bible/managers/ExtensionReviewsManager";
 
 describe("extension permission dialogs", () => {
   let container: HTMLDivElement;
@@ -90,7 +94,7 @@ describe("extension permission dialogs", () => {
     }
 
     const switches = () => [
-      ...container.querySelectorAll<HTMLButtonElement>('[role="switch"]'),
+      ...container.querySelectorAll<HTMLInputElement>('[role="switch"]'),
     ];
     const status = () =>
       container.querySelector('[role="status"]')!.textContent;
@@ -112,13 +116,10 @@ describe("extension permission dialogs", () => {
         ["Connect to api.example.comlockNeeded"],
       ]);
       expect(
-        switches().map((s) => [
-          s.getAttribute("aria-label"),
-          s.getAttribute("aria-checked"),
-        ])
+        switches().map((s) => [s.getAttribute("aria-label"), s.checked])
       ).toEqual([
-        ["See your reading history", "false"],
-        ["Add notes, and change or delete the ones it added", "true"],
+        ["See your reading history", false],
+        ["Add notes, and change or delete the ones it added", true],
       ]);
       expect(container.textContent).toContain(
         "To take away something marked Needed, uninstall Demo."
@@ -138,7 +139,7 @@ describe("extension permission dialogs", () => {
         "reading:history",
         true
       );
-      expect(switches()[0]!.getAttribute("aria-checked")).toBe("true");
+      expect(switches()[0]!.checked).toBe(true);
       expect(status()).toContain(
         "Saved. Demo restarted with the new permissions."
       );
@@ -153,7 +154,7 @@ describe("extension permission dialogs", () => {
       });
 
       expect(status()).toContain("That didn't save. Try again.");
-      expect(switches()[1]!.getAttribute("aria-checked")).toBe("true");
+      expect(switches()[1]!.checked).toBe(true);
     });
   });
 
@@ -175,7 +176,8 @@ describe("extension permission dialogs", () => {
 
     function ask(
       request: Partial<SandboxConsentRequest> = {},
-      people?: ConsentPeople
+      people?: ConsentPeople,
+      reviews?: ExtensionReviewsManager
     ) {
       const answer = openExtensionConsentModal(
         modals,
@@ -193,7 +195,8 @@ describe("extension permission dialogs", () => {
           optionalPermissions: ["highlights:write", "notes:read"],
           ...request,
         },
-        people
+        people,
+        reviews
       );
       renderConsent();
       return answer;
@@ -259,6 +262,31 @@ describe("extension permission dialogs", () => {
       expect(container.textContent).toContain(
         "Seed Bible hasn't reviewed this extension."
       );
+    });
+
+    it("says an extension the reviews record marks verified has been verified", async () => {
+      const reviews = createExtensionReviewsManager(
+        {
+          getData: vi.fn(async (_recordName: string, address: string) =>
+            address === "ext.verse-art"
+              ? { success: true, data: { verified: true, verifiedAtMs: 1 } }
+              : { success: false, errorCode: "data_not_found" }
+          ),
+          recordData: vi.fn(),
+          eraseData: vi.fn(),
+          isRecordAdmin: vi.fn().mockResolvedValue(false),
+        } as unknown as Parameters<typeof createExtensionReviewsManager>[0],
+        { userId: signal<string | null>(null) },
+        "seed-bible-reviews"
+      );
+
+      void ask({}, undefined, reviews);
+      await act(async () => {});
+
+      expect(container.textContent).toContain(
+        "Seed Bible has verified this extension."
+      );
+      expect(container.textContent).not.toContain("hasn't reviewed");
     });
 
     describe("who uploaded it to Seed Bible", () => {

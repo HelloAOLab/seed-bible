@@ -150,10 +150,10 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
 export const TUTORIAL_STEPS = ONBOARDING_STEPS;
 
 /**
- * The mobile tour. Below 480px the desktop selector sub-controls (translation,
- * testament) and the pane-layout menu aren't rendered, so mobile gets its own
- * step list targeting the mobile header, the book selector grid, and the
- * bottom toolbar. The book step reuses the `selector-books` id so the
+ * The mobile tour. In the mobile layout the desktop selector sub-controls
+ * (translation, testament) and the pane-layout menu aren't rendered, so it
+ * gets its own step list targeting the mobile header, the book selector grid,
+ * and the bottom toolbar. The book step reuses the `selector-books` id so the
  * selector's built-in spotlight/open logic applies.
  */
 export const MOBILE_TUTORIAL_STEPS: TutorialStep[] = [
@@ -468,6 +468,15 @@ export interface TutorialManager {
    * flag is still tracked under `featureId` either way.
    */
   startContextual: (featureId: string, steps?: TutorialStep[]) => void;
+  /**
+   * Starts a contextual tour on request, such as from a "Take the tour"
+   * button: unlike {@link startContextual} it runs even if the tour was seen
+   * or the user turned tutorials off, since they asked for it. Finishing it
+   * still records it seen. `steps` works as in `startContextual`. Returns
+   * false when nothing started (another tour is running, an embed, or no
+   * steps).
+   */
+  replayContextual: (featureId: string, steps?: TutorialStep[]) => boolean;
   /**
    * Starts a tutorial by id at `step` (clamped to the tour's length), whether
    * or not the user has seen it or opted out — this is an explicit request,
@@ -834,15 +843,28 @@ export function createTutorialManager(
     if (featuresSeen.value[featureId]) {
       return;
     }
+    replayContextual(featureId, steps);
+  };
+
+  const replayContextual = (
+    featureId: string,
+    steps?: TutorialStep[]
+  ): boolean => {
+    if (isMinimalEmbed.value || running.value) {
+      return false;
+    }
     const resolvedSteps = steps ?? CONTEXTUAL_TUTORIALS[featureId];
     if (!resolvedSteps || resolvedSteps.length === 0) {
-      return;
+      return false;
     }
-    mode.value = "contextual";
-    activeFeatureId.value = featureId;
-    activeSteps.value = resolvedSteps;
-    index.value = 0;
-    running.value = true;
+    batch(() => {
+      mode.value = "contextual";
+      activeFeatureId.value = featureId;
+      activeSteps.value = resolvedSteps;
+      index.value = 0;
+      running.value = true;
+    });
+    return true;
   };
 
   const startTutorial = (id: string, step = 0): boolean => {
@@ -1069,6 +1091,7 @@ export function createTutorialManager(
     featuresSeen,
     start: () => start(),
     startContextual,
+    replayContextual,
     startTutorial,
     next,
     prev,

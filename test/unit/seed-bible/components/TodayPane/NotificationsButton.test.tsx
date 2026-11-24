@@ -55,7 +55,6 @@ describe("NotificationsButton", () => {
 
     expect(badge()).toBeNull();
     expect(bell().getAttribute("aria-label")).toBe("Notifications");
-    expect(bell().title).toBe("Notifications");
   });
 
   it("counts unread friend requests on the badge and in its label", async () => {
@@ -67,7 +66,7 @@ describe("NotificationsButton", () => {
 
     expect(bell().getAttribute("aria-label")).toBe("Notifications, 2 unread");
     // The label already says how many, so the number isn't read out twice.
-    expect(badge()!.getAttribute("aria-hidden")).toBe("true");
+    expect(badge()!.closest('[aria-hidden="true"]')).not.toBeNull();
   });
 
   it("shows 99 as it is", async () => {

@@ -11,6 +11,7 @@ import { LANG_META } from "seed-bible/i18n";
 import {
   bibleLanguageToUiLocale,
   extractContentText,
+  scriptureStepVerses,
   type AudioPlaybackController,
   type AudioPlaybackManager,
   type PlaybackVerse,
@@ -58,8 +59,35 @@ let saveListeningSpan: SaveListeningSpan | null = null;
  */
 let audioPlayback: AudioPlaybackManager | null = null;
 
+/**
+ * True while this tab's own playlist is borrowing the reader. The playlist
+ * changes the chapter; the paused narration has to stay so it can continue
+ * when that playlist gives the tab back. This is the tab's playlist, not
+ * whichever tab happens to be on screen.
+ */
+let playlistHoldsReadingState: (
+  readingState: BibleReadingState
+) => boolean = () => false;
+
 /** The browser's speech synthesiser, for as long as the extension is installed. */
 let textToSpeech: TextToSpeechManager | null = null;
+
+/** The first and last verse to read, when only part of a chapter is wanted. */
+interface Passage {
+  start: number;
+  end: number;
+}
+
+/**
+ * The verses of the playlist step open in a tab, when it's part of the
+ * chapter there: listening then reads just those. Set while installed.
+ */
+let stepPassage: ((readingState: BibleReadingState) => Passage | null) | null =
+  null;
+
+function passageKey(passage: Passage | null): string {
+  return passage ? `${passage.start}-${passage.end}` : "";
+}
 
 /** The chapter a stretch of listening is credited to. */
 export interface ListeningTarget {
@@ -386,6 +414,8 @@ interface SessionBase {
   duration: Signal<number | null>;
   /** See {@link chapterVerseHeadings}. */
   headings: Map<number, string>;
+  /** The verses being read, or null for the whole chapter. */
+  passage: Passage | null;
   controller: AudioPlaybackController;
   /** Takes the session's controls down and stops watching its tab. */
   teardown: () => void;
@@ -398,6 +428,19 @@ interface RecordingSession extends SessionBase {
   url: string;
   /** The chapter's verse timings, once fetched. */
   track: VerseTimingTrack | null;
+  /**
+   * Where in the recording `passage` starts and ends, in seconds; 0 and null
+   * for the whole chapter. The controls count from `clipStart`, so a passage
+   * shows as its own length.
+   */
+  clipStart: Signal<number>;
+  clipEnd: Signal<number | null>;
+  /**
+   * Playing silently from the top until the timings say where `passage`
+   * starts. It starts at once rather than after the fetch, which a browser
+   * could refuse as no longer the listener's own tap.
+   */
+  awaitingStart: boolean;
 }
 
 /** A tab having its chapter read aloud by the browser's voice. */
@@ -482,6 +525,13 @@ function ensureAudio(): HTMLAudioElement | null {
         if (Math.abs(el.currentTime - resumeAt) > 0.5) return;
         resumeAt = null;
       }
+      if (session.awaitingStart) return;
+      const clipEnd = session.clipEnd.peek();
+      if (clipEnd !== null && el.currentTime >= clipEnd) {
+        // The passage is over: the same as reaching the end of a chapter.
+        endSession(session, { keepHighlight: true });
+        return;
+      }
       session.position.value = el.currentTime;
       highlightVerseForTime(session, el.currentTime);
     };
@@ -546,13 +596,67 @@ function makeAudible(session: ListeningSession): void {
 function beginSession(session: ListeningSession): void {
   const { readingState } = session;
   sessions.set(readingState, session);
-  const hide = audioPlayback?.show(readingState, session.controller);
+  // `let` so the effect can clear it when the playlist hides the controls and
+  // restore a fresh one when it gives the tab back.
+  let hide: (() => void) | undefined = audioPlayback?.show(
+    readingState,
+    session.controller
+  );
 
+  // Moving to another step's verses in the same chapter ends it too.
   const chapterKey = () =>
-    `${readingState.translationId.value}|${readingState.bookId.value}|${readingState.chapterNumber.value}`;
+    `${readingState.translationId.value}|${readingState.bookId.value}|${readingState.chapterNumber.value}|${passageKey(stepPassage?.(readingState) ?? null)}`;
   const opened = untracked(chapterKey);
+  // Listening started during the playlist is the user listening to its step,
+  // so the playlist has nothing to hold back: only narration from before it
+  // waits out of sight.
+  const startedDuringPlaylist = untracked(() =>
+    playlistHoldsReadingState(readingState)
+  );
   const stopWatching = effect(() => {
-    if (chapterKey() !== opened) untracked(() => endSession(session));
+    // Call it inside the effect so the session follows this tab's playlist,
+    // including the moment that playlist lets the tab go.
+    const held =
+      !startedDuringPlaylist && playlistHoldsReadingState(readingState);
+    const key = chapterKey();
+
+    if (key === opened) {
+      // Right chapter. For a whole-chapter session, the playlist hides the
+      // controls so they're absent while it runs and come back paused once it
+      // ends — the user never sees them disappear mid-read, and they return
+      // already in the right state without any auto-play.
+      if (session.passage === null) {
+        if (held && hide !== undefined) {
+          untracked(() => {
+            const h = hide!;
+            hide = undefined;
+            h();
+          });
+        } else if (!held && hide === undefined && !session.ended) {
+          untracked(() => {
+            hide = audioPlayback?.show(readingState, session.controller);
+          });
+        }
+      }
+      return;
+    }
+    // A playlist that borrowed this tab keeps a paused whole-chapter
+    // narration across its chapter moves so Listen can continue afterward.
+    // Listening to a playlist step (passage set) still ends when that step's
+    // verses change — `held` alone would block that.
+    if (held && session.passage === null) {
+      // Hide the controls while the playlist has the tab; they come back
+      // paused at the same position once the playlist ends.
+      if (hide !== undefined) {
+        untracked(() => {
+          const h = hide!;
+          hide = undefined;
+          h();
+        });
+      }
+      return;
+    }
+    untracked(() => endSession(session));
   });
 
   session.teardown = () => {
@@ -580,6 +684,7 @@ function endSession(
       if (audioEl) {
         if (!audioEl.paused) audioEl.pause();
         audioEl.currentTime = 0;
+        audioEl.muted = false;
       }
       resumeAt = null;
     } else {
@@ -655,6 +760,7 @@ function seekVerseHighlight(
 /** Starts (or resumes) a recording, pausing any other tab being heard. */
 function playRecording(session: RecordingSession): void {
   makeAudible(session);
+  if (audioEl) audioEl.muted = session.awaitingStart;
   // A quick second press pauses before playback has begun, which rejects
   // this promise with AbortError. That's the user getting what they asked
   // for, not a failure worth reporting. (jsdom's element returns nothing at
@@ -670,7 +776,8 @@ function createRecordingSession(
   bibleData: SeedBibleState["bibleData"],
   readingState: BibleReadingState,
   chapter: TranslationBookChapter,
-  chapterAudio: { reader: string; url: string }
+  chapterAudio: { reader: string; url: string },
+  passage: Passage | null = null
 ): RecordingSession {
   const session: RecordingSession = {
     kind: "recording",
@@ -683,26 +790,37 @@ function createRecordingSession(
     position: signal(0),
     duration: signal<number | null>(null),
     headings: chapterVerseHeadings(chapter),
+    passage,
+    clipStart: signal(0),
+    clipEnd: signal<number | null>(null),
+    awaitingStart: passage !== null,
     teardown: () => undefined,
     ended: false,
     controller: undefined as unknown as AudioPlaybackController,
   };
+  const { clipStart, clipEnd } = session;
 
   session.controller = {
     unit: "seconds",
     isPlaying: session.isPlaying,
-    currentTime: session.position,
-    duration: session.duration,
+    currentTime: computed(() =>
+      Math.max(0, session.position.value - clipStart.value)
+    ),
+    duration: computed(() => {
+      const end = clipEnd.value ?? session.duration.value;
+      return end === null ? null : Math.max(0, end - clipStart.value);
+    }),
     play: () => playRecording(session),
     pause: () => {
       if (audible === session) audioEl?.pause();
     },
-    seek: (seconds) => {
-      if (!Number.isFinite(seconds)) return;
-      const duration = session.duration.peek();
+    seek: (position) => {
+      if (!Number.isFinite(position)) return;
+      const seconds = position + clipStart.peek();
+      const end = clipEnd.peek() ?? session.duration.peek();
       const target = Math.max(
-        0,
-        duration !== null ? Math.min(seconds, duration) : seconds
+        clipStart.peek(),
+        end !== null ? Math.min(seconds, end) : seconds
       );
       // A tab paused in the background just remembers where to pick up.
       if (audible === session && audioEl) {
@@ -715,7 +833,8 @@ function createRecordingSession(
       seekVerseHighlight(session, target);
     },
     stop: () => endSession(session),
-    verseAt: (seconds): PlaybackVerse | null => {
+    verseAt: (position): PlaybackVerse | null => {
+      const seconds = position + clipStart.peek();
       const track = session.track;
       if (!track || track.startTimes.length === 0) return null;
       // Matched to the highlight a seek there would light, lead-in and all. A
@@ -734,11 +853,18 @@ function createRecordingSession(
     verseMarks: (): PlaybackVerseMark[] => {
       const track = session.track;
       if (!track) return [];
-      return track.startTimes.flatMap((position, index) => {
+      const start = clipStart.peek();
+      const end = clipEnd.peek() ?? Infinity;
+      return track.startTimes.flatMap((seconds, index) => {
         const number = track.verseNumbers[index];
-        return number === undefined
+        return number === undefined || seconds < start || seconds >= end
           ? []
-          : [{ position, startsSection: session.headings.has(number) }];
+          : [
+              {
+                position: seconds - start,
+                startsSection: session.headings.has(number),
+              },
+            ];
       });
     },
   };
@@ -910,13 +1036,17 @@ function highlightSpokenVerse(
 function createSpeechSession(
   context: SeedBibleState,
   readingState: BibleReadingState,
-  chapter: TranslationBookChapter
+  chapter: TranslationBookChapter,
+  passage: Passage | null = null
 ): SpeechSession | null {
   const lang = speakableChapterLanguage(
     chapter,
     context.textToSpeech.canSpeakLanguage
   );
-  const verses = chapterSpeechVerses(chapter);
+  const verses = chapterSpeechVerses(chapter).filter(
+    (verse) =>
+      !passage || (verse.number >= passage.start && verse.number <= passage.end)
+  );
   if (verses.length === 0 || !lang) {
     context.app.toast(
       context.i18n.t("no-audio", {
@@ -939,6 +1069,7 @@ function createSpeechSession(
     position: signal(0),
     duration: signal<number | null>(verses.length),
     headings: chapterVerseHeadings(chapter),
+    passage,
     teardown: () => undefined,
     ended: false,
     controller: undefined as unknown as AudioPlaybackController,
@@ -1009,6 +1140,47 @@ function speechIndexAt(position: number, count: number): number {
  * works, just without the highlight.
  */
 async function loadVerseTrack(
+  bibleData: SeedBibleState["bibleData"],
+  session: RecordingSession,
+  chapter: TranslationBookChapter,
+  reader: string
+): Promise<void> {
+  try {
+    await fetchVerseTrack(bibleData, session, chapter, reader);
+    clipToPassage(session);
+  } finally {
+    // Without timings there's no telling where the passage is: the whole
+    // chapter plays, from wherever it has got to.
+    if (session.awaitingStart) {
+      session.awaitingStart = false;
+      if (audible === session && audioEl) audioEl.muted = false;
+    }
+  }
+}
+
+/**
+ * Narrows `session` to its passage once its timings are in, and moves a
+ * recording already playing silently to where the passage starts.
+ */
+function clipToPassage(session: RecordingSession): void {
+  const { passage, track } = session;
+  if (session.ended || !passage || !track) return;
+  const first = track.verseNumbers.findIndex((n) => n >= passage.start);
+  const after = track.verseNumbers.findIndex((n) => n > passage.end);
+  const start = first >= 0 ? track.startTimes[first] : undefined;
+  if (start === undefined) return;
+  session.clipStart.value = start;
+  session.clipEnd.value = after >= 0 ? (track.startTimes[after] ?? null) : null;
+  session.position.value = start;
+  if (session.awaitingStart && audible === session && audioEl) {
+    audioEl.currentTime = start;
+    resumeAt = start > 0 ? start : null;
+  }
+  session.awaitingStart = false;
+  if (audible === session && audioEl) audioEl.muted = false;
+}
+
+async function fetchVerseTrack(
   bibleData: SeedBibleState["bibleData"],
   session: RecordingSession,
   chapter: TranslationBookChapter,
@@ -1202,8 +1374,13 @@ export function isAudioPlayToolVisible(
   if (ctx.surface === "quick-toolbar" && ctx.app?.isMinimalEmbed?.value) {
     return false;
   }
+  // During a playlist it reads scripture steps only; a step's own verses
+  // when it has them (see `stepPassage`).
+  const step = ctx.playlists.playing.value?.currentItem.value;
+  if (step && (step.type !== "bible-verse" || step.compare)) {
+    return false;
+  }
   return (
-    !ctx.playlists.playing.value &&
     isChapterListenable(ctx.readingState, canSpeakLanguage) &&
     (ctx.surface !== "quick-toolbar" || !ctx.playlists.isMobile.value)
   );
@@ -1287,13 +1464,36 @@ export default function initAudioReaderExtension() {
         saveListeningSpan = null;
       };
 
+      stepPassage = (readingState) => {
+        const playing = context.playlists.playing.value;
+        const chapter = readingState.chapterData.value;
+        if (
+          !playing ||
+          !chapter ||
+          playing.tab?.readingState !== readingState
+        ) {
+          return null;
+        }
+        return scriptureStepVerses(playing.currentItem.value, {
+          bookId: chapter.book.id,
+          chapter: chapter.chapter.number,
+          numberOfVerses: chapter.numberOfVerses,
+        });
+      };
+      yield () => {
+        stepPassage = null;
+      };
+
       audioPlayback = context.audioPlayback;
+      playlistHoldsReadingState = (readingState) =>
+        context.playlists.holdsReadingState(readingState);
       const speech = context.textToSpeech;
       textToSpeech = speech;
       // The audio element and the synthesiser outlive the install, but nothing
       // would be left to show or control them, so an uninstall ends every
       // tab's listening outright.
       yield () => {
+        playlistHoldsReadingState = () => false;
         endAllSessions();
         audioPlayback = null;
         textToSpeech = null;
@@ -1319,12 +1519,25 @@ export default function initAudioReaderExtension() {
           computed(() => isAudioPlayToolVisible(ctx, speech.canSpeakLanguage)),
         onSelect: debounce((ctx: QuickToolContext) => {
           const readingState = ctx.readingState;
+          const passage = untracked(() => stepPassage?.(readingState) ?? null);
           const existing = sessions.get(readingState);
-          if (existing) {
+          // Narration a playlist is holding has no controls on screen, so
+          // resuming it would play with nothing to show or pause it. Listen
+          // starts the step afresh instead.
+          const heldByPlaylist =
+            existing !== undefined &&
+            context.audioPlayback.controllerFor(readingState) !==
+              existing.controller;
+          if (
+            existing &&
+            !heldByPlaylist &&
+            passageKey(existing.passage) === passageKey(passage)
+          ) {
             if (existing.isPlaying.peek()) existing.controller.pause();
             else existing.controller.play();
             return;
           }
+          if (existing) endSession(existing);
 
           const chapter = readingState.chapterData.peek();
           if (!chapter) return;
@@ -1335,9 +1548,10 @@ export default function initAudioReaderExtension() {
                 context.bibleData,
                 readingState,
                 chapter,
-                chapterAudio
+                chapterAudio,
+                passage
               )
-            : createSpeechSession(context, readingState, chapter);
+            : createSpeechSession(context, readingState, chapter, passage);
           if (!session) return;
           beginSession(session);
           session.controller.play();
