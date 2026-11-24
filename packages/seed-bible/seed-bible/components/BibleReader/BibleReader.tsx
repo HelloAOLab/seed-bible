@@ -1204,6 +1204,16 @@ function renderChapterContent(
             .join(" ")}
           style={flareStyle}
           onClick={hasAnnotation ? handleAnnotationClick : undefined}
+          onKeyDown={
+            hasAnnotation
+              ? (event: KeyboardEvent) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    (event.currentTarget as HTMLElement).click();
+                  }
+                }
+              : undefined
+          }
           role={hasAnnotation ? "button" : undefined}
           tabIndex={hasAnnotation ? 0 : undefined}
         >
@@ -1223,6 +1233,12 @@ function renderChapterContent(
           .join(" ")}
         style={flareStyle}
         onClick={handleAnnotationClick}
+        onKeyDown={(event: KeyboardEvent) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            (event.currentTarget as HTMLElement).click();
+          }
+        }}
         role="button"
         tabIndex={0}
       >
@@ -2206,6 +2222,12 @@ interface ChapterContentProps {
     selectionX: number,
     selectionY: number
   ) => void;
+  /**
+   * When set, ChapterContent stores the verse span element here on each
+   * keyboard-driven verse selection so BibleReaderToolbar can return focus to
+   * the right span without a querySelector that breaks in compare/split mode.
+   */
+  selectedVerseEl?: Signal<HTMLElement | null>;
   selectVersesFromTextSelection: () => void;
   justConvertedSelectionRef: { current: boolean };
   selectFootnote: (noteId: number | null) => void;
@@ -2456,6 +2478,7 @@ function ChapterContent(props: ChapterContentProps) {
     prefersReducedMotionValue,
     highlightAuthors,
     hideHighlights = false,
+    selectedVerseEl,
   } = props;
 
   const { t } = useI18n();
@@ -2544,6 +2567,7 @@ function ChapterContent(props: ChapterContentProps) {
       // selectedVerses so we don't toggle them back off.
       if (stagedVerseNums.size > 0) {
         const content = contentRef.current;
+        let firstStagedEl: HTMLElement | null = null;
         for (const num of stagedVerseNums) {
           const alreadySelected = selectedVerses.value.some(
             (v) =>
@@ -2569,10 +2593,13 @@ function ChapterContent(props: ChapterContentProps) {
           const el = content?.querySelector<HTMLElement>(
             `.sb-verse[data-verse-number="${num}"]`
           );
+          if (el && !firstStagedEl) firstStagedEl = el;
           const rect = el?.getBoundingClientRect() ?? new DOMRect();
           selectVerse(verse, rect.left + rect.width / 2, rect.top);
           onHostVerseClick(verse);
         }
+        if (firstStagedEl && selectedVerseEl)
+          selectedVerseEl.value = firstStagedEl;
         setStagedVerseNums(new Set());
         setShiftAnchorVerseNum(null);
         requestAnimationFrame(() => {
@@ -2610,6 +2637,7 @@ function ChapterContent(props: ChapterContentProps) {
           v.bookId === data.book.id &&
           v.chapterNumber === data.chapter.number
       );
+      if (selectedVerseEl) selectedVerseEl.value = verseEl;
       selectVerse(verse, rect.left + rect.width / 2, rect.top);
       if (!wasSelected) {
         onHostVerseClick(verse);
@@ -4389,6 +4417,7 @@ export function BibleReader(props: BibleReaderProps) {
                 }
                 prefersReducedMotionValue={prefersReducedMotionValue}
                 highlightAuthors={highlightAuthors}
+                selectedVerseEl={readingState.selectedVerseEl}
               />
             </Suspense>
           ))}

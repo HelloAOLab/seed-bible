@@ -1952,16 +1952,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   /**
    * The phone verse sheet's ✕ and Escape: in the highlight colors they go back
    * to the verse actions, keeping the selection; otherwise they clear it.
+   * Returns true if the selection was cleared, false if only the picker closed.
    */
-  const leaveVerseSheetStep = () => {
+  const leaveVerseSheetStep = (): boolean => {
     if (isHighlightPickerOpen.value) {
       isHighlightPickerOpen.value = false;
-      return;
+      return false;
     }
     selectionState.value?.clearSelectedVerses();
+    return true;
   };
 
   // Verse toolbar highlight picker state
+  // Ref to the Highlight trigger button so Escape from the picker can return
+  // focus to it, keeping the user inside the toolbar rather than on body.
+  const highlightTriggerRef = useRef<HTMLButtonElement | null>(null);
   const customColorAnchorRef = useRef<HTMLButtonElement | null>(null);
   const customColorPickerOpen = useSignal(false);
   const customHighlightColors = useComputed(
@@ -2909,18 +2914,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return getReaderNavLabel();
   };
 
-  // Focuses a verse span inside the reader pane that owns this toolbar.
-  // Using verseToolbarRef to scope the query prevents compare/split-screen
-  // from accidentally focusing the same verse number in the other pane.
-  const focusVerseInOwnPane = (num: number) => {
-    const pane =
-      verseToolbarRef.current?.closest<HTMLElement>(".sb-pane-shell");
-    const scope: ParentNode = pane ?? document;
-    scope
-      .querySelector<HTMLElement>(`.sb-verse[data-verse-number="${num}"]`)
-      ?.focus();
-  };
-
   return (
     <>
       {!shouldReplaceDefaultToolbar.value && (
@@ -3394,13 +3387,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         <VerseToolbarFrame
           mobile={isSmallScreen.value}
           onEscape={() => {
-            // Remember which verse was selected so we can return focus to it
-            // after the toolbar closes, instead of stranding the user mid-page.
-            const verseNum =
-              selectionState.value?.selectedVerses.value[0]?.verse.number;
-            leaveVerseSheetStep();
-            if (verseNum != null) {
-              focusVerseInOwnPane(verseNum);
+            // Capture the element before leaveVerseSheetStep clears it.
+            // leaveVerseSheetStep returns true when it cleared the selection
+            // (toolbar will close) and false when it only closed the highlight
+            // picker (toolbar stays open, focus returns to Highlight button via
+            // the picker's own Escape handler). Only return focus to the verse
+            // when the whole toolbar is dismissed.
+            const el = selectionState.value?.selectedVerseEl.value ?? null;
+            const selectionCleared = leaveVerseSheetStep();
+            if (selectionCleared && el) {
+              el.focus({ preventScroll: true });
             }
           }}
           floating={{
@@ -3508,6 +3504,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 if (event.key === "Escape") {
                   event.preventDefault();
                   isHighlightPickerOpen.value = false;
+                  // Return focus to the Highlight button so the user stays
+                  // inside the toolbar; without this, focus falls to body and
+                  // the second Escape can't close the toolbar.
+                  requestAnimationFrame(() => {
+                    highlightTriggerRef.current?.focus();
+                  });
                   return;
                 }
                 if (isSmallScreen.value) {
@@ -3902,6 +3904,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 const highlightCard = showHighlightCard.value ? (
                   <div key="highlight" className="sb-verse-toolbar-action-item">
                     <button
+                      ref={highlightTriggerRef}
                       type="button"
                       className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
                       onClick={() => {
@@ -3978,14 +3981,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       {nonCancel.map((tool) => renderTool(tool))}
                       {cancelTools.map((tool) =>
                         renderTool(tool, false, () => {
-                          // Capture the verse number now — clearSelectedVerses
-                          // runs immediately after and empties the signal.
-                          const verseNum =
-                            selectionState.value?.selectedVerses.value[0]?.verse
-                              .number;
-                          if (verseNum != null) {
+                          // Capture the element now — clearSelectedVerses runs
+                          // immediately after and nulls selectedVerseEl. The
+                          // rAF waits one frame so the toolbar has unmounted
+                          // before we try to focus the verse.
+                          const el =
+                            selectionState.value?.selectedVerseEl.value ?? null;
+                          if (el) {
                             requestAnimationFrame(() => {
-                              focusVerseInOwnPane(verseNum);
+                              el.focus({ preventScroll: true });
                             });
                           }
                         })
