@@ -2952,15 +2952,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               // can be scrubbed; paused, it shrinks to a ring around the play
               // button so the pill area goes back to plain navigation.
               const isScrubbing = !!playback?.isPlaying.value;
-              // A host asking this reader to come back, or offering them the
-              // audio they're playing, can't wait for the playlist to finish,
-              // so it takes the note sheet's place.
+              // Anything the reader has to answer or act on (a host asking
+              // them back, audio on offer, their own audio out of step with
+              // the group's) can't wait for the playlist to finish, so it
+              // takes the note sheet's place.
               const showsGroupBar =
                 !!sessionState.value &&
                 (!playing ||
                   !!sessionState.value.incomingComeBackRequest.value ||
                   !!sessionState.value.audioOffer.value ||
-                  sessionState.value.leadsSharedAudio.value);
+                  sessionState.value.leadsSharedAudio.value ||
+                  sessionState.value.isListeningOnOwn.value);
 
               return (
                 <div

@@ -1162,8 +1162,8 @@ export interface BibleReadingSession {
 
   /**
    * True once this reader has agreed to hear the host's audio. Until then
-   * their device stays silent when the host plays. Lasts until the host stops
-   * sharing or the reader stops it themselves.
+   * their device stays silent when the host plays. Lasts until the reader
+   * stops it themselves or leaves, across chapters and the host's stops.
    */
   isListeningAlong: ReadonlySignal<boolean>;
 
@@ -1172,6 +1172,18 @@ export interface BibleReadingSession {
 
   /** Stops hearing the host's audio, without asking again for this chapter. */
   stopListeningAlong: () => void;
+
+  /**
+   * True while this reader is listening along but has paused or moved their
+   * own player, so the host's play, pause, and seeks no longer move it.
+   */
+  isListeningOnOwn: ReadonlySignal<boolean>;
+
+  /** Marks this reader's player as off on its own. No-op unless listening along. */
+  listenOnOwn: () => void;
+
+  /** Puts this reader's player back in step with the host's audio. */
+  rejoinGroupAudio: () => void;
 
   /**
    * Audio someone else is sharing on the chapter this reader is on, playing
@@ -2787,17 +2799,22 @@ async function createBibleReadingSession(
 
   const audioShareChoice = signal<SharedAudioShareChoice | null>(null);
   const isListeningAlong = signal(false);
+  const listeningOnOwn = signal(false);
+  const isListeningOnOwn = computed(
+    () => isListeningAlong.value && listeningOnOwn.value
+  );
   // The chapter whose offer was turned down, as `${bookId}:${chapter}`, so a
   // host who keeps playing the same chapter doesn't keep asking.
   const declinedAudioOffer = signal<string | null>(null);
   const audioChapterKey = (playback: SharedAudioPlayback) =>
     `${playback.bookId}:${playback.chapterNumber}`;
 
-  // Once the host stops sharing, the next time they play is a new offer.
+  // Once the host stops sharing, the next time they play is a new offer for
+  // anyone who turned this one down. Those listening along stay joined, so
+  // the next chapter the host plays reaches them without asking again.
   const stopResettingListenAlong = effect(() => {
     if (sharedAudio.value !== null) return;
     untracked(() => {
-      isListeningAlong.value = false;
       declinedAudioOffer.value = null;
     });
   });
@@ -2899,11 +2916,20 @@ async function createBibleReadingSession(
     isListeningAlong,
     listenAlong: () => {
       declinedAudioOffer.value = null;
+      listeningOnOwn.value = false;
       isListeningAlong.value = true;
     },
     stopListeningAlong: () => {
       isListeningAlong.value = false;
+      listeningOnOwn.value = false;
       dismissAudioOffer();
+    },
+    isListeningOnOwn,
+    listenOnOwn: () => {
+      if (isListeningAlong.peek()) listeningOnOwn.value = true;
+    },
+    rejoinGroupAudio: () => {
+      listeningOnOwn.value = false;
     },
     audioOffer,
     dismissAudioOffer,

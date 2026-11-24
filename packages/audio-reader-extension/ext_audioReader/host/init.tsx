@@ -107,6 +107,12 @@ const sharedAudioEcho = new Map<string, string | null>();
 const sharedAudioFollowed = new Set<string>();
 
 /**
+ * Sessions whose listener paused or moved their own player, so the host's
+ * commands are left alone until they rejoin.
+ */
+const sharedAudioOnOwn = new Set<string>();
+
+/**
  * Last remote command id already applied. Kept apart from {@link sharedAudioEcho}
  * so following the host is not mistaken for having published the command.
  */
@@ -763,12 +769,6 @@ function endSession(
   options: { keepHighlight?: boolean } = {}
 ): void {
   if (session.ended) return;
-  // A listener who stops the host's audio themselves is done listening along;
-  // otherwise the host's next seek would start it again.
-  const stopsListeningAlong =
-    !applyingSharedAudio &&
-    !!session.sharedSession &&
-    sharedAudioFollowed.has(session.sharedSession.id);
   // Pausing the element and stopping speech both report a local pause.
   // Hold publishing off until the stop itself goes out, or peers pause at
   // the start of the chapter and then stop.
@@ -808,7 +808,19 @@ function endSession(
     applyingSharedAudio = previousApplying;
   }
   if (publishStop) publishSharedAudio(session, null);
-  if (stopsListeningAlong) session.sharedSession?.stopListeningAlong();
+}
+
+/**
+ * The player's stop button. A listener who stops the host's audio themselves
+ * is done listening along, or the host's next seek would start it again.
+ * Other endings (the chapter finishing, the group moving on) are not that.
+ */
+function stopPressed(session: ListeningSession): void {
+  const shared = session.sharedSession;
+  const leaving =
+    !applyingSharedAudio && !!shared && sharedAudioFollowed.has(shared.id);
+  endSession(session);
+  if (leaving) shared.stopListeningAlong();
 }
 
 /** Ends every tab's listening, as an uninstall must. */
@@ -943,7 +955,25 @@ function publishSharedAudio(
 ): void {
   if (applyingSharedAudio || publishingSharedAudio) return;
   const shared = session.sharedSession;
-  if (!shared || shared.audioShareChoice.peek() !== "everyone") return;
+  if (!shared) return;
+  if (shared.audioShareChoice.peek() === "everyone") {
+    writeSharedAudio(shared, command);
+  }
+  // A listener's own play, pause, or seek takes their player out of step
+  // with the host's, unless it went out to everyone and they now lead.
+  if (
+    command !== null &&
+    sharedAudioFollowed.has(shared.id) &&
+    !shared.leadsSharedAudio.peek()
+  ) {
+    shared.listenOnOwn();
+  }
+}
+
+function writeSharedAudio(
+  shared: BibleReadingSession,
+  command: SharedAudioPlaybackCommand | null
+): void {
   // Only the client that still owns the stored command may clear it. Having
   // published an earlier press is not enough: a co-host who followed someone
   // else must not stop the room when their own tab closes.
@@ -1092,6 +1122,7 @@ function stopSharedListening(
   sharedAudioAwaitingGesture.delete(sessionId);
   clearListenAlongPrompt();
   sharedAudioFollowed.delete(sessionId);
+  sharedAudioOnOwn.delete(sessionId);
   sharedAudioApplied.delete(sessionId);
   sharedAudioAligned.delete(sessionId);
   if (listening) endSession(listening);
@@ -1410,7 +1441,7 @@ function createRecordingSession(
       seekVerseHighlight(session, target);
       publishSharedFrom(session);
     },
-    stop: () => endSession(session),
+    stop: () => stopPressed(session),
     verseAt: (position): PlaybackVerse | null => {
       const seconds = position + clipStart.peek();
       const track = session.track;
@@ -1683,7 +1714,7 @@ function createSpeechSession(
       if (verse) followVerse(readingState, verse.number);
       publishSharedFrom(session);
     },
-    stop: () => endSession(session),
+    stop: () => stopPressed(session),
     verseAt: (position): PlaybackVerse | null => {
       const verse = verses[speechIndexAt(position, verses.length)];
       if (!verse) return null;
@@ -2112,6 +2143,7 @@ export default function initAudioReaderExtension() {
         readOpenTabs = null;
         sharedAudioEcho.clear();
         sharedAudioFollowed.clear();
+        sharedAudioOnOwn.clear();
         sharedAudioApplied.clear();
         sharedAudioAligned.clear();
         sharedAudioAwaitingGesture.clear();
@@ -2124,6 +2156,7 @@ export default function initAudioReaderExtension() {
       readOpenTabs = () => context.tabs.tabs.peek();
       sharedAudioEcho.clear();
       sharedAudioFollowed.clear();
+      sharedAudioOnOwn.clear();
       sharedAudioApplied.clear();
       sharedAudioAligned.clear();
       sharedAudioAwaitingGesture.clear();
@@ -2165,6 +2198,8 @@ export default function initAudioReaderExtension() {
               translationId: tab.readingState.translationId.value,
               ended: options.endedAt !== null,
               listeningAlong: shared.isListeningAlong.value,
+              listeningOnOwn: shared.isListeningOnOwn.value,
+              rejoinGroupAudio: shared.rejoinGroupAudio,
               leaderConnected,
               presenceTrustworthy,
             },
@@ -2192,13 +2227,34 @@ export default function initAudioReaderExtension() {
               });
               continue;
             }
-            if (leaderLeft) {
+            if (leaderLeft && !item.listeningOnOwn) {
               // Only silence audio we started from the host. A guest's own
               // Listen is theirs until the session itself ends.
               stopSharedListening(item.sessionId, item.readingState, {
                 onlyIfFollowing: true,
               });
               continue;
+            }
+            if (item.listeningOnOwn) {
+              if (item.playback === null) {
+                // The host stopped sharing: nothing is left to rejoin. Their
+                // own audio carries on, and they're back with the group for
+                // whatever the host plays next.
+                sharedAudioOnOwn.delete(item.sessionId);
+                sharedAudioFollowed.delete(item.sessionId);
+                sharedAudioApplied.delete(item.sessionId);
+                sharedAudioAligned.delete(item.sessionId);
+                item.rejoinGroupAudio();
+                continue;
+              }
+              sharedAudioOnOwn.add(item.sessionId);
+              continue;
+            }
+            if (sharedAudioOnOwn.delete(item.sessionId)) {
+              // Rejoining: the host's current command is applied again even
+              // though it was already followed before the listener went off.
+              sharedAudioApplied.delete(item.sessionId);
+              sharedAudioAligned.delete(item.sessionId);
             }
             applySharedPlayback(
               context,

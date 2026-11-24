@@ -781,6 +781,8 @@ describe("BibleReaderToolbar — clearing highlights", () => {
       incomingComeBackRequest: signal(null),
       audioOffer: signal(null),
       leadsSharedAudio: signal(false),
+      isListeningAlong: signal(false),
+      isListeningOnOwn: signal(false),
       document: {} as never,
       updateOptions: vi.fn(),
       dispose: vi.fn(),
@@ -6332,6 +6334,8 @@ describe("BibleReaderToolbar — answers to a playing question in a shared sessi
         incomingComeBackRequest: signal(null),
         audioOffer: signal(null),
         leadsSharedAudio: signal(false),
+        isListeningAlong: signal(false),
+        isListeningOnOwn: signal(false),
         document: {} as never,
         updateOptions: vi.fn(),
         dispose: vi.fn(),
@@ -6421,7 +6425,12 @@ describe("BibleReaderToolbar — away from the session group", () => {
   async function renderInSession(
     viewportWidth: number,
     away: boolean,
-    { askedToComeBack = false, offeredAudio = false, leadingAudio = false } = {}
+    {
+      askedToComeBack = false,
+      offeredAudio = false,
+      leadingAudio = false,
+      listening = null as "with-group" | "on-own" | null,
+    } = {}
   ) {
     window.innerWidth = viewportWidth;
     const state = await createTestSeedBibleState({
@@ -6475,7 +6484,7 @@ describe("BibleReaderToolbar — away from the session group", () => {
     });
     const leadsSharedAudio = signal(leadingAudio);
     const sharedAudio = signal(
-      leadingAudio
+      leadingAudio || listening
         ? {
             playing: false,
             bookId: "EXO",
@@ -6485,11 +6494,16 @@ describe("BibleReaderToolbar — away from the session group", () => {
             unit: "seconds" as const,
             verseNumber: null,
             updatedAtMs: Date.now(),
-            id: "audio-mine",
-            fromConnectionId: "conn-self",
+            id: "audio-1",
+            fromConnectionId: leadingAudio ? "conn-self" : "conn-host",
           }
         : null
     );
+    const isListeningAlong = signal(listening !== null);
+    const isListeningOnOwn = signal(listening === "on-own");
+    const rejoinGroupAudio = vi.fn(() => {
+      isListeningOnOwn.value = false;
+    });
     const audioListeners = signal<ConnectedSessionUser[]>([]);
     tab.sharedSession = {
       id: "group-abc",
@@ -6540,6 +6554,9 @@ describe("BibleReaderToolbar — away from the session group", () => {
       leadsSharedAudio,
       sharedAudio,
       audioListeners,
+      isListeningAlong,
+      isListeningOnOwn,
+      rejoinGroupAudio,
       document: {} as never,
       updateOptions: vi.fn(),
       dispose: vi.fn(),
@@ -6561,6 +6578,7 @@ describe("BibleReaderToolbar — away from the session group", () => {
       listenAlong,
       dismissAudioOffer,
       audioListeners,
+      rejoinGroupAudio,
     };
   }
 
@@ -6724,6 +6742,40 @@ describe("BibleReaderToolbar — away from the session group", () => {
       groupBar()!.querySelectorAll(".sb-session-group-bar-leader")
     ).toHaveLength(4);
     expect(groupBar()!.textContent).toContain("+1");
+  });
+
+  it("tells a listener they're with the group and who controls playback", async () => {
+    await renderInSession(1200, false, { listening: "with-group" });
+
+    const bar = groupBar()!;
+    expect(bar.textContent).toContain("Listening to Exodus 2 with the group");
+    expect(bar.textContent).toContain("Grace controls playback");
+    expect(bar.querySelector(".sb-session-group-bar-rejoin")).toBeNull();
+  });
+
+  it("offers a listener who went off on their own the way back to the group's audio", async () => {
+    const { rejoinGroupAudio } = await renderInSession(
+      MOBILE_VIEWPORT_WIDTH,
+      false,
+      { listening: "on-own" }
+    );
+
+    expect(groupBar()!.textContent).toContain("You're listening on your own");
+    expect(groupBar()!.textContent).toContain(
+      "The group is listening to Exodus 2"
+    );
+    const rejoin = groupBar()!.querySelector<HTMLButtonElement>(
+      ".sb-session-group-bar-rejoin"
+    )!;
+    expect(rejoin.getAttribute("aria-label")).toBe("Rejoin the group's audio");
+    await act(async () => {
+      rejoin.click();
+    });
+
+    expect(rejoinGroupAudio).toHaveBeenCalledTimes(1);
+    expect(groupBar()!.textContent).toContain(
+      "Listening to Exodus 2 with the group"
+    );
   });
 
   it("shows nothing while the reader is with the group", async () => {
