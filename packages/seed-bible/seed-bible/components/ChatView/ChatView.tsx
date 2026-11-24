@@ -695,19 +695,13 @@ function AiLimitsNotice({ onAcknowledge }: { onAcknowledge: () => void }) {
   );
 }
 
-interface ToolUseEvent {
+interface ToolUseEventProps {
   group: ChatToolCallGroup;
-  avatar: {
-    imageUrl: string | null;
-    label: string;
-    visual: ConnectionSessionUserVisual;
-    isSelf: boolean;
-    genericFallback: boolean;
-  };
+  avatar: ReturnType<typeof getMessageAvatar>;
   toolUseLabel: ComponentChildren;
 }
 
-function ToolUseEvent({ group, avatar, toolUseLabel }: ToolUseEvent) {
+function ToolUseEvent({ group, avatar, toolUseLabel }: ToolUseEventProps) {
   const shouldShowList = group.tools.length > 1;
   const isShowingTools = useSignal<boolean>(false);
 
