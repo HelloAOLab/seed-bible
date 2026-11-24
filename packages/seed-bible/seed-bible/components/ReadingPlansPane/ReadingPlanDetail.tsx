@@ -167,11 +167,12 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
       }
       setStarting(true);
       try {
-        if (!login?.userId.value) {
-          await login?.login();
-          if (!login?.userId.value) {
+        if (login && !login.userId.value) {
+          await login.login();
+          if (!login.userId.value) {
             return;
           }
+          await readingPlans.reloadReadingPlanProgresses();
         }
         const progresses = readingPlans.userReadingPlanProgresses.value;
         const planId = formatReadingPlanId(plan.recordName, plan.address);
@@ -180,7 +181,6 @@ export function ReadingPlanDetail(props: ReadingPlanDetailProps) {
           await readingPlans.selectReadingPlanProgress(existingProgress);
           return;
         }
-        // No existing progress: create a new one.
         const created = await readingPlans.startReadingPlan(
           plan,
           selfPaced ? { selfPaced: true } : { cadenceId: chosen }
