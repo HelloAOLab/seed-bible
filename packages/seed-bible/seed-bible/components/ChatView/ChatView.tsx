@@ -71,11 +71,9 @@ interface ChatToolCallGroup {
   authorKey: string;
   /** The first tool-call message in the run, used to resolve the author. */
   message: ToolCallChatMessage;
-  /** The number of tool calls in the run. */
-  count: number;
   /** The time of the most recent tool call in the group. */
   timeMs: number;
-  /** The list of tools called in the group */
+  /** The name of each tool called in the run, in the order they were called. */
   tools: string[];
 }
 
@@ -225,7 +223,6 @@ function buildTimeline(
     } else if (entry.kind === "tool") {
       const authorKey = entry.message.authors.join(" ");
       if (lastGroup?.type === "tool" && lastGroup.authorKey === authorKey) {
-        lastGroup.count += 1;
         lastGroup.timeMs = entry.timeMs;
         lastGroup.tools.push(entry.message.name);
       } else {
@@ -234,7 +231,6 @@ function buildTimeline(
           key: `tool-${entry.message.id}`,
           authorKey,
           message: entry.message,
-          count: 1,
           timeMs: entry.timeMs,
           tools: [entry.message.name],
         });
@@ -712,7 +708,7 @@ interface ToolUseEvent {
 }
 
 function ToolUseEvent({ group, avatar, toolUseLabel }: ToolUseEvent) {
-  const shouldShowList = group.count > 1;
+  const shouldShowList = group.tools.length > 1;
   const isShowingTools = useSignal<boolean>(false);
 
   return (
