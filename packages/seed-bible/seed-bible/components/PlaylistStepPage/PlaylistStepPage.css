@@ -50,7 +50,21 @@
    height of its own here, so without one they shrink to the browser's
    default 300×150. Narrowed on a short screen to stay in view whole. */
 .sb-playlist-step-page .sb-play-playlist-content-embed {
+  display: block;
   width: min(100%, calc(70vh * 16 / 9));
   aspect-ratio: 16 / 9;
   margin-inline: auto;
+}
+
+/* The desktop reader column is only as wide as its content asks for (up to
+   the scripture width), and the box above can't ask for anything: its 100%
+   is of that same column. So the player itself asks for its full size,
+   which the column caps at the scripture width — otherwise a step with a
+   short title shrinks the page, and the player with it, to 300px. Kept a
+   block with a percentage max-width so a narrow pane can still shrink it. */
+.sb-playlist-step-page .sb-play-playlist-content-iframe,
+.sb-playlist-step-page .sb-play-playlist-content-video {
+  display: block;
+  width: calc(70vh * 16 / 9);
+  max-width: 100%;
 }
