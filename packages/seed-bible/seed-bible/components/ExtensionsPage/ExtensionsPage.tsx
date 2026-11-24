@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./ExtensionsPage.css";
 import { useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -15,9 +16,14 @@ import {
   useExtensionUploader,
 } from "../SettingsPage/ExtensionInfoPage";
 import { useExtensionCatalog } from "../SettingsPage/useExtensionCatalog";
+import {
+  ExtensionReviewBadges,
+  useExtensionReview,
+} from "../ExtensionReview/ExtensionReview";
 import { UnusedSensitiveSettingsList } from "../ExtensionSettingsForm/SensitiveSettingsForm";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
+import { SEED_BIBLE_DOCS_URL } from "../../app/publicLinks";
 
 export const EXTENSIONS_PANE_ID = "extensions-pane";
 
@@ -56,6 +62,8 @@ function ExtensionCard(props: {
   const extension = entry.extension;
   const url = extension && "url" in extension ? extension.url : null;
   const uploader = useExtensionUploader(state.extensions, entry.id, url);
+  const builtIn = catalog.isBuiltIn(entry);
+  const review = useExtensionReview(state.extensionReviews, entry.id, builtIn);
   let sourceHost: string | null = null;
   try {
     sourceHost = url ? new URL(url).host : null;
@@ -82,7 +90,10 @@ function ExtensionCard(props: {
             }}
           />
           <span className="sb-extensions-card-titles">
-            <span className="sb-extensions-card-name">{name}</span>
+            <span className="sb-extensions-card-name">
+              {name}
+              <ExtensionReviewBadges review={review} builtIn={builtIn} />
+            </span>
             <span className="sb-extensions-card-source">
               {sourceHost
                 ? withSource(
@@ -146,6 +157,9 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
           installState={catalog.installStateOf(openEntry)}
           extensions={state.extensions}
           people={catalog.people}
+          reviews={state.extensionReviews}
+          modals={state.modals}
+          builtIn={catalog.isBuiltIn(openEntry)}
           onInstall={() => void catalog.install(openEntry.id)}
           onUninstall={() => catalog.uninstall(openEntry.id)}
           settings={catalog.renderSettings(openEntry)}
@@ -215,7 +229,9 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
           {title}
         </h2>
         {entries.length === 0 ? (
-          <p className="sb-extensions-page-empty">{emptyMessage}</p>
+          <EmptyState className="sb-extensions-page-empty">
+            {emptyMessage}
+          </EmptyState>
         ) : (
           <ul className="sb-extensions-page-grid">
             {entries.map((entry) => (
@@ -243,19 +259,29 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
           }}
           placeholder={t("extensions-search")}
         />
-        <Button
-          size="lg"
-          shape="pill"
-          icon="link"
-          className="sb-extensions-page-add-link"
-          onClick={() =>
-            catalog.openAddFromLink((extensionId) =>
-              state.openExtensions(extensionId)
-            )
-          }
-        >
-          {t("extensions-page-add-link")}
-        </Button>
+        <div className="sb-extensions-page-toolbar-actions">
+          <Button
+            size="lg"
+            shape="pill"
+            icon="link"
+            onClick={() =>
+              catalog.openAddFromLink((extensionId) =>
+                state.openExtensions(extensionId)
+              )
+            }
+          >
+            {t("extensions-page-add-link")}
+          </Button>
+          <Button
+            size="lg"
+            shape="pill"
+            icon="menu_book"
+            href={SEED_BIBLE_DOCS_URL}
+            target="_blank"
+          >
+            {t("docs-link-label", { defaultValue: "Docs" })}
+          </Button>
+        </div>
       </div>
 
       <div className="sb-extensions-page-columns">
@@ -291,17 +317,17 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
             </p>
           )}
           {catalog.entries.length === 0 ? (
-            <p className="sb-extensions-page-empty">
+            <EmptyState className="sb-extensions-page-empty">
               {t("no-extensions-available", {
                 defaultValue: "No extensions available.",
               })}
-            </p>
+            </EmptyState>
           ) : shown.length === 0 && (query || filter.value !== "all") ? (
-            <p className="sb-extensions-page-empty" role="status">
+            <EmptyState className="sb-extensions-page-empty" role="status">
               {query
                 ? t("extensions-search-no-matches", { query })
                 : t("extensions-page-filter-empty")}
-            </p>
+            </EmptyState>
           ) : (
             <>
               {renderSection(

@@ -112,7 +112,7 @@ describe("a playlist's page: Share, and its owner's Edit and Delete", () => {
       render(
         <I18nProvider i18n={state.i18n}>
           {pane?.component() ?? null}
-          <ModalHost manager={state.modals} />
+          <ModalHost manager={state.modals} isMobile={state.app.isMobile} />
         </I18nProvider>,
         container
       );
@@ -172,7 +172,7 @@ describe("a playlist's page: Share, and its owner's Edit and Delete", () => {
     draw(state);
     expect(deletePlaylist).not.toHaveBeenCalled();
     await act(async () => {
-      container
+      document
         .querySelector<HTMLButtonElement>(
           ".sb-confirm-delete .sb-delete-button"
         )!

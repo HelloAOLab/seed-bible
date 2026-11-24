@@ -1,4 +1,5 @@
 import { computed, effect, signal } from "@preact/signals";
+import { toShareableUrl } from "../app/publicLinks";
 
 export type NavigationDestination = number | string | URL;
 
@@ -183,8 +184,11 @@ export function createNavigationManager(
         // turn it into an in-page update, and things only read while the app
         // starts (a session to join, a customization) would be skipped. The
         // native apps rely on this to open links handed to them by the OS.
+        // `canIntercept` is false in the iOS app, whose `capacitor://` origin
+        // WebKit treats as opaque, and `intercept()` there throws.
         if (
           disposed ||
+          !event.canIntercept ||
           event.downloadRequest ||
           event.navigationType === "reload" ||
           !isNavigationToSameOrigin(event.destination?.url)
@@ -555,6 +559,12 @@ export function createNavigationManager(
     syncSignalsToUrl,
     linkToQuery,
     linkToBareRoot,
+    /**
+     * Makes a link built from this page work for whoever receives it: in the
+     * native apps the page is served from `localhost`, so the link is moved
+     * onto the public site. Use it for any link meant for someone else.
+     */
+    toShareableUrl,
     dispose,
   };
 }

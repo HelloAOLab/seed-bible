@@ -565,7 +565,7 @@ describe("ComparePane", () => {
     // The translation being read is the only block, so there is nothing to
     // compare it against.
     expect(container.querySelectorAll(".sb-compare-block")).toHaveLength(1);
-    const empty = container.querySelector(".sb-compare-empty")!;
+    const empty = container.querySelector(".sb-empty-state")!;
     expect(empty).not.toBeNull();
     expect(empty.textContent).toContain("No translations to compare yet");
     expect(empty.textContent).toContain(
@@ -592,7 +592,7 @@ describe("ComparePane", () => {
     containers.push(container);
     await settle(container, node);
 
-    expect(container.querySelector(".sb-compare-empty")).toBeNull();
+    expect(container.querySelector(".sb-empty-state")).toBeNull();
   });
 
   it("still explains the empty pane when the only saved id is the translation being read", async () => {
@@ -616,7 +616,7 @@ describe("ComparePane", () => {
     await settle(container, node);
 
     expect(container.querySelectorAll(".sb-compare-block")).toHaveLength(1);
-    expect(container.querySelector(".sb-compare-empty")).not.toBeNull();
+    expect(container.querySelector(".sb-empty-state")).not.toBeNull();
   });
 
   it("keeps an Add Translation button anchored below the scrolling list", () => {

@@ -66,6 +66,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
   if (view === "create_annotation" && annotations.editingAnnotation.value) {
     return (
       <CreateAnnotationForm
+        key={annotations.editingAnnotation.value.id}
         annotations={annotations}
         tabs={tabs}
         toast={props.toast}

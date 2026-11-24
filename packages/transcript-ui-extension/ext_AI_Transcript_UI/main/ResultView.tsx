@@ -8,6 +8,7 @@ import type {
   QueuedFile,
 } from "@seed-bible/transcription/types";
 import { useI18n } from "seed-bible/i18n";
+import { Checkbox } from "seed-bible/components";
 
 function fmtTime(sec: number | null): string {
   if (sec == null || !Number.isFinite(sec)) return "—";
@@ -96,19 +97,15 @@ export function ResultView({
           })}
         </span>
         <span class="ts_result__spacer" />
-        <label class="ts_check">
-          <input
-            type="checkbox"
-            checked={followRefs}
-            onChange={(e) =>
-              setFollowRefs((e.target as HTMLInputElement).checked)
-            }
-          />
-          {t("Follow_refs", {
+        <Checkbox
+          className="ts_check"
+          label={t("Follow_refs", {
             ns: "ext_AI_Transcript_UI",
             defaultValue: "Follow refs",
           })}
-        </label>
+          checked={followRefs}
+          onToggled={setFollowRefs}
+        />
       </header>
 
       <div class="ts_result__body">

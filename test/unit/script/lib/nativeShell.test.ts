@@ -8,8 +8,43 @@ import {
 import { readInjectedConfig } from "../../../../packages/seed-bible/seed-bible/app/appConfig";
 import { readInjectedApiResponseSnapshot } from "../../../../packages/seed-bible/seed-bible/app/apiResponseSeed";
 import { readInjectedCustomizationSeed } from "../../../../packages/seed-bible/seed-bible/app/customizationSeed";
-import { decideHydration } from "../../../../packages/seed-bible/seed-bible/app/hydrationGate";
+import {
+  decideHydration,
+  hasServerRenderedContent,
+} from "../../../../packages/seed-bible/seed-bible/app/hydrationGate";
 import { readInjectedFriendLinkSeed } from "../../../../packages/seed-bible/seed-bible/app/friendLinkSeed";
+import { LAYOUT_ATTRIBUTE } from "../../../../packages/seed-bible/seed-bible/app/layoutAttribute";
+import {
+  restoreViewport,
+  SIDEWAYS_PHONE,
+  SIDEWAYS_TABLET,
+  stubViewport,
+  type StubbedDevice,
+} from "../../seed-bible/testUtils/stubViewport";
+
+const UPRIGHT_PHONE: StubbedDevice = {
+  width: 390,
+  height: 844,
+  screen: { width: 390, height: 844 },
+  pointer: "coarse",
+};
+
+const UPRIGHT_TABLET: StubbedDevice = {
+  width: 820,
+  height: 1180,
+  screen: { width: 820, height: 1180 },
+  pointer: "coarse",
+};
+
+/** The inline script in the page's head that fills in the layout attribute. */
+function layoutScript(html: string): string {
+  const script = Array.from(
+    html.matchAll(/<script>([\s\S]*?)<\/script>/g),
+    (match) => match[1]!
+  ).find((body) => body.includes(LAYOUT_ATTRIBUTE));
+  if (!script) throw new Error("the page has no layout script");
+  return script;
+}
 
 const TEMPLATE = readFileSync(
   path.resolve(__dirname, "../../../../index.html"),
@@ -29,12 +64,17 @@ function loadDocument(html: string): void {
   const parsed = new DOMParser().parseFromString(html, "text/html");
   document.documentElement.innerHTML = parsed.documentElement.innerHTML;
   document.documentElement.lang = parsed.documentElement.lang;
+  document.documentElement.dataset.sbAppLayout =
+    parsed.documentElement.dataset.sbAppLayout;
 }
 
 describe("fillNativeShellPlaceholders", () => {
   afterEach(() => {
     document.documentElement.innerHTML = "<head></head><body></body>";
     document.documentElement.removeAttribute("lang");
+    document.documentElement.removeAttribute(LAYOUT_ATTRIBUTE);
+    restoreViewport();
+    vi.unstubAllGlobals();
   });
 
   it("fills every placeholder in index.html except the critical CSS, which its own plugin fills", () => {
@@ -64,11 +104,38 @@ describe("fillNativeShellPlaceholders", () => {
         clientCommit: "abc123",
       })
     ).toEqual({ hydrate: false, reason: "no-ssr-content" });
+    // So the app starts from the real window rather than the phone guess:
+    // an iPad gets the desktop layout from the first draw.
+    expect(
+      hasServerRenderedContent(config, document.getElementById("app")!)
+    ).toBe(false);
     expect(readInjectedApiResponseSnapshot()).toEqual({});
     expect(readInjectedCustomizationSeed()).toBeUndefined();
     expect(readInjectedFriendLinkSeed()).toBeUndefined();
     expect(document.documentElement.getAttribute("lang")).toBe("en");
   });
+
+  // Every install gets the same page, so it can't name one layout for all of
+  // them; the inline script in its head picks it on the device.
+  it.each([
+    ["an iPad", SIDEWAYS_TABLET, "desktop"],
+    ["an iPad held upright", UPRIGHT_TABLET, "desktop"],
+    ["a phone", UPRIGHT_PHONE, "mobile"],
+    ["a phone held sideways", SIDEWAYS_PHONE, "mobile"],
+  ])(
+    "styles the page for %s's layout before the app loads",
+    (_name, device, layout) => {
+      const html = fillNativeShellPlaceholders(TEMPLATE, VALUES);
+      loadDocument(html);
+      stubViewport(device);
+
+      new Function(layoutScript(html))();
+
+      expect(document.documentElement.getAttribute(LAYOUT_ATTRIBUTE)).toBe(
+        layout
+      );
+    }
+  );
 
   it("gives the pre-load theme script presets it can parse, and the fallback theme", () => {
     loadDocument(fillNativeShellPlaceholders(TEMPLATE, VALUES));

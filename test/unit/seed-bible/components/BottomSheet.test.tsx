@@ -9,9 +9,9 @@ import {
 
 const direction = vi.hoisted(() => ({ rtl: false }));
 
-vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const { mockI18nManager } = await import("../testUtils/mockI18n");
-  return mockI18nManager({
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nContext", async () => {
+  const { mockI18nContext } = await import("../testUtils/mockI18n");
+  return mockI18nContext({
     get isRtl() {
       return direction.rtl;
     },
@@ -308,6 +308,29 @@ describe("BottomSheet", () => {
       } finally {
         otherDialog.remove();
       }
+    });
+
+    it("can't be closed at all while it isn't dismissible", () => {
+      const panelEscape = vi.fn();
+      document.addEventListener("keydown", panelEscape);
+      const { onClose } = renderSheet({ title: "Saving", dismissible: false });
+
+      expect(closeButton()!.disabled).toBe(true);
+      pressKey(document.querySelector(".first-action")!, "Escape");
+      act(() => {
+        backdrop()!.dispatchEvent(
+          new MouseEvent("mousedown", { bubbles: true })
+        );
+        backdrop()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      drag(handle(), 500, 600);
+      document.removeEventListener("keydown", panelEscape);
+
+      expect(onClose).not.toHaveBeenCalled();
+      // It springs back rather than staying pulled down.
+      expect(sheet()!.style.transform).toBe("");
+      // Nor does Escape fall through to what's behind it.
+      expect(panelEscape).not.toHaveBeenCalled();
     });
   });
 

@@ -93,7 +93,8 @@
   box-shadow: var(--sb-shadow-raised);
 }
 
-.sb-extension-info-tab:focus-visible {
+.sb-extension-info-tab:focus-visible,
+.sb-extension-screenshot:focus-visible {
   outline: 2px solid var(--sb-primary-color);
   outline-offset: 2px;
 }
@@ -264,6 +265,9 @@
 }
 
 .sb-extension-info-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   flex: 1 1 17rem;
   max-width: 21rem;
 }
@@ -347,4 +351,32 @@
 .sb-extension-info-wide .sb-extension-permissions .sb-extension-consent-card {
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-xl);
+}
+
+.sb-extension-screenshots {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sb-extension-screenshot-strip {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.25rem;
+}
+
+.sb-extension-screenshot {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: var(--sb-radius-lg);
+  background: var(--sb-reader-background);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.sb-extension-screenshot img {
+  display: block;
+  height: 10rem;
+  width: auto;
 }

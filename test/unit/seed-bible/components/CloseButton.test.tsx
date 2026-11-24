@@ -2,9 +2,9 @@ import { render } from "preact";
 import { act } from "preact/test-utils";
 import { CloseButton } from "@packages/seed-bible/seed-bible/components/CloseButton/CloseButton";
 
-vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
-  const { mockI18nManager } = await import("../testUtils/mockI18n");
-  return mockI18nManager();
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nContext", async () => {
+  const { mockI18nContext } = await import("../testUtils/mockI18n");
+  return mockI18nContext();
 });
 
 describe("CloseButton", () => {
@@ -32,7 +32,6 @@ describe("CloseButton", () => {
     // A plain button inside a form must not submit it.
     expect(button().type).toBe("button");
     expect(button().getAttribute("aria-label")).toBe("Close");
-    expect(button().title).toBe("Close");
     // The icon's ligature text ("close") isn't read out on top of the label.
     expect(
       button()
@@ -41,13 +40,12 @@ describe("CloseButton", () => {
     ).toBe("true");
   });
 
-  it("uses the label it's given for screen readers and the tooltip", () => {
+  it("uses the label it's given for screen readers", () => {
     act(() => {
       render(<CloseButton label="Hide" onClose={vi.fn()} />, container);
     });
 
     expect(button().getAttribute("aria-label")).toBe("Hide");
-    expect(button().title).toBe("Hide");
   });
 
   it("calls onClose when clicked", () => {

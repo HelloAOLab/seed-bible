@@ -1883,7 +1883,8 @@ export function StopIcon() {
   );
 }
 
-type SvgIconProps = preact.JSX.SVGAttributes<SVGSVGElement>;
+/** What the SVG icons take: any `<svg>` attribute, like `className` or `width`. */
+export type SvgIconProps = preact.JSX.SVGAttributes<SVGSVGElement>;
 
 const SupportIcon = (props: SvgIconProps) => {
   return (

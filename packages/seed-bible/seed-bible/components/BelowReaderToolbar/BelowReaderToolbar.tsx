@@ -1,5 +1,7 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./BelowReaderToolbar.inline.css";
 import "./BelowReaderToolbar.css";
+import "../visuallyHidden.inline.css";
 import { type ToolsManager } from "../../managers/BibleToolsManager";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
@@ -89,26 +91,27 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
         const hasMenuItems = menuItems.length > 0;
         return tool.visible.value ? (
           <div key={tool.id} className="sb-below-reader-toolbar-item">
-            <button
-              disabled={tool.disabled.value}
-              onClick={() => {
-                if (hasMenuItems) {
-                  setSelectedToolId((prev) =>
-                    prev === tool.id ? null : tool.id
-                  );
-                  return;
-                }
+            <TooltipTrigger>
+              <button
+                disabled={tool.disabled.value}
+                onClick={() => {
+                  if (hasMenuItems) {
+                    setSelectedToolId((prev) =>
+                      prev === tool.id ? null : tool.id
+                    );
+                    return;
+                  }
 
-                setSelectedToolId(null);
-                tool.onSelect();
-              }}
-              className="sb-below-reader-toolbar-button"
-              aria-label={title}
-              title={title}
-            >
-              <ToolIcon />
-              <span className="sr-only">{title}</span>
-            </button>
+                  setSelectedToolId(null);
+                  tool.onSelect();
+                }}
+                className="sb-below-reader-toolbar-button"
+                aria-label={title}
+              >
+                <ToolIcon />
+                <span className="sb-visually-hidden">{title}</span>
+              </button>
+            </TooltipTrigger>
             {hasMenuItems && selectedToolId === tool.id && (
               <div
                 className="sb-tool-context-menu"

@@ -1,3 +1,4 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./BibleReader.inline.css";
 import "./BibleReader.css";
 import {
@@ -72,7 +73,6 @@ import {
 } from "../../managers/SessionsManager";
 import { Avatar, getUserDisplayName } from "../Avatar/Avatar";
 import { useI18n } from "../../i18n/I18nManager";
-import { useOverlayDismiss } from "../useOverlayDismiss";
 import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/MobileSettingsSheet";
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon } from "../../components/icons";
@@ -128,7 +128,7 @@ import {
   isPlaylistEditorTab,
   PlaylistReaderHint,
 } from "../PlaylistEditor/PlaylistEditorWorkspace";
-import { CloseButton } from "../CloseButton/CloseButton";
+import { Dialog } from "../Dialog/Dialog";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
 
@@ -326,37 +326,38 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
       : null;
 
   return (
-    <button
-      type="button"
-      className="sb-bible-reader-mobile-header-notes"
-      // Mirrors the account button below: stop the tap here so the reader
-      // pane wrapper's pointerdown handler doesn't interfere.
-      onPointerDown={(e: PointerEvent) => e.stopPropagation()}
-      onClick={(e: MouseEvent) => {
-        e.stopPropagation();
-        if (firstAnnotatedVerse === null || !bookId || !chapterNumber) {
-          state.app.openDiscover();
-          return;
-        }
-        if (!state.settings.settings.value.discoveredContent.showContent) {
-          state.discover.view.value = "discover";
-        }
-        state.discover.scrollToVerse.value = {
-          bookId,
-          chapterNumber,
-          verseNumber: firstAnnotatedVerse,
-        };
-      }}
-      aria-label={label}
-      title={label}
-    >
-      <span className="material-symbols-outlined" aria-hidden="true">
-        sticky_note_2
-      </span>
-      <span className="sb-bible-reader-mobile-header-notes-count">
-        {noteCount}
-      </span>
-    </button>
+    <TooltipTrigger>
+      <button
+        type="button"
+        className="sb-bible-reader-mobile-header-notes"
+        // Mirrors the account button below: stop the tap here so the reader
+        // pane wrapper's pointerdown handler doesn't interfere.
+        onPointerDown={(e: PointerEvent) => e.stopPropagation()}
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          if (firstAnnotatedVerse === null || !bookId || !chapterNumber) {
+            state.app.openDiscover();
+            return;
+          }
+          if (!state.settings.settings.value.discoveredContent.showContent) {
+            state.discover.view.value = "discover";
+          }
+          state.discover.scrollToVerse.value = {
+            bookId,
+            chapterNumber,
+            verseNumber: firstAnnotatedVerse,
+          };
+        }}
+        aria-label={label}
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">
+          sticky_note_2
+        </span>
+        <span className="sb-bible-reader-mobile-header-notes-count">
+          {noteCount}
+        </span>
+      </button>
+    </TooltipTrigger>
   );
 }
 
@@ -686,6 +687,31 @@ function splitVerseIntoSegments(
   return segments;
 }
 
+/** The small ⓘ after a verse that opens its footnote. */
+function FootnoteButton(props: {
+  noteId: number;
+  onOpen: (noteId: number) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <TooltipTrigger>
+      <button
+        className="sb-inline-footnote-button"
+        aria-label={t("open-footnote", {
+          noteId: props.noteId,
+          defaultValue: "Open footnote {{noteId}}",
+        })}
+        onClick={(event: MouseEvent) => {
+          event.stopPropagation();
+          props.onOpen(props.noteId);
+        }}
+      >
+        <span className="material-symbols-outlined">info</span>
+      </button>
+    </TooltipTrigger>
+  );
+}
+
 function renderInlineContent(
   part: ChapterVerse["content"][0],
   index: number,
@@ -844,17 +870,7 @@ function renderInlineContent(
     return (
       <span key={index} className="sb-inline-footnote">
         {"\u00A0"}
-        <button
-          className="sb-inline-footnote-button"
-          aria-label={`Open footnote ${part.noteId}`}
-          title={`Open footnote ${part.noteId}`}
-          onClick={(event: MouseEvent) => {
-            event.stopPropagation();
-            onOpenFootnote(part.noteId);
-          }}
-        >
-          <span className="material-symbols-outlined">info</span>
-        </button>
+        <FootnoteButton noteId={part.noteId} onOpen={onOpenFootnote} />
       </span>
     );
   }
@@ -3101,12 +3117,6 @@ export function BibleReader(props: BibleReaderProps) {
     selectedFootnote,
     selectFootnote,
   } = readingState;
-  // Set below, once a compare step's second passage (which can have a
-  // footnote open too) is known.
-  const closeFootnoteRef = useRef(() => selectFootnote(null));
-  const footnoteOverlayDismiss = useOverlayDismiss(() =>
-    closeFootnoteRef.current()
-  );
   const readerRootRef = useRef<HTMLDivElement>(null);
 
   if (import.meta.env.SSR && !readingState.initialChapterLoadSettled.value) {
@@ -3903,7 +3913,6 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote(null);
     compareReadingState?.selectFootnote(null);
   };
-  closeFootnoteRef.current = closeFootnote;
 
   const renderMainContent = () =>
     comparePage && compareReadingState ? (
@@ -4436,7 +4445,7 @@ export function BibleReader(props: BibleReaderProps) {
                   dir="auto"
                 >
                   {stepPage
-                    ? playlistStepPageTitle(stepPage)
+                    ? playlistStepPageTitle(stepPage, t)
                     : comparePageTitle}
                 </h2>
               ) : (
@@ -4533,42 +4542,32 @@ export function BibleReader(props: BibleReaderProps) {
       )}
 
       {scriptureElements.showFootnotes && openFootnote && (
-        <div className="sb-footnote-modal-overlay" {...footnoteOverlayDismiss}>
-          <div
-            className="sb-footnote-modal"
-            onClick={(event: MouseEvent) => {
-              event.stopPropagation();
-            }}
-          >
-            <div className="sb-footnote-modal-header">
-              <h3 className="sb-footnote-modal-title">
-                {openFootnote.chapter.book.name}{" "}
-                {openFootnote.chapter.chapter.number}
-                {openFootnote.verse ? ":" + openFootnote.verse.number : ""}
-              </h3>
-              <CloseButton
-                className="sb-footnote-modal-close"
-                label={t("close-footnote", {
-                  defaultValue: "Close footnote",
-                })}
-                onClose={() => {
-                  closeFootnote();
-                }}
-              />
-            </div>
-
-            <div className="sb-footnote-modal-content">
-              <VerseReferenceText
-                text={openFootnote.note.text}
-                books={translationBooks.value?.books}
-                onReferenceClick={(ref) => {
-                  closeFootnote();
-                  void state?.app.openVerseReference(ref);
-                }}
-              />
-            </div>
+        <Dialog
+          // Rendered outside the reader, so it brings the reader's text size.
+          className={`sb-footnote-dialog ${readerFontSizeClass}`}
+          title={
+            <>
+              {openFootnote.chapter.book.name}{" "}
+              {openFootnote.chapter.chapter.number}
+              {openFootnote.verse ? ":" + openFootnote.verse.number : ""}
+            </>
+          }
+          closeLabel={t("close-footnote", { defaultValue: "Close footnote" })}
+          onClose={closeFootnote}
+        >
+          {/* From the passage it belongs to, which in a compare step can be
+              the second one, in another translation. */}
+          <div dir={openFootnote.chapter.translation.textDirection ?? "auto"}>
+            <VerseReferenceText
+              text={openFootnote.note.text}
+              books={translationBooks.value?.books}
+              onReferenceClick={(ref) => {
+                closeFootnote();
+                void state?.app.openVerseReference(ref);
+              }}
+            />
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

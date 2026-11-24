@@ -1,4 +1,6 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./BibleReaderToolbar.inline.css";
+import "../visuallyHidden.inline.css";
 import {
   effect,
   signal,
@@ -2401,11 +2403,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // way (`.sb-tool-context-menu`), so a tap on one of its options has to be
   // excluded too — otherwise the selection clears before the option's click
   // can run.
-  // Same story for `.sb-footnote-modal-overlay` — the delete-confirmation
-  // modal Delete opens renders as a sibling of the toolbar at the app root
-  // (`ModalHost`), so without this, confirming or cancelling that dialog
-  // would also clear the selection out from under it. The custom colour
-  // picker is the same kind of portal (`.sb-color-picker-layer`).
+  // Same story for dialogs and modal sheets — the delete-confirmation dialog
+  // Delete opens is portaled too (`ModalHost`), so without this, confirming
+  // or cancelling it would also clear the selection out from under it. The
+  // custom colour picker is the same kind of portal (`.sb-color-picker-layer`).
   useEffect(() => {
     if (!isVerseToolbarVisible.value) return;
 
@@ -2421,7 +2422,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       if (target.closest(".sb-pane-shell-detached")) return;
       if (target.closest(".sb-context-menu")) return;
       if (target.closest(".sb-tool-context-menu")) return;
-      if (target.closest(".sb-footnote-modal-overlay")) return;
+      if (
+        target.closest(
+          ".sb-dialog-backdrop, .sb-bottom-sheet-backdrop, .sb-bottom-sheet-modal"
+        )
+      )
+        return;
       // ColorPicker portals to `document.body`, same as the context menu —
       // a pointerdown on the square, hue slider, or backdrop must not read
       // as "outside" and clear the selection out from under the picker.
@@ -2653,7 +2659,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         >
           <ToolIcon />
           {hideLabel ? (
-            <span className="sr-only">{label}</span>
+            <span className="sb-visually-hidden">{label}</span>
           ) : (
             <span className="sb-reader-toolbar-button-label">{label}</span>
           )}
@@ -2868,7 +2874,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             <MaterialIcon>
               {isAudioPlaying ? "pause" : "play_arrow"}
             </MaterialIcon>
-            <span className="sr-only">{toggleLabel}</span>
+            <span className="sb-visually-hidden">{toggleLabel}</span>
           </button>
         </div>
         {!isAudioPlaying && (
@@ -2880,7 +2886,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               onClick={() => playback.stop()}
             >
               <StopIcon />
-              <span className="sr-only">{stopLabel}</span>
+              <span className="sb-visually-hidden">{stopLabel}</span>
             </button>
           </div>
         )}
@@ -3545,22 +3551,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     const hex = customHighlightColors.value[slot];
                     if (!hex) {
                       return (
-                        <button
+                        <TooltipTrigger
                           key={`custom-slot-${slot}`}
-                          type="button"
-                          className="sb-verse-toolbar-color-button"
-                          onPointerEnter={preloadColorPicker}
-                          onFocus={preloadColorPicker}
-                          onClick={() => {
-                            customColorPickerOpen.value = true;
-                          }}
-                          aria-label={t("add-custom-color", {
-                            defaultValue: "Add custom color",
-                          })}
-                          title={t("add-color", { defaultValue: "Add color" })}
+                          label={t("add-color", { defaultValue: "Add color" })}
                         >
-                          <span className="sb-verse-toolbar-color sb-verse-toolbar-color-slot" />
-                        </button>
+                          <button
+                            type="button"
+                            className="sb-verse-toolbar-color-button"
+                            onPointerEnter={preloadColorPicker}
+                            onFocus={preloadColorPicker}
+                            onClick={() => {
+                              customColorPickerOpen.value = true;
+                            }}
+                            aria-label={t("add-custom-color", {
+                              defaultValue: "Add custom color",
+                            })}
+                          >
+                            <span className="sb-verse-toolbar-color sb-verse-toolbar-color-slot" />
+                          </button>
+                        </TooltipTrigger>
                       );
                     }
                     return (
@@ -3601,50 +3610,56 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 {/* On mobile the "+" lives inside the scroll strip so custom
                     colors and defaults stay one continuous thumb-scroll row. */}
                 {isSmallScreen.value && (
-                  <button
-                    ref={customColorAnchorRef}
-                    type="button"
-                    className="sb-verse-toolbar-plus sb-verse-toolbar-plus-inline"
-                    onPointerEnter={preloadColorPicker}
-                    onFocus={preloadColorPicker}
-                    onClick={() => {
-                      customColorPickerOpen.value = true;
-                    }}
-                    aria-label={t("add-custom-color", {
-                      defaultValue: "Add custom color",
-                    })}
-                    title={t("add-color", { defaultValue: "Add color" })}
-                    aria-haspopup="dialog"
-                    aria-expanded={customColorPickerOpen.value}
+                  <TooltipTrigger
+                    label={t("add-color", { defaultValue: "Add color" })}
                   >
-                    <span className="material-symbols-outlined">add</span>
-                  </button>
+                    <button
+                      ref={customColorAnchorRef}
+                      type="button"
+                      className="sb-verse-toolbar-plus sb-verse-toolbar-plus-inline"
+                      onPointerEnter={preloadColorPicker}
+                      onFocus={preloadColorPicker}
+                      onClick={() => {
+                        customColorPickerOpen.value = true;
+                      }}
+                      aria-label={t("add-custom-color", {
+                        defaultValue: "Add custom color",
+                      })}
+                      aria-haspopup="dialog"
+                      aria-expanded={customColorPickerOpen.value}
+                    >
+                      <span className="material-symbols-outlined">add</span>
+                    </button>
+                  </TooltipTrigger>
                 )}
               </div>
 
               <div className="sb-verse-toolbar-picker-actions">
                 {!isSmallScreen.value && (
-                  <button
-                    ref={customColorAnchorRef}
-                    type="button"
-                    className="sb-verse-toolbar-plus"
-                    onPointerEnter={preloadColorPicker}
-                    onFocus={preloadColorPicker}
-                    onClick={() => {
-                      customColorPickerOpen.value = true;
-                    }}
-                    aria-label={t("add-custom-color", {
-                      defaultValue: "Add custom color",
-                    })}
-                    title={t("add-color", { defaultValue: "Add color" })}
-                    aria-haspopup="dialog"
-                    aria-expanded={customColorPickerOpen.value}
+                  <TooltipTrigger
+                    label={t("add-color", { defaultValue: "Add color" })}
                   >
-                    <span className="material-symbols-outlined">add</span>
-                    <span className="sb-verse-toolbar-action-text">
-                      {t("add", { defaultValue: "Add" })}
-                    </span>
-                  </button>
+                    <button
+                      ref={customColorAnchorRef}
+                      type="button"
+                      className="sb-verse-toolbar-plus"
+                      onPointerEnter={preloadColorPicker}
+                      onFocus={preloadColorPicker}
+                      onClick={() => {
+                        customColorPickerOpen.value = true;
+                      }}
+                      aria-label={t("add-custom-color", {
+                        defaultValue: "Add custom color",
+                      })}
+                      aria-haspopup="dialog"
+                      aria-expanded={customColorPickerOpen.value}
+                    >
+                      <span className="material-symbols-outlined">add</span>
+                      <span className="sb-verse-toolbar-action-text">
+                        {t("add", { defaultValue: "Add" })}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
                 )}
                 <LazyColorPicker
                   value="#ffeb3a"
@@ -3654,6 +3669,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     customColorPickerOpen.value = next;
                   }}
                   anchorRef={customColorAnchorRef}
+                  isMobile={props.state.app.isMobile.value}
                   ariaLabel={t("add-custom-color", {
                     defaultValue: "Add custom color",
                   })}
@@ -3784,6 +3800,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           {label}
                         </span>
                       </button>
+
                       {floatingMenuOpen && (
                         <FloatingVerseToolMenu
                           anchorId={tool.id}

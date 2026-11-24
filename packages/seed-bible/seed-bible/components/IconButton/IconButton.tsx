@@ -1,6 +1,7 @@
 import "./IconButton.css";
 import type { ComponentChild, JSX, Ref } from "preact";
 import { MaterialIcon } from "../icons";
+import { useTooltip, withTooltipHandlers } from "../TooltipTrigger/useTooltip";
 
 export type IconButtonSize = "sm" | "md" | "lg";
 export type IconButtonLook = "plain" | "tinted";
@@ -18,7 +19,7 @@ export type IconButtonProps = Omit<
 > & {
   /** A Material Symbols name such as `"bookmark"`, or an icon element (an SVG). */
   icon: string | ComponentChild;
-  /** What the button does, for screen readers and the tooltip. Required, since the icon alone says nothing to a screen reader. */
+  /** What the button does, for screen readers and the tooltip (on hover, keyboard focus and a held finger). Required, since the icon alone says nothing to a screen reader. */
   label: string;
   /** sm (28px) for toasts and small floating panels, md (32px) for pane headers and toolbars, lg (40px) for phone screen headers. */
   size?: IconButtonSize;
@@ -48,9 +49,10 @@ export function IconButton({
   buttonRef,
   ...rest
 }: IconButtonProps) {
+  const { handlers, tooltip } = useTooltip(label);
   return (
     <button
-      {...rest}
+      {...withTooltipHandlers(rest, handlers)}
       ref={buttonRef}
       type={type}
       className={[
@@ -65,7 +67,9 @@ export function IconButton({
         .join(" ")}
       aria-label={label}
       aria-pressed={pressed}
-      title={label}
+      // A disabled button gets no styled label (browsers differ on whether it
+      // gets hover events at all), so it keeps the browser's own.
+      title={rest.disabled ? label : undefined}
     >
       {typeof icon === "string" ? (
         <MaterialIcon aria-hidden="true">{icon}</MaterialIcon>
@@ -74,6 +78,7 @@ export function IconButton({
           {icon}
         </span>
       )}
+      {tooltip}
     </button>
   );
 }

@@ -1,0 +1,6 @@
+/* BottomSheet puts its footer straight after the scrolling body; leave the
+ * same gap above it as a Dialog's footer. */
+.sb-modal-host-sheet-footer {
+  flex-shrink: 0;
+  margin-top: 1rem;
+}

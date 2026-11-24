@@ -37,12 +37,18 @@ import {
   nivBooks,
   translations,
 } from "./testUtils/mockBibleApiData";
-import { batch, signal } from "@preact/signals";
+import { batch, effect, signal } from "@preact/signals";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
 import { BibleReaderToolbar } from "@packages/seed-bible/seed-bible/components/BibleReaderToolbar/BibleReaderToolbar";
 import type { UserInfo } from "@packages/seed-bible/seed-bible/managers";
 import { waitForCondition } from "../../references-extension/referencesTestState";
+import {
+  restoreViewport,
+  SIDEWAYS_PHONE,
+  SIDEWAYS_TABLET,
+  stubViewport,
+} from "../testUtils/stubViewport";
 
 // App defaults to the private API; shared mock maps target the free-use host.
 const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org";
@@ -1730,6 +1736,157 @@ describe("createSeedBibleState", () => {
           configurable: true,
         });
       }
+    });
+
+    // The phone-vs-desktop styles all key off `<html data-sb-app-layout>`.
+    it("marks <html> with the layout it starts in, then the one the measured window calls for", async () => {
+      const originalWidth = window.innerWidth;
+      try {
+        const state = await createTestSeedBibleState({
+          config: { ...DEFAULT_APP_CONFIG, renderedAsMobile: true },
+        });
+        expect(document.documentElement.dataset.sbAppLayout).toBe("mobile");
+
+        Object.defineProperty(window, "innerWidth", {
+          value: 1234,
+          configurable: true,
+        });
+        state.app.applyViewport();
+        expect(document.documentElement.dataset.sbAppLayout).toBe("desktop");
+
+        Object.defineProperty(window, "innerWidth", {
+          value: 400,
+          configurable: true,
+        });
+        window.dispatchEvent(new Event("resize"));
+        expect(document.documentElement.dataset.sbAppLayout).toBe("mobile");
+      } finally {
+        Object.defineProperty(window, "innerWidth", {
+          value: originalWidth,
+          configurable: true,
+        });
+        document.documentElement.removeAttribute("data-sb-app-layout");
+      }
+    });
+
+    // `<html>` is shared by everything on the page, so a state that's been
+    // disposed must stop writing to it.
+    it("stops marking <html> once disposed", async () => {
+      try {
+        const state = await createTestSeedBibleState({
+          config: { ...DEFAULT_APP_CONFIG, renderedAsMobile: false },
+        });
+        expect(document.documentElement.dataset.sbAppLayout).toBe("desktop");
+
+        state.dispose();
+        (state.app.viewportWidth as unknown as { value: number }).value = 400;
+
+        expect(state.app.isMobile.value).toBe(true);
+        expect(document.documentElement.dataset.sbAppLayout).toBe("desktop");
+      } finally {
+        document.documentElement.removeAttribute("data-sb-app-layout");
+      }
+    });
+  });
+
+  describe("phones and tablets held sideways", () => {
+    afterEach(() => {
+      restoreViewport();
+      vi.unstubAllGlobals();
+      document.documentElement.removeAttribute("data-sb-app-layout");
+    });
+
+    // The server guessed "phone" from the user agent; the app then measures
+    // a phone that was already sideways. Width, pointer and screen have to
+    // land together, or the phone reads as desktop in between and the
+    // drawer closes under the reader's thumb.
+    it("keeps a sideways phone in the mobile layout, with the tabs drawer still open", async () => {
+      const state = await createTestSeedBibleState({
+        config: { ...DEFAULT_APP_CONFIG, renderedAsMobile: true },
+      });
+      state.sidebar.openSidebar();
+      const layouts: boolean[] = [];
+      const stop = effect(() => {
+        layouts.push(state.app.isMobile.value);
+      });
+
+      stubViewport(SIDEWAYS_PHONE);
+      state.app.applyViewport();
+      stop();
+
+      expect(layouts).toEqual([true]);
+      expect(state.sidebar.isMobileOpen.value).toBe(true);
+      expect(document.documentElement.dataset.sbAppLayout).toBe("mobile");
+    });
+
+    it("keeps a sideways tablet in the desktop layout", async () => {
+      const state = await createTestSeedBibleState();
+
+      stubViewport(SIDEWAYS_TABLET);
+      window.dispatchEvent(new Event("resize"));
+
+      expect(state.app.isMobile.value).toBe(false);
+    });
+
+    it("switches layout when the main pointer changes without a resize", async () => {
+      const setPointer = stubViewport({ ...SIDEWAYS_PHONE, pointer: "fine" });
+      const state = await createTestSeedBibleState();
+      state.app.applyViewport();
+      expect(state.app.isMobile.value).toBe(false);
+
+      setPointer("coarse");
+
+      expect(state.app.isMobile.value).toBe(true);
+    });
+
+    // An iPhone SE held sideways is 667 wide: inside the compact desktop
+    // band, whose overlay sidebar and scrim don't belong in the mobile layout.
+    it("doesn't treat a sideways phone as a compact desktop window", async () => {
+      const state = await createTestSeedBibleState();
+
+      stubViewport({
+        width: 667,
+        height: 375,
+        screen: { width: 375, height: 667 },
+        pointer: "coarse",
+      });
+      state.app.applyViewport();
+
+      expect(state.app.isMobile.value).toBe(true);
+      expect(state.app.isCompactDesktop.value).toBe(false);
+    });
+
+    it("still treats a desktop window of the same width as compact desktop", async () => {
+      const state = await createTestSeedBibleState();
+
+      stubViewport({
+        width: 667,
+        height: 800,
+        screen: { width: 1920, height: 1080 },
+      });
+      state.app.applyViewport();
+
+      expect(state.app.isMobile.value).toBe(false);
+      expect(state.app.isCompactDesktop.value).toBe(true);
+    });
+
+    // The native iPad app guesses "phone" (renderedAsMobile) but has no
+    // server markup to match, so it starts from the real window rather than
+    // drawing the mobile layout first and switching.
+    it("starts from the real window, not the server's guess, when asked to measure", async () => {
+      stubViewport(SIDEWAYS_TABLET);
+
+      const measured = await createTestSeedBibleState({
+        config: { ...DEFAULT_APP_CONFIG, renderedAsMobile: true },
+        measureViewport: true,
+      });
+      expect(measured.app.isMobile.value).toBe(false);
+      expect(document.documentElement.dataset.sbAppLayout).toBe("desktop");
+
+      const guessed = await createTestSeedBibleState({
+        config: { ...DEFAULT_APP_CONFIG, renderedAsMobile: true },
+      });
+      expect(guessed.app.isMobile.value).toBe(true);
     });
   });
 

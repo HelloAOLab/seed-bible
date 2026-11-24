@@ -63,6 +63,7 @@ import {
   type SandboxSelectedVerse,
   type SandboxSharedSession,
   type SandboxState,
+  type SandboxStrings,
   type SandboxTitle,
   type SandboxToolDefinition,
 } from "../extensions/protocol";
@@ -89,7 +90,7 @@ export interface SandboxHostContext extends SandboxServicesContext {
     AppState,
     "toast" | "currentReadingState" | "isMobile" | "openVerseReference"
   >;
-  i18n: Pick<I18nManager, "language" | "isRtl">;
+  i18n: Pick<I18nManager, "language" | "isRtl" | "i18n">;
 }
 
 export interface SandboxFrameRequest {
@@ -641,6 +642,27 @@ export function startSandboxSession(
       ],
       session: has("session:read") ? currentSession() : null,
       ...services.state(),
+    };
+  };
+
+  // Whether the strings last sent lacked the app's, for their language.
+  let appStringsMissing = false;
+  const computeStrings = (): SandboxStrings => {
+    const language = context.i18n.language.peek();
+    appStringsMissing = !context.i18n.i18n.hasResourceBundle(
+      language,
+      "seed-bible"
+    );
+    const languages = [...new Set([language, "en"])];
+    const byLanguage = (
+      read: (language: string) => Record<string, string> | undefined
+    ) => Object.fromEntries(languages.map((lng) => [lng, read(lng) ?? {}]));
+    return {
+      language,
+      app: byLanguage((lng) =>
+        context.i18n.i18n.getResourceBundle(lng, "seed-bible")
+      ),
+      extension: byLanguage((lng) => translations[lng]),
     };
   };
 
@@ -1227,6 +1249,7 @@ export function startSandboxSession(
         granted: [...grantedPermissions.peek()],
         optional: [...optional],
         state: computeState(),
+        strings: computeStrings(),
       },
     });
     connection.port.onmessage = (event) =>
@@ -1260,10 +1283,34 @@ export function startSandboxSession(
     post(background, { type: "ping" });
   }, heartbeatInterval);
 
+  // The strings go apart from the state, and only when the language changes,
+  // since the app's are far too many to send every time a verse is selected.
+  // They go first, so a frame never has the new language without its strings.
+  // i18next reports the change once the new language's strings have loaded.
+  let stringsLanguage = context.i18n.language.peek();
   const stopStateEffect = effect(() => {
     const state = computeState();
+    if (state.language !== stringsLanguage) {
+      stringsLanguage = state.language;
+      broadcast({ type: "strings", strings: computeStrings() });
+    }
     broadcast({ type: "state", state });
   });
+  // On a first visit the app takes its language before that language's
+  // strings have loaded, so a frame started in between gets none of them, and
+  // no language change follows to send them. Send them once they arrive.
+  const onStringsLoaded = () => {
+    if (
+      appStringsMissing &&
+      context.i18n.i18n.hasResourceBundle(
+        context.i18n.language.peek(),
+        "seed-bible"
+      )
+    ) {
+      broadcast({ type: "strings", strings: computeStrings() });
+    }
+  };
+  context.i18n.i18n.on("loaded", onStringsLoaded);
   // Runs before `permissions.request` replies, so the extension sees the
   // grant as soon as its request resolves.
   const stopPermissionsEffect = effect(() => {
@@ -1280,6 +1327,7 @@ export function startSandboxSession(
       void storage.dispose();
     }
     stopStateEffect();
+    context.i18n.i18n.off("loaded", onStringsLoaded);
     stopPermissionsEffect();
     for (const cleanup of destroyCallbacks) {
       try {

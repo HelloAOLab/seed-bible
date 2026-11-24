@@ -5,10 +5,12 @@ import type { LoginRequestSuccess } from "@casual-simulation/aux-records";
 import { useI18n } from "../../i18n/I18nManager";
 import SeedBibleTitleIcon from "../../img/SeedBibleLogoWithTitleBlack.png";
 import { MaterialIcon } from "../icons";
-import { useOverlayDismiss } from "../useOverlayDismiss";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import type { LoginManager } from "../../managers/LoginManager";
 import { Button } from "../Button/Button";
+import { Checkbox } from "../Checkbox/Checkbox";
+import { Dialog } from "../Dialog/Dialog";
+import { TextField } from "../TextField/TextField";
 
 type LoginStep = "email" | "code";
 
@@ -109,8 +111,6 @@ export function LoginModal({
   const cancel = () => {
     void login.cancelLogin();
   };
-  const overlayDismiss = useOverlayDismiss(cancel);
-
   if (!isOpen) {
     return null;
   }
@@ -265,154 +265,143 @@ export function LoginModal({
       });
 
   return (
-    <div
-      className="sb-footnote-modal-overlay"
-      {...overlayDismiss}
-      onKeyDown={(event: KeyboardEvent) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          cancel();
-        }
-      }}
+    // In place like the legal windows its links open, so they land on top.
+    <Dialog
+      className="sb-login-modal"
+      label={title}
+      showClose={false}
+      portal={false}
+      initialFocusRef={emailInputRef}
+      onClose={cancel}
     >
-      <div
-        className="sb-footnote-modal sb-login-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(event: MouseEvent) => event.stopPropagation()}
-      >
-        <div className="sb-login-modal-body">
-          <div className="sb-login-header">
-            <span
-              className={`sb-login-logo${logoFailed.value ? " is-broken" : ""}`}
+      <div className="sb-login-modal-body">
+        <div className="sb-login-header">
+          <span
+            className={`sb-login-logo${logoFailed.value ? " is-broken" : ""}`}
+          >
+            <img
+              ref={logoImgRef}
+              src={SeedBibleTitleIcon}
+              alt={t("seed-bible", { defaultValue: "Seed Bible" })}
+              onError={() => {
+                logoFailed.value = true;
+              }}
+            />
+          </span>
+          <h3 className="sb-login-title">{title}</h3>
+          <p className="sb-login-subtitle">{subtitle}</p>
+          {onCode && (
+            <button
+              type="button"
+              className="sb-login-link sb-login-change-email"
+              onClick={backToEmail}
+              disabled={isSubmitting.value}
             >
-              <img
-                ref={logoImgRef}
-                src={SeedBibleTitleIcon}
-                alt={t("seed-bible", { defaultValue: "Seed Bible" })}
-                onError={() => {
-                  logoFailed.value = true;
-                }}
-              />
-            </span>
-            <h3 className="sb-login-title">{title}</h3>
-            <p className="sb-login-subtitle">{subtitle}</p>
-            {onCode && (
-              <button
-                type="button"
-                className="sb-login-link sb-login-change-email"
-                onClick={backToEmail}
+              {t("login-change-email", {
+                defaultValue: "Change email address",
+              })}
+            </button>
+          )}
+        </div>
+
+        {onCode ? (
+          <form className="sb-login-form" onSubmit={submitCode}>
+            <div className="sb-login-field">
+              <div className="sb-login-code-row">
+                <TextField
+                  inputRef={codeInputRef}
+                  id="sb-login-code"
+                  className="sb-login-code-input"
+                  label={t("login-code-placeholder", {
+                    defaultValue: "Enter login code here",
+                  })}
+                  hideLabel
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={code.value}
+                  disabled={isSubmitting.value}
+                  placeholder={t("login-code-placeholder", {
+                    defaultValue: "Enter login code here",
+                  })}
+                  onValueInput={(value) => {
+                    code.value = value;
+                  }}
+                />
+                <button
+                  type="button"
+                  className="sb-login-resend"
+                  onClick={resendCode}
+                  disabled={isSubmitting.value}
+                >
+                  <MaterialIcon className="sb-login-resend-icon">
+                    refresh
+                  </MaterialIcon>
+                  {t("login-resend-code", { defaultValue: "Resend code" })}
+                </button>
+              </div>
+            </div>
+
+            {error.value && (
+              <p className="sb-login-error" role="alert">
+                {error.value}
+              </p>
+            )}
+
+            <div className="sb-login-actions sb-login-actions-row">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="sb-login-secondary"
+                onClick={cancel}
                 disabled={isSubmitting.value}
               >
-                {t("login-change-email", {
-                  defaultValue: "Change email address",
+                {t("cancel", { defaultValue: "Cancel" })}
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="sb-login-submit"
+                loading={isSubmitting.value}
+              >
+                {isSubmitting.value
+                  ? t("login-verifying", { defaultValue: "Verifying…" })
+                  : t("login-confirm-code", { defaultValue: "Confirm code" })}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <form className="sb-login-form" onSubmit={submitEmail}>
+            <div className="sb-login-field">
+              <TextField
+                inputRef={emailInputRef}
+                id="sb-login-email"
+                label={t("login-email-title", {
+                  defaultValue: "Enter your email address",
                 })}
-              </button>
-            )}
-          </div>
+                hideLabel
+                type="email"
+                autoComplete="email"
+                value={email.value}
+                disabled={isSubmitting.value}
+                placeholder={t("login-email-title", {
+                  defaultValue: "Enter your email address",
+                })}
+                onValueInput={(value) => {
+                  email.value = value;
+                }}
+              />
+            </div>
 
-          {onCode ? (
-            <form className="sb-login-form" onSubmit={submitCode}>
-              <div className="sb-login-field">
-                <div className="sb-login-code-row">
-                  <input
-                    ref={codeInputRef}
-                    id="sb-login-code"
-                    className="sb-settings-text-input sb-login-input sb-login-code-input"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    value={code.value}
-                    disabled={isSubmitting.value}
-                    placeholder={t("login-code-placeholder", {
-                      defaultValue: "Enter login code here",
-                    })}
-                    onInput={(event: Event) => {
-                      code.value = (
-                        event.currentTarget as HTMLInputElement
-                      ).value;
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="sb-login-resend"
-                    onClick={resendCode}
-                    disabled={isSubmitting.value}
-                  >
-                    <MaterialIcon className="sb-login-resend-icon">
-                      refresh
-                    </MaterialIcon>
-                    {t("login-resend-code", { defaultValue: "Resend code" })}
-                  </button>
-                </div>
-              </div>
-
-              {error.value && (
-                <p className="sb-login-error" role="alert">
-                  {error.value}
-                </p>
-              )}
-
-              <div className="sb-login-actions sb-login-actions-row">
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="sb-login-secondary"
-                  onClick={cancel}
-                  disabled={isSubmitting.value}
-                >
-                  {t("cancel", { defaultValue: "Cancel" })}
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  className="sb-login-submit"
-                  loading={isSubmitting.value}
-                >
-                  {isSubmitting.value
-                    ? t("login-verifying", { defaultValue: "Verifying…" })
-                    : t("login-confirm-code", { defaultValue: "Confirm code" })}
-                </Button>
-              </div>
-            </form>
-          ) : (
-            <form className="sb-login-form" onSubmit={submitEmail}>
-              <div className="sb-login-field">
-                <input
-                  ref={emailInputRef}
-                  id="sb-login-email"
-                  className="sb-settings-text-input sb-login-input"
-                  type="email"
-                  autoComplete="email"
-                  value={email.value}
-                  disabled={isSubmitting.value}
-                  placeholder={t("login-email-title", {
-                    defaultValue: "Enter your email address",
-                  })}
-                  onInput={(event: Event) => {
-                    email.value = (
-                      event.currentTarget as HTMLInputElement
-                    ).value;
-                  }}
-                />
-              </div>
-
-              <label className="sb-login-terms" htmlFor="sb-login-terms">
-                <input
-                  id="sb-login-terms"
-                  className="sb-login-terms-checkbox"
-                  type="checkbox"
-                  checked={agreed.value}
-                  disabled={isSubmitting.value}
-                  onChange={(event: Event) => {
-                    agreed.value = (
-                      event.currentTarget as HTMLInputElement
-                    ).checked;
-                  }}
-                />
-                <span className="sb-login-terms-text">
+            <Checkbox
+              className="sb-login-terms"
+              checked={agreed.value}
+              disabled={isSubmitting.value}
+              onToggled={(checked) => {
+                agreed.value = checked;
+              }}
+              label={
+                <>
                   {t("login-agree-prefix", { defaultValue: "I agree to the" })}{" "}
                   <a
                     className="sb-login-link"
@@ -423,54 +412,54 @@ export function LoginModal({
                       defaultValue: "Terms of service",
                     })}
                   </a>
-                </span>
-              </label>
+                </>
+              }
+            />
 
-              {error.value && (
-                <p className="sb-login-error" role="alert">
-                  {error.value}
-                </p>
-              )}
+            {error.value && (
+              <p className="sb-login-error" role="alert">
+                {error.value}
+              </p>
+            )}
 
-              <div className="sb-login-actions">
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  className="sb-login-submit"
-                  loading={isSubmitting.value}
-                >
-                  {isSubmitting.value
-                    ? t("login-sending", { defaultValue: "Sending…" })
-                    : t("log-in", { defaultValue: "Log in" })}
-                </Button>
-              </div>
-            </form>
-          )}
-
-          {!onCode && (
-            <div className="sb-login-legal">
-              <a className="sb-login-link" href={privacyPolicyLink}>
-                {t("privacy-policy", { defaultValue: "Privacy policy" })}
-              </a>
-              <a
-                className="sb-login-link"
-                href={codeOfConductLink}
-                onClick={(event: MouseEvent) => event.stopPropagation()}
+            <div className="sb-login-actions">
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="sb-login-submit"
+                loading={isSubmitting.value}
               >
-                {t("code-of-conduct", { defaultValue: "Code of conduct" })}
-              </a>
-              <a
-                className="sb-login-link"
-                href={termsOfServiceLink}
-                onClick={(event: MouseEvent) => event.stopPropagation()}
-              >
-                {t("terms-of-service", { defaultValue: "Terms of service" })}
-              </a>
+                {isSubmitting.value
+                  ? t("login-sending", { defaultValue: "Sending…" })
+                  : t("log-in", { defaultValue: "Log in" })}
+              </Button>
             </div>
-          )}
-        </div>
+          </form>
+        )}
+
+        {!onCode && (
+          <div className="sb-login-legal">
+            <a className="sb-login-link" href={privacyPolicyLink}>
+              {t("privacy-policy", { defaultValue: "Privacy policy" })}
+            </a>
+            <a
+              className="sb-login-link"
+              href={codeOfConductLink}
+              onClick={(event: MouseEvent) => event.stopPropagation()}
+            >
+              {t("code-of-conduct", { defaultValue: "Code of conduct" })}
+            </a>
+            <a
+              className="sb-login-link"
+              href={termsOfServiceLink}
+              onClick={(event: MouseEvent) => event.stopPropagation()}
+            >
+              {t("terms-of-service", { defaultValue: "Terms of service" })}
+            </a>
+          </div>
+        )}
       </div>
-    </div>
+    </Dialog>
   );
 }

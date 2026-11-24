@@ -30,11 +30,8 @@
   margin-bottom: 8px;
 }
 
-/*
- * Playlist text inputs reuse the account settings' filled-box look
- * (`sb-settings-text-input`); this glue lets them flex next to the add button
- * inside `.sb-playlist-add-row`.
- */
+/* Lets the playlist add boxes flex next to the add button inside
+   `.sb-playlist-add-row`. */
 .sb-playlist-input {
   flex: 1;
   min-width: 0;

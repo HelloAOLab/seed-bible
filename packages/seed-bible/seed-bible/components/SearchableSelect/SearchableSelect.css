@@ -3,35 +3,17 @@
   width: 100%;
 }
 
-.sb-language-picker-button {
-  display: inline-flex;
+/* The box (border, focus ring, height) is `sb-text-input` and `sb-select-input`,
+   shared with `Select`; this lays out the trigger's contents inside it. */
+.sb-text-input.sb-language-picker-button {
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  width: 100%;
-  box-sizing: border-box;
-  border: none;
-  border-radius: var(--sb-radius-md);
-  padding: 0.75rem 1rem;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  color: var(--sb-font-color);
-  font-size: var(--sb-font-size-15);
-  font-family: inherit;
-  cursor: pointer;
-  text-align: left;
-  transition: background-color var(--sb-duration-base) ease;
-}
-
-.sb-language-picker-button:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
-}
-
-.sb-language-picker-button:focus {
-  outline: none;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
+  text-align: start;
 }
 
 .sb-language-picker-button .material-symbols-outlined:last-child {
-  margin-left: auto;
+  margin-inline-start: auto;
   font-size: 1rem;
 }
 
@@ -93,12 +75,10 @@
 .sb-language-picker-search-input::placeholder {
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
-
 .sb-language-picker-empty {
-  padding: 0.75rem 0.625rem;
-  font-size: var(--sb-font-size-13);
+  --sb-empty-state-padding: 0.75rem 0.625rem;
+  --sb-empty-state-font-size: var(--sb-font-size-13);
   text-align: center;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
 .sb-language-picker-item {
@@ -126,18 +106,16 @@
   font-weight: 600;
 }
 
-@media (max-width: 480px) {
-  .sb-language-picker-overlay {
-    background: var(--sb-backdrop);
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-language-picker-overlay {
+  background: var(--sb-backdrop);
+}
 
-  .sb-language-picker-menu {
-    position: fixed;
-    left: 0.75rem;
-    right: 0.75rem;
-    top: auto;
-    bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
-    min-width: 0;
-    max-height: min(50dvh, 22.5rem);
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-language-picker-menu {
+  position: fixed;
+  left: 0.75rem;
+  right: 0.75rem;
+  top: auto;
+  bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
+  min-width: 0;
+  max-height: min(50dvh, 22.5rem);
 }

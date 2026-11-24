@@ -3,7 +3,12 @@ import {
   type Translation,
   extractContentText,
 } from "seed-bible/managers";
-import { Button, Skeleton, SkeletonContainer } from "seed-bible/components";
+import {
+  Button,
+  Skeleton,
+  SkeletonContainer,
+  TooltipTrigger,
+} from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import {
   chapterCacheKey,
@@ -79,7 +84,7 @@ function TranslationBlockHeader(props: {
     return (
       <div className="sb-compare-block-header" dir={dir}>
         {content}
-        <span className="sr-only">
+        <span className="sb-visually-hidden">
           {t("currently-reading", { defaultValue: "Currently reading" })}
         </span>
       </div>
@@ -87,16 +92,17 @@ function TranslationBlockHeader(props: {
   }
 
   return (
-    <button
-      type="button"
-      className="sb-compare-block-header sb-compare-block-header--switch"
-      dir={dir}
-      aria-label={label}
-      title={label}
-      onClick={() => onRead(translationId)}
-    >
-      {content}
-    </button>
+    <TooltipTrigger>
+      <button
+        type="button"
+        className="sb-compare-block-header sb-compare-block-header--switch"
+        dir={dir}
+        aria-label={label}
+        onClick={() => onRead(translationId)}
+      >
+        {content}
+      </button>
+    </TooltipTrigger>
   );
 }
 

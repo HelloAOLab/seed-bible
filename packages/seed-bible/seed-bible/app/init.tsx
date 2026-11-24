@@ -7,8 +7,10 @@ import { readInjectedCustomizationSeed } from "../app/customizationSeed";
 import { readInjectedFriendLinkSeed } from "../app/friendLinkSeed";
 import { readTrustedSharedPageSeeds } from "../app/sharedPageSeeds";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
+import { setDefaultI18n } from "../i18n/I18nManager";
 import {
   decideStartupHydration,
+  hasServerRenderedContent,
   isRenderedByThisBuild,
   type HydrationDecision,
 } from "../app/hydrationGate";
@@ -66,6 +68,7 @@ console.log("Starting APP");
 // gets replaced.
 const state = createSeedBibleState({
   config,
+  measureViewport: !hasServerRenderedContent(config, container),
   apiResponseSnapshot,
   initialCustomizationSeed,
   revalidateInitialCustomizationSeed,
@@ -73,6 +76,10 @@ const state = createSeedBibleState({
   initialReadingPlanPageSeed,
   initialFriendLinkSeed,
 });
+
+// So a shared component an extension renders in a root of its own speaks the
+// app's language too.
+setDefaultI18n(state.i18n);
 
 /**
  * Every initial tab's chapter fetch is already in flight by the time
@@ -156,6 +163,9 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
         `Hydration skipped (${decision.reason}); falling back to render().`
       );
       recordPageLoadOutcome(`rendered:${decision.reason}`);
+      // No server markup to match, so draw for the real window rather than
+      // the server's guess (in the same task, so nothing paints in between).
+      state.app.applyViewport();
       render(app, container);
     }
   }

@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { loadExtensionProjectInfo } from "../lib/project.js";
-import { readIcon } from "../lib/icon.js";
+import { readIcon, readScreenshots } from "../lib/images.js";
 import {
   isSandboxedProject,
   readProjectSources,
@@ -41,6 +41,7 @@ export async function runPackage(
     bundle: await readFile(path.join(root, "dist", "standalone", "index.js")),
     meta: info.meta,
     icon: await readIcon(root, info.meta),
+    screenshots: await readScreenshots(root, info.meta),
     appUrl: options.appUrl,
   });
 

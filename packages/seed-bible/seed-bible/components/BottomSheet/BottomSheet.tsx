@@ -1,11 +1,12 @@
 import "./BottomSheet.css";
 import type { ComponentChild, ComponentChildren, JSX, Ref } from "preact";
 import { createPortal } from "preact/compat";
-import { useCallback, useEffect, useLayoutEffect, useRef } from "preact/hooks";
+import { useCallback, useRef } from "preact/hooks";
 import { useSignal } from "@preact/signals";
-import { useI18n } from "../../i18n/I18nManager";
+import { useI18n } from "../../i18n/I18nContext";
 import { useOverlayDismiss } from "../useOverlayDismiss";
 import { IconButton } from "../IconButton/IconButton";
+import { useModalLayer } from "../useModalFocus";
 
 /** A press that moves less than this is a tap, not a drag. */
 const TAP_SLOP_PX = 6;
@@ -25,9 +26,6 @@ const DEFAULT_DRAG_IGNORE_SELECTOR =
 /** Where Escape belongs to the field (clearing or cancelling an edit). */
 const EDITABLE_SELECTOR =
   'textarea, select, input:not([type="checkbox"], [type="radio"], [type="button"], [type="submit"], [type="reset"], [type="range"], [type="color"]), [contenteditable]:not([contenteditable="false"])';
-
-const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Lets a sheet grow by dragging its handle up. The sheet only runs the
@@ -67,6 +65,12 @@ export interface BottomSheetProps {
    * back a step should pass the same handler, so Escape goes back too.
    */
   onEscape?: () => void;
+  /**
+   * Whether the user may close it right now (✕, Escape, the backdrop, or
+   * dragging it down). False while it is in the middle of something it
+   * shouldn't be left in. Defaults to true.
+   */
+  dismissible?: boolean;
   closeLabel?: string;
   /**
    * The corner button's icon: a Material Symbols name, or an icon element. An
@@ -133,6 +137,7 @@ export function BottomSheet(props: BottomSheetProps) {
     showClose = true,
     onCloseButton,
     closeIcon = "close",
+    dismissible = true,
     backdrop = true,
     portal = true,
     dragSurface = "handle",
@@ -154,7 +159,10 @@ export function BottomSheet(props: BottomSheetProps) {
   const drag = useRef<DragState | null>(null);
   const dismissOffset = useSignal(0);
   const isDragging = useSignal(false);
-  const overlayDismiss = useOverlayDismiss(onClose);
+  const close = () => {
+    if (dismissible) onClose();
+  };
+  const overlayDismiss = useOverlayDismiss(close);
   // Stable, so Preact doesn't detach and reattach the ref on every render
   // (which happens once per frame during a drag).
   const setSheetEl = useCallback(
@@ -165,72 +173,23 @@ export function BottomSheet(props: BottomSheetProps) {
     [sheetRef]
   );
 
-  // Read through a ref so the document listener added once on mount always
-  // calls the latest handler.
-  const onEscapeRef = useRef(onClose);
-  onEscapeRef.current = props.onEscape ?? onClose;
+  // Escape is taken even when the sheet can't be closed, so it doesn't fall
+  // through to whatever is behind.
+  const onEscape = () => {
+    if (dismissible) (props.onEscape ?? onClose)();
+  };
 
-  // A modal sheet takes focus while open and hands it back when it closes, so
-  // keyboard and screen-reader users land where they were.
-  useLayoutEffect(() => {
-    if (!modal) return;
-    const previous =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    sheetEl.current?.focus({ preventScroll: true });
-    return () => {
-      if (previous?.isConnected) previous.focus({ preventScroll: true });
-    };
-  }, [modal]);
-
-  useEffect(() => {
-    if (!modal) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.defaultPrevented) return;
-      const sheet = sheetEl.current;
-      const target = event.target as Node | null;
-      // Something stacked over the sheet (a modal opened from it) owns
-      // Escape while it has focus.
-      if (target !== document.body && !sheet?.contains(target)) return;
-      event.preventDefault();
-      onEscapeRef.current();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [modal]);
+  useModalLayer(sheetEl, { enabled: modal, onEscape });
 
   const handleSheetKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Escape" && !modal && !event.defaultPrevented) {
-      // A non-modal sheet can hold other people's content (extension cards in
-      // the verse sheet), whose fields may use Escape without preventing it.
-      if ((event.target as Element | null)?.closest?.(EDITABLE_SELECTOR)) {
-        return;
-      }
-      event.preventDefault();
-      onEscapeRef.current();
+    if (event.key !== "Escape" || modal || event.defaultPrevented) return;
+    // A non-modal sheet can hold other people's content (extension cards in
+    // the verse sheet), whose fields may use Escape without preventing it.
+    if ((event.target as Element | null)?.closest?.(EDITABLE_SELECTOR)) {
       return;
     }
-    if (event.key !== "Tab" || !modal) return;
-    const sheet = sheetEl.current;
-    if (!sheet) return;
-    const focusables = Array.from(
-      sheet.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-    );
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-    if (!first || !last) {
-      event.preventDefault();
-      return;
-    }
-    const active = document.activeElement;
-    if (event.shiftKey && (active === first || active === sheet)) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
+    event.preventDefault();
+    onEscape();
   };
 
   const canExpand = !!expansion?.canExpand;
@@ -325,7 +284,7 @@ export function BottomSheet(props: BottomSheetProps) {
     }
 
     if (offset >= DISMISS_THRESHOLD_PX) {
-      onClose();
+      close();
       return;
     }
 
@@ -384,6 +343,7 @@ export function BottomSheet(props: BottomSheetProps) {
       look="tinted"
       icon={closeIcon}
       label={closeLabel}
+      disabled={!dismissible}
       onClick={onCloseButton ?? onClose}
     />
   );

@@ -139,7 +139,7 @@ Extensions are written in TypeScript with three tools. If you've used React, you
 4. **Update.** When you publish a new version, it's used on the user's next visit. If it asks for no new permissions, it loads without a prompt. If it asks for more, the user sees only what's new, and it doesn't load until they agree.
 5. **Uninstall.** Everything you registered is removed, your storage is deleted, and Seed Bible forgets what the user granted, so reinstalling asks again.
 
-**What a sandboxed extension can't do (yet).** It can't depend on other extensions, and it's never installed without the user being asked. A chat provider replies with one whole message (no streaming), and a Discover provider answers with data (`content`, `cross-reference` or `study-note` results), not its own markup. If your background frame stops responding, Seed Bible stops the extension until the page reloads. Styles must come from your bundle itself, as inline styles or CSS imported with `?inline`, since a frame can't load a separate stylesheet.
+**What a sandboxed extension can't do (yet).** It can't depend on other extensions, and it's never installed without the user being asked. A chat provider replies with one whole message (no streaming), and a Discover provider answers with data (`content`, `cross-reference` or `study-note` results), not its own markup. If your background frame stops responding, Seed Bible stops the extension until the page reloads.
 
 ---
 
@@ -193,7 +193,7 @@ The [API reference](./extension-api.md#3-the-sb-object) has every call in detail
 - **`sb.app.toast(message)`** (shown with your extension's name) and **`sb.app.isMobile`**.
 - **`sb.storage.get/set/remove/keys`**: your own JSON key/value store, up to 256 KB. The frame has no `localStorage`. While the user is signed in it syncs to a private record in their account, so it follows them to their other devices (the newer write to a key wins). Signed out, it stays on the device. It's cleared everywhere when the user uninstalls your extension.
 - **`sb.settings.get(key)`**: your own non-sensitive settings from `extension.json`, which the user changes on your extension's page in Settings.
-- **`sb.i18n.t(key, defaultValue, values)`**, **`sb.i18n.language`** and **`sb.i18n.direction`**: strings come from your `extension.json` translations.
+- **`sb.i18n.t(key, options)`**, **`sb.i18n.language`** and **`sb.i18n.direction`**: `t` is i18next's, reading your `extension.json` translations (with `_one`/`_other` forms for plurals). `{ ns: "seed-bible" }` reads Seed Bible's own strings, like "Close"; always pass `defaultValue` for those, since their keys can change. In a view, `useI18n(sb.extensionId)` gives the same `t` for your strings, and `useI18n()` for Seed Bible's. See [`sb.i18n`](./extension-api.md#sbi18n).
 - **`sb.reading.position`**, **`sb.reading.selection`** and **`sb.reading.open(ref)`**, if granted (below).
 
 A call that isn't allowed rejects with a `SandboxError` whose `code` says why: `permission_denied`, `invalid_request`, `not_found`, `limit_exceeded` or `unavailable`. The [reference](./extension-api.md#5-errors) says what each means and what to do about it.
@@ -207,10 +207,19 @@ Declare them in `extension.json`. The user sees them, in plain language, before 
   "id": "verse-art",
   "version": "1.0.0",
   "icon": "icon.png",
+  "screenshots": [
+    { "src": "screenshots/art.webp", "caption": "screenshot-art" }
+  ],
   "permissions": ["reading:selection"],
   "optionalPermissions": ["reading:position"],
   "network": ["api.verse-art.example"],
-  "translations": { "en": { "title": "Verse Art", "description": "…" } }
+  "translations": {
+    "en": {
+      "title": "Verse Art",
+      "description": "…",
+      "screenshot-art": "Turn selected verses into artwork"
+    }
+  }
 }
 ```
 
@@ -241,7 +250,11 @@ Declare them in `extension.json`. The user sees them, in plain language, before 
 
 `network` lists every host your frames may contact (`fetch`, images, media, fonts); anything else is blocked. Requests arrive with `Origin: null`, so the server must allow that in its CORS headers (`Access-Control-Allow-Origin: *` does). A manifest that names a permission this version of Seed Bible doesn't know won't install, rather than install without it. Network hosts can't be optional.
 
-**Icon.** `icon` is a square image in your project (`.png`, `.svg`, `.webp` or `.jpg`, under 256 KB; 256 pixels across is plenty). Seed Bible shows it wherever your extension is listed, on its page and in the install dialog, in place of the colored initials it shows otherwise. `publish` uploads it to its own link and puts that link in the manifest; `package` copies it next to the bundle and `dev` serves it. You can also give a full `https:` link to an image hosted elsewhere. `check` refuses an icon Seed Bible couldn't show.
+**Icon.** `icon` is a square image in your project (`.png`, `.svg`, `.webp`, `.jpg` or `.jpeg`, under 256 KB; 256 pixels across is plenty). Seed Bible shows it wherever your extension is listed, on its page and in the install dialog, in place of the colored initials it shows otherwise. `publish` uploads it to its own link and puts that link in the manifest; `package` copies it next to the bundle and `dev` serves it. You can also give a full `https:` link to an image hosted elsewhere. `check` refuses an icon Seed Bible couldn't show.
+
+**Screenshots.** The optional `screenshots` list holds up to 8 objects, in display order, each with an image `src` and an optional `caption`. Local files must be inside your project, use `.png`, `.webp`, `.jpg` or `.jpeg` (not SVG), and be smaller than 1 MB (1,048,576 bytes) each. WebP at about 1280 pixels on the long edge is recommended. `caption` is a translation key, not the caption itself: give it nonblank English text in `translations.en`, as above. Other languages fall back to English. Screenshots appear on the extension's page before or after installation; selecting a thumbnail opens the full-size viewer.
+
+You can also use full `https:` links for screenshot sources. `check` accepts these without downloading or checking the image's type or size. `package`, `dev` and `publish` keep those links as they are. Local screenshots are copied by `package`, served by `dev` and uploaded by `publish`, keeping their order and captions. In a hosted extension set, relative image links resolve against the set's URL; Seed Bible keeps only HTTPS links (or HTTP on localhost while developing). Images that fail to load are left out.
 
 **Needs no permission:** `sb.identity` (an id for the user that's the same every time for your extension, different for every extension, not their real id, and null when signed out), `sb.bible` for public Bible text, search, commentaries and datasets (translations, books, chapters, verse search, cross-references; downloaded translations work offline), `sb.sensitive.fetch(...)` for requests that carry the user's sensitive settings such as API keys (see the [`sensitive` section](./extension-api.md#sensitive-settings) of `extension.json`), `sb.modals.alert`/`open`, and `sb.settings.registerPanel(view)` for a view on your extension's Settings page.
 
@@ -397,6 +410,7 @@ A user pastes your link into **Settings → Extensions → Add extensions from a
 - Keep the [API reference](./extension-api.md) open while you work: it lists every `sb` call, `extension.json` field, error and limit. Your editor shows the same documentation when you hover over an `sb` call.
 - Read `packages/sandboxed-example-extension/` for a fuller example than the starter project.
 - Read the [security model](./extension-security.md) to understand what the sandbox protects users from, and what it doesn't.
+- Only need to link to a passage or embed the reader, not build an extension? See the [integration reference](./integration-reference.md).
 - Found something the API can't do? [Open an issue](https://github.com/HelloAOLab/seed-bible/issues) describing what you're trying to build.
 
 ---
@@ -456,14 +470,27 @@ my-extension/
 ```json
 {
   "id": "my-extension",
+  "icon": "icon.svg",
+  "screenshots": [
+    { "src": "screenshots/pane.webp", "caption": "screenshot-pane" }
+  ],
   "translations": {
     "en": {
       "title": "My Extension",
-      "description": "What this extension does, in one sentence."
+      "description": "What this extension does, in one sentence.",
+      "screenshot-pane": "Study a chapter alongside your notes"
     }
   }
 }
 ```
+
+**Icon and screenshots.** Both fields are optional. Their paths are relative to `extension.json` and must name files inside the extension package; built-in extensions cannot use hosted image links. The app bundles these files and supplies their public URLs.
+
+- `icon` is a square `.png`, `.svg`, `.webp`, `.jpg` or `.jpeg`, smaller than 256 KB (262,144 bytes). A square image 256 pixels across is plenty. It replaces the extension's initials in lists, on its page and in the install dialog; a broken icon falls back to initials.
+- `screenshots` is a list of up to 8 objects in display order, each with `src` and an optional `caption`. Each file must be `.png`, `.webp`, `.jpg` or `.jpeg` (not SVG), smaller than 1 MB (1,048,576 bytes). Use WebP at about 1280 pixels on the long edge. Screenshots appear on the extension's page, with a full-size viewer when selected.
+- A `caption` is a translation key with nonblank English text in `translations.en`, as in the example. Captions use the user's language when available and fall back to English. Opening the page loads any needed translations without installing the extension.
+
+The app build fails on bad media: missing files, paths outside the package, unsupported types, files at or above the size limits, a malformed screenshot list or entry, more than 8 screenshots, or a caption key without English text. The error names the extension, the field or entry and the reason. Omit `screenshots` or use an empty list to show no screenshots.
 
 You can add more keys per language beyond `title`/`description` — those are the strings your extension's own UI uses (via the `useI18n` hook), and per `CLAUDE.md`'s translation convention, **only `en` needs to be complete**; other languages are filled in separately by translators. Note: `extension.json` also supports `dependencies` (an array of other extension IDs this one needs) and `autoinstall: true` (installed by default for every user the first time they see it — see [§8.2.3](#823-installation-and-persistence)).
 
@@ -633,6 +660,8 @@ The map is drawn with [Leaflet](https://leafletjs.com), which the package downlo
 #### Chat providers — plug in a conversational participant
 
 `context.chats.registerProvider({ id, name, generateResponse, supportsSharedChats })` adds a chat participant that can generate responses to messages — effectively, "install an AI assistant into the chat panel." The **apologist extension** (`packages/apologist-extension/`) is a complete real example: it reads configuration from the URL's query parameters (an API domain, key, model, an optional shared-conversation token), and its `generateResponse` forwards the conversation (plus what chapter the user is currently reading, for context) to an external chat-completion API and returns the reply as a chat message.
+
+A chat provider can also implement the optional `classifyContent(request)`, which suggests categories and Bible passages for Custom Branding content libraries (design: `docs/custom-content-database.md` §5.4). The request carries a ready-made `instructions` prompt and `input`; a provider backed by a chat model can send those as its system and user messages and return `parseContentClassification(reply)` from `managers/customContent/classify.ts`. The app checks every answer (unknown categories and passages that don't exist are dropped), so a provider doesn't need to. Apologist's implementation is in `packages/apologist-extension/ext_Apologist/main/init.tsx`. Only built-in extensions can offer it for now; the sandbox protocol for third-party chat providers doesn't carry it yet.
 
 #### Reacting to app state — effects
 
