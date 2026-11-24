@@ -6,6 +6,8 @@
 
 ### 🔧 Changed
 
+- Start new shared sessions with "Only host can navigate" turned on, so participants follow the host until the host turns it off in session settings.
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed
