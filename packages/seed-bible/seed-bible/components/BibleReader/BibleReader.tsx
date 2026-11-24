@@ -4142,6 +4142,7 @@ export function BibleReader(props: BibleReaderProps) {
                   // The tab's own chapter, so its presence is the chapter's.
                   presence={sharedSession ? presence : undefined}
                   onVisibleVersesChange={reportVisibleVerses}
+                  selectedVerseEl={readingState.selectedVerseEl}
                 />
               </Suspense>
             ),
@@ -4184,6 +4185,7 @@ export function BibleReader(props: BibleReaderProps) {
                   onVisibleVersesChange={reportVisibleArea(
                     `${stepArea}-second`
                   )}
+                  selectedVerseEl={second.selectedVerseEl}
                 />
               </Suspense>
             ),

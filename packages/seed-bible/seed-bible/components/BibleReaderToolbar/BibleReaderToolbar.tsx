@@ -1956,7 +1956,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
    */
   const leaveVerseSheetStep = (): boolean => {
     if (isHighlightPickerOpen.value) {
-      isHighlightPickerOpen.value = false;
+      closeHighlightPicker();
       return false;
     }
     selectionState.value?.clearSelectedVerses();
@@ -1964,9 +1964,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   };
 
   // Verse toolbar highlight picker state
-  // Ref to the Highlight trigger button so Escape from the picker can return
-  // focus to it, keeping the user inside the toolbar rather than on body.
+  // Ref to the Highlight trigger button so closing the picker returns focus to
+  // it, keeping the user inside the toolbar rather than landing on page body.
   const highlightTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  // Closes the highlight picker and returns focus to the Highlight button.
+  // Used by the picker's Escape, the Back arrow, and the VerseToolbarFrame
+  // onEscape when the picker is open — all three paths where the picker closes
+  // without clearing the selection.
+  const closeHighlightPicker = () => {
+    isHighlightPickerOpen.value = false;
+    requestAnimationFrame(() => highlightTriggerRef.current?.focus());
+  };
+
   const customColorAnchorRef = useRef<HTMLButtonElement | null>(null);
   const customColorPickerOpen = useSignal(false);
   const customHighlightColors = useComputed(
@@ -3482,9 +3492,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   className="sb-verse-toolbar-back"
                   icon="chevron_left"
                   label={t("back", { defaultValue: "Back" })}
-                  onClick={() => {
-                    isHighlightPickerOpen.value = false;
-                  }}
+                  onClick={closeHighlightPicker}
                 />
               )}
               <span
@@ -3503,13 +3511,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               onKeyDown={(event) => {
                 if (event.key === "Escape") {
                   event.preventDefault();
-                  isHighlightPickerOpen.value = false;
-                  // Return focus to the Highlight button so the user stays
-                  // inside the toolbar; without this, focus falls to body and
-                  // the second Escape can't close the toolbar.
-                  requestAnimationFrame(() => {
-                    highlightTriggerRef.current?.focus();
-                  });
+                  closeHighlightPicker();
                   return;
                 }
                 if (isSmallScreen.value) {
