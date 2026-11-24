@@ -1,4 +1,5 @@
 import { signal } from "@preact/signals";
+import { render } from "preact";
 import initAudioReaderExtension from "@packages/audio-reader-extension/ext_audioReader/host/init";
 import {
   setupExtensionContext,
@@ -12,6 +13,7 @@ import type {
   BibleReadingSession,
   SharedAudioPlayback,
   SharedAudioPlaybackCommand,
+  SharedAudioShareChoice,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import { createTestSeedBibleState } from "../../seed-bible/testUtils/createTestSeedBibleState";
 import {
@@ -508,7 +510,16 @@ describe("audio-reader playback controls", () => {
       pauseSpy.mockRestore();
     });
 
-    function attachSession(host: boolean) {
+    function attachSession(
+      host: boolean,
+      {
+        shareChoice = host ? "everyone" : null,
+        listeningAlong = !host,
+      }: {
+        shareChoice?: SharedAudioShareChoice | null;
+        listeningAlong?: boolean;
+      } = {}
+    ) {
       const readingState = getReadingState(state);
       const sharedAudio = signal<SharedAudioPlayback | null>(null);
       let written = 0;
@@ -530,7 +541,7 @@ describe("audio-reader playback controls", () => {
       const options = signal({
         allowedNavigators: null,
         allowedDecorators: null,
-        hostUserId: null as string | null,
+        hostUserId: (host ? "host-user" : null) as string | null,
         highlightDurationSeconds: 16,
         endedAt: null as number | null,
         shareTranslation: false,
@@ -540,6 +551,13 @@ describe("audio-reader playback controls", () => {
       const connectedUsers = signal<
         { userId: string | null; connectionId: string; isSelf: boolean }[]
       >([]);
+      const audioShareChoice = signal<SharedAudioShareChoice | null>(
+        shareChoice
+      );
+      const isListeningAlong = signal(listeningAlong);
+      const stopListeningAlong = vi.fn(() => {
+        isListeningAlong.value = false;
+      });
       const session = {
         id: "session-shared-audio",
         document: {},
@@ -550,11 +568,30 @@ describe("audio-reader playback controls", () => {
         options,
         connectedUsers,
         isSynced: signal(true),
+        localSessionId: signal(host ? "host-user" : "guest-user"),
+        audioShareChoice,
+        setAudioShareChoice: (choice: SharedAudioShareChoice) => {
+          audioShareChoice.value = choice;
+        },
+        isListeningAlong,
+        listenAlong: () => {
+          isListeningAlong.value = true;
+        },
+        stopListeningAlong,
       } as unknown as BibleReadingSession;
       const tab = state.tabs.tabs.peek()[0]!;
       tab.sharedSession = session;
       state.tabs.tabs.value = [...state.tabs.tabs.peek()];
-      return { publish, sharedAudio, readingState, options, connectedUsers };
+      return {
+        publish,
+        sharedAudio,
+        readingState,
+        options,
+        connectedUsers,
+        audioShareChoice,
+        isListeningAlong,
+        stopListeningAlong,
+      };
     }
 
     function hostCommand(
@@ -603,11 +640,10 @@ describe("audio-reader playback controls", () => {
     });
 
     it("does not publish a participant's own playback", () => {
-      const { publish, sharedAudio } = attachSession(false);
+      const { sharedAudio } = attachSession(false);
 
       pressPlay();
 
-      expect(publish).toHaveBeenCalled();
       expect(sharedAudio.value).toBeNull();
       expect(
         state.audioPlayback.controllerFor(getReadingState(state))?.isPlaying
@@ -655,6 +691,7 @@ describe("audio-reader playback controls", () => {
         readingState,
         sharedAudio,
         publishAudioPlayback: vi.fn(() => false),
+        isListeningAlong: signal(true),
         dispose: vi.fn(),
         options: signal({
           allowedNavigators: null,
@@ -814,7 +851,9 @@ describe("audio-reader playback controls", () => {
     });
 
     it("does not republish a command it is only following", () => {
-      const { publish, sharedAudio, readingState } = attachSession(true);
+      const { publish, sharedAudio, readingState } = attachSession(true, {
+        listeningAlong: true,
+      });
       publish.mockClear();
 
       sharedAudio.value = hostCommand(readingState, { id: "cohost-command" });
@@ -827,7 +866,9 @@ describe("audio-reader playback controls", () => {
     });
 
     it("does not clear shared audio once someone else is leading", () => {
-      const { publish, sharedAudio, readingState } = attachSession(true);
+      const { publish, sharedAudio, readingState } = attachSession(true, {
+        listeningAlong: true,
+      });
       pressPlay();
 
       sharedAudio.value = hostCommand(readingState, {
@@ -839,6 +880,153 @@ describe("audio-reader playback controls", () => {
 
       expect(publish).not.toHaveBeenCalledWith(null);
       expect(sharedAudio.value?.id).toBe("cohost-now");
+    });
+
+    function sharePrompt() {
+      return (
+        state.modals.modals.value.find((modal) =>
+          modal.id.startsWith("ext_audioReader-share-audio")
+        ) ?? null
+      );
+    }
+
+    /** Renders the host's share prompt and presses the button labelled `label`. */
+    function chooseInSharePrompt(label: string) {
+      const modal = sharePrompt();
+      expect(modal).not.toBeNull();
+      const host = document.createElement("div");
+      document.body.append(host);
+      try {
+        render(
+          <>
+            {modal!.content({
+              t: (key, options) => state.i18n.t(key, options),
+            })}
+          </>,
+          host
+        );
+        const button = Array.from(host.querySelectorAll("button")).find(
+          (candidate) => candidate.textContent?.includes(label)
+        );
+        expect(button).toBeDefined();
+        button!.click();
+      } finally {
+        render(null, host);
+        host.remove();
+      }
+    }
+
+    it("asks the host the first time they press play, then plays for everyone", () => {
+      const { publish, audioShareChoice, readingState } = attachSession(true, {
+        shareChoice: null,
+      });
+
+      pressPlay();
+
+      expect(sharePrompt()).not.toBeNull();
+      expect(playSpy).not.toHaveBeenCalled();
+      expect(publish).not.toHaveBeenCalled();
+
+      chooseInSharePrompt("Play for everyone");
+
+      expect(sharePrompt()).toBeNull();
+      expect(audioShareChoice.value).toBe("everyone");
+      expect(playSpy).toHaveBeenCalled();
+      expect(publish).toHaveBeenCalledWith(
+        expect.objectContaining({ playing: true })
+      );
+
+      // Answered once for the session: stopping and starting again just plays.
+      state.audioPlayback.controllerFor(readingState)!.stop();
+      playSpy.mockClear();
+      pressPlay();
+      expect(sharePrompt()).toBeNull();
+      expect(playSpy).toHaveBeenCalled();
+    });
+
+    it("plays only on the host's device when they choose that", () => {
+      const { publish, sharedAudio, readingState } = attachSession(true, {
+        shareChoice: null,
+      });
+
+      pressPlay();
+      chooseInSharePrompt("Only on my device");
+
+      expect(playSpy).toHaveBeenCalled();
+      expect(
+        state.audioPlayback.controllerFor(readingState)?.isPlaying.value
+      ).toBe(true);
+      expect(publish).not.toHaveBeenCalled();
+      expect(sharedAudio.value).toBeNull();
+
+      pressPlay();
+      pressPlay();
+      state.audioPlayback.controllerFor(readingState)!.stop();
+      expect(publish).not.toHaveBeenCalled();
+    });
+
+    it("plays nothing when the host closes the prompt, and asks again next time", () => {
+      const { readingState } = attachSession(true, { shareChoice: null });
+
+      pressPlay();
+      state.modals.dismissModal(sharePrompt()!.id);
+
+      expect(playSpy).not.toHaveBeenCalled();
+      expect(state.audioPlayback.controllerFor(readingState)).toBeNull();
+
+      pressPlay();
+      expect(sharePrompt()).not.toBeNull();
+    });
+
+    it("keeps a guest silent until they agree to listen along", () => {
+      const { sharedAudio, readingState, isListeningAlong } = attachSession(
+        false,
+        { listeningAlong: false }
+      );
+
+      sharedAudio.value = hostCommand(readingState, { position: 6 });
+
+      expect(playSpy).not.toHaveBeenCalled();
+      expect(state.audioPlayback.controllerFor(readingState)).toBeNull();
+
+      isListeningAlong.value = true;
+
+      expect(playSpy).toHaveBeenCalled();
+      expect(audio.current!.currentTime).toBeCloseTo(6, 0);
+      expect(
+        state.audioPlayback.controllerFor(readingState)?.isPlaying.value
+      ).toBe(true);
+    });
+
+    it("stops listening along when the guest stops the host's audio themselves", () => {
+      const { sharedAudio, readingState, stopListeningAlong } =
+        attachSession(false);
+      sharedAudio.value = hostCommand(readingState, { position: 5 });
+      expect(
+        state.audioPlayback.controllerFor(readingState)?.isPlaying.value
+      ).toBe(true);
+
+      state.audioPlayback.controllerFor(readingState)!.stop();
+
+      expect(stopListeningAlong).toHaveBeenCalledTimes(1);
+      playSpy.mockClear();
+      sharedAudio.value = hostCommand(readingState, {
+        id: "host-seek",
+        position: 20,
+      });
+      expect(playSpy).not.toHaveBeenCalled();
+      expect(state.audioPlayback.controllerFor(readingState)).toBeNull();
+    });
+
+    it("does not count the host stopping the audio as the guest leaving", () => {
+      const { sharedAudio, readingState, stopListeningAlong } =
+        attachSession(false);
+      sharedAudio.value = hostCommand(readingState, { position: 5 });
+
+      sharedAudio.value = null;
+
+      expect(state.audioPlayback.controllerFor(readingState)).toBeNull();
+      expect(stopListeningAlong).not.toHaveBeenCalled();
     });
 
     it("follows a different translation by verse instead of by seconds", async () => {

@@ -3617,6 +3617,101 @@ describe("SessionsManager", () => {
       expect(session.sharedAudio.value).toBeNull();
     });
 
+    async function joinWithHostAudio() {
+      const session = await manager().joinSession("group-abc");
+      session.readingState.bookId.value = "GEN";
+      session.readingState.chapterNumber.value = 1;
+      mockAudioMap.setEmitOnSet(true);
+      const play = (id: string, overrides: Record<string, unknown> = {}) =>
+        mockAudioMap.set("current", {
+          ...playing,
+          updatedAtMs: Date.now(),
+          id,
+          fromConnectionId: "host-connection",
+          ...overrides,
+        });
+      return { session, play };
+    }
+
+    it("offers the host's audio on the reader's chapter until they answer", async () => {
+      const { session, play } = await joinWithHostAudio();
+      expect(session.audioOffer.value).toBeNull();
+
+      play("host:1");
+      expect(session.audioOffer.value).toMatchObject({
+        id: "host:1",
+        fromConnectionId: "host-connection",
+      });
+      expect(session.isListeningAlong.value).toBe(false);
+
+      session.listenAlong();
+      expect(session.isListeningAlong.value).toBe(true);
+      expect(session.audioOffer.value).toBeNull();
+
+      // Following the host's next seek needs no new answer.
+      play("host:2", { position: 40 });
+      expect(session.audioOffer.value).toBeNull();
+      expect(session.isListeningAlong.value).toBe(true);
+    });
+
+    it("does not offer paused audio, another chapter's audio, or the reader's own", async () => {
+      const { session, play } = await joinWithHostAudio();
+
+      play("host:1", { playing: false });
+      expect(session.audioOffer.value).toBeNull();
+
+      play("host:2", { bookId: "EXO", chapterNumber: 3 });
+      expect(session.audioOffer.value).toBeNull();
+
+      play("own:1", { fromConnectionId: os.connectionId });
+      expect(session.audioOffer.value).toBeNull();
+    });
+
+    it("stays quiet about a chapter turned down, until the host stops and plays again", async () => {
+      const { session, play } = await joinWithHostAudio();
+      play("host:1");
+
+      session.dismissAudioOffer();
+      expect(session.audioOffer.value).toBeNull();
+      play("host:2", { position: 30 });
+      expect(session.audioOffer.value).toBeNull();
+
+      mockAudioMap.delete("current");
+      play("host:3");
+      expect(session.audioOffer.value).toMatchObject({ id: "host:3" });
+    });
+
+    it("asks again after the host stops sharing, even someone who was listening along", async () => {
+      const { session, play } = await joinWithHostAudio();
+      play("host:1");
+      session.listenAlong();
+
+      mockAudioMap.delete("current");
+      expect(session.isListeningAlong.value).toBe(false);
+
+      play("host:2");
+      expect(session.audioOffer.value).toMatchObject({ id: "host:2" });
+    });
+
+    it("stops listening along without asking again for that chapter", async () => {
+      const { session, play } = await joinWithHostAudio();
+      play("host:1");
+      session.listenAlong();
+
+      session.stopListeningAlong();
+
+      expect(session.isListeningAlong.value).toBe(false);
+      expect(session.audioOffer.value).toBeNull();
+    });
+
+    it("stamps the host's connection on what it publishes", async () => {
+      const session = await manager().createSession();
+
+      expect(session.publishAudioPlayback(playing)).toMatchObject({
+        fromConnectionId: os.connectionId,
+      });
+    });
+
     it("ignores a shared audio value it cannot read", async () => {
       const session = await manager().createSession();
       session.publishAudioPlayback(playing);

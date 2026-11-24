@@ -275,6 +275,13 @@ function createMockSharedSession(
     getDecorationOwner: () => undefined,
     sharedAudio: signal(null),
     publishAudioPlayback: vi.fn(() => false),
+    audioShareChoice: signal(null),
+    setAudioShareChoice: vi.fn(),
+    isListeningAlong: signal(false),
+    listenAlong: vi.fn(),
+    stopListeningAlong: vi.fn(),
+    audioOffer: signal(null),
+    dismissAudioOffer: vi.fn(),
   } as BibleReadingSession;
 }
 

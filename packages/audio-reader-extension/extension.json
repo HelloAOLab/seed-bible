@@ -9,7 +9,11 @@
       "play": "Play chapter audio",
       "pause": "Pause chapter audio",
       "no-audio": "No audio is available for this chapter.",
-      "tap-to-listen": "Tap to listen along"
+      "tap-to-listen": "Tap to listen along",
+      "share-audio-title": "Play for everyone?",
+      "share-audio-message": "Everyone in this session will be asked whether they'd like to hear {{passage}} on their own device along with you.",
+      "share-audio-this-device": "Only on my device",
+      "share-audio-everyone": "Play for everyone"
     },
     "af": {
       "title": "Oudio-leser",

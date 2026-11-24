@@ -778,6 +778,7 @@ describe("BibleReaderToolbar — clearing highlights", () => {
       currentUser: signal(null),
       isAwayFromGroup: signal(false),
       incomingComeBackRequest: signal(null),
+      audioOffer: signal(null),
       document: {} as never,
       updateOptions: vi.fn(),
       dispose: vi.fn(),
@@ -6327,6 +6328,7 @@ describe("BibleReaderToolbar — answers to a playing question in a shared sessi
         // With the group, so its bar stays out of the way.
         isAwayFromGroup: signal(false),
         incomingComeBackRequest: signal(null),
+        audioOffer: signal(null),
         document: {} as never,
         updateOptions: vi.fn(),
         dispose: vi.fn(),
@@ -6416,7 +6418,7 @@ describe("BibleReaderToolbar — away from the session group", () => {
   async function renderInSession(
     viewportWidth: number,
     away: boolean,
-    { askedToComeBack = false } = {}
+    { askedToComeBack = false, offeredAudio = false } = {}
   ) {
     window.innerWidth = viewportWidth;
     const state = await createTestSeedBibleState({
@@ -6445,6 +6447,28 @@ describe("BibleReaderToolbar — away from the session group", () => {
     });
     const dismissComeBackRequest = vi.fn(() => {
       incomingComeBackRequest.value = null;
+    });
+    const audioOffer = signal(
+      offeredAudio
+        ? {
+            playing: true,
+            bookId: "EXO",
+            chapterNumber: 2,
+            translationId: "AAB",
+            position: 0,
+            unit: "seconds" as const,
+            verseNumber: null,
+            updatedAtMs: Date.now(),
+            id: "audio-1",
+            fromConnectionId: "conn-host",
+          }
+        : null
+    );
+    const listenAlong = vi.fn(() => {
+      audioOffer.value = null;
+    });
+    const dismissAudioOffer = vi.fn(() => {
+      audioOffer.value = null;
     });
     tab.sharedSession = {
       id: "group-abc",
@@ -6489,6 +6513,9 @@ describe("BibleReaderToolbar — away from the session group", () => {
       rejoinGroup,
       incomingComeBackRequest,
       dismissComeBackRequest,
+      audioOffer,
+      listenAlong,
+      dismissAudioOffer,
       document: {} as never,
       updateOptions: vi.fn(),
       dispose: vi.fn(),
@@ -6503,7 +6530,13 @@ describe("BibleReaderToolbar — away from the session group", () => {
       );
     });
 
-    return { state, rejoinGroup, dismissComeBackRequest };
+    return {
+      state,
+      rejoinGroup,
+      dismissComeBackRequest,
+      listenAlong,
+      dismissAudioOffer,
+    };
   }
 
   const groupBar = () =>
@@ -6586,6 +6619,57 @@ describe("BibleReaderToolbar — away from the session group", () => {
 
     expect(rejoinGroup).toHaveBeenCalledTimes(1);
     expect(groupBar()).toBeNull();
+  });
+
+  it("offers the host's audio to a reader with the group, and listens along", async () => {
+    const { listenAlong } = await renderInSession(
+      MOBILE_VIEWPORT_WIDTH,
+      false,
+      {
+        offeredAudio: true,
+      }
+    );
+
+    const bar = groupBar()!;
+    expect(bar.parentElement?.classList).toContain("sb-reader-floating-nav");
+    expect(bar.textContent).toContain("Grace would like to play Exodus 2");
+    expect(bar.textContent).toContain("Listen along on this device?");
+
+    const listen = Array.from(bar.querySelectorAll("button")).find((button) =>
+      button.textContent?.includes("Listen along")
+    )!;
+    await act(async () => {
+      listen.click();
+    });
+
+    expect(listenAlong).toHaveBeenCalledTimes(1);
+    expect(groupBar()).toBeNull();
+  });
+
+  it("turns down the host's audio with Not now on desktop", async () => {
+    const { dismissAudioOffer, listenAlong } = await renderInSession(
+      1200,
+      false,
+      { offeredAudio: true }
+    );
+
+    const toolbar = () => container.querySelector(".sb-reader-toolbar")!;
+    expect(groupBar()!.parentElement).toBe(toolbar());
+    expect(toolbar().classList).toContain("sb-reader-toolbar-has-group-bar");
+
+    const notNow = Array.from(groupBar()!.querySelectorAll("button")).find(
+      (button) => button.textContent === "Not now"
+    )!;
+    await act(async () => {
+      notNow.click();
+    });
+
+    expect(dismissAudioOffer).toHaveBeenCalledTimes(1);
+    expect(listenAlong).not.toHaveBeenCalled();
+    expect(groupBar()).toBeNull();
+    expect(toolbar().classList).not.toContain(
+      "sb-reader-toolbar-has-group-bar"
+    );
   });
 
   it("shows nothing while the reader is with the group", async () => {

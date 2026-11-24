@@ -8,6 +8,7 @@ import {
 import { debounce } from "es-toolkit";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { LANG_META } from "seed-bible/i18n";
+import { openShareAudioPrompt } from "./ShareAudioPrompt";
 import {
   bibleLanguageToUiLocale,
   extractContentText,
@@ -699,6 +700,12 @@ function endSession(
   options: { keepHighlight?: boolean } = {}
 ): void {
   if (session.ended) return;
+  // A listener who stops the host's audio themselves is done listening along;
+  // otherwise the host's next seek would start it again.
+  const stopsListeningAlong =
+    !applyingSharedAudio &&
+    !!session.sharedSession &&
+    sharedAudioFollowed.has(session.sharedSession.id);
   // Pausing the element and stopping speech both report a local pause.
   // Hold publishing off until the stop itself goes out, or peers pause at
   // the start of the chapter and then stop.
@@ -738,6 +745,7 @@ function endSession(
     applyingSharedAudio = previousApplying;
   }
   if (publishStop) publishSharedAudio(session, null);
+  if (stopsListeningAlong) session.sharedSession?.stopListeningAlong();
 }
 
 /** Ends every tab's listening, as an uninstall must. */
@@ -872,7 +880,7 @@ function publishSharedAudio(
 ): void {
   if (applyingSharedAudio || publishingSharedAudio) return;
   const shared = session.sharedSession;
-  if (!shared) return;
+  if (!shared || shared.audioShareChoice.peek() !== "everyone") return;
   // Only the client that still owns the stored command may clear it. Having
   // published an earlier press is not enough: a co-host who followed someone
   // else must not stop the room when their own tab closes.
@@ -2090,6 +2098,7 @@ export default function initAudioReaderExtension() {
               chapter: tab.readingState.chapterData.value,
               translationId: tab.readingState.translationId.value,
               ended: options.endedAt !== null,
+              listeningAlong: shared.isListeningAlong.value,
               leaderConnected,
               presenceTrustworthy,
             },
@@ -2108,6 +2117,13 @@ export default function initAudioReaderExtension() {
               !item.leaderConnected;
             if (item.ended) {
               stopSharedListening(item.sessionId, item.readingState);
+              continue;
+            }
+            if (!item.listeningAlong) {
+              // Their device stays theirs until they agree to listen along.
+              stopSharedListening(item.sessionId, item.readingState, {
+                onlyIfFollowing: true,
+              });
               continue;
             }
             if (leaderLeft) {
@@ -2150,31 +2166,48 @@ export default function initAudioReaderExtension() {
           computed(() => isAudioPlayToolVisible(ctx, speech.canSpeakLanguage)),
         onSelect: debounce((ctx: QuickToolContext) => {
           const readingState = ctx.readingState;
-          const passage = untracked(() => stepPassage?.(readingState) ?? null);
-          const existing = sessions.get(readingState);
+          const shared = sharedSessionFor(readingState);
+          const chapter = readingState.chapterData.peek();
           if (
-            existing &&
-            passageKey(existing.passage) === passageKey(passage)
+            shared &&
+            chapter &&
+            !sessions.has(readingState) &&
+            shared.audioShareChoice.peek() === null &&
+            isSessionHost(shared.options.peek(), shared.localSessionId.peek())
           ) {
-            if (existing.isPlaying.peek()) existing.controller.pause();
-            else existing.controller.play();
+            openShareAudioPrompt(
+              context.modals,
+              shared.id,
+              `${chapter.book.name} ${chapter.chapter.number}`,
+              (choice) => {
+                shared.setAudioShareChoice(choice);
+                toggleListening(readingState);
+              }
+            );
             return;
           }
-          if (existing) endSession(existing);
-
-          const chapter = readingState.chapterData.peek();
-          if (!chapter) return;
-          // No recording for this chapter, so read it aloud instead.
-          const session = startListening(
-            context,
-            readingState,
-            chapter,
-            passage
-          );
-          if (!session) return;
-          session.controller.play();
+          toggleListening(readingState);
         }, TOGGLE_DEBOUNCE_MS),
       });
+
+      /** The Listen button: pauses or resumes this tab, or starts it. */
+      function toggleListening(readingState: BibleReadingState): void {
+        const passage = untracked(() => stepPassage?.(readingState) ?? null);
+        const existing = sessions.get(readingState);
+        if (existing && passageKey(existing.passage) === passageKey(passage)) {
+          if (existing.isPlaying.peek()) existing.controller.pause();
+          else existing.controller.play();
+          return;
+        }
+        if (existing) endSession(existing);
+
+        const chapter = readingState.chapterData.peek();
+        if (!chapter) return;
+        // No recording for this chapter, so read it aloud instead.
+        const session = startListening(context, readingState, chapter, passage);
+        if (!session) return;
+        session.controller.play();
+      }
 
       // Follows the synthesiser from verse to verse, for whichever tab it is
       // reading in. Recorded narration drives its highlight off the audio

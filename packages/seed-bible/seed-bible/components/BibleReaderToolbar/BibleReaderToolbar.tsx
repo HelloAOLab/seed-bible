@@ -50,7 +50,10 @@ import {
 } from "../Tabs/Tabs";
 import { BookmarkStackIcon } from "../Bookmarks/Bookmarks";
 import { CustomizableIcon } from "../CustomizableIcon/CustomizableIcon";
-import { SessionGroupBar } from "../SessionGroupBar/SessionGroupBar";
+import {
+  SessionGroupBar,
+  isSessionGroupBarShown,
+} from "../SessionGroupBar/SessionGroupBar";
 import { playlistItemLabel } from "../playlistItemLabel";
 import {
   ScriptureNoteSheet,
@@ -2944,12 +2947,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               // can be scrubbed; paused, it shrinks to a ring around the play
               // button so the pill area goes back to plain navigation.
               const isScrubbing = !!playback?.isPlaying.value;
-              // A host asking this reader to come back can't wait for the
-              // playlist to finish, so it takes the note sheet's place.
+              // A host asking this reader to come back, or offering them the
+              // audio they're playing, can't wait for the playlist to finish,
+              // so it takes the note sheet's place.
               const showsGroupBar =
                 !!sessionState.value &&
                 (!playing ||
-                  !!sessionState.value.incomingComeBackRequest.value);
+                  !!sessionState.value.incomingComeBackRequest.value ||
+                  !!sessionState.value.audioOffer.value);
 
               return (
                 <div
@@ -3127,7 +3132,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   : ""
               }${
                 !isSmallScreen.value &&
-                sessionState.value?.isAwayFromGroup.value
+                sessionState.value &&
+                isSessionGroupBarShown(sessionState.value)
                   ? " sb-reader-toolbar-has-group-bar"
                   : ""
               }`}

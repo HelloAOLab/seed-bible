@@ -3,6 +3,7 @@ import {
   computed,
   effect,
   signal,
+  untracked,
   type ReadonlySignal,
 } from "@preact/signals";
 import {
@@ -296,7 +297,19 @@ export interface SharedAudioPlayback extends SharedAudioPlaybackCommand {
    * already applied.
    */
   id: string;
+  /**
+   * Connection that wrote it, so listeners can be told who is playing.
+   * Absent from writes made before this was recorded.
+   */
+  fromConnectionId?: string | null;
 }
+
+/**
+ * What a host or co-host decided their play button does in a session:
+ * plays for everyone, or only on their own device. Null until they're asked,
+ * which happens the first time they press play.
+ */
+export type SharedAudioShareChoice = "everyone" | "this-device";
 
 /** How close a new playing position must be to "where playback should be now" to count as the same command. */
 const SHARED_AUDIO_REPEAT_SECONDS = 0.35;
@@ -354,6 +367,7 @@ function parseSharedAudioPlayback(value: unknown): SharedAudioPlayback | null {
       typeof verseNumber === "number" && verseNumber > 0 ? verseNumber : null,
     updatedAtMs,
     id,
+    fromConnectionId: toStringOrNull(record.fromConnectionId),
   };
 }
 
@@ -1137,6 +1151,36 @@ export interface BibleReadingSession {
   publishAudioPlayback: (
     command: SharedAudioPlaybackCommand | null
   ) => SharedAudioPlayback | null | false;
+
+  /**
+   * Whether this host's own play button plays for everyone or only on this
+   * device. Null until they've answered. Kept on this device only.
+   */
+  audioShareChoice: ReadonlySignal<SharedAudioShareChoice | null>;
+
+  setAudioShareChoice: (choice: SharedAudioShareChoice) => void;
+
+  /**
+   * True once this reader has agreed to hear the host's audio. Until then
+   * their device stays silent when the host plays. Lasts until the host stops
+   * sharing or the reader stops it themselves.
+   */
+  isListeningAlong: ReadonlySignal<boolean>;
+
+  /** Agrees to hear the host's audio on this device. */
+  listenAlong: () => void;
+
+  /** Stops hearing the host's audio, without asking again for this chapter. */
+  stopListeningAlong: () => void;
+
+  /**
+   * Audio someone else is sharing on the chapter this reader is on, while
+   * this reader hasn't answered yet: what the "listen along" banner offers.
+   */
+  audioOffer: ReadonlySignal<SharedAudioPlayback | null>;
+
+  /** Answers the audio offer with "not now". */
+  dismissAudioOffer: () => void;
 }
 
 /**
@@ -1939,6 +1983,7 @@ async function createBibleReadingSession(
       ...command,
       updatedAtMs: Date.now(),
       id: createSharedAudioId(),
+      fromConnectionId: localConnectionId,
     };
     try {
       document.transact(() => {
@@ -2525,6 +2570,7 @@ async function createBibleReadingSession(
     questionAnswersSubscription.unsubscribe();
     comeBackRequestsSubscription.unsubscribe();
     stopSettlingComeBackRequests();
+    stopResettingListenAlong();
     remoteClientsSubscription.unsubscribe();
     statusUpdatedSubscription.unsubscribe();
     stopSync();
@@ -2715,6 +2761,44 @@ async function createBibleReadingSession(
     return queueRemoteSync(getSessionDataFromMap(stateMap));
   };
 
+  const audioShareChoice = signal<SharedAudioShareChoice | null>(null);
+  const isListeningAlong = signal(false);
+  // The chapter whose offer was turned down, as `${bookId}:${chapter}`, so a
+  // host who keeps playing the same chapter doesn't keep asking.
+  const declinedAudioOffer = signal<string | null>(null);
+  const audioChapterKey = (playback: SharedAudioPlayback) =>
+    `${playback.bookId}:${playback.chapterNumber}`;
+
+  // Once the host stops sharing, the next time they play is a new offer.
+  const stopResettingListenAlong = effect(() => {
+    if (sharedAudio.value !== null) return;
+    untracked(() => {
+      isListeningAlong.value = false;
+      declinedAudioOffer.value = null;
+    });
+  });
+
+  const audioOffer = computed(() => {
+    const playback = sharedAudio.value;
+    if (
+      !playback ||
+      !playback.playing ||
+      playback.fromConnectionId === localConnectionId ||
+      isListeningAlong.value ||
+      declinedAudioOffer.value === audioChapterKey(playback) ||
+      readingState.bookId.value !== playback.bookId ||
+      readingState.chapterNumber.value !== playback.chapterNumber
+    ) {
+      return null;
+    }
+    return playback;
+  });
+
+  const dismissAudioOffer = () => {
+    const playback = sharedAudio.peek();
+    if (playback) declinedAudioOffer.value = audioChapterKey(playback);
+  };
+
   const isHost = (user: ConnectedSessionUser | null): boolean => {
     if (!user) return false;
     const hostUserId = options.value.hostUserId;
@@ -2756,6 +2840,21 @@ async function createBibleReadingSession(
     userCanDecorate,
     sharedAudio,
     publishAudioPlayback,
+    audioShareChoice,
+    setAudioShareChoice: (choice) => {
+      audioShareChoice.value = choice;
+    },
+    isListeningAlong,
+    listenAlong: () => {
+      declinedAudioOffer.value = null;
+      isListeningAlong.value = true;
+    },
+    stopListeningAlong: () => {
+      isListeningAlong.value = false;
+      dismissAudioOffer();
+    },
+    audioOffer,
+    dismissAudioOffer,
     getDecorationOwner: (decorationId: string) =>
       decorationOwners.get(decorationId),
   };
