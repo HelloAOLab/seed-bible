@@ -339,26 +339,6 @@
   pointer-events: none;
 }
 
-/* Welcome has no header row, so its bell sits where the header's buttons
-   would: at the end of the same centred column, the same distance down. */
-.sb-today-welcome-corner {
-  position: absolute;
-  top: 2.25rem;
-  inset-inline: 0;
-  width: 90%;
-  max-width: 51.25rem;
-  margin-inline: auto;
-  display: flex;
-  justify-content: flex-end;
-  /* Only the bell takes taps; the rest of the strip lets them through to the
-     welcome underneath. */
-  pointer-events: none;
-}
-
-.sb-today-welcome-corner > .sb-today-notifications-button {
-  pointer-events: auto;
-}
-
 .sb-today-container .sb-today-resume-card {
   width: 100%;
   background-color: var(--sb-secondary-color);

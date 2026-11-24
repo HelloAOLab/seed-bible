@@ -9,7 +9,6 @@ import type {
 import { TimeProvider } from "./TimeContext";
 import { Welcome } from "./Welcome";
 import { Header } from "./Header";
-import { NotificationsButton } from "./NotificationsButton";
 import { ResumeReadingSection } from "./ResumeReadingSection";
 import { BookmarksSection, type BookmarkStripItem } from "./BookmarksSection";
 import { SearchSection } from "./SearchSection";
@@ -102,14 +101,6 @@ function TodayContainer(props: TodayScreenProps) {
           <TodayContent {...props} />
         )}
       </div>
-      {/* Welcome has no header row, so its bell sits where the header's
-          buttons would be. It's outside the scrolling container, so it stays
-          put if a short screen scrolls the welcome underneath it. */}
-      {showWelcome ? (
-        <div className="sb-today-welcome-corner">
-          <NotificationsButton notifications={props.notifications} />
-        </div>
-      ) : null}
     </div>
   );
 }
