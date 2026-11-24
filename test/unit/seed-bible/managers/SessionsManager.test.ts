@@ -1603,6 +1603,57 @@ describe("SessionsManager", () => {
       await waitFor(() => session.readingState.chapterNumber.value === 4);
     });
 
+    it("stops carrying a follower along with the hosts once they've broken off", async () => {
+      const session = await joinAsFollower();
+      wanderOff(session);
+
+      moveGroup(4);
+      await idleTicks(5);
+
+      expect(session.groupPosition.value.chapterNumber).toBe(4);
+      expect(session.readingState.bookId.value).toBe("ROM");
+      expect(session.readingState.chapterNumber.value).toBe(8);
+      expect(session.isAwayFromGroup.value).toBe(true);
+    });
+
+    it("keeps a follower apart from the group after they find their own way back, until they rejoin", async () => {
+      const session = await joinAsFollower();
+      wanderOff(session);
+      session.readingState.bookId.value = "JHN";
+      session.readingState.chapterNumber.value = 3;
+
+      expect(session.isAwayFromGroup.value).toBe(true);
+
+      moveGroup(4);
+      await idleTicks(5);
+      expect(session.readingState.chapterNumber.value).toBe(3);
+      expect(session.isAwayFromGroup.value).toBe(true);
+
+      await session.rejoinGroup();
+      expect(session.readingState.chapterNumber.value).toBe(4);
+      expect(session.isAwayFromGroup.value).toBe(false);
+
+      // Back with the group, the hosts' moves carry them along again.
+      moveGroup(5);
+      await waitFor(() => session.readingState.chapterNumber.value === 5);
+      expect(session.isAwayFromGroup.value).toBe(false);
+    });
+
+    it("still carries a follower along after one of the hosts' chapters fails to load", async () => {
+      const session = await joinAsFollower();
+      const select = session.readingState
+        .selectTranslationAndChapter as unknown as Mock;
+      select.mockRejectedValueOnce(new Error("offline"));
+
+      moveGroup(4);
+      await waitFor(() => session.readingState.error.value === "offline");
+      expect(session.readingState.chapterNumber.value).toBe(3);
+
+      moveGroup(5);
+      await waitFor(() => session.readingState.chapterNumber.value === 5);
+      expect(session.isAwayFromGroup.value).toBe(false);
+    });
+
     it("doesn't report a follower as away while the hosts' new chapter is still loading", async () => {
       const session = await joinAsFollower();
       const load = deferred<void>();

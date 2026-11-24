@@ -3,6 +3,7 @@ import {
   computed,
   effect,
   signal,
+  untracked,
   type ReadonlySignal,
 } from "@preact/signals";
 import {
@@ -883,14 +884,19 @@ export interface BibleReadingSession {
   groupPosition: ReadonlySignal<SessionGroupPosition>;
 
   /**
-   * True when this reader isn't allowed to move the group and is on a
-   * different chapter from it — they navigated off on their own. Stays false
-   * while a move to the group's position is still loading, so it doesn't
-   * flicker on every chapter the hosts turn to.
+   * True when this reader isn't allowed to move the group and has broken off
+   * from it by turning to another chapter themselves. Once set it stays set —
+   * even if they wander back to the group's chapter, and while the hosts keep
+   * moving the group, which no longer carries them along — until they
+   * `rejoinGroup`. Stays false while a move to the group's position is still
+   * loading, so it doesn't flicker on every chapter the hosts turn to.
    */
   isAwayFromGroup: ReadonlySignal<boolean>;
 
-  /** Moves this reader back to the group's current position. */
+  /**
+   * Moves this reader back to the group's current position, and has them
+   * follow the hosts' moves again.
+   */
   rejoinGroup: () => Promise<void>;
 
   /**
@@ -1137,6 +1143,10 @@ async function createBibleReadingSession(
   /** Non-null while `queueRemoteSync`'s drain loop is running. */
   let remoteSyncDrain: Promise<void> | null = null;
   const isRemoteSyncRunning = signal(false);
+  // Set once a follower turns to another chapter themselves, and cleared only
+  // by `rejoinGroup` (or by them being allowed to move the group). While set,
+  // the hosts' moves no longer carry them along.
+  const hasLeftGroup = signal(false);
   const groupPosition = signal<SessionGroupPosition>(
     getSessionDataFromMap(stateMap)
   );
@@ -1549,6 +1559,9 @@ async function createBibleReadingSession(
 
   const mapSubscription = stateMap.changes.subscribe(() => {
     refreshGroupPosition();
+    if (hasLeftGroup.peek()) {
+      return;
+    }
     const nextSessionData = getSessionDataFromMap(stateMap);
 
     if (
@@ -2288,6 +2301,8 @@ async function createBibleReadingSession(
     questionAnswersSubscription.unsubscribe();
     comeBackRequestsSubscription.unsubscribe();
     stopSettlingComeBackRequests();
+    stopNoticingLeavingGroup();
+    stopForgettingLeftGroupForNavigators();
     remoteClientsSubscription.unsubscribe();
     statusUpdatedSubscription.unsubscribe();
     stopSync();
@@ -2333,11 +2348,38 @@ async function createBibleReadingSession(
     );
   });
 
+  // Only a chapter change the reader made counts as leaving: one made while a
+  // remote move is being applied is that move, and a move that failed to load
+  // leaves the chapter as it was. Either way the next host move still carries
+  // them along.
+  let lastChapterKey = `${readingState.bookId.peek()}:${readingState.chapterNumber.peek()}`;
+  const stopNoticingLeavingGroup = effect(() => {
+    const chapterKey = `${readingState.bookId.value}:${readingState.chapterNumber.value}`;
+    if (chapterKey === lastChapterKey) {
+      return;
+    }
+    lastChapterKey = chapterKey;
+    untracked(() => {
+      if (
+        !isRemoteSyncRunning.value &&
+        !userCanNavigate(localSessionId.value) &&
+        isOffGroupChapter.value
+      ) {
+        hasLeftGroup.value = true;
+      }
+    });
+  });
+  const stopForgettingLeftGroupForNavigators = effect(() => {
+    if (userCanNavigate(localSessionId.value)) {
+      hasLeftGroup.value = false;
+    }
+  });
+
   const isAwayFromGroup = computed(
     () =>
       !userCanNavigate(localSessionId.value) &&
-      !isRemoteSyncRunning.value &&
-      isOffGroupChapter.value
+      (hasLeftGroup.value ||
+        (!isRemoteSyncRunning.value && isOffGroupChapter.value))
   );
 
   const participantsAwayFromGroup = computed(() => {
@@ -2428,6 +2470,7 @@ async function createBibleReadingSession(
     if (
       request &&
       request.id !== handledComeBackRequestId.peek() &&
+      !hasLeftGroup.value &&
       !isOffGroupChapter.value
     ) {
       handledComeBackRequestId.value = request.id;
@@ -2473,10 +2516,12 @@ async function createBibleReadingSession(
 
   // A plain `queueRemoteSync`, so a rejoin and a host's move arriving at the
   // same moment coalesce into one load toward the newest position.
-  const rejoinGroup = () => {
-    dismissComeBackRequest();
-    return queueRemoteSync(getSessionDataFromMap(stateMap));
-  };
+  const rejoinGroup = () =>
+    batch(() => {
+      dismissComeBackRequest();
+      hasLeftGroup.value = false;
+      return queueRemoteSync(getSessionDataFromMap(stateMap));
+    });
 
   const isHost = (user: ConnectedSessionUser | null): boolean => {
     if (!user) return false;
