@@ -893,6 +893,18 @@ function readBody(req: IncomingMessage, limit: number): Promise<string | null> {
  * both the production host and the dev server. Returns false, having done
  * nothing, for any other path.
  */
+/**
+ * The iOS and Android apps (`mobile/`) run the page from their own origin,
+ * Capacitor's defaults, so their calls to the relay are cross-origin. The
+ * website calls it from its own origin and needs no CORS headers. Allowing
+ * these exposes nothing: the relay is authorized by the session key in the
+ * `Authorization` header, never by cookies.
+ */
+export const APP_ORIGINS: ReadonlySet<string> = new Set([
+  "capacitor://localhost", // iOS
+  "https://localhost", // Android
+]);
+
 export async function serveNotificationsApi(
   relay: NotificationsRelay,
   req: IncomingMessage,
@@ -903,11 +915,34 @@ export async function serveNotificationsApi(
     return false;
   }
   const method = req.method ?? "GET";
+  const origin = req.headers.origin;
+  const cors: Record<string, string> =
+    origin && APP_ORIGINS.has(origin)
+      ? { "access-control-allow-origin": origin, vary: "Origin" }
+      : { vary: "Origin" };
+
+  // The preflight the apps' POST (JSON body, `Authorization` header) needs.
+  if (method === "OPTIONS") {
+    res.writeHead(204, {
+      ...cors,
+      ...(cors["access-control-allow-origin"]
+        ? {
+            "access-control-allow-methods": "GET, POST",
+            "access-control-allow-headers": "Authorization, Content-Type",
+            "access-control-max-age": "600",
+          }
+        : {}),
+    });
+    res.end();
+    return true;
+  }
+
   const send = (response: RelayResponse, extra?: Record<string, string>) => {
     res.writeHead(response.status, {
       "content-type": "application/json; charset=utf-8",
       "cache-control": "no-store",
       ...response.headers,
+      ...cors,
       ...extra,
     });
     res.end(JSON.stringify(response.body));

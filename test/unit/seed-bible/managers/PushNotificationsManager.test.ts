@@ -16,6 +16,8 @@ const OTHER_USER = "bbbbbbbb-0000-4000-8000-00000000000b";
 const NOTIFIER = "nnnnnnnn-0000-4000-8000-00000000000n";
 const SESSION_KEY = "vSK1.session-key-of-the-signed-in-user";
 const CASUALOS = "https://auth.seedbible.org/api/v3/callProcedure";
+/** The website, as the iOS and Android apps know it (`publicOrigin`). */
+const WEBSITE = "https://seedbible.org";
 /** A real VAPID public key's shape: URL-safe base64 of a 65-byte P-256 point. */
 const VAPID_KEY =
   "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
@@ -130,6 +132,8 @@ function fakeBrowser() {
 function fakeNetwork() {
   const calls: { procedure: string; input: Record<string, unknown> }[] = [];
   const relayPosts: { headers: Record<string, string>; body: unknown }[] = [];
+  /** Every call to the relay, as the manager addressed it. */
+  const relayRequests: { url: string; keepalive: boolean }[] = [];
   const answers: Record<string, (input: Record<string, unknown>) => Answer> = {
     getNotificationsApplicationServerKey: () => ({
       success: true,
@@ -147,6 +151,7 @@ function fakeNetwork() {
   const network = {
     calls,
     relayPosts,
+    relayRequests,
     answers,
     config: {
       push: { notifierUserId: NOTIFIER, inboxAddress: "inbox" },
@@ -162,7 +167,15 @@ function fakeNetwork() {
 
   const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
-    if (url === "/api/notifications/config") {
+    // The website calls the relay on its own origin; the apps call it on the
+    // website's.
+    const relayPath = url.startsWith(`${WEBSITE}/`)
+      ? url.slice(WEBSITE.length)
+      : url;
+    if (relayPath.startsWith("/api/notifications/")) {
+      relayRequests.push({ url, keepalive: init?.keepalive ?? false });
+    }
+    if (relayPath === "/api/notifications/config") {
       network.configReads++;
       if (network.configFailure === "offline") {
         throw new TypeError("Failed to fetch");
@@ -171,7 +184,7 @@ function fakeNetwork() {
         ? new Response("Bad gateway", { status: 502 })
         : Response.json(network.config);
     }
-    if (url === "/api/notifications/friend-request") {
+    if (relayPath === "/api/notifications/friend-request") {
       expect(init?.method).toBe("POST");
       relayPosts.push({
         headers: init?.headers as Record<string, string>,
@@ -1094,6 +1107,51 @@ describe("PushNotificationsManager", () => {
     });
   });
 
+  describe("in the iOS and Android apps", () => {
+    const startInApp = (
+      overrides: Partial<CreatePushNotificationsManagerOptions> = {}
+    ) => start({ publicOrigin: WEBSITE, ...overrides });
+
+    // Android's web view has the service worker API but the app registers no
+    // worker, so waiting for one would only delay the answer.
+    it("is unsupported straight away, without waiting for a service worker", async () => {
+      browser.state.registered = false;
+      const push = startInApp({ serviceWorkerTimeoutMs: 60_000 });
+
+      await expect(settled(push)).resolves.toBe("unsupported");
+    });
+
+    // The app's own origin (`capacitor://localhost`, `https://localhost`)
+    // only exists on the phone.
+    it("asks the relay on the website for a friend request push", async () => {
+      const push = startInApp();
+
+      await push.notifyFriendRequestSent("sp-42");
+
+      expect(network.relayRequests.map((request) => request.url)).toEqual([
+        `${WEBSITE}/api/notifications/config`,
+        `${WEBSITE}/api/notifications/friend-request`,
+      ]);
+      expect(network.relayPosts).toEqual([
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${SESSION_KEY}`,
+          },
+          body: { requestId: "sp-42" },
+        },
+      ]);
+    });
+
+    it("asks without keepalive, which browsers have refused on a cross-origin call", async () => {
+      const push = startInApp();
+
+      await push.notifyFriendRequestSent("sp-42");
+
+      expect(network.relayRequests.at(-1)?.keepalive).toBe(false);
+    });
+  });
+
   describe("notifyFriendRequestSent()", () => {
     it("asks the relay to push the request, as the signed-in user", async () => {
       const push = start();
@@ -1109,6 +1167,19 @@ describe("PushNotificationsManager", () => {
           body: { requestId: "sp-42" },
         },
       ]);
+    });
+
+    // On the website the call stays same-origin, so `keepalive` can see it
+    // through someone closing the page right after sending.
+    it("asks on the website's own origin, surviving the page closing", async () => {
+      const push = start();
+
+      await push.notifyFriendRequestSent("sp-42");
+
+      expect(network.relayRequests.at(-1)).toEqual({
+        url: "/api/notifications/friend-request",
+        keepalive: true,
+      });
     });
 
     it("works in a browser that can't receive pushes itself", async () => {

@@ -1244,6 +1244,70 @@ describe("serveNotificationsApi", () => {
     });
   });
 
+  describe("calls from the iOS and Android apps", () => {
+    const preflight = (origin: string) =>
+      fetch(`${base}${FRIEND_REQUEST_PUSH_PATH}`, {
+        method: "OPTIONS",
+        headers: {
+          origin,
+          "access-control-request-method": "POST",
+          "access-control-request-headers": "authorization,content-type",
+        },
+      });
+
+    it.each(["capacitor://localhost", "https://localhost"])(
+      "lets %s send a friend request push",
+      async (origin) => {
+        const response = await preflight(origin);
+
+        expect(response.status).toBe(204);
+        expect(response.headers.get("access-control-allow-origin")).toBe(
+          origin
+        );
+        expect(response.headers.get("access-control-allow-methods")).toContain(
+          "POST"
+        );
+        expect(
+          response.headers.get("access-control-allow-headers")?.toLowerCase()
+        ).toBe("authorization, content-type");
+      }
+    );
+
+    it("lets the app read the relay's answer", async () => {
+      const response = await fetch(`${base}${FRIEND_REQUEST_PUSH_PATH}`, {
+        method: "POST",
+        headers: {
+          origin: "capacitor://localhost",
+          "content-type": "application/json",
+          authorization: "Bearer nonsense",
+        },
+        body: JSON.stringify({ requestId: "sp-1" }),
+      });
+
+      expect(response.status).toBe(401);
+      expect(response.headers.get("access-control-allow-origin")).toBe(
+        "capacitor://localhost"
+      );
+    });
+
+    // Other sites' pages can't call it from a browser; the website calls it
+    // from its own origin and needs no CORS at all.
+    it("allows no other origin", async () => {
+      const preflightResponse = await preflight("https://example.com");
+      const config = await fetch(`${base}${NOTIFICATIONS_CONFIG_PATH}`, {
+        headers: { origin: "https://example.com" },
+      });
+
+      expect(
+        preflightResponse.headers.get("access-control-allow-origin")
+      ).toBeNull();
+      expect(
+        preflightResponse.headers.get("access-control-allow-methods")
+      ).toBeNull();
+      expect(config.headers.get("access-control-allow-origin")).toBeNull();
+    });
+  });
+
   it("leaves every other path to the rest of the server", async () => {
     const response = await fetch(`${base}/api/notifications/other`);
 

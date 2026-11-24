@@ -527,6 +527,32 @@ For "a new Seed Bible update was released", sent to everyone with push on:
 3. A release step (or a script) sends to it. The in-app update notice (5.2)
    already covers people who open the app; the push reaches those who don't.
 
+### 7.6 In the iOS and Android apps
+
+The apps (`mobile/`) can't receive pushes yet. They ship without a service
+worker, and the web views they run in don't offer web push, so the card
+offering push never appears there (`PushNotificationsManager` reports
+`unsupported` straight away instead of waiting for a worker). The bell, the
+list, toasts and update notices work as on the website.
+
+They can still send: a friend request sent from the app pushes to the
+recipient's browsers like any other. The app's page runs on its own origin
+(`capacitor://localhost` on iOS, `https://localhost` on Android), which only
+exists on the phone, so the app calls the relay on the website instead
+(`AppConfig.publicOrigin`). That call is cross-origin, so the relay answers
+the CORS preflight and allows those two origins (`APP_ORIGINS` in
+`server/notifications.ts`). Nothing else is allowed, and allowing them exposes
+nothing: the relay is authorized by the session key in `Authorization`, never
+by cookies. The app's call goes without `keepalive`, which browsers have
+refused on a request that needs a preflight; the app's page isn't unloaded
+when someone leaves it, so the call finishes anyway.
+
+Native push (Apple's push service on iOS; on Android, Firebase Cloud Messaging
+or an open alternative such as UnifiedPush) is a separate piece of work. It
+needs a decision about the Android route, since Firebase's client depends on
+Google Play Services, which isn't open source, and about where device tokens
+would be kept, since the relay can't read anyone's records today.
+
 ## 8. Privacy and abuse
 
 - The read/dismissed record is `private`: only its owner can read it.

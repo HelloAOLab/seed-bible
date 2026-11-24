@@ -41,6 +41,10 @@ The two `/api/notifications/*` routes are the push relay
 ([notifications.ts](notifications.ts)); the dev server answers them too. What
 they take and answer is in
 [docs/notifications.md §7.2](../docs/notifications.md#72-how-a-push-travels).
+They also answer the CORS preflight (`OPTIONS`) from the iOS and Android apps,
+whose pages run on `capacitor://localhost` and `https://localhost`, so whatever
+sits in front of the host must let `OPTIONS` through to them as well
+([§7.6](../docs/notifications.md#76-in-the-ios-and-android-apps)).
 
 Hashed assets are **not** served here. Each deployment's chunks are namespaced
 per branch/build (`branches/<name>/<buildId>/assets/...`) and referenced at the

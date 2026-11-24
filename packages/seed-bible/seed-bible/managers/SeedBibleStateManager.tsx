@@ -1007,6 +1007,7 @@ export function createSeedBibleState(
   const pushNotifications = createPushNotificationsManager({
     os,
     login,
+    publicOrigin: options.config?.publicOrigin,
     onPushReceived: () => void notifications.refresh(),
     onOpenRequested: () => notifications.openFeed(),
   });

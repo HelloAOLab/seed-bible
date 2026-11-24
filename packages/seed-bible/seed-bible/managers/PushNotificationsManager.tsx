@@ -83,6 +83,13 @@ export interface PushNotificationsManager {
 export interface CreatePushNotificationsManagerOptions {
   os: CasualOSManager;
   login: LoginManager;
+  /**
+   * The website's origin, set only in the iOS and Android apps
+   * (`AppConfig.publicOrigin`). The relay is called there, since the app's
+   * own origin only exists on the device, and the device is treated as
+   * unable to receive web push: the apps ship without a service worker.
+   */
+  publicOrigin?: string;
   /** Called when a push arrives while the app is open. */
   onPushReceived?: () => void;
   /**
@@ -206,7 +213,9 @@ type CasualOSResult = { success: boolean; errorCode?: string };
 export function createPushNotificationsManager(
   options: CreatePushNotificationsManagerOptions
 ): PushNotificationsManager {
-  const { os, login, onPushReceived, onOpenRequested } = options;
+  const { os, login, publicOrigin, onPushReceived, onOpenRequested } = options;
+  const relayUrl = (path: string) =>
+    publicOrigin ? new URL(path, publicOrigin).href : path;
   const now = options.now ?? Date.now;
   const serviceWorkerTimeoutMs = options.serviceWorkerTimeoutMs ?? 10_000;
 
@@ -326,7 +335,7 @@ export function createPushNotificationsManager(
    * comes back into view ({@link retryConfig}).
    */
   const loadConfig = () => {
-    configRequest ??= fetch(CONFIG_URL, {
+    configRequest ??= fetch(relayUrl(CONFIG_URL), {
       cache: "no-store",
       headers: { Accept: "application/json" },
     })
@@ -394,7 +403,7 @@ export function createPushNotificationsManager(
     };
 
   const detectEnvironment = async (): Promise<Environment> => {
-    if (!("serviceWorker" in navigator)) {
+    if (publicOrigin || !("serviceWorker" in navigator)) {
       return { kind: "unsupported" };
     }
     const registration = await findRegistration();
@@ -716,7 +725,7 @@ export function createPushNotificationsManager(
       if (!sessionKey) {
         return;
       }
-      const response = await fetch(FRIEND_REQUEST_PUSH_URL, {
+      const response = await fetch(relayUrl(FRIEND_REQUEST_PUSH_URL), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -724,7 +733,10 @@ export function createPushNotificationsManager(
         },
         body: JSON.stringify({ requestId }),
         // Still delivered if the person leaves the page right after sending.
-        keepalive: true,
+        // Not in the apps: their call is cross-origin and needs a CORS
+        // preflight, which browsers have refused alongside `keepalive`, and
+        // the app's page isn't unloaded when someone leaves it anyway.
+        keepalive: !publicOrigin,
       });
       if (!response.ok) {
         console.warn(
@@ -807,7 +819,11 @@ export function createPushNotificationsManager(
       // On a first visit the worker only registers once the page has loaded,
       // which on a slow connection can be after `detectEnvironment` stopped
       // waiting. When it does turn up, look again.
-      if (found.kind === "unsupported" && "serviceWorker" in navigator) {
+      if (
+        found.kind === "unsupported" &&
+        !publicOrigin &&
+        "serviceWorker" in navigator
+      ) {
         void navigator.serviceWorker.ready.then(() => {
           if (!disposed && environment.peek().kind === "unsupported") {
             void detect();
