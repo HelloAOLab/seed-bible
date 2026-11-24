@@ -69,9 +69,9 @@ describe("ResumeReadingSection", () => {
       setup({ status: "loading" });
       const placeholder = q(".sb-today-resume-card--loading")!;
       expect(placeholder.getAttribute("role")).toBe("status");
-      expect(placeholder.querySelector(".sr-only")!.textContent).toBe(
-        "Loading your reading history…"
-      );
+      expect(
+        placeholder.querySelector(".sb-visually-hidden")!.textContent
+      ).toBe("Loading your reading history…");
     });
 
     it("offers nothing to click", () => {

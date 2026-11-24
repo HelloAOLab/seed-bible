@@ -1,5 +1,5 @@
 import { render as ssrRender } from "../../../standalone/entry-ssr";
-import { hydrate } from "preact";
+import { hydrate, render } from "preact";
 import { act } from "preact/test-utils";
 import { Main } from "@packages/seed-bible/seed-bible/app/main";
 import {
@@ -13,6 +13,7 @@ import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/S
 import { SIDEBAR_COLLAPSED_STORAGE_KEY } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
 import {
   decideHydration,
+  hasServerRenderedContent,
   decideStartupHydration,
 } from "@packages/seed-bible/seed-bible/app/hydrationGate";
 import { waitForInitialChapterLoads } from "@packages/seed-bible/seed-bible/app/initialChapterLoadWait";
@@ -315,6 +316,37 @@ describe("client hydration", () => {
     expect(normalizeKnownSsrClientDivergences(container.innerHTML)).toBe(
       normalizeKnownSsrClientDivergences(beforeHtml)
     );
+  });
+
+  // A link to the terms has the server draw them open, so the policy text is
+  // in the page before any script runs; the browser must keep that dialog
+  // where the server put it rather than drawing its own somewhere else.
+  it("server-renders a link to the terms with them open and hydrates onto it without changing the DOM", async () => {
+    const { container, beforeHtml } = await installSsrDocument(
+      `${PATH}&terms=open`
+    );
+    expect(beforeHtml).toContain("AO Lab Web Services Terms of Service");
+
+    const { config, state } = await createClientState();
+    expect(state.isTermsOpen.value).toBe(true);
+    expect(
+      decideHydration({
+        config,
+        pathname: location.pathname,
+        search: location.search,
+        container,
+        clientCommit: __GIT_COMMIT__,
+      })
+    ).toEqual({ hydrate: true });
+
+    hydrate(<Main initialState={state} config={config} />, container);
+
+    expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
+    expect(normalizeKnownSsrClientDivergences(container.innerHTML)).toBe(
+      normalizeKnownSsrClientDivergences(beforeHtml)
+    );
+
+    render(null, container);
   });
 
   it("hydrates cleanly when the visitor already has this chapter's tab saved", async () => {
@@ -657,6 +689,43 @@ describe("client hydration", () => {
       clientCommit: __GIT_COMMIT__,
     });
     expect(decision).toEqual({ hydrate: false, reason: "no-ssr-content" });
+  });
+
+  // Decides, before the app state exists, whether the first draw can use the
+  // real window rather than the server's phone/desktop guess.
+  describe("hasServerRenderedContent", () => {
+    it("is true for markup the server rendered for this page", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<div>Verse 1</div>";
+
+      expect(
+        hasServerRenderedContent(
+          { ...DEFAULT_APP_CONFIG, renderedForPath: "/en/AAB/genesis/1" },
+          container
+        )
+      ).toBe(true);
+    });
+
+    it("is false for a shell whose markup was never filled in", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<!-- APP_HTML -->";
+
+      expect(
+        hasServerRenderedContent(
+          { ...DEFAULT_APP_CONFIG, renderedForPath: "/" },
+          container
+        )
+      ).toBe(false);
+    });
+
+    it("is false for a config that never went through a real render()", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<div>some stale build-time snapshot</div>";
+
+      expect(hasServerRenderedContent(DEFAULT_APP_CONFIG, container)).toBe(
+        false
+      );
+    });
   });
 
   it("declines to hydrate when the SSR HTML was rendered by a different commit's bundle", () => {

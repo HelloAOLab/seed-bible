@@ -1,4 +1,5 @@
 import { render } from "preact";
+import { useState } from "preact/hooks";
 import { act } from "preact/test-utils";
 import { computed, signal } from "@preact/signals";
 import type { ComponentChildren } from "preact";
@@ -46,15 +47,19 @@ vi.mock(
 vi.mock(
   "@packages/seed-bible/seed-bible/components/CreateAnnotationForm/CreateAnnotationForm",
   () => ({
+    // Remember the id the form was first rendered with, mirroring what the
+    // real editors do: they seed from initialContent on mount and never
+    // re-read it. The key={editingAnnotation.id} in DiscoverPane must force a
+    // fresh mount when the note changes, otherwise this stub (and the real
+    // editors) would keep showing the previous note's content.
     CreateAnnotationForm: ({
       annotations,
     }: {
       annotations: AnnotationsManager;
-    }) => (
-      <div className="stub-create-annotation-form">
-        {annotations.editingAnnotation.value?.id}
-      </div>
-    ),
+    }) => {
+      const [firstId] = useState(annotations.editingAnnotation.value?.id);
+      return <div className="stub-create-annotation-form">{firstId}</div>;
+    },
   })
 );
 
@@ -393,6 +398,83 @@ describe("DiscoverPane", () => {
 
     expect(container.querySelector(".sb-play-playlist")).toBeNull();
     expect(container.querySelector('button[aria-label="Back"]')).toBeNull();
+  });
+
+  it("remounts CreateAnnotationForm with the new note's content when editingAnnotation switches to a different note", () => {
+    const { playlists } = createMockPlaylists({ view: "create_annotation" });
+    const { annotations } = createMockAnnotations({
+      editingAnnotation: createAnnotation({ id: "ann-1" }),
+    });
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".stub-create-annotation-form")?.textContent
+    ).toBe("ann-1");
+
+    act(() => {
+      annotations.editingAnnotation.value = createAnnotation({ id: "ann-2" });
+    });
+
+    // A fresh form instance must mount for ann-2 — it must show ann-2, not ann-1.
+    // Without key={editingAnnotation.id} on CreateAnnotationForm, Preact reuses
+    // the same instance and firstId stays "ann-1", causing this assertion to fail.
+    expect(
+      container.querySelector(".stub-create-annotation-form")?.textContent
+    ).toBe("ann-2");
+  });
+
+  it("keeps the same CreateAnnotationForm instance when only the verse changes on the same note", () => {
+    const { playlists } = createMockPlaylists({ view: "create_annotation" });
+    const { annotations } = createMockAnnotations({
+      editingAnnotation: createAnnotation({ id: "ann-1" }),
+    });
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+    const state = createMockState();
+
+    act(() => {
+      render(
+        <DiscoverPane
+          tabs={tabs}
+          playlists={playlists}
+          annotations={annotations}
+          modals={modals}
+          state={state}
+          toast={state.app.toast}
+        />,
+        container
+      );
+    });
+
+    act(() => {
+      // Same id, different verse — the reader's selection moved while drafting.
+      annotations.editingAnnotation.value = createAnnotation({
+        id: "ann-1",
+        verseNumber: 5,
+      });
+    });
+
+    // The key hasn't changed, so the same form instance is kept. firstId is
+    // still "ann-1", confirming typing isn't interrupted by verse re-targeting.
+    expect(
+      container.querySelector(".stub-create-annotation-form")?.textContent
+    ).toBe("ann-1");
   });
 });
 

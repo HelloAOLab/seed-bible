@@ -64,7 +64,7 @@ describe("the page a playlist ends on", () => {
       render(
         <I18nProvider i18n={state.i18n}>
           {finishedPane(state)?.component() ?? null}
-          <ModalHost manager={state.modals} />
+          <ModalHost manager={state.modals} isMobile={state.app.isMobile} />
         </I18nProvider>,
         container
       );

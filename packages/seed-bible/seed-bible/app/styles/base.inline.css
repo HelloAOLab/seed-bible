@@ -61,14 +61,21 @@
 
   /* App-wide stacking order, lowest first: toolbars and sidebars, menus and
      pop-overs, modal dialogs, prompts that interrupt a modal, the tutorial,
-     then short-lived toasts. Toast containers ignore the pointer but the cards
-     take clicks, so anything that stays on screen belongs below `modal`. */
+     then short-lived toasts, and last tooltips, which only label what is under
+     them and so can sit over anything. Toast containers ignore the pointer but
+     the cards take clicks, so anything that stays on screen belongs below
+     `modal`. */
   --sb-layer-chrome: 100;
   --sb-layer-popover: 500;
   --sb-layer-modal: 1000;
   --sb-layer-prompt: 1100;
   --sb-layer-tour: 1200;
   --sb-layer-toast: 1300;
+  --sb-layer-tooltip: 1400;
+
+  /* The dimming behind a sheet or modal that blocks the page. Black in both
+     themes, so the page behind reads as paused on light and dark alike. */
+  --sb-backdrop: rgba(0, 0, 0, 0.3);
 
   /* UI animation speeds: quick feedback (hover, press), most open/close and
      fade changes, and larger moves (sheets, modals, slides). Long or looping
@@ -374,6 +381,9 @@
   --sb-bookmark-green-color: #3a9a55;
   --sb-bookmark-blue-color: #3474d4;
   --sb-bookmark-purple-color: #8a56cc;
+  --sb-bookmark-black-color: #161616;
+  --sb-bookmark-gray-color: #8c8c8c;
+  --sb-bookmark-white-color: #ffffff;
 
   --sb-dynamic-range-limit: standard;
 }
@@ -509,17 +519,15 @@ body {
  * browsers don't show the default white "overscroll" gap when the user
  * pulls the page up past the bottom toolbar. Scrolling happens inside
  * the inner panes (which have their own overflow scrollers). */
-@media (max-width: 480px) {
-  html,
-  body {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    overscroll-behavior: none;
-  }
+html:where([data-sb-app-layout="mobile"]),
+:where(html[data-sb-app-layout="mobile"]) body {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 button,

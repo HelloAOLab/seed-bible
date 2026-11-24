@@ -181,7 +181,9 @@ describe("bookmarks", () => {
       // The premade bookmark is the ordinary create form, already open.
       expect(rows(modal)).toHaveLength(1);
       expect(
-        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+        modal.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!.value
       ).toBe("My bookmark");
       // Nothing is stored until Save.
       expect(recordData).not.toHaveBeenCalled();
@@ -285,7 +287,9 @@ describe("bookmarks", () => {
       await click(button(modal, ".sb-bookmark-add-new"));
 
       expect(
-        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+        modal.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!.value
       ).toBe("My bookmark 3");
     });
 
@@ -295,7 +299,9 @@ describe("bookmarks", () => {
 
       await click(button(modal, ".sb-bookmark-add-new"));
       await type(
-        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!,
+        modal.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!,
         "Sermon prep"
       );
       await click(
@@ -315,6 +321,26 @@ describe("bookmarks", () => {
       expect(
         state.bookmarks.bookmarks.value.find((b) => b.id === "bm-1")
       ).toMatchObject(AAB_EXO_3);
+    });
+
+    it("offers black, gray and white in the color picker", async () => {
+      await signIn([]);
+      const modal = await openModal();
+      const swatches = Array.from(
+        modal.querySelectorAll<HTMLElement>(".sb-bookmark-form-color")
+      ).map((swatch) => swatch.getAttribute("aria-label"));
+
+      expect(swatches).toEqual([
+        "Orange",
+        "Red",
+        "Yellow",
+        "Green",
+        "Blue",
+        "Purple",
+        "Black",
+        "Gray",
+        "White",
+      ]);
     });
 
     it("disables New bookmark at the cap and says why", async () => {
@@ -359,7 +385,9 @@ describe("bookmarks", () => {
         // The sheet stays open, offering the premade bookmark again.
         expect(rows(modal)).toHaveLength(1);
         expect(
-          modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+          modal.querySelector<HTMLInputElement>(
+            'input[aria-label="Bookmark name"]'
+          )!.value
         ).toBe("My bookmark");
       });
 
@@ -428,8 +456,13 @@ describe("bookmarks", () => {
   describe("the reader button's icon", () => {
     const icon = (bookmarks: Bookmark[]) =>
       renderInto(<BookmarkStackIcon bookmarks={bookmarks} />);
-    /** The ribbons drawn, back to front — not the shapes inside masks. */
-    const fills = (root: HTMLElement) =>
+    /** Color ids on painted ribbons, back to front — not mask/clip shapes. */
+    const ribbonColors = (root: HTMLElement) =>
+      Array.from(root.querySelectorAll("[data-bookmark-color]")).map((el) =>
+        el.getAttribute("data-bookmark-color")
+      );
+    /** Flat fills used by the Tabs toggle (outline / current paint modes). */
+    const flatFills = (root: HTMLElement) =>
       Array.from(
         root.querySelectorAll("svg > path, .sb-bookmark-stack-ribbon")
       ).map((path) => path.getAttribute("fill"));
@@ -443,9 +476,11 @@ describe("bookmarks", () => {
     });
 
     it("is filled in the bookmark's color for one", () => {
-      expect(fills(icon([aBookmark({ colorId: "red" })]))).toEqual([
-        "var(--sb-bookmark-red-color)",
-      ]);
+      const root = icon([aBookmark({ colorId: "red" })]);
+      expect(ribbonColors(root)).toEqual(["red"]);
+      expect(
+        root.querySelector(".sb-bookmark-glyph-fill")!.getAttribute("fill")
+      ).toMatch(/^url\(#/);
     });
 
     it("fans several, most recently moved painted on top", () => {
@@ -454,10 +489,23 @@ describe("bookmarks", () => {
         aBookmark({ id: "b", colorId: "green" }),
       ]);
       // SVG paints later paths over earlier ones, so the front one is last.
-      expect(fills(root)).toEqual([
-        "var(--sb-bookmark-green-color)",
-        "var(--sb-bookmark-red-color)",
+      expect(ribbonColors(root)).toEqual(["green", "red"]);
+    });
+
+    it("gives every colored ribbon its own gradient and inside outline", () => {
+      const root = icon([
+        aBookmark({ id: "a", colorId: "black" }),
+        aBookmark({ id: "b", colorId: "white" }),
       ]);
+      expect(root.querySelectorAll("linearGradient").length).toBeGreaterThan(0);
+      expect(
+        root.querySelectorAll(".sb-bookmark-stack-ribbon[data-bookmark-color]")
+      ).toHaveLength(2);
+      // Each ribbon: fill path + clipped outline stroke.
+      expect(root.querySelectorAll("svg > g path")).toHaveLength(4);
+      expect(
+        root.querySelector("svg > g g path")!.getAttribute("stroke-width")
+      ).not.toBeNull();
     });
 
     // A cut-out reads on any background; a painted gap would only match the
@@ -480,19 +528,30 @@ describe("bookmarks", () => {
         aBookmark({ id: "b", colorId: "green" }),
       ];
       expect(
-        fills(
+        flatFills(
           renderInto(
             <BookmarkStackIcon bookmarks={bookmarks} paint="outline" />
           )
         )
       ).toEqual(["none", "none"]);
       expect(
-        fills(
+        flatFills(
           renderInto(
             <BookmarkStackIcon bookmarks={bookmarks} paint="current" />
           )
         )
       ).toEqual(["currentColor", "currentColor"]);
+      // Tabs toggle style (#2039): no gradient / inside-outline treatment.
+      expect(
+        renderInto(
+          <BookmarkStackIcon bookmarks={bookmarks} paint="outline" />
+        ).querySelector("linearGradient")
+      ).toBeNull();
+      expect(
+        renderInto(
+          <BookmarkStackIcon bookmarks={bookmarks} paint="current" />
+        ).querySelector("linearGradient")
+      ).toBeNull();
     });
 
     it("draws stacked outlines as heavy as a lone one", () => {
@@ -521,7 +580,7 @@ describe("bookmarks", () => {
           aBookmark({ id: `bm-${i}`, colorId })
         )
       );
-      expect(fills(root)).toHaveLength(3);
+      expect(ribbonColors(root)).toHaveLength(3);
     });
   });
 
@@ -564,9 +623,11 @@ describe("bookmarks", () => {
       );
       expect(markers).toHaveLength(1);
       // One small ribbon, in the most recently moved bookmark's color.
-      expect(markers[0]!.querySelector("path")!.getAttribute("fill")).toBe(
-        "var(--sb-bookmark-green-color)"
-      );
+      expect(
+        markers[0]!
+          .querySelector("[data-bookmark-color]")!
+          .getAttribute("data-bookmark-color")
+      ).toBe("green");
       expect(markers[0]!.getAttribute("aria-label")).toBe(
         "2 bookmarks on this chapter: Reading plan, Sermon prep"
       );
@@ -727,7 +788,7 @@ describe("bookmarks", () => {
       ).toBeNull();
       const modal = renderModal(openModalSpy.mock.calls[0]![0]);
       const nameInput = modal.querySelector<HTMLInputElement>(
-        ".sb-bookmark-form-name"
+        'input[aria-label="Bookmark name"]'
       )!;
       expect(nameInput.value).toBe("Reading plan");
 
@@ -772,7 +833,9 @@ describe("bookmarks", () => {
       const isOpen = () =>
         state.modals.modals.value.some((m) => m.id === modalId);
       await type(
-        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!,
+        modal.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!,
         "Sermon prep"
       );
       await click(button(modal, ".sb-bookmark-picker-save"));
@@ -794,7 +857,9 @@ describe("bookmarks", () => {
       );
       expect(isOpen()).toBe(true);
       expect(
-        modal.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+        modal.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!.value
       ).toBe("Sermon prep");
       // Once the save has settled, it can be closed again.
       await act(async () => {

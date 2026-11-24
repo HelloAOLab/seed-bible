@@ -1,5 +1,3 @@
-import "./OfflineDownloadPrompt.css";
-import { useEffect } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import {
   estimateTranslationSizeBytes,
@@ -7,15 +5,13 @@ import {
   type OfflineTranslationsManager,
 } from "../../managers/OfflineTranslationsManager";
 import { downloadTranslationWithToast } from "./downloadTranslationWithToast";
-import { useOverlayDismiss } from "../useOverlayDismiss";
-import { Button } from "../Button/Button";
+import { OfflinePromptCard } from "./OfflinePromptCard";
 
 /**
  * Offers to save the translation the reader is currently in for offline use.
  *
  * The offer itself is decided by {@link OfflineTranslationsManager}; this only
- * renders whatever it has put up. A centered dialog on desktop and a bottom
- * sheet on narrow screens — the same markup either way, switched in CSS.
+ * renders whatever it has put up.
  *
  * Accepting starts the download and closes immediately: live progress belongs
  * to the translation list's own controls, so the user isn't held here watching
@@ -24,31 +20,17 @@ import { Button } from "../Button/Button";
 export function OfflineDownloadPrompt({
   offline,
   toast,
-  className = "",
+  isMobile,
+  className,
 }: {
   offline: OfflineTranslationsManager;
   toast: (message: string) => void;
+  /** Phone-sized screen, where it opens as a bottom sheet. */
+  isMobile: boolean;
   className?: string;
 }) {
   const { t } = useI18n();
   const translation = offline.downloadPrompt.value;
-
-  useEffect(() => {
-    if (!translation) {
-      return;
-    }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        offline.dismissDownloadPrompt();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [translation]);
-
-  const overlayDismiss = useOverlayDismiss(() =>
-    offline.dismissDownloadPrompt()
-  );
 
   if (!translation) {
     return null;
@@ -62,67 +44,32 @@ export function OfflineDownloadPrompt({
   };
 
   return (
-    <div
-      className={`sb-offline-prompt-overlay ${className}`}
-      {...overlayDismiss}
-    >
-      <div
-        className="sb-offline-prompt"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="sb-offline-prompt-title"
-        onClick={(event: MouseEvent) => event.stopPropagation()}
-      >
-        <div className="sb-offline-prompt-handle" aria-hidden="true" />
-
-        <div className="sb-offline-prompt-header">
-          <div className="sb-offline-prompt-icon" aria-hidden="true">
-            <span className="material-symbols-outlined">download</span>
-          </div>
-
-          <h2 className="sb-offline-prompt-title" id="sb-offline-prompt-title">
-            {t("offlinePrompt.title", {
-              abbreviation: translation.shortName,
-              defaultValue: "Save {{abbreviation}} for offline reading?",
-            })}
-          </h2>
-        </div>
-
-        <p className="sb-offline-prompt-body">
-          {estimatedBytes === null
-            ? t("offlinePrompt.bodyNoSize", {
-                name: translation.name,
-                defaultValue:
-                  "Keep {{name}} on your device so you can read it without a connection.",
-              })
-            : t("offlinePrompt.body", {
-                name: translation.name,
-                size: formatBytes(estimatedBytes),
-                defaultValue:
-                  "Keep {{name}} on your device so you can read it without a connection. About {{size}}.",
-              })}
-        </p>
-
-        <Button
-          variant="primary"
-          size="lg"
-          shape="pill"
-          className="sb-offline-prompt-btn sb-offline-prompt-btn-primary"
-          onClick={() => void save()}
-        >
-          {t("offlinePrompt.save", { defaultValue: "Save offline" })}
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="lg"
-          shape="pill"
-          className="sb-offline-prompt-btn sb-offline-prompt-btn-secondary"
-          onClick={() => offline.dismissDownloadPrompt()}
-        >
-          {t("offlinePrompt.notNow", { defaultValue: "Not now" })}
-        </Button>
-      </div>
-    </div>
+    <OfflinePromptCard
+      isMobile={isMobile}
+      className={className}
+      icon="download"
+      title={t("offlinePrompt.title", {
+        abbreviation: translation.shortName,
+        defaultValue: "Save {{abbreviation}} for offline reading?",
+      })}
+      body={
+        estimatedBytes === null
+          ? t("offlinePrompt.bodyNoSize", {
+              name: translation.name,
+              defaultValue:
+                "Keep {{name}} on your device so you can read it without a connection.",
+            })
+          : t("offlinePrompt.body", {
+              name: translation.name,
+              size: formatBytes(estimatedBytes),
+              defaultValue:
+                "Keep {{name}} on your device so you can read it without a connection. About {{size}}.",
+            })
+      }
+      actionLabel={t("offlinePrompt.save", { defaultValue: "Save offline" })}
+      onAction={() => void save()}
+      dismissLabel={t("offlinePrompt.notNow", { defaultValue: "Not now" })}
+      onDismiss={() => offline.dismissDownloadPrompt()}
+    />
   );
 }

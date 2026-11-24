@@ -345,6 +345,27 @@ describe("sandboxed extension services", () => {
       ).toBe("unavailable");
       expect(h.host.saves.value).toEqual([]);
     });
+
+    it("says the save failed when the user's saves couldn't load", async () => {
+      // Offline, say. Answering `null` here would tell the extension it saved.
+      h.host.savesRecord.loaded = false;
+      const extension = await install({
+        id: "ext.offline-saver",
+        optionalPermissions: ["saves:write"],
+      });
+      const sb = await allowInSettings(
+        extension,
+        sourced("ext.offline-saver"),
+        "saves:write"
+      );
+
+      expect(
+        await codeOf(
+          sb.saves.add({ translationId: "BSB", bookId: "JHN", chapter: 3 })
+        )
+      ).toBe("unavailable");
+      expect(h.host.saves.value).toEqual([]);
+    });
   });
 
   describe("reading history and Bible text", () => {

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect } from "preact/hooks";
 import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { Annotation } from "../../managers/AnnotationsManager";
@@ -50,8 +50,7 @@ import { openConfirmDeleteModal } from "../ConfirmDeleteModal/ConfirmDeleteModal
 import { Spinner } from "../Spinner/Spinner";
 import { ReadingPlanOptionsMenu } from "../ReadingPlansPane/ReadingPlanOptionsMenu";
 import { useI18n } from "../../i18n";
-import { useScrollEdgeFade } from "../useScrollEdgeFade";
-import { useHorizontalScroll } from "../useHorizontalScroll";
+import { FilterPills } from "../FilterPills/FilterPills";
 import { UserImagesGrid } from "./UserImages";
 import { CustomizationCard } from "../CustomizationEditPane/CustomizationCard";
 import "./YourContentPane.css";
@@ -82,6 +81,8 @@ export interface YourContentScreenProps {
   onOpenReadingPlan: (plan: ReadingPlanMetadata) => void;
   /** Opens a reading plan in the plan editor and leaves this screen. */
   onEditReadingPlan: (plan: ReadingPlanMetadata) => void;
+  /** Opens the plan editor on a new reading plan and leaves this screen. */
+  onCreateReadingPlan: () => void;
   /** Opens a customization in its editor and leaves this screen. */
   onEditCustomization: (customizationId: string) => void;
   /** Creates a new customization, opens it in the editor and leaves this screen. */
@@ -681,6 +682,7 @@ function ReadingPlanRow(props: {
         fullPlan={plan.status === "draft" ? null : full}
         onEdit={props.onEdit}
         modals={state.modals}
+        app={state.app}
         toast={state.app.toast}
         buttonClassName="sb-discover-item-menu"
       />
@@ -766,11 +768,6 @@ export function YourContentPane(props: YourContentScreenProps) {
   } = state;
   const { t } = useI18n();
   const userId = state.login.userId.value;
-  // The filter chips scroll horizontally with the vertical wheel, and fade at
-  // an edge only while chips are hidden past it.
-  const chipsRef = useRef<HTMLDivElement | null>(null);
-  useHorizontalScroll(chipsRef);
-  useScrollEdgeFade(chipsRef);
 
   // Every open refreshes, so a verse highlighted or annotated in the reader
   // since the last visit shows up. It's quiet when content is already
@@ -1066,6 +1063,18 @@ export function YourContentPane(props: YourContentScreenProps) {
               </MaterialIcon>
               {t("create-playlist-menu-item", { defaultValue: "Playlist" })}
             </ContextMenuItem>
+            {/* Both save to the user's account, so a signed-out user can't
+                keep what they make. */}
+            {userId ? (
+              <ContextMenuItem onClick={props.onCreateReadingPlan}>
+                <MaterialIcon className="sb-context-menu-item-icon">
+                  menu_book
+                </MaterialIcon>
+                {t("create-reading-plan-menu-item", {
+                  defaultValue: "Reading Plan",
+                })}
+              </ContextMenuItem>
+            ) : null}
             {userId ? (
               <ContextMenuItem onClick={props.onCreateCustomization}>
                 <MaterialIcon className="sb-context-menu-item-icon">
@@ -1080,24 +1089,20 @@ export function YourContentPane(props: YourContentScreenProps) {
 
           <span className="sb-content-toolbar-divider" aria-hidden="true" />
 
-          <div className="sb-content-chips" role="tablist" ref={chipsRef}>
-            {CONTENT_FILTERS.map((value) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={filter === value}
-                className={`sb-content-chip${
-                  filter === value ? " sb-content-chip-active" : ""
-                }`}
-                onClick={() => {
-                  yourContent.filter.value = value;
-                }}
-              >
-                {chipLabel(value)}
-              </button>
-            ))}
-          </div>
+          <FilterPills
+            className="sb-content-filters"
+            aria-label={t("your-content-filters", {
+              defaultValue: "Filter your content",
+            })}
+            options={CONTENT_FILTERS.map((value) => ({
+              value,
+              label: chipLabel(value),
+            }))}
+            value={filter}
+            onChange={(value) => {
+              yourContent.filter.value = value;
+            }}
+          />
         </div>
 
         {status === "loading" || stillSearching || bookmarksPending ? (
@@ -1277,7 +1282,7 @@ export function YourContentPane(props: YourContentScreenProps) {
                   playlist={p}
                   playlists={playlists}
                   modals={state.modals}
-                  toast={state.app.toast}
+                  app={state.app}
                   onPlay={props.onPlayPlaylist}
                   onEdit={props.onEditPlaylist}
                 />

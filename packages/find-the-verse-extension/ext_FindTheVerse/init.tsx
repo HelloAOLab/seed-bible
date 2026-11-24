@@ -1,4 +1,4 @@
-import { batch, effect, signal, untracked } from "@preact/signals";
+import { batch, effect, signal, untracked, type Signal } from "@preact/signals";
 import { render } from "preact";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { extractContentText } from "seed-bible/managers";
@@ -15,8 +15,11 @@ import { blankSteps, beginRound, resetDraft, resetPlay } from "./gameSession";
 import { watchSearchRange } from "./searchRange";
 import {
   createSavedGamesController,
+  loadSharedGame,
   savedGamesErrorKey,
   savedGamesErrorMessage,
+  sharedGameFromUrl,
+  type SavedGamesAction,
 } from "./gamesStore";
 import { GameCreator } from "./GameCreator";
 import { GamePlayer } from "./GamePlayer";
@@ -28,7 +31,14 @@ import {
   trackRoundDecoration,
 } from "./roundTab";
 import { SavedGamesList } from "./SavedGamesList";
-import type { GameDraft, GameSignals, SavedGame, TargetVerse } from "./types";
+import { SharedGameSection } from "./SharedGameSection";
+import type {
+  GameDraft,
+  GameSignals,
+  SavedGame,
+  SharedGameView,
+  TargetVerse,
+} from "./types";
 import { playWinSound } from "./winSound";
 import "./findTheVerse.css";
 
@@ -50,30 +60,49 @@ function FindTheVersePaneTitle() {
 
 function GamePane({
   game,
+  sharedGame,
   state,
   onSaveGame,
   onDeleteGame,
   onEditGame,
   onStartRound,
+  onShareGame,
 }: {
   game: GameSignals;
+  sharedGame: Signal<SharedGameView | null>;
   state: SeedBibleState;
   onSaveGame: (draft: GameDraft) => Promise<void>;
   onDeleteGame: (id: string) => Promise<void>;
   onEditGame: (saved: SavedGame) => void;
   onStartRound: (draft: RoundDraft) => void;
+  onShareGame: (id: string, shared: boolean) => Promise<void>;
 }) {
   const phase = game.phase.value;
   const savedGames = game.savedGames.value;
   const { t } = useI18n("find-the-verse-extension");
-  const noticeFor = (error: unknown, action: "save" | "delete") =>
+  const noticeFor = (error: unknown, action: SavedGamesAction) =>
     t(savedGamesErrorKey(error, action), {
       defaultValue: savedGamesErrorMessage(error, action),
     });
 
   if (phase === "idle") {
+    const shared = sharedGame.value;
     return (
       <div className="ftv-home">
+        {shared && (
+          <SharedGameSection
+            view={shared}
+            onPlay={(opened) =>
+              onStartRound({
+                id: null,
+                name: opened.name,
+                targetVerse: opened.targetVerse,
+                steps: opened.steps,
+              })
+            }
+          />
+        )}
+
         <div className="ftv-home-hero">
           <span className="ftv-home-icon" aria-hidden="true">
             🔍
@@ -121,6 +150,13 @@ function GamePane({
             });
           }}
           onEdit={onEditGame}
+          onShare={(id, shared) => {
+            game.notice.value = null;
+            return onShareGame(id, shared).catch((error: unknown) => {
+              game.notice.value = noticeFor(error, "share");
+              throw error;
+            });
+          }}
         />
       </div>
     );
@@ -186,6 +222,8 @@ export default function initFindTheVerseExtension() {
         roundDecorations: signal([]),
       };
 
+      const sharedGame = signal<SharedGameView | null>(null);
+
       const savedGames = createSavedGamesController(
         game.savedGames,
         () => state.login.userId.peek(),
@@ -233,6 +271,10 @@ export default function initFindTheVerseExtension() {
 
       function deleteGame(id: string): Promise<void> {
         return savedGames.remove(id);
+      }
+
+      function setGameShared(id: string, shared: boolean): Promise<void> {
+        return savedGames.setPrivacy(id, shared);
       }
 
       // Load a saved game into the creator for editing.
@@ -292,14 +334,41 @@ export default function initFindTheVerseExtension() {
           component: () => (
             <GamePane
               game={game}
+              sharedGame={sharedGame}
               state={state}
               onSaveGame={saveGame}
               onDeleteGame={deleteGame}
               onEditGame={editGame}
               onStartRound={startRound}
+              onShareGame={setGameShared}
             />
           ),
         });
+      }
+
+      // The game is played, never saved: it stays out of the visitor's own
+      // games, and the round starts without an id so nothing can edit it.
+      async function openSharedGame(creatorId: string, gameId: string) {
+        sharedGame.value = { status: "loading" };
+        openGamePane();
+        const result = await loadSharedGame(creatorId, gameId, state.os);
+        if (result.status !== "ok") {
+          sharedGame.value = result;
+          return;
+        }
+        const view: SharedGameView = {
+          status: "ok",
+          game: result.game,
+          creatorName: null,
+        };
+        sharedGame.value = view;
+        const creatorName = await state.login.getPublicProfile(creatorId).then(
+          (profile) => profile?.name.trim() || null,
+          () => null
+        );
+        if (creatorName && sharedGame.peek() === view) {
+          sharedGame.value = { ...view, creatorName };
+        }
       }
 
       // Open / re-open the pane when the toolbar button is clicked.
@@ -442,6 +511,11 @@ export default function initFindTheVerseExtension() {
           );
         }
       });
+
+      const sharedLink = sharedGameFromUrl(state.navigation.currentUrl.peek());
+      if (sharedLink) {
+        void openSharedGame(sharedLink.creatorId, sharedLink.gameId);
+      }
 
       yield disposeLoadEffect;
       yield disposeGuessEffect;

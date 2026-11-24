@@ -1,10 +1,8 @@
 import i18n from "i18next";
 import type { TFunction } from "i18next";
 import resourcesToBackend from "i18next-resources-to-backend";
-import { useContext, useMemo } from "preact/hooks";
 import en from "./en.json";
 import { navigatorLanguages, safeSessionStorage } from "../app/ssrEnv";
-import { createContext, type ComponentChildren } from "preact";
 import type { NavigationManager } from "../managers/NavigationManager";
 import { computed, signal } from "@preact/signals";
 import {
@@ -20,6 +18,7 @@ import {
 import { parseStaticPagePath } from "../managers/StaticPagePath";
 import { parseSharedPagePath } from "../managers/SharedPagePath";
 import type { BrandingConfig } from "../app/appConfig";
+import { isRightToLeftLanguage } from "./I18nContext";
 
 function getLanguageName(importPath: string): string {
   const match = importPath.match(/\.\/([a-z-]+)\.json$/i);
@@ -41,6 +40,18 @@ const localeLoaders = import.meta.glob("./*.json") as Record<
 >;
 
 export { i18n };
+
+/**
+ * The primary subtag of a language tag, lowercased: "en-GB", "en_US" and "en"
+ * all reduce to "en".
+ *
+ * Voices name themselves with a region ("en-GB", "pt-BR") while a translation
+ * only knows its language, so comparing the two has to happen at this level or
+ * an American voice would never be considered able to read English.
+ */
+export function baseLanguageTag(tag: string): string {
+  return tag.toLowerCase().split(/[-_]/)[0] ?? "";
+}
 
 export type BotTranslations = Record<string, Record<string, string>>;
 
@@ -541,108 +552,13 @@ export function createI18nManager(
 }
 
 export type I18nManager = ReturnType<typeof createI18nManager>;
-const I18nContext = createContext(null as I18nManager | null);
 
-export function I18nProvider(props: {
-  i18n: I18nManager;
-  children: ComponentChildren;
-}) {
-  return (
-    <I18nContext.Provider value={props.i18n}>
-      {props.children}
-    </I18nContext.Provider>
-  );
-}
-
-export type I18nHook = ReturnType<typeof useI18n>;
-
-/**
- * For shared components an extension may render in a root of its own, with no
- * `I18nProvider` above: the translate function, or null there instead of
- * `useI18n()`'s error.
- */
-export function useOptionalI18n() {
-  const i18nManager = useContext(I18nContext);
-  // Reading the language subscribes the caller, as `useI18n()` does, so it
-  // re-renders when the language changes.
-  const language = i18nManager?.language.value;
-  return i18nManager ? { t: i18nManager.i18n.t, language } : null;
-}
-
-const RTL_LANGUAGE_CODES = new Set(["ar", "fa", "he", "ur", "ps", "dv", "yi"]);
-
-export function isRightToLeftLanguage(languageCode: string): boolean {
-  const normalizedCode = languageCode.trim();
-  if (!normalizedCode) {
-    return false;
-  }
-
-  const primarySubtag = normalizedCode.split("-")[0]?.toLowerCase();
-  if (primarySubtag && RTL_LANGUAGE_CODES.has(primarySubtag)) {
-    return true;
-  }
-
-  if (typeof Intl !== "undefined" && typeof Intl.Locale === "function") {
-    try {
-      const locale = new Intl.Locale(normalizedCode) as Intl.Locale & {
-        textInfo?: { direction: string };
-        getTextInfo?: () => { direction: string };
-      };
-      if (typeof locale.getTextInfo === "function") {
-        const textInfo = locale.getTextInfo();
-        return textInfo.direction === "rtl";
-      }
-      return locale.textInfo?.direction === "rtl";
-    } catch {
-      return false;
-    }
-  }
-
-  return false;
-}
-
-/**
- * Gets the i18n manager, which provides access to the translation function, current language, available languages, and a function to change the language. Also provides a helper function for translating keys within a specific namespace.
- * @param ns The namespace for the translations, typically the extension ID to avoid conflicts with other extensions. This is optional, as the returned manager will still work without it, but it can be used to create a namespaced translation function that automatically applies the namespace to translation keys.
- * @returns
- */
-export function useI18n(ns?: string) {
-  const i18nManager = useContext(I18nContext);
-  if (!i18nManager) {
-    throw new Error("useI18n() must be used within an I18nProvider");
-  }
-  const i18n = i18nManager.i18n;
-  const { t } = i18n;
-
-  const isRtl = isRightToLeftLanguage(i18nManager.language.value);
-
-  const setLanguage = async (language: string) => {
-    await i18nManager.requestLanguageChange(language);
-  };
-
-  const translate = ns
-    ? (key: string, options?: Record<string, unknown>) =>
-        t(key, { ...options, ns })
-    : t;
-
-  return useMemo(
-    () => ({
-      t: translate,
-      ns,
-      language: i18nManager.language.value,
-      isRtl,
-      availableLanguages,
-      setLanguage,
-      requestLanguageChange: i18nManager.requestLanguageChange,
-      confirmLanguageFallback: i18nManager.confirmLanguageFallback,
-      cancelLanguageFallback: i18nManager.cancelLanguageFallback,
-      languageFallbackPrompt: i18nManager.languageFallbackPrompt,
-      uiLanguageSwitchPrompt: i18nManager.uiLanguageSwitchPrompt,
-      confirmUiLanguageSwitch: i18nManager.confirmUiLanguageSwitch,
-      dismissUiLanguageSwitch: i18nManager.dismissUiLanguageSwitch,
-      neverAskUiLanguageSwitch: i18nManager.neverAskUiLanguageSwitch,
-      i18n: i18n,
-    }),
-    [t, i18n.language]
-  );
-}
+export {
+  I18nProvider,
+  isRightToLeftLanguage,
+  setDefaultI18n,
+  useI18n,
+  useOptionalI18n,
+  type I18nHook,
+  type I18nSource,
+} from "./I18nContext";

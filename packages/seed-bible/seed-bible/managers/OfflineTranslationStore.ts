@@ -28,7 +28,11 @@ import type {
   TranslationBook,
   TranslationBookChapterAudioLinks,
 } from "./FreeUseBibleAPI";
-import { requestToPromise, transactionToPromise } from "./indexedDbUtils";
+import {
+  createDatabaseConnection,
+  requestToPromise,
+  transactionToPromise,
+} from "./indexedDbUtils";
 
 export const OFFLINE_DB_NAME = "seed-bible-offline";
 export const OFFLINE_DB_VERSION = 1;
@@ -203,57 +207,29 @@ export function createIndexedDbTranslationStore(): OfflineTranslationStore | nul
     return null;
   }
 
-  let databasePromise: Promise<IDBDatabase> | null = null;
-
-  const openDatabase = (): Promise<IDBDatabase> => {
-    if (databasePromise) {
-      return databasePromise;
+  const connection = createDatabaseConnection(
+    OFFLINE_DB_NAME,
+    OFFLINE_DB_VERSION,
+    (database) => {
+      if (!database.objectStoreNames.contains(TRANSLATIONS_STORE)) {
+        database.createObjectStore(TRANSLATIONS_STORE, {
+          keyPath: "translationId",
+        });
+      }
+      if (!database.objectStoreNames.contains(CHAPTERS_STORE)) {
+        const chapters = database.createObjectStore(CHAPTERS_STORE, {
+          keyPath: "key",
+        });
+        chapters.createIndex(TRANSLATION_ID_INDEX, "translationId");
+      }
     }
-
-    databasePromise = new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open(OFFLINE_DB_NAME, OFFLINE_DB_VERSION);
-
-      request.onupgradeneeded = () => {
-        const database = request.result;
-        if (!database.objectStoreNames.contains(TRANSLATIONS_STORE)) {
-          database.createObjectStore(TRANSLATIONS_STORE, {
-            keyPath: "translationId",
-          });
-        }
-        if (!database.objectStoreNames.contains(CHAPTERS_STORE)) {
-          const chapters = database.createObjectStore(CHAPTERS_STORE, {
-            keyPath: "key",
-          });
-          chapters.createIndex(TRANSLATION_ID_INDEX, "translationId");
-        }
-      };
-
-      request.onsuccess = () => {
-        const database = request.result;
-        // A version change from another tab invalidates this handle; drop the
-        // cached promise so the next call reopens instead of using a dead one.
-        database.onversionchange = () => {
-          database.close();
-          databasePromise = null;
-        };
-        resolve(database);
-      };
-
-      request.onerror = () =>
-        reject(request.error ?? new Error("Failed to open IndexedDB."));
-      request.onblocked = () =>
-        reject(new Error("IndexedDB upgrade blocked by another tab."));
-    }).catch((error: unknown) => {
-      databasePromise = null;
-      throw error;
-    });
-
-    return databasePromise;
-  };
+  );
 
   const list = async (): Promise<DownloadedTranslation[]> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(TRANSLATIONS_STORE, "readonly");
+    const transaction = await connection.transaction(
+      TRANSLATIONS_STORE,
+      "readonly"
+    );
     const records = await requestToPromise(
       transaction.objectStore(TRANSLATIONS_STORE).getAll()
     );
@@ -263,8 +239,10 @@ export function createIndexedDbTranslationStore(): OfflineTranslationStore | nul
   const get = async (
     translationId: string
   ): Promise<DownloadedTranslation | null> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(TRANSLATIONS_STORE, "readonly");
+    const transaction = await connection.transaction(
+      TRANSLATIONS_STORE,
+      "readonly"
+    );
     const record = await requestToPromise(
       transaction.objectStore(TRANSLATIONS_STORE).get(translationId)
     );
@@ -276,8 +254,10 @@ export function createIndexedDbTranslationStore(): OfflineTranslationStore | nul
     bookId: string,
     chapterNumber: number
   ): Promise<StoredChapter | null> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(CHAPTERS_STORE, "readonly");
+    const transaction = await connection.transaction(
+      CHAPTERS_STORE,
+      "readonly"
+    );
     const record = await requestToPromise(
       transaction
         .objectStore(CHAPTERS_STORE)
@@ -301,8 +281,7 @@ export function createIndexedDbTranslationStore(): OfflineTranslationStore | nul
   };
 
   const deleteTranslation = async (translationId: string): Promise<void> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(
+    const transaction = await connection.transaction(
       [TRANSLATIONS_STORE, CHAPTERS_STORE],
       "readwrite"
     );
@@ -329,7 +308,6 @@ export function createIndexedDbTranslationStore(): OfflineTranslationStore | nul
     chapters: StoredChapterEntry[],
     options?: SaveTranslationOptions
   ): Promise<void> => {
-    const database = await openDatabase();
     await deleteTranslation(record.translationId);
 
     // Between chunks is the only safe place to give up: a chunk is one
@@ -346,7 +324,10 @@ export function createIndexedDbTranslationStore(): OfflineTranslationStore | nul
 
     for (let index = 0; index < chapters.length; index += SAVE_CHUNK_SIZE) {
       const chunk = chapters.slice(index, index + SAVE_CHUNK_SIZE);
-      const transaction = database.transaction(CHAPTERS_STORE, "readwrite");
+      const transaction = await connection.transaction(
+        CHAPTERS_STORE,
+        "readwrite"
+      );
       const store = transaction.objectStore(CHAPTERS_STORE);
       for (const entry of chunk) {
         const chapterRecord: ChapterRecord = {
@@ -369,7 +350,7 @@ export function createIndexedDbTranslationStore(): OfflineTranslationStore | nul
       );
     }
 
-    const metadataTransaction = database.transaction(
+    const metadataTransaction = await connection.transaction(
       TRANSLATIONS_STORE,
       "readwrite"
     );

@@ -1,5 +1,5 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import { useSignal } from "@preact/signals";
-import { MaterialIcon } from "../icons";
 import {
   numberFieldLimits,
   settingValueSatisfiesDefinition,
@@ -8,6 +8,11 @@ import {
 } from "../../managers/ExtensionManager";
 import type { I18nHook } from "../../i18n/I18nManager";
 import { IconButton } from "../IconButton/IconButton";
+import { Checkbox } from "../Checkbox/Checkbox";
+import { Switch } from "../Switch/Switch";
+import "../Field/Field.css";
+import { TextInput } from "../TextField/TextField";
+import { Select } from "../Select/Select";
 
 function NumberSettingInput(props: {
   id: string;
@@ -23,16 +28,14 @@ function NumberSettingInput(props: {
   const draft = useSignal<string | null>(null);
 
   return (
-    <input
+    <TextInput
       id={id}
-      className="sb-settings-text-input"
       type="number"
       min={limits.min}
       max={limits.max}
       step={limits.step}
       value={draft.value ?? (value === undefined ? "" : String(value))}
-      onInput={(event: Event) => {
-        const raw = (event.currentTarget as HTMLInputElement).value;
+      onValueInput={(raw) => {
         draft.value = raw;
         const parsed = Number(raw);
         // An in-progress edit that isn't a number yet (e.g. empty, or a bare
@@ -65,12 +68,10 @@ function EnumSettingSelect(props: {
   const selected = value !== undefined && choices.includes(value) ? value : "";
 
   return (
-    <select
+    <Select
       id={id}
-      className="sb-settings-language-select"
       value={selected}
-      onChange={(event: Event) => {
-        const next = (event.currentTarget as HTMLSelectElement).value;
+      onValueChange={(next) => {
         if (choices.includes(next)) {
           onChange(next);
         }
@@ -85,7 +86,7 @@ function EnumSettingSelect(props: {
           })}
         </option>
       ))}
-    </select>
+    </Select>
   );
 }
 
@@ -142,13 +143,11 @@ export function ExtensionSettingsForm(props: {
 
   if (entries.length === 0) {
     return (
-      <div className="sb-settings-empty-state">
-        <p>
-          {t("no-extension-settings", {
-            defaultValue: "This extension has no configurable settings.",
-          })}
-        </p>
-      </div>
+      <EmptyState className="sb-settings-empty-state">
+        {t("no-extension-settings", {
+          defaultValue: "This extension has no configurable settings.",
+        })}
+      </EmptyState>
     );
   }
 
@@ -174,29 +173,16 @@ export function ExtensionSettingsForm(props: {
         // checkbox every field stores one.
         const overridden = overriding ? overriding.isOverridden(key) : true;
         const overrideNode = overriding ? (
-          <label className="sb-settings-field-override">
-            {/* The real checkbox stays for keyboard and screen readers; the
-                Material glyph beside it is what's actually seen. */}
-            <input
-              type="checkbox"
-              className="sb-settings-field-override-input"
-              checked={overridden}
-              aria-label={t("override-setting", {
-                defaultValue: "Override {{name}}",
-                name: title,
-              })}
-              onChange={(event: Event) =>
-                overriding.onOverrideChange(
-                  key,
-                  (event.currentTarget as HTMLInputElement).checked
-                )
-              }
-            />
-            <MaterialIcon className="sb-settings-field-override-icon">
-              {overridden ? "check_box" : "check_box_outline_blank"}
-            </MaterialIcon>
-            {t("override-setting-label", { defaultValue: "Override" })}
-          </label>
+          <Checkbox
+            className="sb-settings-field-override"
+            label={t("override-setting-label", { defaultValue: "Override" })}
+            aria-label={t("override-setting", {
+              defaultValue: "Override {{name}}",
+              name: title,
+            })}
+            checked={overridden}
+            onToggled={(checked) => overriding.onOverrideChange(key, checked)}
+          />
         ) : null;
         const defaultValue = getDefault?.(key);
         const defaultNode =
@@ -231,10 +217,10 @@ export function ExtensionSettingsForm(props: {
           <div className="sb-settings-field-row" key={key}>
             {definition.type === "boolean" ? (
               <>
-                <div className="sb-settings-toggle-row">
+                <div className="sb-settings-field-switch-row">
                   <div className="sb-settings-field-title-row">
                     <label
-                      className="sb-settings-field-label"
+                      className="sb-field-label"
                       htmlFor={overridden ? fieldId : undefined}
                     >
                       {title}
@@ -242,16 +228,10 @@ export function ExtensionSettingsForm(props: {
                     {resetNode}
                   </div>
                   {overridden && (
-                    <input
+                    <Switch
                       id={fieldId}
-                      type="checkbox"
                       checked={Boolean(value)}
-                      onChange={(event: Event) =>
-                        onChange(
-                          key,
-                          (event.currentTarget as HTMLInputElement).checked
-                        )
-                      }
+                      onToggled={(checked) => onChange(key, checked)}
                     />
                   )}
                 </div>
@@ -263,7 +243,7 @@ export function ExtensionSettingsForm(props: {
               <>
                 <div className="sb-settings-field-title-row">
                   <label
-                    className="sb-settings-field-label"
+                    className="sb-field-label"
                     htmlFor={overridden ? fieldId : undefined}
                   >
                     {title}
@@ -292,17 +272,10 @@ export function ExtensionSettingsForm(props: {
                       t={t}
                     />
                   ) : (
-                    <input
+                    <TextInput
                       id={fieldId}
-                      className="sb-settings-text-input"
-                      type="text"
                       value={value === undefined ? "" : String(value)}
-                      onInput={(event: Event) =>
-                        onChange(
-                          key,
-                          (event.currentTarget as HTMLInputElement).value
-                        )
-                      }
+                      onValueInput={(next) => onChange(key, next)}
                     />
                   ))}
               </>

@@ -26,6 +26,8 @@ export interface ExtensionProjectMeta {
    * `publish` uploads, or an https: link.
    */
   icon?: string;
+  /** Preview images in display order; captions name keys in translations.en. */
+  screenshots?: { src: string; caption?: string }[];
   /** Anything else in the file, such as `settings` and `sensitive`. */
   [field: string]: unknown;
 }

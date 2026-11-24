@@ -345,6 +345,15 @@ function createHost() {
     chapterNumber: 3 as number | null,
   });
   const toasts: string[] = [];
+  const language = signal("en");
+  // The app's own strings by language, as its i18next would hold them.
+  const appStrings: Record<string, Record<string, string>> = {};
+  const loadedListeners = new Set<() => void>();
+  /** A language's strings arrive, as i18next reports when a file loads. */
+  const loadAppStrings = (lng: string, strings: Record<string, string>) => {
+    appStrings[lng] = strings;
+    for (const listener of loadedListeners) listener();
+  };
   const openedReferences: unknown[] = [];
   const userId = signal<string | null>(null);
   const profile = signal<UserProfile | null>(null);
@@ -355,6 +364,8 @@ function createHost() {
   const highlights = new Map<string, ChapterHighlight[]>();
   const notes = new Map<string, Annotation[]>();
   const saves = signal<Save[]>([]);
+  /** Set `loaded` to false to make `addSave` act as if the saves couldn't load. */
+  const savesRecord = { loaded: true };
   const readingEvents: ReadingEvent[] = [];
   const chatProviders = new Map<string, ChatProvider>();
   const settingsPanels = new Map<string, () => unknown>();
@@ -401,8 +412,20 @@ function createHost() {
       googleFontFamiliesToLoad: signal<string[]>([]),
     },
     i18n: {
-      language: signal("en"),
+      language,
       isRtl: signal(false),
+      i18n: {
+        getResourceBundle: (lng: string, ns: string) =>
+          ns === "seed-bible" ? appStrings[lng] : undefined,
+        hasResourceBundle: (lng: string, ns: string) =>
+          ns === "seed-bible" && lng in appStrings,
+        on: (event: string, listener: () => void) => {
+          if (event === "loaded") loadedListeners.add(listener);
+        },
+        off: (event: string, listener: () => void) => {
+          if (event === "loaded") loadedListeners.delete(listener);
+        },
+      },
       t: (key: string, options?: Record<string, unknown>) =>
         options ? `${key} ${JSON.stringify(options)}` : key,
     },
@@ -486,6 +509,7 @@ function createHost() {
         chapterNumber: number,
         options?: { verse?: Save["verse"]; categories?: readonly string[] }
       ) => {
+        if (!savesRecord.loaded) return false;
         saves.value = [
           ...saves.value,
           {
@@ -498,6 +522,7 @@ function createHost() {
             categories: [...(options?.categories ?? ["Saved"])],
           },
         ];
+        return true;
       },
       removeSave: async (id: string) => {
         saves.value = saves.value.filter((save) => save.id !== id);
@@ -554,6 +579,10 @@ function createHost() {
     reading,
     selectedVerses,
     toasts,
+    language,
+    appStrings,
+    loadAppStrings,
+    loadedListenerCount: () => loadedListeners.size,
     openedReferences,
     userId,
     profile,
@@ -561,6 +590,7 @@ function createHost() {
     highlights,
     notes,
     saves,
+    savesRecord,
     readingEvents,
     chats: context.chats,
     chatProviders,

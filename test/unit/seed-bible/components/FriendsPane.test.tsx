@@ -172,6 +172,20 @@ describe("FriendsPane", () => {
     expect(login.login).toHaveBeenCalled();
   });
 
+  it("shows a loading line, not the empty note, while the friends are first read", async () => {
+    act(() => {
+      render(<FriendsPane state={createState()} />, container);
+    });
+
+    expect(container.querySelector(".sb-friends-loading")).not.toBeNull();
+    expect(text()).not.toContain("No friends yet.");
+
+    await waitForIdle();
+
+    expect(container.querySelector(".sb-friends-loading")).toBeNull();
+    expect(text()).toContain("No friends yet.");
+  });
+
   it("shows an empty friends list with a way to add someone", async () => {
     await renderPane(createState());
 

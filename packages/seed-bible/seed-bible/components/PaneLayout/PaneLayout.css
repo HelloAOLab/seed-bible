@@ -176,12 +176,11 @@
    way, rather than undone for phones and embeds, so the flush values above
    live in one place. Its extra classes also let it win on specificity, so it
    doesn't rely on coming after the rule above. */
-@media (min-width: 481px) {
+:where(html:not([data-sb-app-layout="mobile"]))
   .sb-app-root:not(.sb-embed-minimal)
-    .sb-pane-shell:not(.sb-pane-shell-detached) {
-    border-radius: var(--sb-radius-lg);
-    margin: 0.75rem 0rem;
-  }
+  .sb-pane-shell:not(.sb-pane-shell-detached) {
+  border-radius: var(--sb-radius-lg);
+  margin: 0.75rem 0rem;
 }
 
 .sb-pane-shell-detached {
@@ -199,7 +198,7 @@
    whole viewport and the desktop sidebar stays docked beside it. These
    properties live here rather than in an inline style so the mobile bottom
    inset below can actually override them — an inline `bottom: 0` would win
-   over any stylesheet rule and silently defeat that media query. */
+   over any stylesheet rule and silently defeat that mobile rule. */
 .sb-pane-shell-detached[data-placement="fullscreen"] {
   box-shadow: none;
   border-radius: 0;
@@ -221,11 +220,10 @@
    while a pane fills the screen rather than having room reserved for it (see
    `isVerseToolbarVisible` in BibleReaderToolbar).
    NOTE: `FullscreenPane` must not set `bottom` inline — an inline value beats
-   this media query and reopens the "footer hidden behind the toolbar" bug. */
-@media (max-width: 480px) {
+   this rule and reopens the "footer hidden behind the toolbar" bug. */
+:where(html[data-sb-app-layout="mobile"])
   .sb-pane-shell-detached[data-placement="fullscreen"] {
-    bottom: 4.375rem;
-  }
+  bottom: 4.375rem;
 }
 
 /* A compact embed hides that bottom bar, so the same inset would leave a
@@ -391,33 +389,15 @@
   position: relative;
 }
 
+/* Placed and animated by `Popover`, which opens it into the reader from the
+   sidebar's corner (and mirrors that in RTL). */
 .sb-pane-layout-menu {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  /* The menu is wider than the sidebar it hangs off, so it has to open into the
-     reader. Logical inset, not `left`: in RTL the sidebar is on the right edge
-     and a physical `left: 0` would push the menu off the screen. */
-  inset-inline-start: 0;
   width: 23.25rem;
   padding: 1.25rem;
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-xl);
   background: var(--sb-reader-background);
   box-shadow: var(--sb-shadow-popover);
-  z-index: var(--sb-layer-popover);
-  /* The corner by its button, for the opening animation below. */
-  transform-origin: top left;
-}
-
-.sb-pane-layout-menu:dir(rtl) {
-  transform-origin: top right;
-}
-
-/* Opens like the ⋯ menus (`sb-context-menu-open`, in ContextMenu.css). */
-@media (prefers-reduced-motion: no-preference) {
-  .sb-pane-layout-menu {
-    animation: sb-context-menu-open var(--sb-duration-fast) ease-out;
-  }
 }
 
 .sb-pane-layout-menu-title {

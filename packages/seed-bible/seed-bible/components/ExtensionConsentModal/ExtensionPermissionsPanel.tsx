@@ -4,6 +4,7 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { ExtensionManager } from "../../managers/ExtensionManager";
 import type { SandboxPermission } from "../../extensions/protocol";
 import { PermissionCards, type ConsentLine } from "./ExtensionConsentModal";
+import { Switch } from "../Switch/Switch";
 
 export type PermissionsApi = Pick<
   ExtensionManager,
@@ -68,17 +69,12 @@ export function ExtensionPermissionsPanel({
     const permission = line.permission;
     const on = summary.granted.includes(permission);
     return (
-      <button
-        type="button"
-        role="switch"
-        aria-checked={on}
+      <Switch
         aria-label={line.label}
-        className="sb-extension-permissions-switch"
+        checked={on}
         disabled={saving.value}
-        onClick={() => void toggle(permission, !on)}
-      >
-        <span className="sb-extension-permissions-knob" />
-      </button>
+        onToggled={(checked) => void toggle(permission, checked)}
+      />
     );
   };
 

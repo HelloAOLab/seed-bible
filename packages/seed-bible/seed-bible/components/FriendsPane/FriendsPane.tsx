@@ -1,3 +1,5 @@
+import { LoadingStatus } from "../LoadingStatus/LoadingStatus";
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./FriendsPane.css";
 import { useEffect } from "preact/hooks";
 import { useSignal } from "@preact/signals";
@@ -25,6 +27,7 @@ import {
 } from "./friendLinks";
 import { PersonButton, type PersonProfileDeps } from "./PersonCard";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
 
 export const FRIENDS_PANE_ID = "friends-pane";
 
@@ -198,11 +201,10 @@ function AddFriendCard(props: { state: SeedBibleState; userId: string }) {
         {t("add-friend", { defaultValue: "Add a friend" })}
       </FriendsHeading>
       <form className="sb-friends-add-form" onSubmit={submit}>
-        <input
-          type="text"
+        <TextInput
           className="sb-friends-add-input"
           value={value.value}
-          onInput={(e) => (value.value = e.currentTarget.value)}
+          onValueInput={(text) => (value.value = text)}
           placeholder={
             ADD_FRIEND_BY_EMAIL_ENABLED
               ? t("add-friend-placeholder", {
@@ -500,15 +502,17 @@ export function FriendsPane(props: { state: SeedBibleState }) {
                 />
               ))}
             </ul>
+          ) : loading ? (
+            <LoadingStatus className="sb-friends-loading">
+              {t("loading", { defaultValue: "Loading…" })}
+            </LoadingStatus>
           ) : (
-            <p className="sb-friends-empty">
-              {loading
-                ? t("loading", { defaultValue: "Loading…" })
-                : t("friends-empty", {
-                    defaultValue:
-                      "No friends yet. Share your friend link, or add someone by their user ID.",
-                  })}
-            </p>
+            <EmptyState className="sb-friends-empty">
+              {t("friends-empty", {
+                defaultValue:
+                  "No friends yet. Share your friend link, or add someone by their user ID.",
+              })}
+            </EmptyState>
           )}
         </section>
 

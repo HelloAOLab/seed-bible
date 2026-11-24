@@ -120,7 +120,7 @@ describe("LoginModal backdrop", () => {
       );
     });
     const overlay = container.querySelector<HTMLElement>(
-      ".sb-footnote-modal-overlay"
+      ".sb-dialog-backdrop"
     )!;
     const emailInput = container.querySelector<HTMLElement>(
       ".sb-login-modal input[type=email]"
@@ -146,5 +146,77 @@ describe("LoginModal backdrop", () => {
 
     expect(state.login.isLoginOpen.value).toBe(true);
     expect(container.querySelector(".sb-login-modal")).not.toBeNull();
+  });
+
+  it("is a dialog named by its title, with focus in the email field", async () => {
+    const { emailInput } = await renderOpenLogin();
+
+    const dialog = container.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    expect(dialog.getAttribute("aria-label")).toBe("Login to your account");
+    expect(document.activeElement).toBe(emailInput);
+  });
+
+  it("names the email box for screen readers, not only by its placeholder", async () => {
+    const { emailInput } = await renderOpenLogin();
+
+    const box = emailInput as HTMLInputElement;
+    expect(box.labels?.[0]?.textContent).toBe("Enter your email address");
+    expect(box.placeholder).toBe("Enter your email address");
+  });
+
+  it("closes on Escape", async () => {
+    const { state, emailInput } = await renderOpenLogin();
+
+    act(() => {
+      emailInput.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    await vi.waitFor(() => expect(state.login.isLoginOpen.value).toBe(false));
+  });
+});
+
+describe("LoginModal terms", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+  });
+
+  it("is a checkbox named by the agreement, ticked by clicking its text, with the terms still a link", async () => {
+    const state = await createTestSeedBibleState();
+    act(() => {
+      state.login.isLoginOpen.value = true;
+      render(
+        <TestHost state={state}>
+          <LoginModal login={state.login} navigation={state.navigation} />
+        </TestHost>,
+        container
+      );
+    });
+
+    const terms = container.querySelector<HTMLInputElement>(
+      ".sb-login-modal input[type=checkbox]"
+    )!;
+    const label = terms.labels![0]!;
+    expect(label.textContent).toBe("I agree to the Terms of service");
+    expect(label.querySelector("a")?.getAttribute("href")).toBeTruthy();
+    expect(terms.checked).toBe(false);
+
+    act(() => {
+      label
+        .querySelector(".sb-checkbox-label")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(terms.checked).toBe(true);
   });
 });

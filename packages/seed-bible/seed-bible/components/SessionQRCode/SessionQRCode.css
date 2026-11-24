@@ -109,17 +109,17 @@
 /* The large code's modal blacks out everything behind it, not just dims it,
    so the small code it was opened from (in the share sheet or the sidebar)
    can't be scanned instead. */
-.sb-footnote-modal-overlay:has(.sb-session-qr-large) {
-  background: #000000;
+.sb-dialog-backdrop:has(.sb-session-qr-large) {
+  --sb-dialog-backdrop: #000000;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   /* The background deepens from the usual dim, the card rises into place,
      then the code settles in and a sheen passes over it once. */
-  .sb-footnote-modal-overlay:has(.sb-session-qr-large) {
+  .sb-dialog-backdrop:has(.sb-session-qr-large) {
     animation: sb-session-qr-backdrop-in 0.4s ease-out;
 
-    > .sb-footnote-modal {
+    > .sb-dialog {
       animation: sb-session-qr-card-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.15);
     }
   }
@@ -146,7 +146,7 @@
 
 @keyframes sb-session-qr-backdrop-in {
   from {
-    background-color: rgba(0, 0, 0, 0.45);
+    background-color: var(--sb-backdrop);
   }
 }
 

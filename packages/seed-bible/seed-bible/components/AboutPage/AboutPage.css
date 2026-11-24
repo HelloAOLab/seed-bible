@@ -160,8 +160,6 @@
   }
 }
 
-@media (max-width: 480px) {
-  .sb-about-actions {
-    padding-bottom: 4rem;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-about-actions {
+  padding-bottom: 4rem;
 }

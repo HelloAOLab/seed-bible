@@ -3,6 +3,7 @@ import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { PlayPlaylistView } from "@packages/seed-bible/seed-bible/components/PlayPlaylistView/PlayPlaylistView";
 import { PlaylistPagePane } from "@packages/seed-bible/seed-bible/components/PlaylistPagePane/PlaylistPagePane";
+import { PlaylistStepRow } from "@packages/seed-bible/seed-bible/components/PlaylistOverview/PlaylistOverview";
 import {
   createPlayingState,
   type Playlist,
@@ -526,6 +527,61 @@ describe("PlayPlaylistView", () => {
       )
     ).map((label) => label.textContent);
     expect(labels).toEqual(["Genesis 1:1 · In the beginning", "Genesis 1:2"]);
+  });
+
+  it("names a titled compare step by its title once, with no note tag after it", () => {
+    const playlist = createPlaylist({
+      items: [
+        verseItem({
+          ref: { bookId: "GEN", chapter: 1 },
+          compare: { ref: { bookId: "GEN", chapter: 2 } },
+          noteTitle: "Two creation accounts",
+        }),
+      ],
+    });
+    const { playlists } = createMockPlaylists(createPlayingState([playlist]));
+    const tabs = createMockTabs(createMockTab([book("GEN", "Genesis")]));
+
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(
+        ".sb-playlist-step-row-button .sb-discover-item-title"
+      )!.textContent
+    ).toBe("Two creation accounts");
+  });
+
+  it("keeps a titled compare step's title after a row label that isn't it", () => {
+    act(() => {
+      render(
+        <ul>
+          <PlaylistStepRow
+            item={verseItem({
+              ref: { bookId: "GEN", chapter: 1 },
+              compare: { ref: { bookId: "GEN", chapter: 2 } },
+              noteTitle: "Two creation accounts",
+            })}
+            resolveBookName={(id) => id}
+            label="Draft step"
+          />
+        </ul>,
+        container
+      );
+    });
+
+    expect(
+      container.querySelector(".sb-discover-item-title")!.textContent
+    ).toBe("Draft step · Two creation accounts");
   });
 
   it("opens the clicked queue item, including the one already playing", () => {

@@ -50,10 +50,8 @@
 /* The reader toolbar floats over the bottom of the pane, so leave room to
    scroll "Log out" clear of it. On phones the pane already stops above it
    (see PaneLayout.css). */
-@media (min-width: 481px) {
-  .sb-profile-screen {
-    padding-bottom: var(--sb-reader-bottom-inset, 6rem);
-  }
+:where(html:not([data-sb-app-layout="mobile"])) .sb-profile-screen {
+  padding-bottom: var(--sb-reader-bottom-inset, 6rem);
 }
 
 /* Wide viewports: the design is a phone layout, so cap it and centre. */
@@ -405,39 +403,6 @@ button.sb-profile-plans-link {
 }
 
 /* ------------------------------------------------------------ edit profile */
-
-.sb-profile-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.sb-profile-field-label {
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-}
-
-.sb-profile-field-optional {
-  color: var(--sb-profile-muted);
-  font-weight: 400;
-}
-
-.sb-profile-field-input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid var(--sb-profile-border);
-  border-radius: var(--sb-radius-lg);
-  background: var(--sb-reader-background);
-  box-sizing: border-box;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-16);
-}
-
-.sb-profile-field-textarea {
-  min-height: 96px;
-  resize: vertical;
-}
 
 .sb-profile-save {
   width: 100%;

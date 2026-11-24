@@ -15,6 +15,7 @@ import {
 } from "../TextItemInput/TextItemInput";
 import { LinkItemInput, type LinkItemInputHandle } from "../LinkItemInput";
 import { Button } from "../Button/Button";
+import { Select } from "../Select/Select";
 
 interface PlaylistItemInputProps {
   books: TranslationBook[];
@@ -118,13 +119,13 @@ export const PlaylistItemInput = forwardRef<
           : t("playlist-add-item", { defaultValue: "Add item" })
       }
     >
-      <select
+      <Select
         className="sb-playlist-add-mode-select"
+        size="sm"
         value={mode}
         aria-label={t("playlist-add-mode-label", { defaultValue: "Item type" })}
-        onChange={(event: Event) => {
-          const target = event.currentTarget as HTMLSelectElement;
-          setMode(target.value as AddMode);
+        onValueChange={(next) => {
+          setMode(next as AddMode);
         }}
       >
         {MODES.map((option) => (
@@ -132,7 +133,7 @@ export const PlaylistItemInput = forwardRef<
             {t(option.labelKey, { defaultValue: option.defaultLabel })}
           </option>
         ))}
-      </select>
+      </Select>
 
       {mode === "scripture" ? (
         <ScriptureItemInput

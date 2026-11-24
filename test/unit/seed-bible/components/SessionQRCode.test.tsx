@@ -48,7 +48,7 @@ describe("SessionQRCode", () => {
         <TestHost state={state}>
           <>
             {children}
-            <ModalHost manager={state.modals} />
+            <ModalHost manager={state.modals} isMobile={state.app.isMobile} />
             <ToastHost app={state.app} />
           </>
         </TestHost>,
@@ -117,20 +117,20 @@ describe("SessionQRCode", () => {
 
   it("opens a large version of the QR code when the code is clicked", async () => {
     await renderGeneratedQR();
-    expect(container.querySelector(".sb-session-qr-large")).toBeNull();
+    expect(document.querySelector(".sb-session-qr-large")).toBeNull();
 
     await click(
       container.querySelector<HTMLButtonElement>("button.sb-session-qr-code")
     );
     await waitFor(() =>
-      Boolean(container.querySelector(".sb-session-qr-large-code img"))
+      Boolean(document.querySelector(".sb-session-qr-large-code img"))
     );
 
     const smallSrc = container
       .querySelector(".sb-session-qr-code img")
       ?.getAttribute("src");
     expect(
-      container
+      document
         .querySelector(".sb-session-qr-large-code img")
         ?.getAttribute("src")
     ).toBe(smallSrc);
@@ -238,11 +238,11 @@ describe("SessionQRCode", () => {
       );
       const toast =
         container.querySelector<HTMLButtonElement>("button.sb-toast");
-      expect(container.querySelector(".sb-session-qr-large")).toBeNull();
+      expect(document.querySelector(".sb-session-qr-large")).toBeNull();
 
       await click(toast);
       await waitFor(() =>
-        Boolean(container.querySelector(".sb-session-qr-large-code img"))
+        Boolean(document.querySelector(".sb-session-qr-large-code img"))
       );
 
       expect(container.querySelector(".sb-toast")).toBeNull();

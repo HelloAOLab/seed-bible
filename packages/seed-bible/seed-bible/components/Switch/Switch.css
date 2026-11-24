@@ -1,0 +1,84 @@
+/* The shared on/off switch: a real checkbox (so forms, labels and screen
+   readers treat it as one) with `role="switch"`, drawn as a track and knob.
+   Its colors are custom properties, so a surface that needs it to look
+   different sets those on the switch or anything around it, instead of
+   overriding the rules:
+   - `--sb-switch-track` / `--sb-switch-knob`: off.
+   - `--sb-switch-on-track` / `--sb-switch-on-knob`: on.
+   The defaults are fallbacks where each is used rather than declared on the
+   switch, so a value set on a parent reaches it and one set on the switch
+   doesn't depend on stylesheet order.
+   Off: tints of the text color over the background, so the track is soft but
+   visible in light and dark, and the knob reads without the glare a pure
+   white one has on a dark surface. On: the primary's paired text color always
+   stands out on the primary (white on the light theme's orange, dark on the
+   dark theme's pale one). */
+.sb-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  flex-shrink: 0;
+  position: relative;
+  width: 2.75rem;
+  height: 1.5rem;
+  margin: 0;
+  border: none;
+  border-radius: var(--sb-radius-full);
+  background-color: var(
+    --sb-switch-track,
+    color-mix(in srgb, var(--sb-font-color) 22%, var(--sb-background))
+  );
+  cursor: pointer;
+  transition: background-color var(--sb-duration-base) ease;
+}
+
+.sb-switch::before {
+  content: "";
+  position: absolute;
+  top: 0.125rem;
+  inset-inline-start: 0.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background-color: var(
+    --sb-switch-knob,
+    color-mix(in srgb, var(--sb-font-color) 60%, var(--sb-background))
+  );
+  box-shadow: var(--sb-shadow-raised);
+  transition:
+    inset-inline-start var(--sb-duration-base) ease,
+    background-color var(--sb-duration-base) ease;
+}
+
+.sb-switch:checked,
+.sb-switch-on {
+  background-color: var(--sb-switch-on-track, var(--sb-primary-color));
+}
+
+.sb-switch:checked::before,
+.sb-switch-on::before {
+  inset-inline-start: 1.375rem;
+  background-color: var(--sb-switch-on-knob, var(--sb-primary-font-color));
+}
+
+/* The look-only `SwitchIndicator`: its menu item takes the clicks. */
+.sb-switch-indicator {
+  display: inline-block;
+  cursor: inherit;
+}
+
+.sb-switch:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+}
+
+.sb-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-switch,
+  .sb-switch::before {
+    transition: none;
+  }
+}

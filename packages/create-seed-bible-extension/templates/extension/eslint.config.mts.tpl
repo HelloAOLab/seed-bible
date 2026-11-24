@@ -4,6 +4,7 @@ import json from "@eslint/json";
 import { defineConfig, globalIgnores } from "eslint/config";
 import i18nUntranslatedContentRule from "./eslint-rules/i18nUntranslatedContentRule";
 import i18nExtensionIncompleteTranslationsRule from "./eslint-rules/i18nExtensionIncompleteTranslationsRule";
+import i18nExtensionKeyFormatRule from "./eslint-rules/i18nExtensionKeyFormatRule";
 
 const jsonPlugin = json as unknown as Record<string, unknown>;
 const i18nPlugin = {
@@ -15,11 +16,12 @@ const i18nJsonPlugin = {
   rules: {
     "translation-extension-incomplete-translations":
       i18nExtensionIncompleteTranslationsRule,
+    "translation-extension-key-format": i18nExtensionKeyFormatRule,
   },
 } as unknown as Record<string, unknown>;
 
-// These two rules are vendored from the seed-bible monorepo (see
-// eslint-rules/) — they're the two i18n lint rules that are genuinely
+// These rules are vendored from the seed-bible monorepo (see
+// eslint-rules/) — they're the i18n lint rules that are genuinely
 // self-contained (no dependency on the monorepo's own layout), unlike its
 // other i18n rules, which check this project's translations against the
 // *app's* own translation directory and don't apply outside it.
@@ -43,6 +45,7 @@ export default defineConfig([
     plugins: { json: jsonPlugin, "seed-bible-i18n": i18nJsonPlugin },
     rules: {
       "seed-bible-i18n/translation-extension-incomplete-translations": "warn",
+      "seed-bible-i18n/translation-extension-key-format": "error",
     },
   },
 ]);

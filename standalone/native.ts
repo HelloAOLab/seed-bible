@@ -27,9 +27,9 @@ if (publicOrigin) {
     publicOrigin,
     currentHref: () => window.location.href,
     reloadAt: (href, { replace }) => {
-      // Setting `location` to the new address would be caught by the app's
-      // own Navigation API handler (NavigationManager) and turned into an
-      // in-page update. A reload is the one navigation it lets through.
+      // Setting `location` instead would be caught and handled in place by
+      // NavigationManager wherever the Navigation API can intercept it.
+      // A reload is the one navigation it lets through.
       if (replace) {
         window.history.replaceState(null, "", href);
       } else {
@@ -42,8 +42,14 @@ if (publicOrigin) {
     pageStartedAt,
   };
 
+  // `pushState` rather than `location.assign`: NavigationManager picks up
+  // `pushState` on every platform, but it can't catch a `location` change in
+  // the iOS app (WebKit won't let `capacitor://` pages intercept navigations),
+  // so there the tap would restart the app.
   document.addEventListener("click", (event) => {
-    handleLinkClick(event, context, (href) => window.location.assign(href));
+    handleLinkClick(event, context, (href) =>
+      window.history.pushState(null, "", href)
+    );
   });
 
   void App.addListener("appUrlOpen", ({ url }) => {

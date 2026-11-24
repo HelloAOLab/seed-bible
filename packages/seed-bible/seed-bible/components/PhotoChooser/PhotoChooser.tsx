@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./PhotoChooser.css";
 import "../ProfilePictureModal/ProfilePictureModal.css";
 import { useRef } from "preact/hooks";
@@ -78,11 +79,11 @@ export function PhotoChooserContent(props: {
             {t("recent-uploads", { defaultValue: "Recent uploads" })}
           </h3>
           {recent.length === 0 ? (
-            <p className="sb-photo-chooser-empty">
+            <EmptyState>
               {t("no-photos-yet", {
                 defaultValue: "No photos yet. Upload a picture to get started.",
               })}
-            </p>
+            </EmptyState>
           ) : (
             <div className="sb-photo-gallery-grid">
               {recent.map((photo) => (

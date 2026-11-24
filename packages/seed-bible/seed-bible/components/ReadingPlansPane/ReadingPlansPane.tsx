@@ -1,3 +1,5 @@
+import { Spinner } from "../Spinner/Spinner";
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./ReadingPlansPane.css";
 import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
@@ -23,6 +25,7 @@ import type {
 } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { AppState } from "../../managers/SeedBibleStateManager";
 import type { Friend, FriendsManager } from "../../managers/FriendsManager";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import { Avatar } from "../Avatar/Avatar";
@@ -75,6 +78,8 @@ interface ReadingPlansPaneProps {
   ) => void;
   /** Shown after a plan share URL is copied. Optional — copy still works without it. */
   toast?: (message: string) => void;
+  /** Lets a plan's Share open the share sheet rather than only copy its link. */
+  app?: AppState;
   /**
    * Returns to the screen that opened the pane, when leaving a plan that screen
    * opened directly. The same callback the header's back button gets.
@@ -236,15 +241,21 @@ export async function openReadingPlanEditor(
 }
 
 /**
- * Opens the editor on a new plan. An in-flight draft is resumed rather than
+ * Opens the editor on a new plan. An in-flight new plan is resumed rather than
  * thrown away — the user may have stepped out of the editor to go read and add
- * a passage from the verse toolbar.
+ * a passage from the verse toolbar. An edit to a published plan is not: the
+ * user asked for a new plan, and the published copy is untouched until saved.
+ *
+ * Exported for the same reason as {@link openReadingPlanDetail}.
  */
-function openPlanCreate(readingPlans: ReadingPlansManager) {
-  if (!readingPlans.editingReadingPlan.peek()) {
+export function openPlanCreate(
+  readingPlans: ReadingPlansManager,
+  options: OpenPlanOptions = {}
+) {
+  if (!readingPlans.editingReadingPlan.peek()?.isNew) {
     readingPlans.startEditingReadingPlan();
   }
-  readingPlansView.value = "edit";
+  showPlan("edit", options);
 }
 
 /**
@@ -393,6 +404,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
     onOpenScripture,
     onPlayReadings,
     toast,
+    app,
     onBack,
   } = props;
   // The view outlives this component, so closing the pane to go read and add a
@@ -446,6 +458,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
         onOpenScripture={onOpenScripture}
         onPlayReadings={onPlayReadings}
         toast={toast}
+        app={app}
         onEdit={() => {
           const plan = readingPlans.selectedReadingPlan.peek();
           if (plan) {
@@ -469,6 +482,7 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
       onEdit={(plan) => void editPlan(plan)}
       onRestart={(plan) => void restartPlan(plan)}
       toast={toast}
+      app={app}
     />
   );
 }
@@ -496,6 +510,7 @@ interface ReadingPlansListProps {
   /** Starts a completed plan over on a fresh progress, then opens it. */
   onRestart: (plan: ReadingPlanMetadata) => void;
   toast?: (message: string) => void;
+  app?: AppState;
 }
 
 /** Resolves a book id to its display name, for reading labels/typeaheads. */
@@ -529,6 +544,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
     onEdit,
     onRestart,
     toast,
+    app,
   } = props;
   const { t } = useI18n();
   // Deleting a plan erases it for good, so the button asks once first rather
@@ -595,6 +611,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
       fullPlan={row.full}
       onEdit={() => onEdit(row.meta)}
       modals={modals}
+      app={app}
       toast={toast}
     />
   );
@@ -614,12 +631,12 @@ function ReadingPlansList(props: ReadingPlansListProps) {
     <div className="sb-reading-plans-pane">
       <div className="sb-reading-plans-scroll">
         {rows.length === 0 && drafts.length === 0 ? (
-          <div className="sb-reading-plans-empty">
+          <EmptyState className="sb-reading-plans-empty" size="panel">
             {t("reading-plans-empty", {
               defaultValue:
                 "You don't have any reading plans yet. Create one to get started.",
             })}
-          </div>
+          </EmptyState>
         ) : (
           <>
             {hero && hero.summary?.next ? (
@@ -652,11 +669,11 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                   </span>
                 </div>
                 <span className="sb-rp-today-go" aria-hidden="true">
-                  <MaterialIcon>
-                    {openingId === hero.planId
-                      ? "hourglass_top"
-                      : "arrow_forward"}
-                  </MaterialIcon>
+                  {openingId === hero.planId ? (
+                    <Spinner size="1.5rem" />
+                  ) : (
+                    <MaterialIcon>arrow_forward</MaterialIcon>
+                  )}
                 </span>
               </button>
             ) : null}
@@ -808,9 +825,16 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                             </span>
                           </span>
                         </button>
-                        <MaterialIcon className="sb-rp-card-chevron">
-                          {opening ? "hourglass_top" : "arrow_forward"}
-                        </MaterialIcon>
+                        {opening ? (
+                          <Spinner
+                            size="1.5rem"
+                            className="sb-rp-card-chevron"
+                          />
+                        ) : (
+                          <MaterialIcon className="sb-rp-card-chevron">
+                            arrow_forward
+                          </MaterialIcon>
+                        )}
                         {optionsMenu(row)}
                       </div>
                       <PlanLoadError planId={row.planId} />
@@ -1144,9 +1168,13 @@ function ActivePlanCard(props: {
         {props.openLabel ? (
           <span className="sb-rp-card-open-label">{props.openLabel}</span>
         ) : null}
-        <MaterialIcon className="sb-rp-card-chevron">
-          {opening ? "hourglass_top" : "arrow_forward"}
-        </MaterialIcon>
+        {opening ? (
+          <Spinner size="1.5rem" className="sb-rp-card-chevron" />
+        ) : (
+          <MaterialIcon className="sb-rp-card-chevron">
+            arrow_forward
+          </MaterialIcon>
+        )}
         {menu}
       </div>
 
