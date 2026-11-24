@@ -8,6 +8,7 @@ import "./TipTapEditor.css";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import { MaterialIcon } from "../icons";
+import { handleHorizontalListKeyNav } from "../../app/keyboardNav";
 
 export interface TipTapEditorProps {
   className?: string;
@@ -122,11 +123,18 @@ export default function TipTapEditor(props: TipTapEditorProps) {
 /**
  * Formatting toolbar for the editor. Re-renders on every editor transaction so
  * each button reflects the current selection's active marks and alignment.
+ *
+ * The toolbar is a single Tab stop (roving-tabindex pattern): only one button
+ * has tabIndex=0 at a time, and ArrowLeft/ArrowRight (plus Home/End) move
+ * between buttons. Tab exits the toolbar in one press.
  */
 function EditorMenuBar({ editor }: { editor: Editor | null }) {
   const { t } = useI18n();
   // Bump on each transaction to re-read `isActive` for the current selection.
   const [, setVersion] = useState(0);
+  // Index (0–6) of the button that owns tabIndex=0. Starts on Bold.
+  const [rovingIndex, setRovingIndex] = useState(0);
+  const toolbarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!editor) {
@@ -143,26 +151,68 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
     return null;
   }
 
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (handleHorizontalListKeyNav(event, toolbarRef.current)) {
+      // Sync rovingIndex to whichever button just received focus.
+      const toolbar = toolbarRef.current;
+      if (!toolbar) return;
+      const buttons = Array.from(
+        toolbar.querySelectorAll<HTMLElement>("button:not([disabled])")
+      );
+      const newIndex = buttons.indexOf(document.activeElement as HTMLElement);
+      if (newIndex >= 0) setRovingIndex(newIndex);
+    }
+  };
+
+  // Bubble-phase focus: keeps rovingIndex in sync when a button is clicked or
+  // focused by any means other than arrow keys (e.g. mouse click).
+  const handleFocus = (event: FocusEvent) => {
+    const toolbar = toolbarRef.current;
+    if (!toolbar || !(event.target instanceof HTMLButtonElement)) return;
+    const buttons = Array.from(
+      toolbar.querySelectorAll<HTMLElement>("button:not([disabled])")
+    );
+    const index = buttons.indexOf(event.target);
+    if (index >= 0) setRovingIndex(index);
+  };
+
+  // Flat button index used for the roving-tabindex calculation below.
+  let buttonIndex = -1;
+  const nextTabIndex = () => {
+    buttonIndex += 1;
+    return buttonIndex === rovingIndex ? 0 : -1;
+  };
+
   return (
-    <div className="sb-editor-toolbar" role="toolbar">
+    <div
+      ref={toolbarRef}
+      className="sb-editor-toolbar"
+      role="toolbar"
+      aria-label={t("editor-toolbar-label", { defaultValue: "Formatting" })}
+      onKeyDown={handleKeyDown}
+      onFocus={handleFocus}
+    >
       <div className="sb-editor-toolbar-group">
         <MenuButton
           icon="format_bold"
           label={t("editor-format-bold", { defaultValue: "Bold" })}
           active={editor.isActive("bold")}
           onClick={() => editor.chain().focus().toggleBold().run()}
+          tabIndex={nextTabIndex()}
         />
         <MenuButton
           icon="format_italic"
           label={t("editor-format-italic", { defaultValue: "Italic" })}
           active={editor.isActive("italic")}
           onClick={() => editor.chain().focus().toggleItalic().run()}
+          tabIndex={nextTabIndex()}
         />
         <MenuButton
           icon="format_underlined"
           label={t("editor-format-underline", { defaultValue: "Underline" })}
           active={editor.isActive("underline")}
           onClick={() => editor.chain().focus().toggleUnderline().run()}
+          tabIndex={nextTabIndex()}
         />
       </div>
       <div className="sb-editor-toolbar-group">
@@ -171,24 +221,28 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
           label={t("editor-align-left", { defaultValue: "Align left" })}
           active={editor.isActive({ textAlign: "left" })}
           onClick={() => editor.chain().focus().setTextAlign("left").run()}
+          tabIndex={nextTabIndex()}
         />
         <MenuButton
           icon="format_align_center"
           label={t("editor-align-center", { defaultValue: "Align center" })}
           active={editor.isActive({ textAlign: "center" })}
           onClick={() => editor.chain().focus().setTextAlign("center").run()}
+          tabIndex={nextTabIndex()}
         />
         <MenuButton
           icon="format_align_right"
           label={t("editor-align-right", { defaultValue: "Align right" })}
           active={editor.isActive({ textAlign: "right" })}
           onClick={() => editor.chain().focus().setTextAlign("right").run()}
+          tabIndex={nextTabIndex()}
         />
         <MenuButton
           icon="format_align_justify"
           label={t("editor-align-justify", { defaultValue: "Justify" })}
           active={editor.isActive({ textAlign: "justify" })}
           onClick={() => editor.chain().focus().setTextAlign("justify").run()}
+          tabIndex={nextTabIndex()}
         />
       </div>
     </div>
@@ -200,9 +254,16 @@ interface MenuButtonProps {
   label: string;
   active: boolean;
   onClick: () => void;
+  tabIndex: number;
 }
 
-function MenuButton({ icon, label, active, onClick }: MenuButtonProps) {
+function MenuButton({
+  icon,
+  label,
+  active,
+  onClick,
+  tabIndex,
+}: MenuButtonProps) {
   return (
     <TooltipTrigger>
       <button
@@ -217,6 +278,7 @@ function MenuButton({ icon, label, active, onClick }: MenuButtonProps) {
         onMouseDown={(event) => event.preventDefault()}
         aria-label={label}
         aria-pressed={active}
+        tabIndex={tabIndex}
       >
         <MaterialIcon>{icon}</MaterialIcon>
       </button>

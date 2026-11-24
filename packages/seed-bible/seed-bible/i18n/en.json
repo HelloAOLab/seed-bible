@@ -416,6 +416,7 @@
   "stop": "Stop",
   "previous": "Previous",
   "next": "Next",
+  "editor-toolbar-label": "Formatting",
   "editor-format-bold": "Bold",
   "editor-format-italic": "Italic",
   "editor-format-underline": "Underline",
