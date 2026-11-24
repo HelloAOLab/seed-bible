@@ -2909,6 +2909,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return getReaderNavLabel();
   };
 
+  // Focuses a verse span inside the reader pane that owns this toolbar.
+  // Using verseToolbarRef to scope the query prevents compare/split-screen
+  // from accidentally focusing the same verse number in the other pane.
+  const focusVerseInOwnPane = (num: number) => {
+    const pane =
+      verseToolbarRef.current?.closest<HTMLElement>(".sb-pane-shell");
+    const scope: ParentNode = pane ?? document;
+    scope
+      .querySelector<HTMLElement>(`.sb-verse[data-verse-number="${num}"]`)
+      ?.focus();
+  };
+
   return (
     <>
       {!shouldReplaceDefaultToolbar.value && (
@@ -3388,11 +3400,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               selectionState.value?.selectedVerses.value[0]?.verse.number;
             leaveVerseSheetStep();
             if (verseNum != null) {
-              document
-                .querySelector<HTMLElement>(
-                  `.sb-verse[data-verse-number="${verseNum}"]`
-                )
-                ?.focus();
+              focusVerseInOwnPane(verseNum);
             }
           }}
           floating={{
@@ -3977,11 +3985,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                               .number;
                           if (verseNum != null) {
                             requestAnimationFrame(() => {
-                              document
-                                .querySelector<HTMLElement>(
-                                  `.sb-verse[data-verse-number="${verseNum}"]`
-                                )
-                                ?.focus();
+                              focusVerseInOwnPane(verseNum);
                             });
                           }
                         })
@@ -4214,6 +4218,11 @@ function VerseToolbarFrame(props: {
   if (mobile) return <BottomSheet {...sheet}>{children}</BottomSheet>;
 
   const handleKeyDown = (event: KeyboardEvent) => {
+    // A child (the highlight color picker, an inline tool menu) may have
+    // already handled this key and called preventDefault(). Don't double-fire:
+    // one Escape should close the picker, not close the picker AND the toolbar.
+    if (event.defaultPrevented) return;
+
     // ArrowLeft/Right navigate between the toolbar's buttons. This also
     // blocks the global chapter-navigation shortcut in TabsLayout (which
     // checks event.defaultPrevented). ArrowUp/Down are swallowed so the

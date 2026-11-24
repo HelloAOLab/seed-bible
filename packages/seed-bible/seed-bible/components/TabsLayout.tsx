@@ -727,8 +727,9 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   }, [isCompactReader, readingState]);
 
   // Keyboard shortcuts for the selected slot:
-  //   Up / Down  — scroll the reader
-  //   Left / Right — move between chapters (respects RTL)
+  //   Up          — open the search panel
+  //   Left/Right  — move between chapters (respects RTL, matches swipe/chevrons)
+  //   Down        — intentionally unbound
   // These shortcuts must not fire when the user is interacting with a widget
   // that owns arrow-key semantics (menus, dialogs, the tutorial, toolbars,
   // sliders). Those widgets either call event.preventDefault() themselves (so
@@ -772,12 +773,17 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       }
 
       if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-        if (!scroller) return;
-        event.preventDefault();
-        scroller.scrollBy({
-          top: event.key === "ArrowDown" ? 120 : -120,
-          behavior: "smooth",
-        });
+        // When focus is on a verse span the chapter key handler in BibleReader
+        // owns ArrowUp/Down (verse navigation). Don't compete with it here —
+        // the explicit check is more reliable than depending on defaultPrevented
+        // across Preact's delegated event dispatch.
+        if (target?.closest(".sb-verse[data-verse-number]")) return;
+
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          state.sidebar.openSearch();
+        }
+        // ArrowDown is intentionally unbound when focus is not on a verse.
         return;
       }
 
@@ -812,7 +818,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [readingState, state, slot.id, scroller]);
+  }, [readingState, state, slot.id]);
 
   // Drop the inline transform on a translation change so the track falls back
   // to the stylesheet's centred rest (which flips for RTL). In `useEffect`

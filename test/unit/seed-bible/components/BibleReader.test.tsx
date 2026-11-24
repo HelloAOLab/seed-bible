@@ -1916,6 +1916,83 @@ describe("BibleReader", () => {
     }
   });
 
+  it("Shift+ArrowUp after Shift+ArrowDown shrinks the staged selection", () => {
+    // Shift+Down from verse 1 stages {1,2}; Shift+Up back stages only {1}.
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const verse1 = getVerseEl(1);
+    act(() => {
+      verse1.focus();
+    });
+
+    // Extend: anchor=1, focus moves to 2, staged={1,2}
+    act(() => {
+      verse1.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(getVerseEl(1).className).toContain("sb-verse-selected");
+    expect(getVerseEl(2).className).toContain("sb-verse-selected");
+
+    // Shrink: anchor still 1, focus moves back to 1, staged={1}
+    act(() => {
+      getVerseEl(2).dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowUp",
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(getVerseEl(1).className).toContain("sb-verse-selected");
+    // Verse 2 is no longer in the staged range after shrinking.
+    expect(getVerseEl(2).className).not.toContain("sb-verse-selected");
+    // Still no selectVerse calls — toolbar still hidden.
+    expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("staged selection is cleared when focus leaves the chapter content", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const verse1 = getVerseEl(1);
+    act(() => {
+      verse1.focus();
+    });
+    act(() => {
+      verse1.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(getVerseEl(1).className).toContain("sb-verse-selected");
+
+    // Simulate focus moving outside the chapter (relatedTarget = null ≡ outside).
+    const contentDiv = verse1.closest<HTMLElement>(".sb-chapter-content")!;
+    act(() => {
+      contentDiv.dispatchEvent(
+        new FocusEvent("focusout", { bubbles: true, relatedTarget: null })
+      );
+    });
+
+    expect(getVerseEl(1).className).not.toContain("sb-verse-selected");
+    expect(selectVerse).not.toHaveBeenCalled();
+  });
+
   it("Enter on a verse focuses the first verse-toolbar button after it renders", async () => {
     // The verse toolbar lives outside ChapterContent, so simulate it by
     // injecting a fake toolbar button into the document. After Enter the

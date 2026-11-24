@@ -2484,6 +2484,12 @@ function ChapterContent(props: ChapterContentProps) {
   const [stagedVerseNums, setStagedVerseNums] = useState<ReadonlySet<number>>(
     () => new Set()
   );
+  // The verse the Shift+Arrow selection started from. Recomputing from anchor
+  // → current on every Shift+Arrow press makes the range shrink correctly when
+  // the user reverses direction (Shift+Down, Shift+Down, Shift+Up → 2 verses).
+  const [shiftAnchorVerseNum, setShiftAnchorVerseNum] = useState<number | null>(
+    null
+  );
 
   // Reset to "auto-first" whenever the reader moves to a different chapter so
   // the new chapter's first verse always starts as the Tab entry point.
@@ -2498,6 +2504,7 @@ function ChapterContent(props: ChapterContentProps) {
         lastChapterId = id;
         setRovingVerseNumber(null);
         setStagedVerseNums(new Set());
+        setShiftAnchorVerseNum(null);
       }
     });
   }, []);
@@ -2513,11 +2520,16 @@ function ChapterContent(props: ChapterContentProps) {
     const verseEl = target?.closest<HTMLElement>(
       ".sb-verse[data-verse-number]"
     );
-    if (!verseEl) return;
+    // Only intercept keys whose target IS the verse span itself. Buttons and
+    // other focusable elements inside the verse (footnote ⓘ, note icon) must
+    // keep their native keyboard behaviour — Enter on a footnote should open
+    // the footnote, not select the verse.
+    if (!verseEl || target !== verseEl) return;
 
     if (event.key === "Escape") {
       event.preventDefault();
       setStagedVerseNums(new Set());
+      setShiftAnchorVerseNum(null);
       selectedVerses.value = [];
       return;
     }
@@ -2562,6 +2574,7 @@ function ChapterContent(props: ChapterContentProps) {
           onHostVerseClick(verse);
         }
         setStagedVerseNums(new Set());
+        setShiftAnchorVerseNum(null);
         requestAnimationFrame(() => {
           document
             .querySelector<HTMLElement>(
@@ -2628,21 +2641,57 @@ function ChapterContent(props: ChapterContentProps) {
       nextEl.focus();
 
       if (event.shiftKey) {
-        // Stage both the anchor verse and the destination. Staged verses are
-        // highlighted visually but do not go into selectedVerses — the toolbar
-        // stays hidden until Enter confirms the selection.
+        // Staged verses: highlighted but not yet in selectedVerses — toolbar
+        // stays hidden until Enter confirms. Recompute as the full range from
+        // anchor → destination so reversing direction shrinks the selection.
         const currentNum = parseInt(verseEl.dataset.verseNumber ?? "", 10);
         const nextNum = parseInt(nextEl.dataset.verseNumber ?? "", 10);
-        setStagedVerseNums((prev) => {
-          const next = new Set(prev);
-          if (!isNaN(currentNum)) next.add(currentNum);
-          if (!isNaN(nextNum)) next.add(nextNum);
-          return next;
-        });
+        if (!isNaN(currentNum) && !isNaN(nextNum)) {
+          // Set anchor on the first Shift+Arrow of a new gesture.
+          const anchor = shiftAnchorVerseNum ?? currentNum;
+          if (shiftAnchorVerseNum === null) setShiftAnchorVerseNum(currentNum);
+
+          // Collect all verse numbers between anchor and destination in DOM order.
+          const allVerseNums = Array.from(
+            content.querySelectorAll<HTMLElement>(
+              ".sb-verse[data-verse-number]"
+            )
+          )
+            .map((el) => parseInt(el.dataset.verseNumber ?? "", 10))
+            .filter((n) => !isNaN(n));
+          const anchorIdx = allVerseNums.indexOf(anchor);
+          const destIdx = allVerseNums.indexOf(nextNum);
+          if (anchorIdx !== -1 && destIdx !== -1) {
+            const lo = Math.min(anchorIdx, destIdx);
+            const hi = Math.max(anchorIdx, destIdx);
+            setStagedVerseNums(new Set(allVerseNums.slice(lo, hi + 1)));
+          }
+        }
       } else {
         // Plain arrow clears any staged selection.
         if (stagedVerseNums.size > 0) setStagedVerseNums(new Set());
+        if (shiftAnchorVerseNum !== null) setShiftAnchorVerseNum(null);
       }
+    }
+  };
+
+  // Clear the staged Shift+Arrow selection whenever focus leaves the chapter
+  // (Tab away, mouse click outside) so a stale highlight can't unexpectedly
+  // commit on a later Enter.
+  const handleChapterFocusOut = (event: FocusEvent) => {
+    const relatedTarget = event.relatedTarget as HTMLElement | null;
+    if (!contentRef.current?.contains(relatedTarget)) {
+      setStagedVerseNums(new Set());
+      setShiftAnchorVerseNum(null);
+    }
+  };
+
+  // A mouse click on the chapter also clears staged state so a pointer-driven
+  // selection doesn't inherit an unconfirmed keyboard range.
+  const handleChapterClick = () => {
+    if (stagedVerseNums.size > 0) {
+      setStagedVerseNums(new Set());
+      setShiftAnchorVerseNum(null);
     }
   };
 
@@ -3147,8 +3196,10 @@ function ChapterContent(props: ChapterContentProps) {
         justConvertedSelectionRef.current = false;
       }}
       onPointerUp={selectVersesFromTextSelection}
+      onClick={handleChapterClick}
       onKeyDown={handleChapterKeyDown}
       onFocusIn={handleChapterFocusIn}
+      onFocusOut={handleChapterFocusOut}
     >
       <svg className="sb-highlight-layer" aria-hidden="true">
         {ribbons.map((ribbon) => (
