@@ -1,5 +1,6 @@
 import type { ReadonlySignal } from "@preact/signals";
 import type { LoginManager } from "../../managers/LoginManager";
+import type { NotificationsManager } from "../../managers/NotificationsManager";
 import type { BibleTheme } from "../../managers/ThemeManager";
 import type {
   TodayManager,
@@ -30,6 +31,8 @@ import { useSignal } from "@preact/signals";
 export interface TodayScreenProps {
   today: TodayManager;
   login: LoginManager;
+  /** Behind the bell, which opens the notifications list. */
+  notifications: NotificationsManager;
   theme: ReadonlySignal<BibleTheme>;
   isMobile: ReadonlySignal<boolean>;
   /** The user's bookmarks, most recently moved first. */
@@ -105,7 +108,11 @@ function TodayContainer(props: TodayScreenProps) {
 function TodayContent(props: TodayScreenProps) {
   return (
     <div className="sb-today-content">
-      <Header login={props.login} onClose={props.onClose} />
+      <Header
+        login={props.login}
+        notifications={props.notifications}
+        onClose={props.onClose}
+      />
       {/* Unconditional: `TodayContainer` only reaches here while history is
           loading or ready, and the resume card renders a placeholder for the
           former. The `empty` case rendered Welcome instead. */}

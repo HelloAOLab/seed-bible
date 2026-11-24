@@ -333,6 +333,12 @@ function createInstruments(meter: Meter): Instruments {
 export function routeLabel(pathname: string): string {
   if (pathname === "/healthz") return "/healthz";
   if (pathname.startsWith("/__invalidate")) return "/__invalidate";
+  if (
+    pathname === "/api/notifications/config" ||
+    pathname === "/api/notifications/friend-request"
+  ) {
+    return pathname;
+  }
 
   const segments = pathname.split("/").filter(Boolean);
   if (segments[0] === "b" && segments.length >= 2) {

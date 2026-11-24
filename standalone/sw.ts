@@ -43,6 +43,13 @@ import { CacheFirst, StaleWhileRevalidate } from "workbox-strategies";
 import { hasDownloadedTranslation } from "./swOffline";
 import { createHtmlPageStore, handleNavigation } from "./swNavigation";
 import {
+  notificationClickUrl,
+  openNotificationUrl,
+  PUSH_RECEIVED_MESSAGE,
+  pushDisplay,
+  readPushData,
+} from "./swPush";
+import {
   getHtmlCacheName,
   isAppShellNavigation,
   isCacheableStaticAsset,
@@ -298,6 +305,47 @@ registerRoute(
     ],
   })
 );
+
+// ─── Push notifications ──────────────────────────────────────────────────────
+// See docs/notifications.md §7.3; the decisions are made in `swPush.ts`.
+
+const windowClients = () =>
+  self.clients.matchAll({ type: "window", includeUncontrolled: true });
+
+self.addEventListener("push", (event) => {
+  // Every push has to show a notification (it was subscribed with
+  // `userVisibleOnly`), so one that can't be read still shows a plain one.
+  const display = pushDisplay(readPushData(event.data), self.location.origin);
+  event.waitUntil(
+    Promise.all([
+      self.registration.showNotification(display.title, display.options),
+      // An open window refreshes its lists, so what the push is about is
+      // already there when the person looks.
+      windowClients().then((windows) => {
+        for (const client of windows) {
+          client.postMessage({
+            type: PUSH_RECEIVED_MESSAGE,
+            tag: display.options.tag ?? null,
+          });
+        }
+      }),
+    ])
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = notificationClickUrl(
+    event.notification.data,
+    self.location.origin
+  );
+  event.waitUntil(
+    openNotificationUrl(url, {
+      matchAll: windowClients,
+      openWindow: (target) => self.clients.openWindow(target),
+    })
+  );
+});
 
 // ─── Lifecycle ───────────────────────────────────────────────────────────────
 // `registerType: "autoUpdate"` in vite.config.ts means there is no "reload to

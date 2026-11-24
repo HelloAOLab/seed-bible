@@ -279,11 +279,22 @@ describe("TodayPane", () => {
       expect(container.querySelector(".sb-today-close-button")).toBeNull();
     });
 
+    // The bell is in the personalized layout's header row, which Welcome
+    // doesn't have.
+    it("shows Welcome without a notifications bell", () => {
+      setup({ status: "empty" });
+
+      expect(
+        container.querySelector(".sb-today-notifications-button")
+      ).toBeNull();
+    });
+
     it("hands each personalized section the props it needs", () => {
       const props = setup({ bookmarks: [aBookmark] });
 
       expect(propsOf(Header)).toMatchObject({
         login: props.login,
+        notifications: props.notifications,
         onClose: props.onClose,
       });
       expect(propsOf(ResumeReadingSection)).toMatchObject({

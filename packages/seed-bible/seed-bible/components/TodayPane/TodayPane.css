@@ -305,9 +305,38 @@
 /* Always the last one in the row, whatever other buttons join it. */
 .sb-today-close-button {
   grid-column: -2 / -1;
+}
+
+.sb-today-header > .sb-today-notifications-button {
+  grid-column: -3 / -2;
+}
+
+.sb-today-close-button,
+.sb-today-header > .sb-today-notifications-button {
   grid-row: 1 / 3;
   justify-self: end;
   align-self: self-start;
+}
+
+/* Looks like the reader toolbar's unread badge
+   (`.sb-reader-toolbar-unread-indicator`), hanging off the bell's top corner. */
+.sb-today-notifications-badge {
+  position: absolute;
+  top: -0.125rem;
+  inset-inline-end: -0.125rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: var(--sb-radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--sb-font-size-10);
+  font-weight: 700;
+  line-height: 1;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  pointer-events: none;
 }
 
 .sb-today-container .sb-today-resume-card {

@@ -304,7 +304,13 @@ describe("mobile saves screen", () => {
       expect(toast).toHaveBeenCalledWith("Couldn't save. Please try again.");
       expect(closeModal).not.toHaveBeenCalled();
       expect(state.saves.saves.value).toEqual([]);
-      expect(state.os.recordData).not.toHaveBeenCalled();
+      // Signing in also writes the account's notification state, which isn't
+      // a save.
+      expect(
+        vi
+          .mocked(state.os.recordData)
+          .mock.calls.filter(([, address]) => address === "saves")
+      ).toEqual([]);
     });
 
     /** The star renders as an SVG, so "filled" is its fill, not a font axis. */

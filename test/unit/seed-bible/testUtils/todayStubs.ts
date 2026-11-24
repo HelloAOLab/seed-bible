@@ -2,6 +2,7 @@ import type {
   LoginManager,
   UserProfile,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import type { NotificationsManager } from "@packages/seed-bible/seed-bible/managers/NotificationsManager";
 import type { TodayManager } from "@packages/seed-bible/seed-bible/managers/TodayManager";
 import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import type { TodayScreenProps } from "@packages/seed-bible/seed-bible/components/TodayPane/TodayPane";
@@ -25,6 +26,17 @@ export function loginStub(parts: Partial<LoginManager>): LoginManager {
   return parts as unknown as LoginManager;
 }
 
+/** Nothing unread, which is all the bell needs to render. */
+export function notificationsStub(
+  parts: Partial<NotificationsManager> = {}
+): NotificationsManager {
+  return {
+    unreadCount: signal(0),
+    openFeed: vi.fn(),
+    ...parts,
+  } as unknown as NotificationsManager;
+}
+
 /** A `LoginManager` whose profile carries just a display name. */
 export function loginWithName(name: string | undefined): LoginManager {
   return loginStub({
@@ -44,6 +56,7 @@ export function todayScreenPropsStub(
   return {
     today: todayStub({}),
     login: loginWithName("Tester"),
+    notifications: notificationsStub(),
     theme: signal({ variables: {} } as unknown as BibleTheme),
     isMobile: signal(false),
     bookmarks: signal([]),

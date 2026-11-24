@@ -117,6 +117,12 @@ export interface FriendsManager {
   isLoading: ReadonlySignal<boolean>;
 
   /**
+   * True while names and pictures for people in the lists are still loading,
+   * so something that names them can wait instead of showing a placeholder.
+   */
+  isLoadingProfiles: ReadonlySignal<boolean>;
+
+  /**
    * True once the lists have been read for the signed-in account, and through
    * later refreshes. Until then (or when every read so far has failed) empty
    * lists don't mean someone isn't a friend.
@@ -158,6 +164,15 @@ export interface FriendsManager {
 
   /** Stops following sign-in changes and the app coming back into focus. */
   dispose: () => void;
+}
+
+export interface FriendsManagerOptions {
+  /**
+   * Called when a brand-new request has gone out: not when one was already
+   * waiting, they were already friends, or their request was accepted
+   * instead. Push notifications use it to tell the recipient.
+   */
+  onRequestSent?: (requestId: string) => void;
 }
 
 type FriendLink = { userId: string; sharedPermissionIds: string[] };
@@ -213,7 +228,8 @@ const sameLinks = (a: FriendLink[], b: FriendLink[]): boolean =>
 
 export function createFriendsManager(
   os: CasualOSManager,
-  login: LoginManager
+  login: LoginManager,
+  { onRequestSent }: FriendsManagerOptions = {}
 ): FriendsManager {
   const links = signal<FriendLink[]>(EMPTY_LINKS);
   const incoming = signal<SharedPermission[]>(EMPTY_REQUESTS);
@@ -228,6 +244,7 @@ export function createFriendsManager(
   let refreshVersion = 0;
   let lastRefreshStartedMs = 0;
   const profilesInFlight = new Set<string>();
+  const profilesPending = signal(0);
 
   const profileFor = (userId: string): Profile =>
     profiles.value.get(userId) ?? {
@@ -301,6 +318,7 @@ export function createFriendsManager(
     await Promise.all(
       wanted.map(async (userId) => {
         profilesInFlight.add(userId);
+        profilesPending.value++;
         try {
           const profile = await login.getPublicProfile(userId);
           const next = new Map(profiles.peek());
@@ -312,6 +330,7 @@ export function createFriendsManager(
           console.warn(`Could not load the profile for ${userId}:`, error);
         } finally {
           profilesInFlight.delete(userId);
+          profilesPending.value--;
         }
       })
     );
@@ -374,14 +393,16 @@ export function createFriendsManager(
           (r) => isPendingFriendRequest(r, nowMs) && r.targetUserId !== userId
         );
         loadedUserId.value = userId;
-      });
 
-      const people = new Set<string>(byUser.keys());
-      for (const r of incoming.peek()) people.add(r.requestingUserId);
-      for (const r of outgoing.peek()) {
-        if (r.targetUserId) people.add(r.targetUserId);
-      }
-      void loadProfiles([...people], options?.reloadProfiles ?? false);
+        // Started inside the batch, so nothing sees the new lists without
+        // also seeing that their names are on the way.
+        const people = new Set<string>(byUser.keys());
+        for (const r of incoming.peek()) people.add(r.requestingUserId);
+        for (const r of outgoing.peek()) {
+          if (r.targetUserId) people.add(r.targetUserId);
+        }
+        void loadProfiles([...people], options?.reloadProfiles ?? false);
+      });
     } catch (error) {
       // Keeps whatever was shown before rather than blanking the lists over a
       // dropped request; the next refresh tries again.
@@ -410,8 +431,9 @@ export function createFriendsManager(
     }
   });
 
-  // Requests arrive while the app sits in the background, and there's no
-  // push channel yet, so coming back to the app is when to look again.
+  // Requests arrive while the app sits in the background, and only devices
+  // with push turned on hear about them, so coming back to the app is when to
+  // look again.
   const refreshOnReturn = () => {
     if (
       document.visibilityState === "visible" &&
@@ -694,6 +716,15 @@ export function createFriendsManager(
       }
     }
 
+    // Told before the lists are read again, so a push reaches them sooner.
+    // Not after an account switch: the hook acts as whoever is signed in.
+    if (login.userId.peek() === me) {
+      try {
+        onRequestSent?.(requestId);
+      } catch (error) {
+        console.warn("onRequestSent failed:", error);
+      }
+    }
     await refresh();
     return { status: "sent", requestId };
   };
@@ -740,6 +771,7 @@ export function createFriendsManager(
     outgoingRequests,
     isLoading,
     hasLoaded,
+    isLoadingProfiles: computed(() => profilesPending.value > 0),
     refresh,
     sendRequest,
     acceptRequest,
