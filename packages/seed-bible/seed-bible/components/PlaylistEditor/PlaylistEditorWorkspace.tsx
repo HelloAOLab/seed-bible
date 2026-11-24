@@ -3,11 +3,8 @@ import type { ComponentChildren } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import type { ReaderTab } from "../../managers/TabsManager";
-import type {
-  PlaylistItemData,
-  PlaylistManager,
-} from "../../managers/PlaylistManager";
+import type { PlaylistItemData } from "../../managers/PlaylistManager";
+import type { StepEditor } from "../../managers/StepEditor";
 import { uploadPhotoToGallery } from "../../managers/UserGalleryManager";
 import { HeroImageField } from "../HeroImageField/HeroImageField";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
@@ -19,11 +16,11 @@ import {
 import {
   AddStepMenu,
   AddStepToggle,
-  PlaylistEditorBackButton,
-  PlaylistStepsSummary,
-  usePlaylistDraftStatus,
+  playlistEditorPanelHost,
+  StepEditorBackButton,
   useResolveBookName,
 } from "./PlaylistEditorPanel";
+import type { StepEditorHost } from "./stepEditorHost";
 import { PlaylistCompareEditor } from "./PlaylistCompareEditor";
 import { PlaylistStepCard, type StepCardContext } from "./PlaylistStepCard";
 import {
@@ -31,43 +28,13 @@ import {
   playlistStepKind,
   playlistStepKindName,
   playlistStepLabel,
+  playlistStepMinutes,
   playlistTotalMinutes,
 } from "./playlistSteps";
+import { translateTitle } from "../../app/utils";
 import { Button } from "../Button/Button";
 import { BottomSheet } from "../BottomSheet/BottomSheet";
 import { TextInput } from "../TextField/TextField";
-
-type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
-
-/** Whether the playlist editor takes over this reader tab. */
-export function isPlaylistEditorTab(
-  state: SeedBibleState,
-  tab: ReaderTab | null | undefined
-): boolean {
-  const { playlists } = state;
-  return (
-    !!tab &&
-    playlists.view.value === "create_playlist" &&
-    !!playlists.editingPlaylist.value &&
-    state.tabs.selectedTabId.value === tab.id
-  );
-}
-
-/**
- * The open step when it's plain scripture shown over this tab's reader, with
- * its index, or null. Compare steps have their own editor instead.
- */
-export function playlistEditorScriptureStep(
-  state: SeedBibleState,
-  tab: ReaderTab | null | undefined
-): { index: number; item: ScriptureItem } | null {
-  if (!isPlaylistEditorTab(state, tab)) {
-    return null;
-  }
-  const index = state.playlists.editorStepIndex.value;
-  const item = state.playlists.editingPlaylist.value?.items[index];
-  return item?.type === "bible-verse" && !item.compare ? { index, item } : null;
-}
 
 /** Loads chapters for previews, defaulting to the translation being read. */
 function useChapterLoader(state: SeedBibleState): ScriptureChapterLoader {
@@ -95,11 +62,11 @@ function useChapterLoader(state: SeedBibleState): ScriptureChapterLoader {
  * step's settings and Delete.
  */
 function StepActions(props: {
-  playlists: PlaylistManager;
+  editor: StepEditor;
   index: number;
   square?: boolean;
 }) {
-  const { playlists, index, square } = props;
+  const { editor, index, square } = props;
   const { t } = useI18n();
   const duplicate = t("playlist-editor-duplicate", {
     defaultValue: "Duplicate",
@@ -109,15 +76,13 @@ function StepActions(props: {
     const more = t("more", { defaultValue: "More" });
     return (
       <div className="sb-pe-mobile-header-actions">
-        <AddStepToggle playlists={playlists} />
+        <AddStepToggle editor={editor} />
         <ContextMenuWithButton
           buttonClassName="sb-pe-step-menu"
           size="lg"
           label={more}
         >
-          <ContextMenuItem
-            onClick={() => (playlists.editorStepSettingsOpen.value = true)}
-          >
+          <ContextMenuItem onClick={() => (editor.settingsOpen.value = true)}>
             <PeIcon name="settings" />
             {t("playlist-editor-item-settings", {
               defaultValue: "Item settings",
@@ -125,7 +90,7 @@ function StepActions(props: {
           </ContextMenuItem>
           <ContextMenuItem
             className="sb-pe-step-menu-delete"
-            onClick={() => playlists.removeEditingPlaylistItem(index)}
+            onClick={() => editor.removeItem(index)}
           >
             <PeIcon name="trash" />
             {remove}
@@ -141,7 +106,7 @@ function StepActions(props: {
         size="sm"
         icon={<PeIcon name="copy" />}
         className="sb-pe-toolbar-action"
-        onClick={() => playlists.duplicateEditingPlaylistItem(index)}
+        onClick={() => editor.duplicateItem(index)}
       >
         {duplicate}
       </Button>
@@ -151,7 +116,7 @@ function StepActions(props: {
         tone="danger"
         icon={<PeIcon name="trash" />}
         className="sb-pe-toolbar-action"
-        onClick={() => playlists.removeEditingPlaylistItem(index)}
+        onClick={() => editor.removeItem(index)}
       >
         {remove}
       </Button>
@@ -173,23 +138,31 @@ export function PlaylistReaderHint() {
   );
 }
 
+/** What a draft's details fields edit. */
+export interface EditorDetails {
+  title: string | null;
+  description: string | null;
+  heroImageUrl?: string | null;
+}
+
 /**
- * The playlist's title, description and cover image, edited in place: in the
+ * A draft's title, description and cover image, edited in place: in the
  * phone's details sheet, and the desktop's details dialog.
  */
-function PlaylistDetailsFields(props: {
+export function EditorDetailsFields(props: {
   state: SeedBibleState;
   /** Keeps the fields' ids unique when two sets could be on screen. */
   idPrefix: string;
+  details: EditorDetails;
+  titlePlaceholder: string;
+  descriptionPlaceholder: string;
+  onChange: (changes: Partial<EditorDetails>) => void;
+  /** Uploads a cover image when there's no gallery to upload it to. */
+  fallbackUpload: (file: File) => Promise<string>;
 }) {
-  const { state, idPrefix } = props;
-  const { playlists, modals } = state;
+  const { state, idPrefix, details, onChange } = props;
+  const { modals, gallery } = state;
   const { t } = useI18n();
-  const editing = playlists.editingPlaylist.value;
-  if (!editing) {
-    return null;
-  }
-  const gallery = state.gallery;
 
   return (
     <>
@@ -200,14 +173,10 @@ function PlaylistDetailsFields(props: {
         <TextInput
           id={`${idPrefix}-title`}
           dir="auto"
-          value={editing.title ?? ""}
-          placeholder={t("untitled-playlist", {
-            defaultValue: "Untitled playlist",
-          })}
+          value={details.title ?? ""}
+          placeholder={props.titlePlaceholder}
           onValueInput={(value) => {
-            playlists.updateEditingPlaylistMetadata({
-              title: value.trim() ? value : null,
-            });
+            onChange({ title: value.trim() ? value : null });
           }}
         />
       </div>
@@ -223,14 +192,10 @@ function PlaylistDetailsFields(props: {
           id={`${idPrefix}-description`}
           dir="auto"
           rows={3}
-          value={editing.description ?? ""}
-          placeholder={t("playlist-description_placeholder", {
-            defaultValue: "What is this playlist about?",
-          })}
+          value={details.description ?? ""}
+          placeholder={props.descriptionPlaceholder}
           onValueInput={(value) => {
-            playlists.updateEditingPlaylistMetadata({
-              description: value.trim() ? value : null,
-            });
+            onChange({ description: value.trim() ? value : null });
           }}
         />
       </div>
@@ -239,7 +204,7 @@ function PlaylistDetailsFields(props: {
           {t("hero-image", { defaultValue: "Cover image" })}
         </span>
         <HeroImageField
-          imageUrl={editing.heroImageUrl}
+          imageUrl={details.heroImageUrl}
           modals={modals}
           gallery={gallery}
           photos={gallery?.photos}
@@ -248,36 +213,59 @@ function PlaylistDetailsFields(props: {
               gallery,
               os: state.os,
               userId: state.login.userId.value,
-              fallbackUpload: playlists.uploadHeroImage,
+              fallbackUpload: props.fallbackUpload,
             });
-            playlists.updateEditingPlaylistMetadata({ heroImageUrl: url });
+            onChange({ heroImageUrl: url });
             return url;
           }}
           onSelectPhoto={(url) => {
-            playlists.updateEditingPlaylistMetadata({ heroImageUrl: url });
+            onChange({ heroImageUrl: url });
             void gallery?.rememberPhoto(url);
           }}
-          onRemove={() =>
-            playlists.updateEditingPlaylistMetadata({ heroImageUrl: null })
-          }
+          onRemove={() => onChange({ heroImageUrl: null })}
         />
       </div>
     </>
   );
 }
 
-/**
- * Phone only: the sheet the playlist's title opens, for its title,
- * description and cover image.
- */
-function PlaylistDetailsSheet(props: { state: SeedBibleState }) {
-  const { state } = props;
+function PlaylistDetailsFields(props: {
+  state: SeedBibleState;
+  idPrefix: string;
+}) {
+  const { state, idPrefix } = props;
   const { playlists } = state;
   const { t } = useI18n();
-  const close = () => (playlists.editorDetailsSheetOpen.value = false);
-  const heading = t("playlist-editor-details", {
-    defaultValue: "Playlist details",
-  });
+  const editing = playlists.editingPlaylist.value;
+  if (!editing) {
+    return null;
+  }
+  return (
+    <EditorDetailsFields
+      state={state}
+      idPrefix={idPrefix}
+      details={editing}
+      titlePlaceholder={t("untitled-playlist", {
+        defaultValue: "Untitled playlist",
+      })}
+      descriptionPlaceholder={t("playlist-description_placeholder", {
+        defaultValue: "What is this playlist about?",
+      })}
+      onChange={playlists.updateEditingPlaylistMetadata}
+      fallbackUpload={playlists.uploadHeroImage}
+    />
+  );
+}
+
+/**
+ * Phone only: the sheet the title opens, for the draft's title, description
+ * and cover image.
+ */
+function DetailsSheet(props: { host: StepEditorHost }) {
+  const { host } = props;
+  const { t } = useI18n();
+  const close = () => (host.editor.detailsOpen.value = false);
+  const heading = translateTitle(t, host.details.title);
 
   return (
     <BottomSheet
@@ -287,22 +275,22 @@ function PlaylistDetailsSheet(props: { state: SeedBibleState }) {
       onClose={close}
     >
       <div className="sb-pe sb-pe-details-sheet-body">
-        <PlaylistDetailsFields state={state} idPrefix="sb-pe-details" />
+        {host.details.render("sb-pe-details")}
       </div>
     </BottomSheet>
   );
 }
 
 /** Phone only: the open step's settings, from its title bar's menu. */
-function PlaylistStepSettingsSheet(props: {
-  state: SeedBibleState;
+function StepSettingsSheet(props: {
+  host: StepEditorHost;
   index: number;
   item: PlaylistItemData;
 }) {
-  const { state, index, item } = props;
-  const { playlists } = state;
+  const { host, index, item } = props;
+  const { editor } = host;
   const { t } = useI18n();
-  const close = () => (playlists.editorStepSettingsOpen.value = false);
+  const close = () => (editor.settingsOpen.value = false);
   const heading = t("playlist-editor-item-settings", {
     defaultValue: "Item settings",
   });
@@ -315,25 +303,29 @@ function PlaylistStepSettingsSheet(props: {
       onClose={close}
     >
       <div className="sb-pe sb-pe-details-sheet-body">
-        <StepSettings playlists={playlists} index={index} item={item} />
+        <StepSettings
+          editor={editor}
+          index={index}
+          item={item}
+          minutes={host.stepMinutes(item)}
+        />
       </div>
     </BottomSheet>
   );
 }
 
-const UNFINISHED_STEPS_MODAL_ID = "playlist-unfinished-steps";
+const UNFINISHED_STEPS_MODAL_ID = "step-editor-unfinished-steps";
 
-/** Why the playlist can't be saved yet: the steps that need finishing. */
-function UnfinishedStepsContent(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { playlists, modals } = state;
+/** Why the draft can't be saved yet: the steps that need finishing. */
+function UnfinishedStepsContent(props: {
+  state: SeedBibleState;
+  editor: StepEditor;
+}) {
+  const { state, editor } = props;
+  const { modals } = state;
   const { t } = useI18n();
   const resolveBookName = useResolveBookName(state.tabs);
-  const editing = playlists.editingPlaylist.value;
-  if (!editing) {
-    return null;
-  }
-  const invalid = playlists.editingPlaylistInvalidSteps();
+  const items = editor.items.value;
   const close = () => modals.closeModal(UNFINISHED_STEPS_MODAL_ID);
 
   return (
@@ -343,22 +335,18 @@ function UnfinishedStepsContent(props: { state: SeedBibleState }) {
           defaultValue: "These steps need finishing before you save:",
         })}
         <ul>
-          {invalid.map((index) => (
+          {editor.invalidSteps().map((index) => (
             <li key={index}>
               <button
                 type="button"
                 onClick={() => {
                   close();
-                  playlists.selectEditorStep(index);
+                  editor.selectStep(index);
                 }}
               >
                 {t("playlist-editor-step-link-text", {
                   step: index + 1,
-                  label: playlistStepLabel(
-                    editing.items[index]!,
-                    t,
-                    resolveBookName
-                  ),
+                  label: playlistStepLabel(items[index]!, t, resolveBookName),
                   defaultValue: "Step {{step}}: {{label}}",
                 })}
               </button>
@@ -376,24 +364,35 @@ function UnfinishedStepsContent(props: { state: SeedBibleState }) {
 }
 
 /**
- * Saves the playlist; or, while a step is unfinished (a video step with no
- * link, say), says which, as a playlist saved with one would fail to load.
+ * Says which of the draft's steps are unfinished (a video step with no link,
+ * say), as one saved with them would fail to load. False when there are none.
  */
+export function showUnfinishedSteps(
+  state: SeedBibleState,
+  editor: StepEditor
+): boolean {
+  if (editor.invalidSteps().length === 0) {
+    return false;
+  }
+  state.modals.openModal({
+    id: UNFINISHED_STEPS_MODAL_ID,
+    title: {
+      key: "playlist-editor-unfinished-steps",
+      defaultValue: "Some steps aren't finished",
+    },
+    mobileSheet: true,
+    content: () => <UnfinishedStepsContent state={state} editor={editor} />,
+  });
+  return true;
+}
+
+/** Saves the playlist, or says which steps need finishing first. */
 export function PublishButton(props: { state: SeedBibleState }) {
   const { state } = props;
   const { t } = useI18n();
   const [saving, setSaving] = useState(false);
   const save = () => {
-    if (state.playlists.editingPlaylistInvalidSteps().length > 0) {
-      state.modals.openModal({
-        id: UNFINISHED_STEPS_MODAL_ID,
-        title: {
-          key: "playlist-editor-unfinished-steps",
-          defaultValue: "Some steps aren't finished",
-        },
-        mobileSheet: true,
-        content: () => <UnfinishedStepsContent state={state} />,
-      });
+    if (showUnfinishedSteps(state, state.playlists.stepEditor)) {
       return;
     }
     setSaving(true);
@@ -409,13 +408,23 @@ export function PublishButton(props: { state: SeedBibleState }) {
       })
       .finally(() => setSaving(false));
   };
+  return <SaveAndPublishButton saving={saving} onClick={save} />;
+}
+
+/** The step editor's "Save & Publish" button. */
+export function SaveAndPublishButton(props: {
+  saving: boolean;
+  onClick: () => void;
+}) {
+  const { saving, onClick } = props;
+  const { t } = useI18n();
   return (
     <Button
       variant="primary"
       size="lg"
       className="sb-pe-publish"
       loading={saving}
-      onClick={save}
+      onClick={onClick}
     >
       {saving
         ? t("saving", { defaultValue: "Saving…" })
@@ -426,32 +435,32 @@ export function PublishButton(props: { state: SeedBibleState }) {
   );
 }
 
-const DETAILS_MODAL_ID = "playlist-editor-details";
+const DETAILS_MODAL_ID = "step-editor-details";
 
 /**
- * Desktop: the playlist's details (its title, description and cover) in a
+ * Desktop: the draft's details (its title, description and cover) in a
  * dialog, opened from its title, as a phone opens them in a sheet.
  */
-function PlaylistDetailsModal(props: { state: SeedBibleState }) {
-  const { state } = props;
-  const { playlists, modals } = state;
-  const open = playlists.editorDetailsSheetOpen.value;
+function DetailsModal(props: {
+  modals: SeedBibleState["modals"];
+  host: StepEditorHost;
+}) {
+  const { modals, host } = props;
+  const { editor } = host;
+  const open = editor.detailsOpen.value;
   useEffect(() => {
     if (!open) {
       modals.closeModal(DETAILS_MODAL_ID);
       return;
     }
-    const close = () => (playlists.editorDetailsSheetOpen.value = false);
+    const close = () => (editor.detailsOpen.value = false);
     modals.openModal({
       id: DETAILS_MODAL_ID,
-      title: {
-        key: "playlist-editor-details",
-        defaultValue: "Playlist details",
-      },
+      title: host.details.title,
       mobileSheet: true,
       content: () => (
         <div className="sb-pe sb-pe-details-modal">
-          <PlaylistDetailsFields state={state} idPrefix="sb-pe-details-modal" />
+          {host.details.render("sb-pe-details-modal")}
         </div>
       ),
       footer: ({ t }) => (
@@ -473,11 +482,11 @@ function PlaylistDetailsModal(props: { state: SeedBibleState }) {
  * While verses are picked in the reader for the open scripture step: which
  * ones, and Apply to give them to the step. Deselecting them hides it.
  */
-export function VersePickBar(props: { state: SeedBibleState }) {
-  const { playlists } = props.state;
+export function VersePickBar(props: { editor: StepEditor }) {
+  const { editor } = props;
   const { t } = useI18n();
-  const index = playlists.editorVersePickIndex.value;
-  const ref = playlists.editorVersePickRef.value;
+  const index = editor.versePickIndex.value;
+  const ref = editor.versePickRef.value;
   if (index === null || !ref || ref.verse == null) {
     return null;
   }
@@ -497,7 +506,7 @@ export function VersePickBar(props: { state: SeedBibleState }) {
         size="sm"
         shape="pill"
         className="sb-pe-pickbar-apply"
-        onClick={() => playlists.applyEditorVersePick()}
+        onClick={() => editor.applyVersePick()}
       >
         {t("playlist-editor-apply", { defaultValue: "Apply" })}
       </Button>
@@ -510,11 +519,13 @@ export function VersePickBar(props: { state: SeedBibleState }) {
  * chapter pill, the book selector): Apply points the step at the chapter on
  * screen.
  */
-export function ChapterChangeBar(props: { state: SeedBibleState }) {
-  const { playlists } = props.state;
+export function ChapterChangeBar(props: {
+  editor: StepEditor;
+  resolveBookName: (bookId: string) => string;
+}) {
+  const { editor, resolveBookName } = props;
   const { t } = useI18n();
-  const resolveBookName = useResolveBookName(props.state.tabs);
-  const change = playlists.editorChapterChange.value;
+  const change = editor.chapterChange.value;
   if (!change) {
     return null;
   }
@@ -522,7 +533,7 @@ export function ChapterChangeBar(props: { state: SeedBibleState }) {
     <div className="sb-pe sb-pe-pickbar sb-pe-chapterbar" role="status">
       <span>
         {t("playlist-editor-use-chapter", {
-          step: playlists.editorStepIndex.value + 1,
+          step: editor.stepIndex.value + 1,
           passage: formatVerseRef(
             { bookId: change.bookId, chapter: change.chapter },
             resolveBookName
@@ -535,7 +546,7 @@ export function ChapterChangeBar(props: { state: SeedBibleState }) {
         size="sm"
         shape="pill"
         className="sb-pe-pickbar-apply"
-        onClick={() => playlists.applyEditorChapterChange()}
+        onClick={() => editor.applyChapterChange()}
       >
         {t("playlist-editor-apply", { defaultValue: "Apply" })}
       </Button>
@@ -543,40 +554,91 @@ export function ChapterChangeBar(props: { state: SeedBibleState }) {
   );
 }
 
-/**
- * The playlist editor over a reader tab: the open step's toolbar along the
- * top, its card (or the reader itself, for scripture) in the middle, and the
- * editor's actions along the bottom. `children` is the tab's reader, kept
- * mounted while a card covers it so its place in the chapter survives.
- */
+/** The playlist editor's side of the step editor. */
+export function playlistEditorHost(state: SeedBibleState): StepEditorHost {
+  const { playlists, tabs, modals } = state;
+  const panelHost = playlistEditorPanelHost({ playlists, tabs, modals });
+  return {
+    ...panelHost,
+    stepMinutes: playlistStepMinutes,
+    mobileStatus: (t) => {
+      const items = playlists.editingPlaylist.value?.items ?? [];
+      const status = panelHost.status(t);
+      return t("playlist-editor-mobile-status", {
+        steps: items.length,
+        minutes: playlistTotalMinutes(items),
+        status: status.saved
+          ? status.label
+          : t("playlist-editor-draft", { defaultValue: "Draft" }),
+        defaultValue: "{{steps}} items · {{minutes}} min · {{status}}",
+      });
+    },
+    details: {
+      title: {
+        key: "playlist-editor-details",
+        defaultValue: "Playlist details",
+      },
+      render: (idPrefix) => (
+        <PlaylistDetailsFields state={state} idPrefix={idPrefix} />
+      ),
+    },
+    renderPublishButton: () => <PublishButton state={state} />,
+  };
+}
+
+/** The playlist editor over a reader tab; see `StepEditorWorkspace`. */
 export function PlaylistEditorWorkspace(props: {
   state: SeedBibleState;
   compact: boolean;
   children: ComponentChildren;
 }) {
   const { state, compact, children } = props;
-  const { playlists, tabs, modals } = state;
+  if (!state.playlists.editingPlaylist.value) {
+    return <>{children}</>;
+  }
+  return (
+    <StepEditorWorkspace
+      state={state}
+      host={playlistEditorHost(state)}
+      compact={compact}
+    >
+      {children}
+    </StepEditorWorkspace>
+  );
+}
+
+/**
+ * The step editor over a reader tab: the open step's toolbar along the top,
+ * its card (or the reader itself, for scripture) in the middle, and the
+ * editor's actions along the bottom. `children` is the tab's reader, kept
+ * mounted while a card covers it so its place in the chapter survives.
+ */
+export function StepEditorWorkspace(props: {
+  state: SeedBibleState;
+  host: StepEditorHost;
+  compact: boolean;
+  children: ComponentChildren;
+}) {
+  const { state, host, compact, children } = props;
+  const { tabs, modals } = state;
+  const { editor } = host;
   const { t } = useI18n();
   const resolveBookName = useResolveBookName(tabs);
   const loadChapter = useChapterLoader(state);
-  const editing = playlists.editingPlaylist.value;
-  const index = playlists.editorStepIndex.value;
-  const status = usePlaylistDraftStatus(playlists);
-  const addMenu = playlists.editorAddMenu.value;
-  const detailsOpen = playlists.editorDetailsSheetOpen.value;
-  if (!editing) {
-    return <>{children}</>;
-  }
-  const item = editing.items[index];
+  const items = editor.items.value;
+  const index = editor.stepIndex.value;
+  const addMenu = editor.addMenu.value;
+  const detailsOpen = editor.detailsOpen.value;
+  const item = items[index];
   const kind = item ? playlistStepKind(item) : null;
   const showsCard = !!item && kind !== "scripture";
   const books =
     tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value)
       ?.readingState.translationBooks.value?.books ?? [];
   const ctx: StepCardContext = {
-    playlists,
+    editor,
     index,
-    count: editing.items.length,
+    count: items.length,
     loadChapter,
     books,
     resolveBookName,
@@ -585,7 +647,7 @@ export function PlaylistEditorWorkspace(props: {
     kind === "compare" && item?.type === "bible-verse" ? (
       <PlaylistCompareEditor
         key={index}
-        state={state}
+        editor={editor}
         index={index}
         item={item}
         loadChapter={loadChapter}
@@ -601,7 +663,7 @@ export function PlaylistEditorWorkspace(props: {
       <div className="sb-pe sb-pe-card-scroll">
         <div className="sb-pe-card">
           <p className="sb-pe-step-empty">
-            {editing.items.length === 0
+            {items.length === 0
               ? t("playlist-editor-no-steps", {
                   defaultValue: "No steps yet. Add one to get started.",
                 })
@@ -621,13 +683,10 @@ export function PlaylistEditorWorkspace(props: {
   }`;
 
   if (compact) {
-    const playlistTitle =
-      editing.title?.trim() ||
-      t("untitled-playlist", { defaultValue: "Untitled playlist" });
     return (
       <div className={workspaceClass}>
         <header className="sb-pe sb-pe-mobile-header">
-          <PlaylistEditorBackButton playlists={playlists} modals={modals} />
+          <StepEditorBackButton host={host} />
           {item && kind ? (
             <div className="sb-pe-mobile-heading">
               <h2 className="sb-pe-mobile-title">
@@ -638,7 +697,7 @@ export function PlaylistEditorWorkspace(props: {
               <p className="sb-pe-mobile-status">
                 {t("playlist-editor-step-position", {
                   step: index + 1,
-                  count: editing.items.length,
+                  count: items.length,
                   kind: playlistStepKindName(kind, t),
                   defaultValue: "Step {{step}} of {{count}} · {{kind}}",
                 })}
@@ -652,53 +711,34 @@ export function PlaylistEditorWorkspace(props: {
                   className="sb-pe-mobile-title-button"
                   aria-haspopup="dialog"
                   aria-expanded={detailsOpen}
-                  title={t("playlist-editor-edit-details", {
-                    defaultValue: "Edit title, description and cover",
-                  })}
-                  onClick={() =>
-                    (playlists.editorDetailsSheetOpen.value = true)
-                  }
+                  title={host.editDetailsLabel(t)}
+                  onClick={() => (editor.detailsOpen.value = true)}
                 >
                   <span className="sb-pe-mobile-title-text" dir="auto">
-                    {playlistTitle}
+                    {host.title(t)}
                   </span>
                   <PeIcon name="pencil" />
                 </button>
               </h2>
-              <p className="sb-pe-mobile-status">
-                {t("playlist-editor-mobile-status", {
-                  steps: editing.items.length,
-                  minutes: playlistTotalMinutes(editing.items),
-                  status: status.saved
-                    ? status.label
-                    : t("playlist-editor-draft", { defaultValue: "Draft" }),
-                  defaultValue:
-                    "{{steps}} items · {{minutes}} min · {{status}}",
-                })}
-              </p>
+              <p className="sb-pe-mobile-status">{host.mobileStatus(t)}</p>
             </div>
           )}
           {item ? (
-            <StepActions playlists={playlists} index={index} square />
+            <StepActions editor={editor} index={index} square />
           ) : (
             <div className="sb-pe-mobile-header-actions">
-              <AddStepToggle playlists={playlists} />
+              <AddStepToggle editor={editor} />
             </div>
           )}
           {/* The title bar's Add button opens the menu, on a step's page and
               on the list. */}
           {addMenu ? (
-            <AddStepMenu
-              playlists={playlists}
-              afterIndex={addMenu.afterIndex}
-            />
+            <AddStepMenu host={host} afterIndex={addMenu.afterIndex} />
           ) : null}
         </header>
         {children}
         {onList ? (
-          <div className="sb-pe sb-pe-list-page">
-            <PlaylistStepsSummary playlists={playlists} tabs={tabs} />
-          </div>
+          <div className="sb-pe sb-pe-list-page">{host.renderSteps()}</div>
         ) : (
           card
         )}
@@ -708,22 +748,25 @@ export function PlaylistEditorWorkspace(props: {
         {onList ? (
           <div className="sb-pe sb-pe-mobile-bottom">
             <div className="sb-pe-mobile-bottom-row">
-              <PublishButton state={state} />
+              {host.renderPublishButton()}
             </div>
           </div>
         ) : // Wider than a phone, the reader's own toolbar is the desktop one,
         // whose stack above it already shows these bars.
         state.app.isCompactReader.value &&
-          (playlists.editorVersePickIndex.value !== null ||
-            playlists.editorChapterChange.value) ? (
+          (editor.versePickIndex.value !== null ||
+            editor.chapterChange.value) ? (
           <div className="sb-pe sb-pe-mobile-bottom">
-            <VersePickBar state={state} />
-            <ChapterChangeBar state={state} />
+            <VersePickBar editor={editor} />
+            <ChapterChangeBar
+              editor={editor}
+              resolveBookName={resolveBookName}
+            />
           </div>
         ) : null}
-        {detailsOpen ? <PlaylistDetailsSheet state={state} /> : null}
-        {item && playlists.editorStepSettingsOpen.value ? (
-          <PlaylistStepSettingsSheet state={state} index={index} item={item} />
+        {detailsOpen ? <DetailsSheet host={host} /> : null}
+        {item && editor.settingsOpen.value ? (
+          <StepSettingsSheet host={host} index={index} item={item} />
         ) : null}
       </div>
     );
@@ -734,14 +777,19 @@ export function PlaylistEditorWorkspace(props: {
       {item ? (
         <div className="sb-pe sb-pe-toolbar">
           <div className="sb-pe-toolbar-settings">
-            <StepSettings playlists={playlists} index={index} item={item} />
+            <StepSettings
+              editor={editor}
+              index={index}
+              item={item}
+              minutes={host.stepMinutes(item)}
+            />
           </div>
-          <StepActions playlists={playlists} index={index} />
+          <StepActions editor={editor} index={index} />
         </div>
       ) : null}
       {children}
       {card}
-      <PlaylistDetailsModal state={state} />
+      <DetailsModal modals={modals} host={host} />
     </div>
   );
 }

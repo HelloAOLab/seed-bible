@@ -1151,6 +1151,22 @@ describe("estimateReadingMinutes", () => {
     ).toBe(3);
   });
 
+  it("takes the time its author set for a reading over the estimate", () => {
+    expect(
+      estimateReadingMinutes([
+        PlanReadingSchema.parse({
+          id: "r1",
+          item: {
+            type: "bible-verse",
+            ref: { bookId: "GEN", chapter: 1 },
+            minutes: 10,
+          },
+        }),
+        verseReading("r2", { bookId: "GEN", chapter: 2 }),
+      ])
+    ).toBe(13);
+  });
+
   it("never returns less than a minute, even for no readings", () => {
     expect(estimateReadingMinutes([])).toBe(1);
   });
@@ -1325,7 +1341,10 @@ describe("createReadingPlansManager", () => {
       tabs: signal([
         {
           id: "tab-1",
-          readingState: { translationId: signal(sharer.translationId) },
+          readingState: {
+            translationId: signal(sharer.translationId),
+            selectedVerses: signal([]),
+          },
         },
       ]),
       selectedTabId: signal("tab-1"),
@@ -2472,6 +2491,163 @@ describe("createReadingPlansManager", () => {
 
     expect(manager.editingReadingPlan.value).toBeNull();
     expect(eraseDataMock).not.toHaveBeenCalled();
+  });
+
+  it("autosaves a draft without the readings that aren't finished yet", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    vi.useFakeTimers();
+    try {
+      manager.startEditingReadingPlan();
+      manager.addReadingToEditingPlan({
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 1 },
+      });
+      // A video still waiting for its link. Saved, the plan couldn't be read.
+      manager.addReadingToEditingPlan({ type: "link", url: "", embed: true });
+      await vi.advanceTimersByTimeAsync(2000);
+
+      const saved = recordDataMock.mock.calls[0]![2];
+      expect(ReadingPlanSchema.safeParse(saved).success).toBe(true);
+      expect(saved.sessions[0].readings).toHaveLength(1);
+      expect(
+        manager.editingReadingPlan.value!.plan.sessions[0]!.readings
+      ).toHaveLength(2);
+      await expect(manager.finishEditingReadingPlan()).rejects.toThrow();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps an edit made to a link reading while its preview was loading", async () => {
+    let respond: (value: unknown) => void = () => {};
+    getLinkPreviewMock.mockReturnValueOnce(
+      new Promise((resolve) => (respond = resolve))
+    );
+    const manager = makeManager("user-1");
+    await flush();
+    manager.startEditingReadingPlan();
+    const url = "https://example.com/page";
+    manager.addReadingToEditingPlan({ type: "link", url });
+    const { id } =
+      manager.editingReadingPlan.value!.plan.sessions[0]!.readings[0]!;
+    manager.updateReadingInEditingPlan(0, id, {
+      type: "link",
+      url,
+      title: "My own title",
+    });
+
+    respond({ success: true, title: "The page's title" });
+    await flush();
+
+    expect(
+      manager.editingReadingPlan.value!.plan.sessions[0]!.readings[0]!.item
+    ).toMatchObject({ title: "My own title" });
+  });
+
+  it("saves the last change to a new plan when another is opened before it was", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    manager.startEditingReadingPlan();
+    manager.updateEditingReadingPlan({ title: "First" });
+
+    manager.editExistingReadingPlan(
+      makePlan({ authorUserId: "user-1", recordName: "user-1" })
+    );
+
+    await vi.waitFor(() =>
+      expect(recordDataMock.mock.calls[0]?.[2]).toMatchObject({
+        title: "First",
+      })
+    );
+  });
+
+  it("deletes a discarded new plan whose first save was still on its way", async () => {
+    let finishSave: () => void = () => {};
+    recordDataMock.mockImplementationOnce(
+      () => new Promise<void>((resolve) => (finishSave = resolve))
+    );
+    const manager = makeManager("user-1");
+    await flush();
+    vi.useFakeTimers();
+    try {
+      manager.startEditingReadingPlan();
+      manager.updateEditingReadingPlan({ title: "Unwanted" });
+      const { address } = manager.editingReadingPlan.value!.plan;
+      await vi.advanceTimersByTimeAsync(1000);
+
+      const discarded = manager.discardEditingReadingPlan();
+      finishSave();
+      await discarded;
+
+      expect(eraseDataMock).toHaveBeenCalledWith("user-1", address);
+      expect(manager.userReadingPlans.value).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  describe("opening the editor for a URL", () => {
+    const plan = () =>
+      makePlan({ authorUserId: "user-1", recordName: "user-1" });
+    const locator = () => `user-1.${plan().address}`;
+
+    it("loads the plan it names", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      getDataMock.mockResolvedValue({ success: true, data: plan() });
+
+      const open = await manager.openEditorForLocator(locator());
+      (open as () => void)();
+
+      expect(manager.isEditorShowing.value).toBe(true);
+      expect(manager.editingReadingPlan.value!.plan.address).toBe(
+        plan().address
+      );
+    });
+
+    it("opens empty for a plan that was never saved", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+      });
+
+      const open = await manager.openEditorForLocator("user-1.plan_new");
+      (open as () => void)();
+
+      expect(manager.editingReadingPlan.value).toMatchObject({
+        isNew: true,
+        plan: { address: "plan_new", recordName: "user-1" },
+      });
+    });
+
+    // Opened empty, the first edit would be autosaved over the real plan.
+    it("doesn't open when the plan couldn't be loaded for another reason", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+      });
+
+      expect(await manager.openEditorForLocator(locator())).toBeNull();
+      expect(manager.isEditorShowing.value).toBe(false);
+    });
+
+    it("doesn't open someone else's plan", async () => {
+      const manager = makeManager("user-2");
+      await flush();
+      getDataMock.mockResolvedValue({ success: true, data: plan() });
+
+      expect(await manager.openEditorForLocator(locator())).toBeNull();
+    });
+
+    it("doesn't open for a malformed locator", () => {
+      const manager = makeManager("user-1");
+      expect(manager.openEditorForLocator("nonsense")).toBe(false);
+    });
   });
 
   it("cover image changes on a published plan persist only on Save changes", async () => {

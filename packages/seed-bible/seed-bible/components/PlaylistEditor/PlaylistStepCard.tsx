@@ -2,10 +2,8 @@ import type { ComponentChildren } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import type {
-  PlaylistItemData,
-  PlaylistManager,
-} from "../../managers/PlaylistManager";
+import type { PlaylistItemData } from "../../managers/PlaylistManager";
+import type { StepEditor } from "../../managers/StepEditor";
 import { resolveLinkMedia } from "../../managers/resolveLinkMedia";
 import { safeImageUrl } from "../../managers/safeImageUrl";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
@@ -20,7 +18,7 @@ type LinkItem = Extract<PlaylistItemData, { type: "link" }>;
 
 /** Shared by every step card: which step it is and how to change it. */
 export interface StepCardContext {
-  playlists: PlaylistManager;
+  editor: StepEditor;
   index: number;
   count: number;
   loadChapter?: ScriptureChapterLoader;
@@ -112,7 +110,7 @@ function NoteCard(props: { ctx: StepCardContext; item: HtmlItem }) {
   const { ctx, item } = props;
   const { t } = useI18n();
   const update = (changes: Partial<HtmlItem>) =>
-    ctx.playlists.updateEditingPlaylistItem(ctx.index, { ...item, ...changes });
+    ctx.editor.updateItem(ctx.index, { ...item, ...changes });
   return (
     <>
       <TitleField
@@ -153,7 +151,7 @@ function QuestionCard(props: { ctx: StepCardContext; item: HtmlItem }) {
   const { ctx, item } = props;
   const { t } = useI18n();
   const update = (changes: Partial<HtmlItem>) =>
-    ctx.playlists.updateEditingPlaylistItem(ctx.index, { ...item, ...changes });
+    ctx.editor.updateItem(ctx.index, { ...item, ...changes });
   const optional = t("playlist-editor-optional", { defaultValue: "Optional" });
 
   return (
@@ -238,7 +236,7 @@ function LinkCard(props: { ctx: StepCardContext; item: LinkItem }) {
     []
   );
   const update = (changes: Partial<LinkItem>) =>
-    ctx.playlists.updateEditingPlaylistItem(ctx.index, { ...item, ...changes });
+    ctx.editor.updateItem(ctx.index, { ...item, ...changes });
 
   const trimmed = url.trim();
   const parses = URL.canParse(trimmed);

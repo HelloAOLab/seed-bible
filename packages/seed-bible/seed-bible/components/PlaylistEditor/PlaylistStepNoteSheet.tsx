@@ -6,7 +6,7 @@ import {
   hasScriptureNote,
   type PlaylistItemData,
 } from "../../managers/PlaylistManager";
-import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import type { StepEditor } from "../../managers/StepEditor";
 import { MaterialIcon } from "../icons";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { NoteHeading } from "../ScriptureNote/ScriptureNote";
@@ -23,13 +23,12 @@ type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
  * note's title and text, with Remove note at the bottom.
  */
 export function PlaylistStepNoteSheet(props: {
-  state: SeedBibleState;
+  editor: StepEditor;
   index: number;
   item: ScriptureItem;
   resolveBookName: (bookId: string) => string;
 }) {
-  const { state, index, item, resolveBookName } = props;
-  const { playlists } = state;
+  const { editor, index, item, resolveBookName } = props;
   const { t, isRtl } = useI18n();
   const [open, setOpen] = useState(false);
   const hasNote = hasScriptureNote(item);
@@ -37,9 +36,9 @@ export function PlaylistStepNoteSheet(props: {
 
   // Re-read at each edit: the title and the text are typed separately.
   const update = (changes: Partial<ScriptureItem>) => {
-    const current = playlists.editingPlaylist.peek()?.items[index];
+    const current = editor.items.peek()[index];
     if (current?.type === "bible-verse") {
-      playlists.updateEditingPlaylistItem(index, { ...current, ...changes });
+      editor.updateItem(index, { ...current, ...changes });
     }
   };
 

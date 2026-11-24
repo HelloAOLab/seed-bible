@@ -300,6 +300,7 @@ function createMobileState(): SeedBibleState {
       },
     },
     readingPlans: {
+      isEditorShowing: signal(false),
       getReadingPlansForChapter: vi.fn(() => []),
     },
   } as any as SeedBibleState;
@@ -362,6 +363,7 @@ function createDesktopState(): SeedBibleState {
       },
     },
     readingPlans: {
+      isEditorShowing: signal(false),
       getReadingPlansForChapter: vi.fn(() => []),
     },
   } as any as SeedBibleState;

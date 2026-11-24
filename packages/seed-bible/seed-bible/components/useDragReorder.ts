@@ -14,6 +14,8 @@ interface DragState {
 export interface UseDragReorderOptions {
   /** How many rows the list has. */
   itemCount: number;
+  /** The first place a row can be dragged to. The top when omitted. */
+  minIndex?: number;
   /** Moves the row at `from` to `to`. Called each time a dragged row passes another. */
   onReorder: (from: number, to: number) => void;
 }
@@ -37,6 +39,8 @@ export function useDragReorder(options: UseDragReorderOptions) {
   const dragStateRef = useRef<DragState | null>(null);
   const itemCountRef = useRef(options.itemCount);
   itemCountRef.current = options.itemCount;
+  const minIndexRef = useRef(0);
+  minIndexRef.current = options.minIndex ?? 0;
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -52,7 +56,7 @@ export function useDragReorder(options: UseDragReorderOptions) {
         (event.clientY - drag.startClientY) / drag.rowPitch
       );
       const target = Math.max(
-        0,
+        minIndexRef.current,
         Math.min(drag.startIndex + offset, itemCountRef.current - 1)
       );
       if (target === drag.index) {

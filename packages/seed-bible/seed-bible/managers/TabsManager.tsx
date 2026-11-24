@@ -15,7 +15,7 @@ import {
   stripBasePath,
 } from "./ReadingUrlPath";
 import { isNonReadingPagePath } from "./StaticPagePath";
-import { parsePlaylistPagePath } from "./SharedPagePath";
+import { parseSharedPagePath } from "./SharedPagePath";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { createChatsManager, type ChatSession } from "./ChatsManager";
 import {
@@ -756,13 +756,13 @@ export function createTabs(
     // A playlist's page or playing path names no chapter, so reading one here
     // would send the reader to the default Genesis 1. While playing, the
     // playlist moves the reader to the step itself; racing it with this aborts
-    // that load and strands the reader on Genesis 1.
-    if (
-      parsePlaylistPagePath(
-        navigation.currentUrl.value.pathname,
-        navigation.basePath
-      )
-    ) {
+    // that load and strands the reader on Genesis 1. The same goes for the
+    // plan editor's path, whose editor moves the reader to the open reading.
+    const sharedPage = parseSharedPagePath(
+      navigation.currentUrl.value.pathname,
+      navigation.basePath
+    );
+    if (sharedPage && (sharedPage.kind === "playlist" || sharedPage.edit)) {
       return;
     }
     const readingState = selectedTab.readingState;
@@ -970,13 +970,13 @@ export function createTabs(
     // position now being shown instead of leaving it stuck behind the URL.
     // Restoring the saved tabs is the exception: it is the tail end of mount,
     // not a navigation, so it must not count as a focus change either. So is
-    // the playlist editor, which stays open over whichever tab is selected
+    // the step editor, which stays open over whichever tab is selected
     // (it moves that tab to the open step) and reads its screen from the
     // address, so writing the new tab's chapter there would close it.
     const leaveStaticPage =
       hasFocusedTabBefore &&
       !restoringStoredTabs &&
-      !parsePlaylistPagePath(
+      !parseSharedPagePath(
         navigation.currentUrl.peek().pathname,
         navigation.basePath
       )?.edit;

@@ -15,13 +15,21 @@ import { type ToolsManager } from "../managers/BibleToolsManager";
 import { batch, effect } from "@preact/signals";
 import { useI18n } from "../i18n/I18nManager";
 import { translateTitle } from "../app/utils";
-import { useCallback, useEffect, useRef, useState } from "preact/hooks";
-import { revealReadAlongVerse } from "./BibleReader/readerViewport";
 import {
-  isPlaylistEditorTab,
-  PlaylistEditorWorkspace,
-  playlistEditorScriptureStep,
-} from "./PlaylistEditor/PlaylistEditorWorkspace";
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "preact/hooks";
+import { revealReadAlongVerse } from "./BibleReader/readerViewport";
+import { PlaylistEditorWorkspace } from "./PlaylistEditor/PlaylistEditorWorkspace";
+import {
+  isPlaylistEditorShowing,
+  scriptureStepOnTab,
+  stepEditorOnTab,
+} from "./PlaylistEditor/stepEditorHost";
+import { ReadingPlanEditorWorkspace } from "./ReadingPlansPane/ReadingPlanEditor";
 
 interface TabSlotReaderProps {
   slot: TabSlot;
@@ -143,7 +151,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   // toolbar comes back. Clear scroll-hide so that bar isn't left translated
   // off-screen — e.g. after Compare opens its pane, or Ask AI opens the chat,
   // from a verse selection while the user had scrolled down. The same goes for
-  // the playlist editor covering the reader with its list of steps or a
+  // the step editor covering the reader with its list of steps or a
   // step's card, where nothing scrolls the reader to bring the bars back.
   useEffect(() => {
     if (!isCompactReader) return;
@@ -151,8 +159,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       const hasPane = (state.panes?.panes?.value?.length ?? 0) > 0;
       const isChatOpen = state.sidebar?.isChatPanelOpen?.value ?? false;
       const editorCoversReader =
-        isPlaylistEditorTab(state, tab) &&
-        !playlistEditorScriptureStep(state, tab);
+        !!stepEditorOnTab(state, tab) && !scriptureStepOnTab(state, tab);
       if (hasPane || isChatOpen || editorCoversReader) {
         setIsScrolled(false);
       }
@@ -852,7 +859,12 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     clearSwipeTrackInlineStyles(swipeTrackRef.current);
   }
 
-  const editingPlaylistHere = isPlaylistEditorTab(state, tab);
+  // Hydrating the editor onto the plain reader the server rendered would leave
+  // its elements with the reader's classes, so a page loaded straight onto an
+  // editor path starts as the reader.
+  const [mounted, setMounted] = useState(false);
+  useLayoutEffect(() => setMounted(true), []);
+  const editingStepsHere = mounted && !!stepEditorOnTab(state, tab);
   const reader = (
     <div
       className={`sb-pane-reader${isCompactReader ? " sb-pane-reader-mobile" : ""}`}
@@ -866,7 +878,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         mobileChrome={mobileChrome}
         sharedSession={tab.sharedSession}
       />
-      {!isCompactReader && !editingPlaylistHere && (
+      {!isCompactReader && !editingStepsHere && (
         <BelowReaderToolbar
           toolsManager={state.tools}
           readingState={readingState}
@@ -888,14 +900,17 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     </div>
   );
 
-  if (editingPlaylistHere) {
+  if (editingStepsHere) {
+    const Workspace = isPlaylistEditorShowing(state)
+      ? PlaylistEditorWorkspace
+      : ReadingPlanEditorWorkspace;
     return (
-      <PlaylistEditorWorkspace
+      <Workspace
         state={state}
         compact={state.app.isCompactPlaylistEditor.value}
       >
         {reader}
-      </PlaylistEditorWorkspace>
+      </Workspace>
     );
   }
   return <div className="sb-pane-reader-outer">{reader}</div>;

@@ -15,6 +15,7 @@ import {
   type CalendarReadingDay,
   type CalendarSummary,
   type ReadingPlan,
+  type ReadingPlanEditorOptions,
   type ReadingPlanMetadata,
   type ReadingPlanProgress,
   type ReadingPlansManager,
@@ -29,16 +30,11 @@ import type { AppState } from "../../managers/SeedBibleStateManager";
 import type { Friend, FriendsManager } from "../../managers/FriendsManager";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
 import { Avatar } from "../Avatar/Avatar";
-import type { CasualOSManager } from "../../managers/OsManager";
-import type { LoginManager } from "../../managers/LoginManager";
-import type { UserGalleryManager } from "../../managers/UserGalleryManager";
 import { displayNameOf } from "../../managers/Utils";
 import { readingLabel } from "./readingLabel";
-import { ReadingPlanEditor } from "./ReadingPlanEditor";
 import { ReadingPlanDetail } from "./ReadingPlanDetail";
 import { ReadingPlanOptionsMenu } from "./ReadingPlanOptionsMenu";
 import { HeroImageThumb } from "../HeroImageField/HeroImageField";
-import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
 
@@ -53,11 +49,6 @@ interface ReadingPlansPaneProps {
   books: TranslationBook[];
   /** Modals host, for previewing a text or link reading and confirming a delete. */
   modals: ModalManager;
-  /** Loads chapters for the plan editor's inline scripture previews. */
-  loadChapter?: ScriptureChapterLoader;
-  os?: Pick<CasualOSManager, "recordFile" | "recordData">;
-  login?: Pick<LoginManager, "userId">;
-  gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
   /**
    * Navigates the reader to a scripture reading. Without it a plan's scripture
    * readings can only be ticked off, not opened.
@@ -81,16 +72,16 @@ interface ReadingPlansPaneProps {
   /** Lets a plan's Share open the share sheet rather than only copy its link. */
   app?: AppState;
   /**
-   * Returns to the screen that opened the pane, when leaving a plan that screen
-   * opened directly. The same callback the header's back button gets.
+   * Opens the pane again, as it was, on leaving the plan editor. The editor
+   * takes the pane's place. Without it, leaving the editor leaves the pane too.
    */
-  onBack?: () => void;
+  onReopen?: () => void;
 }
 
-type ReadingPlansView = "list" | "edit" | "detail";
+type ReadingPlansView = "list" | "detail";
 
 /**
- * Which of the pane's three screens is showing.
+ * Which of the pane's two screens is showing.
  *
  * Module-level rather than component state because the pane's chrome — the
  * back button, the title and the new-plan button — lives in the pane header,
@@ -173,19 +164,15 @@ export async function openReadingPlanDetail(
     planId
   );
   await readingPlans.selectReadingPlanProgress(progress);
-  showPlan("detail", options);
+  readingPlansView.value = "detail";
+  if (options.fromAnotherScreen) {
+    planBackLeavesPane.value = true;
+  }
 }
 
 interface OpenPlanOptions {
   /** Another screen opened the pane onto this plan; back returns there. */
   fromAnotherScreen?: boolean;
-}
-
-function showPlan(view: "detail" | "edit", options: OpenPlanOptions) {
-  readingPlansView.value = view;
-  if (options.fromAnotherScreen) {
-    planBackLeavesPane.value = true;
-  }
 }
 
 /** Opens the detail screen for a plan that is already selected. */
@@ -194,87 +181,65 @@ export function showReadingPlanDetailView() {
 }
 
 /**
- * Opens an existing plan in the editor, loading its contents if needed. A plan
- * still in draft picks up where it left off; a published one opens in edit
- * mode, where backing out changes nothing.
+ * Loads a plan's contents for the editor; null if they couldn't be. A plan
+ * already open in the editor is returned as it stands there.
  *
  * Exported for the same reason as {@link openReadingPlanDetail}.
  */
-export async function openReadingPlanEditor(
+export async function loadReadingPlanToEdit(
   readingPlans: ReadingPlansManager,
-  meta: ReadingPlanMetadata,
-  options: OpenPlanOptions = {}
-) {
-  // Already open in the editor — the author stepped out, to go read, say, and
-  // is coming back. Their unsaved changes are kept rather than reloaded over.
-  const current = readingPlans.editingReadingPlan.peek();
+  meta: ReadingPlanMetadata
+): Promise<ReadingPlan | null> {
+  const planId = formatReadingPlanId(meta.recordName, meta.address);
+  const current = readingPlans.editingReadingPlan.peek()?.plan;
   if (
     current &&
-    current.plan.recordName === meta.recordName &&
-    current.plan.address === meta.address
+    formatReadingPlanId(current.recordName, current.address) === planId
   ) {
-    showPlan("edit", options);
-    return;
+    return current;
   }
-  const planId = formatReadingPlanId(meta.recordName, meta.address);
   planLoadError.value = null;
   openingPlanId.value = planId;
   let full: ReadingPlan | null = null;
   try {
     full = await readingPlans.selectReadingPlan(meta);
   } catch {
-    planLoadError.value = planId;
-    return;
+    // Said on the plan's card, below.
   } finally {
     openingPlanId.value = null;
   }
   if (!full) {
     planLoadError.value = planId;
-    return;
   }
-  if (full.status === "draft") {
-    readingPlans.resumeEditingReadingPlan(full);
-  } else {
-    readingPlans.editExistingReadingPlan(full);
-  }
-  showPlan("edit", options);
+  return full;
 }
 
-/**
- * Opens the editor on a new plan. An in-flight new plan is resumed rather than
- * thrown away — the user may have stepped out of the editor to go read and add
- * a passage from the verse toolbar. An edit to a published plan is not: the
- * user asked for a new plan, and the published copy is untouched until saved.
- *
- * Exported for the same reason as {@link openReadingPlanDetail}.
- */
-export function openPlanCreate(
-  readingPlans: ReadingPlansManager,
-  options: OpenPlanOptions = {}
-) {
-  if (!readingPlans.editingReadingPlan.peek()?.isNew) {
-    readingPlans.startEditingReadingPlan();
-  }
-  showPlan("edit", options);
-}
-
-/**
- * Returns to the plans list. Leaving the editor steps out of the plan (a new
- * one stays saved in the user's account, listed under "Drafts"); leaving the
- * detail view clears the plan selection.
- */
+/** Returns from a plan to the list, clearing the plan selection. */
 function backToPlansList(readingPlans: ReadingPlansManager) {
-  if (readingPlansView.peek() === "edit") {
-    readingPlans.cancelEditingReadingPlan();
-  } else {
-    void readingPlans.selectReadingPlan(null);
-    void readingPlans.selectReadingPlanProgress(null);
-  }
+  void readingPlans.selectReadingPlan(null);
+  void readingPlans.selectReadingPlanProgress(null);
   showPlansList();
 }
 
 /**
- * Leaves a plan or the editor through `leave`, which shows the list. When
+ * What leaving the plan editor returns to from the pane: the pane, on the
+ * screen it was opened from.
+ */
+function editorOptionsFromPane(
+  onReopen: (() => void) | undefined
+): ReadingPlanEditorOptions {
+  const backLeavesPane = planBackLeavesPane.peek();
+  return {
+    onBack: () => {
+      onReopen?.();
+      // Opening the pane forgets this.
+      planBackLeavesPane.value = backLeavesPane;
+    },
+  };
+}
+
+/**
+ * Leaves a plan through `leave`, which shows the list. When
  * another screen opened the pane straight onto that plan, the user never saw
  * the list, so `onBack` then takes them back to that screen instead.
  */
@@ -302,20 +267,7 @@ export function ReadingPlansPaneTitle(props: {
   readingPlans: ReadingPlansManager;
 }) {
   const { t } = useI18n();
-  const view = readingPlansView.value;
-  if (view === "edit") {
-    const draft = props.readingPlans.editingReadingPlan.value;
-    return (
-      <>
-        {draft && !draft.isNew
-          ? t("edit-reading-plan", { defaultValue: "Edit plan" })
-          : t("create-reading-plan-wizard", {
-              defaultValue: "Create new plan",
-            })}
-      </>
-    );
-  }
-  if (view === "detail") {
+  if (readingPlansView.value === "detail") {
     const plan = props.readingPlans.selectedReadingPlan.value;
     return (
       <span dir="auto">
@@ -328,8 +280,7 @@ export function ReadingPlansPaneTitle(props: {
 }
 
 /**
- * Pane header back button. Inside a plan or the editor it returns to the
- * list. On the list, and on a plan another screen opened directly, it calls
+ * Pane header back button. Inside a plan it returns to the list. On the list, and on a plan another screen opened directly, it calls
  * `onBack` to return to that screen; without `onBack` the list has no back.
  */
 export function ReadingPlansPaneLeading(props: {
@@ -362,6 +313,7 @@ export function ReadingPlansPaneLeading(props: {
 /** Pane header actions: the new-plan button, offered from the list. */
 export function ReadingPlansPaneActions(props: {
   readingPlans: ReadingPlansManager;
+  onReopen?: () => void;
 }) {
   const { t } = useI18n();
   if (readingPlansView.value !== "list") {
@@ -374,7 +326,11 @@ export function ReadingPlansPaneActions(props: {
       shape="pill"
       icon="add"
       className="sb-reading-plans-create"
-      onClick={() => openPlanCreate(props.readingPlans)}
+      onClick={() =>
+        void props.readingPlans.createReadingPlanInEditor(
+          editorOptionsFromPane(props.onReopen)
+        )
+      }
       aria-label={t("create-reading-plan", {
         defaultValue: "Create reading plan",
       })}
@@ -386,10 +342,11 @@ export function ReadingPlansPaneActions(props: {
 }
 
 /**
- * Pane content for reading plans. Switches between the user's list of plans,
- * the plan editor, and a single-plan detail view. The chrome around it — back,
- * title and the new-plan button — is rendered by the pane header (see the
- * exports above), so this component renders only the body of each screen.
+ * Pane content for reading plans. Switches between the user's list of plans
+ * and a single-plan detail view; a plan is edited in the plan editor, over the
+ * reader. The chrome around it — back, title and the new-plan button — is
+ * rendered by the pane header (see the exports above), so this component
+ * renders only the body of each screen.
  */
 export function ReadingPlansPane(props: ReadingPlansPaneProps) {
   const {
@@ -397,23 +354,15 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
     friends,
     books,
     modals,
-    loadChapter,
-    os,
-    login,
-    gallery,
     onOpenScripture,
     onPlayReadings,
     toast,
     app,
-    onBack,
+    onReopen,
   } = props;
-  // The view outlives this component, so closing the pane to go read and add a
-  // passage brings the user back to the editor they were in, not to the list.
+  // The view outlives this component, so reopening the pane brings the user
+  // back to the plan they were on, not to the list.
   const view = readingPlansView.value;
-
-  const closeEditor = () => {
-    showPlansList();
-  };
 
   /**
    * Restarts a finished plan: creates a fresh progress (so the calendar starts
@@ -430,24 +379,15 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
     await openReadingPlanDetail(readingPlans, plan);
   };
 
-  const editPlan = (meta: ReadingPlanMetadata) =>
-    openReadingPlanEditor(readingPlans, meta);
-
-  if (view === "edit") {
-    return (
-      <ReadingPlanEditor
-        readingPlans={readingPlans}
-        books={books}
-        modals={modals}
-        loadChapter={loadChapter}
-        os={os}
-        login={login}
-        gallery={gallery}
-        onCancel={() => leavePlan(onBack, () => backToPlansList(readingPlans))}
-        onSaved={() => leavePlan(onBack, closeEditor)}
-      />
-    );
-  }
+  const editPlan = async (meta: ReadingPlanMetadata) => {
+    const plan = await loadReadingPlanToEdit(readingPlans, meta);
+    if (plan) {
+      readingPlans.openReadingPlanInEditor(
+        plan,
+        editorOptionsFromPane(onReopen)
+      );
+    }
+  };
 
   if (view === "detail") {
     return (
@@ -616,17 +556,6 @@ function ReadingPlansList(props: ReadingPlansListProps) {
     />
   );
 
-  const resumeDraft = (meta: ReadingPlanMetadata) => {
-    const full = fullById.get(
-      formatReadingPlanId(meta.recordName, meta.address)
-    );
-    if (!full) {
-      return;
-    }
-    readingPlans.resumeEditingReadingPlan(full);
-    readingPlansView.value = "edit";
-  };
-
   return (
     <div className="sb-reading-plans-pane">
       <div className="sb-reading-plans-scroll">
@@ -700,7 +629,7 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                       <button
                         type="button"
                         className="sb-rp-card-open"
-                        onClick={() => resumeDraft(meta)}
+                        onClick={() => onEdit(meta)}
                         disabled={!full}
                       >
                         {meta.heroImageUrl ? (

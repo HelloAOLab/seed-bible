@@ -510,6 +510,7 @@ function createMobileState(selectorState?: BibleSelectorState): SeedBibleState {
       },
     },
     readingPlans: {
+      isEditorShowing: signal(false),
       getReadingPlansForChapter: vi.fn(() => []),
     },
   } as any as SeedBibleState;
@@ -5964,7 +5965,10 @@ describe("BibleReader", () => {
         pendingCountForChapter: vi.fn(() => 0),
         visibleAnnotationsForChapter: vi.fn(() => []),
       },
-      readingPlans: { getReadingPlansForChapter: vi.fn(() => []) },
+      readingPlans: {
+        isEditorShowing: signal(false),
+        getReadingPlansForChapter: vi.fn(() => []),
+      },
       login: { userId: signal(null), profile: signal(null) },
       os: { connectionId: "test-connection" },
     } as any as SeedBibleState;

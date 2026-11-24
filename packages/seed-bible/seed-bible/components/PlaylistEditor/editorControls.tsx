@@ -1,9 +1,6 @@
 import { useI18n } from "../../i18n/I18nManager";
-import type {
-  PlaylistItemData,
-  PlaylistManager,
-} from "../../managers/PlaylistManager";
-import { playlistStepMinutes } from "./playlistSteps";
+import type { PlaylistItemData } from "../../managers/PlaylistManager";
+import type { StepEditor } from "../../managers/StepEditor";
 
 export type PeIconName =
   | "arrow-right"
@@ -42,15 +39,16 @@ export function PeIcon(props: { name: PeIconName; className?: string }) {
  * step: in the desktop toolbar, and the phone's "Item settings" sheet.
  */
 export function StepSettings(props: {
-  playlists: PlaylistManager;
+  editor: StepEditor;
   index: number;
   item: PlaylistItemData;
+  /** Its reading time, whether the author set it or it's estimated. */
+  minutes: number;
 }) {
-  const { playlists, index, item } = props;
+  const { editor, index, item, minutes } = props;
   const { t } = useI18n();
-  const minutes = playlistStepMinutes(item);
   const update = (changes: Partial<PlaylistItemData>) =>
-    playlists.updateEditingPlaylistItem(index, {
+    editor.updateItem(index, {
       ...item,
       ...changes,
     } as PlaylistItemData);

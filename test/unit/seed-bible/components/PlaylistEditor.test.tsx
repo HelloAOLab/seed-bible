@@ -1595,7 +1595,7 @@ describe("a scripture step's note sheet (phone)", () => {
       const current = state.playlists.editingPlaylist.value?.items[0];
       return current?.type === "bible-verse" ? (
         <PlaylistStepNoteSheet
-          state={state}
+          editor={state.playlists.stepEditor}
           index={0}
           item={current}
           resolveBookName={(bookId) => (bookId === "GEN" ? "Genesis" : bookId)}

@@ -1,402 +1,302 @@
+import "./PaceChoices.css";
 import "./ReadingPlanEditor.css";
 import "../visuallyHidden.inline.css";
-import { useEffect, useRef, useState } from "preact/hooks";
-import type { RefObject } from "preact";
-import { MaterialIcon } from "../icons";
+import type { ComponentChildren } from "preact";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
+import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import {
   cadenceDurationDays,
   DEFAULT_CADENCE_OPTIONS,
   draftReadingCount,
+  estimateReadingMinutes,
   type CadenceOption,
-  type ReadingPlanDraft,
+  type EditorReading,
   type ReadingPlanSession,
   type ReadingPlansManager,
 } from "../../managers/ReadingPlansManager";
-import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
-import type { PlaylistItemData } from "../../managers/PlaylistManager";
-import type { ModalManager } from "../../managers/ModalManager";
-import type { CasualOSManager } from "../../managers/OsManager";
-import type { LoginManager } from "../../managers/LoginManager";
 import {
-  uploadPhotoToGallery,
-  type UserGalleryManager,
-} from "../../managers/UserGalleryManager";
+  ADD_MENU_OPENER,
+  EmptyStepList,
+  openUnsavedChangesModal,
+  StepEditorPanel,
+  StepRowActions,
+  useResolveBookName,
+} from "../PlaylistEditor/PlaylistEditorPanel";
 import {
-  PlaylistItemInput,
-  type PlaylistItemInputHandle,
-} from "../PlaylistItemInput/PlaylistItemInput";
-import { openUnsavedItemConfirm } from "../PlaylistItemInput/unsavedItemConfirm";
-import { HeroImageField } from "../HeroImageField/HeroImageField";
-import {
-  PlaylistItemInlinePreview,
-  type ScriptureChapterLoader,
-} from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
+  EditorDetailsFields,
+  SaveAndPublishButton,
+  showUnfinishedSteps,
+  StepEditorWorkspace,
+} from "../PlaylistEditor/PlaylistEditorWorkspace";
+import type { StepEditorHost } from "../PlaylistEditor/stepEditorHost";
+import { PeIcon } from "../PlaylistEditor/editorControls";
+import { playlistStepLabel } from "../PlaylistEditor/playlistSteps";
+import { PlaylistStepRow } from "../PlaylistOverview/PlaylistOverview";
+import { useDragReorder } from "../useDragReorder";
 import { cadenceOptionLabel } from "./cadenceLabels";
-import { readingLabel } from "./readingLabel";
-import { playlistItemLabel } from "../playlistItemLabel";
-import { readingItemIcon, readingPreviewText } from "./readingPreview";
 import { Button } from "../Button/Button";
-import { TextField } from "../TextField/TextField";
-import "../Field/Field.css";
 import { IconButton } from "../IconButton/IconButton";
 import { CheckboxIndicator } from "../Checkbox/Checkbox";
 
-interface ReadingPlanEditorProps {
-  readingPlans: ReadingPlansManager;
-  /** Books of the active translation, for the scripture typeahead + labels. */
-  books: TranslationBook[];
-  /** Modals host for the cover image picker. */
-  modals?: ModalManager;
-  /** Loads chapters for previewing scripture readings inline. Without it a
-   * scripture preview says it couldn't load the passage. */
-  loadChapter?: ScriptureChapterLoader;
-  os?: Pick<CasualOSManager, "recordFile" | "recordData">;
-  login?: Pick<LoginManager, "userId">;
-  gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
-  /** Called when the user backs out of (or discards) the plan. */
-  onCancel: () => void;
-  /** Called after the plan is successfully saved. */
-  onSaved: () => void;
+/** The desktop plan editor's side pane. */
+export const READING_PLAN_EDITOR_PANE_ID = "reading-plan-editor-pane";
+
+type Translate = ReturnType<typeof useI18n>["t"];
+
+/** How long one reading takes: as its author set it, else an estimate. */
+function readingMinutes(state: SeedBibleState, item: PlaylistItemData): number {
+  const { tabs } = state;
+  const books =
+    tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value)
+      ?.readingState.translationBooks.value?.books ?? [];
+  return estimateReadingMinutes([{ id: "", item }], (bookId) =>
+    books.find((book) => book.id === bookId)
+  );
+}
+
+/** "3 sessions · 8 readings", for the plan in the editor. */
+function planSizeLabel(readingPlans: ReadingPlansManager, t: Translate) {
+  const draft = readingPlans.editingReadingPlan.value;
+  return [
+    t("reading-plan-session-count-sessions", {
+      defaultValue: "{{count}} sessions",
+      count: draft?.plan.sessions.length ?? 0,
+    }),
+    t("reading-plan-session-reading-count", {
+      defaultValue: "{{count}} readings",
+      count: draft ? draftReadingCount(draft) : 0,
+    }),
+  ].join(" · ");
 }
 
 /**
- * The reading-plan editor: one screen holding a plan's name, its readings, and
- * the paces it offers. The same screen creates a new plan and edits an existing
- * one — a plan is a name, a list of readings and some suggested paces, and
- * there is no reason those should be reachable in one order when creating and
- * not at all when editing.
- *
- * The readings come first because they *are* the plan; the paces come after,
- * because "how fast should this be read" is a question you can only answer once
- * you know what's in it.
- *
- * A plan is deliberately just content plus suggested paces — it has no duration
- * of its own and no start date. How long it takes follows from whichever
- * cadence a reader picks when they start it, which is what lets the same plan
- * be offered as, say, "the Bible in a year" and "the Bible in two years".
- *
- * The plan being edited lives on the manager (`editingReadingPlan`), not in this
- * component — so closing the plans pane to go read doesn't lose it, and the
- * reader's "Add to plan" verse action can add straight into the session shown
- * here. A plan still being created autosaves as a draft, so leaving mid-create
- * (or losing the tab) costs nothing. Edits to an already-published plan stay
- * in memory until Save changes, matching how playlist covers work.
- *
- * The component is fluid-width, so it fills the desktop side pane and the
- * mobile fullscreen pane without any breakpoint of its own.
+ * Where the open plan's changes stand. A plan not yet published is saved to
+ * the author's account as they go, so says how that went; changes to a
+ * published one are only drafted until they're published.
  */
-export function ReadingPlanEditor(props: ReadingPlanEditorProps) {
-  const {
-    readingPlans,
-    books,
-    modals,
-    loadChapter,
-    os,
-    login,
-    gallery,
-    onCancel,
-    onSaved,
-  } = props;
-  const { t } = useI18n();
-
-  const [saving, setSaving] = useState(false);
-  const [submitError, setSubmitError] = useState(false);
-  // Discarding a new plan erases it for good, so the button asks once first.
-  const [confirmingDiscard, setConfirmingDiscard] = useState(false);
-  // The reading open in the selected session's item input, or null when that
-  // input is adding a new reading.
-  const [editingReadingId, setEditingReadingId] = useState<string | null>(null);
-  const itemInputRef = useRef<PlaylistItemInputHandle>(null);
-
-  // Reading `.value` during render subscribes the component to edits, including
-  // ones made from the reader's verse toolbar.
+function planDraftStatus(
+  readingPlans: ReadingPlansManager,
+  t: Translate
+): { saved: boolean; label: string } {
   const draft = readingPlans.editingReadingPlan.value;
-  const autosaving = readingPlans.editingReadingPlanSaving.value;
-  const autosaveFailed = readingPlans.editingReadingPlanSaveError.value;
+  // Read so this is worked out again when the plan it's measured against is.
+  void readingPlans.editingBaseline.value;
+  if (!draft?.isNew) {
+    return readingPlans.isEditingReadingPlanDirty()
+      ? {
+          saved: false,
+          label: t("playlist-editor-unsaved", {
+            defaultValue: "Draft - Unsaved changes",
+          }),
+        }
+      : {
+          saved: true,
+          label: t("playlist-editor-saved", { defaultValue: "Saved" }),
+        };
+  }
+  const label = readingPlans.editingReadingPlanSaveError.value
+    ? t("reading-plan-draft-save-failed", {
+        defaultValue: "Couldn't save draft",
+      })
+    : readingPlans.editingReadingPlanSaving.value
+      ? t("reading-plan-draft-saving", { defaultValue: "Saving…" })
+      : draft.persisted
+        ? t("reading-plan-draft-saved", { defaultValue: "Draft saved" })
+        : t("playlist-editor-draft", { defaultValue: "Draft" });
+  return { saved: false, label };
+}
 
+/**
+ * Publishes the open plan, or says what it still needs: its unfinished
+ * readings, a name, or something to read. Says so if it fails.
+ */
+async function publishPlan(state: SeedBibleState): Promise<void> {
+  const { readingPlans } = state;
+  const { stepEditor } = readingPlans;
+  // Destructured for the translation lint rules, which only recognise calls
+  // made through a bare `t`.
+  const { t } = state.i18n;
+  const draft = readingPlans.editingReadingPlan.peek();
+  if (!draft || showUnfinishedSteps(state, stepEditor)) {
+    return;
+  }
+  if (draftReadingCount(draft) === 0) {
+    state.app.toast(
+      t("reading-plan-no-readings", {
+        defaultValue: "Add at least one reading to create the plan",
+      })
+    );
+    return;
+  }
+  if (!draft.plan.title?.trim()) {
+    state.app.toast(
+      t("reading-plan-needs-name", {
+        defaultValue: "Give your plan a name to save it",
+      })
+    );
+    stepEditor.detailsOpen.value = true;
+    return;
+  }
+  try {
+    await readingPlans.finishEditingReadingPlan();
+  } catch (error) {
+    console.error("Failed to save reading plan:", error);
+    state.app.toast(
+      t("reading-plan-create-error", {
+        defaultValue:
+          "Something went wrong creating your plan. Please try again.",
+      })
+    );
+  }
+}
+
+/** Leaves the plan editor, asking first what to do with unsaved changes. */
+function requestClosePlanEditor(state: SeedBibleState) {
+  const { readingPlans, modals } = state;
+  if (!readingPlans.isEditingReadingPlanDirty()) {
+    readingPlans.leaveEditorKeepingDraft();
+    return;
+  }
+  openUnsavedChangesModal(modals, {
+    onDiscard: readingPlans.discardEditorChanges,
+    onSaveDraft: readingPlans.leaveEditorKeepingDraft,
+    onPublish: () => void publishPlan(state),
+  });
+}
+
+/** The reading plan editor's side of the step editor. */
+export function readingPlanEditorHost(state: SeedBibleState): StepEditorHost {
+  const { readingPlans } = state;
+  return {
+    editor: readingPlans.stepEditor,
+    title: (t) =>
+      readingPlans.editingReadingPlan.value?.plan.title?.trim() ||
+      t("untitled-reading-plan", { defaultValue: "Untitled plan" }),
+    status: (t) => planDraftStatus(readingPlans, t),
+    closeLabel: (t) =>
+      t("reading-plan-editor-close", { defaultValue: "Close plan editor" }),
+    requestClose: () => requestClosePlanEditor(state),
+    editDetailsLabel: (t) =>
+      t("reading-plan-editor-edit-details", {
+        defaultValue: "Edit title, description, cover and paces",
+      }),
+    // The session matters more than the place in it: a session is what a
+    // reader sits down to.
+    addMenuPlace: (_afterIndex, t) =>
+      t("reading-plan-editor-added-to-session", {
+        number:
+          (readingPlans.editingReadingPlan.value?.selectedSessionIndex ?? 0) +
+          1,
+        defaultValue: "Added to session {{number}}",
+      }),
+    renderSteps: () => <ReadingPlanSteps state={state} />,
+    stepMinutes: (item) => readingMinutes(state, item),
+    mobileStatus: (t) =>
+      `${planSizeLabel(readingPlans, t)} · ${planDraftStatus(readingPlans, t).label}`,
+    details: {
+      title: {
+        key: "reading-plan-editor-details",
+        defaultValue: "Plan details",
+      },
+      render: (idPrefix) => (
+        <ReadingPlanDetailsFields state={state} idPrefix={idPrefix} />
+      ),
+    },
+    renderPublishButton: () => <PublishPlanButton state={state} />,
+  };
+}
+
+function PublishPlanButton(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const [saving, setSaving] = useState(false);
+  return (
+    <SaveAndPublishButton
+      saving={saving}
+      onClick={() => {
+        setSaving(true);
+        void publishPlan(state).finally(() => setSaving(false));
+      }}
+    />
+  );
+}
+
+/** The desktop plan editor's side pane. */
+export function ReadingPlanEditorPanel(props: { state: SeedBibleState }) {
+  const { state } = props;
+  return (
+    <StepEditorPanel
+      host={readingPlanEditorHost(state)}
+      footerActions={<PublishPlanButton state={state} />}
+    />
+  );
+}
+
+/** The plan editor over a reader tab; see `StepEditorWorkspace`. */
+export function ReadingPlanEditorWorkspace(props: {
+  state: SeedBibleState;
+  compact: boolean;
+  children: ComponentChildren;
+}) {
+  const { state, compact, children } = props;
+  return (
+    <StepEditorWorkspace
+      state={state}
+      host={readingPlanEditorHost(state)}
+      compact={compact}
+    >
+      {children}
+    </StepEditorWorkspace>
+  );
+}
+
+/**
+ * The plan's name, description and cover, as a playlist has, and the paces it
+ * offers its readers.
+ */
+function ReadingPlanDetailsFields(props: {
+  state: SeedBibleState;
+  idPrefix: string;
+}) {
+  const { state, idPrefix } = props;
+  const { readingPlans, gallery } = state;
+  const { t } = useI18n();
+  const draft = readingPlans.editingReadingPlan.value;
+  const heroImageUrl = draft?.plan.heroImageUrl;
+
+  // A cover from before the gallery existed joins it, to be picked again.
   useEffect(() => {
-    const url = draft?.plan.heroImageUrl;
-    if (!url || !gallery) {
-      return;
+    if (
+      heroImageUrl &&
+      gallery &&
+      !gallery.photos.peek().some((photo) => photo.url === heroImageUrl)
+    ) {
+      void gallery.rememberPhoto(heroImageUrl);
     }
-    if (gallery.photos.peek().some((photo) => photo.url === url)) {
-      return;
-    }
-    void gallery.rememberPhoto?.(url);
-  }, [draft?.plan.heroImageUrl, gallery]);
+  }, [heroImageUrl, gallery]);
 
   if (!draft) {
     return null;
   }
-
-  const totalReadings = draftReadingCount(draft);
-  const selectedCadenceIds = draft.plan.cadenceOptions.map((o) => o.id);
-  const hasTitle = (draft.plan.title ?? "").trim().length > 0;
-  const canSave = hasTitle && totalReadings > 0;
-
-  const save = async () => {
-    setSaving(true);
-    setSubmitError(false);
-    try {
-      await readingPlans.finishEditingReadingPlan();
-      onSaved();
-    } catch (error) {
-      console.error("Failed to save reading plan:", error);
-      setSubmitError(true);
-      setSaving(false);
-    }
-  };
-
-  const handleSave = () => {
-    if (saving || !canSave) {
-      return;
-    }
-    // A reading opened for editing with changes not yet saved would otherwise
-    // be silently dropped by saving the plan.
-    if (modals && editingReadingId && itemInputRef.current?.isDirty()) {
-      openUnsavedItemConfirm(
-        modals,
-        true,
-        () => void save(),
-        () => {
-          void (async () => {
-            if (await itemInputRef.current?.commit()) {
-              await save();
-            }
-            // If the edit didn't commit (e.g. an unknown reference), the
-            // input stays open with its inline error.
-          })();
-        }
-      );
-      return;
-    }
-    void save();
-  };
-
-  const handleDiscard = async () => {
-    if (!confirmingDiscard) {
-      setConfirmingDiscard(true);
-      return;
-    }
-    setConfirmingDiscard(false);
-    await readingPlans.discardEditingReadingPlan();
-    onCancel();
-  };
-
-  // What's still missing before the plan can be saved, so the reason the button
-  // is disabled is on screen rather than left to be guessed at.
-  const blockingNote = !hasTitle
-    ? t("reading-plan-needs-name", {
-        defaultValue: "Give your plan a name to save it",
-      })
-    : totalReadings === 0
-      ? t("reading-plan-no-readings", {
-          defaultValue: "Add at least one reading to create the plan",
-        })
-      : null;
-
   return (
-    <div className="sb-rp-editor">
-      {draft.isNew ? (
-        <div className="sb-rp-editor-status" aria-live="polite">
-          {autosaveFailed
-            ? t("reading-plan-draft-save-failed", {
-                defaultValue: "Couldn't save draft",
-              })
-            : autosaving
-              ? t("reading-plan-draft-saving", { defaultValue: "Saving…" })
-              : draft.persisted
-                ? t("reading-plan-draft-saved", { defaultValue: "Draft saved" })
-                : ""}
-        </div>
-      ) : null}
-
-      <div className="sb-rp-editor-body">
-        <section className="sb-rp-editor-section">
-          <TextField
-            label={t("reading-plan-step-name-title", {
-              defaultValue: "Name your plan",
-            })}
-            value={draft.plan.title ?? ""}
-            autoFocus={draft.isNew && totalReadings === 0}
-            onValueInput={(title) =>
-              readingPlans.updateEditingReadingPlan({ title })
-            }
-            placeholder={t("reading-plan-name-placeholder", {
-              defaultValue: "e.g. My Psalms Journey",
-            })}
-          />
-          <TextField
-            label={t("reading-plan-description-label", {
-              defaultValue: "Description (optional)",
-            })}
-            value={draft.plan.description ?? ""}
-            onValueInput={(description) =>
-              readingPlans.updateEditingReadingPlan({ description })
-            }
-            placeholder={t("reading-plan-description_placeholder", {
-              defaultValue: "What is this plan about?",
-            })}
-          />
-          {modals ? (
-            <div className="sb-rp-field">
-              <span className="sb-field-label">
-                {t("hero-image", { defaultValue: "Cover image" })}
-              </span>
-              <HeroImageField
-                imageUrl={draft.plan.heroImageUrl}
-                modals={modals}
-                gallery={gallery}
-                photos={gallery?.photos}
-                onUpload={async (file) => {
-                  const url = await uploadPhotoToGallery(file, {
-                    gallery,
-                    os,
-                    userId: login?.userId.value,
-                    fallbackUpload: readingPlans.uploadHeroImage,
-                  });
-                  readingPlans.updateEditingReadingPlan({
-                    heroImageUrl: url,
-                  });
-                  return url;
-                }}
-                onSelectPhoto={(url) => {
-                  readingPlans.updateEditingReadingPlan({
-                    heroImageUrl: url,
-                  });
-                  void gallery?.rememberPhoto(url);
-                }}
-                onRemove={() =>
-                  readingPlans.updateEditingReadingPlan({
-                    heroImageUrl: null,
-                  })
-                }
-              />
-            </div>
-          ) : null}
-        </section>
-
-        <section className="sb-rp-editor-section">
-          <h3 className="sb-rp-editor-section-title">
-            {t("reading-plan-step-scripture-title", {
-              defaultValue: "Select readings",
-            })}
-          </h3>
-          <SessionsSection
-            books={books}
-            loadChapter={loadChapter}
-            draft={draft}
-            onSelectSession={(index) => {
-              // The reading input only edits within the selected session.
-              if (index !== draft.selectedSessionIndex) {
-                setEditingReadingId(null);
-              }
-              readingPlans.selectEditingPlanSession(index);
-            }}
-            onAddSession={() => readingPlans.addSessionToEditingPlan()}
-            onRemoveSession={(index) => {
-              setEditingReadingId(null);
-              readingPlans.removeSessionFromEditingPlan(index);
-            }}
-            onAddReading={(item) => readingPlans.addReadingToEditingPlan(item)}
-            onRemoveReading={(sessionIndex, readingId) =>
-              readingPlans.removeReadingFromEditingPlan(sessionIndex, readingId)
-            }
-            editingReadingId={editingReadingId}
-            onEditingReadingChange={setEditingReadingId}
-            itemInputRef={itemInputRef}
-            onUpdateReading={(sessionIndex, readingId, item) =>
-              readingPlans.updateReadingInEditingPlan(
-                sessionIndex,
-                readingId,
-                item
-              )
-            }
-          />
-        </section>
-
-        <section className="sb-rp-editor-section">
-          <h3 className="sb-rp-editor-section-title">
-            {t("reading-plan-step-cadences-title", {
-              defaultValue: "Reading cadences",
-            })}
-          </h3>
-          <CadencesSection
-            selectedIds={selectedCadenceIds}
-            // Only sessions that hold something take a day to read, so an empty
-            // one the author has added but not filled must not lengthen the
-            // estimate — or a brand-new plan would claim to finish in a day.
-            sessionCount={
-              draft.plan.sessions.filter((s) => s.readings.length > 0).length
-            }
-            onToggle={(id) =>
-              readingPlans.setEditingPlanCadenceOptions(
-                selectedCadenceIds.includes(id)
-                  ? selectedCadenceIds.filter((existing) => existing !== id)
-                  : [...selectedCadenceIds, id]
-              )
-            }
-          />
-        </section>
-      </div>
-
-      <footer className="sb-rp-editor-footer">
-        {submitError && (
-          <p className="sb-rp-error" role="alert">
-            {t("reading-plan-create-error", {
-              defaultValue:
-                "Something went wrong creating your plan. Please try again.",
-            })}
-          </p>
-        )}
-        {blockingNote && <p className="sb-rp-footer-note">{blockingNote}</p>}
-        <div className="sb-rp-editor-actions">
-          {/* Discarding only ever throws away a plan that is still being
-              created. Backing out of an edit to a published plan drops
-              unsaved changes (cover image included) and leaves the published
-              plan as it was. */}
-          {draft.isNew ? (
-            <Button
-              size="lg"
-              tone={confirmingDiscard ? "danger" : "neutral"}
-              onClick={() => void handleDiscard()}
-              disabled={saving}
-            >
-              {confirmingDiscard
-                ? t("reading-plan-discard-draft-confirm", {
-                    defaultValue: "Delete for good?",
-                  })
-                : t("reading-plan-discard-draft", { defaultValue: "Discard" })}
-            </Button>
-          ) : (
-            <Button size="lg" onClick={onCancel} disabled={saving}>
-              {t("cancel", { defaultValue: "Cancel" })}
-            </Button>
-          )}
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={handleSave}
-            disabled={!canSave}
-            loading={saving}
-          >
-            {draft.isNew
-              ? t("reading-plan-create-submit", { defaultValue: "Create plan" })
-              : t("reading-plan-save-changes", {
-                  defaultValue: "Save changes",
-                })}
-          </Button>
-        </div>
-      </footer>
-    </div>
+    <>
+      <EditorDetailsFields
+        state={state}
+        idPrefix={idPrefix}
+        details={draft.plan}
+        titlePlaceholder={t("reading-plan-name-placeholder", {
+          defaultValue: "e.g. My Psalms Journey",
+        })}
+        descriptionPlaceholder={t("reading-plan-description_placeholder", {
+          defaultValue: "What is this plan about?",
+        })}
+        onChange={readingPlans.updateEditingReadingPlan}
+        fallbackUpload={readingPlans.uploadHeroImage}
+      />
+      <CadencesField readingPlans={readingPlans} idPrefix={idPrefix} />
+    </>
   );
-}
-
-interface CadencesSectionProps {
-  selectedIds: string[];
-  sessionCount: number;
-  onToggle: (id: string) => void;
 }
 
 /**
@@ -405,17 +305,45 @@ interface CadencesSectionProps {
  * decides how long the plan takes them — so the same content can be offered at
  * several speeds instead of being locked to one duration.
  */
-function CadencesSection(props: CadencesSectionProps) {
-  const { selectedIds, sessionCount, onToggle } = props;
+function CadencesField(props: {
+  readingPlans: ReadingPlansManager;
+  idPrefix: string;
+}) {
+  const { readingPlans, idPrefix } = props;
   const { t } = useI18n();
-
+  const plan = readingPlans.editingReadingPlan.value?.plan;
+  if (!plan) {
+    return null;
+  }
+  const selectedIds = plan.cadenceOptions.map((option) => option.id);
   const lastSelected = selectedIds.length === 1;
+  // Only sessions that hold something take a day to read, so an empty one the
+  // author has added but not filled must not lengthen the estimate — or a
+  // brand-new plan would claim to finish in a day.
+  const sessionCount = plan.sessions.filter(
+    (session) => session.readings.length > 0
+  ).length;
+  const toggle = (id: string) =>
+    readingPlans.setEditingPlanCadenceOptions(
+      selectedIds.includes(id)
+        ? selectedIds.filter((existing) => existing !== id)
+        : [...selectedIds, id]
+    );
 
   return (
-    <div className="sb-rp-choices">
+    <div
+      className="sb-pe-field sb-rp-choices"
+      role="group"
+      aria-labelledby={`${idPrefix}-cadences`}
+    >
+      <span id={`${idPrefix}-cadences`} className="sb-pe-field-label">
+        {t("reading-plan-step-cadences-title", {
+          defaultValue: "Reading cadences",
+        })}
+      </span>
       {/* Says plainly that this is authoring options *for readers*, and that
           self-pacing is always on offer without being one of these boxes. */}
-      <p className="sb-rp-hint">
+      <p className="sb-rp-cadences-hint">
         {t("reading-plan-step-cadences-hint", {
           defaultValue:
             "Choose the reading paces you want to offer. Readers can always choose to go at their own pace instead.",
@@ -441,7 +369,7 @@ function CadencesSection(props: CadencesSectionProps) {
               // A plan has to offer at least one cadence, so the last one
               // standing can't be unchecked.
               disabled={selected && lastSelected}
-              onChange={() => onToggle(option.id)}
+              onChange={() => toggle(option.id)}
             />
             <CheckboxIndicator
               className="sb-rp-choice-box"
@@ -468,263 +396,208 @@ function CadencesSection(props: CadencesSectionProps) {
   );
 }
 
-interface SessionsSectionProps {
-  books: TranslationBook[];
-  loadChapter?: ScriptureChapterLoader;
-  draft: ReadingPlanDraft;
-  onSelectSession: (index: number) => void;
-  onAddSession: () => void;
-  onRemoveSession: (index: number) => void;
-  onAddReading: (item: PlaylistItemData) => void;
-  onRemoveReading: (sessionIndex: number, readingId: string) => void;
-  onUpdateReading: (
-    sessionIndex: number,
-    readingId: string,
-    item: PlaylistItemData
-  ) => void;
-  /** The reading open in the item input, or null when it's adding one. */
-  editingReadingId: string | null;
-  onEditingReadingChange: (readingId: string | null) => void;
-  /** Handle on the selected session's item input, for unsaved-edit checks. */
-  itemInputRef: RefObject<PlaylistItemInputHandle>;
+/** A row of the list: a session's heading, or one of its readings. */
+type PlanRow =
+  | { type: "session"; session: ReadingPlanSession; sessionIndex: number }
+  | (EditorReading & { type: "reading"; index: number });
+
+/** The list's rows: each session's heading followed by its readings. */
+function planRows(
+  sessions: readonly ReadingPlanSession[],
+  readings: readonly EditorReading[]
+): PlanRow[] {
+  return sessions.flatMap((session, sessionIndex): PlanRow[] => [
+    { type: "session", session, sessionIndex },
+    ...readings.flatMap((reading, index): PlanRow[] =>
+      reading.sessionIndex === sessionIndex
+        ? [{ ...reading, type: "reading", index }]
+        : []
+    ),
+  ]);
 }
 
 /**
- * The plan's content: a vertical list of reading sessions, each holding one
- * sitting's worth of reading. Selecting a session opens the same add-item
- * control the playlist editor uses (scripture, text, or link) inside it, and is
- * also where the reader's "Add to plan" verse action puts a passage. Editing a
- * reading selects its session and opens that same control on the reading.
+ * The plan's sessions and their readings. The sessions come out as one list,
+ * so that a reading can be dragged from one into another: past a session's
+ * heading, it's in that session.
  */
-function SessionsSection(props: SessionsSectionProps) {
-  const {
-    books,
-    loadChapter,
-    draft,
-    onSelectSession,
-    onAddSession,
-    onRemoveSession,
-    onAddReading,
-    onRemoveReading,
-    onUpdateReading,
-    editingReadingId,
-    onEditingReadingChange: setEditingReadingId,
-    itemInputRef,
-  } = props;
+function ReadingPlanSteps(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { readingPlans, tabs } = state;
+  const { stepEditor } = readingPlans;
   const { t } = useI18n();
-  // Only one reading is expanded at a time, across all sessions.
-  const [expandedReadingId, setExpandedReadingId] = useState<string | null>(
-    null
+  const resolveBookName = useResolveBookName(tabs);
+  const draft = readingPlans.editingReadingPlan.value;
+  const sessions = draft?.plan.sessions ?? [];
+  const rows = planRows(sessions, readingPlans.editorReadings.value);
+  const openIndex = stepEditor.stepIndex.value;
+  const pickIndex = stepEditor.versePickIndex.value;
+  const invalid = new Set(stepEditor.invalidSteps());
+
+  const onReorder = useCallback(
+    (from: number, to: number) => {
+      const current = planRows(
+        readingPlans.editingReadingPlan.peek()?.plan.sessions ?? [],
+        readingPlans.editorReadings.peek()
+      );
+      const [moved] = current.splice(from, 1);
+      if (moved?.type !== "reading") {
+        return;
+      }
+      const above = current.slice(0, to);
+      const heading = above.findLastIndex((row) => row.type === "session");
+      const session = above[heading];
+      if (session?.type === "session") {
+        readingPlans.moveReadingInEditingPlan(
+          moved.reading.id,
+          session.sessionIndex,
+          to - heading - 1
+        );
+      }
+    },
+    [readingPlans]
   );
-
-  // Resolve a book's display name from the active translation's book list.
-  const resolveBookName = (bookId: string): string => {
-    const book = books.find((b) => b.id === bookId);
-    return book?.name ?? book?.commonName ?? bookId;
-  };
-
-  const untitledReading = t("reading-plan-untitled-reading", {
-    defaultValue: "Reading",
+  const { getRowClassName, getHandleProps } = useDragReorder({
+    itemCount: rows.length,
+    // Below the first session's heading: there's no session above it.
+    minIndex: 1,
+    onReorder,
   });
 
-  return (
-    <div className="sb-rp-sessions">
-      <p className="sb-rp-hint">
-        {t("reading-plan-sessions-hint", {
-          defaultValue:
-            "Add the readings for each session — scripture, text, or a link",
+  if (!draft) {
+    return null;
+  }
+
+  const addSession = (
+    <Button
+      size="lg"
+      icon="add"
+      className="sb-rp-add-session"
+      onClick={readingPlans.addSessionToEditingPlan}
+    >
+      {t("reading-plan-add-session", { defaultValue: "Add session" })}
+    </Button>
+  );
+
+  // One empty session, as a new plan starts with, says no more than the plan
+  // being empty does.
+  if (draftReadingCount(draft) === 0 && sessions.length === 1) {
+    return (
+      <EmptyStepList
+        editor={stepEditor}
+        title={t("reading-plan-editor-empty-title", {
+          defaultValue: "This plan is empty",
         })}
-      </p>
+      />
+    );
+  }
 
-      <ul className="sb-rp-session-list">
-        {draft.plan.sessions.map((session: ReadingPlanSession, index) => {
-          const isSelected = index === draft.selectedSessionIndex;
+  return (
+    <>
+      <p className="sb-pe-step-count">{planSizeLabel(readingPlans, t)}</p>
+      <ul className="sb-discover-list sb-playlist-page-items sb-pe-steps">
+        {rows.map((row, rowIndex) => {
+          if (row.type === "session") {
+            return (
+              <SessionHeadingRow
+                key={rowIndex}
+                readingPlans={readingPlans}
+                session={row.session}
+                sessionIndex={row.sessionIndex}
+              />
+            );
+          }
+          const { item } = row.reading;
+          const active = row.index === openIndex;
           return (
-            <li
-              key={session.id}
-              className={`sb-rp-session${
-                isSelected ? " sb-rp-session-selected" : ""
-              }`}
-            >
-              <div className="sb-rp-session-head">
-                <button
-                  type="button"
-                  className="sb-rp-session-select"
-                  aria-pressed={isSelected}
-                  onClick={() => onSelectSession(index)}
-                >
-                  <span className="sb-rp-session-number">{index + 1}</span>
-                  <span className="sb-rp-session-name">
-                    {t("reading-plan-session-label", {
-                      defaultValue: "Session {{number}}",
-                      number: index + 1,
-                    })}
-                  </span>
-                  <span className="sb-rp-session-count">
-                    {t("reading-plan-session-reading-count", {
-                      defaultValue: "{{count}} readings",
-                      count: session.readings.length,
-                    })}
-                  </span>
-                </button>
-                <IconButton
-                  size="sm"
-                  className="sb-rp-session-remove"
-                  onClick={() => onRemoveSession(index)}
-                  icon="delete"
-                  label={t("reading-plan-remove-session", {
-                    defaultValue: "Remove session",
-                  })}
-                />
-              </div>
-
-              {session.readings.length > 0 ? (
-                <ul className="sb-rp-reading-list">
-                  {session.readings.map((reading) => {
-                    const label = readingLabel(
-                      reading.item,
-                      resolveBookName,
-                      untitledReading
-                    );
-                    const preview = readingPreviewText(reading.item, t);
-                    const expanded = expandedReadingId === reading.id;
-                    const previewId = `sb-rp-reading-preview-${reading.id}`;
-
-                    return (
-                      <li key={reading.id} className="sb-rp-reading-item">
-                        <button
-                          type="button"
-                          className="sb-rp-reading-open"
-                          aria-expanded={expanded}
-                          aria-controls={expanded ? previewId : undefined}
-                          onClick={() =>
-                            setExpandedReadingId(expanded ? null : reading.id)
-                          }
-                          aria-label={t("reading-plan-preview-reading", {
-                            defaultValue: "Preview {{reading}}",
-                            reading: label,
-                          })}
-                        >
-                          <span
-                            className="sb-rp-reading-icon"
-                            aria-hidden="true"
-                          >
-                            <MaterialIcon>
-                              {readingItemIcon(reading.item)}
-                            </MaterialIcon>
-                          </span>
-                          <span className="sb-rp-reading-text">
-                            <span className="sb-rp-reading-label" dir="auto">
-                              {label}
-                            </span>
-                            {preview ? (
-                              <span
-                                className="sb-rp-reading-preview"
-                                dir="auto"
-                              >
-                                {preview}
-                              </span>
-                            ) : null}
-                          </span>
-                          <MaterialIcon className="sb-rp-reading-chevron">
-                            {expanded ? "expand_less" : "expand_more"}
-                          </MaterialIcon>
-                        </button>
-                        <IconButton
-                          size="sm"
-                          className="sb-rp-reading-edit"
-                          pressed={editingReadingId === reading.id}
-                          onClick={() => {
-                            onSelectSession(index);
-                            setEditingReadingId(reading.id);
-                          }}
-                          icon="edit"
-                          label={t("reading-plan-edit-reading", {
-                            defaultValue: "Edit reading",
-                          })}
-                        />
-                        <IconButton
-                          size="sm"
-                          className="sb-rp-reading-remove"
-                          onClick={() => {
-                            onRemoveReading(index, reading.id);
-                            if (editingReadingId === reading.id) {
-                              setEditingReadingId(null);
-                            }
-                          }}
-                          icon="close"
-                          label={t("reading-plan-scripture-remove", {
-                            defaultValue: "Remove reading",
-                          })}
-                        />
-                        {expanded ? (
-                          <PlaylistItemInlinePreview
-                            id={previewId}
-                            item={reading.item}
-                            loadChapter={loadChapter}
-                          />
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="sb-rp-empty-day">
-                  {t("reading-plan-session-empty", {
-                    defaultValue: "No readings yet in this session",
-                  })}
-                </p>
-              )}
-
-              {/* Only the selected session takes new readings — including the
-                  ones sent over from the reader's "Add to plan" action, which
-                  has no way to name a session. */}
-              {isSelected
-                ? (() => {
-                    const editingReading =
-                      session.readings.find((r) => r.id === editingReadingId) ??
-                      null;
-                    const editItem = editingReading?.item;
-                    return (
-                      <PlaylistItemInput
-                        ref={itemInputRef}
-                        // Remount when the edit target changes so the inputs
-                        // seed from the newly chosen reading (or reset).
-                        key={
-                          editingReading ? `edit-${editingReading.id}` : "add"
-                        }
-                        books={books}
-                        onAdd={onAddReading}
-                        editItem={editItem}
-                        editScriptureText={
-                          editItem?.type === "bible-verse"
-                            ? playlistItemLabel(editItem, t, resolveBookName)
-                            : undefined
-                        }
-                        onUpdate={(item) => {
-                          if (editingReading) {
-                            onUpdateReading(index, editingReading.id, item);
-                          }
-                          setEditingReadingId(null);
-                        }}
-                        onCancelEdit={() => setEditingReadingId(null)}
-                      />
-                    );
-                  })()
-                : null}
-            </li>
+            <PlaylistStepRow
+              // By place, like a playlist's: a row that moved in the page
+              // under the finger dragging it would drop it.
+              key={rowIndex}
+              item={item}
+              resolveBookName={resolveBookName}
+              label={playlistStepLabel(item, t, resolveBookName)}
+              minutes={readingMinutes(state, item)}
+              current={active}
+              ariaCurrent={active ? "step" : undefined}
+              className={`sb-pe-step${active ? " sb-pe-step--active" : ""}${
+                invalid.has(row.index) ? " sb-pe-step--invalid" : ""
+              }${getRowClassName(rowIndex)}`}
+              dragHandleProps={getHandleProps(rowIndex)}
+              dragLabel={t("drag-to-reorder-playlist-item", {
+                defaultValue: "Drag to reorder",
+              })}
+              handleClassName="sb-pe-step-handle"
+              openClassName="sb-pe-step-open"
+              onOpen={() => stepEditor.selectStep(row.index)}
+              trailing={
+                active ? (
+                  <StepRowActions
+                    editor={stepEditor}
+                    index={row.index}
+                    picking={pickIndex === row.index}
+                  />
+                ) : null
+              }
+            />
           );
         })}
       </ul>
+      {addSession}
+    </>
+  );
+}
 
-      <button
-        type="button"
-        className="sb-rp-add-session"
-        onClick={onAddSession}
-      >
-        <MaterialIcon>add</MaterialIcon>
-        {t("reading-plan-add-session", { defaultValue: "Add session" })}
-      </button>
-    </div>
+/**
+ * A session's heading in the list: its number and how many readings it holds,
+ * with buttons to add to it and remove it.
+ */
+function SessionHeadingRow(props: {
+  readingPlans: ReadingPlansManager;
+  session: ReadingPlanSession;
+  sessionIndex: number;
+}) {
+  const { readingPlans, session, sessionIndex } = props;
+  const { t } = useI18n();
+  const number = sessionIndex + 1;
+  return (
+    <li className="sb-rp-session-row">
+      <h3 className="sb-rp-session-name">
+        {t("reading-plan-session-label", {
+          defaultValue: "Session {{number}}",
+          number,
+        })}
+      </h3>
+      <span className="sb-rp-session-count">
+        {session.readings.length > 0
+          ? t("reading-plan-session-reading-count", {
+              defaultValue: "{{count}} readings",
+              count: session.readings.length,
+            })
+          : t("reading-plan-session-empty", {
+              defaultValue: "No readings yet in this session",
+            })}
+      </span>
+      <IconButton
+        size="sm"
+        className="sb-rp-session-add"
+        icon="add"
+        label={t("reading-plan-editor-add-to-session", {
+          number,
+          defaultValue: "Add to session {{number}}",
+        })}
+        {...ADD_MENU_OPENER}
+        onClick={() => readingPlans.openAddMenuForSession(sessionIndex)}
+      />
+      <IconButton
+        size="sm"
+        className="sb-pe-step-action--danger sb-rp-session-remove"
+        icon={<PeIcon name="trash" />}
+        label={t("reading-plan-remove-session", {
+          defaultValue: "Remove session",
+        })}
+        onClick={() => readingPlans.removeSessionFromEditingPlan(sessionIndex)}
+      />
+    </li>
   );
 }

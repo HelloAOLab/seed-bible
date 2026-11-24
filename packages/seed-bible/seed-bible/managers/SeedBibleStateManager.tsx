@@ -84,9 +84,8 @@ import {
   PlaylistHistoryPaneTitle,
 } from "../components/PlaylistHistoryPane/PlaylistHistoryPane";
 import {
+  loadReadingPlanToEdit,
   openReadingPlanDetail,
-  openReadingPlanEditor,
-  openPlanCreate,
 } from "../components/ReadingPlansPane/ReadingPlansPane";
 import {
   FRIENDS_PANE_ID,
@@ -272,6 +271,7 @@ import {
 import { range } from "es-toolkit";
 import {
   createReadingPlansManager,
+  getReadingPlanLocator,
   type ReadingPlanMetadata,
   type ReadingPlan,
   type ReadingPlansManager,
@@ -798,7 +798,13 @@ import {
   DiscoverPane,
   DISCOVER_PANE_ID,
 } from "../components/Discover/DiscoverPane";
-import { PlaylistDraftChoice } from "../components/PlaylistEditor/PlaylistDraftChoice";
+import { EditorDraftChoice } from "../components/PlaylistEditor/EditorDraftChoice";
+import {
+  READING_PLAN_EDITOR_PANE_ID,
+  ReadingPlanEditorPanel,
+} from "../components/ReadingPlansPane/ReadingPlanEditor";
+import type { ChapterPicker } from "./StepEditor";
+import { createStepEditorRouting } from "./StepEditorRouting";
 import {
   AIBibleVerseRefSchema,
   convertToPlaylistItem,
@@ -1478,10 +1484,24 @@ export function createSeedBibleState(
       },
     },
   });
+  // The book selector, for the editors to ask for a chapter with.
+  const pickChapter: ChapterPicker = (onPick, bookId) => {
+    const slot = tabsLayout.slots
+      .peek()
+      .find((candidate) => candidate.id === tabsLayout.selectedSlotId.peek());
+    if (!slot) {
+      return;
+    }
+    selector.selectingTranslation.value = false;
+    void selector.setOpen(true, slot, { onChapterPick: onPick, bookId });
+  };
   const readingPlans = createReadingPlansManager(os, login, tabs, navigation, {
     language: i18n.language,
     initialReadingPlanPageSeed: options.initialReadingPlanPageSeed,
     friendReads,
+    pickChapter,
+    beforeEditorOpens: () => playlists.hideEditor(),
+    batchUrlWrites: navigation.batchWrites,
   });
   const gallery = createUserGalleryManager(os, login);
   const textToSpeech = createTextToSpeechManager();
@@ -1569,20 +1589,34 @@ export function createSeedBibleState(
     options.initialPlaylistPageSeed,
     {
       friendReads,
-      pickChapter: (onPick, bookId) => {
-        const slot = tabsLayout.slots
-          .peek()
-          .find(
-            (candidate) => candidate.id === tabsLayout.selectedSlotId.peek()
-          );
-        if (!slot) {
-          return;
-        }
-        selector.selectingTranslation.value = false;
-        void selector.setOpen(true, slot, { onChapterPick: onPick, bookId });
-      },
+      pickChapter,
+      beforeEditorOpens: () => readingPlans.hideEditor(),
     }
   );
+  createStepEditorRouting({
+    kind: "readingPlan",
+    navigation,
+    language: i18n.language,
+    editor: readingPlans.stepEditor,
+    openLocator: computed(() => {
+      const plan = readingPlans.isEditorShowing.value
+        ? readingPlans.editingReadingPlan.value?.plan
+        : null;
+      return plan ? getReadingPlanLocator(plan) : null;
+    }),
+    savedTitle: computed(
+      () => readingPlans.editingBaseline.value?.plan.title ?? null
+    ),
+    open: readingPlans.openEditorForLocator,
+    leaveForUrl: readingPlans.closeEditor,
+    leaveUrl: (before) => {
+      if (before) {
+        navigation.push(before);
+      } else {
+        tabs.leaveStaticPage({ push: true });
+      }
+    },
+  });
   // True only while `hydrateFromStorage` below is applying the saved tab state.
   // Restoring the tabs replaces the URL-seeded boot tab, and the reader commits
   // the restored book/chapter to the address bar — a URL move that looks exactly
@@ -3868,11 +3902,7 @@ export function createSeedBibleState(
       panesManager: panes,
       modals,
       playlists,
-      bibleData: data,
       friends,
-      os,
-      login,
-      gallery,
       toast,
       app: state.app,
     });
@@ -4071,32 +4101,83 @@ export function createSeedBibleState(
   // which sub-view shows inside it; DiscoverPane routes discover/create/play
   // internally off the same signal.
 
-  // Going to edit a playlist with unsaved edits kept from before asks first
-  // whether to carry on from them (see `playlists.editorDraftChoice`).
-  const PLAYLIST_DRAFT_CHOICE_MODAL_ID = "playlist-draft-choice";
-  effect(() => {
-    const choice = playlists.editorDraftChoice.value;
-    if (!choice) {
-      modals.closeModal(PLAYLIST_DRAFT_CHOICE_MODAL_ID);
-      return;
+  // Going to edit a playlist or reading plan with unsaved edits kept from
+  // before asks first whether to carry on from them.
+  const askAboutDraft = (
+    kind: "playlist" | "readingPlan",
+    modalId: string,
+    manager: {
+      editorDraftChoice: ReadonlySignal<{ editedAtMs: number | null } | null>;
+      continueEditorDraft: () => void;
+      discardEditorDraft: () => void;
+      dismissEditorDraftChoice: () => void;
     }
-    untracked(() =>
-      modals.openModal({
-        id: PLAYLIST_DRAFT_CHOICE_MODAL_ID,
-        title: {
-          key: "playlist-editor-draft-found",
-          defaultValue: "Continue your draft?",
-        },
-        content: () => (
-          <PlaylistDraftChoice
-            editedAtMs={choice.editedAtMs}
-            onContinue={playlists.continueEditorDraft}
-            onDiscard={playlists.discardEditorDraft}
-          />
-        ),
-        onDismiss: playlists.dismissEditorDraftChoice,
-      })
+  ) =>
+    effect(() => {
+      const choice = manager.editorDraftChoice.value;
+      if (!choice) {
+        modals.closeModal(modalId);
+        return;
+      }
+      untracked(() =>
+        modals.openModal({
+          id: modalId,
+          title: {
+            key: "playlist-editor-draft-found",
+            defaultValue: "Continue your draft?",
+          },
+          content: () => (
+            <EditorDraftChoice
+              kind={kind}
+              editedAtMs={choice.editedAtMs}
+              onContinue={manager.continueEditorDraft}
+              onDiscard={manager.discardEditorDraft}
+            />
+          ),
+          onDismiss: manager.dismissEditorDraftChoice,
+        })
+      );
+    });
+  askAboutDraft("playlist", "playlist-draft-choice", playlists);
+  askAboutDraft("readingPlan", "reading-plan-draft-choice", readingPlans);
+
+  // The plan editor's side pane, which desktop shows beside the reader it
+  // takes over. On a phone (or a narrow tablet) the editor runs without one,
+  // over the reader, so every pane is closed, or the plans pane it was opened
+  // from would cover it.
+  effect(() => {
+    if (!readingPlans.isEditorShowing.value) {
+      panes.closePane(READING_PLAN_EDITOR_PANE_ID); // no-op when already closed
+    } else if (isCompactPlaylistEditor.value) {
+      for (const pane of panes.panes.peek()) {
+        panes.closePane(pane.id, "displaced");
+      }
+    } else {
+      panes.openPane({
+        id: READING_PLAN_EDITOR_PANE_ID,
+        placement: "side",
+        // Never shown: the editor renders its own header.
+        title: "Reading plan",
+        shellClassName: "sb-pe-pane-shell",
+        component: () => <ReadingPlanEditorPanel state={state} />,
+        showHeader: false,
+      });
+    }
+  });
+
+  // Something else taking the side pane puts the editor away, its draft kept.
+  // `peek()` keeps this from looping against the effect above.
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === READING_PLAN_EDITOR_PANE_ID
     );
+    if (
+      !paneOpen &&
+      readingPlans.isEditorShowing.peek() &&
+      !isCompactPlaylistEditor.peek()
+    ) {
+      readingPlans.hideEditor();
+    }
   });
 
   // view -> pane: open (or refresh, by reusing the id) while a view is set,
@@ -4277,11 +4358,7 @@ export function createSeedBibleState(
       panesManager: panes,
       modals,
       playlists,
-      bibleData: data,
       friends,
-      os,
-      login,
-      gallery,
       toast,
       app: state.app,
       onBack: () => {
@@ -4447,37 +4524,48 @@ export function createSeedBibleState(
       buildCustomizationTutorialSteps(state, created.defaultVariantId)
     );
   };
-  // All three land in the plans pane, opened the way the Profile card opens
-  // it, and then go straight to what the user picked (a plan, or the editor
-  // on a new one) so they don't have to find it in the list.
+  // A plan opens in the plans pane, opened the way the Profile card opens it,
+  // straight on the plan so they don't have to find it in the list. Editing
+  // one opens the plan editor over the reader, as for the playlist editor.
   const openReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
-    if (!openReadingPlansFromScreen(openYourContent)) {
-      return;
-    }
     // A draft has nothing to read yet, so it picks up where the author left
     // off — in the editor — rather than opening an empty detail view.
     if (plan.status === "draft") {
-      void openReadingPlanEditor(readingPlans, plan, {
-        fromAnotherScreen: true,
-      });
-    } else {
-      void openReadingPlanDetail(readingPlans, plan, {
-        fromAnotherScreen: true,
-      });
+      void editReadingPlanFromContent(plan);
+      return;
     }
-  };
-  const editReadingPlanFromContent = (plan: ReadingPlanMetadata) => {
     if (!openReadingPlansFromScreen(openYourContent)) {
       return;
     }
-    void openReadingPlanEditor(readingPlans, plan, { fromAnotherScreen: true });
+    void openReadingPlanDetail(readingPlans, plan, {
+      fromAnotherScreen: true,
+    });
   };
-  const createReadingPlanFromContent = () => {
-    if (!openReadingPlansFromScreen(openYourContent)) {
+  // Loaded first, so a plan that can't be leaves the user where they were.
+  const editReadingPlanFromContent = async (plan: ReadingPlanMetadata) => {
+    const full = await loadReadingPlanToEdit(readingPlans, plan);
+    if (!full) {
+      // Destructured for the translation lint rules, as in the toasts above.
+      const { t } = i18n;
+      toast(
+        t("reading-plan-load-failed", {
+          defaultValue: "Couldn't load this plan. Please try again.",
+        })
+      );
       return;
     }
-    openPlanCreate(readingPlans, { fromAnotherScreen: true });
+    navigation.batchWrites(() => {
+      closeYourContent();
+      closeProfile();
+      readingPlans.openReadingPlanInEditor(full, { onBack: openYourContent });
+    });
   };
+  const createReadingPlanFromContent = () =>
+    navigation.batchWrites(() => {
+      closeYourContent();
+      closeProfile();
+      void readingPlans.createReadingPlanInEditor({ onBack: openYourContent });
+    });
   const renderYourContentPane = () => (
     <YourContentPane
       state={state}
@@ -4487,7 +4575,7 @@ export function createSeedBibleState(
       onEditAnnotation={editAnnotationFromContent}
       onCreatePlaylist={createPlaylistFromContent}
       onOpenReadingPlan={openReadingPlanFromContent}
-      onEditReadingPlan={editReadingPlanFromContent}
+      onEditReadingPlan={(plan) => void editReadingPlanFromContent(plan)}
       onCreateReadingPlan={createReadingPlanFromContent}
       onEditCustomization={editCustomizationFromContent}
       onCreateCustomization={() => void createCustomizationFromContent()}

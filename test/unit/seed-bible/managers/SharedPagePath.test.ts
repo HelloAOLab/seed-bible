@@ -197,7 +197,7 @@ describe("playing paths", () => {
   });
 });
 
-describe("playlist editor paths", () => {
+describe("editor paths", () => {
   const parse = (path: string) => parseSharedPagePath(path, "");
 
   it.each([
@@ -234,9 +234,17 @@ describe("playlist editor paths", () => {
     "/en/playlist/u.p/my-list/edit/details/more",
     "/en/playlist/u.p/my-list/edit/elsewhere",
     "/en/playlist/u.p/my-list/3/edit",
-    "/en/reading-plan/u.p/my-plan/edit",
   ])("rejects %s", (path) => {
     expect(parse(path)).toBeNull();
+  });
+
+  it("reads a reading plan's edit path as its editor", () => {
+    expect(parse("/en/reading-plan/u.p/my-plan/edit/step/2")).toMatchObject({
+      kind: "readingPlan",
+      locator: "u.p",
+      step: null,
+      edit: { screen: "step", step: 2, settings: false },
+    });
   });
 
   it('reads a playlist titled "Edit" as its slug, not the editor', () => {

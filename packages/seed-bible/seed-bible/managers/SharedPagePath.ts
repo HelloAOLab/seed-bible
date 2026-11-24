@@ -18,12 +18,12 @@ export interface ParsedSharedPagePath {
    * null for the page itself (its intro modal).
    */
   step: number | null;
-  /** The playlist editor's screen, on a playlist's edit path; else null. */
+  /** The editor's screen, on an edit path; else null. */
   edit: SharedPageEditScreen | null;
 }
 
 /**
- * A screen of the playlist editor, as its path names it:
+ * A screen of the playlist or reading plan editor, as its path names it:
  * `…/edit` (the list of steps), `…/edit/details`, `…/edit/step/{step}`, and
  * `…/edit/step/{step}/settings` (`step` 1-based).
  */
@@ -86,8 +86,8 @@ export const SHARED_PAGE_SLUG_PLACEHOLDER = "-";
  * The slug only exists for search engines and link previews, so it is never
  * used to find the record and a stale one (the content was renamed) still
  * opens it. A trailing step (1-based) means the content is playing at that
- * step. A playlist's path can instead end in one of the editor's screens
- * (see `SharedPageEditScreen`).
+ * step. The path can instead end in one of the editor's screens (see
+ * `SharedPageEditScreen`).
  */
 export function parseSharedPagePath(
   pathname: string,
@@ -117,7 +117,7 @@ export function parseSharedPagePath(
   if (rest.length === 1 && POSITIVE_INTEGER.test(rest[0]!)) {
     return { ...base, step: Number(rest[0]), edit: null };
   }
-  const edit = kind === "playlist" ? parseEditSegments(rest) : null;
+  const edit = parseEditSegments(rest);
   return edit ? { ...base, step: null, edit } : null;
 }
 

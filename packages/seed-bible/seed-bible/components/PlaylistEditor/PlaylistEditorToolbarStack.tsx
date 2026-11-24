@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from "preact/hooks";
 import type { PlaylistItemData } from "../../managers/PlaylistManager";
-import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import type { StepEditor } from "../../managers/StepEditor";
 import { ChapterChangeBar, VersePickBar } from "./PlaylistEditorWorkspace";
 import { PlaylistStepNoteSheet } from "./PlaylistStepNoteSheet";
 
@@ -10,19 +10,19 @@ type ScriptureItem = Extract<PlaylistItemData, { type: "bible-verse" }>;
 const READER_INSET_PX = 16;
 
 /**
- * Desktop: the playlist editor's scripture step stacks its banners (verse
+ * Desktop: the step editor's scripture step stacks its banners (verse
  * pick, chapter change) and its note above the reader's toolbar, as a phone
  * stacks them above the chapter pill. Rendered inside that toolbar, it also
  * centres the toolbar over the reader rather than the window, so neither
  * runs under the editor's side panel, and narrows itself to fit the reader.
  */
 export function PlaylistEditorToolbarStack(props: {
-  state: SeedBibleState;
+  editor: StepEditor;
   index: number;
   item: ScriptureItem;
   resolveBookName: (bookId: string) => string;
 }) {
-  const { state, index, item, resolveBookName } = props;
+  const { editor, index, item, resolveBookName } = props;
   const ref = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
@@ -66,11 +66,11 @@ export function PlaylistEditorToolbarStack(props: {
 
   return (
     <div ref={ref} className="sb-pe-toolbar-stack">
-      <VersePickBar state={state} />
-      <ChapterChangeBar state={state} />
+      <VersePickBar editor={editor} />
+      <ChapterChangeBar editor={editor} resolveBookName={resolveBookName} />
       <PlaylistStepNoteSheet
         key={index}
-        state={state}
+        editor={editor}
         index={index}
         item={item}
         resolveBookName={resolveBookName}

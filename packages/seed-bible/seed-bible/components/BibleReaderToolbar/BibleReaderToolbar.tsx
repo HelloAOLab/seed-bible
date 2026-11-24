@@ -13,9 +13,9 @@ import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
 import { flingSafeTapHandlers } from "../../app/flingSafeTap";
 import {
-  isPlaylistEditorTab,
-  playlistEditorScriptureStep,
-} from "../PlaylistEditor/PlaylistEditorWorkspace";
+  scriptureStepOnTab,
+  stepEditorOnTab,
+} from "../PlaylistEditor/stepEditorHost";
 import { PlaylistEditorToolbarStack } from "../PlaylistEditor/PlaylistEditorToolbarStack";
 import { PlaylistStepNoteSheet } from "../PlaylistEditor/PlaylistStepNoteSheet";
 import { QuestionAnswersSheet } from "../QuestionAnswers/QuestionAnswersSheet";
@@ -1016,13 +1016,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return null;
   }
 
-  // On desktop the playlist editor keeps this toolbar only over a scripture
+  // On desktop the playlist and plan editors keep this toolbar only over a scripture
   // step's page, where moving chapters can re-point the step; its list and
   // other steps' cards cover the reader.
   if (
     !props.state.app.isMobile.value &&
-    isPlaylistEditorTab(props.state, selectedTab.value) &&
-    !playlistEditorScriptureStep(props.state, selectedTab.value)
+    !!stepEditorOnTab(props.state, selectedTab.value) &&
+    !scriptureStepOnTab(props.state, selectedTab.value)
   ) {
     return null;
   }
@@ -1303,12 +1303,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       hasVerseSelection.value &&
       !isFullscreenPaneVisible.value &&
       !props.state.annotations?.isDraftingNewAnnotation.value &&
-      // In the playlist editor, picked verses are a step's passage, applied
+      // In the step editor, picked verses are a step's passage, applied
       // from the editor's own pick bar; as on desktop (where this whole
       // toolbar steps aside), no verse toolbar opens over it. Its "tap
       // outside clears the selection" would also empty the pick the moment
       // Apply is touched.
-      !isPlaylistEditorTab(props.state, selectedTab.value)
+      !stepEditorOnTab(props.state, selectedTab.value)
   );
   const shouldReplaceDefaultToolbar = useComputed(
     () => isSmallScreen.value && isVerseToolbarVisible.value
@@ -2921,11 +2921,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         >
           {isSmallScreen.value &&
             activeMobileTab.value === "bible" &&
-            // In the playlist editor, chapter nav floats only over a
+            // In the step editor, chapter nav floats only over a
             // scripture step's page, where moving chapters can re-point the
             // step; the list and the other steps' cards cover the reader.
-            (!isPlaylistEditorTab(props.state, selectedTab.value) ||
-              !!playlistEditorScriptureStep(props.state, selectedTab.value)) &&
+            (!stepEditorOnTab(props.state, selectedTab.value) ||
+              !!scriptureStepOnTab(props.state, selectedTab.value)) &&
             (() => {
               const audio =
                 audioPlayTool.value && audioPlayTool.value.visible.value
@@ -2981,16 +2981,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   {!playing &&
                     !showsGroupBar &&
                     (() => {
-                      // The playlist editor's scripture step keeps its note
+                      // The step editor's scripture step keeps its note
                       // where playback shows one.
-                      const step = playlistEditorScriptureStep(
+                      const step = scriptureStepOnTab(
                         props.state,
                         selectedTab.value
                       );
                       return step ? (
                         <PlaylistStepNoteSheet
                           key={step.index}
-                          state={props.state}
+                          editor={step.editor}
                           index={step.index}
                           item={step.item}
                           resolveBookName={resolveBookName}
@@ -3165,16 +3165,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 })()}
               {!isSmallScreen.value &&
                 (() => {
-                  // Desktop: the playlist editor's scripture step stacks its
+                  // Desktop: the step editor's scripture step stacks its
                   // banners and its note above this toolbar, as a phone
                   // stacks them above the chapter pill.
-                  const step = playlistEditorScriptureStep(
+                  const step = scriptureStepOnTab(
                     props.state,
                     selectedTab.value
                   );
                   return step ? (
                     <PlaylistEditorToolbarStack
-                      state={props.state}
+                      editor={step.editor}
                       index={step.index}
                       item={step.item}
                       resolveBookName={resolveBookName}

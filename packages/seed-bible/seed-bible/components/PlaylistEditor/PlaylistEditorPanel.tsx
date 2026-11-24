@@ -8,10 +8,12 @@ import type {
   PlaylistManager,
 } from "../../managers/PlaylistManager";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { StepEditor } from "../../managers/StepEditor";
 import type { TabsManager } from "../../managers/TabsManager";
 import { useDragReorder } from "../useDragReorder";
 import { PlaylistStepRow } from "../PlaylistOverview/PlaylistOverview";
 import { PeIcon } from "./editorControls";
+import type { StepEditorPanelHost } from "./stepEditorHost";
 import {
   playlistStepKindName,
   playlistStepLabel,
@@ -21,7 +23,7 @@ import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
 import { CloseButton } from "../CloseButton/CloseButton";
 
-const UNSAVED_CHANGES_CONFIRM_MODAL_ID = "playlist-unsaved-changes-confirm";
+const UNSAVED_CHANGES_CONFIRM_MODAL_ID = "step-editor-unsaved-changes-confirm";
 
 function UnsavedChangesConfirmModalContent(props: {
   onDiscard: () => void;
@@ -65,20 +67,21 @@ function UnsavedChangesConfirmModalContent(props: {
  * unsaved changes. Points left, or right in RTL languages, where the title
  * bar is mirrored.
  */
-export function PlaylistEditorBackButton(props: {
-  playlists: PlaylistManager;
-  modals: ModalManager;
-}) {
-  const { playlists, modals } = props;
+export function StepEditorBackButton(props: { host: StepEditorPanelHost }) {
+  const { host } = props;
+  const { editor } = host;
   const { t, isRtl } = useI18n();
-  const onStep = playlists.editorStepIndex.value >= 0;
-  const label = onStep
-    ? t("playlist-editor-back-to-items", { defaultValue: "Back to items" })
-    : t("playlist-editor-close", { defaultValue: "Close playlist editor" });
+  const onStep = editor.stepIndex.value >= 0;
   return (
     <IconButton
       className="sb-pe-back"
-      label={label}
+      label={
+        onStep
+          ? t("playlist-editor-back-to-items", {
+              defaultValue: "Back to items",
+            })
+          : host.closeLabel(t)
+      }
       icon={
         <PeIcon
           name="arrow-right"
@@ -87,9 +90,9 @@ export function PlaylistEditorBackButton(props: {
       }
       onClick={() => {
         if (onStep) {
-          playlists.selectEditorStep(-1);
+          editor.selectStep(-1);
         } else {
-          requestCancelPlaylistEditor(playlists, modals);
+          host.requestClose();
         }
       }}
     />
@@ -97,17 +100,21 @@ export function PlaylistEditorBackButton(props: {
 }
 
 /**
- * Leaves the playlist editor. If the draft changed since it opened, asks first
- * instead of discarding it.
+ * Asks what to do with the unsaved changes of the draft being left: throw
+ * them away, keep them as a draft, or publish them.
  */
-export function requestCancelPlaylistEditor(
-  playlists: PlaylistManager,
-  modals: ModalManager
-): void {
-  if (!playlists.isEditingPlaylistDirty()) {
-    playlists.cancelEditingPlaylist();
-    return;
+export function openUnsavedChangesModal(
+  modals: ModalManager,
+  choices: {
+    onDiscard: () => void;
+    onSaveDraft: () => void;
+    onPublish: () => void;
   }
+): void {
+  const closeThen = (choice: () => void) => () => {
+    modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID);
+    choice();
+  };
   modals.openModal({
     id: UNSAVED_CHANGES_CONFIRM_MODAL_ID,
     title: {
@@ -116,30 +123,77 @@ export function requestCancelPlaylistEditor(
     },
     content: () => (
       <UnsavedChangesConfirmModalContent
-        onDiscard={() => {
-          modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID);
-          playlists.cancelEditingPlaylist();
-        }}
-        onSaveDraft={() => {
-          modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID);
-          playlists.leaveEditorKeepingDraft();
-        }}
-        onPublish={() => {
-          modals.closeModal(UNSAVED_CHANGES_CONFIRM_MODAL_ID);
-          // A playlist with an unfinished step can't be saved: stay, on the
-          // first such step, to finish it.
-          const [unfinished] = playlists.editingPlaylistInvalidSteps();
-          if (unfinished !== undefined) {
-            playlists.selectEditorStep(unfinished);
-            return;
-          }
-          playlists.saveEditingPlaylist().catch((error: unknown) => {
-            console.error("Failed to save playlist:", error);
-          });
-        }}
+        onDiscard={closeThen(choices.onDiscard)}
+        onSaveDraft={closeThen(choices.onSaveDraft)}
+        onPublish={closeThen(choices.onPublish)}
       />
     ),
   });
+}
+
+/**
+ * Leaves the playlist editor. If the draft changed since it opened, asks first
+ * instead of discarding it.
+ */
+function requestCancelPlaylistEditor(
+  playlists: PlaylistManager,
+  modals: ModalManager
+): void {
+  if (!playlists.isEditingPlaylistDirty()) {
+    playlists.cancelEditingPlaylist();
+    return;
+  }
+  openUnsavedChangesModal(modals, {
+    onDiscard: () => playlists.cancelEditingPlaylist(),
+    onSaveDraft: () => playlists.leaveEditorKeepingDraft(),
+    onPublish: () => {
+      // A playlist with an unfinished step can't be saved: stay, on the
+      // first such step, to finish it.
+      const [unfinished] = playlists.editingPlaylistInvalidSteps();
+      if (unfinished !== undefined) {
+        playlists.selectEditorStep(unfinished);
+        return;
+      }
+      playlists.saveEditingPlaylist().catch((error: unknown) => {
+        console.error("Failed to save playlist:", error);
+      });
+    },
+  });
+}
+
+/** The playlist editor's side of the step editor. */
+export function playlistEditorPanelHost(props: {
+  playlists: PlaylistManager;
+  tabs: TabsManager;
+  modals: ModalManager;
+}): StepEditorPanelHost {
+  const { playlists, tabs, modals } = props;
+  return {
+    editor: playlists.stepEditor,
+    title: (t) =>
+      playlists.editingPlaylist.value?.title?.trim() ||
+      t("untitled-playlist", { defaultValue: "Untitled playlist" }),
+    status: (t) => playlistDraftStatus(playlists, t),
+    closeLabel: (t) =>
+      t("playlist-editor-close", { defaultValue: "Close playlist editor" }),
+    requestClose: () => requestCancelPlaylistEditor(playlists, modals),
+    editDetailsLabel: (t) =>
+      t("playlist-editor-edit-details", {
+        defaultValue: "Edit title, description and cover",
+      }),
+    addMenuPlace: (afterIndex, t) =>
+      afterIndex < 0
+        ? t("playlist-editor-inserted-first", {
+            defaultValue: "Inserted as the first step",
+          })
+        : t("playlist-editor-inserted-after", {
+            step: afterIndex + 1,
+            defaultValue: "Inserted after step {{step}}",
+          }),
+    renderSteps: () => (
+      <PlaylistStepsSummary playlists={playlists} tabs={tabs} />
+    ),
+  };
 }
 
 /**
@@ -157,11 +211,10 @@ export function useResolveBookName(tabs: TabsManager) {
 }
 
 /** "Draft - Unsaved changes", "Draft", or "Saved", for the open draft. */
-export function usePlaylistDraftStatus(playlists: PlaylistManager): {
-  saved: boolean;
-  label: string;
-} {
-  const { t } = useI18n();
+function playlistDraftStatus(
+  playlists: PlaylistManager,
+  t: ReturnType<typeof useI18n>["t"]
+): { saved: boolean; label: string } {
   const editing = playlists.editingPlaylist.value;
   const dirty = playlists.isEditingPlaylistDirty();
   const stored =
@@ -180,6 +233,84 @@ export function usePlaylistDraftStatus(playlists: PlaylistManager): {
         })
       : t("playlist-editor-draft", { defaultValue: "Draft" }),
   };
+}
+
+/** The open step's Duplicate and Delete, at the end of its row. */
+export function StepRowActions(props: {
+  editor: StepEditor;
+  index: number;
+  /** Whether its verses are being picked, which comes first. */
+  picking: boolean;
+}) {
+  const { editor, index, picking } = props;
+  const { t } = useI18n();
+  return (
+    <div className="sb-pe-step-actions">
+      {picking ? (
+        <span
+          className="sb-pe-step-action"
+          title={t("playlist-editor-picking-verses", {
+            defaultValue: "Picking verses",
+          })}
+        >
+          <PeIcon name="pencil" />
+        </span>
+      ) : (
+        <>
+          <IconButton
+            size="sm"
+            className="sb-pe-step-action"
+            icon={<PeIcon name="copy" />}
+            label={t("playlist-editor-duplicate-step", {
+              defaultValue: "Duplicate step",
+            })}
+            onClick={() => editor.duplicateItem(index)}
+          />
+          <IconButton
+            size="sm"
+            className="sb-pe-step-action sb-pe-step-action--danger"
+            icon={<PeIcon name="trash" />}
+            label={t("playlist-editor-delete-step", {
+              defaultValue: "Delete step",
+            })}
+            onClick={() => editor.removeItem(index)}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+/** A draft with no steps yet: says so, with a button that adds the first. */
+export function EmptyStepList(props: { editor: StepEditor; title: string }) {
+  const { editor, title } = props;
+  const { t } = useI18n();
+  return (
+    <EmptyState
+      className="sb-pe-empty-list"
+      size="panel"
+      icon={<PeIcon name="items-list" />}
+      title={title}
+      action={
+        <Button
+          size="lg"
+          icon="add"
+          className="sb-pe-empty-list-add"
+          {...ADD_MENU_OPENER}
+          onClick={editor.openAddMenu}
+        >
+          {t("playlist-editor-add-step-title", {
+            defaultValue: "Add a step",
+          })}
+        </Button>
+      }
+    >
+      {t("playlist-editor-empty-text", {
+        defaultValue:
+          "Add scripture, notes, questions or videos to get started.",
+      })}
+    </EmptyState>
+  );
 }
 
 /** The steps of the open draft, each opening in the editor when clicked. */
@@ -207,33 +338,12 @@ export function PlaylistStepList(props: {
 
   if (items.length === 0) {
     return (
-      <EmptyState
-        className="sb-pe-empty-list"
-        size="panel"
-        icon={<PeIcon name="items-list" />}
+      <EmptyStepList
+        editor={playlists.stepEditor}
         title={t("playlist-editor-empty-title", {
           defaultValue: "This playlist is empty",
         })}
-        action={
-          <Button
-            size="lg"
-            icon="add"
-            // The add-step menu's outside-press check recognises its openers by
-            // this class.
-            className="sb-pe-empty-list-add"
-            onClick={() => openAddStepMenu(playlists)}
-          >
-            {t("playlist-editor-add-step-title", {
-              defaultValue: "Add a step",
-            })}
-          </Button>
-        }
-      >
-        {t("playlist-editor-empty-text", {
-          defaultValue:
-            "Add scripture, notes, questions or videos to get started.",
-        })}
-      </EmptyState>
+      />
     );
   }
 
@@ -261,43 +371,11 @@ export function PlaylistStepList(props: {
             onOpen={() => playlists.selectEditorStep(index)}
             trailing={
               active ? (
-                <div className="sb-pe-step-actions">
-                  {pickIndex === index ? (
-                    <span
-                      className="sb-pe-step-action"
-                      title={t("playlist-editor-picking-verses", {
-                        defaultValue: "Picking verses",
-                      })}
-                    >
-                      <PeIcon name="pencil" />
-                    </span>
-                  ) : (
-                    <>
-                      <IconButton
-                        size="sm"
-                        className="sb-pe-step-action"
-                        icon={<PeIcon name="copy" />}
-                        label={t("playlist-editor-duplicate-step", {
-                          defaultValue: "Duplicate step",
-                        })}
-                        onClick={() =>
-                          playlists.duplicateEditingPlaylistItem(index)
-                        }
-                      />
-                      <IconButton
-                        size="sm"
-                        className="sb-pe-step-action sb-pe-step-action--danger"
-                        icon={<PeIcon name="trash" />}
-                        label={t("playlist-editor-delete-step", {
-                          defaultValue: "Delete step",
-                        })}
-                        onClick={() =>
-                          playlists.removeEditingPlaylistItem(index)
-                        }
-                      />
-                    </>
-                  )}
-                </div>
+                <StepRowActions
+                  editor={playlists.stepEditor}
+                  index={index}
+                  picking={pickIndex === index}
+                />
               ) : null
             }
           />
@@ -306,6 +384,13 @@ export function PlaylistStepList(props: {
     </ul>
   );
 }
+
+/**
+ * Put on every button that opens the "Add a step" menu. They work it
+ * themselves, so the menu doesn't treat a press on one as a click outside
+ * (which would close it only for the button to open it again).
+ */
+export const ADD_MENU_OPENER = { "data-sb-add-menu-opener": "" };
 
 const ADD_OPTIONS: NewPlaylistStepKind[] = [
   "scripture",
@@ -375,15 +460,16 @@ function AddOptionIcon(props: { kind: NewPlaylistStepKind }) {
 
 /** The "Add a step" menu, opened from a title bar's Add button. */
 export function AddStepMenu(props: {
-  playlists: PlaylistManager;
+  host: StepEditorPanelHost;
   afterIndex: number;
 }) {
-  const { playlists, afterIndex } = props;
+  const { host, afterIndex } = props;
+  const { editor } = host;
   const { t } = useI18n();
   const menuRef = useRef<HTMLDivElement | null>(null);
   const close = useCallback(() => {
-    playlists.editorAddMenu.value = null;
-  }, [playlists]);
+    editor.addMenu.value = null;
+  }, [editor]);
 
   useEffect(() => {
     menuRef.current
@@ -394,15 +480,12 @@ export function AddStepMenu(props: {
         close();
       }
     };
-    // The buttons that open the menu toggle it themselves, so a press on one
-    // isn't treated as a click outside (which would close the menu only for
-    // the button to open it again).
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Element | null;
       if (
         target &&
         !menuRef.current?.contains(target) &&
-        !target.closest(".sb-pe-add-toggle, .sb-pe-empty-list-add")
+        !target.closest("[data-sb-add-menu-opener]")
       ) {
         close();
       }
@@ -428,23 +511,14 @@ export function AddStepMenu(props: {
         </h3>
         <CloseButton className="sb-pe-add-menu-close" onClose={close} />
       </div>
-      <p className="sb-pe-add-menu-where">
-        {afterIndex < 0
-          ? t("playlist-editor-inserted-first", {
-              defaultValue: "Inserted as the first step",
-            })
-          : t("playlist-editor-inserted-after", {
-              step: afterIndex + 1,
-              defaultValue: "Inserted after step {{step}}",
-            })}
-      </p>
+      <p className="sb-pe-add-menu-where">{host.addMenuPlace(afterIndex, t)}</p>
       <ul className="sb-pe-add-menu-list">
         {ADD_OPTIONS.map((kind) => (
           <li key={kind}>
             <button
               type="button"
               className="sb-pe-add-option"
-              onClick={() => playlists.addEditorStep(kind, afterIndex)}
+              onClick={() => editor.addStep(kind, afterIndex)}
             >
               <AddOptionIcon kind={kind} />
               <span className="sb-pe-add-option-text">
@@ -463,23 +537,14 @@ export function AddStepMenu(props: {
   );
 }
 
-/** Opens the "Add a step" menu, placing new steps after the open one. */
-export function openAddStepMenu(playlists: PlaylistManager) {
-  const count = playlists.editingPlaylist.peek()?.items.length ?? 0;
-  const open = playlists.editorStepIndex.peek();
-  playlists.editorAddMenu.value = {
-    afterIndex: open >= 0 ? open : count - 1,
-  };
-}
-
 /**
  * A title bar's Add button, which opens the "Add a step" menu below the bar:
  * after the open step on a phone's step page, at the end on the list.
  */
-export function AddStepToggle(props: { playlists: PlaylistManager }) {
-  const { playlists } = props;
+export function AddStepToggle(props: { editor: StepEditor }) {
+  const { editor } = props;
   const { t } = useI18n();
-  const menuOpen = playlists.editorAddMenu.value !== null;
+  const menuOpen = editor.addMenu.value !== null;
   const add = t("playlist-editor-add-step-title", {
     defaultValue: "Add a step",
   });
@@ -489,11 +554,12 @@ export function AddStepToggle(props: { playlists: PlaylistManager }) {
       className="sb-pe-add-toggle"
       label={add}
       aria-expanded={menuOpen}
+      {...ADD_MENU_OPENER}
       onClick={() => {
         if (menuOpen) {
-          playlists.editorAddMenu.value = null;
+          editor.addMenu.value = null;
         } else {
-          openAddStepMenu(playlists);
+          editor.openAddMenu();
         }
       }}
       // Drawn rather than typed: a "+" sits on the text line, below the
@@ -508,16 +574,13 @@ export function AddStepToggle(props: { playlists: PlaylistManager }) {
 }
 
 /**
- * The playlist's name, which opens its details (name, description and cover)
- * to edit, as a phone's title bar does.
+ * The name of what's being edited, which opens its details (name, description
+ * and cover) to edit, as a phone's title bar does.
  */
-function PlaylistTitle(props: { playlists: PlaylistManager }) {
-  const { playlists } = props;
+function StepEditorTitle(props: { host: StepEditorPanelHost }) {
+  const { host } = props;
+  const { editor } = host;
   const { t } = useI18n();
-  const title = playlists.editingPlaylist.value?.title ?? "";
-  const shown =
-    title.trim() ||
-    t("untitled-playlist", { defaultValue: "Untitled playlist" });
 
   return (
     <div className="sb-pe-panel-title-row">
@@ -526,14 +589,12 @@ function PlaylistTitle(props: { playlists: PlaylistManager }) {
           type="button"
           className="sb-pe-panel-title-button"
           aria-haspopup="dialog"
-          aria-expanded={playlists.editorDetailsSheetOpen.value}
-          title={t("playlist-editor-edit-details", {
-            defaultValue: "Edit title, description and cover",
-          })}
-          onClick={() => (playlists.editorDetailsSheetOpen.value = true)}
+          aria-expanded={editor.detailsOpen.value}
+          title={host.editDetailsLabel(t)}
+          onClick={() => (editor.detailsOpen.value = true)}
         >
           <span className="sb-pe-panel-title-text" dir="auto">
-            {shown}
+            {host.title(t)}
           </span>
           <PeIcon name="pencil" />
         </button>
@@ -567,46 +628,61 @@ export function PlaylistStepsSummary(props: {
 }
 
 /**
- * The desktop editor's side pane: the playlist's name, with Add in its title
- * bar as on a phone, above its list of steps.
+ * The desktop editor's side pane: the name of what's being edited, with Add
+ * in its title bar as on a phone, above its list of steps.
  */
-export function PlaylistEditorPanel(props: {
-  playlists: PlaylistManager;
-  tabs: TabsManager;
-  modals: ModalManager;
+export function StepEditorPanel(props: {
+  host: StepEditorPanelHost;
   /** Extra buttons at the end of the title bar. */
   headerActions?: ComponentChildren;
   /** At the foot of the panel, such as Save. */
   footerActions?: ComponentChildren;
 }) {
-  const { playlists, tabs, modals, headerActions, footerActions } = props;
-  const status = usePlaylistDraftStatus(playlists);
-  const addMenu = playlists.editorAddMenu.value;
+  const { host, headerActions, footerActions } = props;
+  const { editor } = host;
+  const { t } = useI18n();
+  const addMenu = editor.addMenu.value;
 
   return (
     <div className="sb-pe sb-pe-panel">
       <div className="sb-pe-panel-header">
-        <PlaylistEditorBackButton playlists={playlists} modals={modals} />
+        <StepEditorBackButton host={host} />
         <div className="sb-pe-panel-heading">
-          <PlaylistTitle playlists={playlists} />
-          <p className="sb-pe-panel-status">{status.label}</p>
+          <StepEditorTitle host={host} />
+          <p className="sb-pe-panel-status">{host.status(t).label}</p>
         </div>
         <div className="sb-pe-panel-header-actions">
-          <AddStepToggle playlists={playlists} />
+          <AddStepToggle editor={editor} />
           {headerActions}
         </div>
         {addMenu ? (
-          <AddStepMenu playlists={playlists} afterIndex={addMenu.afterIndex} />
+          <AddStepMenu host={host} afterIndex={addMenu.afterIndex} />
         ) : null}
       </div>
-      <div className="sb-pe-panel-body">
-        <PlaylistStepsSummary playlists={playlists} tabs={tabs} />
-      </div>
+      <div className="sb-pe-panel-body">{host.renderSteps()}</div>
       {footerActions ? (
         <div className="sb-pe-panel-footer">
           <div className="sb-pe-panel-footer-row">{footerActions}</div>
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** The playlist editor's side pane on desktop. */
+export function PlaylistEditorPanel(props: {
+  playlists: PlaylistManager;
+  tabs: TabsManager;
+  modals: ModalManager;
+  headerActions?: ComponentChildren;
+  footerActions?: ComponentChildren;
+}) {
+  const { playlists, tabs, modals, headerActions, footerActions } = props;
+  return (
+    <StepEditorPanel
+      host={playlistEditorPanelHost({ playlists, tabs, modals })}
+      headerActions={headerActions}
+      footerActions={footerActions}
+    />
   );
 }

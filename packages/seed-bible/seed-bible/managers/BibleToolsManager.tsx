@@ -62,7 +62,6 @@ import type { FriendsManager } from "./FriendsManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
 import type { SettingsManager } from "./SettingsManager";
-import type { ScriptureChapterLoader } from "../components/PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { toShareableUrl } from "../app/publicLinks";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
@@ -1034,18 +1033,8 @@ export interface OpenReadingPlansPaneOptions {
   panesManager: PanesManager;
   modals: ModalManager;
   playlists?: PlaylistManager;
-  /** Loads chapter text for the plan editor's inline scripture previews. */
-  bibleData?: Pick<BibleDataManager, "getTranslationBookChapter">;
   /** Lets the pane list plans from the user's friends. */
   friends?: FriendsManager;
-  /**
-   * Passed straight through to the pane: the plan editor uses them to record
-   * and reuse a plan's hero image. Optional there too, so a caller without
-   * them still gets a working pane, just without the image picker.
-   */
-  os?: Pick<CasualOSManager, "recordFile" | "recordData">;
-  login?: Pick<LoginManager, "userId">;
-  gallery?: Pick<UserGalleryManager, "photos" | "savePhoto" | "rememberPhoto">;
   toast?: (message: string) => void;
   /** Lets a plan's Share open the share sheet rather than only copy its link. */
   app?: AppState;
@@ -1062,8 +1051,7 @@ export const READING_PLANS_PANE_ID = "reading-plans-pane";
 /**
  * Opens the reading plans pane. Shared by shared plan links and the Profile and
  * Your content screens so they all land on the same pane, with the same chrome
- * and the same scripture/playback wiring. It docks beside the reader, like the
- * playlist editor, so a plan being built can take verses picked in the reader.
+ * and the same scripture/playback wiring. It docks beside the reader.
  */
 export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
   const {
@@ -1072,24 +1060,11 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
     panesManager,
     modals,
     playlists,
-    bibleData,
     friends,
-    os,
-    login,
-    gallery,
     toast,
     app,
   } = options;
-
-  // Scripture without a pinned translation previews in the one being read.
-  const loadChapter: ScriptureChapterLoader | undefined = bibleData
-    ? (translationId, bookId, chapter) =>
-        bibleData.getTranslationBookChapter(
-          translationId ?? readingState.translationId.peek(),
-          bookId,
-          chapter
-        )
-    : undefined;
+  const reopen = () => openReadingPlansPane(options);
 
   forgetReadingPlansPaneOpener();
   panesManager.openPane({
@@ -1097,8 +1072,8 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
     placement: "side",
 
     // The pane's own header carries the plans chrome: a back button when
-    // the user has drilled into a plan or the create wizard (or came from
-    // another screen), the plan's name as the title, and the new-plan button.
+    // the user has drilled into a plan (or came from another screen), the
+    // plan's name as the title, and the new-plan button.
     title: () => <ReadingPlansPaneTitle readingPlans={readingPlans} />,
     icon: () => <ReadingPlansPaneIcon />,
     leading: () => (
@@ -1107,17 +1082,15 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
         onBack={options.onBack}
       />
     ),
-    header: () => <ReadingPlansPaneActions readingPlans={readingPlans} />,
+    header: () => (
+      <ReadingPlansPaneActions readingPlans={readingPlans} onReopen={reopen} />
+    ),
     component: () => (
       <ReadingPlansPane
         readingPlans={readingPlans}
         friends={friends}
         books={readingState.translationBooks.value?.books ?? []}
         modals={modals}
-        loadChapter={loadChapter}
-        os={os}
-        login={login}
-        gallery={gallery}
         // Tapping a scripture reading takes the user to it. Without this
         // a plan can only be ticked off, never actually read from.
         onOpenScripture={async (ref, translationId) => {
@@ -1143,7 +1116,7 @@ export function openReadingPlansPane(options: OpenReadingPlansPaneOptions) {
         }}
         toast={toast}
         app={app}
-        onBack={options.onBack}
+        onReopen={reopen}
       />
     ),
   });

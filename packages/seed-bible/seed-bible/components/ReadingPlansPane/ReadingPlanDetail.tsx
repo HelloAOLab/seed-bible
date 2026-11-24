@@ -1,4 +1,5 @@
 import { EmptyState } from "../EmptyState/EmptyState";
+import "./PaceChoices.css";
 import "./ReadingPlanDetail.css";
 import { useState } from "preact/hooks";
 import { MaterialIcon } from "../icons";

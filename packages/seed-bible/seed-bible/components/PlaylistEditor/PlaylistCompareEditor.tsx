@@ -10,7 +10,7 @@ import {
   type PlaylistItemData,
   type VerseRef,
 } from "../../managers/PlaylistManager";
-import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import type { StepEditor } from "../../managers/StepEditor";
 import { MaterialIcon } from "../icons";
 import type { ScriptureChapterLoader } from "../PlaylistItemInlinePreview/PlaylistItemInlinePreview";
 import { passageLabel, playlistItemLabel } from "../playlistItemLabel";
@@ -33,15 +33,14 @@ const MORE_VERSES = 5;
  * rides along the bottom, as a scripture step's does.
  */
 export function PlaylistCompareEditor(props: {
-  state: SeedBibleState;
+  editor: StepEditor;
   index: number;
   item: ScriptureItem;
   loadChapter: ScriptureChapterLoader;
   resolveBookName: (bookId: string) => string;
   compact: boolean;
 }) {
-  const { state, index, item, loadChapter, resolveBookName, compact } = props;
-  const { playlists } = state;
+  const { editor, index, item, loadChapter, resolveBookName, compact } = props;
   const { t } = useI18n();
   // The first verse tapped, until the last is: they make the new passage.
   const [pick, setPick] = useState<{ which: Which; verse: number } | null>(
@@ -51,7 +50,7 @@ export function PlaylistCompareEditor(props: {
   const refOf = (which: Which) => (which === "first" ? item.ref : compare.ref);
 
   const setPassage = (which: Which, ref: VerseRef) => {
-    playlists.updateEditingPlaylistItem(
+    editor.updateItem(
       index,
       which === "first"
         ? { ...item, ref }
@@ -93,7 +92,7 @@ export function PlaylistCompareEditor(props: {
             })}
             onClick={() => {
               setPick(null);
-              playlists.pickEditorComparePassage(index, which);
+              editor.pickComparePassage(index, which);
             }}
           >
             {label}
@@ -164,7 +163,7 @@ export function PlaylistCompareEditor(props: {
         ) : null}
         <PlaylistStepNoteSheet
           key={index}
-          state={state}
+          editor={editor}
           index={index}
           item={item}
           resolveBookName={resolveBookName}

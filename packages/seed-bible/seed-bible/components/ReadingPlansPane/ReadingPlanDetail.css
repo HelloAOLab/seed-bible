@@ -419,13 +419,30 @@
   line-height: 1.5;
 }
 
-/* Footer. `--rp-toolbar-clearance` keeps the buttons out from under the
-   floating reader toolbar — see the note in ReadingPlanEditor.css, which
-   defines it for both footers. */
+/* Footer.
+
+   The reader toolbar is a floating bar fixed to the bottom of the viewport and
+   centred across its full width, so on desktop it reaches over the side pane
+   and lands on top of whatever sits at the bottom of it, such as the "Start
+   plan" button. Reserve the toolbar's height beneath the footer so the button
+   always clears it. The numbers mirror BibleReaderToolbar's own variables, so
+   they move together. */
 .sb-rpd-footer {
-  padding: 12px 16px calc(16px + var(--rp-toolbar-clearance, 0px));
+  --rp-toolbar-clearance: calc(
+    var(--sb-reader-toolbar-bottom, 1.125rem) +
+      var(--sb-reader-toolbar-button-height, 3.25rem) + 0.5rem
+  );
+
+  padding: 12px 16px calc(16px + var(--rp-toolbar-clearance));
   padding-inline: calc(var(--rp-column-inset) + 16px);
   border-top: 1px solid var(--rp-border);
+}
+
+/* On mobile the toolbar is a full-width bar pinned to the bottom of the screen
+   and the pane is already inset above it (see PaneLayout.css), so only a small
+   breathing gap — plus the home indicator — is needed. */
+:where(html[data-sb-app-layout="mobile"]) .sb-rpd-footer {
+  --rp-toolbar-clearance: env(safe-area-inset-bottom, 0px);
 }
 
 .sb-rpd-footer-actions {

@@ -48,7 +48,7 @@ import { computed, effect, signal, type Signal } from "@preact/signals";
 import { h, render } from "preact";
 import { act } from "preact/test-utils";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
-import { forgetPlaylistDrafts } from "../testUtils/createTestSeedBibleState";
+import { forgetEditorDrafts } from "../testUtils/createTestSeedBibleState";
 import { readPlaylistDraft } from "@packages/seed-bible/seed-bible/managers/PlaylistDrafts";
 import type { Mock } from "vitest";
 import { injectNativeAppConfig } from "../testUtils/nativeAppConfig";
@@ -581,7 +581,7 @@ describe("createPlaylistManager", () => {
     // path, playback params) so they don't leak into the next test's initial
     // navigation state.
     window.history.replaceState(null, "", "/");
-    forgetPlaylistDrafts();
+    forgetEditorDrafts();
   });
 
   it("syncs the user's playlists on creation", async () => {

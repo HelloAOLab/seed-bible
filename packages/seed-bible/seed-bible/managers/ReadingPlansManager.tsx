@@ -37,7 +37,17 @@ import {
   SkippedFriendRead,
   type FriendReadLimiter,
 } from "./friendContentFreshness";
-import { createLinkPreviewLoader } from "./linkPreview";
+import { carryOverLinkPreview, createLinkPreviewLoader } from "./linkPreview";
+import {
+  createStepEditor,
+  isFinishedStep,
+  type ChapterPicker,
+} from "./StepEditor";
+import {
+  clearReadingPlanDraft,
+  readReadingPlanDraft,
+  writeReadingPlanDraft,
+} from "./ReadingPlanDrafts";
 import { toShareableUrl } from "../app/publicLinks";
 
 // ---------------------------------------------------------------------------
@@ -499,6 +509,57 @@ export function sessionsFromDraft(
   draft: ReadingPlanDraft
 ): ReadingPlanSession[] {
   return draft.plan.sessions.filter((session) => session.readings.length > 0);
+}
+
+/**
+ * A plan without the readings that aren't finished yet (a video with no link,
+ * say), for saving as a draft: one of those would make the whole plan fail to
+ * load.
+ */
+function withoutUnfinishedReadings(plan: ReadingPlan): ReadingPlan {
+  return {
+    ...plan,
+    sessions: plan.sessions.map((session) => ({
+      ...session,
+      readings: session.readings.filter((r) => isFinishedStep(r.item)),
+    })),
+  };
+}
+
+/**
+ * What the unsaved-changes prompt cares about: name, description, cover, paces
+ * and readings. Sessions with nothing in them are left out, since they aren't
+ * saved, and so are link previews, which are fetched rather than edited.
+ */
+function readingPlanEditorState(plan: ReadingPlan): string {
+  return JSON.stringify({
+    title: plan.title?.trim() || null,
+    description: plan.description?.trim() || null,
+    heroImageUrl: plan.heroImageUrl ?? null,
+    cadenceIds: plan.cadenceOptions.map((option) => option.id),
+    sessions: plan.sessions
+      .filter((session) => session.readings.length > 0)
+      .map((session) =>
+        session.readings.map(({ id, item }) => ({
+          id,
+          item: item.type === "link" ? { ...item, preview: undefined } : item,
+        }))
+      ),
+  });
+}
+
+/** One reading of the plan in the editor, and where it is in the plan. */
+export interface EditorReading {
+  reading: PlanReading;
+  sessionIndex: number;
+  /** Its place within its session. */
+  readingIndex: number;
+}
+
+/** How another screen opens the plan editor. */
+export interface ReadingPlanEditorOptions {
+  /** Returns to that screen, when the editor is left. */
+  onBack?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -1329,6 +1390,8 @@ export interface BookLength {
  * averages far shorter chapters than Isaiah). Without it, every chapter falls
  * back to a typical length — the same flat estimate as before.
  *
+ * A reading whose author set its reading time takes that long.
+ *
  * It remains an estimate: the average can't tell Psalm 119 from Psalm 117.
  * Getting that exact would mean knowing each chapter's verse count, which is
  * only available once the chapter itself has been loaded.
@@ -1338,8 +1401,13 @@ export function estimateReadingMinutes(
   resolveBook?: (bookId: string) => BookLength | null | undefined
 ): number {
   let verses = 0;
+  let setMinutes = 0;
   for (const reading of readings) {
     const item = reading.item;
+    if (item.minutes != null) {
+      setMinutes += item.minutes;
+      continue;
+    }
     if (item.type !== "bible-verse") {
       verses += FALLBACK_VERSES_PER_CHAPTER;
       continue;
@@ -1364,7 +1432,7 @@ export function estimateReadingMinutes(
       verses += chapters * perChapter;
     }
   }
-  return Math.max(1, Math.round(verses / VERSES_PER_MINUTE));
+  return Math.max(1, Math.round(verses / VERSES_PER_MINUTE + setMinutes));
 }
 
 /** Derived, at-a-glance stats about a user's progress through a plan's calendar. */
@@ -1552,6 +1620,12 @@ export function createReadingPlansManager(
      * Omitted means a limit of this manager's own.
      */
     friendReads?: FriendReadLimiter;
+    /** Asks the user for a chapter, for the editor's scripture readings. */
+    pickChapter?: ChapterPicker;
+    /** Called as the editor opens, to put any other editor away first. */
+    beforeEditorOpens?: () => void;
+    /** Collapses the URL writes `fn` makes into one history entry. */
+    batchUrlWrites?: (fn: () => void) => void;
   } = {}
 ) {
   const userReadingPlanProgresses = signal<ReadingPlanProgress[]>([]);
@@ -2351,6 +2425,151 @@ export function createReadingPlansManager(
   // -------------------------------------------------------------------------
 
   const editingReadingPlan = signal<ReadingPlanDraft | null>(null);
+  /**
+   * The plan as it was when the editor opened on it, for telling what changed;
+   * `saved` is whether it was in the author's account by then.
+   */
+  const editingBaseline = signal<{ plan: ReadingPlan; saved: boolean } | null>(
+    null
+  );
+  /**
+   * Whether the editor is up over the reader. The draft outlives it: closing
+   * the editor to go read leaves the plan there to add passages to.
+   */
+  const editorOpen = signal(false);
+  let editorOnBack: (() => void) | null = null;
+
+  /** Every reading of the plan in the open editor, in order. */
+  const editorReadings = computed<EditorReading[]>(() => {
+    const draft = editorOpen.value ? editingReadingPlan.value : null;
+    return (draft?.plan.sessions ?? []).flatMap((session, sessionIndex) =>
+      session.readings.map((reading, readingIndex) => ({
+        reading,
+        sessionIndex,
+        readingIndex,
+      }))
+    );
+  });
+
+  // The editor opens readings as steps, counted across the whole plan.
+  const stepEditor = createStepEditor(
+    computed(
+      () =>
+        tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ??
+        null
+    ),
+    {
+      items: computed(() => editorReadings.value.map((r) => r.reading.item)),
+      insertItem: (index, item, besideIndex) => {
+        const draft = editingReadingPlan.peek();
+        if (!draft) {
+          return false;
+        }
+        const place = editorPlaceFor(draft, index, besideIndex);
+        insertReading(place.sessionIndex, place.readingIndex, item);
+        return true;
+      },
+      updateItem: (index, item) => {
+        const at = editorReadings.peek()[index];
+        if (at) {
+          updateReadingInEditingPlan(at.sessionIndex, at.reading.id, item);
+        }
+      },
+      removeItem: (index) => {
+        const at = editorReadings.peek()[index];
+        if (at) {
+          removeReadingFromEditingPlan(at.sessionIndex, at.reading.id);
+        }
+      },
+      addAfterIndex: (openIndex) => {
+        const open = editorReadings.peek()[openIndex];
+        if (open) {
+          selectEditingPlanSession(open.sessionIndex);
+          return openIndex;
+        }
+        return lastIndexOfSession(
+          editingReadingPlan.peek()?.selectedSessionIndex ?? 0
+        );
+      },
+      pickChapter: options.pickChapter,
+    }
+  );
+
+  // Opening a reading points new ones at its session.
+  const openSessionIndex = computed(
+    () => editorReadings.value[stepEditor.stepIndex.value]?.sessionIndex ?? -1
+  );
+  effect(() => {
+    const sessionIndex = openSessionIndex.value;
+    if (sessionIndex >= 0) {
+      untracked(() => selectEditingPlanSession(sessionIndex));
+    }
+  });
+
+  /** The index, across the plan, of the last reading up to a session's end. */
+  const lastIndexOfSession = (sessionIndex: number): number =>
+    (editingReadingPlan.peek()?.plan.sessions ?? [])
+      .slice(0, sessionIndex + 1)
+      .reduce((sum, session) => sum + session.readings.length, 0) - 1;
+
+  /**
+   * The session, and the place in it, for a reading inserted at `index` across
+   * the plan. Where one session ends and the next begins that could be either:
+   * it's the session of the reading at `besideIndex` when given, else the
+   * selected one, else the one that ends there.
+   */
+  const editorPlaceFor = (
+    draft: ReadingPlanDraft,
+    index: number,
+    besideIndex?: number
+  ): { sessionIndex: number; readingIndex: number } => {
+    const preferred =
+      (besideIndex !== undefined
+        ? editorReadings.peek()[besideIndex]?.sessionIndex
+        : undefined) ?? draft.selectedSessionIndex;
+    const places: { sessionIndex: number; readingIndex: number }[] = [];
+    let start = 0;
+    draft.plan.sessions.forEach((session, sessionIndex) => {
+      if (index >= start && index <= start + session.readings.length) {
+        places.push({ sessionIndex, readingIndex: index - start });
+      }
+      start += session.readings.length;
+    });
+    return (
+      places.find((place) => place.sessionIndex === preferred) ??
+      places.find((place) => place.readingIndex > 0) ??
+      places[0] ?? { sessionIndex: 0, readingIndex: 0 }
+    );
+  };
+
+  /**
+   * Runs `change`, keeping the open step on the reading it was on, wherever
+   * that moved to; back to the list if it was removed.
+   */
+  const followingOpenReading = (change: () => void) => {
+    const idAt = (index: number | null) =>
+      index === null ? undefined : editorReadings.peek()[index]?.reading.id;
+    const openId = idAt(stepEditor.stepIndex.peek());
+    const pickingId = idAt(stepEditor.versePickIndex.peek());
+    const indexOf = (id: string | undefined) =>
+      id === undefined
+        ? -1
+        : editorReadings.peek().findIndex((r) => r.reading.id === id);
+    batch(() => {
+      change();
+      const open = indexOf(openId);
+      if (open !== stepEditor.stepIndex.peek()) {
+        // The open step moving isn't a place to go back to.
+        stepEditor.replaceNextUrlWrite();
+        stepEditor.stepIndex.value = open;
+      }
+      if (pickingId !== undefined) {
+        const picking = indexOf(pickingId);
+        stepEditor.versePickIndex.value = picking >= 0 ? picking : null;
+      }
+    });
+  };
+
   const linkPreviews = createLinkPreviewLoader((url) =>
     os.getLinkPreview(url, options.language?.peek())
   );
@@ -2365,7 +2584,8 @@ export function createReadingPlansManager(
   // Serializes draft writes so two saves can't race and land out of order.
   let draftSaveChain: Promise<void> = Promise.resolve();
 
-  const writeDraft = async (draft: ReadingPlanDraft) => {
+  const writeDraft = async (edited: ReadingPlanDraft) => {
+    const draft = { ...edited, plan: withoutUnfinishedReadings(edited.plan) };
     try {
       await saveReadingPlan(draft.plan);
       const current = editingReadingPlan.peek();
@@ -2472,12 +2692,17 @@ export function createReadingPlansManager(
    * arrives.
    */
   const requestReadingPreview = (reading: PlanReading) => {
-    linkPreviews.request(reading.item, (_original, previewed) => {
+    // A video still waiting for its link has nothing to preview.
+    if (reading.item.type === "link" && !URL.canParse(reading.item.url)) {
+      return;
+    }
+    linkPreviews.request(reading.item, (original, previewed) => {
       const draft = editingReadingPlan.peek();
       // Checked up front, not left to the map below: `mutateDraft` would still
       // bump `updatedAtMs` and schedule an autosave for a reading that's gone.
+      // By the item as well as the id: one edited since would lose the edit.
       const stillThere = draft?.plan.sessions.some((session) =>
-        session.readings.some((r) => r.id === reading.id)
+        session.readings.some((r) => r.id === reading.id && r.item === original)
       );
       if (!stillThere) {
         return;
@@ -2505,80 +2730,385 @@ export function createReadingPlansManager(
     }
   };
 
+  /** Puts `draft` in the editor, measuring changes against `baseline`. */
+  const openDraft = (
+    draft: ReadingPlanDraft,
+    baseline: { plan: ReadingPlan; saved: boolean }
+  ) => {
+    linkPreviews.cancel();
+    // The last change to the plan being replaced may not be saved yet.
+    if (draftSaveTimer !== null) {
+      void flushDraftSave();
+    }
+    batch(() => {
+      stepEditor.reset();
+      editingReadingPlan.value = draft;
+      editingBaseline.value = baseline;
+      editingReadingPlanSaveError.value = false;
+    });
+    requestMissingReadingPreviews(draft.plan);
+  };
+
+  /** `plan` with a session to add readings to, if it has none. */
+  const withASession = (plan: ReadingPlan): ReadingPlan =>
+    plan.sessions.length > 0
+      ? plan
+      : { ...plan, sessions: [createDraftSession(uuid())] };
+
   /**
    * Opens a fresh draft with one empty session and the everyday cadence
    * pre-selected. Nothing is written yet — the first actual edit persists it,
-   * so opening the wizard and immediately backing out leaves no empty plan
+   * so opening the editor and immediately backing out leaves no empty plan
    * behind in the user's account.
    */
   const startEditingReadingPlan = () => {
-    linkPreviews.cancel();
     const userId = login.userId.value ?? "";
-    const now = Date.now();
-    editingReadingPlan.value = {
-      plan: createReadingPlan(userId, userId, `plan_${uuid()}`, now, {
-        status: "draft",
-        cadenceOptions: [DEFAULT_CADENCE_OPTIONS[0]!],
-        sessions: [createDraftSession(uuid())],
-      }),
-      selectedSessionIndex: 0,
-      persisted: false,
-      isNew: true,
-    };
-    editingReadingPlanSaveError.value = false;
+    startEditingBlankPlan(userId, `plan_${uuid()}`);
+  };
+
+  const startEditingBlankPlan = (userId: string, address: string) => {
+    const plan = createReadingPlan(userId, userId, address, Date.now(), {
+      status: "draft",
+      cadenceOptions: [DEFAULT_CADENCE_OPTIONS[0]!],
+      sessions: [createDraftSession(uuid())],
+    });
+    openDraft(
+      { plan, selectedSessionIndex: 0, persisted: false, isNew: true },
+      { plan, saved: false }
+    );
   };
 
   /** Reopens a saved draft so the author can carry on where they left off. */
   const resumeEditingReadingPlan = (plan: ReadingPlan) => {
-    linkPreviews.cancel();
-    editingReadingPlan.value = {
-      plan:
-        plan.sessions.length > 0
-          ? plan
-          : { ...plan, sessions: [createDraftSession(uuid())] },
-      selectedSessionIndex: Math.max(0, plan.sessions.length - 1),
-      persisted: true,
-      isNew: true,
-    };
-    editingReadingPlanSaveError.value = false;
-    requestMissingReadingPreviews(plan);
+    openDraft(
+      {
+        plan: withASession(plan),
+        selectedSessionIndex: Math.max(0, plan.sessions.length - 1),
+        persisted: true,
+        isNew: true,
+      },
+      { plan, saved: true }
+    );
   };
 
   /**
    * Opens an already-published plan in the same editor used to create one, so
-   * there is one screen for both. Edits stay in memory until Save changes —
-   * backing out (Cancel/back) drops them and leaves the published plan as it
-   * was. The plan keeps its `"complete"` status throughout so it never drops
-   * out of the reader's list mid-edit.
+   * there is one screen for both. Edits stay in this browser until they're
+   * published — discarding them leaves the published plan as it was. The plan
+   * keeps its `"complete"` status throughout so it never drops out of the
+   * reader's list mid-edit.
    */
-  const editExistingReadingPlan = (plan: ReadingPlan) => {
-    linkPreviews.cancel();
-    editingReadingPlan.value = {
-      plan:
-        plan.sessions.length > 0
-          ? plan
-          : { ...plan, sessions: [createDraftSession(uuid())] },
-      selectedSessionIndex: Math.max(0, plan.sessions.length - 1),
-      persisted: true,
-      isNew: false,
+  const editExistingReadingPlan = (
+    plan: ReadingPlan,
+    /** The plan as published, when `plan` is a draft of changes to it. */
+    published: ReadingPlan = plan
+  ) => {
+    openDraft(
+      {
+        plan: withASession(plan),
+        selectedSessionIndex: Math.max(0, plan.sessions.length - 1),
+        persisted: true,
+        isNew: false,
+      },
+      { plan: published, saved: true }
+    );
+  };
+
+  const isEditingPlan = (plan: { recordName: string; address: string }) => {
+    const current = editingReadingPlan.peek()?.plan;
+    return (
+      current?.recordName === plan.recordName &&
+      current.address === plan.address
+    );
+  };
+
+  /** Shows the editor, on its list of sessions, for the open draft. */
+  const showEditor = ({ onBack }: ReadingPlanEditorOptions) => {
+    options.beforeEditorOpens?.();
+    editorOnBack = onBack ?? null;
+    batch(() => {
+      stepEditor.reset();
+      editorOpen.value = true;
+    });
+  };
+
+  /**
+   * Takes the editor down, returning to the screen that opened it. The draft
+   * stays open unless the caller closed it.
+   */
+  const closeEditor = () => {
+    if (!editorOpen.peek()) {
+      return;
+    }
+    const onBack = editorOnBack;
+    const leave = () => {
+      hideEditor();
+      onBack?.();
     };
-    editingReadingPlanSaveError.value = false;
-    requestMissingReadingPreviews(plan);
+    // One history entry for leaving the editor and returning there.
+    if (options.batchUrlWrites) {
+      options.batchUrlWrites(leave);
+    } else {
+      leave();
+    }
+  };
+
+  /**
+   * Takes the editor down with its draft still open, for something else taking
+   * its place. Nothing happens while it isn't showing.
+   */
+  const hideEditor = () => {
+    editorOnBack = null;
+    batch(() => {
+      stepEditor.reset();
+      editorOpen.value = false;
+    });
+  };
+
+  /**
+   * The draft kept for `plan`, when it was made to the plan as it's saved now;
+   * a draft made to an older version is forgotten instead.
+   */
+  const keptDraftFor = (plan: ReadingPlan) => {
+    const locator = getReadingPlanLocator(plan);
+    const kept = readReadingPlanDraft(locator);
+    if (kept && kept.baseline.updatedAtMs !== plan.updatedAtMs) {
+      clearReadingPlanDraft(locator);
+      return null;
+    }
+    return kept;
+  };
+
+  /** Opens `plan`'s draft, carrying on from any unsaved edits kept for it. */
+  const restoreDraft = (plan: ReadingPlan) => {
+    if (plan.status === "draft") {
+      resumeEditingReadingPlan(plan);
+      return;
+    }
+    const kept = keptDraftFor(plan);
+    editExistingReadingPlan(kept?.draft ?? plan, kept?.baseline ?? plan);
+  };
+
+  /**
+   * A published plan the author went to edit that has unsaved edits kept from
+   * before, until they choose whether to continue from them or discard them.
+   */
+  const editorDraftChoice = signal<{
+    plan: ReadingPlan;
+    /** When the draft was last edited, when that's known. */
+    editedAtMs: number | null;
+    options: ReadingPlanEditorOptions;
+  } | null>(null);
+
+  /**
+   * Opens an existing plan in the editor. One still in draft picks up where it
+   * left off; a published one with unsaved edits kept from before asks first
+   * whether to continue from them (see `editorDraftChoice`). One that's
+   * already open — the author stepped out to go read, say — is shown as it is.
+   */
+  const openReadingPlanInEditor = (
+    plan: ReadingPlan,
+    editorOptions: ReadingPlanEditorOptions = {}
+  ) => {
+    if (!isEditingPlan(plan)) {
+      const kept = plan.status === "draft" ? null : keptDraftFor(plan);
+      if (kept) {
+        editorDraftChoice.value = {
+          plan,
+          editedAtMs: kept.editedAtMs ?? null,
+          options: editorOptions,
+        };
+        return;
+      }
+      restoreDraft(plan);
+    }
+    showEditor(editorOptions);
+  };
+
+  /** Opens the plan being asked about, carrying on from its draft. */
+  const continueEditorDraft = () => {
+    const choice = editorDraftChoice.peek();
+    editorDraftChoice.value = null;
+    if (choice) {
+      restoreDraft(choice.plan);
+      showEditor(choice.options);
+    }
+  };
+
+  /** Forgets the draft of the plan being asked about, and opens it as saved. */
+  const discardEditorDraft = () => {
+    const choice = editorDraftChoice.peek();
+    editorDraftChoice.value = null;
+    if (choice) {
+      clearReadingPlanDraft(getReadingPlanLocator(choice.plan));
+      restoreDraft(choice.plan);
+      showEditor(choice.options);
+    }
+  };
+
+  /** Leaves the plan being asked about closed, its draft still kept. */
+  const dismissEditorDraftChoice = () => {
+    editorDraftChoice.value = null;
+  };
+
+  /**
+   * Opens the editor on a new plan, asking a signed-out user to sign in first.
+   * A new plan already in progress is picked back up rather than thrown away —
+   * the user may have stepped out of the editor to go read and add a passage
+   * from the verse toolbar. An edit to a published plan is not: the user asked
+   * for a new plan.
+   */
+  const createReadingPlanInEditor = async (
+    editorOptions: ReadingPlanEditorOptions = {}
+  ): Promise<void> => {
+    if (!login.userId.peek() && !(await login.login())) {
+      console.warn("Cannot create a reading plan while signed out.");
+      return;
+    }
+    if (!editingReadingPlan.peek()?.isNew) {
+      startEditingReadingPlan();
+    }
+    showEditor(editorOptions);
+  };
+
+  /**
+   * Opens the plan a URL names in the editor: see `StepEditorRoutingOptions`.
+   * Only its author can edit a plan, so anyone else's isn't opened.
+   */
+  const openEditorForLocator = (
+    locator: string
+  ): boolean | Promise<(() => void) | null> => {
+    const parsed = parseRecordLocator(locator);
+    if (!parsed) {
+      return false;
+    }
+    const isMine = (authorUserId: string) => {
+      const userId = login.userId.peek();
+      return !userId || userId === authorUserId;
+    };
+    if (isEditingPlan(parsed)) {
+      showEditor({});
+      return true;
+    }
+    const open = (plan: ReadingPlan) => {
+      restoreDraft(plan);
+      showEditor({});
+    };
+    const cached = fullReadingPlans
+      .peek()
+      .find((plan) => getReadingPlanLocator(plan) === locator);
+    if (cached) {
+      if (!isMine(cached.authorUserId)) {
+        return false;
+      }
+      open(cached);
+      return true;
+    }
+    return os.getData(parsed.recordName, parsed.address).then((result) => {
+      if (result.success) {
+        const plan = ReadingPlanSchema.safeParse(result.data);
+        return plan.success && isMine(plan.data.authorUserId)
+          ? () => open(plan.data)
+          : null;
+      }
+      // Only a plan that was never saved opens empty. Any other failure might
+      // be of a plan that exists, which autosaving over would lose.
+      return result.errorCode === "data_not_found" && isMine(parsed.recordName)
+        ? () => {
+            startEditingBlankPlan(parsed.recordName, parsed.address);
+            showEditor({});
+          }
+        : null;
+    });
+  };
+
+  /** True when the open draft differs from what it was when it was opened. */
+  const isEditingReadingPlanDirty = (): boolean => {
+    const draft = editingReadingPlan.peek();
+    const baseline = editingBaseline.peek();
+    return (
+      !!draft &&
+      !!baseline &&
+      readingPlanEditorState(draft.plan) !==
+        readingPlanEditorState(baseline.plan)
+    );
+  };
+
+  // Edits to a published plan are kept in this browser as they're made, so a
+  // refresh or a closed tab doesn't lose them.
+  if (!import.meta.env.SSR) {
+    effect(() => {
+      const draft = editingReadingPlan.value;
+      const baseline = editingBaseline.value;
+      if (!draft || !baseline || draft.isNew) {
+        return;
+      }
+      const locator = getReadingPlanLocator(draft.plan);
+      if (isEditingReadingPlanDirty()) {
+        writeReadingPlanDraft(locator, {
+          draft: withoutUnfinishedReadings(draft.plan),
+          baseline: baseline.plan,
+          editedAtMs: Date.now(),
+        });
+      } else {
+        clearReadingPlanDraft(locator);
+      }
+    });
+  }
+
+  /**
+   * Leaves the editor keeping its unsaved changes: in the author's account for
+   * a plan not yet published, in this browser for one that is.
+   */
+  const leaveEditorKeepingDraft = () => {
+    cancelEditingReadingPlan();
+    closeEditor();
+  };
+
+  /**
+   * Leaves the editor without the changes made since it opened: a plan created
+   * in it is deleted, a draft goes back to how it was, and a published plan
+   * stays as it was published.
+   */
+  const discardEditorChanges = () => {
+    const draft = editingReadingPlan.peek();
+    const baseline = editingBaseline.peek();
+    if (draft?.isNew && baseline?.saved) {
+      linkPreviews.cancel();
+      if (draftSaveTimer !== null) {
+        clearTimeout(draftSaveTimer);
+        draftSaveTimer = null;
+      }
+      editingReadingPlan.value = null;
+      editingReadingPlanSaving.value = false;
+      draftSaveChain = draftSaveChain.then(() =>
+        writeDraft({ ...draft, plan: baseline.plan })
+      );
+    } else if (draft?.isNew) {
+      void discardEditingReadingPlan();
+    } else if (draft) {
+      clearReadingPlanDraft(getReadingPlanLocator(draft.plan));
+      cancelEditingReadingPlan();
+    }
+    closeEditor();
   };
 
   /**
    * Steps out of the wizard. A new draft flushes any pending change first and
    * is kept — that is the whole point of drafts — so it stays in the plans
-   * list to be resumed or discarded. An edit of a published plan is dropped
-   * without writing, so Cancel/back does not commit the cover image (or
-   * anything else) the author never saved.
+   * list to be resumed or discarded. An edit of a published plan is closed
+   * without writing, so it does not commit the cover image (or anything else)
+   * the author never published.
    */
   const cancelEditingReadingPlan = () => {
     linkPreviews.cancel();
     const draft = editingReadingPlan.peek();
     if (draft?.isNew && (draft.persisted || draftSaveTimer !== null)) {
       void flushDraftSave().then(() => {
-        editingReadingPlan.value = null;
+        // Reopened meanwhile, or replaced by another plan, it stays.
+        if (!editorOpen.peek() && isEditingPlan(draft.plan)) {
+          editingReadingPlan.value = null;
+        }
       });
       return;
     }
@@ -2678,6 +3208,13 @@ export function createReadingPlansManager(
     if (editingReadingPlan.peek()?.plan.heroImageUrl === url) {
       mutateDraft((plan) => ({ ...plan, heroImageUrl: null }));
     }
+    const baseline = editingBaseline.peek();
+    if (baseline?.plan.heroImageUrl === url) {
+      editingBaseline.value = {
+        ...baseline,
+        plan: { ...baseline.plan, heroImageUrl: null },
+      };
+    }
     const failed = results.find(
       (result): result is PromiseRejectedResult => result.status === "rejected"
     );
@@ -2698,13 +3235,13 @@ export function createReadingPlansManager(
     if (!current) {
       return;
     }
-    editingReadingPlan.value = {
-      ...current,
-      selectedSessionIndex: Math.min(
-        Math.max(0, index),
-        Math.max(0, current.plan.sessions.length - 1)
-      ),
-    };
+    const selectedSessionIndex = Math.min(
+      Math.max(0, index),
+      Math.max(0, current.plan.sessions.length - 1)
+    );
+    if (selectedSessionIndex !== current.selectedSessionIndex) {
+      editingReadingPlan.value = { ...current, selectedSessionIndex };
+    }
   };
 
   /**
@@ -2763,19 +3300,47 @@ export function createReadingPlansManager(
     if (index < selected) {
       selected -= 1;
     }
-    mutateDraft((plan) => ({ ...plan, sessions }), {
-      selectedSessionIndex: Math.min(
-        Math.max(0, selected),
-        sessions.length - 1
-      ),
-    });
+    followingOpenReading(() =>
+      mutateDraft((plan) => ({ ...plan, sessions }), {
+        selectedSessionIndex: Math.min(
+          Math.max(0, selected),
+          sessions.length - 1
+        ),
+      })
+    );
+  };
+
+  /** Inserts a new reading into a session of the draft. */
+  const insertReading = (
+    sessionIndex: number,
+    readingIndex: number,
+    item: PlaylistItemData
+  ) => {
+    const reading: PlanReading = { id: uuid(), item };
+    followingOpenReading(() =>
+      mutateDraft((plan) => ({
+        ...plan,
+        sessions: plan.sessions.map((session, i) =>
+          i === sessionIndex
+            ? {
+                ...session,
+                readings: [
+                  ...session.readings.slice(0, readingIndex),
+                  reading,
+                  ...session.readings.slice(readingIndex),
+                ],
+              }
+            : session
+        ),
+      }))
+    );
+    requestReadingPreview(reading);
   };
 
   /**
    * Appends a reading to the draft's selected session (or `sessionIndex`, when
    * given). Any playlist item type is accepted — scripture, text, or a link.
-   * Used both by the wizard's item input and by the reader's "Add to plan"
-   * verse action.
+   * Used by the reader's "Add to plan" verse action.
    */
   const addReadingToEditingPlan = (
     item: PlaylistItemData,
@@ -2789,16 +3354,56 @@ export function createReadingPlansManager(
       Math.max(0, sessionIndex ?? current.selectedSessionIndex),
       current.plan.sessions.length - 1
     );
-    const reading: PlanReading = { id: uuid(), item };
-    mutateDraft((plan) => ({
-      ...plan,
-      sessions: plan.sessions.map((session, i) =>
-        i === target
-          ? { ...session, readings: [...session.readings, reading] }
-          : session
-      ),
-    }));
-    requestReadingPreview(reading);
+    insertReading(
+      target,
+      current.plan.sessions[target]?.readings.length ?? 0,
+      item
+    );
+  };
+
+  /**
+   * Moves a reading to a place in a session, its own or another, counted with
+   * the reading already taken out of where it was.
+   */
+  const moveReadingInEditingPlan = (
+    readingId: string,
+    toSessionIndex: number,
+    toReadingIndex: number
+  ) => {
+    const sessions = editingReadingPlan.peek()?.plan.sessions ?? [];
+    const reading = sessions
+      .flatMap((session) => session.readings)
+      .find((r) => r.id === readingId);
+    if (!reading || !sessions[toSessionIndex]) {
+      return;
+    }
+    followingOpenReading(() =>
+      mutateDraft((plan) => ({
+        ...plan,
+        sessions: plan.sessions.map((session, i) => {
+          const rest = session.readings.filter((r) => r.id !== readingId);
+          if (i === toSessionIndex) {
+            rest.splice(toReadingIndex, 0, reading);
+          } else if (rest.length === session.readings.length) {
+            return session;
+          }
+          return { ...session, readings: rest };
+        }),
+      }))
+    );
+  };
+
+  /**
+   * Opens the editor's "Add a step" menu for a session, placing the new
+   * reading at its end.
+   */
+  const openAddMenuForSession = (sessionIndex: number) => {
+    batch(() => {
+      selectEditingPlanSession(sessionIndex);
+      stepEditor.addMenu.value = {
+        afterIndex: lastIndexOfSession(sessionIndex),
+      };
+    });
   };
 
   /**
@@ -2811,13 +3416,16 @@ export function createReadingPlansManager(
     item: PlaylistItemData
   ) => {
     const draft = editingReadingPlan.peek();
-    const exists = draft?.plan.sessions[sessionIndex]?.readings.some(
+    const existing = draft?.plan.sessions[sessionIndex]?.readings.find(
       (r) => r.id === readingId
     );
-    if (!exists) {
+    if (!existing) {
       return;
     }
-    const reading: PlanReading = { id: readingId, item };
+    const reading: PlanReading = {
+      id: readingId,
+      item: carryOverLinkPreview(existing.item, item),
+    };
     mutateDraft((plan) => ({
       ...plan,
       sessions: plan.sessions.map((session, i) =>
@@ -2839,23 +3447,26 @@ export function createReadingPlansManager(
     sessionIndex: number,
     readingId: string
   ) => {
-    mutateDraft((plan) => ({
-      ...plan,
-      sessions: plan.sessions.map((session, i) =>
-        i === sessionIndex
-          ? {
-              ...session,
-              readings: session.readings.filter((r) => r.id !== readingId),
-            }
-          : session
-      ),
-    }));
+    followingOpenReading(() =>
+      mutateDraft((plan) => ({
+        ...plan,
+        sessions: plan.sessions.map((session, i) =>
+          i === sessionIndex
+            ? {
+                ...session,
+                readings: session.readings.filter((r) => r.id !== readingId),
+              }
+            : session
+        ),
+      }))
+    );
   };
 
   /**
    * Finishes the draft: drops sessions the author never filled, flips it to
-   * `"complete"`, writes it, and closes the wizard. Returns null when there is
-   * no draft or it has no readings.
+   * `"complete"`, writes it, and closes the editor. Returns null when there is
+   * no draft or it has no readings. Throws while a reading is unfinished, since
+   * a plan saved with one would fail to load.
    */
   const finishEditingReadingPlan = async (): Promise<ReadingPlan | null> => {
     await linkPreviews.settle();
@@ -2863,6 +3474,12 @@ export function createReadingPlansManager(
     const draft = editingReadingPlan.peek();
     if (!draft || draftReadingCount(draft) === 0) {
       return null;
+    }
+    const unfinished = draft.plan.sessions
+      .flatMap((session) => session.readings)
+      .some((reading) => !isFinishedStep(reading.item));
+    if (unfinished) {
+      throw new Error("A reading is incomplete, so the plan can't be saved.");
     }
     if (draftSaveTimer !== null) {
       clearTimeout(draftSaveTimer);
@@ -2899,8 +3516,10 @@ export function createReadingPlansManager(
         selectedReadingPlan.value = plan;
       }
     });
+    clearReadingPlanDraft(getReadingPlanLocator(plan));
     editingReadingPlan.value = null;
     editingReadingPlanSaving.value = false;
+    closeEditor();
     captureEvent(
       draft.isNew ? "reading_plan_created" : "reading_plan_updated",
       {
@@ -2978,7 +3597,21 @@ export function createReadingPlansManager(
     }
     editingReadingPlan.value = null;
     editingReadingPlanSaving.value = false;
-    if (!draft?.persisted || !draft.isNew) {
+    if (!draft?.isNew) {
+      return;
+    }
+    // A first save still on its way would otherwise bring the plan back.
+    await draftSaveChain;
+    const persisted =
+      draft.persisted ||
+      userReadingPlans
+        .peek()
+        .some(
+          (p) =>
+            p.recordName === draft.plan.recordName &&
+            p.address === draft.plan.address
+        );
+    if (!persisted) {
       return;
     }
     try {
@@ -3024,6 +3657,27 @@ export function createReadingPlansManager(
     deleteReadingPlan,
     canEditSelectedPlan,
     editingReadingPlan,
+    editingBaseline,
+    isEditingReadingPlanDirty,
+    /** Whether the editor is showing over the reader, on an open draft. */
+    isEditorShowing: computed(
+      () => editorOpen.value && editingReadingPlan.value !== null
+    ),
+    stepEditor,
+    editorReadings,
+    openReadingPlanInEditor,
+    createReadingPlanInEditor,
+    openEditorForLocator,
+    closeEditor,
+    hideEditor,
+    leaveEditorKeepingDraft,
+    discardEditorChanges,
+    editorDraftChoice,
+    continueEditorDraft,
+    discardEditorDraft,
+    dismissEditorDraftChoice,
+    openAddMenuForSession,
+    moveReadingInEditingPlan,
     editingReadingPlanSaving,
     editingReadingPlanSaveError,
     startEditingReadingPlan,

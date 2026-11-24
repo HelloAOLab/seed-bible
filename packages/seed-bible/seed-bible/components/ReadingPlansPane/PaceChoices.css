@@ -1,0 +1,91 @@
+/* A list of paces to choose from: which ones a plan offers, in its editor, and
+   which one to read it at, in the plan's own page. Each sets the `--rp-*`
+   colors. */
+.sb-rp-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sb-rp-choice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--rp-border);
+  border-radius: var(--sb-radius-md);
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color var(--sb-duration-fast) ease,
+    background var(--sb-duration-fast) ease;
+}
+
+.sb-rp-choice:hover {
+  border-color: var(--rp-accent-border);
+}
+
+.sb-rp-choice-selected {
+  border-color: var(--rp-accent);
+  background: var(--rp-accent-soft);
+}
+
+.sb-rp-choice-radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--rp-border);
+  border-radius: 50%;
+  color: var(--rp-accent-contrast);
+}
+
+.sb-rp-choice-selected .sb-rp-choice-radio {
+  border-color: var(--rp-accent);
+  background: var(--rp-accent);
+}
+
+.sb-rp-choice-radio .material-symbols-outlined {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Cadences are a multi-select — an author can offer several paces for the same
+   plan — so they get a checkbox rather than the radio the pace picker uses. The
+   native input is kept for keyboard and screen-reader use and visually replaced
+   by the shared CheckboxIndicator (the input is .sb-visually-hidden), sized and
+   colored to match the radio. */
+.sb-rp-choice-box {
+  --sb-checkbox-size: 22px;
+  --sb-checkbox-color: var(--rp-accent);
+  --sb-checkbox-mark-color: var(--rp-accent-contrast);
+  --sb-checkbox-border-color: var(--rp-border);
+}
+
+.sb-rp-choice-checkbox:focus-visible + .sb-rp-choice-box {
+  outline: 2px solid var(--rp-accent);
+  outline-offset: 2px;
+}
+
+.sb-rp-choice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sb-rp-choice-title {
+  font-size: var(--sb-font-size-15);
+  font-weight: 600;
+}
+
+.sb-rp-choice-description {
+  font-size: var(--sb-font-size-13);
+  color: var(--rp-muted);
+}

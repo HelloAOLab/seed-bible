@@ -124,10 +124,8 @@ import {
   measureReaderViewport,
   type ReaderViewport,
 } from "./readerViewport";
-import {
-  isPlaylistEditorTab,
-  PlaylistReaderHint,
-} from "../PlaylistEditor/PlaylistEditorWorkspace";
+import { PlaylistReaderHint } from "../PlaylistEditor/PlaylistEditorWorkspace";
+import { stepEditorOnTab } from "../PlaylistEditor/stepEditorHost";
 import { Dialog } from "../Dialog/Dialog";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
@@ -4178,8 +4176,7 @@ export function BibleReader(props: BibleReaderProps) {
     currentSlot.tab != null &&
     state.tabs.selectedTabId.value === currentSlot.tab.id;
 
-  const editingPlaylistHere =
-    !!state && isPlaylistEditorTab(state, currentSlot.tab);
+  const editingStepsHere = !!state && !!stepEditorOnTab(state, currentSlot.tab);
   // Desktop shows a playing passage's note beside it, in the reader playback is
   // bound to; mobile shows it in a sheet above the floating nav instead.
   const playingHere =
@@ -4480,7 +4477,7 @@ export function BibleReader(props: BibleReaderProps) {
                 </>
               )}
             </div>
-            {editingPlaylistHere ? (
+            {editingStepsHere ? (
               <PlaylistReaderHint />
             ) : (
               state && (

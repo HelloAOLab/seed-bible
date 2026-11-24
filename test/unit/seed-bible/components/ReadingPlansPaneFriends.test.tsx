@@ -98,7 +98,13 @@ describe("ReadingPlansPane — reading plans from your friends", () => {
     const login = { userId: signal("me") } as unknown as ManagerArgs[1];
     const tabs = {
       tabs: signal([
-        { id: "tab-1", readingState: { translationId: signal("BSB") } },
+        {
+          id: "tab-1",
+          readingState: {
+            translationId: signal("BSB"),
+            selectedVerses: signal([]),
+          },
+        },
       ]),
       selectedTabId: signal("tab-1"),
     } as unknown as ManagerArgs[2];

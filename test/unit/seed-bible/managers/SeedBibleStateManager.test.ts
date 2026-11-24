@@ -1,3 +1,4 @@
+import { READING_PLAN_EDITOR_PANE_ID } from "@packages/seed-bible/seed-bible/components/ReadingPlansPane/ReadingPlanEditor";
 import {
   ABOUT_PANE_ID,
   MOBILE_BREAKPOINT,
@@ -4951,6 +4952,27 @@ describe("editors opened from Profile and Your content", () => {
     click(playlistEditorBack());
 
     expect(state.playlists.editingPlaylist.value).toBeNull();
+    expect(state.isYourContentOpen.value).toBe(true);
+  });
+
+  it("returns to Your content when backing out of a new reading plan started there", async () => {
+    const state = await signedInDesktopState();
+    state.openYourContent();
+    await renderPane(state, YOUR_CONTENT_PANE_ID);
+
+    click(container.querySelector(".sb-content-create"));
+    click(
+      Array.from(document.body.querySelectorAll(".sb-context-menu-item")).find(
+        (item) => item.textContent?.includes("Reading Plan")
+      )
+    );
+    await waitFor(() => state.readingPlans.isEditorShowing.value);
+    expect(state.isYourContentOpen.value).toBe(false);
+
+    await renderPane(state, READING_PLAN_EDITOR_PANE_ID);
+    click(playlistEditorBack());
+
+    expect(state.readingPlans.editingReadingPlan.value).toBeNull();
     expect(state.isYourContentOpen.value).toBe(true);
   });
 

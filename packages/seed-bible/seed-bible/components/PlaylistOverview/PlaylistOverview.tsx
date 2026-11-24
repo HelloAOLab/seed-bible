@@ -162,6 +162,8 @@ export function PlaylistOverviewItemContent(props: {
   resolveBookName: (bookId: string) => string;
   /** In place of the step's usual name, as the editor names a draft's. */
   label?: string;
+  /** In place of its usual time, as a reading plan estimates its readings'. */
+  minutes?: number;
 }) {
   const { item } = props;
   const { t } = useI18n();
@@ -179,7 +181,7 @@ export function PlaylistOverviewItemContent(props: {
       </span>
       <span className="sb-playlist-page-item-minutes">
         {t("playlist-editor-minutes", {
-          minutes: playlistStepMinutes(item),
+          minutes: props.minutes ?? playlistStepMinutes(item),
           defaultValue: "{{minutes}} min",
         })}
       </span>
@@ -197,6 +199,7 @@ export function PlaylistStepRow(props: {
   item: PlaylistItemData;
   resolveBookName: (bookId: string) => string;
   label?: string;
+  minutes?: number;
   /** Highlighted as the step that's playing, or open in the editor. */
   current?: boolean;
   ariaCurrent?: boolean | "step";
@@ -215,6 +218,7 @@ export function PlaylistStepRow(props: {
       item={item}
       resolveBookName={resolveBookName}
       label={props.label}
+      minutes={props.minutes}
     />
   );
   return (
