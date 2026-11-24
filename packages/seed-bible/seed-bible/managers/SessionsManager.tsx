@@ -306,8 +306,8 @@ export interface SharedAudioPlayback extends SharedAudioPlaybackCommand {
 
 /**
  * What a host or co-host decided their play button does in a session:
- * plays for everyone, or only on their own device. Null until they're asked,
- * which happens the first time they press play.
+ * plays for everyone, or only on their own device. Asked each time they
+ * start listening afresh, rather than resume.
  */
 export type SharedAudioShareChoice = "everyone" | "this-device";
 
@@ -1154,7 +1154,8 @@ export interface BibleReadingSession {
 
   /**
    * Whether this host's own play button plays for everyone or only on this
-   * device. Null until they've answered. Kept on this device only.
+   * device, for the listening they last started. They're asked each time
+   * they start listening afresh. Kept on this device only.
    */
   audioShareChoice: ReadonlySignal<SharedAudioShareChoice | null>;
 
@@ -1162,8 +1163,8 @@ export interface BibleReadingSession {
 
   /**
    * True once this reader has agreed to hear the host's audio. Until then
-   * their device stays silent when the host plays. Lasts until the reader
-   * stops it themselves or leaves, across chapters and the host's stops.
+   * their device stays silent when the host plays. Lasts until the host stops
+   * the audio (which ends the audio session) or the reader stops it.
    */
   isListeningAlong: ReadonlySignal<boolean>;
 
@@ -2809,12 +2810,14 @@ async function createBibleReadingSession(
   const audioChapterKey = (playback: SharedAudioPlayback) =>
     `${playback.bookId}:${playback.chapterNumber}`;
 
-  // Once the host stops sharing, the next time they play is a new offer for
-  // anyone who turned this one down. Those listening along stay joined, so
-  // the next chapter the host plays reaches them without asking again.
+  // The host stopping ends the audio session: whatever they play next is a
+  // new offer that everyone answers again, whether they joined this one or
+  // turned it down.
   const stopResettingListenAlong = effect(() => {
     if (sharedAudio.value !== null) return;
     untracked(() => {
+      isListeningAlong.value = false;
+      listeningOnOwn.value = false;
       declinedAudioOffer.value = null;
     });
   });

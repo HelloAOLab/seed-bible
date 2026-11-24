@@ -3,10 +3,10 @@ import type { ModalManager, SharedAudioShareChoice } from "seed-bible/managers";
 import { Button } from "seed-bible/components";
 
 /**
- * Asks a host, the first time they press play in a shared session, whether
- * the chapter plays for everyone or only on their own device. `onChoose`
- * runs inside the click, so the audio it starts still counts as the host's
- * own tap. Closing the modal any other way plays nothing.
+ * Asks a host, each time they start listening afresh in a shared session,
+ * whether the chapter plays for everyone or only on their own device.
+ * `onChoose` runs inside the click, so the audio it starts still counts as
+ * the host's own tap. Closing the modal any other way plays nothing.
  */
 export function openShareAudioPrompt(
   modals: ModalManager,

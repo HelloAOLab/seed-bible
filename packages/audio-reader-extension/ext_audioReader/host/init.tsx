@@ -2199,7 +2199,6 @@ export default function initAudioReaderExtension() {
               ended: options.endedAt !== null,
               listeningAlong: shared.isListeningAlong.value,
               listeningOnOwn: shared.isListeningOnOwn.value,
-              rejoinGroupAudio: shared.rejoinGroupAudio,
               leaderConnected,
               presenceTrustworthy,
             },
@@ -2227,7 +2226,7 @@ export default function initAudioReaderExtension() {
               });
               continue;
             }
-            if (leaderLeft && !item.listeningOnOwn) {
+            if (leaderLeft) {
               // Only silence audio we started from the host. A guest's own
               // Listen is theirs until the session itself ends.
               stopSharedListening(item.sessionId, item.readingState, {
@@ -2236,17 +2235,6 @@ export default function initAudioReaderExtension() {
               continue;
             }
             if (item.listeningOnOwn) {
-              if (item.playback === null) {
-                // The host stopped sharing: nothing is left to rejoin. Their
-                // own audio carries on, and they're back with the group for
-                // whatever the host plays next.
-                sharedAudioOnOwn.delete(item.sessionId);
-                sharedAudioFollowed.delete(item.sessionId);
-                sharedAudioApplied.delete(item.sessionId);
-                sharedAudioAligned.delete(item.sessionId);
-                item.rejoinGroupAudio();
-                continue;
-              }
               sharedAudioOnOwn.add(item.sessionId);
               continue;
             }
@@ -2293,8 +2281,9 @@ export default function initAudioReaderExtension() {
           if (
             shared &&
             chapter &&
+            // Asked on every fresh start, not just the first: the host
+            // stopping ends the audio session, and the next one is new.
             !resumableListening(readingState) &&
-            shared.audioShareChoice.peek() === null &&
             isSessionHost(shared.options.peek(), shared.localSessionId.peek())
           ) {
             openShareAudioPrompt(

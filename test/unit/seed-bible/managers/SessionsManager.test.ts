@@ -3695,18 +3695,18 @@ describe("SessionsManager", () => {
       expect(session.audioOffer.value).toMatchObject({ id: "host:3" });
     });
 
-    it("keeps a listener joined after the host stops, so the next chapter needs no new answer", async () => {
+    it("ends the audio session when the host stops, so everyone is asked again", async () => {
       const { session, play } = await joinWithHostAudio();
       play("host:1");
       session.listenAlong();
+      session.listenOnOwn();
 
       mockAudioMap.delete("current");
-      expect(session.isListeningAlong.value).toBe(true);
+      expect(session.isListeningAlong.value).toBe(false);
+      expect(session.isListeningOnOwn.value).toBe(false);
 
-      session.readingState.chapterNumber.value = 2;
-      play("host:2", { chapterNumber: 2 });
-      expect(session.audioOffer.value).toBeNull();
-      expect(session.isListeningAlong.value).toBe(true);
+      play("host:2");
+      expect(session.audioOffer.value).toMatchObject({ id: "host:2" });
     });
 
     it("stops listening along without asking again for that chapter", async () => {
@@ -3735,14 +3735,25 @@ describe("SessionsManager", () => {
       expect(mockAudioListenersMap.get(os.connectionId)).toBeUndefined();
     });
 
-    it("stays among the listeners when the host stops sharing", async () => {
+    it("drops this reader from the listeners when the host stops the audio", async () => {
       const { session, play } = await joinWithHostAudio();
       play("host:1");
       session.listenAlong();
 
       mockAudioMap.delete("current");
 
-      expect(mockAudioListenersMap.get(os.connectionId)).toBe(true);
+      expect(mockAudioListenersMap.get(os.connectionId)).toBeUndefined();
+    });
+
+    it("keeps a listener joined while the host only pauses", async () => {
+      const { session, play } = await joinWithHostAudio();
+      play("host:1");
+      session.listenAlong();
+
+      play("host:2", { playing: false, position: 20 });
+
+      expect(session.isListeningAlong.value).toBe(true);
+      expect(session.audioOffer.value).toBeNull();
     });
 
     it("goes off on its own only while listening along, and rejoins", async () => {

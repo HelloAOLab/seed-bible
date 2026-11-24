@@ -1,4 +1,4 @@
-import { computed, signal } from "@preact/signals";
+import { batch, computed, signal } from "@preact/signals";
 import { render } from "preact";
 import initAudioReaderExtension from "@packages/audio-reader-extension/ext_audioReader/host/init";
 import {
@@ -632,6 +632,8 @@ describe("audio-reader playback controls", () => {
       const chapter = readingState.chapterData.value!;
 
       pressPlay();
+      chooseInSharePrompt("Play for everyone");
+      pressPlay();
 
       expect(publish).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -886,6 +888,9 @@ describe("audio-reader playback controls", () => {
         listeningAlong: true,
       });
       pressPlay();
+      chooseInSharePrompt("Play for everyone");
+      pressPlay();
+      expect(sharedAudio.value?.fromConnectionId).toBe("self");
 
       sharedAudio.value = hostCommand(readingState, {
         id: "cohost-now",
@@ -932,7 +937,7 @@ describe("audio-reader playback controls", () => {
       }
     }
 
-    it("asks the host the first time they press play, then opens the player paused for everyone", () => {
+    it("asks the host when they start listening, then opens the player paused for everyone", () => {
       const { publish, audioShareChoice, readingState } = attachSession(true, {
         shareChoice: null,
       });
@@ -962,12 +967,18 @@ describe("audio-reader playback controls", () => {
         expect.objectContaining({ playing: true })
       );
 
-      // Answered once for the session: stopping and starting again just plays.
-      state.audioPlayback.controllerFor(readingState)!.stop();
-      playSpy.mockClear();
+      // Pausing and resuming is the same audio session: no new question.
+      pressPlay();
       pressPlay();
       expect(sharePrompt()).toBeNull();
-      expect(playSpy).toHaveBeenCalled();
+
+      // Stopping ends it, so starting again asks again.
+      state.audioPlayback.controllerFor(readingState)!.stop();
+      expect(publish).toHaveBeenLastCalledWith(null);
+      playSpy.mockClear();
+      pressPlay();
+      expect(sharePrompt()).not.toBeNull();
+      expect(playSpy).not.toHaveBeenCalled();
     });
 
     it("plays only on the host's device when they choose that", () => {
@@ -1124,20 +1135,23 @@ describe("audio-reader playback controls", () => {
       expect(audio.current!.currentTime).toBeCloseTo(30, 0);
     });
 
-    it("keeps a listener's own audio playing when the host stops sharing", () => {
-      const { sharedAudio, readingState, isListeningOnOwn } =
+    it("stops a listener who went off on their own when the host stops the audio session", () => {
+      const { sharedAudio, readingState, isListeningAlong, isListeningOnOwn } =
         attachSession(false);
       reportDuration(120);
       sharedAudio.value = hostCommand(readingState, { position: 5 });
-      const controller = state.audioPlayback.controllerFor(readingState)!;
-      controller.seek(30);
+      state.audioPlayback.controllerFor(readingState)!.seek(30);
+      expect(isListeningOnOwn.value).toBe(true);
 
-      sharedAudio.value = null;
+      // What the session does when the host's stop arrives.
+      batch(() => {
+        sharedAudio.value = null;
+        isListeningAlong.value = false;
+        isListeningOnOwn.value = false;
+      });
 
-      expect(state.audioPlayback.controllerFor(readingState)).toBe(controller);
-      expect(controller.isPlaying.value).toBe(true);
-      // Back with the group for whatever the host plays next.
-      expect(isListeningOnOwn.value).toBe(false);
+      expect(state.audioPlayback.controllerFor(readingState)).toBeNull();
+      expect(audio.current!.paused).toBe(true);
     });
 
     it("doesn't count a co-host's press that went out to everyone as going off on their own", () => {
