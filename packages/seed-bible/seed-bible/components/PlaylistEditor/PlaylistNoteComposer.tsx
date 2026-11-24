@@ -7,6 +7,7 @@ import { parseVerseReference } from "../../managers/BibleDataManager";
 import { PeIcon } from "./editorControls";
 import { escapeHtml } from "./playlistSteps";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
 
 // TipTap is sizeable and never server-rendered; see `TextItemInput`.
 const TipTapEditor = lazy(() =>
@@ -228,9 +229,9 @@ export function PlaylistNoteComposer(props: {
                 }
               }}
             >
-              <input
-                className="sb-pe-input"
-                type="text"
+              <TextInput
+                size="sm"
+                className="sb-pe-insert-picker-input"
                 value={verseText}
                 autoFocus
                 aria-label={t("playlist-editor-embed-verse", {
@@ -239,7 +240,7 @@ export function PlaylistNoteComposer(props: {
                 placeholder={t("playlist-editor-verse-placeholder", {
                   defaultValue: "e.g. John 3:16",
                 })}
-                onInput={(event) => setVerseText(event.currentTarget.value)}
+                onValueInput={setVerseText}
               />
               <Button
                 type="submit"
@@ -265,8 +266,9 @@ export function PlaylistNoteComposer(props: {
                 }
               }}
             >
-              <input
-                className="sb-pe-input"
+              <TextInput
+                size="sm"
+                className="sb-pe-insert-picker-input"
                 type="url"
                 value={linkUrl}
                 autoFocus
@@ -274,7 +276,7 @@ export function PlaylistNoteComposer(props: {
                 placeholder={t("playlist-editor-link-placeholder", {
                   defaultValue: "https://",
                 })}
-                onInput={(event) => setLinkUrl(event.currentTarget.value)}
+                onValueInput={setLinkUrl}
               />
               <Button
                 type="submit"

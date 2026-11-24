@@ -16,6 +16,8 @@ Curious what's coming next? The [Seed Bible roadmap](https://www.helloao.org/see
 
 You can add your own features to Seed Bible with an extension, built in your own project and shared with a link, with no need to change this repository. The [developer guide](./docs/developer-guide.md) starts with a quick start that has one running in a few minutes, and the [extension API reference](./docs/extension-api.md) covers everything an extension can do.
 
+To link to Seed Bible from another site, embed it, or have an AI assistant hand out reading links, see the [integration reference](./docs/integration-reference.md).
+
 ## Developing
 
 Follow the given steps to get started developing the Seed Bible:

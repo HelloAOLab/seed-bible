@@ -243,7 +243,9 @@ describe("SearchSection", () => {
         input().dispatchEvent(new Event("input", { bubbles: true }));
       });
 
-      expect(status()!.textContent).toBe("Searching...");
+      // Announced to screen readers, with the words that say what is happening.
+      const searching = status()!.querySelector('[role="status"]');
+      expect(searching?.textContent).toContain("Searching...");
       expect(searchVerses).not.toHaveBeenCalled();
     });
 

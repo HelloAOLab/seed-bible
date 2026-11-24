@@ -64,6 +64,16 @@ let saveListeningSpan: SaveListeningSpan | null = null;
  */
 let audioPlayback: AudioPlaybackManager | null = null;
 
+/**
+ * True while this tab's own playlist is borrowing the reader. The playlist
+ * changes the chapter; the paused narration has to stay so it can continue
+ * when that playlist gives the tab back. This is the tab's playlist, not
+ * whichever tab happens to be on screen.
+ */
+let playlistHoldsReadingState: (
+  readingState: BibleReadingState
+) => boolean = () => false;
+
 /** The browser's speech synthesiser, for as long as the extension is installed. */
 let textToSpeech: TextToSpeechManager | null = null;
 
@@ -675,14 +685,67 @@ function beginSession(session: ListeningSession): void {
   const { readingState } = session;
   rememberSharedSession(session);
   sessions.set(readingState, session);
-  const hide = audioPlayback?.show(readingState, session.controller);
+  // `let` so the effect can clear it when the playlist hides the controls and
+  // restore a fresh one when it gives the tab back.
+  let hide: (() => void) | undefined = audioPlayback?.show(
+    readingState,
+    session.controller
+  );
 
   // Moving to another step's verses in the same chapter ends it too.
   const chapterKey = () =>
     `${readingState.translationId.value}|${readingState.bookId.value}|${readingState.chapterNumber.value}|${passageKey(stepPassage?.(readingState) ?? null)}`;
   const opened = untracked(chapterKey);
+  // Listening started during the playlist is the user listening to its step,
+  // so the playlist has nothing to hold back: only narration from before it
+  // waits out of sight.
+  const startedDuringPlaylist = untracked(() =>
+    playlistHoldsReadingState(readingState)
+  );
   const stopWatching = effect(() => {
-    if (chapterKey() !== opened) untracked(() => endSession(session));
+    // Call it inside the effect so the session follows this tab's playlist,
+    // including the moment that playlist lets the tab go.
+    const held =
+      !startedDuringPlaylist && playlistHoldsReadingState(readingState);
+    const key = chapterKey();
+
+    if (key === opened) {
+      // Right chapter. For a whole-chapter session, the playlist hides the
+      // controls so they're absent while it runs and come back paused once it
+      // ends — the user never sees them disappear mid-read, and they return
+      // already in the right state without any auto-play.
+      if (session.passage === null) {
+        if (held && hide !== undefined) {
+          untracked(() => {
+            const h = hide!;
+            hide = undefined;
+            h();
+          });
+        } else if (!held && hide === undefined && !session.ended) {
+          untracked(() => {
+            hide = audioPlayback?.show(readingState, session.controller);
+          });
+        }
+      }
+      return;
+    }
+    // A playlist that borrowed this tab keeps a paused whole-chapter
+    // narration across its chapter moves so Listen can continue afterward.
+    // Listening to a playlist step (passage set) still ends when that step's
+    // verses change — `held` alone would block that.
+    if (held && session.passage === null) {
+      // Hide the controls while the playlist has the tab; they come back
+      // paused at the same position once the playlist ends.
+      if (hide !== undefined) {
+        untracked(() => {
+          const h = hide!;
+          hide = undefined;
+          h();
+        });
+      }
+      return;
+    }
+    untracked(() => endSession(session));
   });
 
   session.teardown = () => {
@@ -2034,12 +2097,15 @@ export default function initAudioReaderExtension() {
       };
 
       audioPlayback = context.audioPlayback;
+      playlistHoldsReadingState = (readingState) =>
+        context.playlists.holdsReadingState(readingState);
       const speech = context.textToSpeech;
       textToSpeech = speech;
       // The audio element and the synthesiser outlive the install, but nothing
       // would be left to show or control them, so an uninstall ends every
       // tab's listening outright.
       yield () => {
+        playlistHoldsReadingState = () => false;
         endAllSessions();
         audioPlayback = null;
         textToSpeech = null;
@@ -2171,7 +2237,7 @@ export default function initAudioReaderExtension() {
           if (
             shared &&
             chapter &&
-            !sessions.has(readingState) &&
+            !resumableListening(readingState) &&
             shared.audioShareChoice.peek() === null &&
             isSessionHost(shared.options.peek(), shared.localSessionId.peek())
           ) {
@@ -2197,22 +2263,47 @@ export default function initAudioReaderExtension() {
        */
       function openSharedListening(readingState: BibleReadingState): void {
         const chapter = readingState.chapterData.peek();
-        if (!chapter || sessions.has(readingState)) return;
+        if (!chapter || resumableListening(readingState)) return;
+        const existing = sessions.get(readingState);
+        if (existing) endSession(existing);
         const passage = untracked(() => stepPassage?.(readingState) ?? null);
         const session = startListening(context, readingState, chapter, passage);
         if (session) publishSharedIntent(session, false);
       }
 
       /** The Listen button: pauses or resumes this tab, or starts it. */
-      function toggleListening(readingState: BibleReadingState): void {
-        const passage = untracked(() => stepPassage?.(readingState) ?? null);
+      /**
+       * The tab's listening that Listen would pause or resume, or null when
+       * Listen starts afresh: nothing is open, it's another passage, or a
+       * playlist is holding it. Narration a playlist is holding has no
+       * controls on screen, so resuming it would play with nothing to show
+       * or pause it.
+       */
+      function resumableListening(
+        readingState: BibleReadingState
+      ): ListeningSession | null {
         const existing = sessions.get(readingState);
-        if (existing && passageKey(existing.passage) === passageKey(passage)) {
-          if (existing.isPlaying.peek()) existing.controller.pause();
-          else existing.controller.play();
+        if (!existing) return null;
+        const passage = untracked(() => stepPassage?.(readingState) ?? null);
+        const heldByPlaylist =
+          context.audioPlayback.controllerFor(readingState) !==
+          existing.controller;
+        return !heldByPlaylist &&
+          passageKey(existing.passage) === passageKey(passage)
+          ? existing
+          : null;
+      }
+
+      function toggleListening(readingState: BibleReadingState): void {
+        const resumable = resumableListening(readingState);
+        if (resumable) {
+          if (resumable.isPlaying.peek()) resumable.controller.pause();
+          else resumable.controller.play();
           return;
         }
+        const existing = sessions.get(readingState);
         if (existing) endSession(existing);
+        const passage = untracked(() => stepPassage?.(readingState) ?? null);
 
         const chapter = readingState.chapterData.peek();
         if (!chapter) return;

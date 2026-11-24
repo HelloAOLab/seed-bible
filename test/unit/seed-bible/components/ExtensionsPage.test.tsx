@@ -349,7 +349,7 @@ describe("ExtensionsPage", () => {
       ReturnType<SeedBibleState["extensions"]["discoverExtensionSet"]>
     >);
 
-    act(() => button(".sb-extensions-page-add-link")!.click());
+    act(() => button(".sb-extensions-page-toolbar-actions button")!.click());
     const registration = vi.mocked(state.modals.openModal).mock.calls[0]![0];
     const dialog = document.createElement("div");
     document.body.appendChild(dialog);
@@ -594,6 +594,35 @@ describe("ExtensionsPage", () => {
       expect(
         container.querySelector(".sb-extension-review-controls")
       ).toBeNull();
+    });
+
+    it("names each box in the verification form by its label, with the hints read out with it", async () => {
+      const { reviews } = createReviews({}, { admin: true });
+      const modals = await openVerseArt(reviews);
+      act(() =>
+        buttonNamed(container, "extension-review-mark-verified")!.click()
+      );
+      await renderModal(modals);
+
+      const box = (name: string) =>
+        field<HTMLInputElement | HTMLTextAreaElement>(name);
+      expect(box("verifiedAt").labels?.[0]?.textContent).toContain(
+        "extension-review-modal-verified-at"
+      );
+      expect(box("publicNotes").labels?.[0]?.textContent).toContain(
+        "extension-review-modal-public-notes"
+      );
+      expect(box("internalNotes").tagName).toBe("TEXTAREA");
+      const hint = (name: string) =>
+        document.getElementById(
+          box(name).getAttribute("aria-describedby")!.split(" ")[0]!
+        )?.textContent;
+      expect(hint("publicNotes")).toContain(
+        "extension-review-modal-public-notes-hint"
+      );
+      expect(hint("internalNotes")).toContain(
+        "extension-review-modal-internal-notes-hint"
+      );
     });
 
     it("lets an admin mark an extension verified, with when and their notes", async () => {

@@ -1,3 +1,5 @@
+import { EmptyState } from "../EmptyState/EmptyState";
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "../ScriptureNote/ScriptureNote.css";
 import "./QuestionAnswersSheet.css";
 import "../visuallyHidden.inline.css";
@@ -120,11 +122,11 @@ function QuestionAnswersSheetBody(props: {
         <>
           <div className="sb-scripture-note-body sb-question-answers-list">
             {answers.length === 0 ? (
-              <p className="sb-question-answers-empty">
+              <EmptyState className="sb-question-answers-empty">
                 {t("question-answers-empty", {
                   defaultValue: "No one has answered yet. Be the first.",
                 })}
-              </p>
+              </EmptyState>
             ) : (
               <ul>
                 {answers.map((answer) => {
@@ -205,21 +207,20 @@ function QuestionAnswersSheetBody(props: {
               }
               onInput={(event) => setDraft(event.currentTarget.value)}
             />
-            <button
-              type="submit"
-              className="sb-question-answers-share"
-              disabled={!draft.trim()}
-              aria-label={t("question-answers-share", {
-                defaultValue: "Share with group",
-              })}
-              title={t("question-answers-share", {
-                defaultValue: "Share with group",
-              })}
-            >
-              <MaterialIcon>
-                {isRtl ? "arrow_back" : "arrow_forward"}
-              </MaterialIcon>
-            </button>
+            <TooltipTrigger>
+              <button
+                type="submit"
+                className="sb-question-answers-share"
+                disabled={!draft.trim()}
+                aria-label={t("question-answers-share", {
+                  defaultValue: "Share with group",
+                })}
+              >
+                <MaterialIcon>
+                  {isRtl ? "arrow_back" : "arrow_forward"}
+                </MaterialIcon>
+              </button>
+            </TooltipTrigger>
           </form>
         </>
       ) : null}

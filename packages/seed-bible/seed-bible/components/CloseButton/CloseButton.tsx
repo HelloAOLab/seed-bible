@@ -10,7 +10,8 @@ import { useI18n } from "../../i18n/I18nContext";
 export type CloseButtonSize = IconButtonSize;
 export type CloseButtonLook = IconButtonLook;
 
-type CloseButtonProps = Omit<
+/** What `CloseButton` takes: an `IconButton`'s props, minus the icon. */
+export type CloseButtonProps = Omit<
   IconButtonProps,
   "icon" | "label" | "pressed" | "onClick"
 > & {

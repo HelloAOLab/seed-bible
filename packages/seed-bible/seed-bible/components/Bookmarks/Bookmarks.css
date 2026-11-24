@@ -63,23 +63,6 @@
   gap: 0.625rem;
 }
 
-.sb-bookmark-form-name {
-  width: 100%;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  border-radius: var(--sb-radius-md);
-  background: transparent;
-  color: var(--sb-font-color);
-  font: inherit;
-  font-size: var(--sb-font-size-14);
-  box-sizing: border-box;
-}
-
-.sb-bookmark-form-name:focus {
-  outline: none;
-  border-color: var(--sb-primary-color);
-}
-
 .sb-bookmark-form-colors {
   display: flex;
   flex-wrap: wrap;
@@ -87,21 +70,28 @@
 }
 
 /* The swatch paints itself from `color`, which the component sets to the
- * bookmark color's theme variable. */
+ * bookmark color's theme variable. Gradient + 1px inside outline match the
+ * ribbon glyphs; the 2px background inset leaves room for the selected ring. */
 .sb-bookmark-form-color {
   width: 1.75rem;
   height: 1.75rem;
   padding: 0;
   border: 2px solid transparent;
   border-radius: 50%;
-  background: currentColor;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, currentColor 95%, white),
+    color-mix(in srgb, currentColor 95%, black)
+  );
   background-clip: content-box;
-  box-shadow: inset 0 0 0 2px var(--sb-background);
+  box-shadow:
+    inset 0 0 0 2px var(--sb-background),
+    inset 0 0 0 3px color-mix(in srgb, currentColor 65%, var(--sb-font-color));
   cursor: pointer;
 }
 
 .sb-bookmark-form-color-selected {
-  border-color: currentColor;
+  border-color: color-mix(in srgb, currentColor 65%, var(--sb-font-color));
 }
 
 .sb-bookmark-form-color:focus-visible {
@@ -150,10 +140,10 @@
   margin-inline-end: 0.5rem;
 }
 
-/* The menu is portaled to <body>, so without this it opens under the modal
-   overlay (z-index 1000) it was opened from. */
+/* The menu is portaled to <body>, so without this it opens under the window
+   it was opened from (a dialog or modal sheet, at the modal layer + 1). */
 .sb-context-menu.sb-bookmark-picker-menu {
-  z-index: calc(var(--sb-layer-modal) + 1);
+  z-index: calc(var(--sb-layer-modal) + 2);
 }
 
 .sb-bookmark-picker-hint {
@@ -277,12 +267,9 @@
   gap: 0.25rem;
   margin-bottom: 0.25rem;
 }
-
 .sb-bookmarks-panel-empty {
-  margin: 0;
-  padding: 0.5rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: var(--sb-font-size-13);
+  --sb-empty-state-padding: 0.5rem;
+  --sb-empty-state-font-size: var(--sb-font-size-13);
 }
 
 .sb-bookmarks-panel-row {

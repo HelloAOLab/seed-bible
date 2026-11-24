@@ -34,16 +34,19 @@ export function fillNativeShellPlaceholders(
 ): string {
   const substitutions: Record<string, string> = {
     HTML_LANG: "en",
+    // Left empty so the inline script in `index.html` picks the layout from
+    // the device itself before the first paint; one fixed answer would give
+    // a tablet the phone styles until the app loads.
+    HTML_LAYOUT: "",
     META: "",
     THEME_STYLE_TAG: values.themeStyleText,
     THEME_PRESETS_JSON: escapeForScript(
       JSON.stringify(values.themePresetStyleText)
     ),
-    // Seeds the first render's viewport guess (see `renderedAsMobile` in
-    // `SeedBibleStateManager.tsx`) until the real size is measured. Most
-    // installs are phones.
     CONFIG_JSON: escapeForScript(
       JSON.stringify({
+        // Never used for the layout: with no server markup on the page, the
+        // app measures the real window from the start (`measureViewport`).
         renderedAsMobile: true,
         publicOrigin: values.publicOrigin,
       })

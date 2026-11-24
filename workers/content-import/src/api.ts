@@ -22,12 +22,12 @@ import {
   getJob,
   isActiveImportConflict,
   jobProgress,
-  queuedItemIds,
+  countQueued,
   setJobStatus,
   type JobRow,
 } from "./jobs";
 import type { Env } from "./platform";
-import { enqueue } from "./queue";
+import { startLinks } from "./queue";
 import { getSiteImport, pickSitePages, startSiteImport } from "./siteImports";
 import { deleteCandidates } from "./siteJobs";
 import {
@@ -212,11 +212,7 @@ async function startImport(
     throw error;
   }
   try {
-    await enqueue(
-      env,
-      jobId,
-      items.map((item) => item.itemId)
-    );
+    await startLinks(env, jobId, items.length);
   } catch (error) {
     // Nothing would ever run its links: end it now, so it doesn't hold the
     // library's one import slot.
@@ -315,7 +311,7 @@ async function route(
         }
       );
       if (resumed) {
-        await enqueue(env, job.id, await queuedItemIds(env.DB, job.id));
+        await startLinks(env, job.id, await countQueued(env.DB, job.id));
       }
       return {
         body: await jobProgress(env.DB, (await getJob(env.DB, job.id))!),

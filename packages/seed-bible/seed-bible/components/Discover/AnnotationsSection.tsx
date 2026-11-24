@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./DiscoverPane.css";
 import { effect, useSignal } from "@preact/signals";
 import { lazy, Suspense } from "preact/compat";
@@ -602,7 +603,7 @@ export function AnnotationsSection(props: {
         </p>
       ) : null}
       {groups.length === 0 ? (
-        <div className="sb-discover-empty">
+        <EmptyState className="sb-discover-empty">
           {t("discover-annotations-empty", {
             defaultValue: "You don't have any notes for this chapter.",
           })}{" "}
@@ -615,7 +616,7 @@ export function AnnotationsSection(props: {
               defaultValue: "Create a note",
             })}
           </button>
-        </div>
+        </EmptyState>
       ) : (
         groups.map((group) => {
           const groupKey = `${group.startVerseNumber ?? "chapter"}-${

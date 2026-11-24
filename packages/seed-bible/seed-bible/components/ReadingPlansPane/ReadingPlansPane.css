@@ -16,12 +16,10 @@
   color: var(--sb-font-color);
   font-family: "DM Sans", var(--sb-font-family, sans-serif);
 }
-
 .sb-reading-plans-empty {
-  padding: 24px 8px;
-  font-size: var(--sb-font-size-15);
-  text-align: center;
-  color: var(--rp-muted);
+  --sb-empty-state-padding: 1.5rem 0.5rem;
+  --sb-empty-state-font-size: var(--sb-font-size-15);
+  --sb-empty-state-color: var(--rp-muted);
 }
 
 .sb-reading-plans-scroll {
@@ -41,10 +39,8 @@
    (it's centred across the whole window, see ReadingPlanEditor.css), so leave
    room to scroll the last plan clear of it. On phones the pane already stops
    above it (see PaneLayout.css). */
-@media (min-width: 481px) {
-  .sb-reading-plans-scroll {
-    padding-bottom: var(--sb-reader-bottom-inset, 6rem);
-  }
+:where(html:not([data-sb-app-layout="mobile"])) .sb-reading-plans-scroll {
+  padding-bottom: var(--sb-reader-bottom-inset, 6rem);
 }
 
 /* Today hero */

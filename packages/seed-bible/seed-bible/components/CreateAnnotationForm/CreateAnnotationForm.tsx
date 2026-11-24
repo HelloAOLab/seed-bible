@@ -27,6 +27,7 @@ import {
 import { retryChunkImport } from "./retryChunkImport";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
+import "../TextField/TextField.css";
 
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
 // actually opens the annotation composer. If that fetch fails (e.g. offline
@@ -212,13 +213,13 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
       <Suspense
         fallback={
           <div
-            className="sb-settings-text-input sb-annotation-editor sb-annotation-editor--loading"
+            className="sb-text-input sb-annotation-editor sb-annotation-editor--loading"
             aria-busy="true"
           />
         }
       >
         <EditorComponent
-          className="sb-settings-text-input sb-annotation-editor"
+          className="sb-text-input sb-annotation-editor"
           initialContent={editing.data.html}
           autofocus="end"
           onEditor={(editor) => {

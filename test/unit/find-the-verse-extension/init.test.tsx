@@ -8,8 +8,16 @@ import {
   unregisterExtension,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import { mockTranslate } from "../seed-bible/testUtils/mockI18n";
-import { gameAddress } from "@packages/find-the-verse-extension/ext_FindTheVerse/gamesStore";
+import {
+  gameAddress,
+  PRIVATE_GAME_MARKER,
+  PUBLIC_GAME_MARKER,
+} from "@packages/find-the-verse-extension/ext_FindTheVerse/gamesStore";
 import type { SavedGame } from "@packages/find-the-verse-extension/ext_FindTheVerse/types";
+import {
+  createNavigationManager,
+  type NavigationManager,
+} from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../seed-bible/testUtils/mockI18n");
@@ -20,6 +28,7 @@ const { default: initFindTheVerse } =
   await import("@packages/find-the-verse-extension/ext_FindTheVerse/init");
 
 const PANE_ID = "find-the-verse-pane";
+const CREATOR_ID = "creator-1";
 
 interface SelectedVerse {
   bookId: string;
@@ -143,7 +152,12 @@ function savedGame(
     },
     steps: [{ hint }],
     createdAtMs: 1,
+    shared: false,
   };
+}
+
+function markerOf(game: SavedGame): string {
+  return game.shared ? PUBLIC_GAME_MARKER : PRIVATE_GAME_MARKER;
 }
 
 function buttonsNamed(root: ParentNode, name: string): HTMLButtonElement[] {
@@ -176,9 +190,20 @@ describe("Find the Verse", () => {
   let newTabReading: () => Reading;
   let recordData: ReturnType<typeof vi.fn>;
   let preferredTranslation: string;
+  let toasts: string[];
+  let startUrl: string;
+  let navigation: NavigationManager | null;
+  let readCreatorGame: ReturnType<
+    typeof vi.fn<(address: string) => Promise<unknown>>
+  >;
+  let creatorProfile: ReturnType<
+    typeof vi.fn<(userId: string) => Promise<{ name: string } | null>>
+  >;
 
   function install(games: SavedGame[] = [], active: Reading = reading) {
     recordData = vi.fn(async () => ({ success: true }));
+    toasts = [];
+    navigation = createNavigationManager({ initialHref: startUrl });
     tabs = signal<Tab[]>([
       { id: "tab-1", readingState: active, sharedSession: null },
     ]);
@@ -189,20 +214,28 @@ describe("Find the Verse", () => {
     );
     const state = {
       i18n: { t: mockTranslate },
-      login: { userId: signal(games.length > 0 ? "user-1" : null) },
+      login: {
+        userId: signal(games.length > 0 ? "user-1" : null),
+        getPublicProfile: creatorProfile,
+      },
+      navigation,
       os: {
-        listDataByMarker: vi.fn(async () => ({
-          success: true,
-          items: games.map((game) => ({
-            address: gameAddress(game.id),
-            data: game,
-          })),
-          totalCount: games.length,
-        })),
-        getData: vi.fn(async (_record: string, address: string) => {
+        listDataByMarker: vi.fn(async (_record: string, marker: string) => {
+          const listed = games.filter((game) => markerOf(game) === marker);
+          return {
+            success: true,
+            items: listed.map((game) => ({
+              address: gameAddress(game.id),
+              data: game,
+            })),
+            totalCount: listed.length,
+          };
+        }),
+        getData: vi.fn(async (record: string, address: string) => {
+          if (record === CREATOR_ID) return readCreatorGame(address);
           const game = games.find((g) => gameAddress(g.id) === address);
           return game
-            ? { success: true, data: game }
+            ? { success: true, data: game, markers: [markerOf(game)] }
             : { success: false, errorCode: "data_not_found" };
         }),
         recordData,
@@ -222,6 +255,9 @@ describe("Find the Verse", () => {
         selectedTab,
         selectTab: (id: string) => {
           selectedTabId.value = id;
+        },
+        toast: (message: string) => {
+          toasts.push(message);
         },
       },
       tabs: {
@@ -300,6 +336,8 @@ describe("Find the Verse", () => {
   async function openPane() {
     await act(async () => {
       toolbar?.onSelect?.();
+      // The list loads private and shared games one after the other.
+      for (let i = 0; i < 8; i += 1) await Promise.resolve();
     });
     await showPane();
   }
@@ -339,13 +377,23 @@ describe("Find the Verse", () => {
     reading = createReading();
     newTabReading = () => createReading();
     preferredTranslation = "WEB";
+    startUrl = "https://seedbible.test/";
+    navigation = null;
+    readCreatorGame = vi.fn(async () => ({
+      success: false,
+      errorCode: "data_not_found",
+    }));
+    creatorProfile = vi.fn(async () => ({ name: "Ana" }));
   });
 
   afterEach(() => {
     unregisterExtension("find-the-verse-extension");
     render(null, container);
     container.remove();
+    navigation?.dispose();
+    document.getElementById("app-config")?.remove();
     vi.restoreAllMocks();
+    delete (navigator as { clipboard?: unknown }).clipboard;
   });
 
   it("reopens the panel when Set as target cannot use the verse", async () => {
@@ -666,6 +714,19 @@ describe("Find the Verse", () => {
     );
   }
 
+  it("names the game name and verse reference boxes, the first by its label", async () => {
+    await openEditor(playableGame());
+
+    const name = container.querySelector<HTMLInputElement>(
+      'input[aria-required="true"]'
+    );
+    expect(name?.labels?.[0]?.textContent).toContain("Game name");
+    const reference = container.querySelector<HTMLInputElement>(
+      'input[placeholder="e.g. John 1:1"]'
+    );
+    expect(reference?.getAttribute("aria-label")).toBe("Secret verse");
+  });
+
   it("saves a game with blank chances once 3 hints are filled in", async () => {
     await openEditor(playableGame());
     await act(async () => {
@@ -706,12 +767,9 @@ describe("Find the Verse", () => {
     expect(recordData).not.toHaveBeenCalled();
     expect(tabs.value).toHaveLength(1);
     const hints = [...container.querySelectorAll("textarea")];
-    expect(hints.map((hint) => hint.getAttribute("aria-invalid"))).toEqual([
-      "false",
-      "true",
-      "false",
-      "true",
-    ]);
+    expect(
+      hints.map((hint) => hint.getAttribute("aria-invalid") === "true")
+    ).toEqual([false, true, false, true]);
 
     await typeHint(3, "delta hint");
     expect(formErrors()).toEqual([]);
@@ -990,6 +1048,35 @@ describe("Find the Verse", () => {
     );
   });
 
+  it("keeps reading when Escape is pressed over the win", async () => {
+    await installAndPlay([
+      savedGame("one", "JHN", "In the beginning was the Word", "a hint"),
+    ]);
+    await closePane();
+    const round = roundTab().readingState;
+
+    await tap(
+      round,
+      selectedVerse("JHN", 1, 1, "In the beginning was the Word")
+    );
+    await act(async () => {
+      await vi.dynamicImportSettled();
+    });
+    await vi.waitFor(() => {
+      expect(document.body.querySelector(".ftv-celebration")).not.toBeNull();
+    });
+
+    await act(async () => {
+      document.activeElement!.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    expect(document.body.querySelector(".ftv-celebration")).toBeNull();
+    expect(tabs.value.length).toBeGreaterThan(1);
+    expect(bar()?.textContent).toContain("You found it!");
+  });
+
   it("celebrates a win over the reader with the panel closed, and marks the verse", async () => {
     await installAndPlay([
       savedGame("one", "JHN", "In the beginning was the Word", "a hint"),
@@ -1017,6 +1104,9 @@ describe("Find the Verse", () => {
     );
     expect(found).toMatchObject({ bookId: "JHN", chapterNumber: 1, verses: 1 });
     expect(found?.options.localOnly).toBe(true);
+    expect(celebration?.getAttribute("role")).toBe("dialog");
+    expect(celebration?.getAttribute("aria-label")).toBe("You found it!");
+    expect(document.activeElement?.textContent).toBe("Back to games");
 
     await act(async () => {
       clickButton(celebration!, "Keep reading");
@@ -1029,5 +1119,424 @@ describe("Find the Verse", () => {
     });
     expect(tabs.value).toHaveLength(1);
     expect(round.decorations.value).toEqual([]);
+  });
+  function sharingGame(id: string, name: string, shared: boolean): SavedGame {
+    return { ...savedGame(id, "JHN", "Verse 1 text", "hint"), name, shared };
+  }
+
+  function cardNamed(name: string): HTMLElement {
+    const card = [...container.querySelectorAll(".ftv-saved-card")].find(
+      (element) => element.textContent?.includes(name)
+    );
+    if (!(card instanceof HTMLElement)) throw new Error(`No card ${name}`);
+    return card;
+  }
+
+  async function openMenuOf(card: HTMLElement) {
+    const menu = card.querySelector(".sb-context-menu-button");
+    if (!(menu instanceof HTMLButtonElement)) throw new Error("No game menu");
+    await act(async () => {
+      menu.click();
+    });
+  }
+
+  /** Menu items render their icon's ligature name before their label. */
+  function menuItem(label: string): HTMLButtonElement | undefined {
+    return [...document.body.querySelectorAll("button")].find((button) =>
+      button.textContent?.endsWith(label)
+    );
+  }
+
+  async function clickMenuItem(label: string) {
+    const item = menuItem(label);
+    if (!item) throw new Error(`No menu item ${label}`);
+    await act(async () => {
+      item.click();
+      for (let i = 0; i < 8; i += 1) await Promise.resolve();
+    });
+  }
+
+  function stubClipboard(): ReturnType<typeof vi.fn> {
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    return writeText;
+  }
+
+  it("marks a shared game's card, and offers Copy link and Stop sharing", async () => {
+    await act(async () => {
+      install([
+        sharingGame("shared", "Shared study", true),
+        sharingGame("private", "Private study", false),
+      ]);
+      await Promise.resolve();
+    });
+    await openPane();
+
+    expect(
+      cardNamed("Shared study").querySelector(".ftv-shared-label")?.textContent
+    ).toBe("Shared");
+    expect(
+      cardNamed("Private study").querySelector(".ftv-shared-label")
+    ).toBeNull();
+
+    await openMenuOf(cardNamed("Shared study"));
+    expect(menuItem("Copy link")).toBeDefined();
+    expect(menuItem("Stop sharing")).toBeDefined();
+    expect(menuItem("Share")).toBeUndefined();
+  });
+
+  it("shares a game, copies its link, and marks its card", async () => {
+    startUrl = "https://seedbible.test/en/BSB/JHN/3?panel=notes";
+    const writeText = stubClipboard();
+    await act(async () => {
+      install([sharingGame("g", "Youth group", false)]);
+      await Promise.resolve();
+    });
+    await openPane();
+
+    await openMenuOf(cardNamed("Youth group"));
+    await clickMenuItem("Share");
+
+    const link = new URL(writeText.mock.calls[0]?.[0] as string);
+    expect(link.pathname).toBe("/");
+    expect(link.searchParams.get("panel")).toBeNull();
+    expect(link.searchParams.get("findTheVerseCreator")).toBe("user-1");
+    expect(link.searchParams.get("findTheVerseGame")).toBe("g");
+    expect(link.searchParams.get("autoinstall-find-the-verse-extension")).toBe(
+      "true"
+    );
+    expect(recordData.mock.calls.at(-1)?.[3]).toEqual({
+      marker: PUBLIC_GAME_MARKER,
+    });
+    expect(toasts).toEqual(["Link copied"]);
+    expect(
+      cardNamed("Youth group").querySelector(".ftv-shared-label")
+    ).not.toBeNull();
+  });
+
+  it.each([
+    [
+      "the browser refuses the copy",
+      () => {
+        stubClipboard().mockRejectedValue(new Error("NotAllowedError"));
+      },
+    ],
+    ["the page has no clipboard (plain http)", () => undefined],
+  ])(
+    "shares a game but says the link wasn't copied when %s",
+    async (_, setUpClipboard) => {
+      setUpClipboard();
+      await act(async () => {
+        install([sharingGame("g", "Youth group", false)]);
+        await Promise.resolve();
+      });
+      await openPane();
+
+      await openMenuOf(cardNamed("Youth group"));
+      await clickMenuItem("Share");
+
+      expect(recordData.mock.calls.at(-1)?.[3]).toEqual({
+        marker: PUBLIC_GAME_MARKER,
+      });
+      expect(
+        cardNamed("Youth group").querySelector(".ftv-shared-label")
+      ).not.toBeNull();
+      expect(toasts).toEqual(["Couldn't copy the link"]);
+    }
+  );
+
+  it("shares a link to the public site from the native apps", async () => {
+    startUrl = "capacitor://localhost/";
+    const appConfig = document.createElement("script");
+    appConfig.type = "application/json";
+    appConfig.id = "app-config";
+    appConfig.textContent = JSON.stringify({
+      publicOrigin: "https://seedbible.org",
+    });
+    document.head.appendChild(appConfig);
+    const writeText = stubClipboard();
+    await act(async () => {
+      install([sharingGame("g", "Youth group", false)]);
+      await Promise.resolve();
+    });
+    await openPane();
+
+    await openMenuOf(cardNamed("Youth group"));
+    await clickMenuItem("Share");
+
+    const link = new URL(writeText.mock.calls[0]?.[0] as string);
+    expect(link.origin).toBe("https://seedbible.org");
+    expect(link.searchParams.get("findTheVerseGame")).toBe("g");
+  });
+
+  it("leaves a game unshared and shows why when sharing fails", async () => {
+    stubClipboard();
+    await act(async () => {
+      install([sharingGame("g", "Youth group", false)]);
+      await Promise.resolve();
+    });
+    await openPane();
+    recordData.mockResolvedValueOnce({
+      success: false,
+      errorCode: "server_error",
+    });
+
+    await openMenuOf(cardNamed("Youth group"));
+    await clickMenuItem("Share");
+
+    expect(toasts).toEqual([]);
+    expect(container.textContent).toContain(
+      "Couldn't change sharing for that game. Try again."
+    );
+    expect(
+      cardNamed("Youth group").querySelector(".ftv-shared-label")
+    ).toBeNull();
+  });
+
+  it("copies a shared game's link again", async () => {
+    const writeText = stubClipboard();
+    await act(async () => {
+      install([sharingGame("g", "Youth group", true)]);
+      await Promise.resolve();
+    });
+    await openPane();
+
+    await openMenuOf(cardNamed("Youth group"));
+    await clickMenuItem("Copy link");
+
+    expect(
+      new URL(writeText.mock.calls[0]?.[0] as string).searchParams.get(
+        "findTheVerseGame"
+      )
+    ).toBe("g");
+    expect(recordData).not.toHaveBeenCalled();
+    expect(toasts).toEqual(["Link copied"]);
+  });
+
+  it("stops sharing a game and takes the mark off its card", async () => {
+    await act(async () => {
+      install([sharingGame("g", "Youth group", true)]);
+      await Promise.resolve();
+    });
+    await openPane();
+
+    await openMenuOf(cardNamed("Youth group"));
+    await clickMenuItem("Stop sharing");
+
+    expect(recordData.mock.calls.at(-1)?.[3]).toEqual({
+      marker: PRIVATE_GAME_MARKER,
+    });
+    expect(
+      cardNamed("Youth group").querySelector(".ftv-shared-label")
+    ).toBeNull();
+  });
+
+  it("keeps a game shared and shows why when Stop sharing fails", async () => {
+    await act(async () => {
+      install([sharingGame("g", "Youth group", true)]);
+      await Promise.resolve();
+    });
+    await openPane();
+    recordData.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+
+    await openMenuOf(cardNamed("Youth group"));
+    await clickMenuItem("Stop sharing");
+
+    expect(container.textContent).toContain(
+      "Couldn't change sharing for that game. Try again."
+    );
+    expect(container.textContent).not.toContain("Couldn't save that game");
+    expect(
+      cardNamed("Youth group").querySelector(".ftv-shared-label")
+    ).not.toBeNull();
+  });
+
+  function shareLink(gameId: string): string {
+    const url = new URL("https://seedbible.test/");
+    url.searchParams.set("findTheVerseCreator", CREATOR_ID);
+    url.searchParams.set("findTheVerseGame", gameId);
+    url.searchParams.set("autoinstall-find-the-verse-extension", "true");
+    return url.toString();
+  }
+
+  function creatorsGame(): SavedGame {
+    return {
+      ...savedGame("g", "JHN", "In the beginning was the Word", "alpha hint"),
+      shared: true,
+    };
+  }
+
+  function creatorStores(game: SavedGame) {
+    readCreatorGame.mockImplementation(async (address: string) =>
+      address === gameAddress(game.id)
+        ? { success: true, data: game, markers: [markerOf(game)] }
+        : { success: false, errorCode: "data_not_found" }
+    );
+  }
+
+  async function flush() {
+    for (let i = 0; i < 12; i += 1) await Promise.resolve();
+  }
+
+  async function openLink(gameId: string, ownGames: SavedGame[] = []) {
+    startUrl = shareLink(gameId);
+    await act(async () => {
+      install(ownGames);
+      await flush();
+    });
+    await showPane();
+  }
+
+  function sharedSection(): HTMLElement {
+    const section = [...container.querySelectorAll(".ftv-saved")].find(
+      (element) =>
+        element.querySelector(".ftv-saved-heading")?.textContent ===
+        "Shared with you"
+    );
+    if (!(section instanceof HTMLElement)) throw new Error("No shared game");
+    return section;
+  }
+
+  function ownCardsText(): string {
+    const shared = sharedSection();
+    return [...container.querySelectorAll(".ftv-saved-card")]
+      .filter((card) => !shared.contains(card))
+      .map((card) => card.textContent)
+      .join(" | ");
+  }
+
+  it("opens the panel from a share link and shows the game, without its reference", async () => {
+    let answer: (response: unknown) => void = () => undefined;
+    readCreatorGame.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          answer = resolve;
+        })
+    );
+    await openLink("g");
+
+    expect(panes.value.some((pane) => pane.id === PANE_ID)).toBe(true);
+    expect(sharedSection().textContent).toContain("Loading the game…");
+
+    const game = creatorsGame();
+    await act(async () => {
+      answer({ success: true, data: game, markers: [PUBLIC_GAME_MARKER] });
+      await flush();
+    });
+    await showPane();
+
+    const section = sharedSection();
+    expect(section.textContent).toContain("Youth group");
+    expect(section.textContent).toContain("By Ana · 1 chance");
+    expect(buttonsNamed(section, "Play")).toHaveLength(1);
+    expect(section.textContent).not.toContain("In the beginning was the Word");
+    expect(section.textContent).not.toContain("John");
+    expect(section.textContent).not.toContain("Show reference");
+    expect(section.querySelector(".sb-context-menu-button")).toBeNull();
+  });
+
+  it.each([
+    ["signed out", [] as SavedGame[]],
+    [
+      "signed in",
+      [
+        {
+          ...savedGame("mine", "GEN", "In the beginning God", "a hint"),
+          name: "My study",
+        },
+      ],
+    ],
+  ])(
+    "plays a shared game %s and keeps it out of the visitor's games",
+    async (_, ownGames) => {
+      creatorStores(creatorsGame());
+      await openLink("g", ownGames);
+
+      await act(async () => {
+        clickButton(sharedSection(), "Play");
+      });
+      expect(tabs.value).toHaveLength(2);
+      expect(document.body.textContent).toContain("1 / 1 left");
+
+      await act(async () => {
+        clickButton(document.body, "End game");
+        await flush();
+      });
+      await showPane();
+
+      expect(recordData).not.toHaveBeenCalled();
+      expect(ownCardsText()).not.toContain("Youth group");
+      for (const own of ownGames) expect(ownCardsText()).toContain(own.name);
+    }
+  );
+
+  it.each([
+    [
+      "no longer shared",
+      {
+        success: true,
+        data: { ...creatorsGame(), shared: false },
+        markers: [PRIVATE_GAME_MARKER],
+      },
+      "This game isn't shared any more.",
+    ],
+    [
+      "deleted",
+      { success: false, errorCode: "data_not_found" },
+      "This game isn't shared any more.",
+    ],
+    [
+      "blocked by the creator's privacy settings",
+      {
+        success: false,
+        errorCode: "not_authorized",
+        reason: {
+          type: "disabled_privacy_feature",
+          privacyFeature: "publishData",
+        },
+      },
+      "This game can't be opened because of account privacy settings.",
+    ],
+    [
+      "unreachable",
+      { success: false, errorCode: "server_error" },
+      "Couldn't load this game. Try again later.",
+    ],
+  ])(
+    "says why a shared game can't be played when it is %s",
+    async (_, response, message) => {
+      readCreatorGame.mockResolvedValue(response);
+      await openLink("g");
+
+      expect(sharedSection().textContent).toContain(message);
+      expect(buttonsNamed(sharedSection(), "Play")).toEqual([]);
+    }
+  );
+
+  it("still offers a shared game when its creator's name can't load", async () => {
+    creatorStores(creatorsGame());
+    creatorProfile.mockRejectedValue(new Error("offline"));
+    await openLink("g");
+
+    const section = sharedSection();
+    expect(section.textContent).toContain("Youth group");
+    expect(section.textContent).toContain("1 chance");
+    expect(section.textContent).not.toContain("By ");
+    expect(buttonsNamed(section, "Play")).toHaveLength(1);
+  });
+
+  it("does not open the panel or look for a shared game without a share link", async () => {
+    await act(async () => {
+      install();
+      await flush();
+    });
+    expect(panes.value).toEqual([]);
+
+    await openPane();
+    expect(container.textContent).not.toContain("Shared with you");
+    expect(readCreatorGame).not.toHaveBeenCalled();
   });
 });

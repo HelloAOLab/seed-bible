@@ -12,6 +12,7 @@ import { ExtensionSettingsForm } from "../ExtensionSettingsForm/ExtensionSetting
 import { SensitiveSettingsForm } from "../ExtensionSettingsForm/SensitiveSettingsForm";
 import type { ExtensionInstallState } from "./ExtensionInfoPage";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
 
 export function getExtensionInstallState(
   installed: boolean,
@@ -72,15 +73,15 @@ export function AddExtensionFromLink(props: {
         {t("extension-add-link-url-label")}
       </label>
       <div className="sb-extension-add-link-row">
-        <input
+        <TextInput
           id="sb-extension-add-link-url"
-          className="sb-settings-text-input"
+          className="sb-extension-add-link-input"
           type="url"
           inputMode="url"
           placeholder="https://"
-          ref={inputRef}
+          inputRef={inputRef}
           value={url.value}
-          onInput={(e) => (url.value = e.currentTarget.value)}
+          onValueInput={(next) => (url.value = next)}
         />
         <Button
           type="submit"

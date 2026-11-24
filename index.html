@@ -1,11 +1,36 @@
 <!doctype html>
-<html lang="<!-- HTML_LANG -->">
+<html lang="<!-- HTML_LANG -->" data-sb-app-layout="<!-- HTML_LAYOUT -->">
   <head>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
     />
+    <script>
+      // Fills in `data-sb-app-layout` (see app/layoutAttribute.ts) when the
+      // server didn't: the native apps' page, a branch preview rendered by an
+      // older build, or the unrendered page served when rendering fails. The
+      // styles treat anything but "mobile" as desktop, so without this a phone
+      // would paint with desktop styles until the app's script loads. Same
+      // rule as `isMobileViewport` in app/viewport.ts: a narrow window, or a
+      // phone (a finger pointer and a screen whose short side is 480 or less).
+      // Runs after the viewport tag so the width is the device's.
+      (function (root, win) {
+        var layout = root.getAttribute("data-sb-app-layout");
+        if (layout === "mobile" || layout === "desktop") {
+          return;
+        }
+        var screen = win.screen;
+        var shortSide = screen ? Math.min(screen.width, screen.height) : 0;
+        var coarse =
+          typeof win.matchMedia === "function" &&
+          win.matchMedia("(pointer: coarse)").matches;
+        var mobile =
+          win.innerWidth <= 480 ||
+          (coarse && shortSide > 0 && shortSide <= 480);
+        root.setAttribute("data-sb-app-layout", mobile ? "mobile" : "desktop");
+      })(document.documentElement, window);
+    </script>
     <meta name="referrer" content="origin" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta

@@ -34,13 +34,19 @@ import {
 } from "../components/SharedPageModal/SharedPageModal";
 import { PlaylistPagePane } from "../components/PlaylistPagePane/PlaylistPagePane";
 import { PlaylistFinishedPane } from "../components/PlaylistFinishedPane/PlaylistFinishedPane";
-import { openDeletePlaylistConfirm } from "../components/Discover/PlaylistRow";
+import {
+  openDeletePlaylistConfirm,
+  openPlaylistShareModal,
+} from "../components/Discover/PlaylistRow";
 import {
   buildSharedPagePath,
   parseSharedPagePath,
   type SharedPageKind,
 } from "../managers/SharedPagePath";
-import type { PlaylistPageSeed } from "../managers/PlaylistManager";
+import type {
+  FinishedPlaylist,
+  PlaylistPageSeed,
+} from "../managers/PlaylistManager";
 import {
   averageSessionMinutes,
   type ReadingPlanPageSeed,
@@ -107,7 +113,6 @@ import {
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
 import {
   createBibleToolsManager,
-  openShareModal,
   openReadingPlansPane,
   READING_PLANS_PANE_ID,
 } from "../managers/BibleToolsManager";
@@ -240,6 +245,13 @@ import {
 } from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
 import { type AppConfig } from "../app/appConfig";
+import { LAYOUT_ATTRIBUTE, layoutAttribute } from "../app/layoutAttribute";
+import {
+  isMobileViewport,
+  MOBILE_BREAKPOINT,
+  readViewport,
+  type ViewportMeasurement,
+} from "../app/viewport";
 import {
   createI18nManager,
   getBrandedAppText,
@@ -276,14 +288,7 @@ import {
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
 
-/**
- * App-wide mobile breakpoint, in pixels. Viewports at or below this width use
- * the mobile layout (drawer sidebar, mobile header, full-screen selector);
- * above it the docked desktop layout applies. This is the single source of
- * truth for the JS side — the matching `@media (max-width: 480px)` /
- * `(min-width: 481px)` rules in components/Tabs/Tabs.css must be kept in sync by hand.
- */
-export const MOBILE_BREAKPOINT = 480;
+export { MOBILE_BREAKPOINT };
 
 /** Widest viewport (CSS px) the playlist editor uses its phone layout on. */
 export const PLAYLIST_EDITOR_COMPACT_BREAKPOINT = 768;
@@ -293,7 +298,7 @@ export const PLAYLIST_EDITOR_COMPACT_BREAKPOINT = 768;
  * {@link MOBILE_BREAKPOINT} but at or below this width the screen is too narrow
  * to dock a 320px sidebar beside the reader, so an *expanded* sidebar floats
  * over the reader instead of splitting the layout row. Kept in sync with the
- * matching `@media (min-width: 481px) and (max-width: 768px)` rules in
+ * matching `@media (max-width: 768px)` desktop-layout rule in
  * components/Tabs/Tabs.css by hand.
  */
 export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
@@ -389,7 +394,11 @@ export interface AppState {
    */
   hydrateFromStorage: () => void;
 
-  /** True when viewport width is at or below the mobile breakpoint (480px). */
+  /**
+   * Whether the app uses its mobile layout: the window is at or below the
+   * mobile breakpoint (480px), or the device is a phone, held either way (see
+   * `isMobileViewport` in `app/viewport.ts`).
+   */
   isMobile: ReadonlySignal<boolean>;
   /**
    * Compact partner-site embed (`?embed=minimal` or `?embed=true`). The
@@ -409,12 +418,16 @@ export interface AppState {
    * narrow for the side pane beside a step.
    */
   isCompactPlaylistEditor: ReadonlySignal<boolean>;
-  /** True when on a phone-sized viewport held in landscape orientation. */
+  /**
+   * True for a short, wide window: up to 600px tall and wider than it is
+   * tall. That's a phone held sideways, but also a short desktop window, so
+   * for a sideways phone specifically check `isMobile` too.
+   */
   isMobileLandscape: ReadonlySignal<boolean>;
   /**
    * True in the "compact desktop" band (just above the mobile breakpoint) where
    * an expanded sidebar floats over the reader as an overlay rather than
-   * docking beside it.
+   * docking beside it. Desktop layout only: never true alongside `isMobile`.
    */
   isCompactDesktop: ReadonlySignal<boolean>;
 
@@ -867,6 +880,14 @@ export interface CreateSeedBibleStateOptions {
 
   /** Same as `initialPlaylistPageSeed`, for an `?addFriend=` link's profile. */
   initialFriendLinkSeed?: FriendLinkSeed;
+
+  /**
+   * Start from the real window instead of `config.renderedAsMobile`. Only for
+   * a page with no server markup on screen for the first render to match
+   * (see `hasServerRenderedContent` in `app/hydrationGate.ts`): the native
+   * apps, and a page whose server render was empty or failed.
+   */
+  measureViewport?: boolean;
 }
 
 /** Where a shared session started from this reading surface should open. */
@@ -1047,23 +1068,53 @@ export function createSeedBibleState(
     saves,
     navigation,
     login,
-    i18n
+    i18n,
+    modals
   );
   const tools = createBibleToolsManager(branding);
   const readingHistory = createReadingHistoryManager(os, login);
 
   const renderedAsMobile = options.config?.renderedAsMobile ?? false;
 
-  // Seeded from the SAME `renderedAsMobile` guess the server made — never
-  // `window.innerWidth`/`.innerHeight` here — so the client's first
-  // render/hydrate pass produces the identical viewport-derived layout the
-  // server rendered, regardless of the device's actual screen size.
-  // `applyViewport` (below, exposed on `AppState`) corrects this to the real
-  // dimensions once, from a post-mount effect in `MainBody` — see
-  // `app/main.tsx`.
-  const viewportWidth = signal(renderedAsMobile ? MOBILE_BREAKPOINT : 1000);
-  const viewportHeight = signal(renderedAsMobile ? 800 : 1000);
-  const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
+  // Seeded from the SAME `renderedAsMobile` guess the server made — never the
+  // real window here — so the client's first render/hydrate pass produces the
+  // identical viewport-derived layout the server rendered, regardless of the
+  // device's actual screen size. `applyViewport` (below, exposed on
+  // `AppState`) corrects this to the real window once, from a post-mount
+  // effect in `MainBody` — see `app/main.tsx`. With no server markup to match
+  // (`measureViewport`), the real window is used from the start instead.
+  const initialViewport: ViewportMeasurement =
+    options.measureViewport && typeof window !== "undefined"
+      ? readViewport()
+      : {
+          width: renderedAsMobile ? MOBILE_BREAKPOINT : 1000,
+          height: renderedAsMobile ? 800 : 1000,
+          // Unknown until measured; the width alone carries the guess.
+          coarsePointer: false,
+          screenShortSide: 0,
+        };
+  const viewportWidth = signal(initialViewport.width);
+  const viewportHeight = signal(initialViewport.height);
+  const coarsePointer = signal(initialViewport.coarsePointer);
+  const screenShortSide = signal(initialViewport.screenShortSide);
+  const isMobile = computed(() =>
+    isMobileViewport({
+      width: viewportWidth.value,
+      coarsePointer: coarsePointer.value,
+      screenShortSide: screenShortSide.value,
+    })
+  );
+  // Hydration never touches `<html>`, so this is what keeps the stylesheet's
+  // layout in step once the real viewport is measured.
+  const disposeLayoutAttribute = effect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+    document.documentElement.setAttribute(
+      LAYOUT_ATTRIBUTE,
+      layoutAttribute(isMobile.value)
+    );
+  });
 
   const annotationRecordKey =
     navigation.currentUrl.value.searchParams.get("annotationRecordKey") ??
@@ -1133,7 +1184,7 @@ export function createSeedBibleState(
     if (targetIds === null && !hasEnteredCustomizationExtensionMode) {
       return;
     }
-    const key = targetIds === null ? " default" : [...targetIds].sort().join("");
+    const key = targetIds === null ? "default" : [...targetIds].sort().join("");
     if (key === previousExtensionTargetKey) {
       return;
     }
@@ -1514,6 +1565,7 @@ export function createSeedBibleState(
     readingExtensions,
     discover,
     chats,
+    audioPlayback,
     options.initialPlaylistPageSeed,
     {
       friendReads,
@@ -1724,18 +1776,24 @@ export function createSeedBibleState(
   );
 
   /**
-   * Re-reads the real `window.innerWidth`/`.innerHeight` and applies them.
-   * Shared by the resize listener below and a one-time post-mount correction
-   * (`MainBody` in `app/main.tsx`) — one place reads `window.inner*` into
-   * these signals. No-op on the server.
+   * Re-reads the real window and applies it. Shared by the listeners below
+   * and a one-time post-mount correction (`MainBody` in `app/main.tsx`) — one
+   * place reads the window into these signals. No-op on the server.
    */
   const applyViewport = () => {
     if (typeof window === "undefined") {
       return;
     }
+    const viewport = readViewport();
+    // All at once: a phone turned sideways is only still a phone once its
+    // pointer and screen are read along with the new width. In between it
+    // would read as desktop, long enough for the effects below to close the
+    // tabs drawer and collapse the sidebar.
     batch(() => {
-      viewportWidth.value = window.innerWidth;
-      viewportHeight.value = window.innerHeight;
+      viewportWidth.value = viewport.width;
+      viewportHeight.value = viewport.height;
+      coarsePointer.value = viewport.coarsePointer;
+      screenShortSide.value = viewport.screenShortSide;
     });
   };
 
@@ -1744,8 +1802,16 @@ export function createSeedBibleState(
       return;
     }
     window.addEventListener("resize", applyViewport);
+    // The main pointer can change without a resize, e.g. a tablet docked to
+    // a keyboard.
+    const pointerQuery =
+      typeof window.matchMedia === "function"
+        ? window.matchMedia("(pointer: coarse)")
+        : null;
+    pointerQuery?.addEventListener("change", applyViewport);
     return () => {
       window.removeEventListener("resize", applyViewport);
+      pointerQuery?.removeEventListener("change", applyViewport);
     };
   });
 
@@ -1772,9 +1838,11 @@ export function createSeedBibleState(
   // expanded sidebar would overlay the reader rather than dock beside it
   // (see components/Tabs/Tabs.css), so start collapsed to a rail when entering the band.
   // Same once-per-transition pattern as the landscape collapse above, so the
-  // user can still expand the floating sidebar afterwards.
+  // user can still expand the floating sidebar afterwards. A phone turned
+  // sideways is often this wide, but it has the mobile layout, not this one.
   const isCompactDesktop = computed(
     () =>
+      !isMobile.value &&
       viewportWidth.value > MOBILE_BREAKPOINT &&
       viewportWidth.value <= SIDEBAR_OVERLAY_MAX_WIDTH
   );
@@ -3806,6 +3874,7 @@ export function createSeedBibleState(
       login,
       gallery,
       toast,
+      app: state.app,
     });
     showReadingPlanDetailView();
   });
@@ -3947,6 +4016,7 @@ export function createSeedBibleState(
       }
       i18n.dispose();
       disposeReadingTicker();
+      disposeLayoutAttribute();
     },
     app: {
       createSharedSession: handleCreateSharedSession,
@@ -4213,6 +4283,7 @@ export function createSeedBibleState(
       login,
       gallery,
       toast,
+      app: state.app,
       onBack: () => {
         panes.closePane(READING_PLANS_PANE_ID);
         reopen();
@@ -4658,20 +4729,8 @@ export function createSeedBibleState(
     );
   };
 
-  const sharePlaylist = (
-    playlist: Parameters<typeof playlists.getPlaylistUrl>[0]
-  ) =>
-    openShareModal(
-      {
-        modals,
-        app: state.app,
-        toast: state.app.toast,
-        sharedSession: selectedTab.peek()?.sharedSession ?? null,
-        embedThemes: state.theme.themes,
-        customizationLocator: state.customizations.activeCustomizationLocator,
-      },
-      new URL(playlists.getPlaylistUrl(playlist))
-    );
+  const sharePlaylist = (playlist: FinishedPlaylist) =>
+    openPlaylistShareModal({ playlist, playlists, modals, app: state.app });
 
   const renderPlaylistFinishedPane = () => {
     const playlist = playlists.finishedPlaylist.value;

@@ -3,10 +3,8 @@
   opacity: 0;
 }
 
-@media (max-width: 480px) {
-  .sb-tabs-sidebar {
-    display: none;
-  }
+:where(html[data-sb-app-layout="mobile"]) .sb-tabs-sidebar {
+  display: none;
 }
 
 .sb-embed-minimal .sb-tabs-sidebar {

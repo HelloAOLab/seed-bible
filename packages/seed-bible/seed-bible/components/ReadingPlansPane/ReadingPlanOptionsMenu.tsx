@@ -1,6 +1,8 @@
 import { MaterialIcon } from "../icons";
-import { useI18n } from "../../i18n/I18nManager";
+import { i18n, useI18n } from "../../i18n/I18nManager";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { AppState } from "../../managers/SeedBibleStateManager";
+import { openLinkShareModal } from "../ShareModal/openLinkShareModal";
 import type {
   ReadingPlan,
   ReadingPlanMetadata,
@@ -30,12 +32,25 @@ export function ReadingPlanOptionsMenu(props: {
   /** Called after the plan has been deleted, so a detail view can leave it. */
   onDeleted?: () => void;
   modals: ModalManager;
+  /**
+   * Lets Share open the share sheet. Without it, Share just copies the
+   * plan's link.
+   */
+  app?: AppState;
   toast?: (message: string) => void;
   /** Styles the ⋮ button to match the list it sits in. */
   buttonClassName?: string;
 }) {
-  const { readingPlans, plan, fullPlan, onEdit, onDeleted, modals, toast } =
-    props;
+  const {
+    readingPlans,
+    plan,
+    fullPlan,
+    onEdit,
+    onDeleted,
+    modals,
+    app,
+    toast,
+  } = props;
   const { t } = useI18n();
 
   return (
@@ -51,9 +66,12 @@ export function ReadingPlanOptionsMenu(props: {
         <ContextMenuItem
           onClick={(e) => {
             e.stopPropagation();
-            void navigator.clipboard.writeText(
-              readingPlans.getReadingPlanShareUrl(fullPlan)
-            );
+            const url = readingPlans.getReadingPlanShareUrl(fullPlan);
+            if (app) {
+              openReadingPlanShareModal(modals, app, fullPlan, url);
+              return;
+            }
+            void navigator.clipboard.writeText(url);
             toast?.(
               t("reading-plan-url-copied", {
                 defaultValue: "Reading plan URL copied to clipboard",
@@ -138,5 +156,29 @@ function openDeleteReadingPlanConfirm(
         defaultValue: "Couldn't delete the reading plan.",
       }),
     toast,
+  });
+}
+
+function openReadingPlanShareModal(
+  modals: ModalManager,
+  app: AppState,
+  plan: ReadingPlan,
+  url: string
+) {
+  openLinkShareModal({
+    id: `share-reading-plan-${plan.recordName}-${plan.address}`,
+    modals,
+    app,
+    url,
+    title:
+      plan.title ??
+      i18n.t("untitled-reading-plan", { defaultValue: "Untitled plan" }),
+    kind: "readingPlan",
+    copiedMessage: i18n.t("reading-plan-url-copied", {
+      defaultValue: "Reading plan URL copied to clipboard",
+    }),
+    copyFailedMessage: i18n.t("reading-plan-url-copy-failed", {
+      defaultValue: "Couldn't copy the reading plan link",
+    }),
   });
 }

@@ -364,6 +364,8 @@ function createHost() {
   const highlights = new Map<string, ChapterHighlight[]>();
   const notes = new Map<string, Annotation[]>();
   const saves = signal<Save[]>([]);
+  /** Set `loaded` to false to make `addSave` act as if the saves couldn't load. */
+  const savesRecord = { loaded: true };
   const readingEvents: ReadingEvent[] = [];
   const chatProviders = new Map<string, ChatProvider>();
   const settingsPanels = new Map<string, () => unknown>();
@@ -507,6 +509,7 @@ function createHost() {
         chapterNumber: number,
         options?: { verse?: Save["verse"]; categories?: readonly string[] }
       ) => {
+        if (!savesRecord.loaded) return false;
         saves.value = [
           ...saves.value,
           {
@@ -519,6 +522,7 @@ function createHost() {
             categories: [...(options?.categories ?? ["Saved"])],
           },
         ];
+        return true;
       },
       removeSave: async (id: string) => {
         saves.value = saves.value.filter((save) => save.id !== id);
@@ -586,6 +590,7 @@ function createHost() {
     highlights,
     notes,
     saves,
+    savesRecord,
     readingEvents,
     chats: context.chats,
     chatProviders,

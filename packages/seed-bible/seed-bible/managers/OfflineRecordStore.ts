@@ -34,7 +34,11 @@
  * {@link createInMemoryRecordStore}.
  */
 
-import { requestToPromise, transactionToPromise } from "./indexedDbUtils";
+import {
+  createDatabaseConnection,
+  requestToPromise,
+  transactionToPromise,
+} from "./indexedDbUtils";
 
 /**
  * The owner used for records written while signed out.
@@ -429,65 +433,33 @@ export function createIndexedDbRecordStore<T>(
     return null;
   }
 
-  let databasePromise: Promise<IDBDatabase> | null = null;
-
-  const openDatabase = (): Promise<IDBDatabase> => {
-    if (databasePromise) {
-      return databasePromise;
+  const connection = createDatabaseConnection(
+    dbName,
+    RECORD_DB_VERSION,
+    (database, event, upgrade) => {
+      if (!database.objectStoreNames.contains(RECORDS_STORE)) {
+        const records = database.createObjectStore(RECORDS_STORE, {
+          keyPath: "key",
+        });
+        records.createIndex(COLLECTION_INDEX, ["owner", "collection"]);
+        // IndexedDB skips records whose indexed value is null, so this index
+        // contains exactly the rows that still need pushing.
+        records.createIndex(PENDING_INDEX, ["owner", "pendingOp"]);
+      }
+      if (!database.objectStoreNames.contains(LISTED_STORE)) {
+        database.createObjectStore(LISTED_STORE, { keyPath: "key" });
+      }
+      if (event.oldVersion === 1 && upgrade) {
+        migrateLegacyStores(database, upgrade);
+      }
     }
-
-    databasePromise = new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open(dbName, RECORD_DB_VERSION);
-
-      request.onupgradeneeded = (event) => {
-        const database = request.result;
-        const upgrade = request.transaction;
-        if (!database.objectStoreNames.contains(RECORDS_STORE)) {
-          const records = database.createObjectStore(RECORDS_STORE, {
-            keyPath: "key",
-          });
-          records.createIndex(COLLECTION_INDEX, ["owner", "collection"]);
-          // IndexedDB skips records whose indexed value is null, so this index
-          // contains exactly the rows that still need pushing.
-          records.createIndex(PENDING_INDEX, ["owner", "pendingOp"]);
-        }
-        if (!database.objectStoreNames.contains(LISTED_STORE)) {
-          database.createObjectStore(LISTED_STORE, { keyPath: "key" });
-        }
-        if (event.oldVersion === 1 && upgrade) {
-          migrateLegacyStores(database, upgrade);
-        }
-      };
-
-      request.onsuccess = () => {
-        const database = request.result;
-        // A version change from another tab invalidates this handle; drop the
-        // cached promise so the next call reopens instead of using a dead one.
-        database.onversionchange = () => {
-          database.close();
-          databasePromise = null;
-        };
-        resolve(database);
-      };
-
-      request.onerror = () =>
-        reject(request.error ?? new Error("Failed to open IndexedDB."));
-      request.onblocked = () =>
-        reject(new Error("IndexedDB upgrade blocked by another tab."));
-    }).catch((error: unknown) => {
-      databasePromise = null;
-      throw error;
-    });
-
-    return databasePromise;
-  };
+  );
 
   const listForCollection = async (
     owner: string,
     collection: string
   ): Promise<StoredRecord<T>[]> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(RECORDS_STORE, "readonly");
+    const transaction = await connection.transaction(RECORDS_STORE, "readonly");
     const rows = await requestToPromise(
       transaction
         .objectStore(RECORDS_STORE)
@@ -501,8 +473,7 @@ export function createIndexedDbRecordStore<T>(
     owner: string,
     address: string
   ): Promise<StoredRecord<T> | null> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(RECORDS_STORE, "readonly");
+    const transaction = await connection.transaction(RECORDS_STORE, "readonly");
     const row = await requestToPromise(
       transaction.objectStore(RECORDS_STORE).get(recordKey(owner, address))
     );
@@ -510,22 +481,25 @@ export function createIndexedDbRecordStore<T>(
   };
 
   const put = async (record: StoredRecord<T>): Promise<void> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(RECORDS_STORE, "readwrite");
+    const transaction = await connection.transaction(
+      RECORDS_STORE,
+      "readwrite"
+    );
     transaction.objectStore(RECORDS_STORE).put(record);
     await transactionToPromise(transaction);
   };
 
   const deleteRow = async (owner: string, address: string): Promise<void> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(RECORDS_STORE, "readwrite");
+    const transaction = await connection.transaction(
+      RECORDS_STORE,
+      "readwrite"
+    );
     transaction.objectStore(RECORDS_STORE).delete(recordKey(owner, address));
     await transactionToPromise(transaction);
   };
 
   const listPending = async (owner: string): Promise<StoredRecord<T>[]> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(RECORDS_STORE, "readonly");
+    const transaction = await connection.transaction(RECORDS_STORE, "readonly");
     const store = transaction.objectStore(RECORDS_STORE).index(PENDING_INDEX);
     const [upserts, deletes] = await Promise.all([
       requestToPromise(store.getAll(IDBKeyRange.only([owner, "upsert"]))),
@@ -541,8 +515,7 @@ export function createIndexedDbRecordStore<T>(
     owner: string,
     collection: string
   ): Promise<StoredCollection | null> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(LISTED_STORE, "readonly");
+    const transaction = await connection.transaction(LISTED_STORE, "readonly");
     const row = await requestToPromise(
       transaction
         .objectStore(LISTED_STORE)
@@ -557,8 +530,7 @@ export function createIndexedDbRecordStore<T>(
     serverRecords: ServerRecord<T>[],
     listedAtMs: number
   ): Promise<void> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(
+    const transaction = await connection.transaction(
       [RECORDS_STORE, LISTED_STORE],
       "readwrite"
     );
@@ -595,8 +567,10 @@ export function createIndexedDbRecordStore<T>(
     owner: string,
     combine?: (account: T | null, local: T | null) => T | null
   ): Promise<StoredRecord<T>[]> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(RECORDS_STORE, "readwrite");
+    const transaction = await connection.transaction(
+      RECORDS_STORE,
+      "readwrite"
+    );
     const store = transaction.objectStore(RECORDS_STORE);
     const rows = (await requestToPromise(store.getAll())) as StoredRecord<T>[];
     const { adopt, discard } = partitionLocalRows(rows);
@@ -617,8 +591,10 @@ export function createIndexedDbRecordStore<T>(
   };
 
   const discardLocalRows = async (): Promise<void> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(RECORDS_STORE, "readwrite");
+    const transaction = await connection.transaction(
+      RECORDS_STORE,
+      "readwrite"
+    );
     const store = transaction.objectStore(RECORDS_STORE);
     const rows = (await requestToPromise(store.getAll())) as StoredRecord<T>[];
     for (const row of rows) {
@@ -630,8 +606,10 @@ export function createIndexedDbRecordStore<T>(
   };
 
   const clearSynced = async (owner: string): Promise<void> => {
-    const database = await openDatabase();
-    const transaction = database.transaction(RECORDS_STORE, "readwrite");
+    const transaction = await connection.transaction(
+      RECORDS_STORE,
+      "readwrite"
+    );
     const store = transaction.objectStore(RECORDS_STORE);
     const rows = (await requestToPromise(store.getAll())) as StoredRecord<T>[];
     for (const row of rows) {

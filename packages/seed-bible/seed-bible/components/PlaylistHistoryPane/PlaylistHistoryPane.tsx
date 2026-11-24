@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "../Discover/DiscoverPane.css";
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n";
@@ -115,9 +116,13 @@ export function PlaylistHistoryPane(props: PlaylistHistoryPaneProps) {
     }
     openingId.value = entry.id;
     void playlists.playFromHistory(entry).then(
-      () => {
+      (started) => {
         openingId.value = null;
-        onLeave();
+        // Declining to pause Audio Reader stays on this list. Anything else
+        // (including a caller that doesn't report a boolean) leaves for the reader.
+        if (started !== false) {
+          onLeave();
+        }
       },
       () => {
         openingId.value = null;
@@ -130,11 +135,11 @@ export function PlaylistHistoryPane(props: PlaylistHistoryPaneProps) {
     <div className="sb-playlist-history-screen">
       <div className="sb-playlist-history-inner">
         {history.length === 0 ? (
-          <p className="sb-playlist-history-empty">
+          <EmptyState className="sb-playlist-history-empty">
             {t("playlist-history-empty", {
               defaultValue: "Playlists you listen to will show up here.",
             })}
-          </p>
+          </EmptyState>
         ) : (
           <PlaylistHistoryList
             history={history}

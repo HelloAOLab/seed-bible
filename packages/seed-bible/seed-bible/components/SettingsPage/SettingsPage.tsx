@@ -1,3 +1,5 @@
+import { EmptyState } from "../EmptyState/EmptyState";
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./SettingsPage.css";
 import { localizedThemeName } from "./localizedThemeName";
 import { useSignal } from "@preact/signals";
@@ -46,7 +48,11 @@ import { useExtensionCatalog } from "./useExtensionCatalog";
 export { AddExtensionFromLink } from "./useExtensionCatalog";
 import { ExtensionTile } from "../ExtensionConsentModal/ExtensionConsentModal";
 import { Button } from "../Button/Button";
+import { SEED_BIBLE_DOCS_URL } from "../../app/publicLinks";
 import { IconButton } from "../IconButton/IconButton";
+import { SettingRow } from "../SettingRow/SettingRow";
+import { Switch } from "../Switch/Switch";
+import { SelectField } from "../Select/Select";
 
 function FlagImg({ cc }: { cc: string }) {
   return (
@@ -325,9 +331,19 @@ function CustomizationSystemCard(props: {
   const { customizations } = props.state;
   const { t } = useI18n();
   const isSelected = customizations.isFollowingSystemScheme.value;
-  const halves = [LIGHT_THEME.id, DARK_THEME.id].map((presetId) => {
+
+  const halves = [
+    {
+      presetId: LIGHT_THEME.id,
+      variantId: props.customization.defaultLightVariantId,
+    },
+    {
+      presetId: DARK_THEME.id,
+      variantId: props.customization.defaultDarkVariantId,
+    },
+  ].map(({ presetId, variantId }) => {
     const variant = props.customization.variants.find(
-      (v) => v.baseTheme === presetId
+      (v) => v.id === variantId
     );
     return {
       presetId,
@@ -471,20 +487,23 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           >
             {t("scripture-settings-font-size-example", { defaultValue: "A" })}
           </button>
-          <button
-            type="button"
-            className="sb-scripture-quick-btn"
-            onClick={handleCycleLineHeight}
-            aria-label={t("change-line-spacing", {
-              defaultValue: "Change line spacing",
-            })}
-            title={t("line-spacing_lineHeight", {
+          <TooltipTrigger
+            label={t("line-spacing_lineHeight", {
               lineHeight: currentLineHeight,
               defaultValue: `Line spacing: ${currentLineHeight}`,
             })}
           >
-            <ScriptureLineHeightIcon index={lineHeightIndex} />
-          </button>
+            <button
+              type="button"
+              className="sb-scripture-quick-btn"
+              onClick={handleCycleLineHeight}
+              aria-label={t("change-line-spacing", {
+                defaultValue: "Change line spacing",
+              })}
+            >
+              <ScriptureLineHeightIcon index={lineHeightIndex} />
+            </button>
+          </TooltipTrigger>
         </div>
 
         {!isMobile && (
@@ -537,433 +556,301 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           </>
         )}
 
-        <div className="sb-settings-field-row">
-          <label className="sb-settings-field-label" htmlFor="sb-font-select">
-            {t("scripture-font", { defaultValue: "Scripture Font" })}
-          </label>
-          <select
-            id="sb-font-select"
-            className="sb-settings-language-select"
-            value={current.fontOverride ?? "default"}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-              if (target.value === "default") {
-                settings.setFontOverride(undefined);
-              } else {
-                settings.setFontOverride(target.value);
-              }
-            }}
-          >
-            {[
-              {
-                value: "default",
-                name: t("default", { defaultValue: "Default" }),
-              },
-              ...CUSTOMIZATION_FONT_PRESETS,
-            ].map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          id="sb-font-select"
+          className="sb-settings-select-field"
+          label={t("scripture-font", { defaultValue: "Scripture Font" })}
+          value={current.fontOverride ?? "default"}
+          onValueChange={(value) => {
+            if (value === "default") {
+              settings.setFontOverride(undefined);
+            } else {
+              settings.setFontOverride(value);
+            }
+          }}
+        >
+          {[
+            {
+              value: "default",
+              name: t("default", { defaultValue: "Default" }),
+            },
+            ...CUSTOMIZATION_FONT_PRESETS,
+          ].map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.name}
+            </option>
+          ))}
+        </SelectField>
 
         <h3 className="sb-settings-subheading">
           {t("scripture-elements", { defaultValue: "Scripture elements" })}
         </h3>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-scripture-headings"
-          >
-            {t("show-headings", { defaultValue: "Show headings" })}
-          </label>
-          <input
-            id="sb-show-scripture-headings"
-            type="checkbox"
+        <SettingRow
+          label={t("show-headings", { defaultValue: "Show headings" })}
+        >
+          <Switch
             checked={current.scriptureElements.showHeadings}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setScriptureElements({
-                showHeadings: (event.currentTarget as HTMLInputElement).checked,
+                showHeadings: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-scripture-verse-numbers"
-          >
-            {t("show-verse-numbers", { defaultValue: "Show verse numbers" })}
-          </label>
-          <input
-            id="sb-show-scripture-verse-numbers"
-            type="checkbox"
+        <SettingRow
+          label={t("show-verse-numbers", {
+            defaultValue: "Show verse numbers",
+          })}
+        >
+          <Switch
             checked={current.scriptureElements.showVerseNumbers}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setScriptureElements({
-                showVerseNumbers: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showVerseNumbers: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-scripture-footnotes"
-          >
-            {t("show-footnotes", { defaultValue: "Show footnotes" })}
-          </label>
-          <input
-            id="sb-show-scripture-footnotes"
-            type="checkbox"
+        <SettingRow
+          label={t("show-footnotes", { defaultValue: "Show footnotes" })}
+        >
+          <Switch
             checked={current.scriptureElements.showFootnotes}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setScriptureElements({
-                showFootnotes: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showFootnotes: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-scripture-highlights"
-          >
-            {t("show-highlights", { defaultValue: "Show highlights" })}
-          </label>
-          <input
-            id="sb-show-scripture-highlights"
-            type="checkbox"
+        <SettingRow
+          label={t("show-highlights", { defaultValue: "Show highlights" })}
+        >
+          <Switch
             checked={current.scriptureElements.showHighlights}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setScriptureElements({
-                showHighlights: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showHighlights: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-red-lettering"
-          >
-            {t("show-red-lettering", { defaultValue: "Show red lettering" })}
-          </label>
-          <input
-            id="sb-show-red-lettering"
-            type="checkbox"
+        <SettingRow
+          label={t("show-red-lettering", {
+            defaultValue: "Show red lettering",
+          })}
+        >
+          <Switch
             checked={current.scriptureElements.showRedLettering}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setScriptureElements({
-                showRedLettering: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showRedLettering: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
         <h3 className="sb-settings-subheading">
           {t("discovered-content", { defaultValue: "Discovered Content" })}
         </h3>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-discovered-content"
-          >
-            {t("show-discovered-content", {
-              defaultValue: "Show discovered content",
-            })}
-          </label>
-          <input
-            id="sb-show-discovered-content"
-            type="checkbox"
+        <SettingRow
+          label={t("show-discovered-content", {
+            defaultValue: "Show discovered content",
+          })}
+        >
+          <Switch
             checked={current.discoveredContent.showContent}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setDiscoveredContent({
-                showContent: (event.currentTarget as HTMLInputElement).checked,
+                showContent: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <div className="sb-settings-toggle-text">
-            <label
-              className="sb-settings-toggle-label"
-              htmlFor="sb-show-discovered-content-in-sessions"
-            >
-              {t("show-discovered-content-in-sessions", {
-                defaultValue: "Show in shared sessions",
-              })}
-            </label>
-            <p
-              id="sb-show-discovered-content-in-sessions-description"
-              className="sb-settings-toggle-description"
-            >
-              {t("show-discovered-content-in-sessions-description", {
-                defaultValue: "Only you see it. Others in the session won't.",
-              })}
-            </p>
-          </div>
-          <input
-            id="sb-show-discovered-content-in-sessions"
-            type="checkbox"
-            aria-describedby="sb-show-discovered-content-in-sessions-description"
+        <SettingRow
+          label={t("show-discovered-content-in-sessions", {
+            defaultValue: "Show in shared sessions",
+          })}
+          description={t("show-discovered-content-in-sessions-description", {
+            defaultValue: "Only you see it. Others in the session won't.",
+          })}
+        >
+          <Switch
             checked={current.discoveredContent.showInSharedSessions}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setDiscoveredContent({
-                showInSharedSessions: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showInSharedSessions: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
         <h3 className="sb-settings-subheading">
           {t("session", { defaultValue: "Session" })}
         </h3>
-        <div className="sb-settings-field-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-verse-selection-effects"
-          >
-            {t("verse-selection-effects", {
-              defaultValue: "Verse Selection Effects",
+        <SelectField
+          id="sb-verse-selection-effects"
+          className="sb-settings-select-field"
+          label={t("verse-selection-effects", {
+            defaultValue: "Verse Selection Effects",
+          })}
+          value={current.verseSelectionEffects ?? "default"}
+          onValueChange={(value) => {
+            settings.setVerseSelectionEffects(value as VerseSelectionEffects);
+          }}
+        >
+          <option value="default">
+            {t("default", { defaultValue: "Default" })}
+          </option>
+          <option value="enabled">
+            {t("enabled", { defaultValue: "Enabled" })}
+          </option>
+          <option value="disabled">
+            {t("disabled", { defaultValue: "Disabled" })}
+          </option>
+        </SelectField>
+        <SelectField
+          id="sb-viewing-area-indicators"
+          className="sb-settings-select-field"
+          label={t("viewing-area-indicators", {
+            defaultValue: "Viewing areas",
+          })}
+          hint={t("viewing-area-indicators-desc", {
+            count: VIEWING_AREA_HOSTS_ONLY_MIN_USERS,
+            defaultValue:
+              "Default follows the session: everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more. Hosts only hides the other bars on your screen, even when the session is showing everyone. Everyone cannot show those bars when the host has set the session to hosts only.",
+          })}
+          value={current.viewingAreaIndicators ?? "default"}
+          onValueChange={(value) => {
+            settings.setViewingAreaIndicators(value as ViewingAreaIndicators);
+          }}
+        >
+          <option value="default">
+            {t("default", { defaultValue: "Default" })}
+          </option>
+          <option value="everyone">
+            {t("session-settings-viewing-areas-everyone", {
+              defaultValue: "Everyone",
             })}
-          </label>
-
-          <select
-            id="sb-verse-selection-effects"
-            className="sb-settings-language-select"
-            value={current.verseSelectionEffects ?? "default"}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-
-              settings.setVerseSelectionEffects(
-                target.value as VerseSelectionEffects
-              );
-            }}
-          >
-            <option value="default">
-              {t("default", { defaultValue: "Default" })}
-            </option>
-            <option value="enabled">
-              {t("enabled", { defaultValue: "Enabled" })}
-            </option>
-            <option value="disabled">
-              {t("disabled", { defaultValue: "Disabled" })}
-            </option>
-          </select>
-        </div>
-        <div className="sb-settings-field-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-viewing-area-indicators"
-          >
-            {t("viewing-area-indicators", {
-              defaultValue: "Viewing areas",
+          </option>
+          <option value="hosts-only">
+            {t("session-settings-viewing-areas-hosts-only", {
+              defaultValue: "Hosts only",
             })}
-          </label>
-
-          <select
-            id="sb-viewing-area-indicators"
-            className="sb-settings-language-select"
-            value={current.viewingAreaIndicators ?? "default"}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-
-              settings.setViewingAreaIndicators(
-                target.value as ViewingAreaIndicators
-              );
-            }}
-          >
-            <option value="default">
-              {t("default", { defaultValue: "Default" })}
-            </option>
-            <option value="everyone">
-              {t("session-settings-viewing-areas-everyone", {
-                defaultValue: "Everyone",
-              })}
-            </option>
-            <option value="hosts-only">
-              {t("session-settings-viewing-areas-hosts-only", {
-                defaultValue: "Hosts only",
-              })}
-            </option>
-          </select>
-          <p className="sb-settings-field-description">
-            {t("viewing-area-indicators-desc", {
-              count: VIEWING_AREA_HOSTS_ONLY_MIN_USERS,
-              defaultValue:
-                "Default follows the session: everyone's place when fewer than {{count}} people are here, and only hosts at {{count}} or more. Hosts only hides the other bars on your screen, even when the session is showing everyone. Everyone cannot show those bars when the host has set the session to hosts only.",
-            })}
-          </p>
-        </div>
+          </option>
+        </SelectField>
         <h3 className="sb-settings-subheading">
           {t("display", { defaultValue: "Display" })}
         </h3>
 
-        <div className="sb-settings-field-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-ui-size-select"
-          >
-            {t("ui-size", { defaultValue: "UI size" })}
-          </label>
-          <select
-            id="sb-ui-size-select"
-            className="sb-settings-language-select"
-            value={current.uiSize}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-              settings.setUISize(target.value as UISize);
-            }}
-          >
-            {UI_SIZE_OPTIONS.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          id="sb-ui-size-select"
+          className="sb-settings-select-field"
+          label={t("ui-size", { defaultValue: "UI size" })}
+          value={current.uiSize}
+          onValueChange={(value) => {
+            settings.setUISize(value as UISize);
+          }}
+        >
+          {UI_SIZE_OPTIONS.map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
+          ))}
+        </SelectField>
 
-        <div className="sb-settings-field-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-book-orientation-select"
-          >
-            {t("book-order", { defaultValue: "Book order" })}
-          </label>
-          <select
-            id="sb-book-orientation-select"
-            className="sb-settings-language-select"
-            value={current.bookOrientation}
-            onChange={(event: Event) => {
-              const target = event.currentTarget as HTMLSelectElement;
-              settings.setBookOrientation(target.value as BookOrientation);
-            }}
-          >
-            <option value="traditional">
-              {t("traditional", { defaultValue: "Traditional" })}
-            </option>
-            <option value="tanakh">
-              {t("tanakh", { defaultValue: "Tanakh" })}
-            </option>
-          </select>
-        </div>
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-keep-screen-awake"
-          >
-            {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
-          </label>
-          <input
-            id="sb-keep-screen-awake"
-            type="checkbox"
+        <SelectField
+          id="sb-book-orientation-select"
+          className="sb-settings-select-field"
+          label={t("book-order", { defaultValue: "Book order" })}
+          value={current.bookOrientation}
+          onValueChange={(value) => {
+            settings.setBookOrientation(value as BookOrientation);
+          }}
+        >
+          <option value="traditional">
+            {t("traditional", { defaultValue: "Traditional" })}
+          </option>
+          <option value="tanakh">
+            {t("tanakh", { defaultValue: "Tanakh" })}
+          </option>
+        </SelectField>
+        <SettingRow
+          label={t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
+        >
+          <Switch
             checked={current.keepScreenAwake}
-            onChange={(event: Event) => {
-              settings.setKeepScreenAwake(
-                (event.currentTarget as HTMLInputElement).checked
-              );
+            onToggled={(checked) => {
+              settings.setKeepScreenAwake(checked);
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-ask-to-switch-ui-language"
-          >
-            {t("ask-to-switch-ui-language", {
-              defaultValue: "Offer to switch language with translation",
-            })}
-          </label>
-          <input
-            id="sb-ask-to-switch-ui-language"
-            type="checkbox"
+        <SettingRow
+          label={t("ask-to-switch-ui-language", {
+            defaultValue: "Offer to switch language with translation",
+          })}
+        >
+          <Switch
             checked={current.askToSwitchUiLanguage}
-            onChange={(event: Event) => {
-              settings.setAskToSwitchUiLanguage(
-                (event.currentTarget as HTMLInputElement).checked
-              );
+            onToggled={(checked) => {
+              settings.setAskToSwitchUiLanguage(checked);
             }}
           />
-        </div>
+        </SettingRow>
 
         <h3 className="sb-settings-subheading">
           {t("selection-ui", { defaultValue: "Selection UI" })}
         </h3>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-selected-items"
-          >
-            {t("show-selected-items", { defaultValue: "Show selected items" })}
-          </label>
-          <input
-            id="sb-show-selected-items"
-            type="checkbox"
+        <SettingRow
+          label={t("show-selected-items", {
+            defaultValue: "Show selected items",
+          })}
+        >
+          <Switch
             checked={current.selectionUI.showSelectedItems}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setSelectionUI({
-                showSelectedItems: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showSelectedItems: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-highlight-colors"
-          >
-            {t("show-highlight-colors", {
-              defaultValue: "Show highlight colors",
-            })}
-          </label>
-          <input
-            id="sb-show-highlight-colors"
-            type="checkbox"
+        <SettingRow
+          label={t("show-highlight-colors", {
+            defaultValue: "Show highlight colors",
+          })}
+        >
+          <Switch
             checked={current.selectionUI.showHighlightColors}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setSelectionUI({
-                showHighlightColors: (event.currentTarget as HTMLInputElement)
-                  .checked,
+                showHighlightColors: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-show-icon-text"
-          >
-            {t("show-icon-text", { defaultValue: "Show icon text" })}
-          </label>
-          <input
-            id="sb-show-icon-text"
-            type="checkbox"
+        <SettingRow
+          label={t("show-icon-text", { defaultValue: "Show icon text" })}
+        >
+          <Switch
             checked={current.selectionUI.showIconText}
-            onChange={(event: Event) => {
+            onToggled={(checked) => {
               settings.setSelectionUI({
-                showIconText: (event.currentTarget as HTMLInputElement).checked,
+                showIconText: checked,
               });
             }}
           />
-        </div>
+        </SettingRow>
       </section>
     </div>
   );
@@ -1063,9 +950,9 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           {title}
         </h2>
         {entries.length === 0 ? (
-          <div className="sb-settings-empty-state">
-            <p>{emptyMessage}</p>
-          </div>
+          <EmptyState className="sb-settings-empty-state">
+            {emptyMessage}
+          </EmptyState>
         ) : (
           <ul className="sb-extensions-group">
             {entries.map(renderExtensionRow)}
@@ -1134,13 +1021,11 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </p>
         )}
         {catalog.entries.length === 0 ? (
-          <div className="sb-settings-empty-state">
-            <p>
-              {t("no-extensions-available", {
-                defaultValue: "No extensions available.",
-              })}
-            </p>
-          </div>
+          <EmptyState className="sb-settings-empty-state">
+            {t("no-extensions-available", {
+              defaultValue: "No extensions available.",
+            })}
+          </EmptyState>
         ) : (
           <>
             <SearchBar
@@ -1151,13 +1036,11 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
               placeholder={t("extensions-search")}
             />
             {query && shownExtensions.length === 0 ? (
-              <div className="sb-settings-empty-state" role="status">
-                <p>
-                  {t("extensions-search-no-matches", {
-                    query: searchQuery.value.trim(),
-                  })}
-                </p>
-              </div>
+              <EmptyState className="sb-settings-empty-state" role="status">
+                {t("extensions-search-no-matches", {
+                  query: searchQuery.value.trim(),
+                })}
+              </EmptyState>
             ) : (
               <>
                 {renderSection(
@@ -1202,6 +1085,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           onClick={openAddFromLink}
         >
           {t("extension-add-link-label")}
+        </Button>
+        <Button
+          size="lg"
+          shape="pill"
+          icon="menu_book"
+          className="sb-extensions-add-link-button"
+          href={SEED_BIBLE_DOCS_URL}
+          target="_blank"
+        >
+          {t("docs-link-label", { defaultValue: "Docs" })}
         </Button>
       </section>
     </div>
@@ -1411,12 +1304,9 @@ function SettingsMainView(props: { state: SeedBibleState }) {
           )}
           <li>
             <div className="sb-settings-field-row">
-              <span className="sb-settings-field-label">
-                {t("language", { defaultValue: "Language" })}
-              </span>
               <SearchableSelect
                 id="sb-language-select"
-                buttonClassName="sb-settings-language-select"
+                label={t("language", { defaultValue: "Language" })}
                 value={language}
                 options={availableLanguages.map((languageCode) => {
                   const meta = LANG_META[languageCode];
