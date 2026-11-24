@@ -325,8 +325,8 @@ device was set up for, the app grants the new one.
    is there: still waiting, made in the last 15 minutes, for the friends
    permission only.
 3. It limits how often it sends (the numbers are below): once per request,
-   once a day from one person to another, and a few an hour per sender and
-   per recipient.
+   a few times a day from one person to another, and a set number an hour per
+   sender and per recipient.
 4. It writes the text itself from Ada's public profile name. Ada's app can't
    choose what Ben's phone shows or where tapping it goes.
 5. It answers Ada's app straight away, then sends as the notifier to Ben's
@@ -370,16 +370,24 @@ refused unread):
 
 Errors are `{ "error": "<code>" }`. What CasualOS said is never passed on.
 
-**Limits.** All of them live in the server's memory (`DEFAULT_RELAY_LIMITS`
-in `server/notifications.ts`):
+**Limits.** All of them live in the server's memory (`server/notifications.ts`).
+Each kind of push keeps its own counts (`DEFAULT_PUSH_KIND_LIMITS`), so a
+friend request doesn't use up what a later kind, such as a chat message or a
+shared playlist, may send between the same two people. A new kind adds its
+own row there, with numbers that suit it. For friend requests:
 
-| Limit                                     | Value                              | Why                                                                                                                                                      |
-| ----------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pushes from one person to the same person | 1 a day                            | Cancelling and re-sending a request makes a new request; without this, one person could buzz someone's phone all day and spend their CasualOS push quota |
-| Pushes to one recipient                   | 5 an hour                          | Caps the buzzing when several people friend someone at once                                                                                              |
-| Checks per sender                         | 10 an hour                         | Counts every check of a sender's key that CasualOS accepts, found or not                                                                                 |
-| Checks waiting on CasualOS at once        | 8                                  | Beyond that the relay answers 503 `busy` without asking CasualOS                                                                                         |
-| Session keys CasualOS turns down          | 30 a minute, for everyone together | Stops made-up keys from making our server call CasualOS without end (see below)                                                                          |
+| Limit                                     | Value      | Why                                                                                                                                                                  |
+| ----------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pushes from one person to the same person | 3 a day    | Cancelling and re-sending a request makes a new request; without this, one person could buzz someone's phone all day and spend their CasualOS push quota             |
+| Pushes to one recipient                   | 10 an hour | Caps the buzzing when many people friend someone at once, after an event say                                                                                         |
+| Checks per sender                         | 30 an hour | Counts every check of a sender's key that CasualOS accepts, found or not. High enough for a group leader friending a whole class, each of whom still gets their push |
+
+And for the relay as a whole, whatever it's pushing (`DEFAULT_RELAY_LIMITS`):
+
+| Limit                              | Value                              | Why                                                                             |
+| ---------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------- |
+| Checks waiting on CasualOS at once | 8                                  | Beyond that the relay answers 503 `busy` without asking CasualOS                |
+| Session keys CasualOS turns down   | 30 a minute, for everyone together | Stops made-up keys from making our server call CasualOS without end (see below) |
 
 A made-up key that merely looks like a session key would otherwise reach
 CasualOS every time, and every such call leaves from our server's one address,
@@ -566,8 +574,8 @@ would be kept, since the relay can't read anyone's records today.
 - The relay's answer doesn't say whether the recipient has push on, and comes
   back before the push is sent, so neither its content nor its timing lets a
   stranger use friend requests to find out.
-- One person can push another at most once a day, however many times they
-  cancel and re-send a request.
+- One person can push another a friend request at most 3 times a day, however
+  many times they cancel and re-send it.
 - The relay keeps nothing on disk. Its once-per-request and per-hour limits
   live in memory, so a server restart resets them. That's acceptable here:
   every push still needs a real friend request made in the last 15 minutes.

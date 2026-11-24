@@ -4,6 +4,7 @@ import type { AddressInfo } from "node:net";
 import {
   createNotificationsRelay,
   createWindowLimiter,
+  DEFAULT_PUSH_KIND_LIMITS,
   FRIEND_REQUEST_PUSH_PATH,
   FRIEND_REQUEST_PUSH_WINDOW_MS,
   MAX_BODY_BYTES,
@@ -758,7 +759,9 @@ describe("notifications relay", () => {
     });
 
     it("gives back the recipient's allowance when a send fails on the way", async () => {
-      const target = relay({ limits: { recipientPerHour: 1 } });
+      const target = relay({
+        kindLimits: { "friend-request": { recipientPerHour: 1 } },
+      });
       casualos.overrides.set("sendNotification", () =>
         casualos.failure("server_error")
       );
@@ -775,7 +778,9 @@ describe("notifications relay", () => {
     });
 
     it("counts a push to someone without push on like any other, so the limits don't show who has it on", async () => {
-      const target = relay({ limits: { recipientPerHour: 1 } });
+      const target = relay({
+        kindLimits: { "friend-request": { recipientPerHour: 1 } },
+      });
       const cyKey = casualos.signIn("cy");
       await push(target, {
         requestId: casualos.request(ADA, "no-push-user").id,
@@ -795,7 +800,9 @@ describe("notifications relay", () => {
     });
 
     it("limits how many pushes one sender can trigger in an hour", async () => {
-      const target = relay({ limits: { senderPerHour: 3 } });
+      const target = relay({
+        kindLimits: { "friend-request": { senderPerHour: 3 } },
+      });
       const requests = [1, 2, 3, 4].map((n) => {
         const recipient = `friend-${n}`;
         casualos.turnOnPush(recipient);
@@ -827,7 +834,9 @@ describe("notifications relay", () => {
     });
 
     it("holds the sender's limit for requests made at the same time", async () => {
-      const target = relay({ limits: { senderPerHour: 3 } });
+      const target = relay({
+        kindLimits: { "friend-request": { senderPerHour: 3 } },
+      });
 
       const responses = await Promise.all(
         [1, 2, 3, 4, 5, 6].map((n) =>
@@ -842,7 +851,9 @@ describe("notifications relay", () => {
     });
 
     it("counts lookups of requests that turn out not to exist", async () => {
-      const target = relay({ limits: { senderPerHour: 2 } });
+      const target = relay({
+        kindLimits: { "friend-request": { senderPerHour: 2 } },
+      });
       await push(target, { requestId: "made-up-1" });
       await push(target, { requestId: "made-up-2" });
 
@@ -852,7 +863,9 @@ describe("notifications relay", () => {
     });
 
     it("doesn't count a forged key against the person it names", async () => {
-      const target = relay({ limits: { senderPerHour: 1 } });
+      const target = relay({
+        kindLimits: { "friend-request": { senderPerHour: 1 } },
+      });
       const forged = `Bearer ${sessionKey(ADA, START + 60_000)}`;
       await push(target, { requestId: "sp-x" }, forged);
       await push(target, { requestId: "sp-y" }, forged);
@@ -864,11 +877,12 @@ describe("notifications relay", () => {
     });
 
     it("limits how many pushes one recipient can get in an hour", async () => {
+      const { recipientPerHour } = DEFAULT_PUSH_KIND_LIMITS["friend-request"];
       const target = relay();
-      const senders = ["s1", "s2", "s3", "s4", "s5", "s6"].map((id) => ({
-        key: casualos.signIn(id),
-        request: casualos.request(id, BEN),
-      }));
+      const senders = Array.from({ length: recipientPerHour + 1 }, (_, i) => {
+        const id = `s${i}`;
+        return { key: casualos.signIn(id), request: casualos.request(id, BEN) };
+      });
 
       const statuses: number[] = [];
       for (const { key, request } of senders) {
@@ -878,22 +892,28 @@ describe("notifications relay", () => {
         );
       }
 
-      expect(statuses).toEqual([200, 200, 200, 200, 200, 429]);
+      expect(statuses).toEqual([
+        ...Array<number>(recipientPerHour).fill(200),
+        429,
+      ]);
       await target.idle();
-      expect(casualos.pushes).toHaveLength(5);
+      expect(casualos.pushes).toHaveLength(recipientPerHour);
     });
 
-    it("pushes one sender's requests to the same person once a day", async () => {
+    it("pushes one sender's requests to the same person a few times a day", async () => {
+      const { pairPerDay } = DEFAULT_PUSH_KIND_LIMITS["friend-request"];
       const target = relay();
       casualos.turnOnPush("cy");
-      const first = casualos.request(ADA, BEN);
-      await expect(
-        push(target, { requestId: first.id })
-      ).resolves.toMatchObject({ status: 200 });
+      // Cancelling and asking again makes a new request each time.
+      for (let i = 0; i < pairPerDay; i++) {
+        const request = casualos.request(ADA, BEN);
+        await expect(
+          push(target, { requestId: request.id })
+        ).resolves.toMatchObject({ status: 200 });
+        request.status = "revoked";
+        clock.now += 60_000;
+      }
 
-      // Cancelling and asking again makes a new request, but not a new push.
-      first.status = "revoked";
-      clock.now += 60_000;
       const limited = await push(target, {
         requestId: casualos.request(ADA, BEN).id,
       });
@@ -915,14 +935,16 @@ describe("notifications relay", () => {
       ).resolves.toMatchObject({ status: 200 });
       await target.idle();
       expect(casualos.pushes.map((p) => p.recordName)).toEqual([
-        BEN,
+        ...Array<string>(pairPerDay).fill(BEN),
         "cy",
         BEN,
       ]);
     });
 
-    it("holds the once-a-day limit for requests made at the same time", async () => {
-      const target = relay();
+    it("holds the daily limit for requests made at the same time", async () => {
+      const target = relay({
+        kindLimits: { "friend-request": { pairPerDay: 1 } },
+      });
       const requests = [casualos.request(ADA, BEN), casualos.request(ADA, BEN)];
 
       const responses = await Promise.all(

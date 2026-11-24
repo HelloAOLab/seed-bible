@@ -72,13 +72,40 @@ export interface NotificationsRelayConfig {
   siteOrigin: string;
 }
 
-export interface RelayLimits {
+/** The kinds of push the relay sends. */
+export const PUSH_KINDS = ["friend-request"] as const;
+export type PushKind = (typeof PUSH_KINDS)[number];
+
+/**
+ * How often one kind of push may be sent. Each kind keeps its own counts, so
+ * a friend request doesn't use up what another kind (a chat message, a shared
+ * playlist) may send between the same two people.
+ */
+export interface PushKindLimits {
   /** Lookups one sender's key may get through in an hour, found or not. */
   senderPerHour: number;
   /** Pushes one person may be sent in an hour, by anyone. */
   recipientPerHour: number;
   /** Pushes from one sender to one recipient in a day. */
   pairPerDay: number;
+}
+
+export const DEFAULT_PUSH_KIND_LIMITS: Readonly<
+  Record<PushKind, Readonly<PushKindLimits>>
+> = {
+  "friend-request": {
+    // A group leader friending a whole class at once.
+    senderPerHour: 30,
+    // A burst of people friending someone after an event.
+    recipientPerHour: 10,
+    // Cancelling and re-sending makes a new request each time; this keeps
+    // that from buzzing someone's phone all day.
+    pairPerDay: 3,
+  },
+};
+
+/** Limits on the relay as a whole, whatever it's pushing. */
+export interface RelayLimits {
   /** Lookups of senders' requests that may wait on CasualOS at once. */
   lookupsAtOnce: number;
   /**
@@ -89,9 +116,6 @@ export interface RelayLimits {
 }
 
 export const DEFAULT_RELAY_LIMITS: Readonly<RelayLimits> = {
-  senderPerHour: 10,
-  recipientPerHour: 5,
-  pairPerDay: 1,
   lookupsAtOnce: 8,
   rejectedKeysPerMinute: 30,
 };
@@ -101,6 +125,7 @@ export interface NotificationsRelayOptions {
   fetch?: typeof fetch;
   now?: () => number;
   limits?: Partial<RelayLimits>;
+  kindLimits?: { [K in PushKind]?: Partial<PushKindLimits> };
   log?: Pick<Console, "info" | "warn" | "error">;
 }
 
@@ -466,22 +491,38 @@ export function createNotificationsRelay(
     ? parseSessionKey(config.notifierSessionKey)
     : null;
 
-  const senders = createWindowLimiter({
-    limit: limits.senderPerHour,
-    windowMs: HOUR_MS,
-    now,
-  });
-  const recipients = createWindowLimiter({
-    limit: limits.recipientPerHour,
-    windowMs: HOUR_MS,
-    now,
-  });
-  /** Keyed by sender and recipient together. */
-  const pairs = createWindowLimiter({
-    limit: limits.pairPerDay,
-    windowMs: DAY_MS,
-    now,
-  });
+  const kindLimiters = Object.fromEntries(
+    PUSH_KINDS.map((kind) => {
+      const kindLimits = {
+        ...DEFAULT_PUSH_KIND_LIMITS[kind],
+        ...options.kindLimits?.[kind],
+      };
+      return [
+        kind,
+        {
+          senders: createWindowLimiter({
+            limit: kindLimits.senderPerHour,
+            windowMs: HOUR_MS,
+            now,
+          }),
+          recipients: createWindowLimiter({
+            limit: kindLimits.recipientPerHour,
+            windowMs: HOUR_MS,
+            now,
+          }),
+          /** Keyed by sender and recipient together. */
+          pairs: createWindowLimiter({
+            limit: kindLimits.pairPerDay,
+            windowMs: DAY_MS,
+            now,
+          }),
+        },
+      ];
+    })
+  ) as Record<
+    PushKind,
+    Record<"senders" | "recipients" | "pairs", WindowLimiter>
+  >;
   const rejections = createWindowLimiter({
     limit: limits.rejectedKeysPerMinute,
     windowMs: MINUTE_MS,
@@ -701,6 +742,7 @@ export function createNotificationsRelay(
   const sendFriendRequestPush = async (
     request: RelayRequest
   ): Promise<RelayResponse> => {
+    const { senders, recipients, pairs } = kindLimiters["friend-request"];
     if (!isEnabled() || !config.notifierSessionKey) {
       return refusal(503, "push_relay_off");
     }
