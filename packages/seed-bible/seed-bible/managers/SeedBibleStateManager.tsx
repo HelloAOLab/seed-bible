@@ -1842,8 +1842,14 @@ export function createSeedBibleState(
   // them — the saved session would be destroyed by the act of loading the page.
   const tabsRestored = signal(false);
   const joinsInProgress = signal(0);
+  // The initial URL is available during SSR and client initialization.
+  const initialSessionId =
+    navigation.currentUrl.value.searchParams.get("sessionId");
+  const initialSessionJoinPending = signal(Boolean(initialSessionId));
   /** True while one or more shared sessions are being joined. */
-  const isJoiningSession = computed(() => joinsInProgress.value > 0);
+  const isJoiningSession = computed(
+    () => joinsInProgress.value > 0 || initialSessionJoinPending.value
+  );
 
   // Persist the non-ephemeral tab state (translation/book/chapter per tab, the
   // selected tab, the layout preset, and the slot arrangement) to localStorage
@@ -3192,6 +3198,7 @@ export function createSeedBibleState(
       navigation.currentUrl.value.searchParams.get("sessionId");
 
     if (!initialSessionId) {
+      initialSessionJoinPending.value = false;
       return;
     }
 
@@ -3220,12 +3227,12 @@ export function createSeedBibleState(
         }
       });
     };
+
     try {
       await handleJoinSharedSession(initialSessionId, startPosition);
     } catch (error) {
       console.error("Failed to join the session from the URL:", error);
-      // Destructured for the translation lint rules, which only recognise a
-      // bare `t` — see the sign-out toast below.
+
       const { t } = i18n;
 
       toast(
@@ -3234,13 +3241,14 @@ export function createSeedBibleState(
         })
       );
 
-      // Restoring saved tabs intentionally skips the chapter from the shared-session link,
-      // because the session is expected to open it. If joining fails, show it in a normal tab.
       if (startPosition) {
         whenTabsRestored(() => showLinkedChapter(startPosition));
       }
 
       return;
+    } finally {
+      // The initial session join has either succeeded or failed.
+      initialSessionJoinPending.value = false;
     }
 
     if (!startPosition || !bootTab) {
