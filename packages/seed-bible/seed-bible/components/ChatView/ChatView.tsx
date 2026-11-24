@@ -1,3 +1,4 @@
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./ChatView.css";
 import { effect, useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
@@ -1273,15 +1274,17 @@ export function ChatView(props: ChatViewProps) {
           needsAiLimitsAcknowledgment ? (
             <AiLimitsNotice onAcknowledge={acknowledgeAiLimits} />
           ) : (
-            <div className="sb-chat-view-empty">
-              <AskIcon className="sb-chat-view-empty-icon" />
-              <p className="sb-chat-view-empty-title">
-                {t("start-conversation", {
-                  defaultValue: "Start a conversation",
-                })}
-              </p>
-              <PresencePrompt others={othersPresent} />
-            </div>
+            <EmptyState
+              size="panel"
+              icon={<AskIcon />}
+              title={t("start-conversation", {
+                defaultValue: "Start a conversation",
+              })}
+            >
+              {othersPresent.length > 0 ? (
+                <PresencePrompt others={othersPresent} />
+              ) : null}
+            </EmptyState>
           )
         ) : (
           timelineGroups.map((group) => {
@@ -1397,11 +1400,11 @@ export function ChatView(props: ChatViewProps) {
             aria-label={t("participants", { defaultValue: "Participants" })}
           >
             {totalMentionCount === 0 ? (
-              <div className="sb-chat-view-mention-picker-empty">
+              <EmptyState className="sb-chat-view-mention-picker-empty">
                 {t("no-participants-match", {
                   defaultValue: "No participants match",
                 })}
-              </div>
+              </EmptyState>
             ) : (
               <div className="sb-chat-view-mention-picker-list">
                 {showEveryoneSuggestion && (

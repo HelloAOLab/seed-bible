@@ -1,3 +1,4 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./ColorPicker.css";
 import { signal, useSignal } from "@preact/signals";
 import type { JSX } from "preact";
@@ -6,6 +7,8 @@ import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import { hexToHsv, hsvToHex, normalizeHex, parseHex, type Hsv } from "./color";
 import { Button } from "../Button/Button";
+import { TextInput } from "../TextField/TextField";
+import { useModalLayer } from "../useModalFocus";
 
 const POPOVER_GAP_PX = 8;
 const VIEWPORT_MARGIN_PX = 8;
@@ -189,18 +192,14 @@ export function ColorPicker(props: ColorPickerProps) {
     };
   }, [isOpen]);
 
+  // A popover rather than a Dialog, so the theme editor can raise its live
+  // preview between the dimmed page and the picker; but it joins the same
+  // stack of open windows, for focus, Tab and Escape.
+  useModalLayer(panelRef, { enabled: isOpen, onEscape: cancel });
+
   useEffect(() => {
     if (!isOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        setOpen(false);
-      }
-    };
-    document.addEventListener("keydown", onKeyDown, true);
     return () => {
-      document.removeEventListener("keydown", onKeyDown, true);
       if (!committedRef.current) {
         onCancel?.();
       }
@@ -215,7 +214,6 @@ export function ColorPicker(props: ColorPickerProps) {
       panelStyle.value = undefined;
       return;
     }
-    panelRef.current?.focus();
 
     const position = () => {
       const panel = panelRef.current;
@@ -434,7 +432,8 @@ export function ColorPicker(props: ColorPickerProps) {
                 />
                 <label className="sb-color-picker-hex-label">
                   <span className="sb-color-picker-hex-hash">#</span>
-                  <input
+                  <TextInput
+                    size="sm"
                     className="sb-color-picker-hex"
                     value={hexText.value}
                     spellcheck={false}
@@ -480,29 +479,30 @@ export function ColorPicker(props: ColorPickerProps) {
   return (
     <>
       {showTrigger && (
-        <button
-          ref={triggerRef}
-          type="button"
-          className={`sb-color-picker-trigger${className ? ` ${className}` : ""}`}
-          aria-label={triggerLabel}
-          aria-haspopup="dialog"
-          aria-expanded={isOpen}
-          title={triggerLabel}
-          onClick={() => {
-            if (isOpen) {
-              cancel();
-            } else {
-              setOpen(true);
-            }
-          }}
-        >
-          <span
-            className={`sb-color-picker-swatch${
-              swatchClassName ? ` ${swatchClassName}` : ""
-            }`}
-            style={{ background: committed }}
-          />
-        </button>
+        <TooltipTrigger>
+          <button
+            ref={triggerRef}
+            type="button"
+            className={`sb-color-picker-trigger${className ? ` ${className}` : ""}`}
+            aria-label={triggerLabel}
+            aria-haspopup="dialog"
+            aria-expanded={isOpen}
+            onClick={() => {
+              if (isOpen) {
+                cancel();
+              } else {
+                setOpen(true);
+              }
+            }}
+          >
+            <span
+              className={`sb-color-picker-swatch${
+                swatchClassName ? ` ${swatchClassName}` : ""
+              }`}
+              style={{ background: committed }}
+            />
+          </button>
+        </TooltipTrigger>
       )}
       {dialog}
     </>

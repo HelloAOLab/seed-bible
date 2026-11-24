@@ -387,6 +387,7 @@ function createState(options: StateOptions = {}) {
       remove: removeCustomization,
       editingCustomization,
       resolveEditingVariantTheme: () => LIGHT_THEME,
+      getPreviewVariant: (c: SeedBibleCustomization) => c.variants[0],
       getShareLink: (c: SeedBibleCustomization) =>
         `https://example.com/?customization=${c.id}`,
     },
@@ -1132,7 +1133,7 @@ describe("YourContentPane", () => {
       choose(rows()[0]!, "Edit");
       const dialog = renderOpenedModal(openModal);
       const nameInput = dialog.querySelector<HTMLInputElement>(
-        ".sb-bookmark-form-name"
+        'input[aria-label="Bookmark name"]'
       )!;
       expect(nameInput.value).toBe("Sermon prep");
 
@@ -1171,7 +1172,9 @@ describe("YourContentPane", () => {
       choose(rows()[0]!, "Edit");
       const dialog = renderOpenedModal(openModal);
       type(
-        dialog.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!,
+        dialog.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!,
         "Advent"
       );
       await act(async () => {
@@ -1187,7 +1190,9 @@ describe("YourContentPane", () => {
       );
       expect(closeModal).not.toHaveBeenCalled();
       expect(
-        dialog.querySelector<HTMLInputElement>(".sb-bookmark-form-name")!.value
+        dialog.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!.value
       ).toBe("Advent");
       // The manager put the old name back when the write failed.
       expect(names()).toEqual(["Sermon prep"]);
@@ -1328,7 +1333,7 @@ describe("YourContentPane", () => {
     renderPane(state);
 
     const chips = Array.from(
-      container.querySelectorAll(".sb-content-chip")
+      container.querySelectorAll(".sb-filter-pill")
     ) as HTMLButtonElement[];
     const savesChip = chips.find((c) => c.textContent === "Saves")!;
     act(() => {
@@ -1765,7 +1770,7 @@ describe("YourContentPane", () => {
     renderPane(state);
 
     const create = container.querySelector(".sb-content-create");
-    const chips = container.querySelector(".sb-content-chips");
+    const chips = container.querySelector(".sb-filter-pills-row");
     if (!create || !chips) throw new Error("The toolbar did not render.");
     expect(create.querySelector(".sb-button-label")?.textContent).toBe(
       "Create"

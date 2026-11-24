@@ -34,6 +34,58 @@ describe("LinkItemInput", () => {
     return container.querySelector('input[type="url"]') as HTMLInputElement;
   }
 
+  describe("names and errors", () => {
+    function titleInput(): HTMLInputElement {
+      return container.querySelector('input[type="text"]') as HTMLInputElement;
+    }
+
+    it("names both boxes, which only had placeholder text", () => {
+      act(() => {
+        render(<LinkItemInput onAdd={vi.fn()} />, container);
+      });
+
+      expect(titleInput().getAttribute("aria-label")).toBe("Title (optional)");
+      expect(urlInput().getAttribute("aria-label")).toBe("Link");
+    });
+
+    it("announces an invalid link and ties the message to the link box", () => {
+      const handleRef = createRef<LinkItemInputHandle>();
+      act(() => {
+        render(<LinkItemInput ref={handleRef} onAdd={vi.fn()} />, container);
+        setValue(urlInput(), "not a url");
+      });
+      expect(urlInput().getAttribute("aria-invalid")).toBeNull();
+
+      act(() => {
+        handleRef.current?.commit();
+      });
+
+      const alert = container.querySelector('[role="alert"]')!;
+      expect(alert.textContent).toBe("Enter a valid URL");
+      expect(urlInput().getAttribute("aria-invalid")).toBe("true");
+      expect(urlInput().getAttribute("aria-describedby")).toBe(alert.id);
+    });
+
+    it("clears the error as soon as the link is edited", () => {
+      const handleRef = createRef<LinkItemInputHandle>();
+      act(() => {
+        render(<LinkItemInput ref={handleRef} onAdd={vi.fn()} />, container);
+        setValue(urlInput(), "not a url");
+      });
+      act(() => {
+        handleRef.current?.commit();
+      });
+
+      act(() => {
+        setValue(urlInput(), "https://example.com");
+      });
+
+      expect(container.querySelector('[role="alert"]')).toBeNull();
+      expect(urlInput().getAttribute("aria-invalid")).toBeNull();
+      expect(urlInput().getAttribute("aria-describedby")).toBeNull();
+    });
+  });
+
   describe("imperative handle", () => {
     it("isDirty is false when empty and true once a URL or title is typed", () => {
       const handleRef = createRef<LinkItemInputHandle>();

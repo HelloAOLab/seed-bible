@@ -1,4 +1,4 @@
-import { Loading } from "./icons";
+import { Spinner } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 
 const Authorization = () => {
@@ -6,7 +6,7 @@ const Authorization = () => {
   return (
     <div className="twitchPub-page">
       <div className="twitchPub-content">
-        <Loading />
+        <Spinner size="3.5rem" />
         <span className="twitchPub-auth-title">
           {t("waitingForAuthorization", {
             ns: "ext_twitchPub",

@@ -404,39 +404,6 @@ button.sb-profile-plans-link {
 
 /* ------------------------------------------------------------ edit profile */
 
-.sb-profile-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.sb-profile-field-label {
-  font-size: var(--sb-font-size-14);
-  font-weight: 600;
-}
-
-.sb-profile-field-optional {
-  color: var(--sb-profile-muted);
-  font-weight: 400;
-}
-
-.sb-profile-field-input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid var(--sb-profile-border);
-  border-radius: var(--sb-radius-lg);
-  background: var(--sb-reader-background);
-  box-sizing: border-box;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: var(--sb-font-size-16);
-}
-
-.sb-profile-field-textarea {
-  min-height: 96px;
-  resize: vertical;
-}
-
 .sb-profile-save {
   width: 100%;
   margin-top: 8px;

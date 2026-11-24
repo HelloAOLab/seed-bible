@@ -50,11 +50,15 @@ export interface DurableObjectNamespace {
   get: (id: unknown) => DurableObjectStub;
 }
 
-/** One link of an import, as queued. Never carries the session key. */
+/**
+ * Work on an import's next link that's ready. Never carries the session key.
+ * Messages queued before links were taken in turn name one in `itemId`;
+ * it's ignored.
+ */
 export interface ImportItemMessage {
   kind?: "item";
   jobId: string;
-  itemId: string;
+  itemId?: string;
 }
 
 /**

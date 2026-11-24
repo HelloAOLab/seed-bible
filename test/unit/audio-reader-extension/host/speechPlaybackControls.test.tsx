@@ -62,6 +62,31 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
   let speech: FakeSpeechSynthesis;
 
   beforeEach(async () => {
+    // jsdom normally provides localStorage; some Node builds leave it unset.
+    if (typeof localStorage === "undefined" || !localStorage) {
+      const store = new Map<string, string>();
+      const memoryStorage = {
+        getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+        setItem: (key: string, value: string) => {
+          store.set(key, String(value));
+        },
+        removeItem: (key: string) => {
+          store.delete(key);
+        },
+        clear: () => {
+          store.clear();
+        },
+        key: (index: number) => [...store.keys()][index] ?? null,
+        get length() {
+          return store.size;
+        },
+      };
+      vi.stubGlobal("localStorage", memoryStorage);
+      Object.defineProperty(window, "localStorage", {
+        value: memoryStorage,
+        configurable: true,
+      });
+    }
     localStorage.clear();
     // Before the state is built: the manager reads these globals once.
     speech = installSpeech([{ lang: "en-US", name: "English" }]);
@@ -302,7 +327,14 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
       },
     });
 
-    async function play(items: ReturnType<typeof step>[]) {
+    const wholeChapter = {
+      type: "bible-verse" as const,
+      ref: { bookId: "GEN", chapter: 1 },
+    };
+
+    async function play(
+      items: (ReturnType<typeof step> | typeof wholeChapter)[]
+    ) {
       const playing = state.playlists.startPlaying(
         { id: "p", title: "P", description: null, items },
         0,
@@ -330,6 +362,37 @@ describe("audio-reader playback controls for a chapter read aloud", () => {
 
       pressListen();
       expect(queuedTexts()).toEqual(["Verse 3"]);
+    });
+
+    it("shows controls for listening started on a whole-chapter step", async () => {
+      await play([wholeChapter]);
+
+      pressListen();
+      voiceReaches("Verse 1");
+
+      const playback = state.audioPlayback.controllerFor(
+        getReadingState(state)
+      );
+      expect(playback?.isPlaying.value).toBe(true);
+      expect(playback?.duration.value).toBe(5);
+    });
+
+    it("starts listening with controls on a whole-chapter step when narration from before the playlist is held", async () => {
+      const before = startListening();
+      before.pause();
+      await play([wholeChapter]);
+      // The playlist holds the earlier narration out of sight until it ends.
+      expect(
+        state.audioPlayback.controllerFor(getReadingState(state))
+      ).toBeNull();
+
+      pressListen();
+      voiceReaches("Verse 1");
+
+      const playback = state.audioPlayback.controllerFor(
+        getReadingState(state)
+      );
+      expect(playback?.isPlaying.value).toBe(true);
     });
 
     it("stops when the playlist moves on to another step's verses", async () => {

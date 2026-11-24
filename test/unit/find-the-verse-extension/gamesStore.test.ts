@@ -4,8 +4,10 @@ import type { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/O
 import {
   createSavedGamesController,
   gameAddress,
-  GAMES_MARKER,
   loadGames,
+  loadSharedGame,
+  PRIVATE_GAME_MARKER,
+  PUBLIC_GAME_MARKER,
   savedGamesErrorMessage,
   SavedGamesWriteError,
   toSavedGame,
@@ -17,6 +19,7 @@ function makeGame(overrides: Partial<SavedGame> = {}): SavedGame {
     id: "game-1",
     name: "Youth group",
     createdAtMs: 1_000,
+    shared: false,
     steps: [{ hint: "" }],
     targetVerse: {
       bookId: "JHN",
@@ -27,6 +30,22 @@ function makeGame(overrides: Partial<SavedGame> = {}): SavedGame {
     },
     ...overrides,
   };
+}
+
+/** What the server holds for a game: the shared state lives in its marker. */
+function storedData(game: SavedGame) {
+  const { shared: _shared, ...data } = game;
+  return data;
+}
+
+/** How the server refuses an account whose privacy settings block public data. */
+function privacyRefusal(privacyFeature: "publishData" | "allowPublicData") {
+  return {
+    success: false,
+    errorCode: "not_authorized",
+    errorMessage: "You are not authorized to perform this action.",
+    reason: { type: "disabled_privacy_feature", privacyFeature },
+  } as never;
 }
 
 function deferred<T>() {
@@ -68,7 +87,7 @@ function fakeRecords(pageSize = 50) {
     getData: vi.fn(async (_record: string, address: string) => {
       const item = items.get(address);
       return item
-        ? { success: true as const, data: item.data }
+        ? { success: true as const, data: item.data, markers: item.markers }
         : { success: false as const, errorCode: "data_not_found" };
     }),
     recordData: vi.fn(
@@ -93,12 +112,16 @@ function fakeRecords(pageSize = 50) {
     }),
   };
   const put = (address: string, data: unknown) =>
-    items.set(address, { data, markers: [GAMES_MARKER] });
+    items.set(address, { data, markers: [PRIVATE_GAME_MARKER] });
   return {
     os,
     items,
     put,
-    putGame: (game: SavedGame) => put(gameAddress(game.id), game),
+    putGame: (game: SavedGame) =>
+      items.set(gameAddress(game.id), {
+        data: storedData(game),
+        markers: [game.shared ? PUBLIC_GAME_MARKER : PRIVATE_GAME_MARKER],
+      }),
     asOs: os as unknown as CasualOSManager,
   };
 }
@@ -190,10 +213,10 @@ describe("loadGames", () => {
     expect(result).toEqual({ status: "ok", games: [kjv] });
   });
 
-  it("reads every page when there are more games than one page holds", async () => {
+  it("reads every page of private and shared games", async () => {
     const { os, putGame, asOs } = fakeRecords(2);
     for (let i = 0; i < 5; i++) {
-      putGame(makeGame({ id: `g${i}`, createdAtMs: i }));
+      putGame(makeGame({ id: `g${i}`, createdAtMs: i, shared: i % 2 === 1 }));
     }
 
     const result = await loadGames("user-1", asOs);
@@ -202,7 +225,76 @@ describe("loadGames", () => {
     expect(
       result.status === "ok" && result.games.map((game) => game.id)
     ).toEqual(["g4", "g3", "g2", "g1", "g0"]);
+    expect(
+      result.status === "ok" && result.games.map((game) => game.shared)
+    ).toEqual([false, true, false, true, false]);
+    // Two pages of private games, one of shared games.
     expect(os.listDataByMarker).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe("loadSharedGame", () => {
+  it("opens a shared game", async () => {
+    const { putGame, asOs } = fakeRecords();
+    putGame(makeGame({ id: "g", name: "Youth group", shared: true }));
+
+    const result = await loadSharedGame("user-1", "g", asOs);
+
+    expect(result).toEqual({
+      status: "ok",
+      game: makeGame({ id: "g", name: "Youth group", shared: true }),
+    });
+  });
+
+  it("treats a private, deleted, refused, or unreadable game as no longer shared", async () => {
+    const { os, items, putGame, asOs } = fakeRecords();
+    putGame(makeGame({ id: "private" }));
+    items.set(gameAddress("broken"), {
+      data: { id: "broken" },
+      markers: [PUBLIC_GAME_MARKER],
+    });
+    putGame(makeGame({ id: "refused", shared: true }));
+
+    for (const id of ["private", "deleted", "broken"]) {
+      await expect(loadSharedGame("user-1", id, asOs)).resolves.toEqual({
+        status: "not_shared",
+      });
+    }
+    // The server refuses a private game with `not_authorized` when the reader
+    // is signed in, and `not_logged_in` when they aren't.
+    for (const errorCode of ["not_authorized", "not_logged_in"]) {
+      os.getData.mockResolvedValueOnce({ success: false, errorCode } as never);
+      await expect(loadSharedGame("user-1", "refused", asOs)).resolves.toEqual({
+        status: "not_shared",
+      });
+    }
+  });
+
+  it("tells a privacy refusal apart from a game that is no longer shared", async () => {
+    const { os, putGame, asOs } = fakeRecords();
+    putGame(makeGame({ id: "g", shared: true }));
+    os.getData.mockResolvedValueOnce(privacyRefusal("allowPublicData"));
+
+    await expect(loadSharedGame("user-1", "g", asOs)).resolves.toEqual({
+      status: "privacy_blocked",
+    });
+  });
+
+  it("reports a server or network failure as an error", async () => {
+    const { os, putGame, asOs } = fakeRecords();
+    putGame(makeGame({ id: "g", shared: true }));
+    os.getData.mockResolvedValueOnce({
+      success: false,
+      errorCode: "server_error",
+    } as never);
+    await expect(loadSharedGame("user-1", "g", asOs)).resolves.toEqual({
+      status: "error",
+    });
+
+    os.getData.mockRejectedValueOnce(new Error("offline"));
+    await expect(loadSharedGame("user-1", "g", asOs)).resolves.toEqual({
+      status: "error",
+    });
   });
 });
 
@@ -258,15 +350,15 @@ describe("saved games controller", () => {
     expect(record).toBe("user-1");
     expect(address).toBe(gameAddress(saved.id));
     expect(saved.name).toBe("New");
-    expect(options).toEqual({ marker: GAMES_MARKER });
-    expect(GAMES_MARKER.split(":")[0]).toBe("private");
+    expect(options).toEqual({ marker: PRIVATE_GAME_MARKER });
+    expect(PRIVATE_GAME_MARKER.split(":")[0]).toBe("private");
     expect(savedGames.value.map((game) => game.name)).toEqual([
       "New",
       "Youth group",
     ]);
     // The other game's record was never rewritten.
     expect(records.items.get(gameAddress("old"))?.data).toEqual(
-      makeGame({ id: "old" })
+      storedData(makeGame({ id: "old" }))
     );
   });
 
@@ -352,6 +444,167 @@ describe("saved games controller", () => {
     expect(
       savedGamesErrorMessage(new SavedGamesWriteError("persist_failed"), "save")
     ).toBe("Couldn't save that game. Try again.");
+  });
+
+  it("keeps a game private and says why when privacy settings refuse sharing", async () => {
+    const { controller, records, savedGames } = setup();
+    records.putGame(makeGame({ id: "g" }));
+    await controller.syncUser("user-1");
+    records.os.recordData.mockResolvedValueOnce(privacyRefusal("publishData"));
+
+    const error = await controller
+      .setPrivacy("g", true)
+      .catch((reason: unknown) => reason);
+
+    expect(error).toMatchObject({ code: "privacy_blocked" });
+    expect(savedGamesErrorMessage(error, "save")).toBe(
+      "Your account's privacy settings don't allow sharing games."
+    );
+    expect(savedGames.value.map((game) => game.shared)).toEqual([false]);
+    expect(records.items.get(gameAddress("g"))?.markers).toEqual([
+      PRIVATE_GAME_MARKER,
+    ]);
+  });
+
+  it("reports a privacy refusal when an edit would keep a game shared", async () => {
+    const { controller, records, savedGames } = setup();
+    const shared = makeGame({ id: "g", shared: true });
+    records.putGame(shared);
+    await controller.syncUser("user-1");
+    records.os.recordData.mockResolvedValueOnce(privacyRefusal("publishData"));
+
+    await expect(
+      controller.save(draftOf({ ...shared, name: "Renamed" }), "g")
+    ).rejects.toMatchObject({ code: "privacy_blocked" });
+
+    expect(records.os.recordData.mock.calls[0]?.[3]).toEqual({
+      marker: PUBLIC_GAME_MARKER,
+    });
+    expect(savedGames.value.map((game) => game.name)).toEqual(["Youth group"]);
+    expect(records.items.get(gameAddress("g"))?.data).toEqual(
+      storedData(shared)
+    );
+  });
+
+  it("reports any other refused share as a failed save", async () => {
+    const { controller, records } = setup();
+    records.putGame(makeGame({ id: "g" }));
+    await controller.syncUser("user-1");
+    records.os.recordData.mockResolvedValueOnce({
+      success: false,
+      errorCode: "not_authorized",
+    } as never);
+
+    await expect(controller.setPrivacy("g", true)).rejects.toMatchObject({
+      code: "persist_failed",
+    });
+  });
+
+  it("shares one game without opening up any other", async () => {
+    const { controller, records, savedGames } = setup();
+    records.putGame(makeGame({ id: "g", createdAtMs: 2 }));
+    records.putGame(makeGame({ id: "other", createdAtMs: 1 }));
+    await controller.syncUser("user-1");
+
+    await controller.setPrivacy("g", true);
+
+    expect(records.items.get(gameAddress("g"))).toEqual({
+      data: storedData(makeGame({ id: "g", createdAtMs: 2 })),
+      markers: [PUBLIC_GAME_MARKER],
+    });
+    expect(records.items.get(gameAddress("other"))?.markers).toEqual([
+      PRIVATE_GAME_MARKER,
+    ]);
+    expect(savedGames.value.map((game) => [game.id, game.shared])).toEqual([
+      ["g", true],
+      ["other", false],
+    ]);
+    await expect(
+      loadSharedGame("user-1", "g", records.asOs)
+    ).resolves.toMatchObject({ status: "ok" });
+    await expect(
+      loadSharedGame("user-1", "other", records.asOs)
+    ).resolves.toEqual({ status: "not_shared" });
+  });
+
+  it("stops sharing a game, so its link stops working", async () => {
+    const { controller, records, savedGames } = setup();
+    records.putGame(makeGame({ id: "g", shared: true }));
+    await controller.syncUser("user-1");
+
+    await controller.setPrivacy("g", false);
+
+    expect(records.items.get(gameAddress("g"))?.markers).toEqual([
+      PRIVATE_GAME_MARKER,
+    ]);
+    expect(savedGames.value.map((game) => game.shared)).toEqual([false]);
+    await expect(loadSharedGame("user-1", "g", records.asOs)).resolves.toEqual({
+      status: "not_shared",
+    });
+  });
+
+  it("keeps an edited game shared, and its link plays the edit", async () => {
+    const { controller, records, savedGames } = setup();
+    const shared = makeGame({ id: "g", shared: true });
+    records.putGame(shared);
+    await controller.syncUser("user-1");
+
+    await controller.save(
+      draftOf({ ...shared, name: "Renamed", steps: [{ hint: "new" }] }),
+      "g"
+    );
+
+    expect(records.items.get(gameAddress("g"))?.markers).toEqual([
+      PUBLIC_GAME_MARKER,
+    ]);
+    expect(savedGames.value.map((game) => game.shared)).toEqual([true]);
+    const opened = await loadSharedGame("user-1", "g", records.asOs);
+    expect(opened.status === "ok" && opened.game.name).toBe("Renamed");
+    expect(opened.status === "ok" && opened.game.steps).toEqual([
+      { hint: "new" },
+    ]);
+  });
+
+  it("does not share when nobody is signed in", async () => {
+    const { controller, records } = setup(null);
+    records.putGame(makeGame({ id: "g" }));
+
+    await expect(controller.setPrivacy("g", true)).rejects.toMatchObject({
+      code: "signed_out",
+    });
+    expect(records.os.recordData).not.toHaveBeenCalled();
+  });
+
+  it("refuses to share a game that is no longer on the server", async () => {
+    const { controller, records, savedGames } = setup();
+    records.putGame(makeGame({ id: "g" }));
+    await controller.syncUser("user-1");
+    records.items.delete(gameAddress("g"));
+
+    await expect(controller.setPrivacy("g", true)).rejects.toMatchObject({
+      code: "not_loaded",
+    });
+    expect(records.os.recordData).not.toHaveBeenCalled();
+    expect(records.items.has(gameAddress("g"))).toBe(false);
+    expect(savedGames.value.map((game) => game.shared)).toEqual([false]);
+  });
+
+  it("puts the card back when sharing does not stick", async () => {
+    const { controller, records, savedGames } = setup();
+    records.putGame(makeGame({ id: "g" }));
+    await controller.syncUser("user-1");
+    records.os.recordData.mockResolvedValueOnce({
+      success: false,
+      errorCode: "server_error",
+    } as never);
+
+    await expect(controller.setPrivacy("g", true)).rejects.toMatchObject({
+      code: "persist_failed",
+    });
+    expect(savedGames.value.map((game) => game.shared)).toEqual([false]);
+    expect(records.items.get(gameAddress("g"))?.markers).toEqual([
+      PRIVATE_GAME_MARKER,
+    ]);
   });
 
   it("deletes only that game's record", async () => {

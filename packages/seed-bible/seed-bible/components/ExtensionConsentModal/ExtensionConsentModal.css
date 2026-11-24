@@ -475,50 +475,6 @@
   font-size: 0.9375rem;
 }
 
-.sb-extension-permissions-switch {
-  flex: none;
-  position: relative;
-  width: 2.75rem;
-  height: 1.625rem;
-  padding: 0;
-  border: none;
-  border-radius: var(--sb-radius-full);
-  background: color-mix(in srgb, var(--sb-font-color), transparent 70%);
-  cursor: pointer;
-  transition: background var(--sb-duration-fast);
-}
-
-.sb-extension-permissions-switch[aria-checked="true"] {
-  background: color-mix(in srgb, var(--sb-primary-color), #000000 25%);
-}
-
-.sb-extension-permissions-switch:disabled {
-  cursor: progress;
-  opacity: 0.6;
-}
-
-.sb-extension-permissions-switch:focus-visible {
-  outline: 2px solid var(--sb-primary-color);
-  outline-offset: 2px;
-}
-
-.sb-extension-permissions-knob {
-  position: absolute;
-  top: 0.1875rem;
-  inset-inline-start: 0.1875rem;
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: var(--sb-shadow-raised);
-  transition: inset-inline-start var(--sb-duration-fast);
-}
-
-.sb-extension-permissions-switch[aria-checked="true"]
-  .sb-extension-permissions-knob {
-  inset-inline-start: 1.3125rem;
-}
-
 .sb-extension-permissions-uninstall {
   border: none;
   min-height: 2.75rem;

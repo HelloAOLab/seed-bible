@@ -389,33 +389,15 @@
   position: relative;
 }
 
+/* Placed and animated by `Popover`, which opens it into the reader from the
+   sidebar's corner (and mirrors that in RTL). */
 .sb-pane-layout-menu {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  /* The menu is wider than the sidebar it hangs off, so it has to open into the
-     reader. Logical inset, not `left`: in RTL the sidebar is on the right edge
-     and a physical `left: 0` would push the menu off the screen. */
-  inset-inline-start: 0;
   width: 23.25rem;
   padding: 1.25rem;
   border: 1px solid var(--sb-divider-color);
   border-radius: var(--sb-radius-xl);
   background: var(--sb-reader-background);
   box-shadow: var(--sb-shadow-popover);
-  z-index: var(--sb-layer-popover);
-  /* The corner by its button, for the opening animation below. */
-  transform-origin: top left;
-}
-
-.sb-pane-layout-menu:dir(rtl) {
-  transform-origin: top right;
-}
-
-/* Opens like the ⋯ menus (`sb-context-menu-open`, in ContextMenu.css). */
-@media (prefers-reduced-motion: no-preference) {
-  .sb-pane-layout-menu {
-    animation: sb-context-menu-open var(--sb-duration-fast) ease-out;
-  }
 }
 
 .sb-pane-layout-menu-title {

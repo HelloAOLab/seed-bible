@@ -1,0 +1,30 @@
+/* A spinner and its words. A screen that needs it to look different sets
+   these custom properties on it instead of overriding the rules:
+   - `--sb-loading-status-color`: the text and spinner.
+   - `--sb-loading-status-font-size`: the text size.
+   - `--sb-loading-status-padding`: the room around it. An inline line has
+     none, since the list or dropdown it sits in already pads it. */
+.sb-loading-status {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: var(--sb-loading-status-padding, 0);
+  color: var(
+    --sb-loading-status-color,
+    color-mix(in srgb, var(--sb-font-color), transparent 35%)
+  );
+  font-size: var(--sb-loading-status-font-size, var(--sb-font-size-14));
+  line-height: 1.4;
+}
+
+/* A whole screen that is waiting: stacked, centered, and taking the room
+   there is. */
+.sb-loading-status-panel {
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: var(--sb-loading-status-padding, 2rem 1rem);
+  text-align: center;
+}

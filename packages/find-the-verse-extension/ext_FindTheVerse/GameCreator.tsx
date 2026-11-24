@@ -2,7 +2,7 @@ import { useSignal } from "@preact/signals";
 import { useLayoutEffect, useRef } from "preact/hooks";
 import type { SeedBibleState } from "seed-bible";
 import { extractContentText, parseVerseReference } from "seed-bible/managers";
-import { Button, IconButton } from "seed-bible/components";
+import { Button, IconButton, TextInput } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import { formatReference, isKnownBookId } from "./books";
 import { FormField } from "./FormField";
@@ -45,14 +45,15 @@ function GrowingHint({
   }, [value]);
 
   return (
-    <textarea
-      ref={ref}
+    <TextInput
+      multiline
+      inputRef={ref}
       rows={1}
-      className={`ftv-input ftv-hint-box${invalid ? " ftv-input--invalid" : ""}`}
-      aria-invalid={invalid ? "true" : "false"}
+      className="ftv-hint-box"
+      invalid={invalid}
       placeholder={placeholder}
       value={value}
-      onInput={(event) => onChange((event.target as HTMLTextAreaElement).value)}
+      onValueInput={onChange}
     />
   );
 }
@@ -278,21 +279,20 @@ export function GameCreator({
       </p>
 
       <FormField error={nameError} pulse={errorPulse.value}>
-        <div className="ftv-label">
+        <label className="ftv-label" htmlFor="ftv-game-name">
           {t("game-name", { defaultValue: "Game name" })}
           <span aria-hidden="true"> *</span>
-        </div>
-        <input
-          className="ftv-input"
-          type="text"
+        </label>
+        <TextInput
+          id="ftv-game-name"
           required
           aria-required="true"
           placeholder={t("game-name-placeholder", {
             defaultValue: "e.g. Youth group",
           })}
           value={gameName}
-          onInput={(event) => {
-            game.name.value = (event.target as HTMLInputElement).value;
+          onValueInput={(name) => {
+            game.name.value = name;
           }}
         />
       </FormField>
@@ -337,15 +337,15 @@ export function GameCreator({
               </div>
             )}
             <div className="ftv-reference-row">
-              <input
-                className="ftv-input"
-                type="text"
+              <TextInput
+                className="ftv-reference-input"
+                aria-label={t("secret-verse", { defaultValue: "Secret verse" })}
                 placeholder={t("reference-placeholder", {
                   defaultValue: "e.g. John 1:1",
                 })}
                 value={refInput.value}
-                onInput={(e) => {
-                  refInput.value = (e.target as HTMLInputElement).value;
+                onValueInput={(reference) => {
+                  refInput.value = reference;
                   refError.value = "";
                 }}
                 onKeyDown={(e) => {

@@ -1,7 +1,8 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./DiscoverContentPanel.css";
 import type { ComponentChildren } from "preact";
-import { Signal, useSignal, useSignalEffect } from "@preact/signals";
-import { useCallback, useLayoutEffect, useMemo, useRef } from "preact/hooks";
+import { useSignal, useSignalEffect } from "@preact/signals";
+import { useCallback, useMemo, useRef } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import { getDiscoverPanelContent } from "../../managers/BibleReadingManager";
@@ -28,7 +29,6 @@ import {
   ContextMenuWithButton,
   ContextMenuItem,
 } from "../ContextMenu/ContextMenu";
-import { useHorizontalScroll } from "../useHorizontalScroll";
 import { translateTitle } from "../../app/utils";
 import {
   findScrollContainer,
@@ -36,7 +36,7 @@ import {
   readBottomChromeInset,
 } from "../BibleReader/readerViewport";
 import { Button } from "../Button/Button";
-import { IconButton } from "../IconButton/IconButton";
+import { FilterPills } from "../FilterPills/FilterPills";
 
 type FilterKey =
   | "all"
@@ -52,12 +52,6 @@ type FilterKey =
  * windows, even if that means its bottom edge dips under the toolbar.
  */
 const MIN_SIDE_PANEL_HEIGHT_PX = 192;
-
-/**
- * How long after an arrow click the next one steps on from that click's
- * destination. Longer than a browser's smooth scroll, which is about 300–500ms.
- */
-const PENDING_SCROLL_MS = 600;
 
 /**
  * Publishes `--sb-dcp-side-max-height` on the panel: the height of the part of
@@ -197,12 +191,6 @@ function DiscoverCreateMenu(props: { state: SeedBibleState }) {
   );
 }
 
-interface DiscoverFiltersProps {
-  filters: { key: FilterKey; label: string }[];
-  activeFilter: Signal<FilterKey>;
-  displayFilter: FilterKey;
-}
-
 type DiscoverPanelVariant = "full" | "compact";
 
 interface BaseDiscoverContentPanelProps {
@@ -223,242 +211,6 @@ interface FullDiscoverContentPanelProps extends BaseDiscoverContentPanelProps {
 type DiscoverContentPanelProps =
   | CompactDiscoverContentPanelProps
   | FullDiscoverContentPanelProps;
-/**
- * Renders the filters for discover content and provides horizontal
- * scrolling controls when the filters do not fit within the available width.
- *
- * On smaller/coarse-pointer devices, the filters can be scrolled normally.
- * The active filter is controlled through the provided signal.
- */
-function DiscoverFilters({
-  filters,
-  activeFilter,
-  displayFilter,
-}: DiscoverFiltersProps) {
-  const { t } = useI18n();
-  // The pills scroll horizontally with the vertical wheel, and fade at an
-  // edge only while pills are hidden past it (see `updateScrollState`).
-  const filtersRef = useRef<HTMLDivElement>(null);
-  useHorizontalScroll(filtersRef);
-  // Where the arrows' last smooth scroll is headed, and when it was asked for.
-  const pendingScrollRef = useRef<{ left: number; at: number } | null>(null);
-
-  const hasScrollableFilters = useSignal(false);
-  const canScrollStart = useSignal(false);
-  const canScrollEnd = useSignal(false);
-  const filtersKey = filters
-    .map((filter) => `${filter.key}:${filter.label}`)
-    .join("|");
-
-  // The arrows and the edge fades both follow this, so they never disagree
-  // about whether there's more to scroll.
-  const updateScrollState = useCallback((isRtl: boolean) => {
-    const container = filtersRef.current;
-    const wrapper = container?.parentElement;
-    const setScrollable = (start: boolean, end: boolean) => {
-      canScrollStart.value = start;
-      canScrollEnd.value = end;
-      // The fades are physical sides; the start is on the right in RTL.
-      container?.toggleAttribute("data-fade-left", isRtl ? end : start);
-      container?.toggleAttribute("data-fade-right", isRtl ? start : end);
-    };
-    if (!container || !wrapper) {
-      hasScrollableFilters.value = false;
-      setScrollable(false, false);
-      return;
-    }
-    const hasOverflow = container.scrollWidth > wrapper.clientWidth + 1;
-    hasScrollableFilters.value = hasOverflow;
-    if (!hasOverflow) {
-      setScrollable(false, false);
-      return;
-    }
-    const maxScroll = Math.max(
-      0,
-      container.scrollWidth - container.clientWidth
-    );
-    const position = isRtl
-      ? Math.abs(container.scrollLeft)
-      : container.scrollLeft;
-
-    setScrollable(position > 1, position < maxScroll - 1);
-  }, []);
-
-  const scrollFilters = useCallback((direction: -1 | 1) => {
-    if (direction === -1 && !canScrollStart.value) return;
-    if (direction === 1 && !canScrollEnd.value) return;
-
-    const container = filtersRef.current;
-    if (!container) return;
-
-    const pills = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".sb-dcp-chip")
-    );
-
-    if (pills.length === 0) return;
-
-    const isRtl = getComputedStyle(container).direction === "rtl";
-    const containerRect = container.getBoundingClientRect();
-    const current = container.scrollLeft;
-
-    // Pills in `scrollLeft` units, where the visible stretch runs from
-    // `scrollLeft` to `scrollLeft + clientWidth` (RTL's `scrollLeft` is
-    // negative, which this handles too).
-    const spans = pills.map((pill) => {
-      const rect = pill.getBoundingClientRect();
-      const start = rect.left - containerRect.left + current;
-      return { start, end: start + rect.width };
-    });
-
-    // Steps from where an earlier click's smooth scroll is headed rather than
-    // from where it has got to, so quick clicks each move on another pill.
-    const pending = pendingScrollRef.current;
-    const base =
-      pending && performance.now() - pending.at < PENDING_SCROLL_MS
-        ? pending.left
-        : current;
-    const viewStart = base;
-    const viewEnd = base + container.clientWidth;
-
-    // Toward the end is right in LTR, left in RTL. Bring the nearest pill
-    // hidden past that edge fully into view.
-    let next: number | undefined;
-    if ((direction === 1) !== isRtl) {
-      const hidden = spans.filter((span) => span.end > viewEnd + 1);
-      if (hidden.length > 0) {
-        next = base + Math.min(...hidden.map((span) => span.end)) - viewEnd;
-      }
-    } else {
-      const hidden = spans.filter((span) => span.start < viewStart - 1);
-      if (hidden.length > 0) {
-        next =
-          base - (viewStart - Math.max(...hidden.map((span) => span.start)));
-      }
-    }
-    if (next === undefined) return;
-
-    const maxScroll = container.scrollWidth - container.clientWidth;
-    next = isRtl
-      ? Math.min(0, Math.max(-maxScroll, next))
-      : Math.min(maxScroll, Math.max(0, next));
-    pendingScrollRef.current = { left: next, at: performance.now() };
-
-    container.scrollBy({
-      left: next - current,
-      behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
-        ? "auto"
-        : "smooth",
-    });
-  }, []);
-  const showArrows = hasScrollableFilters.value;
-  useLayoutEffect(() => {
-    const container = filtersRef.current;
-    if (!container) return;
-
-    const active = container.querySelector<HTMLElement>(".sb-dcp-chip--active");
-
-    if (active) {
-      const row = container.getBoundingClientRect();
-      const chip = active.getBoundingClientRect();
-
-      if (chip.left < row.left) {
-        container.scrollLeft -= row.left - chip.left;
-      } else if (chip.right > row.right) {
-        container.scrollLeft += chip.right - row.right;
-      }
-    }
-
-    const update = () =>
-      updateScrollState(getComputedStyle(container).direction === "rtl");
-
-    update();
-    container.addEventListener("scroll", update);
-
-    const resizeObserver =
-      typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
-
-    if (resizeObserver) {
-      resizeObserver.observe(container);
-
-      const wrapper = container.parentElement;
-      if (wrapper) resizeObserver.observe(wrapper);
-
-      container
-        .querySelectorAll<HTMLElement>(".sb-dcp-chip")
-        .forEach((chip) => resizeObserver.observe(chip));
-    }
-
-    // Recheck when the viewport resizes. This also supports test
-    // environments where ResizeObserver is unavailable.
-    window.addEventListener("resize", update);
-
-    return () => {
-      container.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-      resizeObserver?.disconnect();
-    };
-  }, [filtersKey, updateScrollState, showArrows]);
-
-  return (
-    <div
-      className={`sb-dcp-filters-wrapper${
-        hasScrollableFilters.value ? " sb-dcp-filters-wrapper--scrollable" : ""
-      }`}
-    >
-      {hasScrollableFilters.value && (
-        <IconButton
-          size="sm"
-          look="tinted"
-          className="sb-dcp-filters-arrow"
-          onClick={() => scrollFilters(-1)}
-          aria-disabled={!canScrollStart.value}
-          icon={
-            <MaterialIcon className="rtl-mirror">chevron_left</MaterialIcon>
-          }
-          label={t("scroll-filters-start", {
-            defaultValue: "Scroll filters toward start",
-          })}
-        />
-      )}
-
-      <div className="sb-dcp-filters" role="tablist" ref={filtersRef}>
-        {filters.map(({ key, label }) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={displayFilter === key}
-            className={`sb-dcp-chip${
-              displayFilter === key ? " sb-dcp-chip--active" : ""
-            }`}
-            onClick={() => {
-              activeFilter.value = key;
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {hasScrollableFilters.value && (
-        <IconButton
-          size="sm"
-          look="tinted"
-          className="sb-dcp-filters-arrow"
-          onClick={() => scrollFilters(1)}
-          aria-disabled={!canScrollEnd.value}
-          icon={
-            <MaterialIcon className="rtl-mirror">chevron_right</MaterialIcon>
-          }
-          label={t("scroll-filters-end", {
-            defaultValue: "Scroll filters toward end",
-          })}
-        />
-      )}
-    </div>
-  );
-}
-
 interface HiddenContentWarningProps {
   handleAccept: () => void;
   handleDismiss: () => void;
@@ -530,15 +282,16 @@ function InlineContentWarning(props: HiddenContentWarningProps) {
             defaultValue: "Turn on",
           })}
         </button>
-        <button
-          type="button"
-          className="sb-dcp-hidden-banner-close"
-          onClick={props.handleDismiss}
-          aria-label={t("dismiss", { defaultValue: "Dismiss" })}
-          title={t("dismiss", { defaultValue: "Dismiss" })}
-        >
-          <MaterialIcon>close</MaterialIcon>
-        </button>
+        <TooltipTrigger>
+          <button
+            type="button"
+            className="sb-dcp-hidden-banner-close"
+            onClick={props.handleDismiss}
+            aria-label={t("dismiss", { defaultValue: "Dismiss" })}
+          >
+            <MaterialIcon>close</MaterialIcon>
+          </button>
+        </TooltipTrigger>
       </div>
     </div>
   );
@@ -863,10 +616,16 @@ export function DiscoverContentPanel(props: DiscoverContentPanelProps) {
         />
       )}
       {showFilters && (
-        <DiscoverFilters
-          filters={filters}
-          activeFilter={activeFilter}
-          displayFilter={f}
+        <FilterPills
+          className="sb-dcp-filters"
+          aria-label={t("discover-filters", {
+            defaultValue: "Filter discovered content",
+          })}
+          options={filters.map(({ key, label }) => ({ value: key, label }))}
+          value={f}
+          onChange={(key) => {
+            activeFilter.value = key;
+          }}
         />
       )}
       <div className="sb-discover-content-panel-scroll">
