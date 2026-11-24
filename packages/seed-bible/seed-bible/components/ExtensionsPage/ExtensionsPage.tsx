@@ -23,6 +23,7 @@ import {
 import { UnusedSensitiveSettingsList } from "../ExtensionSettingsForm/SensitiveSettingsForm";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
+import { SEED_BIBLE_DOCS_URL } from "../../app/publicLinks";
 
 export const EXTENSIONS_PANE_ID = "extensions-pane";
 
@@ -258,19 +259,29 @@ export function ExtensionsPage(props: { state: SeedBibleState }) {
           }}
           placeholder={t("extensions-search")}
         />
-        <Button
-          size="lg"
-          shape="pill"
-          icon="link"
-          className="sb-extensions-page-add-link"
-          onClick={() =>
-            catalog.openAddFromLink((extensionId) =>
-              state.openExtensions(extensionId)
-            )
-          }
-        >
-          {t("extensions-page-add-link")}
-        </Button>
+        <div className="sb-extensions-page-toolbar-actions">
+          <Button
+            size="lg"
+            shape="pill"
+            icon="link"
+            onClick={() =>
+              catalog.openAddFromLink((extensionId) =>
+                state.openExtensions(extensionId)
+              )
+            }
+          >
+            {t("extensions-page-add-link")}
+          </Button>
+          <Button
+            size="lg"
+            shape="pill"
+            icon="menu_book"
+            href={SEED_BIBLE_DOCS_URL}
+            target="_blank"
+          >
+            {t("docs-link-label", { defaultValue: "Docs" })}
+          </Button>
+        </div>
       </div>
 
       <div className="sb-extensions-page-columns">

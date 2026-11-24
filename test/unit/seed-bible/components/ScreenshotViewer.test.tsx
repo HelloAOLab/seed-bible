@@ -270,18 +270,22 @@ describe("ScreenshotViewer", () => {
     await act(async () => {
       await i18n.changeLanguage("ar");
     });
+    const position = (current: number) =>
+      i18n.t("screenshot-position", { current, total: 3 });
     show(1);
     expect(dialog().dir).toBe("rtl");
-    expect(button("Next screenshot").textContent).toContain("chevron_left");
+    expect(button(i18n.t("screenshot-next")).textContent).toContain(
+      "chevron_left"
+    );
     key("ArrowLeft");
-    expect(dialog().textContent).toContain("3 of 3");
+    expect(dialog().textContent).toContain(position(3));
     key("ArrowLeft");
-    expect(dialog().textContent).toContain("3 of 3");
+    expect(dialog().textContent).toContain(position(3));
     key("ArrowRight");
-    expect(dialog().textContent).toContain("2 of 3");
+    expect(dialog().textContent).toContain(position(2));
     swipe(60);
-    expect(dialog().textContent).toContain("3 of 3");
+    expect(dialog().textContent).toContain(position(3));
     swipe(-60);
-    expect(dialog().textContent).toContain("2 of 3");
+    expect(dialog().textContent).toContain(position(2));
   });
 });

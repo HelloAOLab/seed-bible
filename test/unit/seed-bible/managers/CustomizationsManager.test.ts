@@ -621,6 +621,43 @@ describe("CustomizationsManager", () => {
       lightPreset.variables.readerBackground
     );
   });
+  it("resetEditingVariantField() removes the book title font override and inherits from the base preset", async () => {
+    const { manager, theme } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+
+    manager.startEditing(created.id);
+
+    const lightPreset = theme.themes.value.find((t) => t.id === "light")!;
+
+    manager.setEditingVariantFont(
+      variantId,
+      "bookTitleFontFamily",
+      "Roboto, sans-serif"
+    );
+
+    expect(
+      manager.editingCustomization.value!.variants[0]!.themes
+        .bookTitleFontFamily
+    ).toBe("Roboto, sans-serif");
+
+    // Selecting Default should remove the override, not save a special
+    // "default" string or the Light theme's font as an explicit override.
+    manager.resetEditingVariantField(variantId, "bookTitleFontFamily");
+
+    const variant = manager.editingCustomization.value!.variants[0]!;
+
+    expect(variant.themes).not.toHaveProperty("bookTitleFontFamily");
+
+    const resolved = buildBibleThemeFromCustomizationTheme(
+      variant,
+      lightPreset
+    );
+
+    expect(resolved.variables.bookTitleFontFamily).toBe(
+      lightPreset.variables.bookTitleFontFamily
+    );
+  });
 
   it("resetEditingVariantHighlightColor() removes all of a highlight id's overrides, reverting it to inherit from the base preset", async () => {
     const { manager, theme } = createManager();
@@ -1386,6 +1423,34 @@ describe("CustomizationsManager", () => {
     expect(
       manager.customizations.value[0]?.variants[0]?.themes.verseFontFamily
     ).toBe("Playfair Display, serif");
+  });
+  it("buildBibleThemeFromCustomizationTheme() preserves an explicit Newsreader book title font override", async () => {
+    const { manager, theme } = createManager();
+    const created = await manager.create();
+    const variantId = created.variants[0]!.id;
+
+    manager.startEditing(created.id);
+
+    const lightPreset = theme.themes.value.find((t) => t.id === "light")!;
+
+    manager.setEditingVariantFont(
+      variantId,
+      "bookTitleFontFamily",
+      "Newsreader, serif"
+    );
+
+    const variant = manager.editingCustomization.value!.variants[0]!;
+
+    // The actual font-family value must be stored, not a "default" marker.
+    expect(variant.themes.bookTitleFontFamily).toBe("Newsreader, serif");
+
+    const resolved = buildBibleThemeFromCustomizationTheme(
+      variant,
+      lightPreset
+    );
+
+    // The resolved theme must retain the explicitly selected font.
+    expect(resolved.variables.bookTitleFontFamily).toBe("Newsreader, serif");
   });
 
   it("setEditingVariantFont() on one variant never touches a sibling variant's fonts", async () => {

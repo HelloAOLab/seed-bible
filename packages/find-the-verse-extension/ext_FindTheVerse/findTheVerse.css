@@ -489,3 +489,22 @@
     transparent
   );
 }
+
+.ftv-saved-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ftv-shared-label {
+  flex-shrink: 0;
+  background-color: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--sb-radius-full);
+  font-size: var(--sb-font-size-10);
+
+  margin-block: -0.2rem;
+  line-height: 1;
+}

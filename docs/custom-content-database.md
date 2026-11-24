@@ -519,7 +519,8 @@ CREATE TABLE import_jobs (
   session_key_enc BLOB,          -- encrypted; set to NULL as soon as the job stops
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
-  expires_at INTEGER NOT NULL    -- created_at + 7 days
+  expires_at INTEGER NOT NULL,   -- created_at + 7 days
+  active_at INTEGER              -- when it last started a link (spots lost messages)
 );
 
 -- At most one active import per library.
@@ -534,6 +535,7 @@ CREATE TABLE import_items (
   state TEXT NOT NULL,           -- 'candidate' | 'queued' | 'running' | 'done' | 'failed'
   lease_until INTEGER,           -- set while 'running'
   attempts INTEGER NOT NULL DEFAULT 0,
+  retry_at INTEGER,              -- after a passing failure, when it may be tried again
   error TEXT,
   PRIMARY KEY (job_id, item_id)
 );
@@ -541,18 +543,23 @@ CREATE INDEX import_items_by_state ON import_items (job_id, state);
 ```
 
 - **Progress isn't stored as counters; it's counted from the rows:** `SELECT state, COUNT(*) FROM import_items WHERE job_id = ? GROUP BY state`. With nothing to keep in step, the numbers can't drift from what actually happened.
-- **Fair sharing** (proposal: 3 links at a time per import) is one statement. Before working on an item, the consumer moves it from `queued` to `running` with a lease 10 minutes out, but only if fewer than 3 of the job's items hold an unexpired lease:
+- **Fair sharing** (3 links at a time per import) is one statement. An import keeps one queue message per slot, and a message doesn't name a link: it moves the import's next ready link from `queued` to `running` with a lease 10 minutes out, but only if fewer than 3 of the job's items hold an unexpired lease:
 
   ```sql
-  UPDATE import_items SET state = 'running', lease_until = :leaseEnd, attempts = attempts + 1
-  WHERE job_id = :job AND item_id = :item AND state = 'queued'
+  UPDATE import_items SET state = 'running', lease_until = :leaseEnd, attempts = attempts + 1, retry_at = NULL
+  WHERE job_id = :job AND item_id = (
+      SELECT item_id FROM import_items
+      WHERE job_id = :job AND state = 'queued' AND (retry_at IS NULL OR retry_at <= :now)
+      ORDER BY rowid LIMIT 1)
     AND (SELECT COUNT(*) FROM import_items
          WHERE job_id = :job AND state = 'running' AND lease_until > :now) < 3;
   ```
 
-  If no row changed, the message is put back on the queue with a short delay. A consumer that crashes mid-link never releases its slot, but its lease runs out and the slot frees itself. That item is put back to `queued` by the cleanup job (below).
+  When the link is finished, the message sends one fresh message for the import, which takes the link after it. If no row changed because every slot is taken, the message is dropped: the links running will each carry the import on. If the only links left are waiting to be retried, it sends itself again, delayed until the soonest one is due. A consumer that crashes mid-link never releases its slot, but its lease runs out and the slot frees itself. That item is put back to `queued` by the cleanup job (below), which also sends a message to replace the one that died.
 
-- **Pause and cancel** are a `status` change. The consumer reads the job's status before claiming a slot, so messages still waiting on the queue are dropped (cancelled) or put back (paused) instead of being worked on.
+  _Why not one message per link?_ That was the first build: every link was queued up front, and a message that found the slots taken was re-sent 10 seconds later. With hundreds of links waiting, those re-sends used up Cloudflare Queues' free daily limit of 10,000 operations (each message costs about 3) within a single import. Now each link costs one message.
+
+- **Pause and cancel** are a `status` change. The consumer reads the job's status before claiming a slot, so messages still waiting on the queue are dropped instead of being worked on. Resuming sends the import new messages.
 - **Finishing.** After marking an item, the consumer checks whether any `queued` or `running` items remain. If none do, it moves the job to `done` with a conditional `UPDATE … WHERE status = 'running'`, so only one consumer wins. The winner erases the key, writes a short summary to the content record's `importStatus` entry ("1,969 imported, 31 failed"), and leaves the rows for the cleanup job.
 
 **D1's limit to keep in mind:** one database runs its writes one at a time. Each link costs about three small writes (claim, finish, and occasionally the finish check), so even hundreds of links a minute across all owners is light work. If we ever outgrow that, jobs can be spread over several databases by content record.
@@ -576,10 +583,10 @@ A narrower credential would be better than a full session key. CasualOS **record
 
 #### Reliability for large batches
 
-- **Retries.** A message that fails for a passing reason (a timeout, a 429 or 503, a server error) is retried with growing delays (Queue retry with delay). After 5 attempts it goes to a **dead-letter queue**, whose consumer marks the item `failed` with the reason, so nothing disappears silently.
-- **Idempotent.** Each message carries its `itemId`, chosen when the job is created, so a retry overwrites the same item instead of creating a duplicate. A message for an item that's already `done` is acknowledged and skipped.
+- **Retries.** A link that fails for a passing reason (a timeout, a 429 or 503, a server error) goes back to `queued` with a `retry_at` that grows with each attempt (30 seconds, doubling, at most 15 minutes), and the import carries on with other links meanwhile. After 5 attempts it's marked `failed` with the last reason, so nothing disappears silently. Attempts are counted on the item row, not by the queue, because the next message may take a different link. A pause for sign-in gives back the try it was on: the session ended, the link didn't fail. A message that fails unexpectedly is retried by the queue, and after 5 tries goes to a **dead-letter queue**; the links stay on their rows, and the cleanup job restarts the import if nothing else carries it on.
+- **Idempotent.** Each item's id is chosen when the job is created, so a retry overwrites the same item instead of creating a duplicate, and only `queued` items are ever claimed.
 - **Never clobbers the owner.** If the owner edited an item while it was queued (its `updatedAt` in the content record is newer than the job's start), the consumer skips it.
-- **Resumable.** The item rows say exactly what's left, so resuming re-queues only the `queued` items.
+- **Resumable.** The item rows say exactly what's left, so resuming sends new messages that work through only the `queued` items.
 - **Fair.** Each job has its own slots (above), so one owner's 10,000-link import doesn't starve another owner's 20.
 - **Limits.** Cap a single import (proposal: 10,000 links). The unique index allows only one active import per content record.
 
@@ -587,7 +594,8 @@ A narrower credential would be better than a full session key. CasualOS **record
 
 A scheduled worker (a Cron Trigger, proposal: every 15 minutes):
 
-- Puts `running` items whose lease has expired back to `queued` and re-sends their messages.
+- Puts `running` items whose lease has expired back to `queued`, and sends a message for each, replacing the ones that died with their consumers. A dying consumer counts as one of the link's tries: after 5, the link is marked `failed` (`worker_stopped`) instead, since the page itself may be what stops the consumer, and the import finishes if that was its last link.
+- Restarts a running import that has links waiting, none running, and hasn't started one in 20 minutes (`import_jobs.active_at`): its messages were lost, say because the queue refused sends after reaching its daily limit. 20 minutes is longer than the longest wait before a retry, so an import whose links are all waiting to be retried isn't mistaken for one.
 - Expires `running` and `paused_signin` jobs past `expires_at`: sets them to `expired`, erases the key, and writes the summary to `importStatus`. A website lookup `awaiting_pick` never expires; it waits for the owner, who can pick or cancel whenever they come back.
 - Gives up on a website lookup still `listing` a day after it started (it normally takes minutes, so its remaining lookups have nothing running them): those lookups are marked failed and the owner is offered the pages found so far, with the usual note that some may be missing.
 - Deletes finished jobs and their item rows 30 days after they end. The lasting record is the `importStatus` entry and the items themselves, both in the content record.
@@ -676,7 +684,7 @@ Following the repo's testing rules (mock only `OsManager`/CasualOS, test behavio
 - **`linkMetadata`** (worker, mock the CasualOS client's `getLinkPreview`): URL normalization dedupes `youtu.be` / `youtube.com/watch` / tracking params; a preview that fails or returns null yields `needs_review` with an empty title, not a lost item; new items inherit the manifest's `defaultAuthor`.
 - **Discover provider** (mock `os.getData`): manifest says empty → no `getData` call; missing record or failed read → `[]` and other providers still answer; results carry the right `contentType` and `verses`; switching Customization unregisters the provider and its content types.
 - **Worker authentication and key handling** (CasualOS client mocked): a missing or malformed key → 401; `getUserInfo` failing → 401; a key for a user who can't write the content record → 403; the key never appears in a queue message or log line; a `session_expired` during processing pauses the job instead of retrying, and `resume` with a new key carries on from where it stopped; a `server_error` is retried, not treated as a dead session.
-- **Worker queue and D1** (run in the Workers runtime with `@cloudflare/vitest-pool-workers`, which provides a real local D1): a retried message overwrites the same item, no duplicate; after 5 failures the item ends up `failed` with its reason; an item the owner edited after queueing is skipped; cancelling stops further messages; a fourth item can't claim a slot while three leases are live, and can once one expires; many items finishing at once mark the job `done` exactly once and write one summary; progress counts match the item rows; starting a second import for the same library is refused.
+- **Worker queue and D1** (run in the Workers runtime with `@cloudflare/vitest-pool-workers`, which provides a real local D1): a retried message overwrites the same item, no duplicate; after 5 failures the item ends up `failed` with its reason; an item the owner edited after queueing is skipped; cancelling stops further messages; a fourth item can't claim a slot while three leases are live, and can once one expires; an import keeps one message per slot rather than one per link; retries wait longer each time without holding up other links; an import whose messages were lost is restarted by cleanup; many items finishing at once mark the job `done` exactly once and write one summary; progress counts match the item rows; starting a second import for the same library is refused.
 - **Cleanup**: expired leases go back to `queued`; a paused job past `expires_at` becomes `expired` with its key erased; old rows are deleted.
 - **`LibraryWriter`**: concurrent publish requests for overlapping chapters produce the same chapter entries as running them one after another.
 - **Site import (worker)**, with recorded index responses and a small WARC fixture, no live network: pages across index result pages are all collected; the newest capture wins and identical `digest`s collapse; include/exclude and default noise filters apply; URLs already in the library are skipped; a WARC record parses to the right HTML, including non-UTF-8 pages; extraction finds the title, main text and an embedded YouTube iframe; a 503 from the index is retried with backoff, not reported as "no pages"; a site with zero captures returns a clear "not in the archive" result; the job cap is enforced.
