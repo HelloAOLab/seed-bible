@@ -228,7 +228,7 @@ describe("TipTapEditor", () => {
       expect(updatedButtons[1]!.tabIndex).toBe(-1);
     });
 
-    it("Home moves tabIndex=0 to the first button", async () => {
+    it("Home moves tabIndex=0 to the first button and focuses it", async () => {
       await mountEditor();
       const buttons = getToolbarButtons();
       act(() => {
@@ -238,10 +238,13 @@ describe("TipTapEditor", () => {
       fireKeyDown(getToolbar(), "Home");
 
       const updatedButtons = getToolbarButtons();
-      expect(updatedButtons[0]!.tabIndex).toBe(0);
+      expect(document.activeElement).toBe(updatedButtons[0]);
+      expect(updatedButtons.filter((b) => b.tabIndex === 0)).toEqual([
+        updatedButtons[0],
+      ]);
     });
 
-    it("End moves tabIndex=0 to the last button", async () => {
+    it("End moves tabIndex=0 to the last button and focuses it", async () => {
       await mountEditor();
       const buttons = getToolbarButtons();
       act(() => {
@@ -251,15 +254,57 @@ describe("TipTapEditor", () => {
       fireKeyDown(getToolbar(), "End");
 
       const updatedButtons = getToolbarButtons();
-      expect(updatedButtons[updatedButtons.length - 1]!.tabIndex).toBe(0);
+      const last = updatedButtons[updatedButtons.length - 1]!;
+      expect(document.activeElement).toBe(last);
+      expect(updatedButtons.filter((b) => b.tabIndex === 0)).toEqual([last]);
+    });
+
+    it("ArrowUp and ArrowDown are swallowed so they don't reach the page", async () => {
+      await mountEditor();
+      const buttons = getToolbarButtons();
+      act(() => {
+        buttons[0]!.focus();
+      });
+
+      for (const key of ["ArrowUp", "ArrowDown"]) {
+        const event = new KeyboardEvent("keydown", {
+          key,
+          bubbles: true,
+          cancelable: true,
+        });
+        let prevented = false;
+        event.preventDefault = () => {
+          prevented = true;
+        };
+        act(() => {
+          getToolbar().dispatchEvent(event);
+        });
+        expect(prevented).toBe(true);
+      }
+    });
+
+    it("focusing a button via keyboard updates which button owns tabIndex=0", async () => {
+      await mountEditor();
+      const buttons = getToolbarButtons();
+      // Simulate keyboard/AT focus landing directly on Italic (index 1).
+      act(() => {
+        buttons[1]!.focus();
+      });
+
+      const updatedButtons = getToolbarButtons();
+      expect(updatedButtons[1]!.tabIndex).toBe(0);
+      expect(updatedButtons[0]!.tabIndex).toBe(-1);
     });
 
     it("clicking a button updates which button owns tabIndex=0", async () => {
       await mountEditor();
       const buttons = getToolbarButtons();
-      // Click Italic (index 1).
+      // mousedown keeps focus in the editor (preventDefault), so we fire the
+      // click directly — the same path the browser takes after mousedown.
       act(() => {
-        buttons[1]!.focus();
+        buttons[1]!.dispatchEvent(
+          new MouseEvent("click", { bubbles: true, cancelable: true })
+        );
       });
 
       const updatedButtons = getToolbarButtons();

@@ -152,6 +152,12 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
   }
 
   const handleKeyDown = (event: KeyboardEvent) => {
+    // Up/Down have no role in a horizontal toolbar. Swallow them so they don't
+    // bubble to the page-level handler that opens the search panel on ArrowUp.
+    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+      event.preventDefault();
+      return;
+    }
     if (handleHorizontalListKeyNav(event, toolbarRef.current)) {
       // Sync rovingIndex to whichever button just received focus.
       const toolbar = toolbarRef.current;
@@ -164,9 +170,10 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
     }
   };
 
-  // Bubble-phase focus: keeps rovingIndex in sync when a button is clicked or
-  // focused by any means other than arrow keys (e.g. mouse click).
-  const handleFocus = (event: FocusEvent) => {
+  // Keeps rovingIndex in sync when a button gains focus from the keyboard or
+  // assistive tech. onFocusIn (not onFocus) is used so the event bubbles on
+  // plain Preact without relying on preact/compat's synthetic-event mapping.
+  const handleFocusIn = (event: FocusEvent) => {
     const toolbar = toolbarRef.current;
     if (!toolbar || !(event.target instanceof HTMLButtonElement)) return;
     const buttons = Array.from(
@@ -177,10 +184,20 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
   };
 
   // Flat button index used for the roving-tabindex calculation below.
+  // nextTabIndex() increments it; makeSelectHandler() captures the same value
+  // for the click callback — JSX evaluates props left-to-right, so calling
+  // makeSelectHandler() right after nextTabIndex() captures the correct index.
   let buttonIndex = -1;
   const nextTabIndex = () => {
     buttonIndex += 1;
     return buttonIndex === rovingIndex ? 0 : -1;
+  };
+  // Returns a stable-enough callback that moves the Tab stop to this button
+  // when it is clicked (mousedown keeps focus in the editor, so focusin never
+  // fires on a click; onSelect on the button is the only reliable signal).
+  const makeSelectHandler = () => {
+    const i = buttonIndex;
+    return () => setRovingIndex(i);
   };
 
   return (
@@ -190,7 +207,7 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
       role="toolbar"
       aria-label={t("editor-toolbar-label", { defaultValue: "Formatting" })}
       onKeyDown={handleKeyDown}
-      onFocus={handleFocus}
+      onFocusIn={handleFocusIn}
     >
       <div className="sb-editor-toolbar-group">
         <MenuButton
@@ -199,6 +216,7 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
           active={editor.isActive("bold")}
           onClick={() => editor.chain().focus().toggleBold().run()}
           tabIndex={nextTabIndex()}
+          onSelect={makeSelectHandler()}
         />
         <MenuButton
           icon="format_italic"
@@ -206,6 +224,7 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
           active={editor.isActive("italic")}
           onClick={() => editor.chain().focus().toggleItalic().run()}
           tabIndex={nextTabIndex()}
+          onSelect={makeSelectHandler()}
         />
         <MenuButton
           icon="format_underlined"
@@ -213,6 +232,7 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
           active={editor.isActive("underline")}
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           tabIndex={nextTabIndex()}
+          onSelect={makeSelectHandler()}
         />
       </div>
       <div className="sb-editor-toolbar-group">
@@ -222,6 +242,7 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
           active={editor.isActive({ textAlign: "left" })}
           onClick={() => editor.chain().focus().setTextAlign("left").run()}
           tabIndex={nextTabIndex()}
+          onSelect={makeSelectHandler()}
         />
         <MenuButton
           icon="format_align_center"
@@ -229,6 +250,7 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
           active={editor.isActive({ textAlign: "center" })}
           onClick={() => editor.chain().focus().setTextAlign("center").run()}
           tabIndex={nextTabIndex()}
+          onSelect={makeSelectHandler()}
         />
         <MenuButton
           icon="format_align_right"
@@ -236,6 +258,7 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
           active={editor.isActive({ textAlign: "right" })}
           onClick={() => editor.chain().focus().setTextAlign("right").run()}
           tabIndex={nextTabIndex()}
+          onSelect={makeSelectHandler()}
         />
         <MenuButton
           icon="format_align_justify"
@@ -243,6 +266,7 @@ function EditorMenuBar({ editor }: { editor: Editor | null }) {
           active={editor.isActive({ textAlign: "justify" })}
           onClick={() => editor.chain().focus().setTextAlign("justify").run()}
           tabIndex={nextTabIndex()}
+          onSelect={makeSelectHandler()}
         />
       </div>
     </div>
@@ -255,6 +279,8 @@ interface MenuButtonProps {
   active: boolean;
   onClick: () => void;
   tabIndex: number;
+  /** Called on click to move the roving Tab stop to this button. */
+  onSelect: () => void;
 }
 
 function MenuButton({
@@ -263,6 +289,7 @@ function MenuButton({
   active,
   onClick,
   tabIndex,
+  onSelect,
 }: MenuButtonProps) {
   return (
     <TooltipTrigger>
@@ -272,7 +299,12 @@ function MenuButton({
           "sb-editor-toolbar-button" +
           (active ? " sb-editor-toolbar-button--active" : "")
         }
-        onClick={onClick}
+        onClick={() => {
+          // Move the Tab stop to this button so Shift+Tab after a mouse click
+          // returns to the button the user last interacted with.
+          onSelect();
+          onClick();
+        }}
         // Keep focus in the document (the editor) so the command applies to the
         // current selection rather than blurring it away.
         onMouseDown={(event) => event.preventDefault()}
