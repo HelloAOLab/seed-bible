@@ -177,6 +177,12 @@ export function installSharedDocumentMock(state: SeedBibleState): void {
       return document;
     }
   );
+  // Opening a shared session starts its server clock, and the real sample
+  // goes over the same websocket. Never answering leaves the clock unsynced,
+  // so shared audio falls back to device time.
+  vi.spyOn(state.os, "sampleServerTime").mockImplementation(
+    () => new Promise(() => undefined)
+  );
 }
 
 async function ensureI18nInitialized(): Promise<void> {

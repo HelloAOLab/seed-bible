@@ -7,7 +7,9 @@ import {
   getUserAnimalVisual,
   isConnectedUserHost,
   resolveViewingAreaVisibility,
+  sharedAudioClockNow,
   type BibleReadingSession,
+  type SharedAudioPlayback,
   type SessionOptions,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import {
@@ -344,6 +346,7 @@ async function idleTicks(count: number): Promise<void> {
 
 describe("SessionsManager", () => {
   let getSharedDocumentMock: Mock;
+  let sampleServerTimeMock: Mock;
   let mockMap: ReturnType<typeof createMockSharedMap>;
   let mockOptionsMap: ReturnType<typeof createMockSharedMap>;
   let mockDecorationsMap: ReturnType<typeof createMockSharedMap>;
@@ -477,6 +480,11 @@ describe("SessionsManager", () => {
     // trigger a real network connection whose async events fire after the
     // test has finished and crash an unrelated, later test.
     vi.spyOn(os, "clearBranchDeviceCache").mockImplementation(() => undefined);
+    // Same reason: the server clock samples over that websocket. Unanswered,
+    // the clock stays unsynced unless a test answers it.
+    sampleServerTimeMock = vi
+      .spyOn(os, "sampleServerTime")
+      .mockImplementation(() => new Promise(() => undefined));
     mockDataManager = {};
     mockLoginManager = {
       getUserProfile: vi.fn(async (userId: string) => ({
@@ -3819,6 +3827,75 @@ describe("SessionsManager", () => {
       expect(session.leadsSharedAudio.value).toBe(false);
     });
 
+    /** A server whose clock runs `offsetMs` ahead of this device's. */
+    function answerTimeRequests(offsetMs: number) {
+      let jitter = 0;
+      sampleServerTimeMock.mockImplementation(async () => {
+        jitter = (jitter + 3) % 7;
+        const clientRequestTime = Date.now();
+        const latency = 20 + jitter;
+        return {
+          clientRequestTime,
+          serverReceiveTime: clientRequestTime + latency + offsetMs,
+          serverTransmitTime: clientRequestTime + latency + offsetMs,
+          currentTime: clientRequestTime + 2 * latency,
+        };
+      });
+    }
+
+    it("stamps shared audio with the server's time once the clock has synced", async () => {
+      answerTimeRequests(90_000);
+      const session = await manager().createSession();
+      await waitFor(() => session.serverNow() !== null);
+      expect(session.serverNow()! - Date.now()).toBeGreaterThan(89_900);
+      expect(session.serverNow()! - Date.now()).toBeLessThan(90_100);
+
+      const written = session.publishAudioPlayback(playing);
+
+      expect(written).toMatchObject({ clock: "server" });
+      if (!written) throw new Error("expected a shared audio command");
+      expect(written.updatedAtMs - Date.now()).toBeGreaterThan(89_900);
+      expect(mockAudioMap.set).toHaveBeenCalledWith("current", written);
+    });
+
+    it("stamps shared audio with this device's time until the clock has synced", async () => {
+      const session = await manager().createSession();
+      expect(session.serverNow()).toBeNull();
+
+      const before = Date.now();
+      const written = session.publishAudioPlayback(playing);
+
+      if (!written) throw new Error("expected a shared audio command");
+      expect(written.clock).toBeUndefined();
+      expect(written.updatedAtMs).toBeGreaterThanOrEqual(before);
+      expect(written.updatedAtMs).toBeLessThanOrEqual(Date.now());
+    });
+
+    it("reads which clock a command was stamped with", async () => {
+      mockAudioMap = createMockSharedMap({
+        current: {
+          ...playing,
+          updatedAtMs: 50,
+          id: "host:server",
+          clock: "server",
+        },
+      });
+      const session = await manager().joinSession("group-abc");
+
+      expect(session.sharedAudio.value?.clock).toBe("server");
+    });
+
+    it("doesn't ask the server for the time until a session opens", async () => {
+      answerTimeRequests(0);
+      const sessions = manager();
+      expect(sampleServerTimeMock).not.toHaveBeenCalled();
+
+      const session = await sessions.createSession();
+
+      await waitFor(() => session.serverNow() !== null);
+      expect(sampleServerTimeMock).toHaveBeenCalled();
+    });
+
     it("stamps the host's connection on what it publishes", async () => {
       const session = await manager().createSession();
 
@@ -3939,5 +4016,38 @@ describe("SessionsManager", () => {
         verseNumber: 2,
       });
     });
+  });
+});
+
+describe("sharedAudioClockNow", () => {
+  const command: SharedAudioPlayback = {
+    playing: true,
+    bookId: "GEN",
+    chapterNumber: 1,
+    translationId: "BSB",
+    position: 0,
+    unit: "seconds",
+    verseNumber: null,
+    updatedAtMs: 0,
+    id: "a",
+  };
+
+  it("reads a server-stamped command against the server's time", () => {
+    expect(sharedAudioClockNow({ ...command, clock: "server" }, 123_456)).toBe(
+      123_456
+    );
+  });
+
+  it("reads a device-stamped command against this device's clock", () => {
+    const before = Date.now();
+    const now = sharedAudioClockNow(command, 123_456);
+    expect(now).toBeGreaterThanOrEqual(before);
+    expect(now).toBeLessThanOrEqual(Date.now());
+  });
+
+  it("falls back to this device's clock while its own hasn't synced", () => {
+    const before = Date.now();
+    const now = sharedAudioClockNow({ ...command, clock: "server" }, null);
+    expect(now).toBeGreaterThanOrEqual(before);
   });
 });

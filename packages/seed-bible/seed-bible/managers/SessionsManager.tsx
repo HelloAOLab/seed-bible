@@ -29,6 +29,7 @@ import type { AnnotationsManager } from "./AnnotationsManager";
 import type { DiscoverManager } from "./DiscoverManager";
 import type { SettingsManager } from "./SettingsManager";
 import { toShareableUrl } from "../app/publicLinks";
+import { createServerClock, type ServerClock } from "./ServerClock";
 
 export interface ConnectionSessionUserVisual {
   defaultIcon: string;
@@ -302,6 +303,27 @@ export interface SharedAudioPlayback extends SharedAudioPlaybackCommand {
    * Absent from writes made before this was recorded.
    */
   fromConnectionId?: string | null;
+  /**
+   * "server" when `updatedAtMs` is the CasualOS server's time (see
+   * `ServerClock`), so devices whose clocks disagree still agree where the
+   * audio is. Absent when it's the writer's own device time: the writer's
+   * clock hadn't synced yet, or it predates this field.
+   */
+  clock?: "server";
+}
+
+/**
+ * "Now" on the clock `playback` was stamped with, for working out how far it
+ * has played since. Falls back to this device's clock while its server clock
+ * hasn't synced, which is the best guess there is.
+ */
+export function sharedAudioClockNow(
+  playback: SharedAudioPlayback,
+  serverNow: number | null
+): number {
+  return playback.clock === "server" && serverNow !== null
+    ? serverNow
+    : Date.now();
 }
 
 /**
@@ -368,6 +390,7 @@ function parseSharedAudioPlayback(value: unknown): SharedAudioPlayback | null {
     updatedAtMs,
     id,
     fromConnectionId: toStringOrNull(record.fromConnectionId),
+    ...(record.clock === "server" ? { clock: "server" as const } : {}),
   };
 }
 
@@ -391,7 +414,7 @@ function expectedSharedAudioPosition(
 function sharedAudioCommandsMatch(
   current: SharedAudioPlayback | null,
   next: SharedAudioPlaybackCommand,
-  now: number = Date.now()
+  now: number
 ): boolean {
   if (!current) return false;
   if (
@@ -1201,6 +1224,12 @@ export interface BibleReadingSession {
 
   /** Other connected readers who have agreed to listen along. */
   audioListeners: ReadonlySignal<ConnectedSessionUser[]>;
+
+  /**
+   * The CasualOS server's time as this device estimates it, or null until
+   * the estimate has settled. Pass it to `sharedAudioClockNow`.
+   */
+  serverNow: () => number | null;
 }
 
 /**
@@ -1246,7 +1275,8 @@ async function createBibleReadingSession(
   defaultOptions?: SessionOptions,
   startPosition?: SessionStartPosition,
   getAnnotationsManager?: () => AnnotationsManager | undefined,
-  settingsManager?: SettingsManager
+  settingsManager?: SettingsManager,
+  serverClock?: ServerClock
 ): Promise<BibleReadingSession> {
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
@@ -1309,6 +1339,9 @@ async function createBibleReadingSession(
   const sharedAudio = signal<SharedAudioPlayback | null>(
     parseSharedAudioPlayback(audioPlaybackMap.get(AUDIO_PLAYBACK_KEY))
   );
+  // Kept synced for as long as the session is open, so shared audio is
+  // stamped and read in the server's time rather than each device's own.
+  const releaseServerClock = serverClock?.acquire();
   const syncSharedAudio = () => {
     const raw = audioPlaybackMap.get(AUDIO_PLAYBACK_KEY);
     if (raw == null) {
@@ -2009,15 +2042,24 @@ async function createBibleReadingSession(
     // A repeat of the command already stored (the play button settling, or
     // our own player echoing a press) must not mint a new id — peers would
     // treat it as a new seek and jump.
-    if (sharedAudioCommandsMatch(current, command)) {
+    const serverNow = serverClock?.now() ?? null;
+    if (
+      current &&
+      sharedAudioCommandsMatch(
+        current,
+        command,
+        sharedAudioClockNow(current, serverNow)
+      )
+    ) {
       return current;
     }
 
     const next: SharedAudioPlayback = {
       ...command,
-      updatedAtMs: Date.now(),
+      updatedAtMs: serverNow ?? Date.now(),
       id: createSharedAudioId(),
       fromConnectionId: localConnectionId,
+      ...(serverNow !== null ? { clock: "server" as const } : {}),
     };
     try {
       document.transact(() => {
@@ -2603,6 +2645,7 @@ async function createBibleReadingSession(
     audioPlaybackSubscription.unsubscribe();
     audioListenersSubscription.unsubscribe();
     stopPublishingListenAlong();
+    releaseServerClock?.();
     questionAnswersSubscription.unsubscribe();
     comeBackRequestsSubscription.unsubscribe();
     stopSettlingComeBackRequests();
@@ -2938,6 +2981,7 @@ async function createBibleReadingSession(
     dismissAudioOffer,
     leadsSharedAudio,
     audioListeners,
+    serverNow: () => serverClock?.now() ?? null,
     getDecorationOwner: (decorationId: string) =>
       decorationOwners.get(decorationId),
   };
@@ -2978,6 +3022,10 @@ export function createSessionsManager(
   getAnnotationsManager?: () => AnnotationsManager | undefined,
   settingsManager?: SettingsManager
 ): SessionsManager {
+  // One for every session this reader is in: it samples only while a
+  // session is open (see `createBibleReadingSession`).
+  const serverClock = createServerClock(() => os.sampleServerTime());
+
   const createSession = async (startPosition?: SessionStartPosition) => {
     const id = createSessionId();
     // Claim host at create time so the settings UI knows which connected
@@ -2995,7 +3043,8 @@ export function createSessionsManager(
       { ...DEFAULT_SESSION_OPTIONS, hostUserId },
       startPosition,
       getAnnotationsManager,
-      settingsManager
+      settingsManager,
+      serverClock
     );
   };
 
@@ -3015,7 +3064,8 @@ export function createSessionsManager(
       undefined,
       startPosition,
       getAnnotationsManager,
-      settingsManager
+      settingsManager,
+      serverClock
     );
   };
 

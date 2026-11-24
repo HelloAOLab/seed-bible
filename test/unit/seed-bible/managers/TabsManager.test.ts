@@ -287,6 +287,7 @@ function createMockSharedSession(
     isListeningOnOwn: signal(false),
     listenOnOwn: vi.fn(),
     rejoinGroupAudio: vi.fn(),
+    serverNow: () => null,
   } as BibleReadingSession;
 }
 

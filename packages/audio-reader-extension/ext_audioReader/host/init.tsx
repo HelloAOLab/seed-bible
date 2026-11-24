@@ -10,6 +10,12 @@ import { registerExtension, type SeedBibleState } from "seed-bible";
 import { LANG_META } from "seed-bible/i18n";
 import { openShareAudioPrompt } from "./ShareAudioPrompt";
 import {
+  DRIFT_SEEK_SECONDS,
+  DRIFT_START_NUDGE_SECONDS,
+  decideDriftCorrection,
+  initialDriftState,
+} from "./driftCorrection";
+import {
   bibleLanguageToUiLocale,
   extractContentText,
   scriptureStepVerses,
@@ -20,6 +26,7 @@ import {
   type BibleReadingSession,
   type BibleReadingState,
   isSessionHost,
+  sharedAudioClockNow,
   type ChapterVerse,
   type QuickToolContext,
   type SharedAudioPlayback,
@@ -144,11 +151,8 @@ const sharedDisposeWrapped = new WeakSet<BibleReadingSession>();
  */
 const sharedLeadersSeen = new Set<string>();
 
-/**
- * How far a follower may be from the host, in seconds, before it seeks.
- * Closer than this, seeking just stutters playback that is already together.
- */
-const SHARED_AUDIO_SEEK_THRESHOLD_SECONDS = 1.5;
+/** The speed nudging of the one audio element (see `correctFollowerDrift`). */
+let driftState = initialDriftState();
 
 /** A skewed clock must not fling a late joiner hours past the end of the chapter. */
 const SHARED_AUDIO_MAX_CATCH_UP_SECONDS = 60 * 60;
@@ -628,6 +632,7 @@ function ensureAudio(): HTMLAudioElement | null {
       }
       session.position.value = el.currentTime;
       highlightVerseForTime(session, el.currentTime);
+      correctFollowerDrift(session, el);
     };
     el.ondurationchange = () => {
       const session = heardRecording();
@@ -680,6 +685,79 @@ function makeAudible(session: ListeningSession): void {
   const start = session.position.peek();
   resumeAt = start > 0 ? start : null;
   el.currentTime = start;
+  resetDriftCorrection();
+}
+
+/** Back to normal speed, with no nudge or jump in progress. */
+function resetDriftCorrection(): void {
+  driftState = initialDriftState();
+  if (audioEl && audioEl.playbackRate !== 1) audioEl.playbackRate = 1;
+}
+
+/**
+ * Keeps a listener's recording on the host's timeline while it plays:
+ * nudges the speed for a small gap and jumps for a big one (see
+ * `decideDriftCorrection`). Runs on each `timeupdate`. Anything else (the
+ * host's own audio, a listener on their own, another narration, a pause) is
+ * left at normal speed.
+ */
+function correctFollowerDrift(
+  session: RecordingSession,
+  el: HTMLAudioElement
+): void {
+  const shared = session.sharedSession;
+  const playback = shared?.sharedAudio.peek() ?? null;
+  const following =
+    !!shared &&
+    !!playback &&
+    playback.playing &&
+    session.isPlaying.peek() &&
+    !el.seeking &&
+    session.clipStart.peek() === 0 &&
+    sharedAudioFollowed.has(shared.id) &&
+    !sharedAudioOnOwn.has(shared.id) &&
+    !shared.isListeningOnOwn.peek() &&
+    !shared.leadsSharedAudio.peek() &&
+    sharedAudioApplied.get(shared.id) === playback.id &&
+    playback.bookId === session.bookId &&
+    playback.chapterNumber === session.chapterNumber &&
+    narrationsShareClock(
+      session.readingState.translationId.peek(),
+      session,
+      playback
+    );
+  if (!following || !shared || !playback) {
+    if (driftState.rate !== 1 || el.playbackRate !== 1) resetDriftCorrection();
+    return;
+  }
+
+  const expected = sharedPlaybackTarget(playback, shared);
+  const duration = session.duration.peek();
+  // The host's recording has finished; this one finishing too is all that's left.
+  if (duration !== null && expected >= duration) return;
+
+  const nowMs = performance.now();
+  const decision = decideDriftCorrection(
+    el.currentTime - expected,
+    driftState,
+    nowMs
+  );
+  if (decision.kind === "rate") {
+    el.playbackRate = decision.rate;
+    driftState = {
+      ...driftState,
+      rate: decision.rate,
+      lastRateChangeMs: nowMs,
+    };
+  } else if (decision.kind === "seek") {
+    driftState = { ...driftState, lastSeekMs: nowMs };
+    applyingSharedAudio = true;
+    try {
+      session.controller.seek(expected);
+    } finally {
+      applyingSharedAudio = false;
+    }
+  }
 }
 
 /**
@@ -788,6 +866,7 @@ function endSession(
           audioEl.currentTime = 0;
           audioEl.muted = false;
         }
+        resetDriftCorrection();
         resumeAt = null;
       } else {
         textToSpeech?.stop();
@@ -966,6 +1045,7 @@ function publishSharedAudio(
     sharedAudioFollowed.has(shared.id) &&
     !shared.leadsSharedAudio.peek()
   ) {
+    if (audible === session) resetDriftCorrection();
     shared.listenOnOwn();
   }
 }
@@ -999,10 +1079,14 @@ function publishSharedFrom(session: ListeningSession): void {
   publishSharedAudio(session, sharedAudioCommand(session));
 }
 
-function sharedPlaybackTarget(playback: SharedAudioPlayback): number {
+function sharedPlaybackTarget(
+  playback: SharedAudioPlayback,
+  shared: BibleReadingSession | null
+): number {
   if (!playback.playing || playback.unit !== "seconds")
     return playback.position;
-  const elapsedSeconds = (Date.now() - playback.updatedAtMs) / 1000;
+  const now = sharedAudioClockNow(playback, shared?.serverNow() ?? null);
+  const elapsedSeconds = (now - playback.updatedAtMs) / 1000;
   if (!Number.isFinite(elapsedSeconds) || elapsedSeconds <= 0) {
     return playback.position;
   }
@@ -1012,13 +1096,22 @@ function sharedPlaybackTarget(playback: SharedAudioPlayback): number {
   );
 }
 
+/**
+ * Whether a follower is near enough the host's place to leave alone when a
+ * command arrives. While playing, `correctFollowerDrift` closes small gaps
+ * by nudging the speed, so only a big one is jumped. While paused a jump
+ * can't be heard, so it lines up exactly.
+ */
 function sharedPositionClose(
-  unit: SharedAudioPlayback["unit"],
+  playback: SharedAudioPlayback,
   current: number,
   target: number
 ): boolean {
-  if (unit === "verses") return current === target;
-  return Math.abs(current - target) < SHARED_AUDIO_SEEK_THRESHOLD_SECONDS;
+  if (playback.unit === "verses") return current === target;
+  const threshold = playback.playing
+    ? DRIFT_SEEK_SECONDS
+    : DRIFT_START_NUDGE_SECONDS;
+  return Math.abs(current - target) < threshold;
 }
 
 /**
@@ -1096,10 +1189,13 @@ function seekFollowerTo(
     return;
   }
 
-  const target = sharedPlaybackTarget(playback);
+  const target = sharedPlaybackTarget(
+    playback,
+    listening.sharedSession ?? sharedSessionFor(listening.readingState)
+  );
   if (
     listening.controller.unit === playback.unit &&
-    !sharedPositionClose(playback.unit, listening.position.peek(), target)
+    !sharedPositionClose(playback, listening.position.peek(), target)
   ) {
     listening.controller.seek(target);
   }

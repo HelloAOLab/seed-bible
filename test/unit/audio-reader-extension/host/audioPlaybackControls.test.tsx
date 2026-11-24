@@ -515,9 +515,11 @@ describe("audio-reader playback controls", () => {
       {
         shareChoice = host ? "everyone" : null,
         listeningAlong = !host,
+        serverNow = () => null,
       }: {
         shareChoice?: SharedAudioShareChoice | null;
         listeningAlong?: boolean;
+        serverNow?: () => number | null;
       } = {}
     ) {
       const readingState = getReadingState(state);
@@ -591,6 +593,7 @@ describe("audio-reader playback controls", () => {
         leadsSharedAudio: computed(
           () => sharedAudio.value?.fromConnectionId === "self"
         ),
+        serverNow,
       } as unknown as BibleReadingSession;
       const tab = state.tabs.tabs.peek()[0]!;
       tab.sharedSession = session;
@@ -710,6 +713,8 @@ describe("audio-reader playback controls", () => {
         isListeningAlong: signal(true),
         isListeningOnOwn: signal(false),
         leadsSharedAudio: signal(false),
+        audioShareChoice: signal(null),
+        serverNow: () => null,
         dispose: vi.fn(),
         options: signal({
           allowedNavigators: null,
@@ -1177,6 +1182,122 @@ describe("audio-reader playback controls", () => {
 
       expect(state.audioPlayback.controllerFor(readingState)).toBeNull();
       expect(stopListeningAlong).not.toHaveBeenCalled();
+    });
+
+    describe("keeping in step on the server's clock", () => {
+      const SERVER_START = 5_000_000;
+
+      /**
+       * A listener following a host who started playing at 10s, with the
+       * server's clock at `serverTime.now`. The listener's device clock is
+       * nowhere near the server's, which must not matter.
+       */
+      async function followHost() {
+        const serverTime = { now: SERVER_START };
+        const session = attachSession(false, {
+          serverNow: () => serverTime.now,
+        });
+        reportDuration(120);
+        session.sharedAudio.value = hostCommand(session.readingState, {
+          position: 10,
+          updatedAtMs: SERVER_START,
+          clock: "server",
+        });
+        // Lined up, playing, and the start settled.
+        await vi.waitFor(() => {
+          playAt(10);
+          expect(
+            state.audioPlayback.controllerFor(session.readingState)?.isPlaying
+              .value
+          ).toBe(true);
+        });
+        expect(audio.current!.playbackRate).toBe(1);
+        return { ...session, serverTime };
+      }
+
+      it("starts a listener at the host's place on the server's clock, not their own", async () => {
+        const serverTime = { now: SERVER_START + 20_000 };
+        const { sharedAudio, readingState } = attachSession(false, {
+          serverNow: () => serverTime.now,
+        });
+        reportDuration(120);
+
+        sharedAudio.value = hostCommand(readingState, {
+          position: 10,
+          updatedAtMs: SERVER_START,
+          clock: "server",
+        });
+
+        // Twenty seconds of server time since the host was at 10s.
+        expect(audio.current!.currentTime).toBeCloseTo(30, 0);
+      });
+
+      it("speeds up a listener who has fallen a little behind, then back to normal", async () => {
+        const { serverTime } = await followHost();
+
+        serverTime.now += 2000;
+        playAt(11.7);
+        expect(audio.current!.playbackRate).toBeGreaterThan(1);
+        expect(audio.current!.playbackRate).toBeLessThanOrEqual(1.05);
+
+        playAt(11.995);
+        expect(audio.current!.playbackRate).toBe(1);
+      });
+
+      it("slows down a listener who has got a little ahead", async () => {
+        const { serverTime } = await followHost();
+
+        serverTime.now += 2000;
+        playAt(12.4);
+
+        expect(audio.current!.playbackRate).toBeLessThan(1);
+        expect(audio.current!.playbackRate).toBeGreaterThanOrEqual(0.95);
+      });
+
+      it("jumps a listener who is too far behind to catch up smoothly", async () => {
+        const { serverTime } = await followHost();
+
+        // Stalled while buffering: the host is five seconds on.
+        serverTime.now += 5000;
+        playAt(10.2);
+
+        expect(audio.current!.currentTime).toBeCloseTo(15, 0);
+        expect(audio.current!.playbackRate).toBe(1);
+      });
+
+      it("drops back to normal speed when the listener goes off on their own", async () => {
+        const { serverTime, readingState, isListeningOnOwn } =
+          await followHost();
+        serverTime.now += 2000;
+        playAt(11.7);
+        expect(audio.current!.playbackRate).not.toBe(1);
+
+        state.audioPlayback.controllerFor(readingState)!.seek(40);
+
+        expect(isListeningOnOwn.value).toBe(true);
+        expect(audio.current!.playbackRate).toBe(1);
+        serverTime.now += 2000;
+        playAt(40.5);
+        expect(audio.current!.playbackRate).toBe(1);
+        expect(audio.current!.currentTime).toBeCloseTo(40.5, 1);
+      });
+
+      it("leaves a listener on another translation to follow by verse", async () => {
+        const { serverTime, sharedAudio, readingState } = await followHost();
+        sharedAudio.value = hostCommand(readingState, {
+          id: "other-narration",
+          translationId: "OTHER",
+          position: 10,
+          verseNumber: 2,
+          updatedAtMs: serverTime.now,
+          clock: "server",
+        });
+
+        serverTime.now += 2000;
+        playAt(5.2);
+
+        expect(audio.current!.playbackRate).toBe(1);
+      });
     });
 
     it("follows a different translation by verse instead of by seconds", async () => {
