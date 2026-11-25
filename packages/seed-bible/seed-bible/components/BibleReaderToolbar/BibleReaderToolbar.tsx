@@ -4221,6 +4221,21 @@ function VerseToolbarFrame(props: {
   children: ComponentChildren;
 }) {
   const { mobile, floating, sheet, onEscape, children } = props;
+
+  // On desktop the toolbar is a plain floating div — nothing moves focus into
+  // it automatically. Focus the first button on mount so keyboard users (and
+  // mouse users whose focus landed outside) don't get stranded in the sidebar.
+  useLayoutEffect(() => {
+    if (mobile) return;
+    const toolbar = (floating.ref as { current: HTMLElement | null }).current;
+    if (!toolbar) return;
+    toolbar
+      .querySelector<HTMLElement>(
+        "button:not([disabled]), [href], input:not([disabled])"
+      )
+      ?.focus({ preventScroll: true });
+  }, []);
+
   if (mobile) return <BottomSheet {...sheet}>{children}</BottomSheet>;
 
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -4254,7 +4269,9 @@ function VerseToolbarFrame(props: {
 
     // Focus trap: Tab and Shift+Tab cycle within the toolbar so the
     // background Bible text and app chrome are unreachable by keyboard
-    // while the toolbar is open.
+    // while the toolbar is open. Always intercept Tab so the browser's
+    // natural DOM order (which may lead outside the floating toolbar) is
+    // never used while the toolbar is open.
     if (event.key === "Tab") {
       const toolbar = event.currentTarget as HTMLElement;
       const focusable = Array.from(
@@ -4263,18 +4280,18 @@ function VerseToolbarFrame(props: {
         )
       );
       if (focusable.length === 0) return;
-      const first = focusable[0]!;
-      const last = focusable[focusable.length - 1]!;
+      event.preventDefault();
+      const currentIndex = focusable.indexOf(
+        document.activeElement as HTMLElement
+      );
       if (event.shiftKey) {
-        if (document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        }
+        const prevIndex =
+          currentIndex <= 0 ? focusable.length - 1 : currentIndex - 1;
+        focusable[prevIndex]!.focus();
       } else {
-        if (document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
+        const nextIndex =
+          currentIndex >= focusable.length - 1 ? 0 : currentIndex + 1;
+        focusable[nextIndex]!.focus();
       }
     }
   };
