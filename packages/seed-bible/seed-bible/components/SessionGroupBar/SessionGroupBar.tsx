@@ -10,10 +10,11 @@ const MAX_LEADER_AVATARS = 2;
 
 /**
  * Row along the top of the reader toolbar, shown to someone who may not move
- * the group and has wandered off to another chapter: says where the group is
- * and takes them back there. When a host has asked them to come back, it
- * grows into that request until they answer it. Renders nothing while they're
- * with the group.
+ * the group and has broken off from it: says where the group is and takes
+ * them back there. It stays until they press rejoin, even if they find their
+ * own way back to the group's chapter. When a host has asked them to come
+ * back, it grows into that request until they answer it. Renders nothing
+ * while they're with the group.
  */
 export function SessionGroupBar({
   session,

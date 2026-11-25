@@ -1603,6 +1603,135 @@ describe("SessionsManager", () => {
       await waitFor(() => session.readingState.chapterNumber.value === 4);
     });
 
+    it("stops carrying a follower along with the hosts once they've broken off", async () => {
+      const session = await joinAsFollower();
+      wanderOff(session);
+
+      moveGroup(4);
+      await idleTicks(5);
+
+      expect(session.groupPosition.value.chapterNumber).toBe(4);
+      expect(session.readingState.bookId.value).toBe("ROM");
+      expect(session.readingState.chapterNumber.value).toBe(8);
+      expect(session.isAwayFromGroup.value).toBe(true);
+    });
+
+    it("keeps a follower apart from the group after they find their own way back, until they rejoin", async () => {
+      const session = await joinAsFollower();
+      wanderOff(session);
+      session.readingState.bookId.value = "JHN";
+      session.readingState.chapterNumber.value = 3;
+
+      expect(session.isAwayFromGroup.value).toBe(true);
+
+      moveGroup(4);
+      await idleTicks(5);
+      expect(session.readingState.chapterNumber.value).toBe(3);
+      expect(session.isAwayFromGroup.value).toBe(true);
+
+      await session.rejoinGroup();
+      expect(session.readingState.chapterNumber.value).toBe(4);
+      expect(session.isAwayFromGroup.value).toBe(false);
+
+      // Back with the group, the hosts' moves carry them along again.
+      moveGroup(5);
+      await waitFor(() => session.readingState.chapterNumber.value === 5);
+      expect(session.isAwayFromGroup.value).toBe(false);
+    });
+
+    it("takes a follower who broke off back to the group when they're allowed to move it, instead of moving the group to them", async () => {
+      const session = await joinAsFollower();
+      wanderOff(session);
+      moveGroup(5);
+
+      session.updateOptions({ allowedNavigators: null });
+      await waitFor(() => session.options.value.allowedNavigators === null);
+      await waitFor(() => session.readingState.chapterNumber.value === 5);
+      await flushPublishDebounce();
+
+      expect(session.readingState.bookId.value).toBe("JHN");
+      expect(mockMap.get("bookId")).toBe("JHN");
+      expect(mockMap.get("chapterNumber")).toBe(5);
+      expect(mockMap.set).not.toHaveBeenCalledWith("bookId", "ROM");
+      expect(session.isAwayFromGroup.value).toBe(false);
+    });
+
+    it("tells everyone that a follower has broken off, even once they're back on the group's chapter", async () => {
+      const session = await joinAsFollower();
+      wanderOff(session);
+      session.readingState.bookId.value = "JHN";
+      session.readingState.chapterNumber.value = 3;
+      await flushPublishDebounce();
+
+      expect(mockReadingPositionsMap.get(os.connectionId)).toMatchObject({
+        bookId: "JHN",
+        chapterNumber: 3,
+        leftGroup: true,
+      });
+
+      await session.rejoinGroup();
+      await flushPublishDebounce();
+
+      expect(mockReadingPositionsMap.get(os.connectionId)).not.toHaveProperty(
+        "leftGroup"
+      );
+    });
+
+    it("shows hosts a follower who broke off as away while they're on the group's chapter", async () => {
+      const session = await joinAsHostWithFollowers();
+
+      mockReadingPositionsMap.set("conn-ana", {
+        bookId: "JHN",
+        chapterNumber: 3,
+        leftGroup: true,
+      });
+      mockReadingPositionsMap.emitChange();
+
+      expect(awayIds(session)).toEqual(["conn-ana", "conn-priya"]);
+    });
+
+    it("shows a host's request to a follower who broke off and is back on the group's chapter", async () => {
+      const session = await joinAsFollower();
+      wanderOff(session);
+      session.readingState.bookId.value = "JHN";
+      session.readingState.chapterNumber.value = 3;
+
+      receiveComeBackRequest("request-1");
+
+      expect(session.incomingComeBackRequest.value?.id).toBe("request-1");
+    });
+
+    it("still gives a follower who broke off the translation the group switches to", async () => {
+      const session = await joinAsFollower();
+      session.updateOptions({ shareTranslation: true });
+      await waitFor(() => session.options.value.shareTranslation === true);
+      wanderOff(session);
+
+      mockMap.set("translationId", "WEB");
+      mockMap.set("chapterNumber", 4);
+      mockMap.emitChange();
+
+      await waitFor(() => session.readingState.translationId.value === "WEB");
+      expect(session.readingState.bookId.value).toBe("ROM");
+      expect(session.readingState.chapterNumber.value).toBe(8);
+      expect(session.isAwayFromGroup.value).toBe(true);
+    });
+
+    it("still carries a follower along after one of the hosts' chapters fails to load", async () => {
+      const session = await joinAsFollower();
+      const select = session.readingState
+        .selectTranslationAndChapter as unknown as Mock;
+      select.mockRejectedValueOnce(new Error("offline"));
+
+      moveGroup(4);
+      await waitFor(() => session.readingState.error.value === "offline");
+      expect(session.readingState.chapterNumber.value).toBe(3);
+
+      moveGroup(5);
+      await waitFor(() => session.readingState.chapterNumber.value === 5);
+      expect(session.isAwayFromGroup.value).toBe(false);
+    });
+
     it("doesn't report a follower as away while the hosts' new chapter is still loading", async () => {
       const session = await joinAsFollower();
       const load = deferred<void>();
