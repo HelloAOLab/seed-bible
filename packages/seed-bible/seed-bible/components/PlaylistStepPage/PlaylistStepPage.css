@@ -22,6 +22,13 @@
   overflow-wrap: anywhere;
 }
 
+/* On a phone the reader's header floats over the top of the page, and the
+   title's own margin is what clears it. A step with no title to show keeps
+   that gap, or a video starts underneath the header. */
+.sb-playlist-step-page.is-untitled {
+  padding-top: 2rem;
+}
+
 .sb-playlist-step-page-body .sb-play-playlist-content-html {
   font-size: 1em;
   line-height: inherit;
