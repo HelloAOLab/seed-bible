@@ -723,6 +723,7 @@
   cursor: pointer;
   font-weight: 400;
   flex: 1;
+  min-width: 0;
 }
 
 /* The whole row selects the tab, not just its text: this layer stretches the
@@ -827,6 +828,9 @@
   }
 }
 
+/* The label stays on one line, and a long title ends in an ellipsis rather
+   than wrapping: the ⋯ takes its width back on hover, and a wrap there would
+   make the row taller and push the rows below. */
 .sb-tab-main-content {
   display: flex;
   align-items: center;
@@ -834,10 +838,16 @@
   gap: 0.375rem;
   min-height: 1.375rem;
   font-size: var(--sb-font-size-14);
+  white-space: nowrap;
 }
 
 .sb-tab-main-title {
   font-weight: 600;
+}
+
+.sb-tab-main-content > .sb-tab-main-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sb-tab-row-selected .sb-tab-main-title {
