@@ -1200,6 +1200,12 @@
   &:has(+ .sb-bible-reader-discover-panel) {
     padding-bottom: 5rem;
   }
+
+  /* A playing step's long title can make the reader wider than this
+     column, which would otherwise sit at the start of it. */
+  &:has(> .sb-playlist-step-page) {
+    margin-inline: auto;
+  }
 }
 
 /* Flex-wrap's line-fitting check runs on each item's *unshrunk* flex basis,

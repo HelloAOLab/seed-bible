@@ -4,8 +4,10 @@
   gap: 6px;
 }
 
-/* Wraps the iframe/video so it can grow to fill the enlarged modal (see the
- * `:has(.sb-play-playlist-content-embed)` override in BibleReader.css). */
+/* Wraps the iframe/video so it can grow to fill the enlarged dialog (see the
+ * `.sb-dialog:has(.sb-play-playlist-content-embed)` rule below). A playlist
+ * step page in the reader sizes the player itself instead, see
+ * PlaylistStepPage.css. */
 .sb-play-playlist-content-embed {
   flex: 1;
   display: flex;
