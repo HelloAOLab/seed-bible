@@ -144,6 +144,11 @@ const SEED_BIBLE_ICON_INTRO_MS = 900;
 // hydration render always matches the server's markup.
 let seedBibleIconIntroStartedAt: number | null = null;
 
+/** Forgets that the intro has played, as a fresh page load would. */
+export function resetSeedBibleIconIntroForTests(): void {
+  seedBibleIconIntroStartedAt = null;
+}
+
 /**
  * How far into the intro a newly mounted animated icon should start, or null
  * if the intro has already finished and the icon should render static.

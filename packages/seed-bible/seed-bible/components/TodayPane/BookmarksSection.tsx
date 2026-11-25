@@ -3,10 +3,8 @@ import {
   useSignalEffect,
   type ReadonlySignal,
 } from "@preact/signals";
-import { useRef } from "preact/hooks";
 import { TitledSection } from "./TitledSection";
 import { BookmarkGlyph, BookmarkLabel } from "../Bookmarks/Bookmarks";
-import { useHorizontalScroll } from "../useHorizontalScroll";
 import { useI18n } from "../../i18n";
 import type { TranslationBooks } from "../../managers/FreeUseBibleAPI";
 import type {
@@ -105,12 +103,8 @@ export const BookmarksSection = (props: {
 };
 
 function BookmarkStrip(props: { chips: BookmarkData[] }) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  // Unconditional per Rules of Hooks; a no-op on desktop (no overflow).
-  useHorizontalScroll(containerRef);
-
   return (
-    <div className={"sb-today-bookmarks-section-container"} ref={containerRef}>
+    <div className={"sb-today-bookmarks-section-container"}>
       {props.chips.map(({ key, ...rest }) => (
         <Bookmark key={key} {...rest} />
       ))}

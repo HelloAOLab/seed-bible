@@ -10,6 +10,23 @@
 
 ### 🗑️ Removed
 
+## v1.20.0 — 2026-11-25
+
+### ✨ Added
+
+- Add a hidden Developer page in Settings, unlocked by tapping the version number seven times, with a "Show shared components" tool that outlines Seed Bible's shared controls on screen. ([#2258](https://github.com/HelloAOLab/seed-bible/pull/2258))
+  - Not available in the iPhone and Android apps.
+
+### 🔧 Changed
+
+- Show Today bookmarks in two columns on phones instead of one sideways-scrolling row; a phone turned sideways wraps them onto rows like desktop. ([#2246](https://github.com/HelloAOLab/seed-bible/pull/2246))
+- Start new shared sessions with "Only host can navigate" turned on, so participants follow the host until the host turns it off in session settings. ([#2250](https://github.com/HelloAOLab/seed-bible/pull/2250))
+
+### 🐛 Fixed
+
+- Fix playlist video steps shrinking to a narrow player, or sitting off to the left, in the desktop reader. ([#2251](https://github.com/HelloAOLab/seed-bible/pull/2251))
+- Fix the top of an untitled playlist video step hiding under the header on phones. ([#2251](https://github.com/HelloAOLab/seed-bible/pull/2251))
+
 ## v1.19.0 — 2026-11-23
 
 ### ✨ Added
