@@ -144,6 +144,15 @@ export interface RecordSyncManager<T> {
   syncErrors: ReadonlySignal<Map<string, string>>;
 
   /**
+   * Goes up each time signed-out records are added to the account that just
+   * signed in, or discarded; a sign-in with nothing written signed out leaves
+   * it alone. Adoption waits on the "add to your account?"
+   * prompt, so it finishes well after `userId` changes; a screen listing
+   * everything the user has reloads on this to show the combined list.
+   */
+  adoptions: ReadonlySignal<number>;
+
+  /**
    * Runs a sync pass.
    *
    * Resolves when the pass finishes. Does nothing while offline, while signed
@@ -215,6 +224,7 @@ export function createRecordSyncManager<T>(
   const pendingRows = signal<StoredRecord<T>[]>([]);
   const conflicts = signal<RecordConflict<T>[]>([]);
   const syncErrors = signal<Map<string, string>>(new Map());
+  const adoptions = signal(0);
 
   const pendingCount = computed(() => pendingRows.value.length);
 
@@ -864,12 +874,18 @@ export function createRecordSyncManager<T>(
           // With no base, the domain's merge is a union in which the
           // signed-out edit wins over the account's unsent one per item.
           const { merge } = domain;
-          await store.adoptLocalRows(
+          const adopted = await store.adoptLocalRows(
             owner,
             merge ? (account, local) => merge(null, local, account) : undefined
           );
+          // Still called with nothing to adopt, to clear leftover signed-out
+          // tombstones; but with no row moved, no list has anything to reread.
+          if (adopted.length > 0) {
+            adoptions.value++;
+          }
         } else if (choice === "discard") {
           await store.discardLocalRows();
+          adoptions.value++;
         }
       } catch (error) {
         console.warn("Failed to adopt locally-saved records.", error);
@@ -893,6 +909,7 @@ export function createRecordSyncManager<T>(
     pendingCountForCollection,
     conflicts,
     syncErrors,
+    adoptions: computed(() => adoptions.value),
     sync,
     resolveConflict,
     notifyLocalChange,

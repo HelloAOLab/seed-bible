@@ -8,8 +8,10 @@
      labels ("All") still make a comfortable target.
    - `--sb-filter-pills-background` / `--sb-filter-pills-hover-background`:
      an unselected pill, at rest and under the pointer.
-   - `--sb-filter-pills-selected-background` / `--sb-filter-pills-selected-color`:
-     the selected pill.
+   - `--sb-filter-pills-color`: an unselected pill's text.
+   - `--sb-filter-pills-border`: the pills' border, none by default.
+   - `--sb-filter-pills-selected-background` / `--sb-filter-pills-selected-color`
+     / `--sb-filter-pills-selected-border-color`: the selected pill.
    The defaults are fallbacks where each is used rather than declared here, so
    a value set on a parent reaches the pills. */
 .sb-filter-pills {
@@ -66,13 +68,13 @@
   flex-shrink: 0;
   min-width: var(--sb-filter-pills-min-width, 0);
   padding: var(--sb-filter-pills-padding, 0.4375rem 0.875rem);
-  border: none;
+  border: var(--sb-filter-pills-border, none);
   border-radius: var(--sb-radius-full);
   background: var(
     --sb-filter-pills-background,
     color-mix(in srgb, var(--sb-font-color), transparent 90%)
   );
-  color: var(--sb-font-color);
+  color: var(--sb-filter-pills-color, var(--sb-font-color));
   font-family: inherit;
   font-size: var(--sb-filter-pills-font-size, var(--sb-font-size-13));
   font-weight: 500;
@@ -102,6 +104,7 @@
     --sb-filter-pills-selected-background,
     var(--sb-primary-color)
   );
+  border-color: var(--sb-filter-pills-selected-border-color, currentColor);
   color: var(--sb-filter-pills-selected-color, var(--sb-primary-font-color));
   font-weight: 600;
 }

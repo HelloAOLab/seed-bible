@@ -11,6 +11,7 @@ import {
 import {
   createInMemoryRecordStore,
   LOCAL_OWNER,
+  pendingRow,
   syncedRow,
   type OfflineRecordStore,
 } from "@packages/seed-bible/seed-bible/managers/OfflineRecordStore";
@@ -360,7 +361,7 @@ describe("AnnotationsManager", () => {
       // One sweep of the record, not one request per chapter.
       expect(listAllData).toHaveBeenCalledTimes(1);
       expect(listAllData).toHaveBeenCalledWith("user-1");
-      expect(annotations.map((a) => a.id)).toEqual(["ann-1", "ann-2"]);
+      expect(annotations.items.map((a) => a.id)).toEqual(["ann-1", "ann-2"]);
     });
 
     // The same record holds highlights, bookmarks and playlists. Only the
@@ -381,7 +382,7 @@ describe("AnnotationsManager", () => {
 
       const annotations = await manager.listAllAnnotations();
 
-      expect(annotations.map((a) => a.id)).toEqual(["ann-1"]);
+      expect(annotations.items.map((a) => a.id)).toEqual(["ann-1"]);
     });
 
     it("returns nothing when signed out", async () => {
@@ -389,7 +390,10 @@ describe("AnnotationsManager", () => {
       const listAllData = vi.spyOn(os, "listAllData");
       const manager = createManager();
 
-      expect(await manager.listAllAnnotations()).toEqual([]);
+      expect(await manager.listAllAnnotations()).toEqual({
+        items: [],
+        complete: true,
+      });
       expect(listAllData).not.toHaveBeenCalled();
     });
   });
@@ -2415,6 +2419,97 @@ describe("AnnotationsManager", () => {
       await manager.sync.refreshPendingCount();
 
       expect(manager.sync.pendingCount.value).toBe(2);
+    });
+
+    describe("listAllAnnotations()", () => {
+      it("lists the notes saved on this device while signed out", async () => {
+        login.userId.value = null;
+        const listAllData = vi.spyOn(os, "listAllData");
+        const manager = createOfflineManager();
+        await manager.saveAnnotation(
+          createCommentAnnotation({ id: "local-1" })
+        );
+
+        const result = await manager.listAllAnnotations();
+
+        expect(result.items.map((a) => a.id)).toEqual(["local-1"]);
+        expect(result.complete).toBe(true);
+        expect(listAllData).not.toHaveBeenCalled();
+      });
+
+      it("lists this device's notes offline instead of failing", async () => {
+        const listAllData = vi.spyOn(os, "listAllData");
+        const manager = createOfflineManager();
+        goOffline();
+        await manager.saveAnnotation(createCommentAnnotation({ id: "mine" }));
+
+        const result = await manager.listAllAnnotations();
+
+        expect(result.items.map((a) => a.id)).toEqual(["mine"]);
+        expect(result.complete).toBe(false);
+        expect(listAllData).not.toHaveBeenCalled();
+      });
+
+      it("falls back to this device's notes when the server can't be read", async () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        vi.spyOn(os, "listAllData").mockRejectedValue(new Error("network"));
+        const kept = createCommentAnnotation({ id: "kept" });
+        await store.put(annotationSyncedRow("user-1", kept));
+        const manager = createOfflineManager();
+
+        const result = await manager.listAllAnnotations();
+
+        expect(result.items).toEqual([kept]);
+        expect(result.complete).toBe(false);
+        warn.mockRestore();
+      });
+
+      it("shows unsent edits and deletions over the server's copy", async () => {
+        const original = createCommentAnnotation({ id: "edited" });
+        const removed = createCommentAnnotation({ id: "removed" });
+        const untouched = createCommentAnnotation({ id: "untouched" });
+        vi.spyOn(os, "listAllData").mockResolvedValue({
+          success: true,
+          items: [original, removed, untouched].map((a) => ({
+            address: a.id,
+            data: a,
+          })),
+        });
+        const manager = createOfflineManager();
+        await settle();
+        const edited = {
+          ...original,
+          data: { ...original.data, html: "<p>Changed offline</p>" },
+        };
+        await store.put(
+          pendingRow({
+            owner: "user-1",
+            address: edited.id,
+            collection: annotationCollection("GEN", 1),
+            payload: edited,
+            base: original,
+          })
+        );
+        await store.put(
+          pendingRow({
+            owner: "user-1",
+            address: removed.id,
+            collection: annotationCollection("GEN", 1),
+            payload: null,
+            base: removed,
+          })
+        );
+
+        const result = await manager.listAllAnnotations();
+
+        expect(result.complete).toBe(true);
+        expect(
+          Object.fromEntries(result.items.map((a) => [a.id, a.data.html]))
+        ).toEqual({
+          edited: "<p>Changed offline</p>",
+          untouched: "<p>Hello</p>",
+        });
+      });
     });
 
     describe("when the local database can no longer be opened", () => {

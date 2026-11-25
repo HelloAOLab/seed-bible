@@ -3,6 +3,7 @@ import {
   createInMemoryRecordStore,
   createIndexedDbRecordStore,
   LOCAL_OWNER,
+  mergeServerWithLocal,
   migrateV1Listed,
   migrateV1Row,
   syncedRow,
@@ -201,6 +202,28 @@ describe("createInMemoryRecordStore<Annotation>()", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]?.deleted).toBe(true);
     expect(rows[0]?.payload).toBeNull();
+  });
+
+  it("lists every collection an owner has, tombstones included", async () => {
+    const store = createInMemoryRecordStore<Annotation>();
+    await store.put(pendingRow("user-1", makeAnnotation("ann-1")));
+    await store.put(
+      pendingRow(
+        "user-1",
+        makeAnnotation("ann-2", { bookId: "EXO", chapterNumber: 3 }),
+        { collection: "EXO/3" }
+      )
+    );
+    await store.put(tombstone("user-1", "ann-3"));
+    await store.put(pendingRow("user-2", makeAnnotation("theirs")));
+
+    const rows = await store.listForOwner("user-1");
+
+    expect(rows.map((r) => r.address).sort()).toEqual([
+      "ann-1",
+      "ann-2",
+      "ann-3",
+    ]);
   });
 
   it("removes a row entirely on delete, leaving no tombstone", async () => {
@@ -550,5 +573,63 @@ describe("createInMemoryRecordStore<Annotation>()", () => {
 
       expect(await store.get("user-2", "theirs")).not.toBeNull();
     });
+  });
+});
+
+describe("mergeServerWithLocal()", () => {
+  const record = (annotation: Annotation) => ({
+    address: annotation.id,
+    payload: annotation,
+  });
+
+  it("uses this device's live rows when there is no server list", () => {
+    const kept = makeAnnotation("kept");
+
+    const merged = mergeServerWithLocal(null, [
+      synced("user-1", kept),
+      tombstone("user-1", "gone"),
+    ]);
+
+    expect(merged).toEqual([record(kept)]);
+  });
+
+  it("puts an unsent edit in place of the server's copy", () => {
+    const server = makeAnnotation("ann-1");
+    const edited = makeAnnotation("ann-1", {
+      data: { type: "comment", html: "<p>edited</p>" },
+    });
+
+    const merged = mergeServerWithLocal(
+      [record(server)],
+      [pendingRow("user-1", edited, { base: server })]
+    );
+
+    expect(merged).toEqual([record(edited)]);
+  });
+
+  it("hides a record with an unsent deletion", () => {
+    const merged = mergeServerWithLocal(
+      [record(makeAnnotation("ann-1"))],
+      [tombstone("user-1", "ann-1")]
+    );
+
+    expect(merged).toEqual([]);
+  });
+
+  it("adds an unsent record the server doesn't have yet", () => {
+    const created = makeAnnotation("new");
+
+    const merged = mergeServerWithLocal([], [pendingRow("user-1", created)]);
+
+    expect(merged).toEqual([record(created)]);
+  });
+
+  it("leaves out a synced row the server no longer lists", () => {
+    const merged = mergeServerWithLocal(
+      [],
+      [synced("user-1", makeAnnotation("deleted-elsewhere"))]
+    );
+
+    expect(merged).toEqual([]);
   });
 });

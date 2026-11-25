@@ -78,6 +78,35 @@
   --sb-filter-pills-selected-background: var(--sb-content-accent);
 }
 
+/* A section a signed-out reader can't have yet: dashed and padlocked, so it
+   reads as "needs an account" rather than as an empty section. The padding
+   gives back what the border takes, so it is the size of the other pills. */
+.sb-content-filter-locked {
+  --sb-filter-pills-border: 1.5px dashed
+    color-mix(in srgb, var(--sb-font-color), transparent 70%);
+  --sb-filter-pills-padding: calc(7px - 1.5px) calc(16px - 1.5px);
+  --sb-filter-pills-background: transparent;
+  --sb-filter-pills-color: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    transparent 20%
+  );
+  --sb-filter-pills-selected-background: transparent;
+  --sb-filter-pills-selected-color: var(--sb-content-accent);
+  --sb-filter-pills-selected-border-color: var(--sb-content-accent);
+}
+
+.sb-content-filter-locked-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sb-content-filter-locked-label > span.material-symbols-outlined {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  font-size: 1rem;
+}
+
 /* ---------------------------------------------------------------- sections */
 
 .sb-content-section {
@@ -399,6 +428,80 @@
 
 .sb-content-retry {
   margin-top: 12px;
+}
+
+/* "Bookmarks need an account" with its sign-in button, centered in the room
+   under the chips. */
+.sb-content-needs-account {
+  --sb-empty-state-padding: 3.5rem var(--sb-content-padding);
+  --sb-empty-state-color: var(--sb-content-muted);
+  --sb-empty-state-font-size: var(--sb-font-size-15);
+  --sb-empty-state-title-font-size: var(--sb-font-size-20);
+}
+
+.sb-content-needs-account .sb-empty-state-action {
+  margin-top: 8px;
+}
+
+/* ------------------------------------------------------------ device card */
+
+/* Where the listed content lives: the icon, what it means, and (signed out)
+   a way to sign in, which drops under the text when the row is narrow. */
+.sb-content-device-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 16px;
+  margin: 8px var(--sb-content-padding);
+  padding: 16px 18px;
+  border-radius: var(--sb-radius-xl);
+  background: color-mix(in srgb, var(--sb-content-accent), transparent 88%);
+}
+
+.sb-content-device-card-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--sb-radius-full);
+  background: var(--sb-reader-background);
+  color: var(--sb-content-accent);
+}
+
+.sb-content-device-card-icon .material-symbols-outlined {
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- icon size, not a text size */
+  font-size: 1.25rem;
+}
+
+.sb-content-device-card-text {
+  flex: 999 1 17.5rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sb-content-device-card-title,
+.sb-content-device-card-message {
+  margin: 0;
+}
+
+.sb-content-device-card-title {
+  font-size: var(--sb-font-size-15);
+  font-weight: 700;
+}
+
+.sb-content-device-card-message {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  font-size: var(--sb-font-size-14);
+  line-height: 1.45;
+}
+
+.sb-button.sb-content-sign-in,
+.sb-button.sb-content-device-retry {
+  flex: none;
 }
 
 /* -------------------------------------------------------------- your images */

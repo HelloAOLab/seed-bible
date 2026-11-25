@@ -477,6 +477,15 @@ export function ProfilePane(props: ProfileScreenProps) {
               {t("log-in", { defaultValue: "Log in" })}
             </Button>
           </div>
+
+          <ProfileRow
+            icon="edit"
+            title={t("your-content", { defaultValue: "Your content" })}
+            subtitle={t("your-content-subtitle-signed-out", {
+              defaultValue: "Highlights and notes saved on this device",
+            })}
+            onClick={props.onOpenYourContent}
+          />
         </div>
       </div>
     );

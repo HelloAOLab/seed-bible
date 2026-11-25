@@ -1,12 +1,15 @@
 import {
   computed,
+  effect,
   signal,
+  untracked,
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
 import type { Annotation, AnnotationsManager } from "./AnnotationsManager";
 import type { HighlightsManager, StoredHighlight } from "./HighlightsManager";
 import type { BibleDataManager } from "./BibleDataManager";
+import type { LoginManager } from "./LoginManager";
 import { extractContentText } from "./ChapterText";
 
 /**
@@ -43,6 +46,16 @@ export const CONTENT_FILTERS: ContentFilter[] = [
 /** How far a load has got. `error` keeps a failure from looking like "empty". */
 export type ContentLoadStatus = "idle" | "loading" | "ready" | "error";
 
+/**
+ * Where the loaded annotations and highlights came from. `device` means only
+ * what this device holds: always so signed out, and for a signed-in user who
+ * is offline, in which case the lists may be incomplete until the connection
+ * comes back. `device-unreachable` is the same device-only list for a
+ * signed-in user who is online but whose account couldn't be read, which
+ * reconnecting won't fix.
+ */
+export type ContentSource = "account" | "device" | "device-unreachable";
+
 export interface YourContentManager {
   /** Free-text filter typed into the search box. */
   query: Signal<string>;
@@ -53,6 +66,8 @@ export interface YourContentManager {
   /** Every highlight the user has, in record order. */
   highlights: ReadonlySignal<StoredHighlight[]>;
   status: ReadonlySignal<ContentLoadStatus>;
+  /** Where the last successful load's lists came from. */
+  source: ReadonlySignal<ContentSource>;
   /**
    * Loads annotations and highlights. Safe to call on every open: an
    * in-flight load is shared, and a completed one is reused unless `force`
@@ -96,7 +111,9 @@ export interface YourContentManager {
    * are taken from cache without a request. Results land as each batch
    * arrives rather than all at the end, so a search sharpens as it goes.
    * Idempotent: a second call while the first is running joins it, and a
-   * completed run is not repeated.
+   * highlight already read is not read again. Once it has been called, every
+   * later load reads the highlights it brought that have no wording yet, so
+   * one that arrives after the first search is found by its words too.
    */
   readHighlightVerseText: () => Promise<void>;
   /** True while {@link readHighlightVerseText} is still working. */
@@ -108,6 +125,8 @@ export interface YourContentManager {
 export interface CreateYourContentManagerOptions {
   annotations: AnnotationsManager;
   highlights: HighlightsManager;
+  /** Followed so a change of account never leaves the last one's content up. */
+  login: Pick<LoginManager, "userId">;
   /**
    * Reads the chapters that highlighted verses live in. Only the two chapter
    * accessors are used, so tests can pass a narrower object.
@@ -143,6 +162,7 @@ export function createYourContentManager(
     annotations: annotationsManager,
     highlights: highlightsManager,
     bibleData,
+    login,
   } = options;
 
   const query = signal("");
@@ -150,10 +170,23 @@ export function createYourContentManager(
   const annotations = signal<Annotation[]>([]);
   const highlights = signal<StoredHighlight[]>([]);
   const status = signal<ContentLoadStatus>("idle");
+  const source = signal<ContentSource>("account");
 
   let inFlight: Promise<void> | null = null;
+  /**
+   * Bumped whenever the account changes. Work started under an earlier
+   * account checks it before publishing, so a response for the account that
+   * just signed out can never land on the screen of the one now using it.
+   */
+  let generation = 0;
+
+  const isOnline = () =>
+    annotationsManager.sync.isOnline.value &&
+    highlightsManager.sync.isOnline.value;
 
   const runLoad = async (quiet: boolean): Promise<void> => {
+    const startedIn = generation;
+    const startedOnline = untracked(isOnline);
     if (!quiet) {
       status.value = "loading";
     }
@@ -164,11 +197,26 @@ export function createYourContentManager(
         annotationsManager.listAllAnnotations(),
         highlightsManager.listAllHighlights(),
       ]);
+      if (startedIn !== generation) {
+        return;
+      }
 
-      annotations.value = sortAnnotationsByRecency(loadedAnnotations);
-      highlights.value = loadedHighlights;
+      annotations.value = sortAnnotationsByRecency(loadedAnnotations.items);
+      highlights.value = loadedHighlights.items;
+      readNewHighlightVerseText();
+      const complete = loadedAnnotations.complete && loadedHighlights.complete;
+      source.value = !login.userId.peek()
+        ? "device"
+        : complete
+          ? "account"
+          : startedOnline
+            ? "device-unreachable"
+            : "device";
       status.value = "ready";
     } catch (error) {
+      if (startedIn !== generation) {
+        return;
+      }
       console.error("Error loading your content:", error);
       if (!quiet) {
         status.value = "error";
@@ -184,10 +232,14 @@ export function createYourContentManager(
     if (alreadyLoaded && !loadOptions?.force) {
       return Promise.resolve();
     }
-    inFlight = runLoad(alreadyLoaded).finally(() => {
-      inFlight = null;
+    const run = runLoad(alreadyLoaded).finally(() => {
+      // A change of account may already have replaced this run.
+      if (inFlight === run) {
+        inFlight = null;
+      }
     });
-    return inFlight;
+    inFlight = run;
+    return run;
   };
 
   const removeAnnotation = (annotationId: string) => {
@@ -209,7 +261,17 @@ export function createYourContentManager(
   const verseText = signal<ReadonlyMap<string, string>>(new Map());
   const isReadingVerseText = signal(false);
   let verseTextRun: Promise<void> | null = null;
-  let verseTextDone = false;
+  /** Set by the first search; until then nobody needs the wording. */
+  let verseTextWanted = false;
+  /** A load replaced the highlights while a read was going over the old ones. */
+  let verseTextStale = false;
+
+  const highlightsWithoutText = (): StoredHighlight[] => {
+    const read = verseText.peek();
+    return highlights
+      .peek()
+      .filter((stored) => !read.has(highlightKey(stored)));
+  };
 
   /**
    * The verse numbers a highlight covers. A range is stored as its ends, and
@@ -262,11 +324,14 @@ export function createYourContentManager(
     return texts;
   };
 
-  const runVerseTextRead = async (): Promise<void> => {
+  const runVerseTextRead = async (
+    startedIn: number,
+    toRead: readonly StoredHighlight[]
+  ): Promise<void> => {
     // One entry per distinct chapter: several highlights in one chapter cost
     // one read between them.
     const groups = new Map<string, StoredHighlight[]>();
-    for (const stored of highlights.value) {
+    for (const stored of toRead) {
       const key = `${stored.translationId}/${stored.bookId}/${stored.chapterNumber}`;
       const group = groups.get(key);
       if (group) {
@@ -289,6 +354,9 @@ export function createYourContentManager(
           })
         )
       );
+      if (startedIn !== generation) {
+        return;
+      }
       const merged = new Map(verseText.value);
       for (const result of results) {
         for (const [key, text] of result) {
@@ -302,23 +370,104 @@ export function createYourContentManager(
   };
 
   const readHighlightVerseText = (): Promise<void> => {
-    if (verseTextDone) {
-      return Promise.resolve();
-    }
+    verseTextWanted = true;
     if (verseTextRun) {
       return verseTextRun;
     }
+    if (highlightsWithoutText().length === 0) {
+      return Promise.resolve();
+    }
     isReadingVerseText.value = true;
-    verseTextRun = runVerseTextRead()
-      .then(() => {
-        verseTextDone = true;
-      })
-      .finally(() => {
+    const startedIn = generation;
+    const run: Promise<void> = (async () => {
+      do {
+        verseTextStale = false;
+        await runVerseTextRead(startedIn, highlightsWithoutText());
+      } while (verseTextStale && startedIn === generation);
+    })().finally(() => {
+      if (verseTextRun === run) {
         verseTextRun = null;
         isReadingVerseText.value = false;
-      });
-    return verseTextRun;
+      }
+    });
+    verseTextRun = run;
+    return run;
   };
+
+  const readNewHighlightVerseText = () => {
+    if (!verseTextWanted) {
+      return;
+    }
+    if (verseTextRun) {
+      verseTextStale = true;
+      return;
+    }
+    void readHighlightVerseText();
+  };
+
+  // A different account (or none) has different content. Whatever the last
+  // one had is cleared at once rather than left up behind a quiet refresh —
+  // a refresh that failed would otherwise keep the previous account's notes
+  // on screen for whoever is using the device now.
+  let lastOwner = login.userId.peek();
+  effect(() => {
+    const owner = login.userId.value;
+    if (owner === lastOwner) {
+      return;
+    }
+    lastOwner = owner;
+    generation++;
+    inFlight = null;
+    annotations.value = [];
+    highlights.value = [];
+    verseText.value = new Map();
+    verseTextStale = false;
+    verseTextRun = null;
+    isReadingVerseText.value = false;
+    // Back to idle so the reload shows as loading, not as an empty list.
+    const wasOpened = status.peek() !== "idle";
+    status.value = "idle";
+    if (wasOpened) {
+      void load();
+    }
+  });
+
+  // Signed-out content joins the account only once the "add to your
+  // account?" prompt is answered, after the reload above has already run.
+  const adoptionCount = () =>
+    annotationsManager.sync.adoptions.value +
+    highlightsManager.sync.adoptions.value;
+  let seenAdoptions = untracked(adoptionCount);
+  effect(() => {
+    const count = adoptionCount();
+    if (count === seenAdoptions) {
+      return;
+    }
+    seenAdoptions = count;
+    if (status.peek() === "idle") {
+      return;
+    }
+    // A load already running may have read the device before the adoption
+    // moved anything, so wait it out and read again.
+    void (inFlight ?? Promise.resolve()).then(() => load({ force: true }));
+  });
+
+  // Offline, a signed-in user is shown only what this device holds and told
+  // to reconnect for the rest, so reconnecting has to bring the rest in.
+  let wasOnline = untracked(isOnline);
+  effect(() => {
+    const online = isOnline();
+    const cameBack = online && !wasOnline;
+    wasOnline = online;
+    if (!cameBack || status.peek() === "idle" || !login.userId.peek()) {
+      return;
+    }
+    // Where the content came from is judged only after a running load
+    // settles: one started offline may still be about to report "device".
+    void (inFlight ?? Promise.resolve()).then(() =>
+      source.peek() !== "account" ? load({ force: true }) : undefined
+    );
+  });
 
   const removeHighlight = (highlight: StoredHighlight) => {
     const key = highlightKey(highlight);
@@ -346,6 +495,7 @@ export function createYourContentManager(
     annotations: computed(() => annotations.value),
     highlights: computed(() => highlights.value),
     status: computed(() => status.value),
+    source: computed(() => source.value),
     load,
     removeAnnotation,
     restoreAnnotation,

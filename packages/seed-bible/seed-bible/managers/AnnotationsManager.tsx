@@ -28,8 +28,11 @@ import {
   canonicalize,
   createIndexedDbRecordStore,
   LOCAL_OWNER,
+  mergeServerWithLocal,
   pendingRow,
+  type ListAllResult,
   type OfflineRecordStore,
+  type ServerRecord,
   type StoredRecord,
   type SyncDomain,
 } from "./OfflineRecordStore";
@@ -62,11 +65,14 @@ export interface AnnotationsManager {
   ) => Promise<Annotation[]>;
 
   /**
-   * Every annotation in the effective record, across the whole Bible, for the
-   * "Your content" screen. Unsorted — callers order it themselves. Empty when
-   * the user is signed out and no record override is in play.
+   * Every annotation the user has, across the whole Bible, for the "Your
+   * content" screen. Unsorted — callers order it themselves.
+   *
+   * Reads this device's copy first, so signed-out notes are included and a
+   * signed-in user who is offline still gets what the device holds (with
+   * `complete: false`). With a record override, reads only that record.
    */
-  listAllAnnotations: () => Promise<Annotation[]>;
+  listAllAnnotations: () => Promise<ListAllResult<Annotation>>;
 
   /**
    * Every annotation in one user's record, across the whole Bible. Notes are
@@ -852,14 +858,68 @@ export function createAnnotationsManager(
    * annotation; anything else stored there (highlights, bookmarks, playlists)
    * simply fails the schema and is skipped.
    *
-   * Returns an empty list for a signed-out user, who has no record to read.
+   * The device's rows come first and the server's list is folded over them
+   * (see `mergeServerWithLocal`), so a signed-out user sees the notes this
+   * device holds, and a signed-in user who can't reach the server sees them
+   * too instead of an error. A record override isn't this device's notes, so
+   * it reads that record alone, as before.
    */
-  const listAllAnnotations = async (): Promise<Annotation[]> => {
-    const recordName = resolveRecordName();
-    if (!recordName) {
-      return [];
+  const listAllAnnotations = async (): Promise<ListAllResult<Annotation>> => {
+    if (recordOverride) {
+      return {
+        items: await listAllAnnotationsForUser(recordOverride),
+        complete: true,
+      };
     }
-    return listAllAnnotationsForUser(recordName);
+
+    const userId = login.userId.peek();
+    if (!store) {
+      return {
+        items: userId ? await listAllAnnotationsForUser(userId) : [],
+        complete: true,
+      };
+    }
+
+    if (!userId) {
+      const local = await store.listForOwner(LOCAL_OWNER);
+      return {
+        items: mergeServerWithLocal(null, local).map((r) => r.payload),
+        complete: true,
+      };
+    }
+
+    // A dead local database (see `saveAnnotation`) shouldn't hide the
+    // account's notes when the server can still list them.
+    let localError: unknown = null;
+    const local = await store.listForOwner(userId).catch((error: unknown) => {
+      localError = error;
+      return [];
+    });
+
+    let server: ServerRecord<Annotation>[] | null = null;
+    if (sync.isOnline.peek()) {
+      try {
+        server = (await listAllAnnotationsForUser(userId)).map((a) => ({
+          address: a.id,
+          payload: a,
+        }));
+      } catch (error) {
+        console.warn("Failed to list annotations from the server.", error);
+      }
+    }
+    if (localError) {
+      if (!server) {
+        throw localError;
+      }
+      console.warn(
+        "Failed to read annotations stored on this device.",
+        localError
+      );
+    }
+    return {
+      items: mergeServerWithLocal(server, local).map((r) => r.payload),
+      complete: server !== null,
+    };
   };
 
   const listAllAnnotationsForUser = async (

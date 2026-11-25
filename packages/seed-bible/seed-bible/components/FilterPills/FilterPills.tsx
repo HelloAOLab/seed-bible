@@ -16,6 +16,12 @@ const PENDING_SCROLL_MS = 600;
 export interface FilterPillOption<V extends string> {
   value: V;
   label: ComponentChildren;
+  /**
+   * Extra classes on this one pill, for a surface that styles some pills
+   * apart from the rest by setting the `--sb-filter-pills-*` properties on
+   * them.
+   */
+  className?: string;
 }
 
 export interface FilterPillsProps<V extends string> {
@@ -290,9 +296,13 @@ export function FilterPills<V extends string>({
               role="tab"
               aria-selected={selected}
               tabIndex={option.value === focusable ? 0 : -1}
-              className={`sb-filter-pill${
-                selected ? " sb-filter-pill--selected" : ""
-              }`}
+              className={[
+                "sb-filter-pill",
+                selected ? "sb-filter-pill--selected" : "",
+                option.className,
+              ]
+                .filter(Boolean)
+                .join(" ")}
               onClick={() => onChange(option.value)}
             >
               {option.label}

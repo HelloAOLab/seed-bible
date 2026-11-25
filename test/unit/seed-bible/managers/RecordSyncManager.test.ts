@@ -6,6 +6,7 @@ import {
   LOCAL_OWNER,
   MAX_SYNC_ATTEMPTS,
   migrateV1Row,
+  pendingRow,
   syncedRow,
   type OfflineRecordStore,
   type StoredRecord,
@@ -1101,22 +1102,23 @@ describe("RecordSyncManager", () => {
       await putSignedOutDraft();
       const confirmAdoption = vi.fn().mockResolvedValue("add" as const);
 
-      signInWith(confirmAdoption);
+      const sync = signInWith(confirmAdoption);
       await vi.waitFor(() => expect(recordDataMock).toHaveBeenCalled());
 
       expect(confirmAdoption).toHaveBeenCalledWith(OWNER);
       expect(await store.get(LOCAL_OWNER, "draft")).toBeNull();
       expect(await store.get(OWNER, "draft")).not.toBeNull();
+      // What tells a screen listing everything to read again.
+      expect(sync.adoptions.value).toBe(1);
     });
 
     it("deletes signed-out rows on 'discard' without pushing them", async () => {
       await putSignedOutDraft();
 
-      signInWith(vi.fn().mockResolvedValue("discard" as const));
-      await vi.waitFor(async () =>
-        expect(await store.get(LOCAL_OWNER, "draft")).toBeNull()
-      );
+      const sync = signInWith(vi.fn().mockResolvedValue("discard" as const));
+      await vi.waitFor(() => expect(sync.adoptions.value).toBe(1));
 
+      expect(await store.get(LOCAL_OWNER, "draft")).toBeNull();
       expect(await store.get(OWNER, "draft")).toBeNull();
       expect(recordDataMock).not.toHaveBeenCalled();
     });
@@ -1132,6 +1134,7 @@ describe("RecordSyncManager", () => {
       expect(await store.get(LOCAL_OWNER, "draft")).not.toBeNull();
       expect(await store.get(OWNER, "draft")).toBeNull();
       expect(recordDataMock).not.toHaveBeenCalled();
+      expect(sync.adoptions.value).toBe(0);
     });
 
     it("does not ask when nothing was written signed out", async () => {
@@ -1141,6 +1144,28 @@ describe("RecordSyncManager", () => {
       await sync.sync();
 
       expect(confirmAdoption).not.toHaveBeenCalled();
+    });
+
+    // A screen listing everything rereads on each adoption, so a sign-in that
+    // moved nothing must not count as one. A deletion made while signed out
+    // is still cleared, which is how this knows the adoption has run.
+    it("doesn't count a sign-in with nothing written signed out as an adoption", async () => {
+      await store.put(
+        pendingRow<Annotation>({
+          owner: LOCAL_OWNER,
+          address: "gone",
+          collection: COLLECTION,
+          payload: null,
+          base: null,
+        })
+      );
+
+      const sync = signInWith(vi.fn().mockResolvedValue("add" as const));
+      await vi.waitFor(async () =>
+        expect(await store.get(LOCAL_OWNER, "gone")).toBeNull()
+      );
+
+      expect(sync.adoptions.value).toBe(0);
     });
 
     it("does nothing with the answer if the user signed out while the prompt was open", async () => {

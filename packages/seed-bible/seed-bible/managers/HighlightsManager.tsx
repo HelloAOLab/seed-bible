@@ -17,8 +17,12 @@ import {
   canonicalize,
   createIndexedDbRecordStore,
   LOCAL_OWNER,
+  mergeServerWithLocal,
   pendingRow,
+  type ListAllResult,
   type OfflineRecordStore,
+  type ServerRecord,
+  type StoredRecord,
   type SyncDomain,
 } from "./OfflineRecordStore";
 import {
@@ -384,11 +388,14 @@ export interface HighlightsManager {
   sync: RecordSyncManager<ChapterHighlights>;
 
   /**
-   * Every highlight the signed-in account has, across every translation and
-   * chapter, flattened one entry per highlight. For the "Your content" screen.
-   * Empty when signed out.
+   * Every highlight the user has, across every translation and chapter,
+   * flattened one entry per highlight. For the "Your content" screen.
+   *
+   * Reads this device's copy first, so signed-out highlights are included and
+   * a signed-in user who is offline still gets what the device holds (with
+   * `complete: false`).
    */
-  listAllHighlights: () => Promise<StoredHighlight[]>;
+  listAllHighlights: () => Promise<ListAllResult<StoredHighlight>>;
 }
 
 export interface CreateHighlightsManagerOptions {
@@ -1103,18 +1110,19 @@ export function createHighlightsManager(
    * need to know which translations the user has ever highlighted in. Walking
    * the record by address avoids that guess: highlight payloads are the ones
    * whose address parses as `highlights:{translation}/{book}/{chapter}`.
+   *
+   * The device's rows come first and the server's list is folded over them
+   * (see `mergeServerWithLocal`), so signed-out highlights show, and a
+   * signed-in user who can't reach the server sees this device's copy instead
+   * of an error.
    */
-  const listAllHighlights = async (): Promise<StoredHighlight[]> => {
-    const userId = login.userId.value;
-    if (!userId) {
-      return [];
-    }
-
+  const listServerHighlights = async (
+    userId: string
+  ): Promise<ServerRecord<ChapterHighlights>[]> => {
     const result = await os.listAllData(userId);
-    const stored: StoredHighlight[] = [];
+    const records: ServerRecord<ChapterHighlights>[] = [];
     for (const item of result.items) {
-      const location = parseChapterHighlightsAddress(item.address);
-      if (!location) {
+      if (!parseChapterHighlightsAddress(item.address)) {
         continue;
       }
       const parsed = chapterHighlightsSchema.safeParse(item.data);
@@ -1122,11 +1130,73 @@ export function createHighlightsManager(
         console.warn("Skipping invalid highlights record:", parsed.error);
         continue;
       }
-      for (const highlight of parsed.data.highlights) {
-        stored.push({ ...location, highlight });
+      records.push({ address: item.address, payload: parsed.data });
+    }
+    return records;
+  };
+
+  const flattenHighlights = (
+    records: ServerRecord<ChapterHighlights>[]
+  ): StoredHighlight[] =>
+    records.flatMap(({ address, payload }) => {
+      const location = parseChapterHighlightsAddress(address);
+      return location
+        ? payload.highlights.map((highlight) => ({ ...location, highlight }))
+        : [];
+    });
+
+  const listAllHighlights = async (): Promise<
+    ListAllResult<StoredHighlight>
+  > => {
+    const userId = login.userId.peek();
+    if (!store) {
+      return {
+        items: userId
+          ? flattenHighlights(await listServerHighlights(userId))
+          : [],
+        complete: true,
+      };
+    }
+
+    if (!userId) {
+      const local = await store.listForOwner(LOCAL_OWNER);
+      return {
+        items: flattenHighlights(mergeServerWithLocal(null, local)),
+        complete: true,
+      };
+    }
+
+    // A dead local database shouldn't hide the account's highlights when the
+    // server can still list them.
+    let localError: unknown = null;
+    const local = await store
+      .listForOwner(userId)
+      .catch((error: unknown): StoredRecord<ChapterHighlights>[] => {
+        localError = error;
+        return [];
+      });
+
+    let server: ServerRecord<ChapterHighlights>[] | null = null;
+    if (sync.isOnline.peek()) {
+      try {
+        server = await listServerHighlights(userId);
+      } catch (error) {
+        console.warn("Failed to list highlights from the server.", error);
       }
     }
-    return stored;
+    if (localError) {
+      if (!server) {
+        throw localError;
+      }
+      console.warn(
+        "Failed to read highlights stored on this device.",
+        localError
+      );
+    }
+    return {
+      items: flattenHighlights(mergeServerWithLocal(server, local)),
+      complete: server !== null,
+    };
   };
 
   return {

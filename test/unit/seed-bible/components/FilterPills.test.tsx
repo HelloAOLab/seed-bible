@@ -89,6 +89,25 @@ describe("FilterPills", () => {
       expect(pills().map((pill) => pill.tabIndex)).toEqual([-1, -1, 0]);
     });
 
+    it("puts an option's own class on its pill, keeping the selection class", () => {
+      act(() => {
+        render(
+          <Pills
+            options={[
+              { value: "all", label: "All", className: "my-special" },
+              { value: "notes", label: "Notes" },
+            ]}
+          />,
+          container
+        );
+      });
+
+      expect(pills().map((pill) => pill.className)).toEqual([
+        "sb-filter-pill sb-filter-pill--selected my-special",
+        "sb-filter-pill",
+      ]);
+    });
+
     it("lets the first pill take focus when no option matches the value", () => {
       act(() => {
         render(

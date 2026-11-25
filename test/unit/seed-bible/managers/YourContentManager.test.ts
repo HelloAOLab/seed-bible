@@ -12,6 +12,8 @@ import {
   sortAnnotationsByRecency,
   type CreateYourContentManagerOptions,
 } from "@packages/seed-bible/seed-bible/managers/YourContentManager";
+import type { ListAllResult } from "@packages/seed-bible/seed-bible/managers/OfflineRecordStore";
+import { signal } from "@preact/signals";
 
 function annotation(
   id: string,
@@ -55,15 +57,47 @@ function createManager(
     /** Answer every chapter from the synchronous cache instead of a fetch. */
     cachedChapters?: boolean;
     chapterError?: Error;
+    /** Holds every chapter fetch until this settles. */
+    chapterGate?: Promise<void>;
+    /** Signed in as this account; null for signed out. */
+    userId?: string | null;
+    /** Starts with the device offline, so only its own copy can be read. */
+    offline?: boolean;
+    /** Starts with the device online but the server failing every read. */
+    serverDown?: boolean;
   } = {}
 ) {
-  const listAllAnnotations = vi.fn(async () => {
-    if (options.annotationsError) {
-      throw options.annotationsError;
+  const online = createConnection(!options.offline);
+  const server = { down: options.serverDown ?? false };
+  // Offline or with the server failing, the real managers read the device
+  // alone and say the list may be incomplete; signed out, the device is the
+  // whole story either way.
+  const reachedServer = (connected: boolean) =>
+    (connected && !server.down) || options.userId === null;
+  const listAllAnnotations = vi.fn(
+    async (): Promise<ListAllResult<Annotation>> => {
+      if (options.annotationsError) {
+        throw options.annotationsError;
+      }
+      return {
+        items: options.annotations ?? [],
+        complete: reachedServer(online.annotations.peek()),
+      };
     }
-    return options.annotations ?? [];
-  });
-  const listAllHighlights = vi.fn(async () => options.highlights ?? []);
+  );
+  const listAllHighlights = vi.fn(
+    async (): Promise<ListAllResult<StoredHighlight>> => ({
+      items: options.highlights ?? [],
+      complete: reachedServer(online.highlights.peek()),
+    })
+  );
+  const { login, adoptions, annotationsManager, highlightsManager } =
+    createAccount(
+      options.userId,
+      listAllAnnotations,
+      listAllHighlights,
+      online
+    );
 
   // A stand-in chapter reader. Every verse reads "verse N of BOOK CHAPTER"
   // unless `verseWords` plants something searchable in one of them.
@@ -82,6 +116,7 @@ function createManager(
 
   const getTranslationBookChapter = vi.fn(
     async (_translationId: string, book: string, chapter: number | string) => {
+      await options.chapterGate;
       if (options.chapterError) {
         throw options.chapterError;
       }
@@ -98,12 +133,17 @@ function createManager(
       getTranslationBookChapter,
       getCachedTranslationBookChapter,
     } as unknown as CreateYourContentManagerOptions["bibleData"],
-    annotations: { listAllAnnotations } as unknown as AnnotationsManager,
-    highlights: { listAllHighlights } as unknown as HighlightsManager,
+    annotations: annotationsManager,
+    highlights: highlightsManager,
+    login,
   });
 
   return {
     manager,
+    login,
+    adoptions,
+    online,
+    server,
     listAllAnnotations,
     listAllHighlights,
     getTranslationBookChapter,
@@ -112,30 +152,86 @@ function createManager(
 }
 
 /**
+ * Whether each manager's sync engine thinks the device is online. The two are
+ * separate because each engine hears the browser's `online` event on its own,
+ * so they come back one after the other.
+ */
+function createConnection(connected = true) {
+  return { annotations: signal(connected), highlights: signal(connected) };
+}
+
+type Connection = ReturnType<typeof createConnection>;
+
+/**
+ * The account the screen belongs to, and the two managers it reads from.
+ * `adoptions` stands in for the sync engine finishing an "add to your
+ * account?" answer.
+ */
+function createAccount(
+  userId: string | null | undefined,
+  listAllAnnotations: AnnotationsManager["listAllAnnotations"],
+  listAllHighlights: HighlightsManager["listAllHighlights"],
+  online: Connection = createConnection()
+) {
+  const login = {
+    userId: signal<string | null>(userId === undefined ? "user-1" : userId),
+  };
+  const adoptions = signal(0);
+  return {
+    login,
+    adoptions,
+    annotationsManager: {
+      listAllAnnotations,
+      sync: { adoptions, isOnline: online.annotations },
+    } as unknown as AnnotationsManager,
+    highlightsManager: {
+      listAllHighlights,
+      sync: { adoptions: signal(0), isOnline: online.highlights },
+    } as unknown as HighlightsManager,
+  };
+}
+
+/**
  * A manager whose annotation fetch can be held open, so a refresh can be
  * looked at while it is still in flight — which is where the difference
  * between a loud and a quiet reload shows up.
  */
-function createHoldableManager() {
+function createHoldableManager(options: { offline?: boolean } = {}) {
   const pending: Array<{
-    resolve: (annotations: Annotation[]) => void;
+    resolve: (annotations: Annotation[], complete?: boolean) => void;
     reject: (error: Error) => void;
   }> = [];
   const listAllAnnotations = vi.fn(
     () =>
-      new Promise<Annotation[]>((resolve, reject) => {
-        pending.push({ resolve, reject });
+      new Promise<ListAllResult<Annotation>>((resolve, reject) => {
+        pending.push({
+          resolve: (items, complete = true) => resolve({ items, complete }),
+          reject,
+        });
       })
   );
-  const listAllHighlights = vi.fn(async () => [] as StoredHighlight[]);
+  const listAllHighlights = vi.fn(
+    async (): Promise<ListAllResult<StoredHighlight>> => ({
+      items: [],
+      complete: true,
+    })
+  );
+  const online = createConnection(!options.offline);
+  const { login, annotationsManager, highlightsManager } = createAccount(
+    "user-1",
+    listAllAnnotations,
+    listAllHighlights,
+    online
+  );
 
   const manager = createYourContentManager({
     bibleData: {
       getTranslationBookChapter: vi.fn(),
       getCachedTranslationBookChapter: vi.fn(() => null),
     } as unknown as CreateYourContentManagerOptions["bibleData"],
-    annotations: { listAllAnnotations } as unknown as AnnotationsManager,
-    highlights: { listAllHighlights } as unknown as HighlightsManager,
+    annotations: annotationsManager,
+    highlights: highlightsManager,
+    login,
   });
 
   /** The nth load's controls, once that load has actually been issued. */
@@ -147,8 +243,11 @@ function createHoldableManager() {
     return controls;
   };
 
-  return { manager, listAllAnnotations, settle };
+  return { manager, login, online, listAllAnnotations, settle };
 }
+
+/** Lets every queued promise callback run, without waiting on a timer. */
+const flushPromises = () => new Promise<void>((resolve) => setTimeout(resolve));
 
 describe("createYourContentManager", () => {
   it("starts idle and empty, before anything is asked of it", () => {
@@ -457,6 +556,82 @@ describe("createYourContentManager", () => {
       expect(manager.isReadingHighlightVerseText.value).toBe(false);
       expect(consoleError).toHaveBeenCalled();
     });
+
+    // Every open reloads, and so do an adoption and the connection coming
+    // back; a highlight one of those brings in must be findable by its words
+    // without the search being cleared and typed again.
+    it("reads the wording of a highlight that arrives in a later load", async () => {
+      const highlights = [highlight("JHN", 1)];
+      const { manager } = createManager({
+        highlights,
+        verseWords: { "ROM/1/2": "the power of God" },
+      });
+      await manager.load();
+      await manager.readHighlightVerseText();
+
+      highlights.push(highlight("ROM", 2));
+      await manager.load({ force: true });
+
+      await vi.waitFor(() =>
+        expect([...manager.highlightVerseText.value.values()]).toContain(
+          "the power of God"
+        )
+      );
+      expect(manager.highlightVerseText.value.size).toBe(2);
+    });
+
+    it("doesn't read a chapter again for highlights it already has", async () => {
+      const { manager, getTranslationBookChapter } = createManager({
+        highlights: [highlight("JHN", 1)],
+      });
+      await manager.load();
+      await manager.readHighlightVerseText();
+
+      await manager.load({ force: true });
+      await manager.readHighlightVerseText();
+
+      expect(getTranslationBookChapter).toHaveBeenCalledTimes(1);
+    });
+
+    it("reads nothing on a later load until a search has asked for it", async () => {
+      const highlights = [highlight("JHN", 1)];
+      const { manager, getTranslationBookChapter } = createManager({
+        highlights,
+      });
+      await manager.load();
+
+      highlights.push(highlight("ROM", 2));
+      await manager.load({ force: true });
+      await flushPromises();
+
+      expect(getTranslationBookChapter).not.toHaveBeenCalled();
+    });
+
+    it("catches a highlight that arrives while a read is still running", async () => {
+      let openGate = () => {};
+      const highlights = [highlight("JHN", 1)];
+      const { manager } = createManager({
+        highlights,
+        verseWords: { "ROM/1/2": "the power of God" },
+        chapterGate: new Promise<void>((resolve) => {
+          openGate = resolve;
+        }),
+      });
+      await manager.load();
+      const reading = manager.readHighlightVerseText();
+
+      highlights.push(highlight("ROM", 2));
+      await manager.load({ force: true });
+      openGate();
+      await reading;
+
+      await vi.waitFor(() =>
+        expect([...manager.highlightVerseText.value.values()]).toContain(
+          "the power of God"
+        )
+      );
+      expect(manager.isReadingHighlightVerseText.value).toBe(false);
+    });
   });
 
   // Reopening the screen re-reads the record, so a verse highlighted or
@@ -522,6 +697,236 @@ describe("createYourContentManager", () => {
       void manager.load({ force: true });
       expect(manager.status.value).toBe("loading");
       consoleError.mockRestore();
+    });
+  });
+
+  describe("where the content came from", () => {
+    it("is the device for a signed-out user", async () => {
+      const { manager } = createManager({
+        userId: null,
+        annotations: [annotation("a")],
+      });
+
+      await manager.load();
+
+      expect(manager.status.value).toBe("ready");
+      expect(manager.source.value).toBe("device");
+      expect(manager.annotations.value.map((a) => a.id)).toEqual(["a"]);
+    });
+
+    // Offline, the screen shows what the device has rather than an error,
+    // and says that's what it is showing.
+    it("is the device when offline", async () => {
+      const { manager } = createManager({
+        annotations: [annotation("a")],
+        offline: true,
+      });
+
+      await manager.load();
+
+      expect(manager.status.value).toBe("ready");
+      expect(manager.source.value).toBe("device");
+    });
+
+    // Online with the server failing is told apart from offline: the screen
+    // can't tell someone already connected to connect to the internet.
+    it("says the account couldn't be reached when online but the server failed", async () => {
+      const { manager } = createManager({
+        annotations: [annotation("a")],
+        serverDown: true,
+      });
+
+      await manager.load();
+
+      expect(manager.status.value).toBe("ready");
+      expect(manager.source.value).toBe("device-unreachable");
+      expect(manager.annotations.value.map((a) => a.id)).toEqual(["a"]);
+    });
+
+    it("is the account once a retry reaches the server", async () => {
+      const { manager, server } = createManager({
+        annotations: [annotation("a")],
+        serverDown: true,
+      });
+      await manager.load();
+
+      server.down = false;
+      await manager.load({ force: true });
+
+      expect(manager.source.value).toBe("account");
+    });
+
+    it("is the account once the server copy was read", async () => {
+      const { manager } = createManager({ annotations: [annotation("a")] });
+
+      await manager.load();
+
+      expect(manager.source.value).toBe("account");
+    });
+  });
+
+  // The device-only card tells a signed-in user to reconnect to see everything
+  // in their account, so reconnecting has to bring it in without reopening.
+  describe("the connection coming back", () => {
+    it("reloads from the account once the device is back online", async () => {
+      const { manager, online } = createManager({
+        annotations: [annotation("a")],
+        offline: true,
+      });
+      await manager.load();
+      expect(manager.source.value).toBe("device");
+
+      online.annotations.value = true;
+      online.highlights.value = true;
+
+      await vi.waitFor(() => expect(manager.source.value).toBe("account"));
+      expect(manager.status.value).toBe("ready");
+    });
+
+    it("also retries a list whose account couldn't be reached before", async () => {
+      const { manager, online, server } = createManager({ serverDown: true });
+      await manager.load();
+      expect(manager.source.value).toBe("device-unreachable");
+
+      online.annotations.value = false;
+      online.highlights.value = false;
+      server.down = false;
+      online.annotations.value = true;
+      online.highlights.value = true;
+
+      await vi.waitFor(() => expect(manager.source.value).toBe("account"));
+    });
+
+    it("waits until both kinds of content can reach the server", async () => {
+      const { manager, online, listAllAnnotations } = createManager({
+        offline: true,
+      });
+      await manager.load();
+
+      online.annotations.value = true;
+      await flushPromises();
+      expect(listAllAnnotations).toHaveBeenCalledTimes(1);
+
+      online.highlights.value = true;
+      await vi.waitFor(() => expect(manager.source.value).toBe("account"));
+      expect(listAllAnnotations).toHaveBeenCalledTimes(2);
+    });
+
+    it("catches a load that was still running offline when it came back", async () => {
+      const { manager, online, settle } = createHoldableManager({
+        offline: true,
+      });
+      const first = manager.load();
+
+      online.annotations.value = true;
+      online.highlights.value = true;
+      settle(0).resolve([annotation("on-device")], false);
+      await first;
+      expect(manager.source.value).toBe("device");
+
+      await vi.waitFor(() => settle(1));
+      settle(1).resolve([annotation("on-device"), annotation("in-account")]);
+
+      await vi.waitFor(() => expect(manager.source.value).toBe("account"));
+      expect([...manager.annotations.value.map((a) => a.id)].sort()).toEqual([
+        "in-account",
+        "on-device",
+      ]);
+    });
+
+    it("leaves a list that already came from the account alone", async () => {
+      const { manager, online, listAllAnnotations } = createManager();
+      await manager.load();
+
+      online.annotations.value = false;
+      online.highlights.value = false;
+      online.annotations.value = true;
+      online.highlights.value = true;
+      await flushPromises();
+
+      expect(listAllAnnotations).toHaveBeenCalledTimes(1);
+    });
+
+    it("reads nothing if the screen was never opened", async () => {
+      const { online, listAllAnnotations } = createManager({ offline: true });
+
+      online.annotations.value = true;
+      online.highlights.value = true;
+      await flushPromises();
+
+      expect(listAllAnnotations).not.toHaveBeenCalled();
+    });
+
+    // Signed out, the device holds everything there is, so there is nothing
+    // more to fetch.
+    it("doesn't reload for a signed-out user", async () => {
+      const { manager, online, listAllAnnotations } = createManager({
+        userId: null,
+        offline: true,
+      });
+      await manager.load();
+
+      online.annotations.value = true;
+      online.highlights.value = true;
+      await flushPromises();
+
+      expect(manager.source.value).toBe("device");
+      expect(listAllAnnotations).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("a change of account", () => {
+    it("clears the last account's content at once and reloads", async () => {
+      const { manager, login, settle } = createHoldableManager();
+      const first = manager.load();
+      settle(0).resolve([annotation("theirs")]);
+      await first;
+
+      login.userId.value = null;
+
+      expect(manager.annotations.value).toEqual([]);
+      expect(manager.status.value).toBe("loading");
+      settle(1).resolve([annotation("mine")]);
+      await vi.waitFor(() =>
+        expect(manager.annotations.value.map((a) => a.id)).toEqual(["mine"])
+      );
+    });
+
+    it("drops a load that finishes after the account changed", async () => {
+      const { manager, login, settle } = createHoldableManager();
+      void manager.load();
+
+      login.userId.value = "user-2";
+      settle(0).resolve([annotation("user-1-note")]);
+      settle(1).resolve([annotation("user-2-note")]);
+
+      await vi.waitFor(() => expect(manager.status.value).toBe("ready"));
+      expect(manager.annotations.value.map((a) => a.id)).toEqual([
+        "user-2-note",
+      ]);
+    });
+
+    it("reads nothing if the screen was never opened", () => {
+      const { login, listAllAnnotations } = createManager();
+
+      login.userId.value = null;
+
+      expect(listAllAnnotations).not.toHaveBeenCalled();
+    });
+
+    // Signed-out notes join the account after the "add to your account?"
+    // answer, which lands well after the sign-in itself.
+    it("reloads once signed-out content has been added to the account", async () => {
+      const { manager, adoptions, listAllAnnotations } = createManager({
+        annotations: [annotation("a")],
+      });
+      await manager.load();
+
+      adoptions.value++;
+
+      await vi.waitFor(() =>
+        expect(listAllAnnotations).toHaveBeenCalledTimes(2)
+      );
     });
   });
 
