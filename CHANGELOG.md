@@ -6,6 +6,9 @@
 
 ### 🔧 Changed
 
+- Start new shared sessions with "Only host can navigate" turned on, so participants follow the host until the host turns it off in session settings.
+- While playing a playlist, the compact Discover panel (under the chapter on phones, beside the reader on computers) no longer shows on note, question, video and link steps, where it listed content for a chapter that wasn't on screen. On compare steps it stays, always below the two passages, since there's no room for it beside them.
+
 ### 🐛 Fixed
 
 ### 🗑️ Removed
