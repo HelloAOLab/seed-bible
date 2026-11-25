@@ -1103,9 +1103,10 @@ export function YourContentPane(props: YourContentScreenProps) {
   const needsAccount = !userId && ACCOUNT_ONLY_SECTIONS.has(filter);
   // A signed-out list is always only this device's, so it says so wherever
   // it shows one; a signed-in list only once the account couldn't be reached.
-  const showDeviceCard = userId
-    ? status === "ready" && source !== "account"
-    : !needsAccount;
+  // Either way only once a list has loaded: beside a load error, the card
+  // would describe content the screen just said it couldn't read.
+  const showDeviceCard =
+    status === "ready" && (userId ? source !== "account" : !needsAccount);
   const deviceReason: DeviceContentReason = !userId
     ? "signed-out"
     : source === "device-unreachable"

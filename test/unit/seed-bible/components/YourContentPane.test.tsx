@@ -1332,6 +1332,29 @@ describe("YourContentPane", () => {
       expect(deviceCard()?.textContent).toContain("Saved on this device only");
     });
 
+    it("doesn't show the device card beside a load error", () => {
+      const { state } = createState({
+        userId: null,
+        source: "device",
+        status: "error",
+      });
+      renderPane(state);
+
+      expect(container.querySelector(".sb-content-retry")).not.toBeNull();
+      expect(deviceCard()).toBeNull();
+    });
+
+    it("doesn't show the device card until the list has loaded", () => {
+      const { state } = createState({
+        userId: null,
+        source: "device",
+        status: "loading",
+      });
+      renderPane(state);
+
+      expect(deviceCard()).toBeNull();
+    });
+
     it("signs in from the device card", () => {
       const { state } = createState({ userId: null, source: "device" });
       renderPane(state);
