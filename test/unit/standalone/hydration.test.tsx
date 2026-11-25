@@ -24,6 +24,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { stubColorScheme } from "../seed-bible/testUtils/stubColorScheme";
 import { installSharedDocumentMock } from "../seed-bible/testUtils/createTestSeedBibleState";
+import { resetSeedBibleIconIntroForTests } from "@packages/seed-bible/seed-bible/components/icons";
 
 // A signed-in test makes the app read reading history while its state is
 // still being built, before a test could stub the client it creates. Every
@@ -136,6 +137,10 @@ describe("client hydration", () => {
 
   beforeEach(() => {
     originalFetch = globalThis.fetch;
+    // The server and client renders share this process, so an icon an earlier
+    // test mounted would otherwise make the server draw the intro partway
+    // through, and the client (a moment later) draw it finished.
+    resetSeedBibleIconIntroForTests();
   });
 
   afterEach(() => {
@@ -878,6 +883,10 @@ describe("client hydration with a shared customization link", () => {
   let originalFetch: typeof globalThis.fetch;
   beforeEach(() => {
     originalFetch = globalThis.fetch;
+    // The server and client renders share this process, so an icon an earlier
+    // test mounted would otherwise make the server draw the intro partway
+    // through, and the client (a moment later) draw it finished.
+    resetSeedBibleIconIntroForTests();
   });
   afterEach(() => {
     globalThis.fetch = originalFetch;
