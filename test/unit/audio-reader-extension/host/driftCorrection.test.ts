@@ -1,7 +1,6 @@
 import {
   DRIFT_RATE_CHANGE_INTERVAL_MS,
   DRIFT_SEEK_COOLDOWN_MS,
-  DRIFT_STARTUP_SEEK_COOLDOWN_MS,
   decideDriftCorrection,
   initialDriftState,
   type DriftState,
@@ -92,35 +91,5 @@ describe("decideDriftCorrection", () => {
         NOW - 200 + DRIFT_RATE_CHANGE_INTERVAL_MS
       )
     ).toEqual({ kind: "rate", rate: 1.05 });
-  });
-
-  it("jumps a gap over a tenth of a second right after starting, instead of nudging", () => {
-    expect(decideDriftCorrection(-0.3, initialDriftState(), NOW, true)).toEqual(
-      {
-        kind: "seek",
-      }
-    );
-    // Close enough is still left alone, or nudged, as usual.
-    expect(
-      decideDriftCorrection(-0.05, initialDriftState(), NOW, true)
-    ).toEqual({ kind: "hold" });
-    expect(
-      decideDriftCorrection(-0.09, initialDriftState(), NOW, true)
-    ).toEqual({ kind: "rate", rate: 1.01 });
-  });
-
-  it("can jump again sooner while starting, to land on the timeline", () => {
-    const jumped = { ...initialDriftState(), lastSeekMs: NOW };
-    expect(decideDriftCorrection(-0.3, jumped, NOW + 100, true)).toEqual({
-      kind: "hold",
-    });
-    expect(
-      decideDriftCorrection(
-        -0.3,
-        jumped,
-        NOW + DRIFT_STARTUP_SEEK_COOLDOWN_MS,
-        true
-      )
-    ).toEqual({ kind: "seek" });
   });
 });

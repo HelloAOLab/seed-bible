@@ -28,14 +28,6 @@ export const DRIFT_RATE_CHANGE_INTERVAL_MS = 1000;
  * it behind again while it buffers; jumping again at once would chase it.
  */
 export const DRIFT_SEEK_COOLDOWN_MS = 3000;
-/**
- * Right after audio starts, a jump is barely audible and a gap is a known
- * start-up delay rather than slow drift, so it's jumped instead of nudged
- * from this far off, in seconds.
- */
-export const DRIFT_STARTUP_SEEK_SECONDS = 0.1;
-/** Least time between jumps while starting up. */
-export const DRIFT_STARTUP_SEEK_COOLDOWN_MS = 500;
 
 export interface DriftState {
   /** The speed the player is set to now. */
@@ -60,25 +52,16 @@ export function initialDriftState(): DriftState {
 /**
  * What to do about a listener `driftSeconds` ahead of where the host's audio
  * should be (negative when behind), at `nowMs` on any steady clock.
- * `startingUp` while the audio has only just started (see
- * `DRIFT_STARTUP_SEEK_SECONDS`).
  */
 export function decideDriftCorrection(
   driftSeconds: number,
   state: DriftState,
-  nowMs: number,
-  startingUp = false
+  nowMs: number
 ): DriftDecision {
   const off = Math.abs(driftSeconds);
-  const seekBeyond = startingUp
-    ? DRIFT_STARTUP_SEEK_SECONDS
-    : DRIFT_SEEK_SECONDS;
-  const cooldown = startingUp
-    ? DRIFT_STARTUP_SEEK_COOLDOWN_MS
-    : DRIFT_SEEK_COOLDOWN_MS;
 
-  if (off > seekBeyond) {
-    if (nowMs - state.lastSeekMs >= cooldown) {
+  if (off > DRIFT_SEEK_SECONDS) {
+    if (nowMs - state.lastSeekMs >= DRIFT_SEEK_COOLDOWN_MS) {
       return { kind: "seek" };
     }
     return { kind: "hold" };

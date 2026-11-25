@@ -1209,19 +1209,9 @@ describe("audio-reader playback controls", () => {
        * server's clock at `serverTime.now`. The listener's device clock is
        * nowhere near the server's, which must not matter.
        */
-      /**
-       * The steady clock the correction loop times itself by, moved by hand
-       * so a test can step past the first seconds after a start.
-       */
-      const steady = { ms: 1_000_000 };
-      let steadySpy: ReturnType<typeof vi.spyOn>;
-
       let readySpy: ReturnType<typeof vi.spyOn>;
 
       beforeEach(() => {
-        steadySpy = vi
-          .spyOn(performance, "now")
-          .mockImplementation(() => steady.ms);
         // jsdom never loads media; a real player reports this once it can play on.
         readySpy = vi
           .spyOn(HTMLMediaElement.prototype, "readyState", "get")
@@ -1229,16 +1219,10 @@ describe("audio-reader playback controls", () => {
       });
 
       afterEach(() => {
-        steadySpy.mockRestore();
         readySpy.mockRestore();
       });
 
-      /** Steps past the start-up rules, to the ones for drift while playing. */
-      function settleIn() {
-        steady.ms += 5000;
-      }
-
-      async function followHost({ settle = true } = {}) {
+      async function followHost() {
         const serverTime = { now: SERVER_START };
         const session = attachSession(false, {
           serverNow: () => serverTime.now,
@@ -1258,7 +1242,6 @@ describe("audio-reader playback controls", () => {
           ).toBe(true);
           expect(audio.current!.muted).toBe(false);
         });
-        if (settle) settleIn();
         expect(audio.current!.playbackRate).toBe(1);
         return { ...session, serverTime };
       }
@@ -1406,43 +1389,14 @@ describe("audio-reader playback controls", () => {
         ).toBe(true);
       });
 
-      it("jumps rather than nudges a small gap right after starting", async () => {
-        const { serverTime } = await followHost({ settle: false });
+      it("nudges rather than jumps a small gap right after starting", async () => {
+        const { serverTime } = await followHost();
 
         serverTime.now += 2000;
         playAt(11.7);
 
-        expect(audio.current!.currentTime).toBeCloseTo(12, 1);
-        expect(audio.current!.playbackRate).toBe(1);
-      });
-
-      it("lines the host's own start up with the moment it announced, then leads", async () => {
-        const serverTime = { now: SERVER_START };
-        const { readingState } = attachSession(true, {
-          serverNow: () => serverTime.now,
-        });
-        reportDuration(120);
-        pressPlay();
-        chooseInSharePrompt("Play for everyone");
-        const controller = state.audioPlayback.controllerFor(readingState)!;
-        fakeTimers();
-        void controller.play();
-        serverTime.now += 1000;
-        await vi.advanceTimersByTimeAsync(1000);
-        vi.useRealTimers();
-        playAt(0);
-
-        // Its own player took a moment to start: it jumps to its own timeline.
-        serverTime.now += 300;
-        playAt(0.1);
-        expect(audio.current!.currentTime).toBeCloseTo(0.3, 1);
-
-        // After that it is the reference, and nothing moves it.
-        settleIn();
-        serverTime.now += 1000;
-        playAt(1.1);
-        expect(audio.current!.currentTime).toBeCloseTo(1.1, 1);
-        expect(audio.current!.playbackRate).toBe(1);
+        expect(audio.current!.currentTime).toBeCloseTo(11.7, 1);
+        expect(audio.current!.playbackRate).toBeGreaterThan(1);
       });
 
       it("starts a listener at the host's place on the server's clock, not their own", async () => {

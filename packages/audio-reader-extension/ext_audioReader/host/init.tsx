@@ -169,8 +169,6 @@ const ALIGN_POLL_MS = 50;
 const ALIGN_TOLERANCE_SECONDS = 0.05;
 /** A muted late starter unmutes after this long, in milliseconds, lined up or not. */
 const ALIGN_TIMEOUT_MS = 3000;
-/** How long, in milliseconds, after audio starts the start-up rules apply. */
-const STARTUP_WINDOW_MS = 2500;
 /** `HTMLMediaElement.HAVE_FUTURE_DATA`: enough loaded to play on from here. */
 const HAVE_FUTURE_DATA = 3;
 
@@ -195,9 +193,6 @@ let startAlignment: {
   /** How far ahead to aim each jump, learnt from how far behind the last landed. */
   leadSeconds: number;
 } | null = null;
-
-/** Until when, on `performance.now()`, the start-up rules apply. */
-let startupUntil = Number.NEGATIVE_INFINITY;
 
 /** A skewed clock must not fling a late joiner hours past the end of the chapter. */
 const SHARED_AUDIO_MAX_CATCH_UP_SECONDS = 60 * 60;
@@ -752,9 +747,6 @@ function correctFollowerDrift(
 ): void {
   const shared = session.sharedSession;
   const playback = shared?.sharedAudio.peek() ?? null;
-  const nowMs = performance.now();
-  const startingUp = nowMs < startupUntil;
-  const leading = !!shared && shared.leadsSharedAudio.peek();
   const following =
     !!shared &&
     !!playback &&
@@ -764,14 +756,11 @@ function correctFollowerDrift(
     pendingStart?.session !== session &&
     startAlignment?.session !== session &&
     session.clipStart.peek() === 0 &&
-    // The host keeps to its own timeline only while starting, when its
-    // player's start-up delay is the gap; after that it's the reference.
-    (leading
-      ? startingUp
-      : sharedAudioFollowed.has(shared.id) &&
-        !sharedAudioOnOwn.has(shared.id) &&
-        !shared.isListeningOnOwn.peek() &&
-        sharedAudioApplied.get(shared.id) === playback.id) &&
+    sharedAudioFollowed.has(shared.id) &&
+    !sharedAudioOnOwn.has(shared.id) &&
+    !shared.isListeningOnOwn.peek() &&
+    !shared.leadsSharedAudio.peek() &&
+    sharedAudioApplied.get(shared.id) === playback.id &&
     playback.bookId === session.bookId &&
     playback.chapterNumber === session.chapterNumber &&
     narrationsShareClock(
@@ -789,11 +778,11 @@ function correctFollowerDrift(
   // The host's recording has finished; this one finishing too is all that's left.
   if (duration !== null && expected >= duration) return;
 
+  const nowMs = performance.now();
   const decision = decideDriftCorrection(
     el.currentTime - expected,
     driftState,
-    nowMs,
-    startingUp
+    nowMs
   );
   if (decision.kind === "rate") {
     el.playbackRate = decision.rate;
@@ -1522,7 +1511,7 @@ function playRecording(session: RecordingSession): Promise<void> {
     publishSharedIntent(session, true);
   }
   return settlePlayback(audioEl?.play(), () => {
-    if (startAlignment?.session === session) endStartAlignment(false);
+    if (startAlignment?.session === session) endStartAlignment();
   });
 }
 
@@ -1650,7 +1639,6 @@ function scheduleSharedStart(session: RecordingSession): Promise<void> {
           wait(remainingMs);
           return;
         }
-        startupUntil = performance.now() + STARTUP_WINDOW_MS;
         settlePlayback(el.play(), () => {
           session.isPlaying.value = false;
         }).then(resolve, reject);
@@ -1671,7 +1659,7 @@ function cancelSharedStart(): void {
     pendingStart = null;
     settle();
   }
-  if (startAlignment) endStartAlignment(false);
+  if (startAlignment) endStartAlignment();
 }
 
 /**
@@ -1680,7 +1668,7 @@ function cancelSharedStart(): void {
  * catching up audibly.
  */
 function beginStartAlignment(session: RecordingSession): void {
-  if (startAlignment) endStartAlignment(false);
+  if (startAlignment) endStartAlignment();
   if (audioEl) audioEl.muted = true;
   startAlignment = {
     session,
@@ -1706,7 +1694,7 @@ function alignStartStep(): void {
     audible !== session ||
     performance.now() > alignment.deadline
   ) {
-    endStartAlignment(true);
+    endStartAlignment();
     return;
   }
   // Still starting, or still landing from the last jump.
@@ -1717,7 +1705,7 @@ function alignStartStep(): void {
   const target = sharedPlaybackTarget(playback, shared);
   const drift = el.currentTime - target;
   if (Math.abs(drift) <= ALIGN_TOLERANCE_SECONDS) {
-    endStartAlignment(true);
+    endStartAlignment();
     return;
   }
   // A jump lands a little behind where it aimed, by however long the player
@@ -1733,8 +1721,8 @@ function alignStartStep(): void {
   alignment.timer = setTimeout(alignStartStep, ALIGN_POLL_MS);
 }
 
-/** Unmutes a muted late starter; `started` when it got going, lined up or not. */
-function endStartAlignment(started: boolean): void {
+/** Unmutes a muted late starter, lined up or not. */
+function endStartAlignment(): void {
   const alignment = startAlignment;
   if (!alignment) return;
   if (alignment.timer !== null) clearTimeout(alignment.timer);
@@ -1742,7 +1730,6 @@ function endStartAlignment(started: boolean): void {
   if (audioEl && audible === alignment.session) {
     audioEl.muted = alignment.session.awaitingStart;
   }
-  if (started) startupUntil = performance.now() + STARTUP_WINDOW_MS;
 }
 
 /**
@@ -1827,10 +1814,6 @@ function createRecordingSession(
         // shared timing now applies.
         void playRecording(session);
         return;
-      }
-      if (audible === session && session.isPlaying.peek()) {
-        // A jump is a fresh start for the player, with the same delay.
-        startupUntil = performance.now() + STARTUP_WINDOW_MS;
       }
       publishSharedFrom(session);
     },
