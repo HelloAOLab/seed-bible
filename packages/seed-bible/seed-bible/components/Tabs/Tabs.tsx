@@ -90,7 +90,6 @@ import { Switch, SwitchIndicator } from "../Switch/Switch";
 
 interface SidebarProps {
   state: SeedBibleState;
-  inert?: boolean;
 }
 
 interface TabsProps {
@@ -2980,7 +2979,6 @@ export function Sidebar(props: SidebarProps) {
       )}
       <aside
         className={`sb-tabs-sidebar${effectivelyCollapsed ? " sb-tabs-sidebar-collapsed" : ""}${isMobileOpen ? " sb-tabs-sidebar-mobile-open" : ""}${resizing ? " sb-tabs-sidebar-resizing" : ""}`}
-        inert={props.inert}
       >
         {!isSettingsOpen && (
           <TabsHeader
