@@ -31,6 +31,8 @@ import { VerseReferenceLink } from "../../app/verseReferenceLink";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { VerseRef } from "../../managers/BibleDataManager";
 import { useEffect, useRef, useState } from "preact/hooks";
+import type { ComponentChildren } from "preact";
+import { withSlot } from "../../i18n/withSlot";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
 
@@ -70,10 +72,10 @@ interface ChatToolCallGroup {
   authorKey: string;
   /** The first tool-call message in the run, used to resolve the author. */
   message: ToolCallChatMessage;
-  /** The number of tool calls in the run. */
-  count: number;
   /** The time of the most recent tool call in the group. */
   timeMs: number;
+  /** The name of each tool called in the run, in the order they were called. */
+  tools: string[];
 }
 
 type ChatTimelineGroup = ChatMessageGroup | ChatJoinGroup | ChatToolCallGroup;
@@ -222,16 +224,16 @@ function buildTimeline(
     } else if (entry.kind === "tool") {
       const authorKey = entry.message.authors.join(" ");
       if (lastGroup?.type === "tool" && lastGroup.authorKey === authorKey) {
-        lastGroup.count += 1;
         lastGroup.timeMs = entry.timeMs;
+        lastGroup.tools.push(entry.message.name);
       } else {
         groups.push({
           type: "tool",
           key: `tool-${entry.message.id}`,
           authorKey,
           message: entry.message,
-          count: 1,
           timeMs: entry.timeMs,
+          tools: [entry.message.name],
         });
       }
     } else if (lastGroup?.type === "join") {
@@ -339,26 +341,30 @@ function getAuthorLabel(
 }
 
 /**
- * Builds the label for a tool-use notification, e.g. "Alice used a tool" or
- * "Alice used 3 tools".
+ * Builds the label for a tool-use notification, e.g. "Alice used
+ * `get_cultural_context`" or "Alice used 3 tools".
  */
 function getToolUseLabel(
   name: string,
-  count: number,
+  tools: string[],
   t: (key: string, options?: Record<string, unknown>) => string
-): string {
-  if (count === 1) {
-    return t("chat-tool-used", {
-      defaultValue: "{{name}} used a tool",
-      name,
-      count,
-    });
+): ComponentChildren {
+  if (tools.length === 1) {
+    return withSlot(
+      (tool) =>
+        t("chat-tool-used-named", {
+          defaultValue: "{{name}} used {{tool}}",
+          name,
+          tool,
+        }),
+      <code className="sb-chat-view-tool-name">{tools[0]}</code>
+    );
   }
 
   return t("chat-tool-used", {
     defaultValue: "{{name}} used {{count}} tools",
     name,
-    count,
+    count: tools.length,
   });
 }
 
@@ -687,6 +693,60 @@ function AiLimitsNotice({ onAcknowledge }: { onAcknowledge: () => void }) {
         })}
       </Button>
     </section>
+  );
+}
+
+interface ToolUseEventProps {
+  group: ChatToolCallGroup;
+  avatar: ReturnType<typeof getMessageAvatar>;
+  toolUseLabel: ComponentChildren;
+}
+
+function ToolUseEvent({ group, avatar, toolUseLabel }: ToolUseEventProps) {
+  const shouldShowList = group.tools.length > 1;
+  const isShowingTools = useSignal<boolean>(false);
+
+  return (
+    <div className="sb-chat-view-event">
+      <div className="sb-chat-view-event-avatar-shell">
+        <Avatar
+          imageUrl={avatar.imageUrl}
+          visual={avatar.visual}
+          title={avatar.label}
+          isSelf={avatar.isSelf}
+          genericFallback={avatar.genericFallback}
+        />
+      </div>
+      {shouldShowList ? (
+        <button
+          type="button"
+          aria-expanded={isShowingTools.value}
+          className="sb-chat-view-event-button"
+          onClick={() => {
+            isShowingTools.value = !isShowingTools.value;
+          }}
+        >
+          {toolUseLabel}
+          <MaterialIcon aria-hidden="true">
+            {isShowingTools.value ? "keyboard_arrow_up" : "keyboard_arrow_down"}
+          </MaterialIcon>
+        </button>
+      ) : (
+        <span className="sb-chat-view-event-text">{toolUseLabel}</span>
+      )}
+      <RelativeDateTime timeMs={group.timeMs} />
+      {shouldShowList && isShowingTools.value && (
+        <ol className="sb-chat-view-tool-list">
+          {group.tools.map((tool, index) => (
+            <li key={index}>
+              <code className="sb-chat-view-tool-name">
+                <span>{tool}</span>
+              </code>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
   );
 }
 
@@ -1258,26 +1318,19 @@ export function ChatView(props: ChatViewProps) {
 
             if (group.type === "tool") {
               const avatar = getMessageAvatar(chat, group.message, t);
+              const toolUseLabel = getToolUseLabel(
+                getAuthorLabel(chat, group.message, t),
+                group.tools,
+                t
+              );
+
               return (
-                <div className="sb-chat-view-event" key={group.key}>
-                  <div className="sb-chat-view-event-avatar-shell">
-                    <Avatar
-                      imageUrl={avatar.imageUrl}
-                      visual={avatar.visual}
-                      title={avatar.label}
-                      isSelf={avatar.isSelf}
-                      genericFallback={avatar.genericFallback}
-                    />
-                  </div>
-                  <span className="sb-chat-view-event-text">
-                    {getToolUseLabel(
-                      getAuthorLabel(chat, group.message, t),
-                      group.count,
-                      t
-                    )}
-                  </span>
-                  <RelativeDateTime timeMs={group.timeMs} />
-                </div>
+                <ToolUseEvent
+                  key={group.key}
+                  avatar={avatar}
+                  toolUseLabel={toolUseLabel}
+                  group={group}
+                />
               );
             }
 

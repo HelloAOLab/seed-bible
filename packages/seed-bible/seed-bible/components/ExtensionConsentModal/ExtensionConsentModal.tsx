@@ -2,6 +2,7 @@ import "./ExtensionConsentModal.css";
 import { useSignal, type ReadonlySignal } from "@preact/signals";
 import type { ComponentChildren } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
+import { withSlot } from "../../i18n/withSlot";
 import type {
   ModalContentProps,
   ModalManager,
@@ -157,25 +158,6 @@ function relationText(
     case "extension-consent-uploader-not-friend":
       return t("extension-consent-uploader-not-friend");
   }
-}
-
-// Stands in for the source in a translated sentence, so the label (an
-// element) can go wherever the language puts it.
-const SOURCE_SLOT = "\u0000";
-
-/** `text`, translated with `{{host}}` as the slot the source label fills. */
-export function withSource(
-  text: (host: string) => string,
-  label: ComponentChildren
-) {
-  const [before, after = ""] = text(SOURCE_SLOT).split(SOURCE_SLOT);
-  return (
-    <>
-      {before}
-      {label}
-      {after}
-    </>
-  );
 }
 
 type PermissionGroup =
@@ -680,7 +662,7 @@ function ExtensionConsentContent({
         <ExtensionTile request={request} />
         <div className="sb-extension-consent-identity-text">
           <p className="sb-extension-consent-source">
-            {withSource(
+            {withSlot(
               (host) =>
                 request.version
                   ? t("extension-consent-source-version", {

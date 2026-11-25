@@ -18,9 +18,9 @@ import {
   ExtensionTile,
   PermissionCards,
   SourceLabel,
-  withSource,
   type ConsentPeople,
 } from "../ExtensionConsentModal/ExtensionConsentModal";
+import { withSlot } from "../../i18n/withSlot";
 import {
   ExtensionPermissionsPanel,
   type PermissionsApi,
@@ -443,7 +443,7 @@ export function ExtensionInfoPage(props: ExtensionInfoPageProps) {
         </div>
         <p className="sb-extension-consent-source">
           {sourceHost
-            ? withSource(
+            ? withSlot(
                 (host) =>
                   version
                     ? t("extension-consent-source-version", {
