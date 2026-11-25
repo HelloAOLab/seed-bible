@@ -7,6 +7,7 @@ import { isArrayBuffer } from "es-toolkit";
 import { v4 as uuid } from "uuid";
 import type { RecordFileFailure } from "@casual-simulation/aux-records";
 import { InstRecordsClient } from "@casual-simulation/aux-common/websockets/InstRecordsClient";
+import type { TimeSample } from "@casual-simulation/timesync";
 import { PartitionAuthSource } from "@casual-simulation/aux-common/partitions/PartitionAuthSource";
 import { AuthenticatedConnectionClient } from "@casual-simulation/aux-common/websockets/AuthenticatedConnectionClient";
 import { computed, effect, signal } from "@preact/signals";
@@ -1032,6 +1033,14 @@ export function CasualOSManager(
     },
 
     getSharedDocument,
+
+    /**
+     * Times one round trip to the records server over the inst websocket,
+     * for estimating how far this device's clock is from the server's (see
+     * `ServerClock`). Waits for the connection if it isn't open yet.
+     */
+    sampleServerTime: (): Promise<TimeSample> =>
+      getInstClient().sampleServerTime(),
 
     promptToInstallPWA: async (): Promise<{
       outcome: "accepted" | "dismissed";

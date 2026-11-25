@@ -10,8 +10,6 @@
  * hydrating, the same path it takes when an SSR document can't be trusted.
  */
 
-import { layoutAttribute } from "../../packages/seed-bible/seed-bible/app/layoutAttribute";
-
 export interface NativeShellValues {
   /** Composed CSS for the theme the page paints with before the app loads. */
   themeStyleText: string;
@@ -30,20 +28,16 @@ const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
  */
 const PLACEHOLDER_RE = /<!--\s*([A-Z][A-Z0-9_]*)\s*-->/g;
 
-/**
- * Seeds the first render's viewport guess (see `renderedAsMobile` in
- * `SeedBibleStateManager.tsx`) until the real size is measured. Most installs
- * are phones.
- */
-const RENDERED_AS_MOBILE = true;
-
 export function fillNativeShellPlaceholders(
   html: string,
   values: NativeShellValues
 ): string {
   const substitutions: Record<string, string> = {
     HTML_LANG: "en",
-    HTML_LAYOUT: layoutAttribute(RENDERED_AS_MOBILE),
+    // Left empty so the inline script in `index.html` picks the layout from
+    // the device itself before the first paint; one fixed answer would give
+    // a tablet the phone styles until the app loads.
+    HTML_LAYOUT: "",
     META: "",
     THEME_STYLE_TAG: values.themeStyleText,
     THEME_PRESETS_JSON: escapeForScript(
@@ -51,7 +45,9 @@ export function fillNativeShellPlaceholders(
     ),
     CONFIG_JSON: escapeForScript(
       JSON.stringify({
-        renderedAsMobile: RENDERED_AS_MOBILE,
+        // Never used for the layout: with no server markup on the page, the
+        // app measures the real window from the start (`measureViewport`).
+        renderedAsMobile: true,
         publicOrigin: values.publicOrigin,
       })
     ),

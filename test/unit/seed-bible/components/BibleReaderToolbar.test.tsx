@@ -1,3 +1,4 @@
+import type { ConnectedSessionUser } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
@@ -778,6 +779,10 @@ describe("BibleReaderToolbar — clearing highlights", () => {
       currentUser: signal(null),
       isAwayFromGroup: signal(false),
       incomingComeBackRequest: signal(null),
+      audioOffer: signal(null),
+      leadsSharedAudio: signal(false),
+      isListeningAlong: signal(false),
+      isListeningOnOwn: signal(false),
       document: {} as never,
       updateOptions: vi.fn(),
       dispose: vi.fn(),
@@ -6327,6 +6332,10 @@ describe("BibleReaderToolbar — answers to a playing question in a shared sessi
         // With the group, so its bar stays out of the way.
         isAwayFromGroup: signal(false),
         incomingComeBackRequest: signal(null),
+        audioOffer: signal(null),
+        leadsSharedAudio: signal(false),
+        isListeningAlong: signal(false),
+        isListeningOnOwn: signal(false),
         document: {} as never,
         updateOptions: vi.fn(),
         dispose: vi.fn(),
@@ -6416,7 +6425,12 @@ describe("BibleReaderToolbar — away from the session group", () => {
   async function renderInSession(
     viewportWidth: number,
     away: boolean,
-    { askedToComeBack = false } = {}
+    {
+      askedToComeBack = false,
+      offeredAudio = false,
+      leadingAudio = false,
+      listening = null as "with-group" | "on-own" | null,
+    } = {}
   ) {
     window.innerWidth = viewportWidth;
     const state = await createTestSeedBibleState({
@@ -6446,6 +6460,51 @@ describe("BibleReaderToolbar — away from the session group", () => {
     const dismissComeBackRequest = vi.fn(() => {
       incomingComeBackRequest.value = null;
     });
+    const audioOffer = signal(
+      offeredAudio
+        ? {
+            playing: true,
+            bookId: "EXO",
+            chapterNumber: 2,
+            translationId: "AAB",
+            position: 0,
+            unit: "seconds" as const,
+            verseNumber: null,
+            updatedAtMs: Date.now(),
+            id: "audio-1",
+            fromConnectionId: "conn-host",
+          }
+        : null
+    );
+    const listenAlong = vi.fn(() => {
+      audioOffer.value = null;
+    });
+    const dismissAudioOffer = vi.fn(() => {
+      audioOffer.value = null;
+    });
+    const leadsSharedAudio = signal(leadingAudio);
+    const sharedAudio = signal(
+      leadingAudio || listening
+        ? {
+            playing: false,
+            bookId: "EXO",
+            chapterNumber: 2,
+            translationId: "AAB",
+            position: 0,
+            unit: "seconds" as const,
+            verseNumber: null,
+            updatedAtMs: Date.now(),
+            id: "audio-1",
+            fromConnectionId: leadingAudio ? "conn-self" : "conn-host",
+          }
+        : null
+    );
+    const isListeningAlong = signal(listening !== null);
+    const isListeningOnOwn = signal(listening === "on-own");
+    const rejoinGroupAudio = vi.fn(() => {
+      isListeningOnOwn.value = false;
+    });
+    const audioListeners = signal<ConnectedSessionUser[]>([]);
     tab.sharedSession = {
       id: "group-abc",
       options: signal({
@@ -6489,6 +6548,15 @@ describe("BibleReaderToolbar — away from the session group", () => {
       rejoinGroup,
       incomingComeBackRequest,
       dismissComeBackRequest,
+      audioOffer,
+      listenAlong,
+      dismissAudioOffer,
+      leadsSharedAudio,
+      sharedAudio,
+      audioListeners,
+      isListeningAlong,
+      isListeningOnOwn,
+      rejoinGroupAudio,
       document: {} as never,
       updateOptions: vi.fn(),
       dispose: vi.fn(),
@@ -6503,7 +6571,15 @@ describe("BibleReaderToolbar — away from the session group", () => {
       );
     });
 
-    return { state, rejoinGroup, dismissComeBackRequest };
+    return {
+      state,
+      rejoinGroup,
+      dismissComeBackRequest,
+      listenAlong,
+      dismissAudioOffer,
+      audioListeners,
+      rejoinGroupAudio,
+    };
   }
 
   const groupBar = () =>
@@ -6586,6 +6662,120 @@ describe("BibleReaderToolbar — away from the session group", () => {
 
     expect(rejoinGroup).toHaveBeenCalledTimes(1);
     expect(groupBar()).toBeNull();
+  });
+
+  it("offers the host's audio to a reader with the group, and listens along", async () => {
+    const { listenAlong } = await renderInSession(
+      MOBILE_VIEWPORT_WIDTH,
+      false,
+      {
+        offeredAudio: true,
+      }
+    );
+
+    const bar = groupBar()!;
+    expect(bar.parentElement?.classList).toContain("sb-reader-floating-nav");
+    expect(bar.textContent).toContain("Grace would like to play Exodus 2");
+    expect(bar.textContent).toContain("Listen along on this device?");
+
+    const listen = Array.from(bar.querySelectorAll("button")).find((button) =>
+      button.textContent?.includes("Listen along")
+    )!;
+    await act(async () => {
+      listen.click();
+    });
+
+    expect(listenAlong).toHaveBeenCalledTimes(1);
+    expect(groupBar()).toBeNull();
+  });
+
+  it("turns down the host's audio with Not now on desktop", async () => {
+    const { dismissAudioOffer, listenAlong } = await renderInSession(
+      1200,
+      false,
+      { offeredAudio: true }
+    );
+
+    const toolbar = () => container.querySelector(".sb-reader-toolbar")!;
+    expect(groupBar()!.parentElement).toBe(toolbar());
+    expect(toolbar().classList).toContain("sb-reader-toolbar-has-group-bar");
+
+    const notNow = Array.from(groupBar()!.querySelectorAll("button")).find(
+      (button) => button.textContent === "Not now"
+    )!;
+    await act(async () => {
+      notNow.click();
+    });
+
+    expect(dismissAudioOffer).toHaveBeenCalledTimes(1);
+    expect(listenAlong).not.toHaveBeenCalled();
+    expect(groupBar()).toBeNull();
+    expect(toolbar().classList).not.toContain(
+      "sb-reader-toolbar-has-group-bar"
+    );
+  });
+
+  it("tells a host sharing audio who has joined them", async () => {
+    const { audioListeners } = await renderInSession(1200, false, {
+      leadingAudio: true,
+    });
+
+    const bar = groupBar()!;
+    expect(bar.textContent).toContain("You're playing Exodus 2 for everyone");
+    expect(bar.textContent).toContain("Waiting for people to listen along");
+    expect(bar.querySelectorAll(".sb-tab-user-icon")).toHaveLength(0);
+
+    await act(async () => {
+      audioListeners.value = Array.from({ length: 5 }, (_, i) => ({
+        isSelf: false,
+        connectionId: `conn-${i}`,
+        userId: `user-${i}`,
+        profile: { name: `Listener ${i}` },
+        visual: { defaultIcon: "pets", color: "#8B5CF6", colorName: "purple" },
+        isActive: true,
+        joinedAtMs: null,
+      })) as unknown as ConnectedSessionUser[];
+    });
+
+    expect(groupBar()!.textContent).toContain("5 listening along");
+    expect(
+      groupBar()!.querySelectorAll(".sb-session-group-bar-leader")
+    ).toHaveLength(4);
+    expect(groupBar()!.textContent).toContain("+1");
+  });
+
+  it("tells a listener they're with the group and who controls playback", async () => {
+    await renderInSession(1200, false, { listening: "with-group" });
+
+    const bar = groupBar()!;
+    expect(bar.textContent).toContain("Listening to Exodus 2 with the group");
+    expect(bar.textContent).toContain("Grace controls playback");
+    expect(bar.querySelector(".sb-session-group-bar-rejoin")).toBeNull();
+  });
+
+  it("offers a listener who went off on their own the way back to the group's audio", async () => {
+    const { rejoinGroupAudio } = await renderInSession(
+      MOBILE_VIEWPORT_WIDTH,
+      false,
+      { listening: "on-own" }
+    );
+
+    expect(groupBar()!.textContent).toContain("You're listening on your own");
+    expect(groupBar()!.textContent).toContain(
+      "The group is listening to Exodus 2"
+    );
+    const rejoin = groupBar()!.querySelector<HTMLButtonElement>(
+      ".sb-session-group-bar-rejoin"
+    )!;
+    expect(rejoin.getAttribute("aria-label")).toBe("Rejoin the group's audio");
+    await act(async () => {
+      rejoin.click();
+    });
+
+    expect(rejoinGroupAudio).toHaveBeenCalledTimes(1);
+    expect(groupBar()!.textContent).toContain(
+      "Listening to Exodus 2 with the group"
+    );
   });
 
   it("shows nothing while the reader is with the group", async () => {

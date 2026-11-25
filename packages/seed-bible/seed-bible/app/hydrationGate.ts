@@ -68,6 +68,26 @@ export function isRenderedByThisBuild(
 }
 
 /**
+ * Whether the page holds server-rendered markup the first client render has
+ * to match. Without it the client draws from scratch whatever else is true,
+ * so it can draw for the real window straight away. Known before the app
+ * state exists, unlike the rest of `decideHydration`'s checks.
+ */
+export function hasServerRenderedContent(
+  config: AppConfig,
+  container: Element
+): boolean {
+  // A shell that was never actually filled in (a non-whitelisted branch's
+  // stale fallback with a swallowed substitution, or a render() error path)
+  // leaves nothing but a comment node under the container. And no
+  // `renderedForPath` means this config never came from a real render() call
+  // at all (see AppConfig.renderedForPath).
+  return (
+    Boolean(container.firstElementChild) && Boolean(config.renderedForPath)
+  );
+}
+
+/**
  * Decides whether the client should `hydrate()` onto the existing SSR DOM or
  * fall back to a clean `render()`. Preact's `hydrate()` does not diff
  * attributes on existing DOM, so a mismatch here would silently stay wrong
@@ -78,17 +98,8 @@ export function decideHydration(ctx: HydrationGateContext): HydrationDecision {
   const { config, pathname, search, container, clientCommit, clientLanguage } =
     ctx;
 
-  // A shell that was never actually filled in (a non-whitelisted branch's
-  // stale fallback with a swallowed substitution, or a render() error path)
-  // leaves nothing but a comment node under the container.
-  if (!container.firstElementChild) {
-    return { hydrate: false, reason: "no-ssr-content" };
-  }
-
-  // No `renderedForPath` means this config never came from a real render()
-  // call at all (see AppConfig.renderedForPath) — nothing to verify a URL
-  // match against.
-  if (!config.renderedForPath) {
+  const { renderedForPath } = config;
+  if (!renderedForPath || !hasServerRenderedContent(config, container)) {
     return { hydrate: false, reason: "no-ssr-content" };
   }
 
@@ -103,10 +114,7 @@ export function decideHydration(ctx: HydrationGateContext): HydrationDecision {
     return { hydrate: false, reason: "chapter-load-incomplete" };
   }
 
-  const ssrUrl = new URL(
-    config.renderedForPath,
-    "http://hydration-check.local"
-  );
+  const ssrUrl = new URL(renderedForPath, "http://hydration-check.local");
   const ssrAppPath = `${stripBasePath(ssrUrl.pathname, config.basePath)}${ssrUrl.search}`;
   const liveAppPath = `${stripBasePath(pathname, config.basePath)}${search}`;
   if (ssrAppPath !== liveAppPath) {

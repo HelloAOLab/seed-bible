@@ -184,7 +184,8 @@ export interface ApologistChatCompletionRequest {
    * where it goes and how it's authenticated.
    */
   send: (body: unknown) => Promise<Response>;
-  model: string;
+  /** Left out of the request when undefined, so the agent uses its own model. */
+  model?: string;
   stream: boolean;
   language: string;
   /** Initial `metadata.bible` from {@link resolveApologistBible}. */

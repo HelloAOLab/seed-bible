@@ -13,6 +13,7 @@ import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/S
 import { SIDEBAR_COLLAPSED_STORAGE_KEY } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
 import {
   decideHydration,
+  hasServerRenderedContent,
   decideStartupHydration,
 } from "@packages/seed-bible/seed-bible/app/hydrationGate";
 import { waitForInitialChapterLoads } from "@packages/seed-bible/seed-bible/app/initialChapterLoadWait";
@@ -23,6 +24,7 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import { stubColorScheme } from "../seed-bible/testUtils/stubColorScheme";
 import { installSharedDocumentMock } from "../seed-bible/testUtils/createTestSeedBibleState";
+import { resetSeedBibleIconIntroForTests } from "@packages/seed-bible/seed-bible/components/icons";
 
 // A signed-in test makes the app read reading history while its state is
 // still being built, before a test could stub the client it creates. Every
@@ -135,6 +137,10 @@ describe("client hydration", () => {
 
   beforeEach(() => {
     originalFetch = globalThis.fetch;
+    // The server and client renders share this process, so an icon an earlier
+    // test mounted would otherwise make the server draw the intro partway
+    // through, and the client (a moment later) draw it finished.
+    resetSeedBibleIconIntroForTests();
   });
 
   afterEach(() => {
@@ -690,6 +696,43 @@ describe("client hydration", () => {
     expect(decision).toEqual({ hydrate: false, reason: "no-ssr-content" });
   });
 
+  // Decides, before the app state exists, whether the first draw can use the
+  // real window rather than the server's phone/desktop guess.
+  describe("hasServerRenderedContent", () => {
+    it("is true for markup the server rendered for this page", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<div>Verse 1</div>";
+
+      expect(
+        hasServerRenderedContent(
+          { ...DEFAULT_APP_CONFIG, renderedForPath: "/en/AAB/genesis/1" },
+          container
+        )
+      ).toBe(true);
+    });
+
+    it("is false for a shell whose markup was never filled in", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<!-- APP_HTML -->";
+
+      expect(
+        hasServerRenderedContent(
+          { ...DEFAULT_APP_CONFIG, renderedForPath: "/" },
+          container
+        )
+      ).toBe(false);
+    });
+
+    it("is false for a config that never went through a real render()", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<div>some stale build-time snapshot</div>";
+
+      expect(hasServerRenderedContent(DEFAULT_APP_CONFIG, container)).toBe(
+        false
+      );
+    });
+  });
+
   it("declines to hydrate when the SSR HTML was rendered by a different commit's bundle", () => {
     // Reproduces the reported bug: a request for a branch outside the host
     // server's `ALLOWED_SSR_BRANCHES` whitelist gets rendered through
@@ -840,6 +883,10 @@ describe("client hydration with a shared customization link", () => {
   let originalFetch: typeof globalThis.fetch;
   beforeEach(() => {
     originalFetch = globalThis.fetch;
+    // The server and client renders share this process, so an icon an earlier
+    // test mounted would otherwise make the server draw the intro partway
+    // through, and the client (a moment later) draw it finished.
+    resetSeedBibleIconIntroForTests();
   });
   afterEach(() => {
     globalThis.fetch = originalFetch;

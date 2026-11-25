@@ -43,6 +43,8 @@ export interface CreateTestSeedBibleStateOptions {
   offlineStore?: OfflineTranslationStore | null;
   /** Deployment config passed through to `createSeedBibleState`. */
   config?: AppConfig;
+  /** Passed through to `createSeedBibleState`: start from the real window. */
+  measureViewport?: boolean;
   /**
    * Whether the app boots on the Today page, as it does in production for a
    * URL with no reading position. Defaults to `false` so the fixture models a
@@ -175,6 +177,12 @@ export function installSharedDocumentMock(state: SeedBibleState): void {
       return document;
     }
   );
+  // Opening a shared session starts its server clock, and the real sample
+  // goes over the same websocket. Never answering leaves the clock unsynced,
+  // so shared audio falls back to device time.
+  vi.spyOn(state.os, "sampleServerTime").mockImplementation(
+    () => new Promise(() => undefined)
+  );
 }
 
 async function ensureI18nInitialized(): Promise<void> {
@@ -262,9 +270,13 @@ if (typeof afterEach === "function") {
  * would otherwise be restored into a later test's editor.
  */
 export function forgetPlaylistDrafts(): void {
-  for (const key of Object.keys(window.localStorage)) {
+  const storage = window.localStorage;
+  if (!storage) {
+    return;
+  }
+  for (const key of Object.keys(storage)) {
     if (key.startsWith("sb-playlist-draft:")) {
-      window.localStorage.removeItem(key);
+      storage.removeItem(key);
     }
   }
 }
@@ -341,6 +353,7 @@ export async function createTestSeedBibleState(
   const state = createSeedBibleState({
     offlineStore: options.offlineStore,
     config: options.config,
+    measureViewport: options.measureViewport,
     initialPlaylistPageSeed: options.initialPlaylistPageSeed,
     initialReadingPlanPageSeed: options.initialReadingPlanPageSeed,
   });

@@ -65,7 +65,12 @@ export function PlaylistStepPage(props: {
   const ref = useRef<HTMLElement>(null);
   useScrollToTopOnMount(ref);
   return (
-    <article ref={ref} className="sb-playlist-step-page">
+    <article
+      ref={ref}
+      className={`sb-playlist-step-page${
+        showTitle && !title ? " is-untitled" : ""
+      }`}
+    >
       {title ? (
         <h2 className="sb-playlist-step-page-title" dir="auto">
           {title}

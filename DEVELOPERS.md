@@ -22,6 +22,14 @@ You can now launch the VSCode debugger and step through code.
 3. You should see the Seed Bible load in a new window.
 4. You can now place breakpoints in VSCode and Chrome will pause when one is hit.
 
+### Developer tools
+
+Settings → Developer lists switchable tools for working on Seed Bible.
+
+- **Turning them on:** always shown in `pnpm dev`. On alpha and production, tap the version number at the bottom of Settings seven times, or open any page with `?devTools`. "Hide developer settings" locks them again. The iPhone and Android apps don't have them.
+- **Adding a tool:** add an entry to `ALL_DEV_TOOLS` in `packages/seed-bible/seed-bible/app/devTools/devTools.ts` with a `start` and a `stop`. Set `safeInProduction: true` only if it's harmless for any user to switch on; unmarked tools only show in dev builds, but their code still ships in production's on-demand chunk, so never put anything sensitive in one.
+- **Build check:** `pnpm build:client` and `pnpm build:native` fail if developer-tools code reaches what production loads at startup, or the native apps at all. If a new tool's code contains none of the markers in `script/lib/devToolsBundleCheck.ts`, add one.
+
 ### Extensions
 
 Extensions now need the following:

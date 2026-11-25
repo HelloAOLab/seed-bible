@@ -133,3 +133,22 @@
 .sb-session-group-bar-request-actions > .sb-button {
   flex: 1;
 }
+
+/* A host sharing audio: what's playing, and the faces of who has joined. */
+.sb-session-group-bar-audio-icon {
+  flex-shrink: 0;
+  color: var(--sb-primary-color);
+}
+
+.sb-session-group-bar-audio-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.sb-session-group-bar-more {
+  margin-inline-start: 0.25rem;
+  align-self: center;
+  font-weight: 600;
+}

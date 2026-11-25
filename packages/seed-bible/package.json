@@ -1,6 +1,6 @@
 {
   "name": "seed-bible",
-  "version": "1.18.0",
+  "version": "1.20.0",
   "description": "The core Preact library and CasualOS-backed managers powering the Seed Bible reader.",
   "type": "module",
   "main": "./dist/api.js",
@@ -70,6 +70,7 @@
     "@casual-simulation/aux-records": "4.2.8-alpha.38630400059",
     "@casual-simulation/aux-websocket": "catalog:",
     "@casual-simulation/fast-json-stable-stringify": "^4.0.5",
+    "@casual-simulation/timesync": "catalog:",
     "@casual-simulation/websocket": "catalog:",
     "@tiptap/core": "catalog:",
     "@tiptap/extension-bullet-list": "catalog:",

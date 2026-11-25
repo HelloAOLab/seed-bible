@@ -10,6 +10,7 @@ import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { setDefaultI18n } from "../i18n/I18nManager";
 import {
   decideStartupHydration,
+  hasServerRenderedContent,
   isRenderedByThisBuild,
   type HydrationDecision,
 } from "../app/hydrationGate";
@@ -19,8 +20,30 @@ import {
   recordPageLoadOutcome,
   startWebVitalsBreakdownReporting,
 } from "../app/webVitalsBreakdown";
+import {
+  devToolsUnlocked,
+  hasDevToolsOn,
+  initDevToolsUnlock,
+  removeDevToolsFlag,
+} from "./devTools/devToolsUnlock";
 
 startWebVitalsBreakdownReporting();
+
+// Fetched only when this browser unlocked the developer tools and left one on.
+// The native-build test is spelled out so the bundler can leave the tools out
+// of the native apps entirely (see SettingsPage's DeveloperSettingsView).
+const devToolsFlagInUrl = initDevToolsUnlock();
+if (
+  import.meta.env.MODE !== "native" &&
+  devToolsUnlocked.peek() &&
+  hasDevToolsOn()
+) {
+  void import("./devTools/devTools")
+    .then((m) => m.startDevTools())
+    // Offline, or removed by a deploy since the page loaded: the tools just
+    // stay off for this page.
+    .catch(() => {});
+}
 
 // Config (base path + asset host, plus SSR-verification metadata) injected
 // by the host server. Reading it on the client is what lets the hydration
@@ -67,6 +90,7 @@ console.log("Starting APP");
 // gets replaced.
 const state = createSeedBibleState({
   config,
+  measureViewport: !hasServerRenderedContent(config, container),
   apiResponseSnapshot,
   initialCustomizationSeed,
   revalidateInitialCustomizationSeed,
@@ -161,7 +185,12 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
         `Hydration skipped (${decision.reason}); falling back to render().`
       );
       recordPageLoadOutcome(`rendered:${decision.reason}`);
+      // No server markup to match, so draw for the real window rather than
+      // the server's guess (in the same task, so nothing paints in between).
+      state.app.applyViewport();
       render(app, container);
     }
+
+    if (devToolsFlagInUrl) removeDevToolsFlag(state.navigation);
   }
 );

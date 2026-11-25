@@ -8,7 +8,7 @@ import {
   formatSiteAddress,
   parseSiteAddress,
 } from "../../../packages/seed-bible/seed-bible/managers/customContent/siteImport";
-import { QueueSendError, enqueue, sendAll } from "./queue";
+import { QueueSendError, sendAll, startLinks } from "./queue";
 import {
   CRAWL_LIST_URL,
   findIndexBlocks,
@@ -37,7 +37,6 @@ import {
   getJob,
   isActiveImportConflict,
   jobProgress,
-  queuedItemIds,
   setJobStatus,
   type JobRow,
 } from "./jobs";
@@ -286,7 +285,7 @@ export async function pickSitePages(
     );
   }
   try {
-    await enqueue(env, job.id, await queuedItemIds(env.DB, job.id));
+    await startLinks(env, job.id, total);
   } catch (error) {
     // Back to waiting, with the picked pages still offered, so the owner can
     // press Import again rather than the import sitting with nothing to run.
