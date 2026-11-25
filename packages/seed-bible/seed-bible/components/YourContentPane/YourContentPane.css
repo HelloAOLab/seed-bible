@@ -499,7 +499,8 @@
   line-height: 1.45;
 }
 
-.sb-button.sb-content-sign-in {
+.sb-button.sb-content-sign-in,
+.sb-button.sb-content-device-retry {
   flex: none;
 }
 

@@ -781,16 +781,47 @@ function SignInButton(props: { state: SeedBibleState }) {
   );
 }
 
+/** Why the list is only what this device holds. */
+type DeviceContentReason = "signed-out" | "offline" | "unreachable";
+
+/**
+ * Reads the account again, with a spinner while it runs: the reload is quiet,
+ * so without one a press would show nothing until it finished.
+ */
+function RetryAccountButton(props: { state: SeedBibleState }) {
+  const { t } = useI18n();
+  const retrying = useSignal(false);
+  const retry = () => {
+    retrying.value = true;
+    void props.state.yourContent.load({ force: true }).finally(() => {
+      retrying.value = false;
+    });
+  };
+  return (
+    <Button
+      shape="pill"
+      className="sb-content-device-retry"
+      loading={retrying.value}
+      onClick={retry}
+    >
+      {t("try-again", { defaultValue: "Try again" })}
+    </Button>
+  );
+}
+
 /**
  * Says the list is only what this device holds: for a signed-out reader,
- * with a way to sign in; for a signed-in one whose account couldn't be
- * reached, with no action, since there is nothing to do but reconnect.
+ * with a way to sign in; for a signed-in one who is offline, with no action,
+ * since the list reloads by itself once the connection comes back; and for
+ * a signed-in one who is online but whose account couldn't be read, with a
+ * way to try again.
  */
 function DeviceContentCard(props: {
   state: SeedBibleState;
-  signedIn: boolean;
+  reason: DeviceContentReason;
 }) {
   const { t } = useI18n();
+  const { reason } = props;
   return (
     <section
       className="sb-content-device-card"
@@ -799,31 +830,45 @@ function DeviceContentCard(props: {
       })}
     >
       <span className="sb-content-device-card-icon" aria-hidden="true">
-        <MaterialIcon>{props.signedIn ? "cloud_off" : "devices"}</MaterialIcon>
+        <MaterialIcon>
+          {reason === "signed-out"
+            ? "devices"
+            : reason === "offline"
+              ? "cloud_off"
+              : "sync_problem"}
+        </MaterialIcon>
       </span>
       <div className="sb-content-device-card-text">
         <p className="sb-content-device-card-title">
-          {props.signedIn
-            ? t("your-content-device-only-offline-title", {
-                defaultValue: "Showing content saved on this device",
-              })
-            : t("your-content-device-only-title", {
+          {reason === "signed-out"
+            ? t("your-content-device-only-title", {
                 defaultValue: "Saved on this device only",
+              })
+            : t("your-content-device-only-offline-title", {
+                defaultValue: "Showing content saved on this device",
               })}
         </p>
         <p className="sb-content-device-card-message">
-          {props.signedIn
-            ? t("your-content-device-only-offline", {
-                defaultValue:
-                  "Connect to the internet to see everything in your account.",
-              })
-            : t("your-content-device-only", {
+          {reason === "signed-out"
+            ? t("your-content-device-only", {
                 defaultValue:
                   "Sign in to back up your notes and highlights, and to use bookmarks, saves, playlists and reading plans.",
-              })}
+              })
+            : reason === "offline"
+              ? t("your-content-device-only-offline", {
+                  defaultValue:
+                    "Connect to the internet to see everything in your account.",
+                })
+              : t("your-content-device-only-unreachable", {
+                  defaultValue:
+                    "Your account couldn't be reached, so some of your content may be missing.",
+                })}
         </p>
       </div>
-      {props.signedIn ? null : <SignInButton state={props.state} />}
+      {reason === "signed-out" ? <SignInButton state={props.state} /> : null}
+      {reason === "unreachable" ? (
+        <RetryAccountButton state={props.state} />
+      ) : null}
     </section>
   );
 }
@@ -1059,8 +1104,13 @@ export function YourContentPane(props: YourContentScreenProps) {
   // A signed-out list is always only this device's, so it says so wherever
   // it shows one; a signed-in list only once the account couldn't be reached.
   const showDeviceCard = userId
-    ? status === "ready" && source === "device"
+    ? status === "ready" && source !== "account"
     : !needsAccount;
+  const deviceReason: DeviceContentReason = !userId
+    ? "signed-out"
+    : source === "device-unreachable"
+      ? "unreachable"
+      : "offline";
 
   const nothingToShow =
     status === "ready" &&
@@ -1332,7 +1382,7 @@ export function YourContentPane(props: YourContentScreenProps) {
         ) : null}
 
         {showDeviceCard ? (
-          <DeviceContentCard state={state} signedIn={!!userId} />
+          <DeviceContentCard state={state} reason={deviceReason} />
         ) : null}
 
         {nothingToShow ? (

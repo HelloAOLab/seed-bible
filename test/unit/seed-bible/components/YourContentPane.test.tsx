@@ -1409,7 +1409,7 @@ describe("YourContentPane", () => {
     });
   });
 
-  it("says it's showing this device's content when the account couldn't be reached", () => {
+  it("says it's showing this device's content while offline", () => {
     const { state } = createState({
       source: "device",
       annotations: [annotation("a", "<p>note</p>")],
@@ -1421,8 +1421,65 @@ describe("YourContentPane", () => {
     ).toBe(
       "cloud_offShowing content saved on this deviceConnect to the internet to see everything in your account."
     );
+    // The list reloads by itself once the connection is back.
+    expect(container.querySelector(".sb-content-device-retry")).toBeNull();
     expect(container.querySelector(".sb-content-sign-in")).toBeNull();
     expect(container.querySelector(".sb-content-filter-locked")).toBeNull();
+  });
+
+  describe("online, with the account unreachable", () => {
+    const retryButton = () =>
+      container.querySelector<HTMLButtonElement>(".sb-content-device-retry");
+
+    it("says the account couldn't be reached instead of asking to connect", () => {
+      const { state } = createState({
+        source: "device-unreachable",
+        annotations: [annotation("a", "<p>note</p>")],
+      });
+      renderPane(state);
+
+      const card = container.querySelector(".sb-content-device-card");
+      expect(card?.textContent).toContain(
+        "Your account couldn't be reached, so some of your content may be missing."
+      );
+      expect(card?.textContent).not.toContain("Connect to the internet");
+      expect(container.querySelector(".sb-content-sign-in")).toBeNull();
+    });
+
+    it("tries the account again from the card", async () => {
+      const { state, load } = createState({ source: "device-unreachable" });
+      renderPane(state);
+      const loadsOnOpen = load.mock.calls.length;
+
+      await act(async () => {
+        retryButton()!.click();
+      });
+
+      expect(load).toHaveBeenCalledTimes(loadsOnOpen + 1);
+      expect(load).toHaveBeenLastCalledWith({ force: true });
+    });
+
+    it("shows the retry is running until it finishes", async () => {
+      const { state, load } = createState({ source: "device-unreachable" });
+      let finish = () => {};
+      renderPane(state);
+      load.mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finish = resolve;
+          })
+      );
+
+      act(() => {
+        retryButton()!.click();
+      });
+      expect(retryButton()!.getAttribute("aria-busy")).toBe("true");
+
+      await act(async () => {
+        finish();
+      });
+      expect(retryButton()!.getAttribute("aria-busy")).toBeNull();
+    });
   });
 
   it("adds no device card when the account's content loaded", () => {

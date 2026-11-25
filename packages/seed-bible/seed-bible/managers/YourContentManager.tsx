@@ -48,10 +48,13 @@ export type ContentLoadStatus = "idle" | "loading" | "ready" | "error";
 
 /**
  * Where the loaded annotations and highlights came from. `device` means only
- * what this device holds: always so signed out, and for a signed-in user when
- * the server couldn't be read, in which case the lists may be incomplete.
+ * what this device holds: always so signed out, and for a signed-in user who
+ * is offline, in which case the lists may be incomplete until the connection
+ * comes back. `device-unreachable` is the same device-only list for a
+ * signed-in user who is online but whose account couldn't be read, which
+ * reconnecting won't fix.
  */
-export type ContentSource = "account" | "device";
+export type ContentSource = "account" | "device" | "device-unreachable";
 
 export interface YourContentManager {
   /** Free-text filter typed into the search box. */
@@ -175,8 +178,13 @@ export function createYourContentManager(
    */
   let generation = 0;
 
+  const isOnline = () =>
+    annotationsManager.sync.isOnline.value &&
+    highlightsManager.sync.isOnline.value;
+
   const runLoad = async (quiet: boolean): Promise<void> => {
     const startedIn = generation;
+    const startedOnline = untracked(isOnline);
     if (!quiet) {
       status.value = "loading";
     }
@@ -193,12 +201,14 @@ export function createYourContentManager(
 
       annotations.value = sortAnnotationsByRecency(loadedAnnotations.items);
       highlights.value = loadedHighlights.items;
-      source.value =
-        login.userId.peek() &&
-        loadedAnnotations.complete &&
-        loadedHighlights.complete
+      const complete = loadedAnnotations.complete && loadedHighlights.complete;
+      source.value = !login.userId.peek()
+        ? "device"
+        : complete
           ? "account"
-          : "device";
+          : startedOnline
+            ? "device-unreachable"
+            : "device";
       status.value = "ready";
     } catch (error) {
       if (startedIn !== generation) {
@@ -413,6 +423,23 @@ export function createYourContentManager(
     // A load already running may have read the device before the adoption
     // moved anything, so wait it out and read again.
     void (inFlight ?? Promise.resolve()).then(() => load({ force: true }));
+  });
+
+  // Offline, a signed-in user is shown only what this device holds and told
+  // to reconnect for the rest, so reconnecting has to bring the rest in.
+  let wasOnline = untracked(isOnline);
+  effect(() => {
+    const online = isOnline();
+    const cameBack = online && !wasOnline;
+    wasOnline = online;
+    if (!cameBack || status.peek() === "idle" || !login.userId.peek()) {
+      return;
+    }
+    // Where the content came from is judged only after a running load
+    // settles: one started offline may still be about to report "device".
+    void (inFlight ?? Promise.resolve()).then(() =>
+      source.peek() !== "account" ? load({ force: true }) : undefined
+    );
   });
 
   const removeHighlight = (highlight: StoredHighlight) => {

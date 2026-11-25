@@ -748,6 +748,7 @@
   "your-content-device-only": "Sign in to back up your notes and highlights, and to use bookmarks, saves, playlists and reading plans.",
   "your-content-device-only-offline-title": "Showing content saved on this device",
   "your-content-device-only-offline": "Connect to the internet to see everything in your account.",
+  "your-content-device-only-unreachable": "Your account couldn't be reached, so some of your content may be missing.",
   "your-content-chip-needs-account": "(needs an account)",
   "your-content-needs-account-saves": "Saves need an account",
   "your-content-sign-in-saves": "Sign in to save passages and find them again on any device.",
