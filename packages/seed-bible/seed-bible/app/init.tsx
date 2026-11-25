@@ -23,6 +23,12 @@ import {
 
 startWebVitalsBreakdownReporting();
 
+if (import.meta.env.DEV) {
+  void import("./devShowSharedComponents").then((m) =>
+    m.installShowSharedComponents()
+  );
+}
+
 // Config (base path + asset host, plus SSR-verification metadata) injected
 // by the host server. Reading it on the client is what lets the hydration
 // gate below tell a trustworthy SSR document from one it should discard.
