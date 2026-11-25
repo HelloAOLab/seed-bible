@@ -28,6 +28,11 @@ import type {
   SettingsManager,
 } from "../managers/SettingsManager";
 import { createSidebar } from "../managers/SidebarManager";
+import type { ModalManager } from "../managers/ModalManager";
+import {
+  closeApocryphaInfo,
+  openApocryphaInfo,
+} from "../components/BibleSelector/ApocryphaInfo";
 import type { NavigationManager } from "../managers/NavigationManager";
 import type { I18nManager } from "../i18n/I18nManager";
 import { type SavesManager } from "../managers/SavesManager";
@@ -268,7 +273,8 @@ export interface BibleSelectorState {
   handleTranslationAddition: () => void;
   openTabs: () => void;
   saves: SavesManager;
-  showApocryphaInfo: Signal<boolean>;
+  /** Opens "About the Apocrypha"; it closes when the selector does. */
+  openApocryphaInfo: () => void;
 }
 
 function groupBooks(translationBooks: TranslationBooks | null, search: string) {
@@ -319,7 +325,8 @@ export function createBibleSelectorState(
   saves: SavesManager,
   navigation: NavigationManager,
   login: LoginManager,
-  i18n: I18nManager
+  i18n: I18nManager,
+  modals: ModalManager
 ): BibleSelectorState {
   const isOpen = signal(false);
   const slot = signal<TabSlot | null>(null);
@@ -329,7 +336,6 @@ export function createBibleSelectorState(
   >(null);
   const picking = computed(() => chapterPick.value !== null);
   let openOnBookId: string | null = null;
-  const showApocryphaInfo = signal(false);
   const availableSlots = computed(() => tabsLayoutManager.slots.value);
   const availableTranslations = computed(
     () => dataManager.availableTranslations.value
@@ -550,6 +556,7 @@ export function createBibleSelectorState(
     } else {
       chapterPick.value = null;
       openOnBookId = null;
+      closeApocryphaInfo(modals);
     }
   });
 
@@ -1185,6 +1192,6 @@ export function createBibleSelectorState(
     handleTranslationAddition,
     openTabs,
     saves,
-    showApocryphaInfo,
+    openApocryphaInfo: () => openApocryphaInfo(modals),
   };
 }

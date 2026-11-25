@@ -13,6 +13,7 @@ import {
 } from "../icons";
 import type { ComponentChildren } from "preact";
 import { Button } from "../Button/Button";
+import { SEED_BIBLE_DOCS_URL } from "../../app/publicLinks";
 
 const CHANGELOG_URL =
   "https://github.com/HelloAOLab/seed-bible/blob/main/CHANGELOG.md";
@@ -183,6 +184,14 @@ export function AboutPage({
               {t("about-action-release-notes", {
                 defaultValue: "Release Notes",
               })}
+            </Button>
+            <Button
+              className="sb-about-action-secondary"
+              href={SEED_BIBLE_DOCS_URL}
+              target="_blank"
+              icon="menu_book"
+            >
+              {t("docs-link-label", { defaultValue: "Docs" })}
             </Button>
             <Button
               className="sb-about-action-secondary"

@@ -45,6 +45,14 @@
   --pe-font-title: "Newsreader", serif;
   --pe-font-passage: "Literata", "Newsreader", serif;
 
+  /* The shared text box and dropdown, in the editor's own colors, typeface
+     and corners. */
+  --sb-text-input-background: var(--pe-surface);
+  --sb-text-input-border-color: var(--pe-border);
+  --sb-text-input-focus-color: var(--pe-accent-strong);
+  --sb-text-input-radius: var(--sb-radius-lg);
+  --sb-text-input-font-family: var(--pe-font-ui);
+
   color: var(--pe-text);
   box-sizing: border-box;
 
@@ -69,9 +77,11 @@
     cursor: pointer;
   }
 
+  /* The shared text box and dropdown draw their own focus ring, inside their
+     border, like every other box in the app. */
   & button:focus-visible,
-  & input:focus-visible,
-  & textarea:focus-visible {
+  & input:not(.sb-text-input):focus-visible,
+  & textarea:not(.sb-text-input):focus-visible {
     outline: 2px solid var(--pe-accent-strong);
     outline-offset: 2px;
   }
@@ -300,31 +310,16 @@
 
 /* A playlist with no steps yet: says so, with a way to add the first. */
 .sb-pe-empty-list {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 40px 16px;
-  text-align: center;
-
-  & > .sb-pe-icon {
-    width: 32px;
-    height: 32px;
-    margin-bottom: 6px;
-    color: var(--pe-muted);
-  }
+  /* stylelint-disable-next-line seed-bible/use-design-tokens -- the editor's own spacing */
+  --sb-empty-state-padding: 40px 16px;
+  --sb-empty-state-color: var(--pe-muted);
 }
 
-.sb-pe-empty-list-title {
-  margin: 0;
-  font-weight: 600;
-  font-size: 16px;
-}
-
-.sb-pe-empty-list-text {
-  margin: 0 0 12px;
-  font-size: 13px;
-  color: var(--pe-muted);
+/* The editor's icons are fixed-size masks (16px), not SVGs, so they follow the
+   empty state's icon slot only when told to. */
+.sb-pe-empty-list .sb-pe-icon {
+  width: 1em;
+  height: 1em;
 }
 
 /* The steps are the same rows as the playing list's (`PlaylistStepRow`);
@@ -655,45 +650,6 @@
   text-align: end;
 }
 
-.sb-pe-input,
-.sb-pe-textarea {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid var(--pe-border);
-  border-radius: 10px;
-  background: var(--pe-surface);
-  color: var(--pe-text);
-  font-family: var(--pe-font-ui);
-  font-size: 14px;
-  line-height: 18px;
-}
-
-.sb-pe-input::placeholder,
-.sb-pe-textarea::placeholder {
-  color: #757575;
-}
-
-.sb-pe-textarea {
-  display: block;
-  resize: vertical;
-  line-height: 22.4px;
-  min-height: 68px;
-}
-
-.sb-pe-textarea--tall {
-  min-height: 182px;
-}
-
-.sb-pe-input:focus,
-.sb-pe-textarea:focus {
-  outline: none;
-  border-color: var(--pe-accent-strong);
-}
-
-.sb-pe-input--invalid {
-  border-color: var(--pe-danger);
-}
-
 .sb-pe-count {
   align-self: flex-end;
   font-size: 11px;
@@ -909,6 +865,12 @@
 .sb-pe-compare-status {
   margin: 0;
   color: color-mix(in srgb, var(--sb-font-color) 55%, transparent);
+  --sb-loading-status-color: color-mix(
+    in srgb,
+    var(--sb-font-color) 55%,
+    transparent
+  );
+  --sb-loading-status-font-size: inherit;
 }
 
 /* The pick bar and the note, under the page: as the toolbar stack holds them
@@ -1021,9 +983,8 @@
   gap: 6px;
 }
 
-.sb-pe-insert-picker-row .sb-pe-input {
-  padding: 8px 10px;
-  font-size: 13px;
+.sb-pe-insert-picker-input {
+  flex: 1;
 }
 
 .sb-pe-insert-picker-list {
@@ -1096,6 +1057,7 @@
 
 .sb-pe-rich-field:focus-within {
   border-color: var(--pe-accent-strong);
+  box-shadow: inset 0 0 0 1px var(--pe-accent-strong);
 }
 
 .sb-pe-rich-field-inner {

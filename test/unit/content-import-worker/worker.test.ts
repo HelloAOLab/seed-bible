@@ -4,7 +4,8 @@ import { runCleanup } from "../../../workers/content-import/src/cleanup";
 import {
   LEASE_MS,
   JOB_LIFETIME_MS,
-  claimItem,
+  STALLED_AFTER_MS,
+  claimNextItem,
   finishIfComplete,
 } from "../../../workers/content-import/src/jobs";
 import {
@@ -482,6 +483,64 @@ describe("content import worker", () => {
         done: 0,
         failed: 1,
       });
+      expect(
+        worker.db.sqlite
+          .prepare("SELECT attempts, error FROM import_items WHERE job_id = ?")
+          .get(stuck.id)
+      ).toEqual({
+        attempts: 5,
+        error: "gave_up_after_retries; last: server_error",
+      });
+    });
+
+    it("waits longer before each retry, and carries on with other links meanwhile", async () => {
+      const { worker, key, casualos } = setup();
+      // Saving the flaky link always fails for a passing reason.
+      const saves: { url: string; at: number }[] = [];
+      const fakeFetch = casualos.fetch;
+      casualos.fetch = async (input, init) => {
+        const body = JSON.parse(String(init?.body)) as {
+          procedure: string;
+          input: { data?: { url?: string } };
+        };
+        const url = body.input.data?.url;
+        if (body.procedure === "recordData" && url) {
+          saves.push({ url, at: worker.clock.now });
+          if (url === "https://example.org/flaky") {
+            return Response.json({
+              success: false,
+              errorCode: "server_error",
+              errorMessage: "server_error",
+            });
+          }
+        }
+        return fakeFetch(input, init);
+      };
+      const started = await startImport(worker, key, [
+        { url: "https://example.org/flaky" },
+        { url: "https://example.org/b" },
+        { url: "https://example.org/c" },
+        { url: "https://example.org/d" },
+      ]);
+      const savesOf = (url: string) =>
+        saves.filter((save) => save.url === url).map((save) => save.at);
+      const startedAt = worker.clock.now;
+      await worker.drain();
+
+      expect(await progressOf(worker, key, started.id)).toMatchObject({
+        status: "done",
+        done: 3,
+        failed: 1,
+      });
+      const tries = savesOf("https://example.org/flaky");
+      expect(tries).toHaveLength(5);
+      expect(tries.slice(1).map((at, i) => at - tries[i]!)).toEqual([
+        30_000, 60_000, 120_000, 240_000,
+      ]);
+      // The other links didn't wait for the flaky one's retries.
+      for (const url of ["b", "c", "d"]) {
+        expect(savesOf(`https://example.org/${url}`)).toEqual([startedAt]);
+      }
     });
 
     it("pauses when the session ends, and carries on after the owner signs in again", async () => {
@@ -527,6 +586,37 @@ describe("content import worker", () => {
       expect(libraryItems(casualos)).toHaveLength(4);
     });
 
+    it("doesn't count a pause for sign-in as one of a link's tries", async () => {
+      const { worker, key, casualos } = setup();
+      const started = await startImport(worker, key, [
+        { url: "https://example.org/a" },
+      ]);
+      let current = key;
+      for (let pause = 0; pause < 4; pause++) {
+        casualos.endSession(current);
+        await worker.drain();
+        current = casualos.signIn(OWNER, `s${pause}`);
+        expect(await progressOf(worker, current, started.id)).toMatchObject({
+          status: "paused_signin",
+        });
+        const resumed = await call(
+          worker,
+          "POST",
+          `/imports/${started.id}/resume`,
+          { key: current }
+        );
+        expect(resumed.status).toBe(200);
+      }
+      // Its first real failure is retried, not taken as the last try.
+      casualos.failures.set("recordData", { code: "server_error", times: 1 });
+      await worker.drain();
+      expect(await progressOf(worker, current, started.id)).toMatchObject({
+        status: "done",
+        done: 1,
+        failed: 0,
+      });
+    });
+
     it("stops working on links once cancelled", async () => {
       const { worker, key, casualos } = setup();
       const started = await startImport(worker, key, [
@@ -558,30 +648,159 @@ describe("content import worker", () => {
           url: `https://example.org/${i}`,
         }))
       );
-      const ids = (
-        worker.db.sqlite
-          .prepare(
-            "SELECT item_id FROM import_items WHERE job_id = ? ORDER BY item_id"
-          )
-          .all(started.id) as { item_id: string }[]
-      ).map((row) => row.item_id);
       const now = worker.clock.now;
-      for (const id of ids.slice(0, 3)) {
-        expect(await claimItem(worker.env.DB, started.id, id, now)).toBe(true);
+      const claimed = new Set<string>();
+      for (let i = 0; i < 3; i++) {
+        const claim = await claimNextItem(worker.env.DB, started.id, now);
+        expect(claim.kind).toBe("claimed");
+        if (claim.kind === "claimed") {
+          claimed.add(claim.item.item_id);
+        }
       }
-      expect(await claimItem(worker.env.DB, started.id, ids[3]!, now)).toBe(
-        false
-      );
+      expect(claimed.size).toBe(3);
+      expect(await claimNextItem(worker.env.DB, started.id, now)).toEqual({
+        kind: "full",
+      });
 
       // The three consumers die; once their leases end, cleanup puts the
-      // links back in line and the fourth can start.
+      // links back in line, sends a message for each, and the work goes on.
       worker.clock.now += LEASE_MS + 1;
       worker.pending.length = 0;
       await runCleanup(worker.env, worker.deps);
       expect(worker.pending).toHaveLength(3);
+      await worker.drain();
+      expect(await progressOf(worker, key, started.id)).toMatchObject({
+        status: "done",
+        done: 4,
+      });
+    });
+
+    it("gives up on a link that keeps stopping its consumer, and finishes the import", async () => {
+      const { worker, key, casualos } = setup();
+      const started = await startImport(worker, key, [
+        { url: "https://example.org/crashes" },
+      ]);
+      // Each time the link is taken, its consumer dies (say, out of memory)
+      // before it can record anything.
+      for (let i = 0; i < 5; i++) {
+        expect(
+          (await claimNextItem(worker.env.DB, started.id, worker.clock.now))
+            .kind
+        ).toBe("claimed");
+        worker.pending.length = 0;
+        worker.clock.now += LEASE_MS + 1;
+        await runCleanup(worker.env, worker.deps);
+      }
+
+      expect(await progressOf(worker, key, started.id)).toMatchObject({
+        status: "done",
+        failed: 1,
+      });
+      expect(worker.pending).toHaveLength(0);
       expect(
-        await claimItem(worker.env.DB, started.id, ids[3]!, worker.clock.now)
-      ).toBe(true);
+        worker.db.sqlite
+          .prepare("SELECT error FROM import_items WHERE job_id = ?")
+          .get(started.id)
+      ).toEqual({ error: "gave_up_after_retries; last: worker_stopped" });
+      expect(
+        casualos.records.get(LIBRARY)!.get(CONTENT_IMPORT_STATUS_ADDRESS)?.data
+      ).toMatchObject({ jobId: started.id, status: "done", failed: 1 });
+    });
+
+    it("sends one set of messages per import in a cleanup run", async () => {
+      const { worker, key } = setup();
+      const started = await startImport(
+        worker,
+        key,
+        Array.from({ length: 3 }, (_, i) => ({
+          url: `https://example.org/${i}`,
+        }))
+      );
+      for (let i = 0; i < 3; i++) {
+        await claimNextItem(worker.env.DB, started.id, worker.clock.now);
+      }
+      // All three consumers died, long enough ago that the import also
+      // looks stalled.
+      worker.pending.length = 0;
+      worker.clock.now += STALLED_AFTER_MS + 1;
+      await runCleanup(worker.env, worker.deps);
+      expect(worker.pending).toHaveLength(3);
+    });
+
+    it("keeps one message per slot on the queue, rather than one per link waiting for a slot", async () => {
+      const { worker, key } = setup();
+      const started = await startImport(
+        worker,
+        key,
+        Array.from({ length: 30 }, (_, i) => ({
+          url: `https://example.org/${i}`,
+        }))
+      );
+      expect(worker.sent).toHaveLength(3);
+      await worker.drain();
+
+      expect(await progressOf(worker, key, started.id)).toMatchObject({
+        status: "done",
+        done: 30,
+      });
+      // Each link is started by one message.
+      expect(worker.sent.length).toBeLessThanOrEqual(30);
+    });
+
+    it("picks an import back up once the queue works again, after its messages were lost", async () => {
+      const { worker, key } = setup();
+      const started = await startImport(
+        worker,
+        key,
+        Array.from({ length: 30 }, (_, i) => ({
+          url: `https://example.org/${i}`,
+        }))
+      );
+      // The queue's daily limit: every send fails. Each message can't hand
+      // on, so it's retried (taking another link each time) until it runs
+      // out of retries and is dead-lettered, with links still waiting.
+      worker.queue.failSends = Infinity;
+      await worker.drain();
+      const stalled = await progressOf(worker, key, started.id);
+      expect(stalled.status).toBe("running");
+      expect(stalled.queued).toBeGreaterThan(0);
+
+      // Cleanup leaves it alone while it might still be moving...
+      worker.queue.failSends = 0;
+      await runCleanup(worker.env, worker.deps);
+      expect(worker.pending).toHaveLength(0);
+
+      // ...and restarts it once it clearly isn't.
+      worker.clock.now += STALLED_AFTER_MS + 1;
+      await runCleanup(worker.env, worker.deps);
+      await worker.drain();
+      expect(await progressOf(worker, key, started.id)).toMatchObject({
+        status: "done",
+        done: 30,
+        failed: 0,
+      });
+    });
+
+    it("finishes links still queued from before they were taken in turn", async () => {
+      const { worker, key } = setup();
+      const started = await startImport(worker, key, [
+        { url: "https://example.org/a" },
+        { url: "https://example.org/b" },
+      ]);
+      worker.pending.length = 0;
+      const ids = (
+        worker.db.sqlite
+          .prepare("SELECT item_id FROM import_items WHERE job_id = ?")
+          .all(started.id) as { item_id: string }[]
+      ).map((row) => row.item_id);
+      for (const itemId of ids) {
+        await worker.env.IMPORT_QUEUE.send({ jobId: started.id, itemId });
+      }
+      await worker.drain();
+      expect(await progressOf(worker, key, started.id)).toMatchObject({
+        status: "done",
+        done: 2,
+      });
     });
   });
 

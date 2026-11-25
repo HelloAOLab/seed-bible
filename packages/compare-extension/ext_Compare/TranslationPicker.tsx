@@ -11,6 +11,7 @@ import {
   SearchBar,
   TranslationList,
   TranslationViewModeMenu,
+  TooltipTrigger,
 } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 import {
@@ -172,20 +173,19 @@ export function TranslationPicker(props: {
             defaultValue: "Search translations",
           })}
         />
-        <button
-          type="button"
-          className="sb-compare-filters-button"
-          aria-label={t("filter-translations", {
-            defaultValue: "Filter translations",
-          })}
-          title={t("filter-translations", {
-            defaultValue: "Filter translations",
-          })}
-          aria-expanded={showFilters}
-          onClick={() => setShowFilters((open) => !open)}
-        >
-          <FiltersIcon />
-        </button>
+        <TooltipTrigger>
+          <button
+            type="button"
+            className="sb-compare-filters-button"
+            aria-label={t("filter-translations", {
+              defaultValue: "Filter translations",
+            })}
+            aria-expanded={showFilters}
+            onClick={() => setShowFilters((open) => !open)}
+          >
+            <FiltersIcon />
+          </button>
+        </TooltipTrigger>
         {showFilters && (
           <div className="sb-compare-filters-menu">
             <TranslationViewModeMenu

@@ -202,11 +202,7 @@
   margin-top: 14px;
 }
 .ts_check {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   font-size: var(--sb-font-size-14);
-  cursor: pointer;
 }
 .ts_check .ts_muted {
   font-style: italic;

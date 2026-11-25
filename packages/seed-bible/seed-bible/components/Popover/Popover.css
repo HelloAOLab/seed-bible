@@ -1,0 +1,24 @@
+/* A panel beside its button. `Popover` positions it (inline `position`, `top`
+   or `bottom`, `left` or `right`, and `transform-origin`), so a surface sets
+   only its size, padding, border, background and shadow. */
+.sb-popover {
+  position: fixed;
+  z-index: var(--sb-layer-popover);
+  box-sizing: border-box;
+  /* Focus moves into it as it opens; the panel itself needs no ring. */
+  outline: none;
+}
+
+/* Fades in while growing out of the corner by its button. */
+@media (prefers-reduced-motion: no-preference) {
+  .sb-popover {
+    animation: sb-popover-open var(--sb-duration-fast) ease-out;
+  }
+}
+
+@keyframes sb-popover-open {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}

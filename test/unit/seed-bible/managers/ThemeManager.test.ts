@@ -1,8 +1,11 @@
 import {
   applyBrowserThemeColor,
   applyHighlightOverrides,
+  BOOKMARK_COLOR_IDS,
+  bookmarkColorValue,
   createTheme as createThemeManager,
   DARK_THEME,
+  DEFAULT_BOOKMARK_COLOR_ID,
   LIGHT_THEME,
   filterValidFontFamilyOverrides,
   composeThemeStyleText,
@@ -127,6 +130,45 @@ describe("ThemeManager CSS helpers", () => {
 
       expect(css).not.toContain("html {");
       expect(css).toContain("--sb-background: #fafafa;");
+    });
+
+    it("emits bookmark color variables including the neutral palette", () => {
+      const light = generateThemeCssVariables(LIGHT_THEME);
+      const dark = generateThemeCssVariables(DARK_THEME);
+
+      for (const id of BOOKMARK_COLOR_IDS) {
+        expect(light).toContain(`--sb-bookmark-${id}-color:`);
+        expect(dark).toContain(`--sb-bookmark-${id}-color:`);
+      }
+      expect(light).toContain("--sb-bookmark-black-color: #161616;");
+      expect(light).toContain("--sb-bookmark-gray-color: #8c8c8c;");
+      expect(light).toContain("--sb-bookmark-white-color: #ffffff;");
+      expect(dark).toContain("--sb-bookmark-white-color: #f5f5f5;");
+    });
+  });
+
+  describe("bookmarkColorValue", () => {
+    it("resolves every palette id to its theme variable", () => {
+      expect(BOOKMARK_COLOR_IDS).toEqual([
+        "orange",
+        "red",
+        "yellow",
+        "green",
+        "blue",
+        "purple",
+        "black",
+        "gray",
+        "white",
+      ]);
+      for (const id of BOOKMARK_COLOR_IDS) {
+        expect(bookmarkColorValue(id)).toBe(`var(--sb-bookmark-${id}-color)`);
+      }
+    });
+
+    it("falls back to the default color for an unknown id", () => {
+      expect(bookmarkColorValue("chartreuse")).toBe(
+        `var(--sb-bookmark-${DEFAULT_BOOKMARK_COLOR_ID}-color)`
+      );
     });
   });
 

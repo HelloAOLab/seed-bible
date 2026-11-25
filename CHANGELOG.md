@@ -4,31 +4,69 @@
 
 ### ✨ Added
 
-- Add a content library to Custom Branding: add links to your videos and articles with the passages they cover, and everyone using your Custom Branding finds them in Discover on those chapters.
-  - Each library has its own categories, which become Discover's filters and sections.
-  - The library is stored in its own record, not your personal one.
-  - Import many links at once, pasted or from a CSV with titles, categories and passages. Imports run in the background, so they keep going after you close the page, and pause until you sign in again if your session ends.
-  - Imported content gets the passages it names found automatically.
-  - See which chapters your library covers, book by book, to find the gaps you might want to fill.
-  - Chapters with hundreds of items still show all of them in Discover.
-  - Import a whole website: enter its address, and Seed Bible finds the pages the Common Crawl web archive has saved from it. Pick the folders or pages you want; each one's passages are found in its full text, and a video embedded in the page opens directly from Discover. "Check for new pages" looks again later.
-  - Imported titles leave out the website's name ("Good Things – Frontline Bible Church" becomes "Good Things"). "Cleanup titles" does the same for items imported earlier.
-- Extensions can be marked Verified, shown on their cards and pages. ([#2075](https://github.com/HelloAOLab/seed-bible/pull/2075))
-  - Hovering over the Verified mark shows when the extension was verified and the reviewer's public notes.
-  - Extensions built into Seed Bible are always verified, since they're reviewed with the app's own code.
-  - Admins of the reviews record, chosen at build time with `EXTENSION_REVIEWS_RECORD_NAME`, mark an extension verified from its page, in a dialog that asks when it was verified and for public and internal notes.
-  - Internal notes are kept private to the record's admins.
-  - A verified extension's install dialog says it has been verified, instead of warning that it hasn't been reviewed.
-
 ### 🔧 Changed
 
-- Narrow what `useI18n` from `seed-bible/extensions` is typed to return to `t`, `ns`, `language` and `isRtl`, leaving out the app's own language prompts, which extensions can't use.
+- Start new shared sessions with "Only host can navigate" turned on, so participants follow the host until the host turns it off in session settings.
 
 ### 🐛 Fixed
 
-- Let extension authors import every type the extension SDK uses in its own functions and components, such as `SandboxErrorCode`, `SandboxPanePlacement`, `CloseButtonProps` and, for tests, `SandboxState` and `SandboxMethods`.
-
 ### 🗑️ Removed
+
+## v1.19.0 — 2026-11-23
+
+### ✨ Added
+
+- Add a content library to Custom Branding: add links to your videos and articles with the passages they cover, and everyone using your Custom Branding finds them in Discover on those chapters. ([#2088](https://github.com/HelloAOLab/seed-bible/pull/2088), [#2243](https://github.com/HelloAOLab/seed-bible/pull/2243))
+  - Import many links at once from a pasted list or a CSV, or a whole website from the Common Crawl web archive, and the passages each one covers are found automatically.
+  - Each library has its own categories, which become Discover's filters and sections.
+  - See which chapters your library covers, book by book, to find the gaps.
+- Show a Verified mark on reviewed extensions' cards and pages, and say so in their install dialog instead of warning that they haven't been reviewed. ([#2075](https://github.com/HelloAOLab/seed-bible/pull/2075))
+  - Hover the mark to see when the extension was verified and the reviewer's notes.
+  - Extensions built into Seed Bible are always verified.
+- Share Find the Verse games with a link that anyone can open and play, with Copy link and Stop sharing in the game's menu. ([#2214](https://github.com/HelloAOLab/seed-bible/pull/2214))
+- Add black, gray and white bookmark colors, and give every bookmark a thin outline and a subtle gradient so light and dark ones stay visible. ([#2160](https://github.com/HelloAOLab/seed-bible/pull/2160))
+- Let Custom Branding set one default variant for Light and another for Dark. ([#2135](https://github.com/HelloAOLab/seed-bible/pull/2135))
+- Explain in Discover why discovered content is hidden in shared sessions, with a Turn on button and a "Show in shared sessions" setting. ([#2095](https://github.com/HelloAOLab/seed-bible/pull/2095))
+- Add Reading Plan to the Create menu on Your content, which opens a new plan in the editor. ([#2087](https://github.com/HelloAOLab/seed-bible/pull/2087))
+- Show a styled tooltip on icon buttons on hover, keyboard focus or press and hold on a phone, instead of the browser's plain hover text. ([#2230](https://github.com/HelloAOLab/seed-bible/pull/2230), [#2239](https://github.com/HelloAOLab/seed-bible/pull/2239))
+  - Collapsed sidebar tabs show the full book name and chapter, such as "Genesis 1".
+- Show an extension's icon and a gallery of its screenshots on its About tab. ([#2176](https://github.com/HelloAOLab/seed-bible/pull/2176))
+- Let extensions use more of Seed Bible's own controls: dialogs, popovers, tooltips, switches, checkboxes, text fields, dropdowns, filter pills, and empty and loading states. ([#2200](https://github.com/HelloAOLab/seed-bible/pull/2200), [#2224](https://github.com/HelloAOLab/seed-bible/pull/2224), [#2226](https://github.com/HelloAOLab/seed-bible/pull/2226), [#2230](https://github.com/HelloAOLab/seed-bible/pull/2230), [#2231](https://github.com/HelloAOLab/seed-bible/pull/2231), [#2232](https://github.com/HelloAOLab/seed-bible/pull/2232), [#2233](https://github.com/HelloAOLab/seed-bible/pull/2233), [#2242](https://github.com/HelloAOLab/seed-bible/pull/2242), [#2175](https://github.com/HelloAOLab/seed-bible/pull/2175), [#2193](https://github.com/HelloAOLab/seed-bible/pull/2193))
+  - Extensions installed from a link now get these controls' real styles and the app's translations, and can bring their own CSS.
+- Added link to Seed Bible extensions documentation to extension page and About page.
+
+### 🔧 Changed
+
+- Narrow what `useI18n` from `seed-bible/extensions` is typed to return to `t`, `ns`, `language` and `isRtl`, leaving out the app's own language prompts, which extensions can't use. ([#2217](https://github.com/HelloAOLab/seed-bible/pull/2217))
+- Open the share sheet when sharing a playlist or reading plan, instead of only copying its link. ([#2125](https://github.com/HelloAOLab/seed-bible/pull/2125))
+  - A playlist's share sheet can also start a live session playing it and copy the invite link.
+- Close windows with Escape and keep keyboard focus inside them while they're open, and show phone windows as bottom sheets you can swipe down to close. ([#2200](https://github.com/HelloAOLab/seed-bible/pull/2200), [#2203](https://github.com/HelloAOLab/seed-bible/pull/2203), [#2207](https://github.com/HelloAOLab/seed-bible/pull/2207), [#2208](https://github.com/HelloAOLab/seed-bible/pull/2208), [#2209](https://github.com/HelloAOLab/seed-bible/pull/2209), [#2210](https://github.com/HelloAOLab/seed-bible/pull/2210), [#2211](https://github.com/HelloAOLab/seed-bible/pull/2211), [#2212](https://github.com/HelloAOLab/seed-bible/pull/2212), [#2232](https://github.com/HelloAOLab/seed-bible/pull/2232))
+  - Screen readers now announce them as dialogs.
+  - Tapping outside Find the Verse's "You found it!" card closes it instead of reaching the reader behind.
+- Give switches, checkboxes, text boxes and dropdowns one look across the app and its extensions, and give every text box a name for screen readers. ([#2224](https://github.com/HelloAOLab/seed-bible/pull/2224), [#2226](https://github.com/HelloAOLab/seed-bible/pull/2226))
+- Show a spinner with loading messages, and give "nothing here yet" notes one look across the app. ([#2231](https://github.com/HelloAOLab/seed-bible/pull/2231), [#2233](https://github.com/HelloAOLab/seed-bible/pull/2233))
+- Add scroll arrows and arrow-key navigation to the filter pills on Your content and Today, and show Discover's selected pill in solid orange to match. ([#2242](https://github.com/HelloAOLab/seed-bible/pull/2242))
+- Name playlist compare and question steps more clearly. ([#2218](https://github.com/HelloAOLab/seed-bible/pull/2218), [#2219](https://github.com/HelloAOLab/seed-bible/pull/2219))
+  - A titled compare step shows its title once, as the step's name.
+  - An untitled compare step is named by its passages in the editor.
+  - An untitled question step is headed "Question" in the reader.
+- Let the Apologist agent use its own AI model unless one is set, instead of defaulting to GPT-5 mini. ([#2227](https://github.com/HelloAOLab/seed-bible/pull/2227))
+
+### 🐛 Fixed
+
+- Let extension authors import every type the extension SDK uses in its own functions and components. ([#2217](https://github.com/HelloAOLab/seed-bible/pull/2217))
+- Fix Audio Reader playing over a playlist with no way to stop it; starting a playlist now offers to pause it, and its controls come back when the playlist ends. ([#2112](https://github.com/HelloAOLab/seed-bible/pull/2112))
+- Fix a phone turned sideways switching to the desktop layout. ([#2213](https://github.com/HelloAOLab/seed-bible/pull/2213))
+- Fix long book names such as Song of Solomon being cut off in the phone toolbar. ([#2155](https://github.com/HelloAOLab/seed-bible/pull/2155))
+- Fix the note editor keeping the previous note's text when you switch to editing another note. ([#2222](https://github.com/HelloAOLab/seed-bible/pull/2222))
+- Fix the playlist editor closing when you switch tabs or the reader moves behind it. ([#2216](https://github.com/HelloAOLab/seed-bible/pull/2216))
+- Fix the save window closing as if it worked when your saves hadn't loaded; it now says the save failed so you can try again. ([#2196](https://github.com/HelloAOLab/seed-bible/pull/2196))
+- Fix offline Bibles, reading history, References and Theographic data sometimes failing to load after the browser closes its connection to them, such as when a tab sits in the background. ([#2199](https://github.com/HelloAOLab/seed-bible/pull/2199))
+- Fix tapping a passage link restarting the iOS app. ([#2195](https://github.com/HelloAOLab/seed-bible/pull/2195))
+- Fix the white strip around the installed Android app's bottom navigation bar; it's now dark in every theme. ([#2164](https://github.com/HelloAOLab/seed-bible/pull/2164))
+- Fix the Custom Branding font dropdown showing "Default" when you pick the font that is also that field's default. ([#2215](https://github.com/HelloAOLab/seed-bible/pull/2215))
+- Fix the session tab's title and arrow shifting when its participants list opens. ([#2167](https://github.com/HelloAOLab/seed-bible/pull/2167))
+- Fix the Apocrypha info button showing the word "info" instead of its icon. ([#2204](https://github.com/HelloAOLab/seed-bible/pull/2204))
 
 ## v1.18.0 — 2026-11-16
 

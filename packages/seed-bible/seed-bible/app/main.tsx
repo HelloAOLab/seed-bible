@@ -380,12 +380,14 @@ function MainContent(props: {
         <OfflineDownloadPrompt
           offline={state.bibleData.offline}
           toast={state.app.toast}
+          isMobile={state.app.isMobile.value}
           className={`${webkitClass}`}
         />
 
         <OfflineUpdatePrompt
           offline={state.bibleData.offline}
           toast={state.app.toast}
+          isMobile={state.app.isMobile.value}
           className={`${webkitClass}`}
         />
 

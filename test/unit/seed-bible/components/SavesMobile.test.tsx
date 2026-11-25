@@ -559,6 +559,56 @@ describe("mobile saves screen", () => {
     ]);
   });
 
+  it("renames a folder in a named box that starts with its current name", async () => {
+    await act(async () => {
+      await state.saves.addSave("AAB", "EXO", 2, {
+        categories: ["Sermon prep"],
+      });
+    });
+    await openSavesScreen();
+
+    const menuButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>(
+        "[aria-label='Folder options']"
+      )
+    ).find((button) =>
+      button
+        .closest(".sb-save-category-header")
+        ?.textContent?.includes("Sermon prep")
+    );
+    await act(async () => {
+      menuButton!.click();
+    });
+    const rename = Array.from(
+      document.querySelectorAll<HTMLElement>(".sb-tab-menu-item")
+    ).find((item) => item.textContent?.includes("Rename"));
+    await act(async () => {
+      rename!.click();
+    });
+
+    const box = container.querySelector<HTMLInputElement>(
+      "input[aria-label='Folder name']"
+    );
+    expect(box?.value).toBe("Sermon prep");
+
+    await act(async () => {
+      box!.value = "Youth group";
+      box!.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    });
+    await act(async () => {
+      box!.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
+      );
+    });
+
+    expect(state.saves.categories.value.map((c) => c.name)).toContain(
+      "Youth group"
+    );
+    expect(state.saves.categories.value.map((c) => c.name)).not.toContain(
+      "Sermon prep"
+    );
+  });
+
   describe("deleting a folder", () => {
     /** Picks Delete from the named folder's menu. */
     async function chooseDeleteFolder(name: string) {

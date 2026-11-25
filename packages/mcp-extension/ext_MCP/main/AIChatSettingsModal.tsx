@@ -2,7 +2,12 @@ import "./AIChatSettingsModal.css";
 import { useState } from "preact/hooks";
 import { useI18n } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import { Button, IconButton } from "seed-bible/components";
+import {
+  Button,
+  EmptyState,
+  IconButton,
+  TextInput,
+} from "seed-bible/components";
 import type {
   MCPManager,
   McpServerConfig,
@@ -211,47 +216,45 @@ function AddMcpServerForm(props: { mcp: MCPManager }) {
     }
   };
 
+  const namePlaceholder = t("mcp-server-name-placeholder", {
+    defaultValue: "Server name",
+    ns: "mcp-extension",
+  });
+  const urlPlaceholder = t("mcp-server-url-placeholder", {
+    defaultValue: "https://example.com/mcp",
+    ns: "mcp-extension",
+  });
+  const authHeaderPlaceholder = t("mcp-server-auth-header-placeholder", {
+    defaultValue: "Authorization header (optional)",
+    ns: "mcp-extension",
+  });
+
   return (
     <div className="sb-mcp-add-server-form">
-      <input
-        className="sb-settings-text-input"
-        type="text"
+      <TextInput
         value={name}
         dir="auto"
-        placeholder={t("mcp-server-name-placeholder", {
-          defaultValue: "Server name",
-          ns: "mcp-extension",
-        })}
-        onInput={(event: Event) => {
-          setName((event.currentTarget as HTMLInputElement).value);
-        }}
+        aria-label={namePlaceholder}
+        placeholder={namePlaceholder}
+        onValueInput={setName}
       />
-      <input
-        className="sb-settings-text-input"
+      <TextInput
         type="url"
         value={url}
         dir="auto"
-        placeholder={t("mcp-server-url-placeholder", {
-          defaultValue: "https://example.com/mcp",
-          ns: "mcp-extension",
-        })}
-        onInput={(event: Event) => {
-          setUrl((event.currentTarget as HTMLInputElement).value);
+        aria-label={urlPlaceholder}
+        placeholder={urlPlaceholder}
+        onValueInput={(next) => {
+          setUrl(next);
           setError(null);
         }}
       />
-      <input
-        className="sb-settings-text-input"
-        type="text"
+      <TextInput
         value={authHeader}
         dir="auto"
-        placeholder={t("mcp-server-auth-header-placeholder", {
-          defaultValue: "Authorization header (optional)",
-          ns: "mcp-extension",
-        })}
-        onInput={(event: Event) => {
-          setAuthHeader((event.currentTarget as HTMLInputElement).value);
-        }}
+        aria-label={authHeaderPlaceholder}
+        placeholder={authHeaderPlaceholder}
+        onValueInput={setAuthHeader}
       />
       <Button
         className="sb-settings-save-button"
@@ -286,14 +289,12 @@ export function AIChatSettingsModalContent(props: { mcp: MCPManager }) {
         })}
       </p>
       {servers.length === 0 ? (
-        <div className="sb-settings-empty-state">
-          <p>
-            {t("no-mcp-servers-configured", {
-              defaultValue: "No MCP servers configured yet.",
-              ns: "mcp-extension",
-            })}
-          </p>
-        </div>
+        <EmptyState className="sb-settings-empty-state">
+          {t("no-mcp-servers-configured", {
+            defaultValue: "No MCP servers configured yet.",
+            ns: "mcp-extension",
+          })}
+        </EmptyState>
       ) : (
         <ul className="sb-extensions-list">
           {servers.map((server) => (

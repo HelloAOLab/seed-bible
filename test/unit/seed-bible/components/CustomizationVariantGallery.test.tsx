@@ -59,6 +59,10 @@ function makeCustomization(
     id: "customization_1",
     name: "Branded",
     variants,
+    defaultLightVariantId: variants.find((v) => v.baseTheme === LIGHT_THEME.id)
+      ?.id,
+    defaultDarkVariantId: variants.find((v) => v.baseTheme === DARK_THEME.id)
+      ?.id,
     defaultVariantId: variants[0]!.id,
     logoUrl: null,
     createdAt: 1,
@@ -381,5 +385,27 @@ describe("CustomizationVariantGallery theme colors", () => {
       darkHalf!.querySelector<HTMLElement>(".sb-theme-ready-swatch-a")!.style
         .background
     ).toBe(cssColor(DARK_THEME.variables.primaryColor));
+  });
+
+  it("colors the System card's dark half from the dark default, not the first Dark-based theme", () => {
+    const { container, cardNamed } = renderWithRealManager({
+      ...makeCustomization([
+        makeBareVariant("v-light", "Morning", LIGHT_THEME.id),
+        makeBareVariant("v-night", "Night", DARK_THEME.id, {
+          tertiaryColor: "#111111",
+        }),
+        makeBareVariant("v-midnight", "Midnight", DARK_THEME.id, {
+          tertiaryColor: "#222222",
+        }),
+      ]),
+      defaultDarkVariantId: "v-midnight",
+    });
+    cleanup = () => {
+      render(null, container);
+      container.remove();
+    };
+
+    const [, darkHalf] = cardNamed("System").halves;
+    expect(darkHalf!.style.background).toBe(cssColor("#222222"));
   });
 });
