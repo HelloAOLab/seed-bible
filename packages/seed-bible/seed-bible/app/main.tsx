@@ -292,7 +292,11 @@ function MainContent(props: {
             state.customizations.initialCustomizationLoadSettled
           }
         />
-        {!isMinimalEmbed && <Sidebar state={state} />}
+        {/* When a fullscreen pane covers the app, the sidebar's controls are
+            visually hidden and must be removed from Tab order. */}
+        {!isMinimalEmbed && (
+          <Sidebar state={state} inert={fullscreenPane !== null} />
+        )}
 
         <div className="sb-content-row">
           {/* When a fullscreen pane (Today, Profile, Reading Plans…) covers the
@@ -331,10 +335,14 @@ function MainContent(props: {
 
         {/* The toolbar suspends during SSR until the reading position is
             known, so its chapter links land in the server-rendered HTML.
-            Nothing suspends here on the client. */}
-        <Suspense fallback={null}>
-          <BibleReaderToolbar state={state} />
-        </Suspense>
+            Nothing suspends here on the client. The wrapper carries `inert`
+            when a fullscreen pane is open so the toolbar's Bookmark/Share/
+            Listen buttons can't be reached by Tab from behind Today. */}
+        <div inert={fullscreenPane !== null}>
+          <Suspense fallback={null}>
+            <BibleReaderToolbar state={state} />
+          </Suspense>
+        </div>
 
         <SharedSessionsToasts state={state} />
 
