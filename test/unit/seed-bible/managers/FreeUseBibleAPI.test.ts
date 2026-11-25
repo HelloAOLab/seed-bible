@@ -1,9 +1,11 @@
 import {
+  ApiRequestError,
   FREE_USE_BIBLE_API_ENDPOINT,
   FreeUseBibleAPI,
   type TranslationBookChapter,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { Mock } from "vitest";
+import { G3056, H0430, JHN_1 } from "../../word-study-extension/fixtures";
 
 describe("FreeUseBibleAPI", () => {
   let fetchMock: Mock;
@@ -454,6 +456,101 @@ describe("FreeUseBibleAPI", () => {
       await expect(api.getVerseOfTheDay("2026-10-30")).rejects.toThrow(
         "Status: 500"
       );
+    });
+  });
+
+  describe("interlinear and lexicon datasets", () => {
+    it("returns an interlinear chapter's words", async () => {
+      fetchMock.mockResolvedValue(createResponse(JHN_1));
+      const api = new FreeUseBibleAPI("https://example.com/");
+
+      const chapter = await api.getDatasetBookChapter(
+        "bsb-interlinear",
+        "JHN",
+        1
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://example.com/api/d/bsb-interlinear/JHN/1.json",
+        expect.anything()
+      );
+      const firstVerse = chapter.chapter.content[0];
+      expect(firstVerse?.verse).toBe(1);
+      expect(firstVerse?.words.slice(0, 2)).toEqual([
+        {
+          pos: 1,
+          bsbPos: 1,
+          language: "greek",
+          text: "Ἐν",
+          transliteration: "En",
+          parsing: "Prep",
+          parsingFull: "Preposition",
+          strongs: "G1722",
+          gloss: "In",
+        },
+        {
+          pos: 2,
+          bsbPos: 2,
+          language: "greek",
+          text: "ἀρχῇ",
+          transliteration: "archē",
+          parsing: "N-DFS",
+          parsingFull: "Noun - Dative Feminine Singular",
+          strongs: "G0746",
+          gloss: "[the] beginning",
+        },
+      ]);
+    });
+
+    it("returns a lexicon entry with every one of its senses", async () => {
+      fetchMock.mockResolvedValue(createResponse(H0430));
+      const api = new FreeUseBibleAPI("https://example.com/");
+
+      const result = await api.getDatasetLexiconEntry(
+        "stepbible-lexicon",
+        "H0430"
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://example.com/api/d/stepbible-lexicon/lexicon/H0430.json",
+        expect.anything()
+      );
+      expect(result).toEqual(H0430);
+      expect(result.entry.senses.map((sense) => sense.id)).toEqual([
+        "H0430G",
+        "H0430H",
+        "H0430I",
+      ]);
+    });
+
+    it("rejects an unknown lexicon id like any other miss, with its status", async () => {
+      fetchMock.mockResolvedValue(createResponse(null, 404, "Not Found"));
+      const api = new FreeUseBibleAPI("https://example.com/");
+
+      const request = api.getDatasetLexiconEntry("stepbible-lexicon", "H9999");
+
+      await expect(request).rejects.toThrow(
+        "Failed request to https://example.com/api/d/stepbible-lexicon/lexicon/H9999.json. Status: 404 Not Found"
+      );
+      await expect(request).rejects.toBeInstanceOf(ApiRequestError);
+      await expect(request).rejects.toMatchObject({ status: 404 });
+    });
+
+    it("asks the network once for two requests for the same entry", async () => {
+      fetchMock.mockResolvedValue(createResponse(G3056));
+      const api = new FreeUseBibleAPI("https://example.com/");
+
+      const first = await api.getDatasetLexiconEntry(
+        "stepbible-lexicon",
+        "G3056"
+      );
+      const second = await api.getDatasetLexiconEntry(
+        "stepbible-lexicon",
+        "G3056"
+      );
+
+      expect(second).toEqual(first);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
   });
 

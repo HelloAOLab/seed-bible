@@ -1117,6 +1117,26 @@ export interface Dataset {
    * Null or undefined if the language doesn't have an english name.
    */
   languageEnglishName?: string;
+
+  /**
+   * The API link for the index of every lexicon entry in this dataset.
+   * Only present on lexicon datasets, such as "stepbible-lexicon". The index
+   * is large (about 2 MB), so look entries up one at a time with
+   * `getDatasetLexiconEntry` instead of downloading it.
+   */
+  listOfLexiconApiLink?: string;
+
+  /**
+   * The number of lexicon entries in this dataset. Only present on lexicon
+   * datasets.
+   */
+  totalNumberOfLexicon?: number;
+
+  /**
+   * The number of original-language words in this dataset. Only present on
+   * interlinear datasets, such as "bsb-interlinear".
+   */
+  totalNumberOfWords?: number;
 }
 
 export interface DatasetBooks {
@@ -1179,7 +1199,7 @@ export interface DatasetBook {
   totalNumberOfReferences: number;
 }
 
-export interface DatasetBookChapter {
+export interface DatasetBookChapter<TVerse = DatasetVerse> {
   /**
    * The dataset information for the book chapter.
    */
@@ -1215,10 +1235,10 @@ export interface DatasetBookChapter {
   /**
    * The information for the chapter.
    */
-  chapter: DatasetChapterData;
+  chapter: DatasetChapterData<TVerse>;
 }
 
-export interface DatasetChapterData {
+export interface DatasetChapterData<TVerse = DatasetVerse> {
   /**
    * The number of the chapter.
    */
@@ -1227,9 +1247,10 @@ export interface DatasetChapterData {
   /**
    * The content of the chapter.
    */
-  content: DatasetVerse[];
+  content: TVerse[];
 }
 
+/** A verse of a cross-reference dataset, such as "open-cross-ref". */
 export interface DatasetVerse {
   /**
    * The number of the verse.
@@ -1270,6 +1291,118 @@ export interface DatasetReference {
    * The relevence score for the reference.
    */
   score?: number;
+}
+
+/** The original languages the interlinear and lexicon datasets cover. */
+export type OriginalLanguage = "hebrew" | "aramaic" | "greek";
+
+/** One original-language word of an interlinear verse. */
+export interface InterlinearWord {
+  /** The word's position in the original-language verse, starting at 1. */
+  pos: number;
+
+  /** The word's position in the Berean Standard Bible's English word order. */
+  bsbPos: number;
+
+  language: OriginalLanguage;
+
+  /** The word in the original script, with vowel points and accents. */
+  text: string;
+
+  transliteration: string;
+
+  /** The short grammar code, such as "N-NMS". */
+  parsing: string;
+
+  /** The grammar spelled out, such as "Noun - Nominative Masculine Singular". */
+  parsingFull: string;
+
+  /**
+   * The word's Strong's number, such as "G3056". Null for words the data
+   * doesn't tag, such as some Hebrew pronominal suffixes.
+   */
+  strongs?: string | null;
+
+  /**
+   * The English gloss. Null when the BSB doesn't translate the word on its
+   * own, such as the Hebrew direct object marker.
+   */
+  gloss: string | null;
+}
+
+/** A verse of an interlinear dataset, such as "bsb-interlinear". */
+export interface InterlinearVerse {
+  /** The number of the verse. */
+  verse: number;
+
+  /** The verse's words, in original-language order. */
+  words: InterlinearWord[];
+}
+
+/** A chapter of an interlinear dataset. */
+export type InterlinearBookChapter = DatasetBookChapter<InterlinearVerse>;
+
+/**
+ * The verse shape of each dataset whose verses aren't cross-references, keyed
+ * by dataset ID. `getDatasetBookChapter` reads this, so a chapter's type
+ * follows the dataset asked for.
+ */
+export interface DatasetVerseTypes {
+  "bsb-interlinear": InterlinearVerse;
+}
+
+/** The verse shape of dataset `D`: cross-references unless listed in {@link DatasetVerseTypes}. */
+export type DatasetVerseFor<D extends string> =
+  D extends keyof DatasetVerseTypes ? DatasetVerseTypes[D] : DatasetVerse;
+
+/**
+ * One sense of a lexicon entry. A Strong's number can cover several senses,
+ * each with its own extended ID: H0430 is split into H0430G ("God"),
+ * H0430H and H0430I.
+ */
+export interface LexiconSense {
+  /** The extended Strong's ID, such as "H0430G", or the plain one when the entry has a single sense. */
+  id: string;
+
+  language: OriginalLanguage;
+
+  /** The dictionary form of the word, in the original script. */
+  lemma: string;
+
+  transliteration: string;
+
+  /** The part-of-speech code, such as "N-M". */
+  partOfSpeech: string;
+
+  /** A short English gloss. */
+  gloss: string;
+
+  /**
+   * The definition as plain text. Paragraphs are separated by blank lines, and
+   * outline headings start with "__" (such as "__I." or "__1.").
+   */
+  definition: string;
+}
+
+export interface LexiconEntry {
+  /** The plain Strong's number, such as "H0430". */
+  id: string;
+
+  language: OriginalLanguage;
+
+  /** Every sense of the entry, in the lexicon's order. */
+  senses: LexiconSense[];
+}
+
+/** Maps to the `/api/d/:datasetId/lexicon/:id.json` endpoint. */
+export interface DatasetLexiconEntry {
+  /** The dataset information for the entry. */
+  dataset: Dataset;
+
+  entry: LexiconEntry;
+
+  /** The link to this entry. */
+  thisLexiconEntryApiLink: string;
 }
 
 /**
@@ -1448,6 +1581,22 @@ interface PendingRequest {
 }
 
 const pendingRequests = new WeakMap<Promise<unknown>, PendingRequest>();
+
+/**
+ * The API answered, but not with data. `status` lets a caller tell a file
+ * that doesn't exist (404, such as a book a dataset doesn't cover) from a
+ * server failure worth retrying.
+ */
+export class ApiRequestError extends Error {
+  constructor(
+    readonly url: string,
+    readonly status: number,
+    readonly statusText: string
+  ) {
+    super(`Failed request to ${url}. Status: ${status} ${statusText}`);
+    this.name = "ApiRequestError";
+  }
+}
 
 export class FreeUseBibleAPI {
   endpoint: string;
@@ -1778,17 +1927,44 @@ export class FreeUseBibleAPI {
     );
   }
 
-  async getDatasetBookChapter(
-    dataset: string,
+  /**
+   * Gets one chapter of a dataset. The verses' shape depends on the dataset:
+   * cross-references for most, original-language words for
+   * "bsb-interlinear" (see {@link DatasetVerseTypes}).
+   */
+  async getDatasetBookChapter<D extends string>(
+    dataset: D,
     book: string,
     chapter: number | string,
     endpoint?: string,
     options?: ApiRequestOptions
-  ): Promise<DatasetBookChapter> {
-    return this._getJson<DatasetBookChapter>(
+  ): Promise<DatasetBookChapter<DatasetVerseFor<D>>> {
+    return this._getJson<DatasetBookChapter<DatasetVerseFor<D>>>(
       `api/d/${encodeURIComponent(dataset)}/${encodeURIComponent(
         book
       )}/${encodeURIComponent(String(chapter))}.json`,
+      endpoint,
+      options
+    );
+  }
+
+  /**
+   * Gets one entry of a lexicon dataset, such as "stepbible-lexicon".
+   *
+   * @param id The plain Strong's number, such as "H0430". Extended IDs
+   * ("H0430G") name a sense within an entry, not an entry, so strip the suffix
+   * first.
+   */
+  async getDatasetLexiconEntry(
+    dataset: string,
+    id: string,
+    endpoint?: string,
+    options?: ApiRequestOptions
+  ): Promise<DatasetLexiconEntry> {
+    return this._getJson<DatasetLexiconEntry>(
+      `api/d/${encodeURIComponent(dataset)}/lexicon/${encodeURIComponent(
+        id
+      )}.json`,
       endpoint,
       options
     );
@@ -1893,9 +2069,7 @@ export class FreeUseBibleAPI {
     const request: Promise<T> = fetch(url, { signal: controller.signal })
       .then(async (response) => {
         if (response.status < 200 || response.status >= 300) {
-          throw new Error(
-            `Failed request to ${url}. Status: ${response.status} ${response.statusText}`
-          );
+          throw new ApiRequestError(url, response.status, response.statusText);
         }
         const json = await response.json();
         this._resolvedResponses.set(url, json);

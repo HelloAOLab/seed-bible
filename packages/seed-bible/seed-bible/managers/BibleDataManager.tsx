@@ -17,6 +17,8 @@ import {
   type Dataset,
   type DatasetBookChapter,
   type DatasetBooks,
+  type DatasetLexiconEntry,
+  type DatasetVerseFor,
   type PromiseCache,
   type Translation,
   type TranslationBook,
@@ -28,6 +30,11 @@ import {
   type OfflineTranslationsManager,
 } from "../managers/OfflineTranslationsManager";
 import type { OfflineTranslationStore } from "../managers/OfflineTranslationStore";
+import {
+  createDatasetCache,
+  createIndexedDbDatasetStore,
+  type OfflineDatasetStore,
+} from "./OfflineDatasetStore";
 import { exactTranslationBook, normalizeBookName } from "./bookNameMatch";
 import { isVerseReferenceInBounds } from "./verseReferenceBounds";
 import {
@@ -201,16 +208,30 @@ export interface BibleDataManager {
     options?: ApiRequestOptions
   ) => Promise<CommentaryProfileContent>;
   getDatasets: (options?: ApiRequestOptions) => Promise<Dataset[]>;
+  /**
+   * The `getDataset*` reads below are kept on the device (see
+   * `OfflineDatasetStore`): served from there for thirty days, and past that
+   * whenever the network can't be reached. A 404 is remembered for a day.
+   */
   getDatasetBooks: (
     datasetId: string,
     options?: ApiRequestOptions
   ) => Promise<DatasetBooks>;
-  getDatasetBookChapter: (
-    datasetId: string,
+  getDatasetBookChapter: <D extends string>(
+    datasetId: D,
     book: string,
     chapter: number,
     options?: ApiRequestOptions
-  ) => Promise<DatasetBookChapter>;
+  ) => Promise<DatasetBookChapter<DatasetVerseFor<D>>>;
+  /**
+   * Gets one entry of a lexicon dataset by its plain Strong's number
+   * ("H0430", not the extended "H0430G").
+   */
+  getDatasetLexiconEntry: (
+    datasetId: string,
+    id: string,
+    options?: ApiRequestOptions
+  ) => Promise<DatasetLexiconEntry>;
 
   /**
    * Gets the API endpoint associated with a given translation. If the translation is not associated with a specific endpoint, it returns the default endpoint.
@@ -1046,6 +1067,11 @@ export interface CreateBibleDataManagerOptions {
    */
   offlineStore?: OfflineTranslationStore | null;
   /**
+   * Where dataset files are kept between visits. Defaults to IndexedDB; tests
+   * pass an in-memory store, and null fetches every time.
+   */
+  datasetStore?: OfflineDatasetStore | null;
+  /**
    * Cache shared across `getTranslations()` calls, keyed by endpoint. Omit
    * this everywhere except the SSR host — see `TranslationsCache`'s doc
    * comment for why.
@@ -1435,20 +1461,50 @@ export function createBibleDataManager(
   const getDatasets = async (options?: ApiRequestOptions) =>
     (await api.getAvailableDatasets(defaultEndpoint, options)).datasets;
 
-  const getDatasetBooks = (datasetId: string, options?: ApiRequestOptions) =>
-    api.getDatasetBooks(datasetId, defaultEndpoint, options);
+  const datasetCache = createDatasetCache(
+    options.datasetStore === undefined
+      ? createIndexedDbDatasetStore()
+      : options.datasetStore
+  );
 
-  const getDatasetBookChapter = (
-    datasetId: string,
+  /** Keyed by endpoint too, so a dev endpoint's files never answer for prod's. */
+  const datasetKey = (...parts: (string | number)[]) =>
+    JSON.stringify([defaultEndpoint, ...parts]);
+
+  const getDatasetBooks = (datasetId: string, options?: ApiRequestOptions) =>
+    datasetCache.read(
+      datasetKey(datasetId, "books"),
+      () => api.getDatasetBooks(datasetId, defaultEndpoint, options),
+      options
+    );
+
+  const getDatasetBookChapter = <D extends string>(
+    datasetId: D,
     book: string,
     chapter: number,
     options?: ApiRequestOptions
   ) =>
-    api.getDatasetBookChapter(
-      datasetId,
-      book,
-      chapter,
-      defaultEndpoint,
+    datasetCache.read(
+      datasetKey(datasetId, "chapter", book, chapter),
+      () =>
+        api.getDatasetBookChapter(
+          datasetId,
+          book,
+          chapter,
+          defaultEndpoint,
+          options
+        ),
+      options
+    );
+
+  const getDatasetLexiconEntry = (
+    datasetId: string,
+    id: string,
+    options?: ApiRequestOptions
+  ) =>
+    datasetCache.read(
+      datasetKey(datasetId, "lexicon", id),
+      () => api.getDatasetLexiconEntry(datasetId, id, defaultEndpoint, options),
       options
     );
 
@@ -1554,6 +1610,7 @@ export function createBibleDataManager(
     getDatasets,
     getDatasetBooks,
     getDatasetBookChapter,
+    getDatasetLexiconEntry,
     getTranslationEndpointInfo,
     buildTranslationId,
     hydrateCachedCatalog,

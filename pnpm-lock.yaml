@@ -868,6 +868,12 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
+  packages/word-study-extension:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
 packages:
 
   '@anthropic-ai/sdk@0.92.0':

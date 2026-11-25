@@ -1,0 +1,480 @@
+/* Word Study pane. The surrounding shell (docking, background, mobile
+   fullscreen) comes from the managed side pane, so this only lays out the
+   content. Colours come from the --sb-* theme variables, which both the light
+   and dark themes define. */
+
+.sb-word-study-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  color: var(--sb-font-color);
+}
+
+/* `position: relative` makes this the containing block for the absolutely
+   positioned `.sr-only` labels inside it. Otherwise they position against the
+   pane shell outside this scroller, so they aren't clipped here: labels far
+   down a long list stick out below the pane and give the pane body a second
+   scrollbar. */
+.sb-word-study-scroll {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.sb-word-study-scroll[hidden] {
+  display: none;
+}
+
+/* When the content is taller than the pane, the column must scroll rather
+   than squeeze its children. Without this the word-order toggle, whose
+   `overflow: hidden` drops its minimum height to zero, collapses to a line
+   on any verse long enough to scroll. */
+.sb-word-study-scroll > * {
+  flex-shrink: 0;
+}
+
+/* Own classes rather than `sb-discover-title`: that one is `flex: 1`, which
+   would let the reference squeeze the "Word Study" label down to nothing. */
+.sb-word-study-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sb-word-study-title {
+  flex: 0 0 auto;
+  font-weight: 600;
+}
+
+.sb-word-study-reference {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-word-study-order {
+  display: inline-flex;
+  align-self: flex-start;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.sb-word-study-order-option {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-word-study-order-option[aria-pressed="true"] {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-word-study-verse {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-word-study-verse-heading {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.sb-word-study-words {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+}
+
+.sb-word-study-word {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px 8px;
+  padding: 8px 10px;
+}
+
+.sb-word-study-word + .sb-word-study-word {
+  border-top: 1px solid var(--sb-divider-color);
+}
+
+/* The original word, transliteration, gloss and Strong's number. A button
+   when the word has a lexicon entry, styled to read as plain content. */
+.sb-word-study-word-main {
+  flex: 1 1 12rem;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  grid-template-areas:
+    "original gloss"
+    "transliteration strongs";
+  align-items: baseline;
+  gap: 2px 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+
+.sb-word-study-word-main--link {
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sb-word-study-word-main--link:hover .sb-word-study-gloss {
+    text-decoration: underline;
+  }
+}
+
+.sb-word-study-word-main--link:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+}
+
+/* A font stack that carries Hebrew vowel points and cantillation marks, from
+   fonts readers commonly have installed; nothing is downloaded for it. */
+.sb-word-study-original,
+.sb-word-study-lemma,
+.sb-interlinear-original {
+  font-family:
+    "SBL Hebrew", "Ezra SIL", "Noto Serif Hebrew", "SBL Greek", "Gentium Plus",
+    "Times New Roman", var(--sb-verse-font-family), serif;
+  font-size: 1.375rem;
+  line-height: 1.5;
+}
+
+.sb-word-study-original {
+  grid-area: original;
+  /* RTL words still sit at the start of the row; only their own letters
+     run right to left. */
+  justify-self: start;
+}
+
+.sb-word-study-transliteration {
+  grid-area: transliteration;
+  font-size: 0.8125rem;
+  font-style: italic;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-word-study-gloss {
+  grid-area: gloss;
+  font-size: 0.9375rem;
+}
+
+.sb-word-study-strongs {
+  grid-area: strongs;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--sb-link-color);
+}
+
+.sb-word-study-grammar {
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: 100%;
+}
+
+.sb-word-study-parsing {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px 2px 8px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  font-family: ui-monospace, monospace;
+  cursor: pointer;
+}
+
+.sb-word-study-parsing .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.sb-word-study-parsing-full {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+  text-align: end;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+}
+
+.sb-word-study-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-word-study-message {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+}
+
+.sb-word-study-message p {
+  margin: 0 0 8px;
+}
+
+.sb-word-study-retry {
+  padding: 6px 14px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sb-word-study-attribution {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-word-study-attribution a {
+  color: var(--sb-link-color);
+}
+
+.sb-word-study-lexicon {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sb-word-study-sense-group {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-word-study-sense {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+}
+
+.sb-word-study-sense-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--sb-divider-color);
+}
+
+.sb-word-study-lemma {
+  font-size: 1.625rem;
+}
+
+.sb-word-study-sense-header .sb-word-study-gloss {
+  font-weight: 600;
+}
+
+.sb-word-study-sense-meta {
+  font-size: 0.75rem;
+  font-family: ui-monospace, monospace;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-word-study-definition {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.sb-word-study-definition p {
+  margin: 0 0 8px;
+}
+
+.sb-word-study-outline {
+  margin: 0 0 8px;
+  padding-inline-start: 0;
+  list-style: none;
+}
+
+.sb-word-study-outline .sb-word-study-outline {
+  margin: 4px 0 0;
+  padding-inline-start: 16px;
+}
+
+.sb-word-study-outline li + li {
+  margin-top: 4px;
+}
+
+.sb-word-study-outline-marker {
+  font-weight: 700;
+}
+
+/* Chapter interlinear view. */
+
+.sb-interlinear-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-interlinear-lines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sb-interlinear-line-toggle {
+  padding: 4px 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.sb-interlinear-line-toggle[aria-pressed="true"] {
+  border-color: var(--sb-primary-color);
+  color: var(--sb-link-color);
+}
+
+.sb-interlinear-chapter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Long chapters (Psalm 119 has about 2,400 words) skip rendering the verses
+   that are off screen; the browser keeps an estimated height for each so the
+   scrollbar stays steady. */
+.sb-interlinear-verse {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 160px;
+}
+
+.sb-interlinear-verse-number {
+  flex: 0 0 auto;
+  min-width: 1.5em;
+  padding-top: 0.4em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-interlinear-words {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-interlinear-word-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 3rem;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+}
+
+.sb-interlinear-word-main--link {
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sb-interlinear-word-main--link:hover {
+    border-color: var(--sb-divider-color);
+  }
+}
+
+.sb-interlinear-word-main--link:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 1px;
+}
+
+.sb-interlinear-original {
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+.sb-interlinear-transliteration {
+  font-size: 0.75rem;
+  font-style: italic;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-interlinear-gloss {
+  font-size: 0.8125rem;
+}
+
+.sb-interlinear-strongs,
+.sb-interlinear-parsing {
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.sb-interlinear-strongs {
+  color: var(--sb-link-color);
+}
+
+.sb-interlinear-parsing {
+  font-family: ui-monospace, monospace;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+.sb-word-study-strongs-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-link-color);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
