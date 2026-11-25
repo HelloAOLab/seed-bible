@@ -755,15 +755,17 @@
    edge (the speaker while a tab plays audio) sits there instead of beside an
    empty gap, and slides aside as the ⋯ comes back. The width animates through
    a one-column grid: `minmax(0, …)` lets the column shrink past the button's
-   fixed width, and `overflow: hidden` clips what's left over. Only the width
-   collapses, so the row keeps its height. */
+   fixed width, and `overflow: clip` clips what's left over. The clip reaches a
+   few pixels past the anchor so the button's focus ring, drawn outside it,
+   isn't cut off. Only the width collapses, so the row keeps its height. */
 @media (hover: hover) {
   :where(html:not([data-sb-app-layout="mobile"]))
     .sb-tab-row
     > .sb-tab-menu-anchor {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    overflow: hidden;
+    overflow: clip;
+    overflow-clip-margin: 4px;
   }
 
   :where(html:not([data-sb-app-layout="mobile"]))
