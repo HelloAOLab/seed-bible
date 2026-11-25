@@ -158,7 +158,7 @@ function anySpanFor(bookId: string, chapter: number) {
 const mockHighlightsManager = {
   getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
   saveChapterHighlights: vi.fn(),
-  sync: { adoptions: signal(0) },
+  sync: { adoptions: signal(0), isOnline: signal(true) },
 };
 const mockSessionsManager = {
   createSession: vi.fn(),
