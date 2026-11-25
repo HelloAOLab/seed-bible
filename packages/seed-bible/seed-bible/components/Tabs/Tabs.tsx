@@ -1295,14 +1295,14 @@ function TabRow(props: TabRowProps) {
   // Phones have their own participants sheet in the reader header, so the
   // drawer's tabs keep just the avatar row.
   const showsTabParticipants = hasSessionUsers && !app.isMobile.value;
-  // Fills the star, and decides whether pressing it files or edits.
+  // Shows the star, and decides whether Save chapter files or edits.
   const isChapterSaved = saves.isLocationSaved(
     tab.readingState.translationId.value,
     tab.readingState.bookId.value,
     tab.readingState.chapterNumber.value
   );
-  // Never a toggle: pressing a filled star edits the existing save's folders
-  // rather than removing it. Removing is done from the saves panel.
+  // Run from the tab menu's Save chapter item. Never a toggle: on a saved
+  // chapter it edits that save's folders rather than removing it.
   const handleSaveAction = () => {
     const translationId = tab.readingState.translationId.value;
     const bookId = tab.readingState.bookId.value;
@@ -1337,6 +1337,20 @@ function TabRow(props: TabRowProps) {
             •
           </span>
           <span className="sb-tab-main-translation">{shortSubTitle}</span>
+          {isChapterSaved && !tab.sharedSession && (
+            <span
+              className="sb-tab-saved-marker"
+              role="img"
+              aria-label={t("tab-chapter-saved", {
+                defaultValue: "Chapter saved",
+              })}
+              title={t("tab-chapter-saved", {
+                defaultValue: "Chapter saved",
+              })}
+            >
+              <SaveStarIcon isSaved size={12} />
+            </span>
+          )}
           {frontBookmark && (
             <span
               className="sb-tab-bookmark-marker"
@@ -1395,23 +1409,6 @@ function TabRow(props: TabRowProps) {
             </div>
           )}
       </button>
-
-      {isSelected && !tab.sharedSession && (
-        <IconButton
-          size="sm"
-          className={`sb-tab-save-button${
-            isChapterSaved ? " sb-tab-save-button-saved" : ""
-          }`}
-          icon={<SaveStarIcon isSaved={isChapterSaved} size={18} />}
-          label={saveChapterLabel(t, isChapterSaved)}
-          onClick={(event: MouseEvent) => {
-            event.stopPropagation();
-            closeContextMenus();
-            closeLayoutMenu();
-            handleSaveAction();
-          }}
-        />
-      )}
 
       <ContextMenuWithButton
         onClick={() => {
