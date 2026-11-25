@@ -689,11 +689,27 @@ describe("critical CSS defaults agree with the settings defaults", () => {
   });
 
   it("keeps boxed verse numbers from changing the line's width, in poetry too", () => {
+    // The annotation itself does not add border or padding to the layout.
     expect(readerCss).toMatch(
-      /\.sb-verse-number-annotated\s*{[^}]*margin-inline-start:\s*calc\(0\.625em - 3px\)[^}]*margin-inline-end:\s*calc\(0\.3125em - 3px\)/
+      /\.sb-verse-number-annotated\s*{[^}]*border:\s*none/
     );
     expect(readerCss).toMatch(
-      /\.sb-verse-line \.sb-verse-number-annotated\s*{[^}]*margin-inline-start:\s*calc\(-1\.2em - 3px\)/
+      /\.sb-verse-number-annotated\s*{[^}]*padding:\s*0/
+    );
+
+    // The outline is positioned outside normal document flow.
+    expect(readerCss).toMatch(
+      /\.sb-verse-number-annotated::after\s*{[^}]*position:\s*absolute/
+    );
+
+    // Normal verse-number spacing is preserved.
+    expect(readerCss).toMatch(
+      /\.sb-verse-number-annotated\s*{[^}]*margin-inline-start:\s*0\.625em[^}]*margin-inline-end:\s*0\.3125em/
+    );
+
+    // Poetry gutter positioning is preserved.
+    expect(readerCss).toMatch(
+      /\.sb-verse-line\s+\.sb-verse-number-annotated\s*{[^}]*margin-inline-start:\s*calc\(-1\.2em - 3px\)/
     );
   });
 
