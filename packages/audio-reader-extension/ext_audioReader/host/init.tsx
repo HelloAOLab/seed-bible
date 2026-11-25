@@ -31,6 +31,7 @@ import {
   type QuickToolContext,
   type SharedAudioPlayback,
   type SharedAudioPlaybackCommand,
+  type SharedAudioPublishOptions,
   type SpeechVerse,
   type TextToSpeechManager,
   type TranslationBookChapter,
@@ -153,6 +154,50 @@ const sharedLeadersSeen = new Set<string>();
 
 /** The speed nudging of the one audio element (see `correctFollowerDrift`). */
 let driftState = initialDriftState();
+
+/**
+ * How far ahead, in milliseconds, a host sharing audio schedules its start:
+ * long enough for the command to reach everyone and their audio to load, so
+ * all of them, host included, start at the same moment.
+ */
+const SHARED_START_LEAD_MS = 1000;
+/** A scheduled start closer than this, in milliseconds, is just started. */
+const SHARED_START_NOW_MS = 20;
+/** How often a muted late starter checks whether it has lined up, in milliseconds. */
+const ALIGN_POLL_MS = 50;
+/** Lined up to within this, in seconds, and a muted late starter unmutes. */
+const ALIGN_TOLERANCE_SECONDS = 0.05;
+/** A muted late starter unmutes after this long, in milliseconds, lined up or not. */
+const ALIGN_TIMEOUT_MS = 3000;
+/** How long, in milliseconds, after audio starts the start-up rules apply. */
+const STARTUP_WINDOW_MS = 2500;
+/** `HTMLMediaElement.HAVE_FUTURE_DATA`: enough loaded to play on from here. */
+const HAVE_FUTURE_DATA = 3;
+
+/**
+ * A recording holding at its start position until a scheduled moment, then
+ * starting (see `scheduleSharedStart`).
+ */
+let pendingStart: {
+  session: RecordingSession;
+  timer: ReturnType<typeof setTimeout>;
+  settle: () => void;
+} | null = null;
+
+/**
+ * A recording that started late, playing muted while it jumps to where the
+ * shared audio has got to (see `beginStartAlignment`).
+ */
+let startAlignment: {
+  session: RecordingSession;
+  timer: ReturnType<typeof setTimeout> | null;
+  deadline: number;
+  /** How far ahead to aim each jump, learnt from how far behind the last landed. */
+  leadSeconds: number;
+} | null = null;
+
+/** Until when, on `performance.now()`, the start-up rules apply. */
+let startupUntil = Number.NEGATIVE_INFINITY;
 
 /** A skewed clock must not fling a late joiner hours past the end of the chapter. */
 const SHARED_AUDIO_MAX_CATCH_UP_SECONDS = 60 * 60;
@@ -707,18 +752,26 @@ function correctFollowerDrift(
 ): void {
   const shared = session.sharedSession;
   const playback = shared?.sharedAudio.peek() ?? null;
+  const nowMs = performance.now();
+  const startingUp = nowMs < startupUntil;
+  const leading = !!shared && shared.leadsSharedAudio.peek();
   const following =
     !!shared &&
     !!playback &&
     playback.playing &&
     session.isPlaying.peek() &&
     !el.seeking &&
+    pendingStart?.session !== session &&
+    startAlignment?.session !== session &&
     session.clipStart.peek() === 0 &&
-    sharedAudioFollowed.has(shared.id) &&
-    !sharedAudioOnOwn.has(shared.id) &&
-    !shared.isListeningOnOwn.peek() &&
-    !shared.leadsSharedAudio.peek() &&
-    sharedAudioApplied.get(shared.id) === playback.id &&
+    // The host keeps to its own timeline only while starting, when its
+    // player's start-up delay is the gap; after that it's the reference.
+    (leading
+      ? startingUp
+      : sharedAudioFollowed.has(shared.id) &&
+        !sharedAudioOnOwn.has(shared.id) &&
+        !shared.isListeningOnOwn.peek() &&
+        sharedAudioApplied.get(shared.id) === playback.id) &&
     playback.bookId === session.bookId &&
     playback.chapterNumber === session.chapterNumber &&
     narrationsShareClock(
@@ -736,11 +789,11 @@ function correctFollowerDrift(
   // The host's recording has finished; this one finishing too is all that's left.
   if (duration !== null && expected >= duration) return;
 
-  const nowMs = performance.now();
   const decision = decideDriftCorrection(
     el.currentTime - expected,
     driftState,
-    nowMs
+    nowMs,
+    startingUp
   );
   if (decision.kind === "rate") {
     el.playbackRate = decision.rate;
@@ -867,6 +920,12 @@ function endSession(
           audioEl.muted = false;
         }
         resetDriftCorrection();
+        if (
+          pendingStart?.session === session ||
+          startAlignment?.session === session
+        ) {
+          cancelSharedStart();
+        }
         resumeAt = null;
       } else {
         textToSpeech?.stop();
@@ -1030,13 +1089,14 @@ function isPlaybackPromise(
 
 function publishSharedAudio(
   session: ListeningSession,
-  command: SharedAudioPlaybackCommand | null
+  command: SharedAudioPlaybackCommand | null,
+  publishOptions?: SharedAudioPublishOptions
 ): void {
   if (applyingSharedAudio || publishingSharedAudio) return;
   const shared = session.sharedSession;
   if (!shared) return;
   if (shared.audioShareChoice.peek() === "everyone") {
-    writeSharedAudio(shared, command);
+    writeSharedAudio(shared, command, publishOptions);
   }
   // A listener's own play, pause, or seek takes their player out of step
   // with the host's, unless it went out to everyone and they now lead.
@@ -1052,7 +1112,8 @@ function publishSharedAudio(
 
 function writeSharedAudio(
   shared: BibleReadingSession,
-  command: SharedAudioPlaybackCommand | null
+  command: SharedAudioPlaybackCommand | null,
+  publishOptions?: SharedAudioPublishOptions
 ): void {
   // Only the client that still owns the stored command may clear it. Having
   // published an earlier press is not enough: a co-host who followed someone
@@ -1064,7 +1125,7 @@ function writeSharedAudio(
   }
   publishingSharedAudio = true;
   try {
-    const written = shared.publishAudioPlayback(command);
+    const written = shared.publishAudioPlayback(command, publishOptions);
     if (written !== false) {
       sharedAudioEcho.set(shared.id, written === null ? null : written.id);
     }
@@ -1450,19 +1511,238 @@ function seekVerseHighlight(
  * matching the old "swallow it" behavior.
  */
 function playRecording(session: RecordingSession): Promise<void> {
+  cancelSharedStart();
   makeAudible(session);
   if (audioEl) audioEl.muted = session.awaitingStart;
-  publishSharedIntent(session, true);
-  const result = audioEl?.play();
+  const plan = planSharedStart(session);
+  if (plan === "scheduled") return scheduleSharedStart(session);
+  if (plan === "align") {
+    beginStartAlignment(session);
+  } else {
+    publishSharedIntent(session, true);
+  }
+  return settlePlayback(audioEl?.play(), () => {
+    if (startAlignment?.session === session) endStartAlignment(false);
+  });
+}
+
+/**
+ * Resolves once `result` (from `play()`) has. Rejects only with the
+ * browser's `NotAllowedError` for blocked autoplay; other failures (a second
+ * press aborting the first) resolve, as the user got what they asked for.
+ */
+function settlePlayback(
+  result: void | Promise<void> | undefined,
+  onBlocked?: () => void
+): Promise<void> {
   if (!isPlaybackPromise(result as void | Promise<void>)) {
     return Promise.resolve();
   }
   return (result as Promise<void>).then(
     () => undefined,
     (error: unknown) => {
-      if (isAutoplayBlocked(error)) throw error;
+      if (isAutoplayBlocked(error)) {
+        onBlocked?.();
+        throw error;
+      }
     }
   );
+}
+
+/**
+ * How a recording in a shared session starts playing:
+ * - "scheduled": at a moment shared with everyone. A host sharing its audio
+ *   picks that moment a little ahead (`SHARED_START_LEAD_MS`) and publishes
+ *   it; a listener who hears in time waits for it.
+ * - "align": a listener who heard too late starts muted and unmutes once
+ *   lined up with where the shared audio has got to.
+ * - "now": anything else (on their own, another narration, the clock not
+ *   synced yet) just plays.
+ */
+function planSharedStart(
+  session: RecordingSession
+): "scheduled" | "align" | "now" {
+  const shared = session.sharedSession;
+  if (!shared || !audioEl || session.clipStart.peek() !== 0) return "now";
+
+  if (!applyingSharedAudio) {
+    const serverNow = shared.serverNow();
+    if (shared.audioShareChoice.peek() !== "everyone" || serverNow === null) {
+      return "now";
+    }
+    publishSharedAudio(
+      session,
+      { ...sharedAudioCommand(session), playing: true },
+      { atServerMs: serverNow + SHARED_START_LEAD_MS }
+    );
+    const published = shared.sharedAudio.peek();
+    return shared.leadsSharedAudio.peek() && published?.playing
+      ? "scheduled"
+      : "now";
+  }
+
+  const playback = shared.sharedAudio.peek();
+  if (
+    !playback?.playing ||
+    shared.leadsSharedAudio.peek() ||
+    playback.bookId !== session.bookId ||
+    playback.chapterNumber !== session.chapterNumber ||
+    !narrationsShareClock(
+      session.readingState.translationId.peek(),
+      session,
+      playback
+    )
+  ) {
+    return "now";
+  }
+  return msUntilSharedStart(playback, shared) > SHARED_START_NOW_MS
+    ? "scheduled"
+    : "align";
+}
+
+/** How long until a scheduled command starts, by this device's server clock. */
+function msUntilSharedStart(
+  playback: SharedAudioPlayback,
+  shared: BibleReadingSession
+): number {
+  return (
+    playback.updatedAtMs - sharedAudioClockNow(playback, shared.serverNow())
+  );
+}
+
+/**
+ * Holds `session` at the shared command's start position, loaded, and
+ * starts it at the command's scheduled moment. Shows as playing meanwhile.
+ * The returned promise settles when it actually starts, so a blocked
+ * autoplay is still reported to whoever asked it to play.
+ */
+function scheduleSharedStart(session: RecordingSession): Promise<void> {
+  const el = audioEl;
+  const shared = session.sharedSession;
+  if (!el || !shared || !shared.sharedAudio.peek()) {
+    return settlePlayback(el?.play());
+  }
+
+  /** Waits at the start position of whatever the shared command is now. */
+  const holdAtStart = (playback: SharedAudioPlayback) => {
+    if (Math.abs(el.currentTime - playback.position) > 0.01) {
+      el.currentTime = playback.position;
+      resumeAt = null;
+    }
+    session.position.value = playback.position;
+  };
+  session.isPlaying.value = true;
+
+  return new Promise<void>((resolve, reject) => {
+    const wait = (delayMs: number) => {
+      const timer = setTimeout(() => {
+        if (pendingStart?.timer !== timer) return;
+        pendingStart = null;
+        const playback = shared.sharedAudio.peek();
+        if (session.ended || audible !== session || !playback?.playing) {
+          resolve();
+          return;
+        }
+        // The host may have moved its start while this one was waiting.
+        const remainingMs = msUntilSharedStart(playback, shared);
+        if (remainingMs > SHARED_START_NOW_MS) {
+          holdAtStart(playback);
+          wait(remainingMs);
+          return;
+        }
+        startupUntil = performance.now() + STARTUP_WINDOW_MS;
+        settlePlayback(el.play(), () => {
+          session.isPlaying.value = false;
+        }).then(resolve, reject);
+      }, delayMs);
+      pendingStart = { session, timer, settle: () => resolve() };
+    };
+    const playback = shared.sharedAudio.peek()!;
+    holdAtStart(playback);
+    wait(Math.max(0, msUntilSharedStart(playback, shared)));
+  });
+}
+
+/** Drops a scheduled start or muted line-up that hasn't finished. */
+function cancelSharedStart(): void {
+  if (pendingStart) {
+    clearTimeout(pendingStart.timer);
+    const { settle } = pendingStart;
+    pendingStart = null;
+    settle();
+  }
+  if (startAlignment) endStartAlignment(false);
+}
+
+/**
+ * Starts `session` muted and lines it up with where the shared audio has got
+ * to before unmuting, so a listener who heard late joins in step rather than
+ * catching up audibly.
+ */
+function beginStartAlignment(session: RecordingSession): void {
+  if (startAlignment) endStartAlignment(false);
+  if (audioEl) audioEl.muted = true;
+  startAlignment = {
+    session,
+    timer: setTimeout(alignStartStep, ALIGN_POLL_MS),
+    deadline: performance.now() + ALIGN_TIMEOUT_MS,
+    leadSeconds: 0,
+  };
+}
+
+function alignStartStep(): void {
+  const alignment = startAlignment;
+  if (!alignment) return;
+  alignment.timer = null;
+  const { session } = alignment;
+  const el = audioEl;
+  const shared = session.sharedSession;
+  const playback = shared?.sharedAudio.peek() ?? null;
+  if (
+    !el ||
+    !shared ||
+    !playback?.playing ||
+    session.ended ||
+    audible !== session ||
+    performance.now() > alignment.deadline
+  ) {
+    endStartAlignment(true);
+    return;
+  }
+  // Still starting, or still landing from the last jump.
+  if (el.paused || el.seeking || el.readyState < HAVE_FUTURE_DATA) {
+    alignment.timer = setTimeout(alignStartStep, ALIGN_POLL_MS);
+    return;
+  }
+  const target = sharedPlaybackTarget(playback, shared);
+  const drift = el.currentTime - target;
+  if (Math.abs(drift) <= ALIGN_TOLERANCE_SECONDS) {
+    endStartAlignment(true);
+    return;
+  }
+  // A jump lands a little behind where it aimed, by however long the player
+  // took to get going again; aim that much further on next time.
+  if (alignment.leadSeconds > 0 || drift < 0) {
+    alignment.leadSeconds = Math.min(
+      1,
+      Math.max(0, alignment.leadSeconds - drift)
+    );
+  }
+  el.currentTime = target + alignment.leadSeconds;
+  session.position.value = el.currentTime;
+  alignment.timer = setTimeout(alignStartStep, ALIGN_POLL_MS);
+}
+
+/** Unmutes a muted late starter; `started` when it got going, lined up or not. */
+function endStartAlignment(started: boolean): void {
+  const alignment = startAlignment;
+  if (!alignment) return;
+  if (alignment.timer !== null) clearTimeout(alignment.timer);
+  startAlignment = null;
+  if (audioEl && audible === alignment.session) {
+    audioEl.muted = alignment.session.awaitingStart;
+  }
+  if (started) startupUntil = performance.now() + STARTUP_WINDOW_MS;
 }
 
 /**
@@ -1511,6 +1791,10 @@ function createRecordingSession(
     }),
     play: () => playRecording(session),
     pause: () => {
+      const starting =
+        pendingStart?.session === session ||
+        startAlignment?.session === session;
+      if (starting) cancelSharedStart();
       if (audible === session && audioEl && !audioEl.paused) {
         audioEl.pause();
       } else {
@@ -1526,6 +1810,9 @@ function createRecordingSession(
         clipStart.peek(),
         end !== null ? Math.min(seconds, end) : seconds
       );
+      const starting =
+        pendingStart?.session === session ||
+        startAlignment?.session === session;
       // A tab paused in the background just remembers where to pick up.
       if (audible === session && audioEl) {
         audioEl.currentTime = target;
@@ -1535,6 +1822,16 @@ function createRecordingSession(
       // doesn't snap back to the old position for a moment after being let go.
       session.position.value = target;
       seekVerseHighlight(session, target);
+      if (starting) {
+        // Moved before it got going: start again from here, on whatever
+        // shared timing now applies.
+        void playRecording(session);
+        return;
+      }
+      if (audible === session && session.isPlaying.peek()) {
+        // A jump is a fresh start for the player, with the same delay.
+        startupUntil = performance.now() + STARTUP_WINDOW_MS;
+      }
       publishSharedFrom(session);
     },
     stop: () => stopPressed(session),

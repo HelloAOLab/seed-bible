@@ -3858,6 +3858,32 @@ describe("SessionsManager", () => {
       expect(mockAudioMap.set).toHaveBeenCalledWith("current", written);
     });
 
+    it("stamps a scheduled start a moment ahead on the server's clock", async () => {
+      answerTimeRequests(90_000);
+      const session = await manager().createSession();
+      await waitFor(() => session.serverNow() !== null);
+      const startAt = session.serverNow()! + 1000;
+
+      const written = session.publishAudioPlayback(playing, {
+        atServerMs: startAt,
+      });
+
+      expect(written).toMatchObject({ updatedAtMs: startAt, clock: "server" });
+    });
+
+    it("can't schedule a start before the clock has synced, so starts now", async () => {
+      const session = await manager().createSession();
+      const before = Date.now();
+
+      const written = session.publishAudioPlayback(playing, {
+        atServerMs: before + 60_000,
+      });
+
+      if (!written) throw new Error("expected a shared audio command");
+      expect(written.clock).toBeUndefined();
+      expect(written.updatedAtMs).toBeLessThanOrEqual(Date.now());
+    });
+
     it("stamps shared audio with this device's time until the clock has synced", async () => {
       const session = await manager().createSession();
       expect(session.serverNow()).toBeNull();

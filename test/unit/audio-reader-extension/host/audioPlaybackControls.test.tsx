@@ -13,6 +13,7 @@ import type {
   BibleReadingSession,
   SharedAudioPlayback,
   SharedAudioPlaybackCommand,
+  SharedAudioPublishOptions,
   SharedAudioShareChoice,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import { createTestSeedBibleState } from "../../seed-bible/testUtils/createTestSeedBibleState";
@@ -568,7 +569,23 @@ describe("audio-reader playback controls", () => {
         document: {},
         readingState,
         sharedAudio,
-        publishAudioPlayback: publish,
+        // Records the command alone; a scheduled start is stamped as the
+        // session does, once its server clock has synced.
+        publishAudioPlayback: (
+          command: SharedAudioPlaybackCommand | null,
+          publishOptions?: SharedAudioPublishOptions
+        ) => {
+          const written = publish(command);
+          const serverTime = serverNow();
+          if (!written || serverTime === null) return written;
+          const stamped: SharedAudioPlayback = {
+            ...written,
+            updatedAtMs: publishOptions?.atServerMs ?? serverTime,
+            clock: "server",
+          };
+          sharedAudio.value = stamped;
+          return stamped;
+        },
         dispose: vi.fn(),
         options,
         connectedUsers,
@@ -1192,7 +1209,36 @@ describe("audio-reader playback controls", () => {
        * server's clock at `serverTime.now`. The listener's device clock is
        * nowhere near the server's, which must not matter.
        */
-      async function followHost() {
+      /**
+       * The steady clock the correction loop times itself by, moved by hand
+       * so a test can step past the first seconds after a start.
+       */
+      const steady = { ms: 1_000_000 };
+      let steadySpy: ReturnType<typeof vi.spyOn>;
+
+      let readySpy: ReturnType<typeof vi.spyOn>;
+
+      beforeEach(() => {
+        steadySpy = vi
+          .spyOn(performance, "now")
+          .mockImplementation(() => steady.ms);
+        // jsdom never loads media; a real player reports this once it can play on.
+        readySpy = vi
+          .spyOn(HTMLMediaElement.prototype, "readyState", "get")
+          .mockReturnValue(4);
+      });
+
+      afterEach(() => {
+        steadySpy.mockRestore();
+        readySpy.mockRestore();
+      });
+
+      /** Steps past the start-up rules, to the ones for drift while playing. */
+      function settleIn() {
+        steady.ms += 5000;
+      }
+
+      async function followHost({ settle = true } = {}) {
         const serverTime = { now: SERVER_START };
         const session = attachSession(false, {
           serverNow: () => serverTime.now,
@@ -1203,17 +1249,201 @@ describe("audio-reader playback controls", () => {
           updatedAtMs: SERVER_START,
           clock: "server",
         });
-        // Lined up, playing, and the start settled.
+        // Lined up, playing, and unmuted.
         await vi.waitFor(() => {
           playAt(10);
           expect(
             state.audioPlayback.controllerFor(session.readingState)?.isPlaying
               .value
           ).toBe(true);
+          expect(audio.current!.muted).toBe(false);
         });
+        if (settle) settleIn();
         expect(audio.current!.playbackRate).toBe(1);
         return { ...session, serverTime };
       }
+
+      /** Fakes only the timers, so promises and the spied clocks still behave. */
+      function fakeTimers() {
+        vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      }
+
+      it("schedules the host's start a second ahead, and starts exactly then", async () => {
+        const serverTime = { now: SERVER_START };
+        const { sharedAudio, readingState } = attachSession(true, {
+          serverNow: () => serverTime.now,
+        });
+        pressPlay();
+        chooseInSharePrompt("Play for everyone");
+        const controller = state.audioPlayback.controllerFor(readingState)!;
+        playSpy.mockClear();
+        fakeTimers();
+
+        void controller.play();
+
+        expect(sharedAudio.value).toMatchObject({
+          playing: true,
+          position: 0,
+          updatedAtMs: SERVER_START + 1000,
+          clock: "server",
+        });
+        // Shown as playing straight away, but silent until the moment.
+        expect(controller.isPlaying.value).toBe(true);
+        await vi.advanceTimersByTimeAsync(999);
+        expect(playSpy).not.toHaveBeenCalled();
+
+        serverTime.now += 1000;
+        await vi.advanceTimersByTimeAsync(1);
+        expect(playSpy).toHaveBeenCalled();
+        expect(audio.current!.muted).toBe(false);
+      });
+
+      it("plays nothing when the host pauses before the scheduled start", async () => {
+        const serverTime = { now: SERVER_START };
+        const { readingState } = attachSession(true, {
+          serverNow: () => serverTime.now,
+        });
+        pressPlay();
+        chooseInSharePrompt("Play for everyone");
+        const controller = state.audioPlayback.controllerFor(readingState)!;
+        playSpy.mockClear();
+        fakeTimers();
+
+        void controller.play();
+        controller.pause();
+        serverTime.now += 2000;
+        await vi.advanceTimersByTimeAsync(2000);
+
+        expect(playSpy).not.toHaveBeenCalled();
+        expect(controller.isPlaying.value).toBe(false);
+      });
+
+      it("has a listener who hears in time wait at the start and begin at the same moment", async () => {
+        const serverTime = { now: SERVER_START };
+        const { sharedAudio, readingState } = attachSession(false, {
+          serverNow: () => serverTime.now,
+        });
+        reportDuration(120);
+        fakeTimers();
+
+        sharedAudio.value = hostCommand(readingState, {
+          position: 30,
+          updatedAtMs: SERVER_START + 800,
+          clock: "server",
+        });
+
+        expect(playSpy).not.toHaveBeenCalled();
+        expect(audio.current!.currentTime).toBeCloseTo(30, 1);
+        expect(
+          state.audioPlayback.controllerFor(readingState)?.isPlaying.value
+        ).toBe(true);
+
+        serverTime.now += 800;
+        await vi.advanceTimersByTimeAsync(800);
+        expect(playSpy).toHaveBeenCalled();
+        expect(audio.current!.muted).toBe(false);
+      });
+
+      it("moves a waiting listener's start when the host moves theirs", async () => {
+        const serverTime = { now: SERVER_START };
+        const { sharedAudio, readingState } = attachSession(false, {
+          serverNow: () => serverTime.now,
+        });
+        reportDuration(120);
+        fakeTimers();
+        sharedAudio.value = hostCommand(readingState, {
+          position: 30,
+          updatedAtMs: SERVER_START + 800,
+          clock: "server",
+        });
+
+        // The host scrubbed before it started: a new spot, a new moment.
+        sharedAudio.value = hostCommand(readingState, {
+          id: "host-moved",
+          position: 50,
+          updatedAtMs: SERVER_START + 1500,
+          clock: "server",
+        });
+        serverTime.now += 800;
+        await vi.advanceTimersByTimeAsync(800);
+        expect(playSpy).not.toHaveBeenCalled();
+        expect(audio.current!.currentTime).toBeCloseTo(50, 1);
+
+        serverTime.now += 700;
+        await vi.advanceTimersByTimeAsync(700);
+        expect(playSpy).toHaveBeenCalled();
+      });
+
+      it("starts a listener who hears late muted, and unmutes once lined up", async () => {
+        const serverTime = { now: SERVER_START };
+        const { sharedAudio, readingState } = attachSession(false, {
+          serverNow: () => serverTime.now,
+        });
+        reportDuration(120);
+        fakeTimers();
+
+        // The host started two seconds ago.
+        sharedAudio.value = hostCommand(readingState, {
+          position: 10,
+          updatedAtMs: SERVER_START - 2000,
+          clock: "server",
+        });
+        expect(playSpy).toHaveBeenCalled();
+        expect(audio.current!.muted).toBe(true);
+
+        // The player took a moment to get going and landed behind.
+        serverTime.now += 300;
+        await vi.advanceTimersByTimeAsync(50);
+        expect(audio.current!.muted).toBe(true);
+
+        for (let i = 0; i < 10 && audio.current!.muted; i++) {
+          await vi.advanceTimersByTimeAsync(50);
+        }
+        expect(audio.current!.muted).toBe(false);
+        expect(audio.current!.currentTime).toBeCloseTo(12.3, 1);
+        expect(
+          state.audioPlayback.controllerFor(readingState)?.isPlaying.value
+        ).toBe(true);
+      });
+
+      it("jumps rather than nudges a small gap right after starting", async () => {
+        const { serverTime } = await followHost({ settle: false });
+
+        serverTime.now += 2000;
+        playAt(11.7);
+
+        expect(audio.current!.currentTime).toBeCloseTo(12, 1);
+        expect(audio.current!.playbackRate).toBe(1);
+      });
+
+      it("lines the host's own start up with the moment it announced, then leads", async () => {
+        const serverTime = { now: SERVER_START };
+        const { readingState } = attachSession(true, {
+          serverNow: () => serverTime.now,
+        });
+        reportDuration(120);
+        pressPlay();
+        chooseInSharePrompt("Play for everyone");
+        const controller = state.audioPlayback.controllerFor(readingState)!;
+        fakeTimers();
+        void controller.play();
+        serverTime.now += 1000;
+        await vi.advanceTimersByTimeAsync(1000);
+        vi.useRealTimers();
+        playAt(0);
+
+        // Its own player took a moment to start: it jumps to its own timeline.
+        serverTime.now += 300;
+        playAt(0.1);
+        expect(audio.current!.currentTime).toBeCloseTo(0.3, 1);
+
+        // After that it is the reference, and nothing moves it.
+        settleIn();
+        serverTime.now += 1000;
+        playAt(1.1);
+        expect(audio.current!.currentTime).toBeCloseTo(1.1, 1);
+        expect(audio.current!.playbackRate).toBe(1);
+      });
 
       it("starts a listener at the host's place on the server's clock, not their own", async () => {
         const serverTime = { now: SERVER_START + 20_000 };

@@ -290,7 +290,11 @@ export interface SharedAudioPlaybackCommand {
  * extra to tell a repeat from a new press and to catch a late joiner up.
  */
 export interface SharedAudioPlayback extends SharedAudioPlaybackCommand {
-  /** Leader's clock when `position` was sampled. */
+  /**
+   * When playback is at `position`, on the clock `clock` names. Usually when
+   * it was sampled; for a scheduled start, a moment in the future that
+   * playback holds at `position` until.
+   */
   updatedAtMs: number;
   /**
    * Unique per write. Counters collide when two leaders press together, and
@@ -310,6 +314,16 @@ export interface SharedAudioPlayback extends SharedAudioPlaybackCommand {
    * clock hadn't synced yet, or it predates this field.
    */
   clock?: "server";
+}
+
+export interface SharedAudioPublishOptions {
+  /**
+   * The server time `position` is reached at, when that isn't now. A playing
+   * command stamped a moment ahead tells every device when to start, so they
+   * all start together instead of each as soon as it hears. Ignored until
+   * this device's server clock has synced.
+   */
+  atServerMs?: number;
 }
 
 /**
@@ -1172,7 +1186,8 @@ export interface BibleReadingSession {
    * their listening stays on their own device.
    */
   publishAudioPlayback: (
-    command: SharedAudioPlaybackCommand | null
+    command: SharedAudioPlaybackCommand | null,
+    publishOptions?: SharedAudioPublishOptions
   ) => SharedAudioPlayback | null | false;
 
   /**
@@ -2014,7 +2029,8 @@ async function createBibleReadingSession(
   syncSharedAudio();
 
   const publishAudioPlayback = (
-    command: SharedAudioPlaybackCommand | null
+    command: SharedAudioPlaybackCommand | null,
+    publishOptions?: SharedAudioPublishOptions
   ): SharedAudioPlayback | null | false => {
     if (!isSessionHost(options.peek(), localSessionId.peek())) {
       return false;
@@ -2054,12 +2070,18 @@ async function createBibleReadingSession(
       return current;
     }
 
+    // A start time is only meaningful on the shared clock: without it,
+    // devices can't agree when "a second from now" is.
+    const stampedAt =
+      serverNow !== null && publishOptions?.atServerMs !== undefined
+        ? publishOptions.atServerMs
+        : serverNow;
     const next: SharedAudioPlayback = {
       ...command,
-      updatedAtMs: serverNow ?? Date.now(),
+      updatedAtMs: stampedAt ?? Date.now(),
       id: createSharedAudioId(),
       fromConnectionId: localConnectionId,
-      ...(serverNow !== null ? { clock: "server" as const } : {}),
+      ...(stampedAt !== null ? { clock: "server" as const } : {}),
     };
     try {
       document.transact(() => {
