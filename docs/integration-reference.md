@@ -246,69 +246,97 @@ query parameters:
 
 ## Part 4: Connecting your AI to the Seed Bible MCP server
 
-The system prompts in Part 3 teach an AI to _write_ Seed Bible links. The Seed Bible MCP server goes further: it lets the AI look up the actual Bible text, find translations and build links for itself, so it quotes Scripture accurately instead of from memory.
+You can connect Seed Bible to the AI chat app you already use, such as Claude or ChatGPT. Once connected, the AI can look up the real Bible text whenever you ask about a passage, instead of quoting from memory, and it can hand you a link to keep reading in Seed Bible.
 
-MCP (Model Context Protocol) is a standard way to plug extra abilities into an AI app. You give the app a web address, and the app adds that server's abilities to the AI.
+It takes about two minutes. You don't need to install anything or write any code. You copy one web address into your AI app's settings.
 
-The Seed Bible MCP server's address is:
+"MCP server" is just the technical name for this kind of add-on. You'll see the term in some app menus, so it helps to recognize it.
+
+### What your AI can do once it's connected
+
+- **Quote the Bible word for word.** Ask "What does John 3:16 say?" and the AI shows the exact verse, not a guess.
+- **Read whole chapters** with you, such as all of Psalm 23.
+- **Use your translation.** Over 1,000 translations in many languages are available. Ask for "Romans 8 in Spanish" or name a translation you like.
+- **Give you a Seed Bible link** so you can keep reading the chapter in the full app.
+- **Share the verse of the day** for today or any date you pick. On Christian holidays such as Christmas and Easter, it picks a verse for that holiday.
+
+You don't have to use special commands. Ask in your own words, and the AI uses Seed Bible when it helps.
+
+### The address you'll need
+
+Every app below asks for this address. Copy it exactly:
 
 ```
 https://mcp.seedbible.io/mcp
 ```
 
-It's free and public, and it doesn't need a sign-in or API key. When an app asks how the server authenticates, choose **None** (or "No authentication").
+It's free. You don't need a Seed Bible account, a password or a key. If an app asks how to sign in or "authenticate", choose **None** or **No authentication**.
 
-### What it can do
+### Claude
 
-Once it's connected, your AI can:
+These steps use the Claude website, [claude.ai](https://claude.ai). Once you've added Seed Bible there, it also works in the Claude desktop and phone apps.
 
-- **Understand references written the way people write them.** "John 3:16", "Gen 1:1-3 WEB" or "Ps 23" all work.
-- **Read whole chapters** and **quote single verses or verse ranges** word for word.
-- **Search 1,000+ translations** by language or name (for example "Spanish" or "Reina-Valera") and read the text in any of them. Without a translation it uses the Berean Standard Bible (BSB). The reference itself can also name the BSB, the World English Bible (WEB), the Hebrew Old Testament (WLC) or the Greek New Testament (SBL).
-- **Give the reader a Seed Bible link** to the chapter, so they can keep reading in the full app.
-- **Share the verse of the day** for today or any date, with its text and a Seed Bible link. On Christian holidays such as Christmas and Resurrection Sunday it picks one of that holiday's verses. Every app that uses this verse of the day shows the same verse on the same date.
+1. Click your name or initials in the bottom-left corner, then click **Settings**.
+2. Click **Connectors**. (In some versions, this is under **Customize → Connectors** instead.)
+3. Click **Add custom connector**.
+4. For the name, type `Seed Bible`. For the address, paste the address above.
+5. Leave **Advanced settings** alone, and click **Add**.
+6. Start a new chat. Click the tools button below the message box and make sure **Seed Bible** is switched on.
 
-You don't have to name these abilities. Ask in your own words ("What does Romans 8:28 say in Spanish?", "What's today's verse?") and the AI uses them when they help.
+Good to know:
 
-### Claude (claude.ai, desktop and mobile apps)
+- The free Claude plan allows one custom connector. Paid plans allow more.
+- If your church or organization uses a Claude Team or Enterprise plan, you may not see **Add custom connector**. Ask whoever manages your Claude account to add Seed Bible for everyone. They do this under **Organization settings → Connectors**. You then switch it on for yourself in step 6.
 
-1. Open **Settings → Connectors**. In some versions this page is under **Customize → Connectors**.
-2. Click **Add custom connector**.
-3. Name it `Seed Bible` and paste the server address above. Leave the advanced (OAuth) settings empty.
-4. Click **Add**.
-5. In a chat, open the tools menu and make sure **Seed Bible** is turned on.
+### ChatGPT
 
-Notes:
+ChatGPT keeps this option behind a setting called **Developer mode**. You don't need to be a developer to use it; it's just the name of the switch. Not every ChatGPT plan has it, and which plans do has changed over time. If you can't find the options below, check [OpenAI's help article](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt) for your plan.
 
-- On Team and Enterprise plans, an owner adds it once for everyone under **Organization settings → Connectors**. Members then turn it on for themselves.
-- The free plan allows one custom connector.
-- Once a connector is added in the browser, it also works in the Claude desktop and mobile apps.
+1. Click your name or picture, then click **Settings**.
+2. Click **Apps** (called **Connectors** in some versions), then **Advanced settings**.
+3. Switch on **Developer mode**.
+4. Go back to **Apps** and click **Create**.
+5. For the name, type `Seed Bible`. For the address, paste the address above. For authentication, choose **No authentication**.
+6. Tick the box saying you trust this app, then click **Create**.
+7. Start a new chat. Click the **+** button next to the message box, choose **Developer mode**, and switch on **Seed Bible**.
 
-### Claude Code
+ChatGPT may ask you to approve each time it uses Seed Bible. Click **Confirm** to let it.
 
-Run this in a terminal:
+If your ChatGPT account is through work or church (a Business, Enterprise or Edu plan), whoever manages the account has to allow Developer mode first.
+
+### Other AI apps
+
+Many other AI apps can connect to Seed Bible in the same way. In the app's settings, look for a section called **Connectors**, **Integrations**, **Tools** or **MCP servers**. Add a new one, name it `Seed Bible`, and paste the address above. If the app asks what kind of connection it is, choose **Remote** or **HTTP**.
+
+If your app doesn't have any of these settings, it can't connect to Seed Bible yet. You can still use the [Part 3 instructions](#part-3-ai-system-prompts) to have it hand out Seed Bible links.
+
+### Checking it works
+
+Start a new chat and ask: **"What's today's verse of the day? Include a Seed Bible link."**
+
+- **It's working** if the AI replies with a verse and a link starting with `seedbible.org`. Some apps also show a small note that the AI used Seed Bible.
+- **It's not working** if the AI apologises that it can't look things up, or answers without a link. Check that Seed Bible is switched on for that chat (step 6 for Claude, step 7 for ChatGPT), then try again in a new chat.
+
+<details>
+<summary><strong>For developers: coding tools and config files</strong></summary>
+
+Every client below connects to the same address as a remote (Streamable HTTP) server with no authentication.
+
+**Claude Code:**
 
 ```bash
 claude mcp add --transport http seed-bible https://mcp.seedbible.io/mcp
 ```
 
-Add `--scope user` to make it available in every project, not just the current one.
+Add `--scope user` to make it available in every project.
 
-### ChatGPT
+**OpenAI Codex (CLI and IDE extension):**
 
-ChatGPT adds outside servers through **developer mode**. Which plans include it has changed several times, so check [OpenAI's help article](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt) if you don't see the options below.
+```bash
+codex mcp add seed-bible --url https://mcp.seedbible.io/mcp
+```
 
-1. Open **Settings → Apps** (called **Connectors** in older versions) **→ Advanced settings**, and turn on **Developer mode**. On Business, Enterprise and Edu workspaces, an admin has to allow this first.
-2. Back in **Settings → Apps**, click **Create**.
-3. Name it `Seed Bible`, paste the server address above, and set authentication to **No authentication**.
-4. Confirm that you trust the server, then click **Create**.
-5. In a chat, choose **Developer mode** from the **+** menu and turn on **Seed Bible**. ChatGPT may ask you to approve each tool use.
-
-### Other apps
-
-Most AI apps and coding tools that support MCP need only the server address. Look for a setting called "MCP servers", "Connectors" or "Tools" and add it as a remote (HTTP) server. Here are the settings for a few popular ones:
-
-**VS Code (GitHub Copilot):** add this to `.vscode/mcp.json` in your project, or run **MCP: Open User Configuration** from the command palette to use it everywhere:
+**VS Code (GitHub Copilot):** `.vscode/mcp.json`, or **MCP: Open User Configuration** for every workspace:
 
 ```json
 {
@@ -321,7 +349,7 @@ Most AI apps and coding tools that support MCP need only the server address. Loo
 }
 ```
 
-**Cursor:** add this to `~/.cursor/mcp.json` (every project) or `.cursor/mcp.json` (one project):
+**Cursor:** `~/.cursor/mcp.json` (every project) or `.cursor/mcp.json` (one project):
 
 ```json
 {
@@ -333,7 +361,7 @@ Most AI apps and coding tools that support MCP need only the server address. Loo
 }
 ```
 
-**Gemini CLI:** add this to `~/.gemini/settings.json`. Gemini uses `httpUrl` here, not `url`, and silently skips a server set up with the wrong name:
+**Gemini CLI:** `~/.gemini/settings.json`. Use `httpUrl`, not `url`; Gemini skips the entry without an error if the key is wrong:
 
 ```json
 {
@@ -345,15 +373,9 @@ Most AI apps and coding tools that support MCP need only the server address. Loo
 }
 ```
 
-**OpenAI Codex (CLI and IDE extension):**
+The tools are `getBibleReference`, `fetchChapter`, `fetchVerse`, `getSeedBibleLink`, `getVerseOfTheDay` and `listTranslations`.
 
-```bash
-codex mcp add seed-bible --url https://mcp.seedbible.io/mcp
-```
-
-### Checking it works
-
-Start a new chat and ask "What's the verse of the day?" or "Quote John 3:16 and give me a Seed Bible link." If the AI answers with the exact verse and a `seedbible.org` link, the server is connected. If it answers from memory without a link, check that Seed Bible is turned on in that chat's tool settings.
+</details>
 
 ## Branding
 
