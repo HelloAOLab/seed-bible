@@ -297,7 +297,7 @@ ChatGPT keeps this option behind a setting called **Developer mode**. You don't 
 3. Switch on **Developer mode**.
 4. Go back to **Apps** and click **Create**.
 5. For the name, type `Seed Bible`. For the address, paste the address above. For authentication, choose **No authentication**.
-6. Tick the box saying you trust this app, then click **Create**.
+6. Check the box saying you trust this app, then click **Create**.
 7. Start a new chat. Click the **+** button next to the message box, choose **Developer mode**, and switch on **Seed Bible**.
 
 ChatGPT may ask you to approve each time it uses Seed Bible. Click **Confirm** to let it.
@@ -315,7 +315,7 @@ If your app doesn't have any of these settings, it can't connect to Seed Bible y
 Start a new chat and ask: **"What's today's verse of the day? Include a Seed Bible link."**
 
 - **It's working** if the AI replies with a verse and a link starting with `seedbible.org`. Some apps also show a small note that the AI used Seed Bible.
-- **It's not working** if the AI apologises that it can't look things up, or answers without a link. Check that Seed Bible is switched on for that chat (step 6 for Claude, step 7 for ChatGPT), then try again in a new chat.
+- **It's not working** if the AI apologizes that it can't look things up, or answers without a link. Check that Seed Bible is switched on for that chat (step 6 for Claude, step 7 for ChatGPT), then try again in a new chat.
 
 <details>
 <summary><strong>For developers: coding tools and config files</strong></summary>
@@ -361,7 +361,7 @@ codex mcp add seed-bible --url https://mcp.seedbible.io/mcp
 }
 ```
 
-**Gemini CLI:** `~/.gemini/settings.json`. Use `httpUrl`, not `url`; Gemini skips the entry without an error if the key is wrong:
+**Gemini CLI:** `~/.gemini/settings.json`. Use `httpUrl`, not `url`. Gemini treats `url` as an older connection type (SSE, short for server-sent events) that this server doesn't use, so it won't connect:
 
 ```json
 {
@@ -374,6 +374,8 @@ codex mcp add seed-bible --url https://mcp.seedbible.io/mcp
 ```
 
 The tools are `getBibleReference`, `fetchChapter`, `fetchVerse`, `getSeedBibleLink`, `getVerseOfTheDay` and `listTranslations`.
+
+<!-- Maintainers: the tool names and the abilities listed in "What your AI can do" come from the MCP server, whose code lives in the HelloAOLab/bible-api repository at packages/seed-bible-mcp (tools are registered in src/mcp.ts). Update this section when a tool is added, renamed or changes behavior. -->
 
 </details>
 
