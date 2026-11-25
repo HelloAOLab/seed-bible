@@ -11,7 +11,10 @@ export type RequestedSettingsView =
   | null
   | "main"
   | "display-and-theme"
-  | "extensions";
+  | "extensions"
+  // Only once the developer tools are unlocked; until then the main view
+  // shows instead.
+  | "developer";
 
 /**
  * Remembers whether the desktop sidebar rail is collapsed. Absent until the

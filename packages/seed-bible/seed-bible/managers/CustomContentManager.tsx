@@ -714,7 +714,11 @@ export function createCustomContentManager(deps: {
         );
       }
       const record = `${RECORD_NAME_PREFIX}${uuid()}`;
-      const createdRecord = await os.createRecord(record, userId);
+      // A shared customization's library belongs to its studio too, which
+      // only the studio's admins may add records to.
+      const createdRecord = customization.studioId
+        ? await os.createStudioRecord(record, customization.studioId)
+        : await os.createRecord(record, userId);
       if (!createdRecord.success) {
         throw new ContentLibraryError(
           String(createdRecord.errorCode),
@@ -724,7 +728,7 @@ export function createCustomContentManager(deps: {
       const created: ContentLibraryManifest = {
         schemaVersion: 1,
         name: customization.name,
-        customizationLocator: `${userId}.${customization.id}`,
+        customizationLocator: `${customization.studioId ?? userId}.${customization.id}`,
         categories: [],
         updatedAt: Date.now(),
       };

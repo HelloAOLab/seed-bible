@@ -25,6 +25,7 @@ import {
   getExtensionAvailability,
   getExtensionSettingDefault,
   getFontPresetsForField,
+  CustomizationSaveConflictError,
   getVariantDefaultRole,
   isDefaultVariant,
   type CustomizationIconId,
@@ -92,6 +93,10 @@ import {
   ThemeThumbnail,
 } from "./CustomizationPreviews";
 import { Button } from "../Button/Button";
+import {
+  CustomizationPeopleView,
+  studioRoleLabel,
+} from "./CustomizationPeopleView";
 import { TextInput } from "../TextField/TextField";
 import "../Field/Field.css";
 
@@ -115,7 +120,8 @@ type CustomizationEditView =
   | "edit-variant"
   | "edit-extensions"
   | "edit-icons"
-  | "edit-content";
+  | "edit-content"
+  | "edit-people";
 
 /**
  * Whether `foregroundKey` (e.g. `primaryFontColor`) has a known reading
@@ -392,6 +398,9 @@ export function CustomizationEditPaneTitle(props: {
       <>{t("custom-content-library", { defaultValue: "Content library" })}</>
     );
   }
+  if (view === "edit-people") {
+    return <>{t("customization-people", { defaultValue: "People" })}</>;
+  }
   if (view === "edit-variant") {
     const variant = record.variants.find(
       (v) => v.id === props.customizations.editingVariantId.value
@@ -573,6 +582,10 @@ async function saveCustomizationOrToast(
     await state.customizations.saveEditingCustomization();
     return true;
   } catch (error) {
+    if (error instanceof CustomizationSaveConflictError) {
+      // The conflict banner explains it and offers the choices.
+      return false;
+    }
     console.error("Failed to save customization:", error);
     state.app.toast(
       i18n.t("customization-save-failed", {
@@ -643,8 +656,73 @@ export function openCustomizationEditPane(
  */
 export function CustomizationEditPane(props: { state: SeedBibleState }) {
   const { state } = props;
+  return (
+    <>
+      <SaveConflictBanner state={state} />
+      <CustomizationEditPaneView state={state} />
+    </>
+  );
+}
+
+/**
+ * Shown when someone else saved this Custom Branding while it was open here.
+ * Saving stays stopped until one side is picked, since either choice loses
+ * the other's changes.
+ */
+function SaveConflictBanner(props: { state: SeedBibleState }) {
+  const { customizations } = props.state;
+  const { t } = useI18n();
+  const conflict = customizations.saveConflict.value;
+  if (
+    !conflict ||
+    conflict.customizationId !== customizations.editingCustomization.value?.id
+  ) {
+    return null;
+  }
+  const resolve = (choice: "keep-mine" | "use-theirs") => {
+    customizations.resolveSaveConflict(choice).catch((error) => {
+      if (!(error instanceof CustomizationSaveConflictError)) {
+        console.error("Failed to resolve a save conflict:", error);
+        props.state.app.toast(
+          t("customization-save-failed", {
+            defaultValue:
+              "Couldn't save your Custom Branding. Please try again.",
+          })
+        );
+      }
+    });
+  };
+  return (
+    <div className="sb-cz-conflict" role="alert">
+      <p>
+        {t("customization-save-conflict", {
+          defaultValue:
+            "Someone else saved changes to this Custom Branding while you were editing. Your changes haven't been saved.",
+        })}
+      </p>
+      <div className="sb-cz-conflict-actions">
+        <Button variant="primary" onClick={() => resolve("use-theirs")}>
+          {t("customization-save-conflict-use-theirs", {
+            defaultValue: "Use their version",
+          })}
+        </Button>
+        <Button tone="danger" onClick={() => resolve("keep-mine")}>
+          {t("customization-save-conflict-keep-mine", {
+            defaultValue: "Replace with mine",
+          })}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function CustomizationEditPaneView(props: { state: SeedBibleState }) {
+  const { state } = props;
   const view = customizationEditView.value;
 
+  if (view === "edit-people") {
+    return <CustomizationPeopleView state={state} />;
+  }
   if (view === "edit-extensions") {
     return <CustomizationEditExtensionsView state={state} />;
   }
@@ -741,6 +819,7 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
   const customIconCount = CUSTOMIZATION_ICON_IDS.filter(
     (iconId) => !!record.icons?.[iconId]
   ).length;
+  const studioRole = customizations.getStudioRole(record);
 
   const availabilityCounts = { available: 0, "auto-installed": 0, hidden: 0 };
   for (const entry of extensions.extensions.value) {
@@ -1009,6 +1088,36 @@ function CustomizationEditMainView(props: { state: SeedBibleState }) {
                   })
                 : t("custom-content-row-hint-empty", {
                     defaultValue: "Add your videos and articles to Discover",
+                  })}
+            </span>
+          </span>
+          <span className="material-symbols-outlined rtl-mirror">
+            chevron_right
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className="sb-cz-row sb-cz-row-tall"
+          onClick={() => {
+            customizationEditView.value = "edit-people";
+          }}
+        >
+          <span className="material-symbols-outlined sb-cz-row-icon">
+            group
+          </span>
+          <span className="sb-cz-row-text">
+            <span className="sb-cz-row-label">
+              {t("customization-people", { defaultValue: "People" })}
+            </span>
+            <span className="sb-cz-row-hint">
+              {studioRole
+                ? t("customization-people-row-hint-shared", {
+                    role: studioRoleLabel(t, studioRole),
+                    defaultValue: "Shared · Your role: {{role}}",
+                  })
+                : t("customization-people-row-hint-private", {
+                    defaultValue: "Only you can edit this",
                   })}
             </span>
           </span>

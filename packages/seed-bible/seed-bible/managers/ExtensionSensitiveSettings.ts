@@ -276,6 +276,8 @@ interface PointerScope {
   pointers: () => Pointers;
   /** The visibility of a proxy saved before anyone chose one. */
   defaultVisibility: ExtensionSensitiveProxyVisibility;
+  /** The record new proxies are saved in. */
+  recordName: (userId: string) => string;
   /** Saves (or, with null, forgets) one entry's pointer. */
   writePointer: (
     userId: string,
@@ -410,7 +412,9 @@ export function createExtensionSensitiveSettings(
 
   /**
    * The active Customization's pointer for this entry while it's current and
-   * this viewer may send through it: a `private` one only works for its owner.
+   * this viewer may send through it: a `private` one only works for whoever
+   * may use its record, the owner or, for a shared Customization, its
+   * studio's members.
    */
   const customizationPointer = (
     extensionId: string,
@@ -423,7 +427,8 @@ export function createExtensionSensitiveSettings(
     );
     return pointer &&
       (pointer.visibility === "public" ||
-        pointer.recordName === login.userId.value)
+        pointer.recordName === login.userId.value ||
+        customizations.studioRoles.value[pointer.recordName] !== undefined)
       ? pointer
       : undefined;
   };
@@ -558,6 +563,7 @@ export function createExtensionSensitiveSettings(
   const viewerScope: PointerScope = {
     pointers: () => pointers.value,
     defaultVisibility: "private",
+    recordName: (userId) => userId,
     writePointer: (userId, extensionId, proxyId, pointer) => {
       // Re-checked after the proxy call: if the account changed meanwhile,
       // `pointers` now holds the other account's, and writing them into this
@@ -632,11 +638,14 @@ export function createExtensionSensitiveSettings(
     }
     // Reusing the address replaces the host and markers along with the
     // values, so an older save can't keep sending to where it used to. Only
-    // one this account owns, though: anything else can't be written here.
+    // one in the record this scope saves to, though: anything else can't be
+    // written here.
+    const recordName = scope.recordName(userId);
     const previous = scope.pointers()[extensionId]?.[proxyId];
-    const address = previous?.recordName === userId ? previous.address : uuid();
+    const address =
+      previous?.recordName === recordName ? previous.address : uuid();
     try {
-      const result = await os.recordProxy(userId, address, host, data, {
+      const result = await os.recordProxy(recordName, address, host, data, {
         marker: PROXY_MARKERS[visibility],
       });
       if (!result.success) {
@@ -651,7 +660,7 @@ export function createExtensionSensitiveSettings(
       return false;
     }
     const recorded = await scope.writePointer(userId, extensionId, proxyId, {
-      recordName: userId,
+      recordName,
       address,
       host,
       defaultHost: usable.proxy.host,
@@ -664,9 +673,19 @@ export function createExtensionSensitiveSettings(
       // effort: after an account switch the session may no longer be allowed
       // to erase it.
       try {
-        await os.eraseProxy(userId, address);
+        await os.eraseProxy(recordName, address);
       } catch (error) {
         console.error("Failed to clear an unrecorded sensitive proxy:", error);
+      }
+    }
+    if (recorded && previous && previous.recordName !== recordName) {
+      // The values moved, e.g. from the creator's record into the studio of
+      // a Customization they shared. Best effort: only the old record's
+      // owner may erase the old proxy.
+      try {
+        await os.eraseProxy(previous.recordName, previous.address);
+      } catch (error) {
+        console.warn("Couldn't clear a replaced sensitive proxy:", error);
       }
     }
     return recorded;
@@ -716,25 +735,29 @@ export function createExtensionSensitiveSettings(
    * starts so one that finishes after the editor switched still lands on the
    * Customization it was made for.
    */
-  const customizationScope = (customizationId: string): PointerScope => ({
-    pointers: () => {
-      const customization =
-        customizations.editingCustomization.value?.id === customizationId
-          ? customizations.editingCustomization.value
-          : customizations.customizations.value.find(
-              (candidate) => candidate.id === customizationId
-            );
-      return customization?.extensionSensitiveProxies ?? {};
-    },
-    defaultVisibility: "public",
-    writePointer: (_userId, extensionId, proxyId, pointer) =>
-      customizations.setExtensionSensitiveProxy(
-        customizationId,
-        extensionId,
-        proxyId,
-        pointer
-      ),
-  });
+  const customizationScope = (customizationId: string): PointerScope => {
+    const find = () =>
+      customizations.editingCustomization.value?.id === customizationId
+        ? customizations.editingCustomization.value
+        : customizations.customizations.value.find(
+            (candidate) => candidate.id === customizationId
+          );
+    // Captured now, like the ID: a shared Customization's proxies belong to
+    // its studio, so they keep working whoever saved them.
+    const studioId = find()?.studioId;
+    return {
+      pointers: () => find()?.extensionSensitiveProxies ?? {},
+      defaultVisibility: "public",
+      recordName: (userId) => studioId ?? userId,
+      writePointer: (_userId, extensionId, proxyId, pointer) =>
+        customizations.setExtensionSensitiveProxy(
+          customizationId,
+          extensionId,
+          proxyId,
+          pointer
+        ),
+    };
+  };
 
   const editingScope = (): PointerScope | null => {
     const editing = customizations.editingCustomization.value;

@@ -137,6 +137,31 @@ describe("CustomContentManager", () => {
       expect(customContent.status.value).toBe("ready");
     });
 
+    it("puts a shared Custom Branding's library in a record its studio owns", async () => {
+      const server = fakeRecordsServer();
+      const app = createApp(server, { userId: OWNER });
+      const created = await app.customizations.create();
+      app.customizations.startEditing(created.id);
+      const shared = await app.customizations.shareWithOthers(created.id);
+
+      await app.customContent.createLibrary();
+
+      const recordName = app.customContent.recordName.value!;
+      expect(server.studioOwners.get(recordName)).toBe(shared.studioId);
+      const manifest = server.records
+        .get(recordName)!
+        .get(CONTENT_MANIFEST_ADDRESS)!.data as {
+        customizationLocator: string;
+      };
+      expect(manifest.customizationLocator).toBe(
+        `${shared.studioId}.${created.id}`
+      );
+      const saved = server.records.get(shared.studioId!)!.get(created.id)!;
+      expect(
+        (saved.data as { contentRecordName?: string }).contentRecordName
+      ).toBe(recordName);
+    });
+
     it("reports a plan limit and leaves the Custom Branding without a library", async () => {
       const server = fakeRecordsServer();
       const app = createApp(server, { userId: OWNER });

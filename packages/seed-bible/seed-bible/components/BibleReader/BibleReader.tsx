@@ -3768,6 +3768,10 @@ export function BibleReader(props: BibleReaderProps) {
       ? playingStep
       : null;
   const compareReadingState = playbackHere?.compareReadingState.value ?? null;
+  // Two passages side by side leave no room for Discover beside them, so it
+  // goes below. Decided by the step rather than `comparePage` so the panel
+  // doesn't jump while the second passage is still loading.
+  const compareStepShown = !!compareStep && !playbackHere?.awayFromStep.value;
   const comparePage =
     compareStep && compareReadingState && !playbackHere?.awayFromStep.value
       ? compareStep
@@ -4157,9 +4161,13 @@ export function BibleReader(props: BibleReaderProps) {
   // const extraContent = discoverPanel ? (
   //   <div className="sb-bible-reader-discover-panel">{discoverPanel}</div>
   // ) : null;
+  // Discover follows the passage being read, so a playlist step that fills
+  // the reader with something else (a note, question, video or link) leaves
+  // it out.
   const extraContent =
     state &&
     !isMinimalEmbed &&
+    !stepPage &&
     !state.app.isDiscoverOpen.value &&
     state.settings.settings.value.discoveredContent.showContent ? (
       <DiscoverContentPanel
@@ -4528,7 +4536,8 @@ export function BibleReader(props: BibleReaderProps) {
           </div>
           <div
             className={`sb-bible-reader-content${
-              readingState.discoverContentPanelInline.value === false
+              readingState.discoverContentPanelInline.value === false ||
+              compareStepShown
                 ? " sb-bible-reader-content--discover-below"
                 : ""
             }`}

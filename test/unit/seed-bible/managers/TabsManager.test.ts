@@ -273,6 +273,21 @@ function createMockSharedSession(
     isHost: vi.fn().mockReturnValue(false),
     isSynced: signal(true),
     getDecorationOwner: () => undefined,
+    sharedAudio: signal(null),
+    publishAudioPlayback: vi.fn(() => false),
+    audioShareChoice: signal(null),
+    setAudioShareChoice: vi.fn(),
+    isListeningAlong: signal(false),
+    listenAlong: vi.fn(),
+    stopListeningAlong: vi.fn(),
+    audioOffer: signal(null),
+    dismissAudioOffer: vi.fn(),
+    leadsSharedAudio: signal(false),
+    audioListeners: signal([]),
+    isListeningOnOwn: signal(false),
+    listenOnOwn: vi.fn(),
+    rejoinGroupAudio: vi.fn(),
+    serverNow: () => null,
   } as BibleReadingSession;
 }
 

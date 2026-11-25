@@ -7,6 +7,7 @@ import { isArrayBuffer } from "es-toolkit";
 import { v4 as uuid } from "uuid";
 import type { RecordFileFailure } from "@casual-simulation/aux-records";
 import { InstRecordsClient } from "@casual-simulation/aux-common/websockets/InstRecordsClient";
+import type { TimeSample } from "@casual-simulation/timesync";
 import { PartitionAuthSource } from "@casual-simulation/aux-common/partitions/PartitionAuthSource";
 import { AuthenticatedConnectionClient } from "@casual-simulation/aux-common/websockets/AuthenticatedConnectionClient";
 import { computed, effect, signal } from "@preact/signals";
@@ -35,6 +36,56 @@ export { FATAL_SESSION_ERROR_CODES } from "./SessionGuard";
 export interface UserInfo {
   id: string;
   email: string;
+}
+
+/**
+ * A studio admin may manage its members and create records in it; a member
+ * may read and write the data, files and proxies in its records.
+ */
+export type StudioRole = "admin" | "member";
+
+export interface StudioMembership {
+  studioId: string;
+  displayName: string;
+  role: StudioRole;
+}
+
+export type StudioResult<T extends object> =
+  | ({ success: true } & T)
+  | { success: false; errorCode: string; errorMessage: string };
+
+/**
+ * One studio procedure's answer in the shape callers use: the SDK's
+ * success, reshaped by `onSuccess`, or its failure with a plain string code.
+ */
+function toStudioResult<
+  R extends
+    | { success: true }
+    | { success: false; errorCode: unknown; errorMessage: string },
+  T extends object,
+>(
+  result: R,
+  onSuccess: (result: Extract<R, { success: true }>) => T
+): StudioResult<T> {
+  if (result.success) {
+    return {
+      success: true,
+      ...onSuccess(result as Extract<R, { success: true }>),
+    };
+  }
+  const failure = result as Extract<R, { success: false }>;
+  return {
+    success: false,
+    errorCode: String(failure.errorCode),
+    errorMessage: failure.errorMessage,
+  };
+}
+
+export interface StudioMember {
+  userId: string;
+  role: StudioRole;
+  name: string | null;
+  email: string | null;
 }
 
 /**
@@ -569,6 +620,79 @@ export function CasualOSManager(
       client.createRecord({ recordName, ownerId }),
 
     /**
+     * Creates a record owned by a studio rather than a person. Only an admin
+     * of the studio may, and the studio's plan must allow another record.
+     */
+    createStudioRecord: (recordName: string, studioId: string) =>
+      client.createRecord({ recordName, studioId }),
+
+    /**
+     * Creates a studio with the signed-in user as its admin. A studio also
+     * gets a record named after its ID, which its members share.
+     */
+    createStudio: async (
+      displayName: string
+    ): Promise<StudioResult<{ studioId: string }>> =>
+      toStudioResult(await client.createStudio({ displayName }), (result) => ({
+        studioId: result.studioId,
+      })),
+
+    /** Every studio the signed-in user belongs to, with their role in it. */
+    listStudios: async (
+      userId: string
+    ): Promise<StudioResult<{ studios: StudioMembership[] }>> =>
+      toStudioResult(await client.listStudios({ userId }), (result) => ({
+        studios: result.studios.map((studio) => ({
+          studioId: studio.studioId,
+          displayName: studio.displayName,
+          role: studio.role,
+        })),
+      })),
+
+    listStudioMembers: async (
+      studioId: string
+    ): Promise<StudioResult<{ members: StudioMember[] }>> =>
+      toStudioResult(
+        await client.listStudioMembers({ studioId }),
+        (result) => ({
+          members: result.members.map((member) => ({
+            userId: member.userId,
+            role: member.role,
+            name: member.user.displayName || member.user.name || null,
+            email: member.user.email ?? null,
+          })),
+        })
+      ),
+
+    /**
+     * Adds someone to a studio by the email they sign in with. Only a studio
+     * admin may. Fails with `user_not_found` when no account uses that email:
+     * a studio can only hold people who have signed in at least once.
+     */
+    addStudioMember: async (
+      studioId: string,
+      email: string,
+      role: StudioRole
+    ): Promise<StudioResult<object>> =>
+      toStudioResult(
+        await client.addStudioMember({ studioId, addedEmail: email, role }),
+        () => ({})
+      ),
+
+    /**
+     * Removes someone from a studio. Only a studio admin may, and not
+     * themselves: CasualOS refuses that, so a studio can't lose its last admin.
+     */
+    removeStudioMember: async (
+      studioId: string,
+      userId: string
+    ): Promise<StudioResult<object>> =>
+      toStudioResult(
+        await client.removeStudioMember({ studioId, removedUserId: userId }),
+        () => ({})
+      ),
+
+    /**
      * Removes an uploaded file, given the URL `recordFile` returned for it.
      * The SDK's own result type for this procedure leaves out the success
      * case, so the shape callers can rely on is spelled out here.
@@ -909,6 +1033,14 @@ export function CasualOSManager(
     },
 
     getSharedDocument,
+
+    /**
+     * Times one round trip to the records server over the inst websocket,
+     * for estimating how far this device's clock is from the server's (see
+     * `ServerClock`). Waits for the connection if it isn't open yet.
+     */
+    sampleServerTime: (): Promise<TimeSample> =>
+      getInstClient().sampleServerTime(),
 
     promptToInstallPWA: async (): Promise<{
       outcome: "accepted" | "dismissed";
