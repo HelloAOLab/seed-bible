@@ -386,9 +386,12 @@ describe("CreateAnnotationForm", () => {
       await flushLazyLoad();
     });
 
-    const cancelButton = container.querySelector(
-      ".sb-reading-plans-back"
-    ) as HTMLButtonElement;
+    const cancelButton = Array.from(
+      container.querySelectorAll<HTMLButtonElement>("button")
+    ).find((button) => button.textContent === "Cancel");
+    if (!cancelButton) {
+      throw new Error("Cancel button not rendered");
+    }
     act(() => {
       cancelButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });

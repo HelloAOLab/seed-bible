@@ -1,15 +1,44 @@
 .sb-annotation-editor {
-  /* min-height: 8rem; */
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: clamp(10rem, 20dvh, 15rem);
+  min-width: 0;
+  max-width: 100%;
   margin-bottom: 8px;
+  overflow: hidden;
 }
 
-.sb-annotation-editor--loading {
-  min-height: 8rem;
+.sb-annotation-editor > .sb-editor-toolbar {
+  flex-shrink: 0;
+}
+
+.sb-annotation-editor > .sb-editor-content {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Fills the scrolling area so a tap anywhere in the empty part of the box
+   still lands in the editor. */
+.sb-annotation-editor .ProseMirror {
+  min-height: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* Code blocks keep their lines, so they scroll sideways on their own rather
+   than widening the editor. */
+.sb-annotation-editor .ProseMirror pre {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 /* Matches the info banner in `AnnotationOverrideBanner.css` so it reads as a
    notice about the form, not as text inside the textarea below it. */
 .sb-annotation-editor-offline-notice {
+  flex-shrink: 0;
   margin: 0 0 8px;
   padding: 10px 12px;
   border-radius: var(--sb-radius-md);
@@ -18,17 +47,23 @@
   font-size: var(--sb-font-size-13);
 }
 
+/* Fills the fixed-height editor box and scrolls inside it. No resize handle:
+   dragging it would only fight the box's fixed height. */
 .sb-annotation-editor-textarea {
   display: block;
+  flex: 1;
   width: 100%;
-  min-height: 8rem;
+  min-height: 0;
   box-sizing: border-box;
   padding: 0;
   border: none;
   background: transparent;
   color: inherit;
   font: inherit;
-  resize: vertical;
+  overflow-wrap: anywhere;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  resize: none;
 }
 
 .sb-annotation-editor-textarea:focus {
@@ -39,6 +74,8 @@
    verse(s) being annotated) behind a fullscreen pane. */
 .sb-annotation-verse-quote {
   display: none;
+  flex-shrink: 0;
+  min-width: 0;
   margin-bottom: 8px;
   padding: 0.5rem 0.625rem;
   border: 1px solid var(--sb-divider-color);
@@ -49,10 +86,17 @@
   margin: 0 0 4px;
   font-weight: 600;
   font-size: 0.85em;
+  overflow-wrap: anywhere;
 }
 
+/* A long passage scrolls inside the quote instead of pushing the editor down
+   the screen, so the editor sits in the same place for one verse or twenty. */
 .sb-annotation-verse-quote-text {
+  max-height: 6em;
   margin: 0;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
   font-size: 0.9em;
   color: var(--sb-secondary-font-color);
 }
@@ -64,4 +108,11 @@
   .sb-annotation-verse-quote {
     display: block;
   }
+}
+
+.sb-annotation-form-actions {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
 }
