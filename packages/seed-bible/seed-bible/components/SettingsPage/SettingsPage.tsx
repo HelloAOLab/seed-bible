@@ -3,6 +3,12 @@ import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./SettingsPage.css";
 import { localizedThemeName } from "./localizedThemeName";
 import { useSignal } from "@preact/signals";
+import { useEffect } from "preact/hooks";
+import { lazy, Suspense } from "preact/compat";
+import {
+  countUnlockTap,
+  devToolsUnlocked,
+} from "../../app/devTools/devToolsUnlock";
 import { ScriptureLineHeightIcon } from "../icons";
 import { SearchBar } from "../SearchBar/SearchBar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -72,7 +78,57 @@ function FlagImg({ cc }: { cc: string }) {
 
 const FONT_SIZE_OPTIONS: TextSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
 
-function SettingsBreadcrumbs(props: { onBack: () => void; trail: string[] }) {
+// English only, like the rest of the developer tools: they're for the team,
+// not for translators.
+const DEVELOPER_VIEW_LABEL = "Developer";
+const DEVELOPER_UNAVAILABLE_TITLE = "Couldn't load the developer tools";
+const DEVELOPER_UNAVAILABLE_HINT =
+  "Check your connection, then reload the page.";
+
+// Its own chunk, fetched only when someone opens the view after unlocking the
+// developer tools (see app/devTools/devToolsUnlock.ts). The native-build test
+// is spelled out rather than using DEV_TOOLS_SUPPORTED: only a condition the
+// bundler can read here lets it leave the chunk out of the native apps.
+// A failed download (offline, or the file was removed by a deploy since the
+// page loaded) shows a note instead of crashing Settings: nothing catches the
+// error otherwise. `lazy` keeps the note until a reload.
+const DeveloperSettingsView =
+  import.meta.env.MODE !== "native"
+    ? lazy(() =>
+        import("./DeveloperSettingsView")
+          .then((m) => ({ default: m.DeveloperSettingsView }))
+          .catch(() => ({ default: DeveloperSettingsUnavailable }))
+      )
+    : null;
+
+function DeveloperSettingsUnavailable(props: { state: SeedBibleState }) {
+  const { t } = useI18n();
+  return (
+    <div className="sb-settings-page">
+      <SettingsBreadcrumbs
+        onBack={() => {
+          props.state.sidebar.requestedSettingsView.value = "main";
+        }}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          DEVELOPER_VIEW_LABEL,
+        ]}
+      />
+      <EmptyState
+        size="panel"
+        icon="cloud_off"
+        title={DEVELOPER_UNAVAILABLE_TITLE}
+      >
+        {DEVELOPER_UNAVAILABLE_HINT}
+      </EmptyState>
+    </div>
+  );
+}
+
+export function SettingsBreadcrumbs(props: {
+  onBack: () => void;
+  trail: string[];
+}) {
   const { t } = useI18n();
   return (
     <div className="sb-settings-breadcrumbs">
@@ -105,7 +161,7 @@ function SettingsBreadcrumbs(props: { onBack: () => void; trail: string[] }) {
   );
 }
 
-function SettingsHero(props: {
+export function SettingsHero(props: {
   icon: string;
   title: string;
   description?: string;
@@ -1124,7 +1180,10 @@ function SettingsVersionFooter() {
     <button
       type="button"
       className="sb-settings-version"
-      onClick={onCopy}
+      onClick={() => {
+        onCopy();
+        countUnlockTap();
+      }}
       title={t("copy", { defaultValue: "Copy" })}
     >
       {copied.value
@@ -1138,8 +1197,11 @@ function SettingsVersionFooter() {
   );
 }
 
-function SettingsMainView(props: { state: SeedBibleState }) {
-  const { state } = props;
+function SettingsMainView(props: {
+  state: SeedBibleState;
+  showDeveloper: boolean;
+}) {
+  const { state, showDeveloper } = props;
   const { branding } = useAppConfig();
   const { t, language, availableLanguages, setLanguage } = useI18n();
 
@@ -1302,6 +1364,24 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </button>
             </li>
           )}
+          {showDeveloper && (
+            <li>
+              <button
+                className="sb-settings-nav-item"
+                onClick={() => onNavigate("developer")}
+              >
+                <span className="sb-settings-nav-icon">
+                  <MaterialIcon>code</MaterialIcon>
+                </span>
+                <span className="sb-settings-nav-label">
+                  {DEVELOPER_VIEW_LABEL}
+                </span>
+                <span className="material-symbols-outlined rtl-mirror">
+                  chevron_right
+                </span>
+              </button>
+            </li>
+          )}
           <li>
             <div className="sb-settings-field-row">
               <SearchableSelect
@@ -1353,6 +1433,25 @@ export function SettingsPage(props: { state: SeedBibleState }) {
   // Honor a deep-link requested by the sidebar (e.g. `?settingsView=extensions`).
   const currentView = state.sidebar.requestedSettingsView;
 
+  // Whether this browser unlocked the developer tools is something the server
+  // can't know, so they wait for hydration (the main view shows until then).
+  const hasMounted = useSignal(false);
+  useEffect(() => {
+    hasMounted.value = true;
+  }, []);
+  const showDeveloper =
+    DeveloperSettingsView !== null &&
+    hasMounted.value &&
+    devToolsUnlocked.value;
+
+  if (currentView.value === "developer" && showDeveloper) {
+    return (
+      <Suspense fallback={null}>
+        <DeveloperSettingsView state={state} />
+      </Suspense>
+    );
+  }
+
   if (currentView.value === "display-and-theme") {
     return <DisplayAndThemeSettingsView state={state} />;
   }
@@ -1361,5 +1460,5 @@ export function SettingsPage(props: { state: SeedBibleState }) {
     return <ExtensionsSettingsView state={state} />;
   }
 
-  return <SettingsMainView state={state} />;
+  return <SettingsMainView state={state} showDeveloper={showDeveloper} />;
 }
