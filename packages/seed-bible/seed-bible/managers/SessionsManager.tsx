@@ -347,6 +347,12 @@ export function sharedAudioClockNow(
  */
 export type SharedAudioShareChoice = "everyone" | "this-device";
 
+/**
+ * How long, in milliseconds, shared audio whose writer has left stays before
+ * a host or co-host clears it.
+ */
+export const ABANDONED_AUDIO_GRACE_MS = 5000;
+
 /** How close a new playing position must be to "where playback should be now" to count as the same command. */
 const SHARED_AUDIO_REPEAT_SECONDS = 0.35;
 
@@ -2667,6 +2673,8 @@ async function createBibleReadingSession(
     audioPlaybackSubscription.unsubscribe();
     audioListenersSubscription.unsubscribe();
     stopPublishingListenAlong();
+    stopClearingAbandonedAudio();
+    if (abandonedAudioTimer !== null) clearTimeout(abandonedAudioTimer);
     releaseServerClock?.();
     questionAnswersSubscription.unsubscribe();
     comeBackRequestsSubscription.unsubscribe();
@@ -2916,10 +2924,63 @@ async function createBibleReadingSession(
 
   // Offered whether it's playing yet or not: a host may set the chapter up
   // paused and wait for people to join before pressing play.
+  // Stored audio whose writer has left: a host who reloaded never sent the
+  // stop, and comes back as a new connection that didn't write it. Only
+  // judged once our own presence is live, or every command would look
+  // abandoned to someone who has just joined.
+  const sharedAudioAbandoned = computed(() => {
+    const playback = sharedAudio.value;
+    const writer = playback?.fromConnectionId;
+    if (!writer || writer === localConnectionId) return false;
+    const users = connectedUsers.value;
+    if (!isSynced.value || !users.some((user) => user.isSelf)) return false;
+    return !users.some((user) => user.connectionId === writer);
+  });
+
+  // A host or co-host clears an abandoned command, after a grace period so a
+  // writer who only dropped for a moment isn't cut off. Nobody else could:
+  // only its writer may clear a command it wrote.
+  let abandonedAudioTimer: ReturnType<typeof setTimeout> | null = null;
+  let abandonedAudioTimerFor: string | null = null;
+  const stopClearingAbandonedAudio = effect(() => {
+    const abandonedId =
+      sharedAudioAbandoned.value &&
+      isSessionHost(options.value, localSessionId.value)
+        ? (sharedAudio.value?.id ?? null)
+        : null;
+    // People coming and going don't restart the wait for the same command.
+    if (abandonedId !== null && abandonedId === abandonedAudioTimerFor) return;
+    if (abandonedAudioTimer !== null) {
+      clearTimeout(abandonedAudioTimer);
+      abandonedAudioTimer = null;
+    }
+    abandonedAudioTimerFor = abandonedId;
+    if (abandonedId === null) return;
+    abandonedAudioTimer = setTimeout(() => {
+      abandonedAudioTimer = null;
+      abandonedAudioTimerFor = null;
+      if (
+        !sharedAudioAbandoned.peek() ||
+        sharedAudio.peek()?.id !== abandonedId
+      ) {
+        return;
+      }
+      try {
+        document.transact(() => {
+          audioPlaybackMap.delete(AUDIO_PLAYBACK_KEY);
+        });
+        sharedAudio.value = null;
+      } catch {
+        // The document can already be gone.
+      }
+    }, ABANDONED_AUDIO_GRACE_MS);
+  });
+
   const audioOffer = computed(() => {
     const playback = sharedAudio.value;
     if (
       !playback ||
+      sharedAudioAbandoned.value ||
       playback.fromConnectionId === localConnectionId ||
       isListeningAlong.value ||
       declinedAudioOffer.value === audioChapterKey(playback) ||

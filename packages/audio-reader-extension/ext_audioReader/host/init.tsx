@@ -529,6 +529,8 @@ export function chapterSpeechVerses(
  */
 interface SessionBase {
   readingState: BibleReadingState;
+  /** The translation whose narration this is. */
+  translationId: string;
   bookId: string;
   chapterNumber: number;
   isPlaying: Signal<boolean>;
@@ -632,12 +634,18 @@ function ensureAudio(): HTMLAudioElement | null {
     el.onplay = () => {
       const session = heardRecording();
       if (!session) return;
+      // The silent start that unlocks a scheduled one (see
+      // `scheduleSharedStart`) isn't the listening starting or moving.
+      if (pendingStart?.session === session) return;
       session.isPlaying.value = true;
       resumeVerseHighlight(session, el.currentTime);
     };
     el.onpause = () => {
       const session = heardRecording();
       if (!session) return;
+      // The silent start that unlocks a scheduled one (see
+      // `scheduleSharedStart`) isn't the listening starting or moving.
+      if (pendingStart?.session === session) return;
       session.isPlaying.value = false;
       // The end of a chapter fires `pause` immediately before `ended` (per the
       // media spec) — that's the highlight finishing on schedule, not a user
@@ -659,6 +667,9 @@ function ensureAudio(): HTMLAudioElement | null {
     el.ontimeupdate = () => {
       const session = heardRecording();
       if (!session) return;
+      // The silent start that unlocks a scheduled one (see
+      // `scheduleSharedStart`) isn't the listening starting or moving.
+      if (pendingStart?.session === session) return;
       if (resumeAt !== null) {
         if (Math.abs(el.currentTime - resumeAt) > 0.5) return;
         resumeAt = null;
@@ -1048,10 +1059,13 @@ function armListenAlongPrompt(
     clearListenAlongPrompt();
     onGesture();
   };
-  window.addEventListener("pointerdown", handler, true);
+  // `click` rather than `pointerdown`: on a touch screen a browser only
+  // lets a page start sound once the tap ends, so a retry from the touch
+  // going down is blocked all over again.
+  window.addEventListener("click", handler, true);
   window.addEventListener("keydown", handler, true);
   removeListenAlongPrompt = () => {
-    window.removeEventListener("pointerdown", handler, true);
+    window.removeEventListener("click", handler, true);
     window.removeEventListener("keydown", handler, true);
   };
   context.app.toast(
@@ -1084,8 +1098,25 @@ function publishSharedAudio(
   if (applyingSharedAudio || publishingSharedAudio) return;
   const shared = session.sharedSession;
   if (!shared) return;
-  if (shared.audioShareChoice.peek() === "everyone") {
+  // A host or co-host listening along controls the shared audio too: their
+  // press goes to everyone, and they lead from then on.
+  const takesControl =
+    command !== null &&
+    sharedAudioFollowed.has(shared.id) &&
+    !shared.isListeningOnOwn.peek() &&
+    isSessionHost(shared.options.peek(), shared.localSessionId.peek());
+  // A stop always goes out: only the client that wrote the stored command
+  // can clear it (see `writeSharedAudio`), and it may have changed its
+  // choice since, so a "this device only" choice mustn't strand it.
+  if (
+    command === null ||
+    takesControl ||
+    shared.audioShareChoice.peek() === "everyone"
+  ) {
     writeSharedAudio(shared, command, publishOptions);
+  }
+  if (takesControl && shared.leadsSharedAudio.peek()) {
+    shared.setAudioShareChoice("everyone");
   }
   // A listener's own play, pause, or seek takes their player out of step
   // with the host's, unless it went out to everyone and they now lead.
@@ -1310,9 +1341,13 @@ function applySharedPlayback(
     clearListenAlongPrompt();
   }
 
+  // A narration of another translation is on its way out: the reader has
+  // switched, and it ends as soon as the tab notices.
   const listeningNow = sessions.get(readingState) ?? null;
   const alignment =
-    listeningNow && !listeningNow.ended
+    listeningNow &&
+    !listeningNow.ended &&
+    listeningNow.translationId === (translationId ?? "")
       ? `${playback.id}|${translationId ?? ""}|${listeningNow.controller.unit}`
       : null;
 
@@ -1320,17 +1355,27 @@ function applySharedPlayback(
   // A translation switch keeps the same id but needs another seek; it must
   // not start playback again after the guest has stopped.
   if (sharedAudioEcho.get(sessionId) === playback.id) return;
-  const alreadyFollowed = sharedAudioApplied.get(sessionId) === playback.id;
-  if (
-    alreadyFollowed &&
-    (alignment === null || sharedAudioAligned.get(sessionId) === alignment)
-  ) {
+  const lastAligned = sharedAudioAligned.get(sessionId);
+  // Switching translation ends the reader's listening (its narration is
+  // gone), but they're still listening along, so they start again on the
+  // new narration at the host's place. Any other ending, like the chapter
+  // finishing, waits for the host's next command.
+  const switchedNarration =
+    alignment === null &&
+    sharedAudioFollowed.has(sessionId) &&
+    lastAligned !== undefined &&
+    !lastAligned.startsWith(`${playback.id}|${translationId ?? ""}|`);
+  const alreadyFollowed =
+    sharedAudioApplied.get(sessionId) === playback.id && !switchedNarration;
+  if (alreadyFollowed && (alignment === null || lastAligned === alignment)) {
     return;
   }
   if (
     !chapter ||
     chapter.book.id !== playback.bookId ||
-    chapter.chapter.number !== playback.chapterNumber
+    chapter.chapter.number !== playback.chapterNumber ||
+    // The new translation's chapter is still loading; this runs again once it has.
+    (switchedNarration && chapter.translation.id !== translationId)
   ) {
     return;
   }
@@ -1361,7 +1406,7 @@ function applySharedPlayback(
     applyingSharedAudio = true;
     let started: void | Promise<void>;
     try {
-      started = listening.controller.play();
+      started = playToFollow(listening);
     } finally {
       applyingSharedAudio = false;
     }
@@ -1377,9 +1422,11 @@ function applySharedPlayback(
     if (
       !listening ||
       listening.ended ||
+      listening.translationId !== (translationId ?? "") ||
       listening.bookId !== playback.bookId ||
       listening.chapterNumber !== playback.chapterNumber
     ) {
+      if (listening && !listening.ended) endSession(listening);
       listening = startListening(context, readingState, chapter);
       if (!listening) {
         // Nothing can play this chapter. Remember the id so the failure
@@ -1400,7 +1447,7 @@ function applySharedPlayback(
     }
 
     if (playback.playing && !listening.isPlaying.peek()) {
-      const started = listening.controller.play();
+      const started = playToFollow(listening);
       watchPlaybackStart(started, markApplied, () => {
         sharedAudioAwaitingGesture.set(sessionId, playback.id);
         armListenAlongPrompt(context, retryAfterGesture);
@@ -1415,6 +1462,17 @@ function applySharedPlayback(
   } finally {
     applyingSharedAudio = false;
   }
+}
+
+/**
+ * Plays `listening` to follow the host, reporting a blocked autoplay so the
+ * listener can be asked for a tap. (A play from the player's own controls
+ * doesn't, as nothing there would handle it.)
+ */
+function playToFollow(listening: ListeningSession): void | Promise<void> {
+  return listening.kind === "recording"
+    ? playRecording(listening, { reportBlocked: true })
+    : listening.controller.play();
 }
 
 /**
@@ -1495,24 +1553,32 @@ function seekVerseHighlight(
 /**
  * Starts (or resumes) a recording, pausing any other tab being heard.
  *
- * The promise rejects with `NotAllowedError` when the browser blocked
- * autoplay. Other failures (a second press aborting the first) resolve,
- * matching the old "swallow it" behavior.
+ * With `reportBlocked`, the promise rejects with `NotAllowedError` when the
+ * browser blocked autoplay. Otherwise, and for other failures (a second
+ * press aborting the first), it resolves.
  */
-function playRecording(session: RecordingSession): Promise<void> {
+function playRecording(
+  session: RecordingSession,
+  { reportBlocked = false }: { reportBlocked?: boolean } = {}
+): Promise<void> {
   cancelSharedStart();
   makeAudible(session);
   if (audioEl) audioEl.muted = session.awaitingStart;
   const plan = planSharedStart(session);
-  if (plan === "scheduled") return scheduleSharedStart(session);
-  if (plan === "align") {
-    beginStartAlignment(session);
+  let started: Promise<void>;
+  if (plan === "scheduled") {
+    started = scheduleSharedStart(session);
   } else {
-    publishSharedIntent(session, true);
+    if (plan === "align") {
+      beginStartAlignment(session);
+    } else {
+      publishSharedIntent(session, true);
+    }
+    started = settlePlayback(audioEl?.play(), () => {
+      if (startAlignment?.session === session) endStartAlignment();
+    });
   }
-  return settlePlayback(audioEl?.play(), () => {
-    if (startAlignment?.session === session) endStartAlignment();
-  });
+  return reportBlocked ? started : started.catch(() => undefined);
 }
 
 /**
@@ -1622,7 +1688,8 @@ function scheduleSharedStart(session: RecordingSession): Promise<void> {
   };
   session.isPlaying.value = true;
 
-  return new Promise<void>((resolve, reject) => {
+  const leading = shared.leadsSharedAudio.peek();
+  const started = new Promise<void>((resolve, reject) => {
     const wait = (delayMs: number) => {
       const timer = setTimeout(() => {
         if (pendingStart?.timer !== timer) return;
@@ -1639,8 +1706,14 @@ function scheduleSharedStart(session: RecordingSession): Promise<void> {
           wait(remainingMs);
           return;
         }
+        holdAtStart(playback);
+        el.muted = session.awaitingStart;
         settlePlayback(el.play(), () => {
           session.isPlaying.value = false;
+          // Everyone else is starting now. Better they all pause than
+          // play on without the host, whose next press would then pause
+          // them anyway.
+          if (leading) publishSharedIntent(session, false);
         }).then(resolve, reject);
       }, delayMs);
       pendingStart = { session, timer, settle: () => resolve() };
@@ -1649,6 +1722,20 @@ function scheduleSharedStart(session: RecordingSession): Promise<void> {
     holdAtStart(playback);
     wait(Math.max(0, msUntilSharedStart(playback, shared)));
   });
+
+  // Started now, silently, and paused straight away. A browser that only
+  // lets a page start sound from a tap (Safari, especially on iPhone) then
+  // counts this player as started by one, so the delayed start is allowed.
+  el.muted = true;
+  void settlePlayback(el.play())
+    .catch(() => undefined)
+    .then(() => {
+      const playback = shared.sharedAudio.peek();
+      if (pendingStart?.session !== session || !playback) return;
+      if (!el.paused) el.pause();
+      holdAtStart(playback);
+    });
+  return started;
 }
 
 /** Drops a scheduled start or muted line-up that hasn't finished. */
@@ -1754,6 +1841,7 @@ function createRecordingSession(
     position: signal(0),
     duration: signal<number | null>(null),
     headings: chapterVerseHeadings(chapter),
+    translationId: chapter.translation.id,
     passage,
     clipStart: signal(0),
     clipEnd: signal<number | null>(null),
@@ -2054,6 +2142,7 @@ function createSpeechSession(
     position: signal(0),
     duration: signal<number | null>(verses.length),
     headings: chapterVerseHeadings(chapter),
+    translationId: chapter.translation.id,
     passage,
     teardown: () => undefined,
     ended: false,
@@ -2530,6 +2619,22 @@ export default function initAudioReaderExtension() {
       };
 
       readOpenTabs = () => context.tabs.tabs.peek();
+
+      // Closing or reloading the page runs no cleanup, so a host leading the
+      // audio would leave it "playing" for everyone. Try to stop it on the
+      // way out; if this doesn't get through, the session clears it once it
+      // sees this connection has gone.
+      if (typeof window !== "undefined") {
+        const stopOnLeave = () => {
+          for (const session of sessions.values()) {
+            if (session.sharedSession?.leadsSharedAudio.peek()) {
+              publishSharedAudio(session, null);
+            }
+          }
+        };
+        window.addEventListener("pagehide", stopOnLeave);
+        yield () => window.removeEventListener("pagehide", stopOnLeave);
+      }
       sharedAudioEcho.clear();
       sharedAudioFollowed.clear();
       sharedAudioOnOwn.clear();
@@ -2553,13 +2658,18 @@ export default function initAudioReaderExtension() {
           if (!shared) return [];
           const options = shared.options.value;
           const users = shared.connectedUsers.value;
-          const leaderConnected =
-            options.hostUserId == null ||
-            users.some(
-              (user) =>
-                isSessionHost(options, user.userId) ||
-                isSessionHost(options, user.connectionId)
-            );
+          // The connection that wrote the command, not just any host: a host
+          // who reloaded comes back as a new connection that never sent the
+          // stop, and the old command must not start up again for them.
+          const writer = shared.sharedAudio.value?.fromConnectionId;
+          const leaderConnected = writer
+            ? users.some((user) => user.connectionId === writer)
+            : options.hostUserId == null ||
+              users.some(
+                (user) =>
+                  isSessionHost(options, user.userId) ||
+                  isSessionHost(options, user.connectionId)
+              );
           // An empty list, or one that doesn't include us, means our own
           // presence channel is stale. "The host isn't here" is only
           // meaningful once we can see ourselves.
@@ -2668,6 +2778,9 @@ export default function initAudioReaderExtension() {
               `${chapter.book.name} ${chapter.chapter.number}`,
               (choice) => {
                 shared.setAudioShareChoice(choice);
+                // Sharing is listening along to the session's audio too, so
+                // a co-host's press moves this player as well.
+                if (choice === "everyone") shared.listenAlong();
                 if (choice === "everyone") openSharedListening(readingState);
                 else toggleListening(readingState);
               }
@@ -2692,7 +2805,6 @@ export default function initAudioReaderExtension() {
         if (session) publishSharedIntent(session, false);
       }
 
-      /** The Listen button: pauses or resumes this tab, or starts it. */
       /**
        * The tab's listening that Listen would pause or resume, or null when
        * Listen starts afresh: nothing is open, it's another passage, or a
@@ -2715,6 +2827,7 @@ export default function initAudioReaderExtension() {
           : null;
       }
 
+      /** The Listen button: pauses or resumes this tab, or starts it. */
       function toggleListening(readingState: BibleReadingState): void {
         const resumable = resumableListening(readingState);
         if (resumable) {

@@ -1,5 +1,6 @@
 import { batch, effect, signal } from "@preact/signals";
 import {
+  ABANDONED_AUDIO_GRACE_MS,
   COME_BACK_REQUEST_COOLDOWN_MS,
   countSessionPeople,
   GROUP_MOVE_GRACE_MS,
@@ -3920,6 +3921,109 @@ describe("SessionsManager", () => {
 
       await waitFor(() => session.serverNow() !== null);
       expect(sampleServerTimeMock).toHaveBeenCalled();
+    });
+
+    /** Live presence with just this reader in it (and anyone in `others`). */
+    async function presence(
+      session: BibleReadingSession,
+      others: string[] = []
+    ) {
+      mockRemoteClients.emit({
+        type: "client_connected",
+        isSelf: true,
+        client: { connectionId: os.connectionId, userId: null },
+      });
+      for (const connectionId of others) {
+        mockRemoteClients.emit({
+          type: "client_connected",
+          isSelf: false,
+          client: { connectionId, userId: null },
+        });
+      }
+      await waitFor(
+        () => session.connectedUsers.value.length === others.length + 1
+      );
+    }
+
+    /** Audio stored by a connection, like the host's before it reloaded. */
+    function storedAudio(fromConnectionId: string, id = "old:1") {
+      mockAudioMap.setEmitOnSet(true);
+      mockAudioMap.set("current", {
+        ...playing,
+        updatedAtMs: Date.now(),
+        id,
+        fromConnectionId,
+      });
+    }
+
+    it("doesn't offer audio whose writer has left the session", async () => {
+      const { session } = await joinWithHostAudio();
+      await presence(session, ["host-connection"]);
+      storedAudio("host-connection");
+      expect(session.audioOffer.value).not.toBeNull();
+
+      mockRemoteClients.emit({
+        type: "client_disconnected",
+        isSelf: false,
+        client: { connectionId: "host-connection", userId: null },
+      });
+      await waitFor(() => session.connectedUsers.value.length === 1);
+
+      expect(session.audioOffer.value).toBeNull();
+    });
+
+    it("lets a host clear audio left playing by a connection that has gone", async () => {
+      const session = await manager().createSession();
+      await presence(session);
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      try {
+        // Written by this host before it reloaded, as another connection.
+        storedAudio("host-before-reload");
+        expect(session.sharedAudio.value?.id).toBe("old:1");
+
+        await vi.advanceTimersByTimeAsync(ABANDONED_AUDIO_GRACE_MS - 1);
+        expect(session.sharedAudio.value).not.toBeNull();
+
+        await vi.advanceTimersByTimeAsync(1);
+        expect(session.sharedAudio.value).toBeNull();
+        expect(mockAudioMap.get("current")).toBeUndefined();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("leaves audio alone whose writer comes back within the grace period", async () => {
+      const session = await manager().createSession();
+      await presence(session);
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      try {
+        storedAudio("co-host-connection");
+        await vi.advanceTimersByTimeAsync(ABANDONED_AUDIO_GRACE_MS / 2);
+        mockRemoteClients.emit({
+          type: "client_connected",
+          isSelf: false,
+          client: { connectionId: "co-host-connection", userId: null },
+        });
+        await vi.advanceTimersByTimeAsync(ABANDONED_AUDIO_GRACE_MS);
+
+        expect(session.sharedAudio.value?.id).toBe("old:1");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("never has a guest clear someone else's audio", async () => {
+      const { session } = await joinWithHostAudio();
+      await presence(session);
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      try {
+        storedAudio("host-connection");
+        await vi.advanceTimersByTimeAsync(ABANDONED_AUDIO_GRACE_MS * 2);
+
+        expect(session.sharedAudio.value?.id).toBe("old:1");
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("stamps the host's connection on what it publishes", async () => {
