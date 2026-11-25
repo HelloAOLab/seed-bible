@@ -982,14 +982,10 @@
   > button {
   height: 3rem;
 }
-/* `min-width: 0` lets a long name wrap inside its grid column instead of
-   pushing the column wider than half the screen. */
 :where(html[data-sb-app-layout="mobile"])
   .sb-today-container
   .sb-today-bookmarks-section
   .sb-today-bookmarks-section-bookmark {
-  min-width: 0;
-  max-width: none;
   padding: 0.5rem 0.75rem;
   font-size: var(--sb-font-size-13);
 }
@@ -1011,15 +1007,31 @@
   }
 }
 
-/* Two equal columns on a phone, so all five bookmarks show at once without
-   a sideways scroller. */
 :where(html[data-sb-app-layout="mobile"])
   .sb-today-container
   .sb-today-bookmarks-section
   .sb-today-bookmarks-section-container {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
+}
+/* Two equal columns on an upright phone, so all five bookmarks show at once
+   without a sideways scroller. Turned sideways, the screen is wide enough for
+   desktop's wrapping rows. `min-width: 0` lets a long name wrap inside its
+   column instead of pushing the column wider than half the screen. */
+@media (orientation: portrait) {
+  :where(html[data-sb-app-layout="mobile"])
+    .sb-today-container
+    .sb-today-bookmarks-section
+    .sb-today-bookmarks-section-container {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  :where(html[data-sb-app-layout="mobile"])
+    .sb-today-container
+    .sb-today-bookmarks-section
+    .sb-today-bookmarks-section-bookmark {
+    min-width: 0;
+    max-width: none;
+  }
 }
 :where(html[data-sb-app-layout="mobile"])
   .sb-today-container

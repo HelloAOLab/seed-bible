@@ -6,7 +6,7 @@
 
 ### 🔧 Changed
 
-- On phones, the Today screen shows your bookmarks in two columns, so all of them are visible at once instead of one at a time in a sideways-scrolling row. ([#2245](https://github.com/HelloAOLab/seed-bible/issues/2245))
+- On phones, the Today screen shows your bookmarks in two columns, so all of them are visible at once instead of one at a time in a sideways-scrolling row. Turned sideways, a phone wraps them onto rows like desktop. ([#2245](https://github.com/HelloAOLab/seed-bible/issues/2245))
 - Start new shared sessions with "Only host can navigate" turned on, so participants follow the host until the host turns it off in session settings.
 
 ### 🐛 Fixed
