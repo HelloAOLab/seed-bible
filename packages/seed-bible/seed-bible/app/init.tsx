@@ -24,9 +24,7 @@ import {
 startWebVitalsBreakdownReporting();
 
 if (import.meta.env.DEV) {
-  void import("./devShowSharedComponents").then((m) =>
-    m.installShowSharedComponents()
-  );
+  void import("./devTools/devTools").then((m) => m.startDevTools());
 }
 
 // Config (base path + asset host, plus SSR-verification metadata) injected

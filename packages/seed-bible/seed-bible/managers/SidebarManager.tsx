@@ -11,7 +11,9 @@ export type RequestedSettingsView =
   | null
   | "main"
   | "display-and-theme"
-  | "extensions";
+  | "extensions"
+  // Dev builds only; production shows the main view instead.
+  | "developer";
 
 /**
  * Remembers whether the desktop sidebar rail is collapsed. Absent until the

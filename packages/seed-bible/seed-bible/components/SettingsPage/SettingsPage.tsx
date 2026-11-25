@@ -3,6 +3,8 @@ import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./SettingsPage.css";
 import { localizedThemeName } from "./localizedThemeName";
 import { useSignal } from "@preact/signals";
+import { useEffect } from "preact/hooks";
+import { lazy, Suspense } from "preact/compat";
 import { ScriptureLineHeightIcon } from "../icons";
 import { SearchBar } from "../SearchBar/SearchBar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -72,7 +74,22 @@ function FlagImg({ cc }: { cc: string }) {
 
 const FONT_SIZE_OPTIONS: TextSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
 
-function SettingsBreadcrumbs(props: { onBack: () => void; trail: string[] }) {
+// Dev builds only, so the label isn't sent to translators.
+const DEVELOPER_VIEW_LABEL = "Developer";
+
+// Dev builds only: in production this is null and the chunk isn't built.
+const DeveloperSettingsView = import.meta.env.DEV
+  ? lazy(() =>
+      import("./DeveloperSettingsView").then((m) => ({
+        default: m.DeveloperSettingsView,
+      }))
+    )
+  : null;
+
+export function SettingsBreadcrumbs(props: {
+  onBack: () => void;
+  trail: string[];
+}) {
   const { t } = useI18n();
   return (
     <div className="sb-settings-breadcrumbs">
@@ -105,7 +122,7 @@ function SettingsBreadcrumbs(props: { onBack: () => void; trail: string[] }) {
   );
 }
 
-function SettingsHero(props: {
+export function SettingsHero(props: {
   icon: string;
   title: string;
   description?: string;
@@ -1302,6 +1319,24 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </button>
             </li>
           )}
+          {import.meta.env.DEV && (
+            <li>
+              <button
+                className="sb-settings-nav-item"
+                onClick={() => onNavigate("developer")}
+              >
+                <span className="sb-settings-nav-icon">
+                  <MaterialIcon>code</MaterialIcon>
+                </span>
+                <span className="sb-settings-nav-label">
+                  {DEVELOPER_VIEW_LABEL}
+                </span>
+                <span className="material-symbols-outlined rtl-mirror">
+                  chevron_right
+                </span>
+              </button>
+            </li>
+          )}
           <li>
             <div className="sb-settings-field-row">
               <SearchableSelect
@@ -1352,6 +1387,25 @@ export function SettingsPage(props: { state: SeedBibleState }) {
   const { state } = props;
   // Honor a deep-link requested by the sidebar (e.g. `?settingsView=extensions`).
   const currentView = state.sidebar.requestedSettingsView;
+
+  // The Developer view shows this browser's saved choices, which the server
+  // can't know, so it waits for hydration (showing the main view until then).
+  const hasMounted = useSignal(false);
+  useEffect(() => {
+    hasMounted.value = true;
+  }, []);
+
+  if (
+    currentView.value === "developer" &&
+    DeveloperSettingsView &&
+    hasMounted.value
+  ) {
+    return (
+      <Suspense fallback={null}>
+        <DeveloperSettingsView state={state} />
+      </Suspense>
+    );
+  }
 
   if (currentView.value === "display-and-theme") {
     return <DisplayAndThemeSettingsView state={state} />;

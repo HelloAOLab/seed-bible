@@ -1,10 +1,9 @@
 import { options, type VNode } from "preact";
-import * as sharedComponents from "../components";
-import * as icons from "../components/icons";
+import * as sharedComponents from "../../components";
+import * as icons from "../../components/icons";
 
-// Dev-only: outlines every shared component (the ones exported from
+// Outlines every shared component (the ones exported from
 // `components/index.tsx`) so hand-built look-alikes stand out while testing.
-// On while the URL has `?showSharedComponents`; navigation keeps unrelated query params.
 
 const ATTRIBUTE = "data-sb-component";
 // Adds behavior to an element it's given rather than drawing its own, so
@@ -43,12 +42,6 @@ function rootElements(vnode: InternalVNode): Element[] {
 function outlineTarget(el: Element): Element | null {
   const isBackdrop = [...el.classList].some((c) => c.endsWith("-backdrop"));
   return isBackdrop ? el.firstElementChild : el;
-}
-
-function readEnabled(): boolean {
-  return new URLSearchParams(window.location.search).has(
-    "showSharedComponents"
-  );
 }
 
 function collectSharedComponents(): Map<unknown, string> {
@@ -114,13 +107,13 @@ const STYLES = `
 }
 `;
 
-function showLabelsOnHover() {
+function showLabelsOnHover(): () => void {
   const label = document.createElement("div");
   label.id = "sb-dev-component-label";
   label.hidden = true;
   document.body.appendChild(label);
 
-  document.addEventListener("mouseover", (event) => {
+  const onMouseOver = (event: MouseEvent) => {
     const target = (event.target as Element | null)?.closest?.(
       `[${ATTRIBUTE}]`
     );
@@ -138,23 +131,53 @@ function showLabelsOnHover() {
         : rect.bottom + 2;
     label.style.top = `${top}px`;
     label.style.left = `${Math.max(0, rect.left)}px`;
-  });
-  document.addEventListener("scroll", () => (label.hidden = true), true);
+  };
+  const onScroll = () => (label.hidden = true);
+  document.addEventListener("mouseover", onMouseOver);
+  document.addEventListener("scroll", onScroll, true);
+
+  return () => {
+    document.removeEventListener("mouseover", onMouseOver);
+    document.removeEventListener("scroll", onScroll, true);
+    label.remove();
+  };
 }
 
-export function installShowSharedComponents() {
-  if (!readEnabled()) return;
+let names: Map<unknown, string> | null = null;
+let active = false;
+let removeStyle: (() => void) | null = null;
+let removeLabels: (() => void) | null = null;
 
-  const names = collectSharedComponents();
-  const previousDiffed = options.diffed;
-  options.diffed = (vnode) => {
-    tag(vnode as InternalVNode, names);
-    previousDiffed?.(vnode);
-  };
+export function startShowSharedComponents() {
+  if (active) return;
+  active = true;
+
+  if (!names) {
+    names = collectSharedComponents();
+    const known = names;
+    // Hooked once and left in place: unhooking could drop a hook something
+    // else (preact/debug, signals) added after this one.
+    const previousDiffed = options.diffed;
+    options.diffed = (vnode) => {
+      if (active) tag(vnode as InternalVNode, known);
+      previousDiffed?.(vnode);
+    };
+  }
   tagExistingTree(names);
 
   const style = document.createElement("style");
   style.textContent = STYLES;
   document.head.appendChild(style);
-  showLabelsOnHover();
+  removeStyle = () => style.remove();
+  removeLabels = showLabelsOnHover();
+}
+
+export function stopShowSharedComponents() {
+  if (!active) return;
+  active = false;
+  removeStyle?.();
+  removeLabels?.();
+  for (const el of document.querySelectorAll(`[${ATTRIBUTE}]`)) {
+    el.removeAttribute(ATTRIBUTE);
+  }
 }
