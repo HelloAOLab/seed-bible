@@ -12,7 +12,8 @@ export type RequestedSettingsView =
   | "main"
   | "display-and-theme"
   | "extensions"
-  // Dev builds only; production shows the main view instead.
+  // Only once the developer tools are unlocked; until then the main view
+  // shows instead.
   | "developer";
 
 /**

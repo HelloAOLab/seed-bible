@@ -5,6 +5,10 @@ import { localizedThemeName } from "./localizedThemeName";
 import { useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import { lazy, Suspense } from "preact/compat";
+import {
+  countUnlockTap,
+  devToolsUnlocked,
+} from "../../app/devTools/devToolsUnlock";
 import { ScriptureLineHeightIcon } from "../icons";
 import { SearchBar } from "../SearchBar/SearchBar";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -74,17 +78,22 @@ function FlagImg({ cc }: { cc: string }) {
 
 const FONT_SIZE_OPTIONS: TextSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
 
-// Dev builds only, so the label isn't sent to translators.
+// English only, like the rest of the developer tools: they're for the team,
+// not for translators.
 const DEVELOPER_VIEW_LABEL = "Developer";
 
-// Dev builds only: in production this is null and the chunk isn't built.
-const DeveloperSettingsView = import.meta.env.DEV
-  ? lazy(() =>
-      import("./DeveloperSettingsView").then((m) => ({
-        default: m.DeveloperSettingsView,
-      }))
-    )
-  : null;
+// Its own chunk, fetched only when someone opens the view after unlocking the
+// developer tools (see app/devTools/devToolsUnlock.ts). The native-build test
+// is spelled out rather than using DEV_TOOLS_SUPPORTED: only a condition the
+// bundler can read here lets it leave the chunk out of the native apps.
+const DeveloperSettingsView =
+  import.meta.env.MODE !== "native"
+    ? lazy(() =>
+        import("./DeveloperSettingsView").then((m) => ({
+          default: m.DeveloperSettingsView,
+        }))
+      )
+    : null;
 
 export function SettingsBreadcrumbs(props: {
   onBack: () => void;
@@ -1141,7 +1150,10 @@ function SettingsVersionFooter() {
     <button
       type="button"
       className="sb-settings-version"
-      onClick={onCopy}
+      onClick={() => {
+        onCopy();
+        countUnlockTap();
+      }}
       title={t("copy", { defaultValue: "Copy" })}
     >
       {copied.value
@@ -1155,8 +1167,11 @@ function SettingsVersionFooter() {
   );
 }
 
-function SettingsMainView(props: { state: SeedBibleState }) {
-  const { state } = props;
+function SettingsMainView(props: {
+  state: SeedBibleState;
+  showDeveloper: boolean;
+}) {
+  const { state, showDeveloper } = props;
   const { branding } = useAppConfig();
   const { t, language, availableLanguages, setLanguage } = useI18n();
 
@@ -1319,7 +1334,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </button>
             </li>
           )}
-          {import.meta.env.DEV && (
+          {showDeveloper && (
             <li>
               <button
                 className="sb-settings-nav-item"
@@ -1388,18 +1403,18 @@ export function SettingsPage(props: { state: SeedBibleState }) {
   // Honor a deep-link requested by the sidebar (e.g. `?settingsView=extensions`).
   const currentView = state.sidebar.requestedSettingsView;
 
-  // The Developer view shows this browser's saved choices, which the server
-  // can't know, so it waits for hydration (showing the main view until then).
+  // Whether this browser unlocked the developer tools is something the server
+  // can't know, so they wait for hydration (the main view shows until then).
   const hasMounted = useSignal(false);
   useEffect(() => {
     hasMounted.value = true;
   }, []);
+  const showDeveloper =
+    DeveloperSettingsView !== null &&
+    hasMounted.value &&
+    devToolsUnlocked.value;
 
-  if (
-    currentView.value === "developer" &&
-    DeveloperSettingsView &&
-    hasMounted.value
-  ) {
+  if (currentView.value === "developer" && showDeveloper) {
     return (
       <Suspense fallback={null}>
         <DeveloperSettingsView state={state} />
@@ -1415,5 +1430,5 @@ export function SettingsPage(props: { state: SeedBibleState }) {
     return <ExtensionsSettingsView state={state} />;
   }
 
-  return <SettingsMainView state={state} />;
+  return <SettingsMainView state={state} showDeveloper={showDeveloper} />;
 }

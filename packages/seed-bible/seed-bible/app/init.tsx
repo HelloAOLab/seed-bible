@@ -20,10 +20,24 @@ import {
   recordPageLoadOutcome,
   startWebVitalsBreakdownReporting,
 } from "../app/webVitalsBreakdown";
+import {
+  devToolsUnlocked,
+  hasDevToolsOn,
+  initDevToolsUnlock,
+  removeDevToolsFlag,
+} from "./devTools/devToolsUnlock";
 
 startWebVitalsBreakdownReporting();
 
-if (import.meta.env.DEV) {
+// Fetched only when this browser unlocked the developer tools and left one on.
+// The native-build test is spelled out so the bundler can leave the tools out
+// of the native apps entirely (see SettingsPage's DeveloperSettingsView).
+const devToolsFlagInUrl = initDevToolsUnlock();
+if (
+  import.meta.env.MODE !== "native" &&
+  devToolsUnlocked.peek() &&
+  hasDevToolsOn()
+) {
   void import("./devTools/devTools").then((m) => m.startDevTools());
 }
 
@@ -172,5 +186,7 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
       state.app.applyViewport();
       render(app, container);
     }
+
+    if (devToolsFlagInUrl) removeDevToolsFlag(state.navigation);
   }
 );

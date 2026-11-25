@@ -3,36 +3,49 @@ import {
   startShowSharedComponents,
   stopShowSharedComponents,
 } from "./showSharedComponents";
+import { DEV_TOOLS_ON_KEY, lockDevTools } from "./devToolsUnlock";
 
 // Tools for working on Seed Bible, switched on from Settings → Developer.
-// Only dev builds load this module (see app/init.tsx and SettingsPage), so
-// none of it ships. Labels stay in English: they're for the team, not for
-// translators.
+// This module is only fetched once they're unlocked (see devToolsUnlock.ts).
+// Labels stay in English: they're for the team, not for translators.
 
 export interface DevTool {
   id: string;
   label: string;
   description: string;
+  /**
+   * Whether production and alpha builds offer it. Anyone can unlock the
+   * developer tools there, so only mark a tool that's harmless for any user
+   * to switch on: never one that changes data, turns on feature flags, shows
+   * other people's information or gets around sign-in.
+   */
+  safeInProduction: boolean;
   start: () => void;
   stop: () => void;
 }
 
-export const DEV_TOOLS: readonly DevTool[] = [
+const ALL_DEV_TOOLS: readonly DevTool[] = [
   {
     id: "showSharedComponents",
     label: "Show shared components",
     description:
       "Outlines everything drawn by a component from components/index.tsx. Hover one to see its name.",
+    safeInProduction: true,
     start: startShowSharedComponents,
     stop: stopShowSharedComponents,
   },
 ];
 
-const STORAGE_KEY = "sb-dev-tools";
+/** The tools this build offers. */
+export const DEV_TOOLS: readonly DevTool[] = ALL_DEV_TOOLS.filter(
+  (tool) => import.meta.env.DEV || tool.safeInProduction
+);
 
 function readStored(): Set<string> {
   try {
-    const ids: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
+    const ids: unknown = JSON.parse(
+      localStorage.getItem(DEV_TOOLS_ON_KEY) ?? "[]"
+    );
     return new Set(
       Array.isArray(ids)
         ? ids.filter((id): id is string => typeof id === "string")
@@ -73,6 +86,15 @@ export function setDevToolEnabled(id: string, on: boolean) {
     next.delete(id);
     tool.stop();
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([...stored]));
+  localStorage.setItem(DEV_TOOLS_ON_KEY, JSON.stringify([...stored]));
   enabled.value = next;
+}
+
+/** Switches every tool off and locks the developer tools again. */
+export function hideDevTools() {
+  for (const tool of DEV_TOOLS) {
+    if (enabled.value.has(tool.id)) tool.stop();
+  }
+  enabled.value = new Set();
+  lockDevTools();
 }
