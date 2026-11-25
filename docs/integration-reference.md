@@ -1,10 +1,11 @@
 # Seed Bible Integration Reference
 
-This page is for ministries, websites and AI assistants that want to send people into Seed Bible: link to a passage, embed the reader, or have a chatbot hand out reading links. Everything here works with plain links. No account, API key or code changes to Seed Bible are needed.
+This page is for ministries, websites and AI assistants that want to send people into Seed Bible: link to a passage, embed the reader, or have a chatbot hand out reading links. Everything here works with plain links or a public web address. You don't need a Seed Bible account, an API key, or any changes to Seed Bible.
 
 - [Part 1: Links and URL parameters](#part-1-links-and-url-parameters)
 - [Part 2: Embedding Seed Bible in your site](#part-2-embedding-seed-bible-in-your-site)
 - [Part 3: AI system prompts](#part-3-ai-system-prompts)
+- [Part 4: Connecting your AI to the Seed Bible MCP server](#part-4-connecting-your-ai-to-the-seed-bible-mcp-server)
 - [Branding](#branding)
 
 ## Part 1: Links and URL parameters
@@ -242,6 +243,117 @@ query parameters:
 - `chapter` - The number of the chapter to link to.
 - `verse` - The verse or range of verses to link to (e.g. 5, 4-6)
 ```
+
+## Part 4: Connecting your AI to the Seed Bible MCP server
+
+The system prompts in Part 3 teach an AI to _write_ Seed Bible links. The Seed Bible MCP server goes further: it lets the AI look up the actual Bible text, find translations and build links for itself, so it quotes Scripture accurately instead of from memory.
+
+MCP (Model Context Protocol) is a standard way to plug extra abilities into an AI app. You give the app a web address, and the app adds that server's abilities to the AI.
+
+The Seed Bible MCP server's address is:
+
+```
+https://free-use-bible-mcp.ao-lab.workers.dev/mcp
+```
+
+It's free and public, and it doesn't need a sign-in or API key. When an app asks how the server authenticates, choose **None** (or "No authentication").
+
+### What it can do
+
+Once it's connected, your AI can:
+
+- **Understand references written the way people write them.** "John 3:16", "Gen 1:1-3 WEB" or "Ps 23" all work.
+- **Read whole chapters** and **quote single verses or verse ranges** word for word.
+- **Search 1,000+ translations** by language or name (for example "Spanish" or "Reina-Valera") and read the text in any of them. Without a translation it uses the Berean Standard Bible (BSB). The reference itself can also name the BSB, the World English Bible (WEB), the Hebrew Old Testament (WLC) or the Greek New Testament (SBL).
+- **Give the reader a Seed Bible link** to the chapter, so they can keep reading in the full app.
+- **Share the verse of the day** for today or any date, with its text and a Seed Bible link. On Christian holidays such as Christmas and Resurrection Sunday it picks one of that holiday's verses. Every app that uses this verse of the day shows the same verse on the same date.
+
+You don't have to name these abilities. Ask in your own words ("What does Romans 8:28 say in Spanish?", "What's today's verse?") and the AI uses them when they help.
+
+### Claude (claude.ai, desktop and mobile apps)
+
+1. Open **Settings → Connectors**. In some versions this page is under **Customize → Connectors**.
+2. Click **Add custom connector**.
+3. Name it `Seed Bible` and paste the server address above. Leave the advanced (OAuth) settings empty.
+4. Click **Add**.
+5. In a chat, open the tools menu and make sure **Seed Bible** is turned on.
+
+Notes:
+
+- On Team and Enterprise plans, an owner adds it once for everyone under **Organization settings → Connectors**. Members then turn it on for themselves.
+- The free plan allows one custom connector.
+- Once a connector is added in the browser, it also works in the Claude desktop and mobile apps.
+
+### Claude Code
+
+Run this in a terminal:
+
+```bash
+claude mcp add --transport http seed-bible https://free-use-bible-mcp.ao-lab.workers.dev/mcp
+```
+
+Add `--scope user` to make it available in every project, not just the current one.
+
+### ChatGPT
+
+ChatGPT adds outside servers through **developer mode**. Which plans include it has changed several times, so check [OpenAI's help article](https://help.openai.com/en/articles/12584461-developer-mode-and-full-mcp-connectors-in-chatgpt) if you don't see the options below.
+
+1. Open **Settings → Apps** (called **Connectors** in older versions) **→ Advanced settings**, and turn on **Developer mode**. On Business, Enterprise and Edu workspaces, an admin has to allow this first.
+2. Back in **Settings → Apps**, click **Create**.
+3. Name it `Seed Bible`, paste the server address above, and set authentication to **No authentication**.
+4. Confirm that you trust the server, then click **Create**.
+5. In a chat, choose **Developer mode** from the **+** menu and turn on **Seed Bible**. ChatGPT may ask you to approve each tool use.
+
+### Other apps
+
+Most AI apps and coding tools that support MCP need only the server address. Look for a setting called "MCP servers", "Connectors" or "Tools" and add it as a remote (HTTP) server. Here are the settings for a few popular ones:
+
+**VS Code (GitHub Copilot):** add this to `.vscode/mcp.json` in your project, or run **MCP: Open User Configuration** from the command palette to use it everywhere:
+
+```json
+{
+  "servers": {
+    "seed-bible": {
+      "type": "http",
+      "url": "https://free-use-bible-mcp.ao-lab.workers.dev/mcp"
+    }
+  }
+}
+```
+
+**Cursor:** add this to `~/.cursor/mcp.json` (every project) or `.cursor/mcp.json` (one project):
+
+```json
+{
+  "mcpServers": {
+    "seed-bible": {
+      "url": "https://free-use-bible-mcp.ao-lab.workers.dev/mcp"
+    }
+  }
+}
+```
+
+**Gemini CLI:** add this to `~/.gemini/settings.json`. Gemini uses `httpUrl` here, not `url`, and silently skips a server set up with the wrong name:
+
+```json
+{
+  "mcpServers": {
+    "seed-bible": {
+      "httpUrl": "https://free-use-bible-mcp.ao-lab.workers.dev/mcp"
+    }
+  }
+}
+```
+
+**OpenAI Codex (CLI and IDE extension):**
+
+```bash
+codex mcp add seed-bible --url https://free-use-bible-mcp.ao-lab.workers.dev/mcp
+```
+
+### Checking it works
+
+Start a new chat and ask "What's the verse of the day?" or "Quote John 3:16 and give me a Seed Bible link." If the AI answers with the exact verse and a `seedbible.org` link, the server is connected. If it answers from memory without a link, check that Seed Bible is turned on in that chat's tool settings.
 
 ## Branding
 
