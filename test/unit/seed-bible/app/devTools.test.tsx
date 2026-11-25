@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 
@@ -292,5 +294,41 @@ describe("dev tools: unlocking", () => {
     expect(hasDevToolsOn()).toBe(true);
     setDevToolEnabled("showSharedComponents", false);
     expect(hasDevToolsOn()).toBe(false);
+  });
+});
+
+describe("dev tools: keeping the startup bundle small", () => {
+  it("names every shared component except TooltipTrigger, which only adds behavior", async () => {
+    vi.resetModules();
+    const shared = await import("@packages/seed-bible/seed-bible/components");
+    const icons =
+      await import("@packages/seed-bible/seed-bible/components/icons");
+    const { SHARED_COMPONENTS } =
+      await import("@packages/seed-bible/seed-bible/app/devTools/showSharedComponents");
+    const iconExports = new Set<unknown>(Object.values(icons));
+    const exported = Object.entries(shared)
+      .filter(
+        ([name, value]) =>
+          typeof value === "function" &&
+          /^[A-Z]/.test(name) &&
+          !iconExports.has(value)
+      )
+      .map(([name]) => name)
+      .filter((name) => name !== "TooltipTrigger");
+
+    // A component added to components/index.tsx needs adding to
+    // SHARED_COMPONENTS in app/devTools/showSharedComponents.ts too.
+    expect(Object.keys(SHARED_COMPONENTS).sort()).toEqual(exported.sort());
+  });
+
+  it("never imports a whole module, which would keep its unused exports in the startup bundle", () => {
+    const dir = path.resolve(
+      __dirname,
+      "../../../../packages/seed-bible/seed-bible/app/devTools"
+    );
+    const offenders = readdirSync(dir).filter((file) =>
+      /import\s+\*\s+as\s/.test(readFileSync(path.join(dir, file), "utf-8"))
+    );
+    expect(offenders).toEqual([]);
   });
 });

@@ -1,14 +1,81 @@
 import { options, type VNode } from "preact";
-import * as sharedComponents from "../../components";
-import * as icons from "../../components/icons";
+import {
+  BottomSheet,
+  Button,
+  Checkbox,
+  CheckboxIndicator,
+  CloseButton,
+  ContextMenuItem,
+  ContextMenuWithButton,
+  Dialog,
+  EmptyState,
+  ExpandableText,
+  FilterPills,
+  IconButton,
+  LoadingStatus,
+  PlaylistLinkContent,
+  Popover,
+  PortalComponent,
+  ScreenshotViewer,
+  SearchBar,
+  Select,
+  SelectField,
+  SettingRow,
+  Skeleton,
+  SkeletonContainer,
+  Spinner,
+  Switch,
+  SwitchIndicator,
+  TextField,
+  TextInput,
+  TranslationList,
+  TranslationViewModeMenu,
+} from "../../components";
 
 // Outlines every shared component (the ones exported from
 // `components/index.tsx`) so hand-built look-alikes stand out while testing.
 
 const ATTRIBUTE = "data-sb-component";
-// Adds behavior to an element it's given rather than drawing its own, so
-// outlining it would mark whatever it wraps as shared.
-const SKIPPED = new Set(["TooltipTrigger"]);
+
+// Named one by one rather than `import * as` the barrel: a namespace import
+// makes the bundler keep every export of every module it reaches, which put
+// all of icons.tsx's unused icons into the startup bundle for everyone. A
+// unit test fails when a component added to components/index.tsx is missing
+// here. TooltipTrigger is left out on purpose: it adds behavior to the element
+// it's given rather than drawing its own, so outlining it would mark whatever
+// it wraps as shared.
+export const SHARED_COMPONENTS: Record<string, unknown> = {
+  BottomSheet,
+  Button,
+  Checkbox,
+  CheckboxIndicator,
+  CloseButton,
+  ContextMenuItem,
+  ContextMenuWithButton,
+  Dialog,
+  EmptyState,
+  ExpandableText,
+  FilterPills,
+  IconButton,
+  LoadingStatus,
+  PlaylistLinkContent,
+  Popover,
+  PortalComponent,
+  ScreenshotViewer,
+  SearchBar,
+  Select,
+  SelectField,
+  SettingRow,
+  Skeleton,
+  SkeletonContainer,
+  Spinner,
+  Switch,
+  SwitchIndicator,
+  TextField,
+  TextInput,
+  TranslationList,
+  TranslationViewModeMenu,
+};
 
 // Preact's mangled internal names: a vnode's DOM node, children and component
 // instance. `v` is preact/compat's name for a portal's fake container: its
@@ -48,19 +115,9 @@ function outlineTarget(el: Element): Element | null {
 }
 
 function collectSharedComponents(): Map<unknown, string> {
-  const iconExports = new Set<unknown>(Object.values(icons));
-  const names = new Map<unknown, string>();
-  for (const [name, value] of Object.entries(sharedComponents)) {
-    if (
-      typeof value === "function" &&
-      /^[A-Z]/.test(name) &&
-      !SKIPPED.has(name) &&
-      !iconExports.has(value)
-    ) {
-      names.set(value, name);
-    }
-  }
-  return names;
+  return new Map(
+    Object.entries(SHARED_COMPONENTS).map(([name, value]) => [value, name])
+  );
 }
 
 function tag(vnode: InternalVNode, names: Map<unknown, string>) {
