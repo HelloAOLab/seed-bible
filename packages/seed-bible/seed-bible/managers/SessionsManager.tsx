@@ -2571,7 +2571,13 @@ export function createSessionsManager(
       discoverManager,
       readingExtensionManager,
       id,
-      { ...DEFAULT_SESSION_OPTIONS, hostUserId },
+      // New sessions start with only the host able to navigate, so a
+      // participant can't move the whole group until the host allows it.
+      {
+        ...DEFAULT_SESSION_OPTIONS,
+        hostUserId,
+        allowedNavigators: [hostUserId],
+      },
       startPosition,
       getAnnotationsManager,
       settingsManager
