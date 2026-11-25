@@ -20,8 +20,30 @@ import {
   recordPageLoadOutcome,
   startWebVitalsBreakdownReporting,
 } from "../app/webVitalsBreakdown";
+import {
+  devToolsUnlocked,
+  hasDevToolsOn,
+  initDevToolsUnlock,
+  removeDevToolsFlag,
+} from "./devTools/devToolsUnlock";
 
 startWebVitalsBreakdownReporting();
+
+// Fetched only when this browser unlocked the developer tools and left one on.
+// The native-build test is spelled out so the bundler can leave the tools out
+// of the native apps entirely (see SettingsPage's DeveloperSettingsView).
+const devToolsFlagInUrl = initDevToolsUnlock();
+if (
+  import.meta.env.MODE !== "native" &&
+  devToolsUnlocked.peek() &&
+  hasDevToolsOn()
+) {
+  void import("./devTools/devTools")
+    .then((m) => m.startDevTools())
+    // Offline, or removed by a deploy since the page loaded: the tools just
+    // stay off for this page.
+    .catch(() => {});
+}
 
 // Config (base path + asset host, plus SSR-verification metadata) injected
 // by the host server. Reading it on the client is what lets the hydration
@@ -168,5 +190,7 @@ void Promise.all([state.i18n.ready, waitForThisPagesChapterLoads()]).then(
       state.app.applyViewport();
       render(app, container);
     }
+
+    if (devToolsFlagInUrl) removeDevToolsFlag(state.navigation);
   }
 );
