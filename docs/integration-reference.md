@@ -253,7 +253,7 @@ MCP (Model Context Protocol) is a standard way to plug extra abilities into an A
 The Seed Bible MCP server's address is:
 
 ```
-https://free-use-bible-mcp.ao-lab.workers.dev/mcp
+https://mcp.seedbible.io/mcp
 ```
 
 It's free and public, and it doesn't need a sign-in or API key. When an app asks how the server authenticates, choose **None** (or "No authentication").
@@ -289,7 +289,7 @@ Notes:
 Run this in a terminal:
 
 ```bash
-claude mcp add --transport http seed-bible https://free-use-bible-mcp.ao-lab.workers.dev/mcp
+claude mcp add --transport http seed-bible https://mcp.seedbible.io/mcp
 ```
 
 Add `--scope user` to make it available in every project, not just the current one.
@@ -315,7 +315,7 @@ Most AI apps and coding tools that support MCP need only the server address. Loo
   "servers": {
     "seed-bible": {
       "type": "http",
-      "url": "https://free-use-bible-mcp.ao-lab.workers.dev/mcp"
+      "url": "https://mcp.seedbible.io/mcp"
     }
   }
 }
@@ -327,7 +327,7 @@ Most AI apps and coding tools that support MCP need only the server address. Loo
 {
   "mcpServers": {
     "seed-bible": {
-      "url": "https://free-use-bible-mcp.ao-lab.workers.dev/mcp"
+      "url": "https://mcp.seedbible.io/mcp"
     }
   }
 }
@@ -339,7 +339,7 @@ Most AI apps and coding tools that support MCP need only the server address. Loo
 {
   "mcpServers": {
     "seed-bible": {
-      "httpUrl": "https://free-use-bible-mcp.ao-lab.workers.dev/mcp"
+      "httpUrl": "https://mcp.seedbible.io/mcp"
     }
   }
 }
@@ -348,7 +348,7 @@ Most AI apps and coding tools that support MCP need only the server address. Loo
 **OpenAI Codex (CLI and IDE extension):**
 
 ```bash
-codex mcp add seed-bible --url https://free-use-bible-mcp.ao-lab.workers.dev/mcp
+codex mcp add seed-bible --url https://mcp.seedbible.io/mcp
 ```
 
 ### Checking it works
