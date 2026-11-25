@@ -728,7 +728,9 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
   // Keyboard chapter navigation for the selected slot. Left/Right move between
   // chapters (respecting text direction, like the swipe gesture and toolbar
-  // chevrons), and Up surfaces the search panel. Down is intentionally unbound.
+  // chevrons). "/" opens search — a conventional shortcut that doesn't
+  // collide with scrolling (Up was the former trigger but it prevented the
+  // page from scrolling up). Down is intentionally unbound.
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -753,7 +755,20 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
-      if (event.key === "ArrowUp") {
+      // Don't steal keys from interactive containers that own their own
+      // keyboard navigation — menus, dialogs, the tutorial overlay, toolbars,
+      // sliders, and radiogroups all rely on arrow keys internally. Without
+      // this guard, Right/Left while navigating a menu turns the chapter
+      // behind it and clears the verse selection.
+      if (
+        target?.closest(
+          '[role="dialog"], [aria-modal="true"], [role="menu"], [role="listbox"], [role="toolbar"], [role="slider"], [role="radiogroup"]'
+        )
+      ) {
+        return;
+      }
+
+      if (event.key === "/") {
         event.preventDefault();
         state.sidebar.openSearch();
         return;
