@@ -80,6 +80,10 @@ describe("ExtensionSettingsManager sensitive settings", () => {
 
   beforeEach(() => {
     os = CasualOSManager();
+    vi.spyOn(os, "listStudios").mockResolvedValue({
+      success: true,
+      studios: [],
+    });
     getDataMock = vi.spyOn(os, "getData").mockResolvedValue({
       success: false,
       errorCode: "data_not_found",
@@ -1099,6 +1103,149 @@ describe("ExtensionSettingsManager sensitive settings", () => {
       ).rejects.toMatchObject({ code: "not_set" });
       expect(proxyRequestMock).not.toHaveBeenCalled();
       expect(manager.getSensitiveValueSource("ext-1", "apiKey")).toBeNull();
+    });
+
+    describe("shared through a studio", () => {
+      const STUDIO_ID = "studio-1";
+
+      /** A member of the studio opens its Customization in the editor. */
+      const memberOpensShared = async (
+        pointer?: SeedBibleCustomization["extensionSensitiveProxies"][string][string]
+      ) => {
+        const shared: SeedBibleCustomization = {
+          id: CUSTOMIZATION_ID,
+          name: "Shared",
+          studioId: STUDIO_ID,
+          variants: [
+            {
+              id: "variant-1",
+              name: "Light",
+              baseTheme: "light",
+              themes: {},
+              highlightColors: {},
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+          defaultVariantId: "variant-1",
+          createdAt: 1,
+          updatedAt: 1,
+          extensionSettings: {},
+          extensionSettingDefaults: {},
+          extensionSensitiveProxies: pointer
+            ? { "ext-1": { exampleApi: pointer } }
+            : {},
+        };
+        vi.spyOn(os, "listStudios").mockResolvedValue({
+          success: true,
+          studios: [
+            { studioId: STUDIO_ID, displayName: "Shared", role: "member" },
+          ],
+        });
+        vi.spyOn(os, "listAllDataByMarker").mockImplementation(
+          async (record: string) => ({
+            success: true,
+            items:
+              record === STUDIO_ID
+                ? [{ address: CUSTOMIZATION_ID, data: shared }]
+                : [],
+          })
+        );
+        getDataMock.mockImplementation(
+          async (record: string, address: string) =>
+            record === STUDIO_ID && address === CUSTOMIZATION_ID
+              ? { success: true, data: shared }
+              : {
+                  success: false,
+                  errorCode: "data_not_found",
+                  errorMessage: "",
+                }
+        );
+        const customizations = createCustomizations();
+        const manager = createWith(customizations);
+        await customizations.load();
+        await flushPromises();
+        customizations.startEditing(CUSTOMIZATION_ID);
+        return { customizations, manager };
+      };
+
+      it("saves the key in the studio's record, so it doesn't depend on who saved it", async () => {
+        const { manager } = await memberOpensShared();
+
+        const saved =
+          await manager.customizationSensitiveSettings.setSensitiveValues(
+            "ext-1",
+            "exampleApi",
+            { apiKey: "shared-key" }
+          );
+
+        expect(saved).toBe(true);
+        expect(recordProxyMock.mock.calls[0]![0]).toBe(STUDIO_ID);
+        const written = recordDataMock.mock.calls
+          .filter(([, address]) => address === CUSTOMIZATION_ID)
+          .at(-1)!;
+        expect(written[0]).toBe(STUDIO_ID);
+        expect(
+          (written[2] as SeedBibleCustomization).extensionSensitiveProxies[
+            "ext-1"
+          ]?.exampleApi?.recordName
+        ).toBe(STUDIO_ID);
+      });
+
+      it("moves a key still kept in the creator's account into the studio, and clears the old proxy", async () => {
+        const { manager } = await memberOpensShared({
+          recordName: "creator-1",
+          address: "creator-proxy",
+          host: "api.example.com",
+          defaultHost: "api.example.com",
+          visibility: "public",
+          requestMapping: {
+            "headers.authorization.bearer": "apiKey",
+            "body.client_id": "clientId",
+          },
+          keys: ["apiKey"],
+        });
+
+        await manager.customizationSensitiveSettings.setSensitiveValues(
+          "ext-1",
+          "exampleApi",
+          { apiKey: "new-key" }
+        );
+
+        const [recordName, address] = recordProxyMock.mock.calls[0]!;
+        expect(recordName).toBe(STUDIO_ID);
+        expect(address).not.toBe("creator-proxy");
+        expect(eraseProxyMock).toHaveBeenCalledWith(
+          "creator-1",
+          "creator-proxy"
+        );
+      });
+
+      it("lets studio members use the Customization's private proxy", async () => {
+        const { manager } = await memberOpensShared({
+          recordName: STUDIO_ID,
+          address: "studio-proxy",
+          host: "api.example.com",
+          defaultHost: "api.example.com",
+          visibility: "private",
+          requestMapping: {
+            "headers.authorization.bearer": "apiKey",
+            "body.client_id": "clientId",
+          },
+          keys: ["apiKey"],
+        });
+
+        const response = await manager.fetchWithSensitiveValues("ext-1", {
+          url: "https://api.example.com/v1/chat",
+        });
+
+        expect(response.status).toBe(200);
+        expect(proxyRequestMock).toHaveBeenCalledWith(
+          STUDIO_ID,
+          "studio-proxy",
+          expect.anything()
+        );
+      });
     });
 
     it("doesn't use a Customization's proxy saved for an older host", async () => {

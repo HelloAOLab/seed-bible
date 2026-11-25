@@ -221,6 +221,7 @@ function makeBareVariant(
 /** The real customizations manager, with only CasualOS itself mocked. */
 function createState(customization: SeedBibleCustomization): SeedBibleState {
   const os = CasualOSManager();
+  vi.spyOn(os, "listStudios").mockResolvedValue({ success: true, studios: [] });
   vi.spyOn(os, "getData").mockResolvedValue({
     success: false,
     errorCode: "data_not_found",
