@@ -520,14 +520,16 @@ describe("FriendsPane", () => {
       server.requestFrom(BOB_ID);
       await renderPane(state);
 
+      // Empty name → Color + Icon from their userId (same as the avatar).
       const dialog = await openProfile(
         section("Friend requests")!,
-        "User 22222222"
+        "Cyan Tree (Anonymous)"
       );
 
       expect(dialog.textContent).toContain(
         "This person hasn't set up their profile yet."
       );
+      expect(dialog.textContent).toContain(BOB_ID);
     });
 
     it("says when a sent request's user ID belongs to no one", async () => {
@@ -538,7 +540,7 @@ describe("FriendsPane", () => {
 
       const dialog = await openProfile(
         section("Sent requests")!,
-        "User 22222222"
+        "Cyan Tree (Anonymous)"
       );
 
       expect(dialog.textContent).toContain(

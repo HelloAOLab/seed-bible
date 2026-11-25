@@ -308,3 +308,27 @@
   white-space: nowrap;
   font-size: var(--sb-font-size-12);
 }
+
+/* User ID under a person profile opened from a session / friends list, so
+   clicking a nameless "User …" entry actually reveals a copyable id. */
+.sb-person-profile-user-id {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sb-person-profile-user-id-label {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
+  font-size: var(--sb-font-size-12);
+}
+
+.sb-person-profile-user-id-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--sb-font-size-12);
+}

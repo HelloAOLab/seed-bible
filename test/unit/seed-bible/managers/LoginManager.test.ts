@@ -1437,9 +1437,12 @@ describe("createLoginManager", () => {
 
       manager.updateProfile({ name: "Updated" });
 
-      expect(manager.cachedProfile.value).toEqual({ name: "Updated" });
+      expect(manager.cachedProfile.value).toEqual({
+        name: "Updated",
+        displayNameAnswered: true,
+      });
       expect(localStorage.getItem(`sb-profile-cache-${USER_ID}`)).toBe(
-        JSON.stringify({ name: "Updated" })
+        JSON.stringify({ name: "Updated", displayNameAnswered: true })
       );
     });
 
@@ -1659,7 +1662,10 @@ describe("createLoginManager", () => {
           manager.updateProfile({ name: "Persisted?" })
         ).not.toThrow();
         // The in-memory signal still updates even though persistence failed.
-        expect(manager.cachedProfile.value).toEqual({ name: "Persisted?" });
+        expect(manager.cachedProfile.value).toEqual({
+          name: "Persisted?",
+          displayNameAnswered: true,
+        });
       } finally {
         setItemSpy.mockRestore();
       }
@@ -1725,11 +1731,14 @@ describe("createLoginManager", () => {
 
       manager.updateProfile({ name: "Updated" });
 
-      expect(manager.profile.value).toEqual({ name: "Updated" });
+      expect(manager.profile.value).toEqual({
+        name: "Updated",
+        displayNameAnswered: true,
+      });
       expect(recordDataMock).toHaveBeenCalledWith(
         USER_ID,
         "profile",
-        { name: "Updated" },
+        { name: "Updated", displayNameAnswered: true },
         { marker: "publicRead" }
       );
     });
@@ -2024,11 +2033,16 @@ describe("createLoginManager", () => {
       expect(manager.profile.value).toEqual({
         name: "",
         config: { fontSize: "L", themeId: "dark" },
+        displayNameAnswered: false,
       });
       expect(recordDataMock).toHaveBeenCalledWith(
         USER_ID,
         "profile",
-        { name: "", config: { fontSize: "L", themeId: "dark" } },
+        {
+          name: "",
+          config: { fontSize: "L", themeId: "dark" },
+          displayNameAnswered: false,
+        },
         { marker: "publicRead" }
       );
       // Adoption succeeded, so the local store is cleared — it shouldn't be
@@ -2052,6 +2066,81 @@ describe("createLoginManager", () => {
       expect(recordDataMock).not.toHaveBeenCalled();
     });
 
+    it("asks for a display name once when inventing a brand-new blank profile", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.profile.value !== null);
+
+      expect(manager.needsDisplayNamePrompt.value).toBe(true);
+
+      manager.dismissDisplayNamePrompt();
+      expect(manager.needsDisplayNamePrompt.value).toBe(false);
+    });
+
+    it("does not ask for a display name when the account already has a profile", async () => {
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { name: "" },
+      });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.profile.value !== null);
+
+      expect(manager.needsDisplayNamePrompt.value).toBe(false);
+    });
+
+    it("clears the display-name prompt when a name is saved", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value !== null);
+      expect(manager.needsDisplayNamePrompt.value).toBe(true);
+
+      manager.updateProfile({ name: "Ada" });
+      expect(manager.needsDisplayNamePrompt.value).toBe(false);
+      expect(manager.profile.value?.name).toBe("Ada");
+    });
+
+    it("keeps the prompt off on a subsequent page load when the user chose Keep default", async () => {
+      // First load: brand-new account, no profile record.
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value !== null);
+      expect(manager.needsDisplayNamePrompt.value).toBe(true);
+
+      // User clicks "Keep default" — this must persist an empty-name profile
+      // record so the account is no longer brand-new from the server's view.
+      manager.updateProfile({ name: "" });
+      expect(manager.needsDisplayNamePrompt.value).toBe(false);
+      await waitFor(() => recordDataMock.mock.calls.length > 0);
+
+      // Page reload: the server now returns the saved profile (not data_not_found).
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { name: "" },
+      });
+      const manager2 = createAuthenticatedManager();
+      await waitFor(() => manager2.profile.value !== null);
+
+      expect(manager2.needsDisplayNamePrompt.value).toBe(false);
+    });
+
     it("keeps the local config in place if persisting the adopted profile fails", async () => {
       localStorage.setItem(
         "sb-profile-config-local",
@@ -2071,6 +2160,7 @@ describe("createLoginManager", () => {
       expect(manager.profile.value).toEqual({
         name: "",
         config: { fontSize: "L" },
+        displayNameAnswered: false,
       });
       expect(manager.localConfig.value).toEqual({ fontSize: "L" });
       expect(localStorage.getItem("sb-profile-config-local")).toBe(
@@ -2185,11 +2275,12 @@ describe("createLoginManager", () => {
       expect(manager.profile.value).toEqual({
         name: "",
         config: { fontSize: "L" },
+        displayNameAnswered: false,
       });
       expect(recordDataMock).toHaveBeenCalledWith(
         USER_ID,
         "profile",
-        { name: "", config: { fontSize: "L" } },
+        { name: "", config: { fontSize: "L" }, displayNameAnswered: false },
         { marker: "publicRead" }
       );
       // Adopted and persisted, so the anonymous local store is now empty.

@@ -13,6 +13,8 @@ import type { CommunityFeedItem } from "@packages/seed-bible/seed-bible/managers
 import type { Friend } from "@packages/seed-bible/seed-bible/managers/FriendsManager";
 import { todayStub, loginStub } from "../../testUtils/todayStubs";
 import { mockI18nState, mockTranslate } from "../../testUtils/mockI18n";
+import { getUserAnimalVisual } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
+import { visualAnonymousLabel } from "@packages/seed-bible/seed-bible/managers/Utils";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../../testUtils/mockI18n");
@@ -705,7 +707,7 @@ describe("SocialSection", () => {
       expect(sentences()).toEqual(["Jonah noted on Colossians 3:12"]);
     });
 
-    it("name a friend with no profile name by a short id", async () => {
+    it("name a friend with no profile name by their avatar's color and animal", async () => {
       const unnamed = "abcdef123456";
       communityMembers.value = [ME, unnamed];
       friendReaders.value = [friend({ userId: unnamed, name: null })];
@@ -713,7 +715,9 @@ describe("SocialSection", () => {
       setup();
       await flush();
 
-      expect(sentences()).toEqual(["User abcdef12 noted on Colossians 3:12"]);
+      const visual = getUserAnimalVisual(unnamed);
+      const name = visualAnonymousLabel(visual, mockTranslate);
+      expect(sentences()).toEqual([`${name} noted on Colossians 3:12`]);
     });
 
     it("say 'replied' for a reply", async () => {

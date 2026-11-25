@@ -17,6 +17,9 @@ import {
   fakeSharedPermissions,
   ME,
 } from "../testUtils/fakeSharedPermissions";
+import { getUserAnimalVisual } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
+import { visualAnonymousLabel } from "@packages/seed-bible/seed-bible/managers/Utils";
+import { mockTranslate } from "../testUtils/mockI18n";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const { mockI18nManager } = await import("../testUtils/mockI18n");
@@ -189,7 +192,7 @@ describe("ParticipantFriendButton", () => {
       { requestingUserId: ME, targetUserId: ADA_ID, status: "requested" },
     ]);
     expect(toast).toHaveBeenCalledWith(
-      `Friend request sent to User ${ADA_ID.slice(0, 8)}.`
+      `Friend request sent to ${visualAnonymousLabel(getUserAnimalVisual(ADA_ID), mockTranslate)}.`
     );
     consoleWarn.mockRestore();
   });

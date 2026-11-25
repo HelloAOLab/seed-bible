@@ -50,7 +50,7 @@ export function SessionGroupBar({
       (user) => user.connectionId === request.fromConnectionId
     );
     const senderName = sender
-      ? getUserDisplayName(sender)
+      ? getUserDisplayName(sender, t)
       : t("host", { defaultValue: "Host" });
     return (
       <div
@@ -132,7 +132,7 @@ export function SessionGroupBar({
               <Avatar
                 imageUrl={user.profile?.pictureUrl ?? null}
                 visual={user.visual}
-                title={getUserDisplayName(user)}
+                title={getUserDisplayName(user, t)}
               />
             </span>
           ))}

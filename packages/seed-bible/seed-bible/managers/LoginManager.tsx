@@ -9,7 +9,7 @@ import {
 import * as z from "zod/v4";
 import type { CasualOSManager, UserInfo } from "./OsManager";
 import type { SessionInvalidatedEvent } from "./SessionGuard";
-import { captureEvent } from "./Utils";
+import { captureEvent, trimmedOrNull } from "./Utils";
 import { parseSessionKey } from "@casual-simulation/aux-common";
 import type {
   CompleteLoginResult,
@@ -159,6 +159,17 @@ export interface LoginManager {
   isSavingProfile: Signal<boolean>;
 
   /**
+   * True once after a brand-new account's blank profile is created on this
+   * device, until the user picks a name or keeps the Color + Icon default.
+   * Existing accounts that already have a profile record (even with an empty
+   * name) never flip this — only the first login that invents the record.
+   */
+  needsDisplayNamePrompt: Signal<boolean>;
+
+  /** Clears {@link needsDisplayNamePrompt} after the user answers the prompt. */
+  dismissDisplayNamePrompt: () => void;
+
+  /**
    * Whether the user is currently in the process of logging in, which can be used to show or hide the login modal. This will be true from the moment a login attempt is initiated until it either succeeds or fails, and will be false at all other times (including while logged in). The login modal should subscribe to this signal to know when to show or hide itself, and should call `cancelLogin` if it is closed while a login attempt is in progress to abort the login flow.
    */
   isLoginOpen: Signal<boolean>;
@@ -236,6 +247,12 @@ export const userProfileSchema = z.object({
   pictureUrl: z.url().max(1024).optional().nullable(),
   description: z.string().max(300).optional().nullable(),
   config: z.record(z.string(), z.unknown()).optional().nullable(),
+  /**
+   * Set to true once the user has answered the first-login display-name
+   * prompt (whether they typed a name or kept the default). False (or absent)
+   * when the account was created but the prompt hasn't been answered yet.
+   */
+  displayNameAnswered: z.boolean().optional(),
 });
 
 export type UserProfile = z.infer<typeof userProfileSchema>;
@@ -654,6 +671,11 @@ export function createLoginManager({
   const localConfig = signal<Record<string, unknown>>({});
   const isProfileLoading = signal(false);
   const isSavingProfile = signal(false);
+  const needsDisplayNamePrompt = signal(false);
+  // Set inside `getUserProfile` when it invents a blank profile for a brand-new
+  // account; consumed (and cleared) only by the signed-in user's own load so a
+  // peer-profile fetch can't flip the prompt for the wrong person.
+  let createdBlankProfileForUserId: string | null = null;
   // Counts profile writes currently in flight so overlapping writes (e.g. a
   // manual save while a background config write is still persisting) don't let
   // the first one to finish clear the "Saving…" state out from under the other.
@@ -707,21 +729,33 @@ export function createLoginManager({
     });
   };
 
-  const getUserProfile = async (userId: string): Promise<UserProfile> => {
-    const data = await os.getData(userId, "profile");
+  const getUserProfile = async (
+    profileUserId: string
+  ): Promise<UserProfile> => {
+    const data = await os.getData(profileUserId, "profile");
 
     if (!data.success) {
       if (data.errorCode === "data_not_found") {
         // The account genuinely has no profile record yet (new user). A blank
         // default is the correct, authoritative answer here — the user can
         // start filling it in and writes should be allowed.
-        console.log("[LoginManager] No profile data found for user:", userId);
+        console.log(
+          "[LoginManager] No profile data found for user:",
+          profileUserId
+        );
 
         const seededConfig = localConfig.value;
         const hasSeededConfig = Object.keys(seededConfig).length > 0;
         const seedProfile: UserProfile = hasSeededConfig
-          ? { name: "", config: seededConfig }
+          ? { name: "", config: seededConfig, displayNameAnswered: false }
           : { name: "" };
+        // Only the signed-in user's own blank profile arms the name prompt.
+        // Peer fetches (SessionsManager looking up another connection) must
+        // not overwrite that marker — a race would either skip the prompt or
+        // falsely arm it for the wrong account.
+        if (profileUserId === userId.value) {
+          createdBlankProfileForUserId = profileUserId;
+        }
 
         if (hasSeededConfig) {
           // This device has config saved from anonymous use (e.g. font size,
@@ -729,7 +763,7 @@ export function createLoginManager({
           // logged in. Adopt it as the account's starting profile so those
           // choices aren't lost when the user signs up.
           try {
-            await updateUserProfile(userId, seedProfile);
+            await updateUserProfile(profileUserId, seedProfile);
             // Adoption succeeded and is now durable on the account — clear the
             // local store so it can't later be silently adopted by a
             // different account created on the same (possibly shared) device.
@@ -1199,17 +1233,23 @@ export function createLoginManager({
       cachedProfile.value = null;
       cachedProfileUserId = null;
       isProfileLoading.value = false;
+      needsDisplayNamePrompt.value = false;
+      createdBlankProfileForUserId = null;
       return;
     }
 
     // If the profile we're holding belongs to a different account — i.e. the
     // user switched accounts without a full logout clearing it first — drop it
     // now so we never display, or (via a later write) merge, one account's
-    // profile under another's id.
+    // profile under another's id. Also reset the display-name prompt so
+    // account B (which may already have a name) doesn't see the prompt armed
+    // with account A's flag, and can't accidentally overwrite B's real name.
     if (profileUserId !== null && profileUserId !== userId.value) {
       profile.value = null;
       profileUserId = null;
       cachedProfile.value = null;
+      needsDisplayNamePrompt.value = false;
+      createdBlankProfileForUserId = null;
     }
 
     if (typeof posthog !== "undefined" && posthog) {
@@ -1247,6 +1287,23 @@ export function createLoginManager({
           cachedProfile.value = p;
           cachedProfileUserId = loadingForUserId;
           writeCachedProfile(loadingForUserId, p);
+          // Arm the prompt for a brand-new blank profile that hasn't been
+          // answered yet. The `createdBlankProfileForUserId` path covers the
+          // first load (profile was not found and was created this session).
+          // The `displayNameAnswered === false` path covers a reload after a
+          // seeded-config save wrote the blank profile to the server on the
+          // first login — on that path the profile exists when we look it up,
+          // so the first path would miss it.
+          if (
+            (createdBlankProfileForUserId === loadingForUserId ||
+              p.displayNameAnswered === false) &&
+            !trimmedOrNull(p.name)
+          ) {
+            needsDisplayNamePrompt.value = true;
+          }
+          if (createdBlankProfileForUserId === loadingForUserId) {
+            createdBlankProfileForUserId = null;
+          }
           if (import.meta.env.DEV) {
             console.log("[LoginManager] Profile loaded:", p);
           }
@@ -1310,6 +1367,10 @@ export function createLoginManager({
     }
   });
 
+  const dismissDisplayNamePrompt = () => {
+    needsDisplayNamePrompt.value = false;
+  };
+
   const updateProfile = (newData: Partial<UserProfile>) => {
     if (!userId.value) {
       console.warn("Cannot update profile: no authenticated user");
@@ -1330,6 +1391,12 @@ export function createLoginManager({
       ...profile.value,
       ...newData,
     };
+    // Choosing a name (or keeping the default) answers the first-login prompt.
+    // Mark it in the profile so a subsequent reload knows not to re-arm it.
+    if (Object.prototype.hasOwnProperty.call(newData, "name")) {
+      nextProfile.displayNameAnswered = true;
+      needsDisplayNamePrompt.value = false;
+    }
     profile.value = nextProfile;
     cachedProfile.value = nextProfile;
     writeCachedProfile(userId.value, nextProfile);
@@ -1414,6 +1481,8 @@ export function createLoginManager({
     },
     isProfileLoading,
     isSavingProfile,
+    needsDisplayNamePrompt,
+    dismissDisplayNamePrompt,
 
     isLoginOpen,
 

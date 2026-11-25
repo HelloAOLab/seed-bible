@@ -11,7 +11,7 @@ import type { LoginManager } from "../../managers/LoginManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import type { NavigationManager } from "../../managers/NavigationManager";
 import { getUserAnimalVisual } from "../../managers/SessionsManager";
-import { displayNameOf } from "../../managers/Utils";
+import { trimmedOrNull, visualAnonymousLabel } from "../../managers/Utils";
 import { useI18n } from "../../i18n/I18nManager";
 import { Avatar } from "../Avatar/Avatar";
 import { ExpandableText } from "../ExpandableText/ExpandableText";
@@ -28,6 +28,21 @@ import { Button } from "../Button/Button";
 
 type T = ReturnType<typeof useI18n>["t"];
 
+/**
+ * Name shown beside a person's avatar: their profile name, or the Color + Icon
+ * of that same avatar when they never set one. Matches the picture so a blank
+ * `name: ""` (brand-new accounts) doesn't leave an empty label.
+ */
+export function personIdentityName(
+  person: Pick<Friend, "userId" | "name">,
+  t: T
+): string {
+  return (
+    trimmedOrNull(person.name) ??
+    visualAnonymousLabel(getUserAnimalVisual(person.userId), t)
+  );
+}
+
 export function PersonIdentity(props: {
   person: Pick<Friend, "userId" | "name" | "pictureUrl">;
   subtitle?: ComponentChildren;
@@ -35,14 +50,11 @@ export function PersonIdentity(props: {
   subtitleId?: string;
 }) {
   const { t } = useI18n();
-  const name = displayNameOf(props.person, t);
+  const visual = getUserAnimalVisual(props.person.userId);
+  const name = personIdentityName(props.person, t);
   return (
     <>
-      <Avatar
-        imageUrl={props.person.pictureUrl}
-        visual={getUserAnimalVisual(props.person.userId)}
-        title={name}
-      />
+      <Avatar imageUrl={props.person.pictureUrl} visual={visual} title={name} />
       <span className="sb-friends-person-text">
         <span className="sb-friends-person-name">{name}</span>
         {props.subtitle ? (
@@ -152,7 +164,7 @@ function FriendshipActions(props: {
     );
   }
 
-  const name = displayNameOf(person, t);
+  const name = personIdentityName(person, t);
   const run = async (action: FriendAction, work: () => Promise<unknown>) => {
     busy.value = action;
     try {
@@ -382,6 +394,22 @@ function PersonProfile(props: { userId: string; deps: PersonProfileDeps }) {
   return (
     <div className="sb-confirm-delete" aria-busy={lookup.value === "loading"}>
       <PersonCard person={shown} note={note} />
+      <div className="sb-person-profile-user-id">
+        <span className="sb-person-profile-user-id-label">
+          {t("user-id", { defaultValue: "User ID" })}
+        </span>
+        <code className="sb-person-profile-user-id-value">{userId}</code>
+        <CopyButton
+          size="sm"
+          toast={deps.app.toast}
+          text={userId}
+          label={t("copy-user-id", { defaultValue: "Copy" })}
+          ariaLabel={t("copy-user-id-of", {
+            name: personIdentityName(shown, t),
+            defaultValue: "Copy {{name}}'s user ID",
+          })}
+        />
+      </div>
       <FriendshipActions person={shown} lookup={lookup.value} deps={deps} />
     </div>
   );
@@ -419,7 +447,7 @@ export function PersonButton(props: {
 }) {
   const { t } = useI18n();
   const subtitleId = useId();
-  const name = displayNameOf(props.person, t);
+  const name = personIdentityName(props.person, t);
   return (
     <button
       type="button"
