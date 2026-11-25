@@ -371,6 +371,12 @@ export interface ParticipantReadingPosition {
    * Absent when there's nothing else, and in entries from older clients.
    */
   areas?: Record<string, { first: number; last: number }>;
+  /**
+   * Set while that participant has broken off from the group (see
+   * `isAwayFromGroup`), even when they happen to be on the group's chapter.
+   * Absent in entries from older clients.
+   */
+  leftGroup?: true;
 }
 
 function parseAreas(
@@ -402,11 +408,14 @@ function parseParticipantReadingPosition(
   // A half-written range says nothing, so both ends have to be there and in
   // order before it is reported.
   const areas = parseAreas(record.areas);
-  const withAreas = areas ? { areas } : {};
+  const extras = {
+    ...(areas ? { areas } : {}),
+    ...(record.leftGroup === true ? { leftGroup: true as const } : {}),
+  };
   if (firstVerse === null || lastVerse === null || lastVerse < firstVerse) {
-    return { bookId, chapterNumber, ...withAreas };
+    return { bookId, chapterNumber, ...extras };
   }
-  return { bookId, chapterNumber, firstVerse, lastVerse, ...withAreas };
+  return { bookId, chapterNumber, firstVerse, lastVerse, ...extras };
 }
 
 /** The longest answer to a question step the session keeps, in characters. */
@@ -887,9 +896,12 @@ export interface BibleReadingSession {
    * True when this reader isn't allowed to move the group and has broken off
    * from it by turning to another chapter themselves. Once set it stays set —
    * even if they wander back to the group's chapter, and while the hosts keep
-   * moving the group, which no longer carries them along — until they
-   * `rejoinGroup`. Stays false while a move to the group's position is still
-   * loading, so it doesn't flicker on every chapter the hosts turn to.
+   * moving the group, which no longer carries them along (a shared
+   * translation still applies). It ends when they `rejoinGroup`, or when
+   * they're allowed to move the group, which first takes them back to it so
+   * they don't publish the chapter they broke off to. Stays false while a
+   * move to the group's position is still loading, so it doesn't flicker on
+   * every chapter the hosts turn to.
    */
   isAwayFromGroup: ReadonlySignal<boolean>;
 
@@ -901,7 +913,8 @@ export interface BibleReadingSession {
 
   /**
    * The connectionIds of everyone, this reader included, who isn't allowed
-   * to move the group and is reading a different chapter from it. Someone
+   * to move the group and is reading a different chapter from it or has
+   * broken off from it (see `ParticipantReadingPosition.leftGroup`). Someone
    * still on a chapter the group only just left isn't counted while their
    * reader catches up (see `GROUP_MOVE_GRACE_MS`), and someone whose position
    * isn't known yet isn't guessed away.
@@ -1144,8 +1157,8 @@ async function createBibleReadingSession(
   let remoteSyncDrain: Promise<void> | null = null;
   const isRemoteSyncRunning = signal(false);
   // Set once a follower turns to another chapter themselves, and cleared only
-  // by `rejoinGroup` (or by them being allowed to move the group). While set,
-  // the hosts' moves no longer carry them along.
+  // by `rejoinGroup`, or once they're allowed to move the group and have been
+  // taken back to it. While set, the hosts' moves no longer carry them along.
   const hasLeftGroup = signal(false);
   const groupPosition = signal<SessionGroupPosition>(
     getSessionDataFromMap(stateMap)
@@ -1194,6 +1207,7 @@ async function createBibleReadingSession(
   let publishedBookId: string | null = null;
   let publishedChapter = 0;
   let publishedTabVisible = true;
+  let publishedLeftGroup = false;
   /**
    * Set while a change waiting to go out was (or followed) one that peers
    * should see promptly: a navigation, or the tab going into or out of the
@@ -1559,10 +1573,27 @@ async function createBibleReadingSession(
 
   const mapSubscription = stateMap.changes.subscribe(() => {
     refreshGroupPosition();
-    if (hasLeftGroup.peek()) {
+    const nextSessionData = getSessionDataFromMap(stateMap);
+
+    // A navigator still flagged is being taken back to the group, so the
+    // hosts' moves keep coalescing into that load.
+    if (hasLeftGroup.peek() && !userCanNavigate(localSessionId.peek())) {
+      // Broken off: they keep their own chapter, but a translation the
+      // session shares is the group's, not where it is.
+      if (
+        options.peek().shareTranslation &&
+        nextSessionData.translationId &&
+        nextSessionData.translationId !== readingState.translationId.peek()
+      ) {
+        void queueRemoteSync({
+          translationId: nextSessionData.translationId,
+          bookId: readingState.bookId.peek(),
+          chapterNumber: readingState.chapterNumber.peek(),
+          scrollToVerse: null,
+        });
+      }
       return;
     }
-    const nextSessionData = getSessionDataFromMap(stateMap);
 
     if (
       lastLocallyWrittenState &&
@@ -1645,15 +1676,18 @@ async function createBibleReadingSession(
             ),
           }
         : {};
+    const extras = hasLeftGroup.value
+      ? { ...areas, leftGroup: true as const }
+      : areas;
     const next: ParticipantReadingPosition = range
       ? {
           bookId,
           chapterNumber,
           firstVerse: range.first,
           lastVerse: range.last,
-          ...areas,
+          ...extras,
         }
-      : { bookId, chapterNumber, ...areas };
+      : { bookId, chapterNumber, ...extras };
     const currentEntry = parseParticipantReadingPosition(
       readingPositionsMap.get(localConnectionId)
     );
@@ -1663,6 +1697,7 @@ async function createBibleReadingSession(
       currentEntry.chapterNumber === next.chapterNumber &&
       currentEntry.firstVerse === next.firstVerse &&
       currentEntry.lastVerse === next.lastVerse &&
+      currentEntry.leftGroup === next.leftGroup &&
       JSON.stringify(currentEntry.areas ?? {}) ===
         JSON.stringify(next.areas ?? {})
     ) {
@@ -1689,6 +1724,7 @@ async function createBibleReadingSession(
     const bookId = readingState.bookId.value;
     const chapterNumber = readingState.chapterNumber.value;
     const visible = tabVisible.value;
+    const leftGroup = hasLeftGroup.value;
     void readingState.visibleVerseRange.value;
     void readingState.visibleAreas.value;
 
@@ -1702,7 +1738,8 @@ async function createBibleReadingSession(
     if (
       publishedBookId !== bookId ||
       publishedChapter !== chapterNumber ||
-      publishedTabVisible !== visible
+      publishedTabVisible !== visible ||
+      publishedLeftGroup !== leftGroup
     ) {
       pendingIsPrompt = true;
     }
@@ -1716,6 +1753,7 @@ async function createBibleReadingSession(
         publishedBookId = readingState.bookId.peek();
         publishedChapter = readingState.chapterNumber.peek();
         publishedTabVisible = tabVisible.peek();
+        publishedLeftGroup = hasLeftGroup.peek();
         broadcastLocalPosition();
       },
       pendingIsPrompt ? PUBLISH_DEBOUNCE_MS : RANGE_PUBLISH_DEBOUNCE_MS
@@ -1845,8 +1883,12 @@ async function createBibleReadingSession(
     const rawNextSessionData = getSessionDataSnapshot(readingState);
     const shareTranslation = options.value.shareTranslation;
     const canNavigate = userCanNavigate(localSessionId.value);
+    // Someone just allowed to move the group is still on the chapter they
+    // broke off to until they've been taken back; publishing it would pull
+    // everyone there.
+    const leftGroup = hasLeftGroup.value;
 
-    if (applyingRemoteState || !canNavigate) {
+    if (applyingRemoteState || !canNavigate || leftGroup) {
       return null;
     }
 
@@ -2302,7 +2344,7 @@ async function createBibleReadingSession(
     comeBackRequestsSubscription.unsubscribe();
     stopSettlingComeBackRequests();
     stopNoticingLeavingGroup();
-    stopForgettingLeftGroupForNavigators();
+    stopRejoiningGroupForNavigators();
     remoteClientsSubscription.unsubscribe();
     statusUpdatedSubscription.unsubscribe();
     stopSync();
@@ -2369,12 +2411,6 @@ async function createBibleReadingSession(
       }
     });
   });
-  const stopForgettingLeftGroupForNavigators = effect(() => {
-    if (userCanNavigate(localSessionId.value)) {
-      hasLeftGroup.value = false;
-    }
-  });
-
   const isAwayFromGroup = computed(
     () =>
       !userCanNavigate(localSessionId.value) &&
@@ -2403,6 +2439,10 @@ async function createBibleReadingSession(
         continue;
       }
       const position = participantPositions.value.get(user.connectionId);
+      if (position?.leftGroup) {
+        away.add(user.connectionId);
+        continue;
+      }
       if (
         !position ||
         (position.bookId === group.bookId &&
@@ -2522,6 +2562,18 @@ async function createBibleReadingSession(
       hasLeftGroup.value = false;
       return queueRemoteSync(getSessionDataFromMap(stateMap));
     });
+
+  // Takes someone who broke off back to the group once they may move it, and
+  // only then lets them publish (see `resolveSessionDataToPublish`).
+  const stopRejoiningGroupForNavigators = effect(() => {
+    if (!userCanNavigate(localSessionId.value) || !hasLeftGroup.peek()) {
+      return;
+    }
+    dismissComeBackRequest();
+    void queueRemoteSync(getSessionDataFromMap(stateMap)).finally(() => {
+      hasLeftGroup.value = false;
+    });
+  });
 
   const isHost = (user: ConnectedSessionUser | null): boolean => {
     if (!user) return false;
