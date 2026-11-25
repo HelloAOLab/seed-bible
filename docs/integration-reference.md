@@ -15,17 +15,17 @@ A Seed Bible link is `https://seedbible.org/?` followed by parameters joined wit
 https://seedbible.org/?translation=BSB&book=JHN&chapter=3&verse=16
 ```
 
-When the page opens, Seed Bible rewrites the address to its own reading path (for example `https://seedbible.org/es/spa_onbv/john/3`). That's expected. Keep generating the `?book=…&chapter=…` form shown here: it's the stable format for integrations, and it will keep working.
+Once the page opens, the address in the browser changes to a shorter form (for example `https://seedbible.org/es/spa_onbv/john/3`). That's expected. Keep building links in the `?book=…&chapter=…` form shown here: it's the format we promise to keep working.
 
 ### Reading parameters
 
 | Parameter     | Value                                                                                                                                                                                                          | Example                       |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
 | `translation` | A translation ID (see [Translation IDs](#translation-ids)). If omitted, Seed Bible picks one from the reader's language (see [Default translation for each language](#default-translation-for-each-language)). | `BSB`, `NASB2020`, `spa_onbv` |
-| `book`        | USFM book code: always three letters, uppercase.                                                                                                                                                               | `GEN`, `PSA`, `JHN`, `REV`    |
+| `book`        | The book's standard three-letter code, in capitals (the USFM code used across Bible software).                                                                                                                 | `GEN`, `PSA`, `JHN`, `REV`    |
 | `chapter`     | Chapter number.                                                                                                                                                                                                | `1`, `23`, `119`              |
 | `verse`       | The verses to highlight: one verse, a range, or a comma-separated list (ranges can go in the list too).                                                                                                        | `16`, `3-7`, `3,5,7`          |
-| `lang`        | Language code for the interface: menus and labels, not the Bible text. Mostly ISO 639-1 two-letter codes; Indonesian is `ind`.                                                                                 | `en`, `es`, `ar`, `fr`, `zh`  |
+| `lang`        | The language for menus and labels (not the Bible text). Usually the standard two-letter language code; Indonesian is `ind`.                                                                                    | `en`, `es`, `ar`, `fr`, `zh`  |
 
 ### Display parameters
 
@@ -65,7 +65,7 @@ Some common ones:
 | Hindi Indian Revised Version Bible                    | `HINIRV`   | Hindi                |
 | French Ostervald Bible                                | `fra_ost`  | French               |
 
-For the full list of 1,000+ translations, call the [Free Use Bible API](https://bible.helloao.org):
+For the full list of 1,000+ translations, open this address from the [Free Use Bible API](https://bible.helloao.org). It returns the list as JSON (a structured text format that code can read):
 
 ```
 GET https://bible.helloao.org/api/available_translations.json
@@ -103,7 +103,9 @@ When a link has no `translation`, Seed Bible uses the default for the reader's i
 | Vietnamese (`vi`)  | `vie_vcb`      | Vietnamese Contemporary Bible                             |
 | Chinese (`zh`)     | `cmn_cbt`      | Chinese, Mandarin: Biblica® 聖經,當代譯本開放資源 (Bible) |
 
-Any other language falls back to `AAB`. The source of truth is `DEFAULT_TRANSLATIONS_BY_LANGUAGE` in `packages/seed-bible/seed-bible/managers/BibleReadingManager.tsx`; if you change it, update this table too.
+Any other language falls back to `AAB`.
+
+<!-- Maintainers: this table mirrors DEFAULT_TRANSLATIONS_BY_LANGUAGE in packages/seed-bible/seed-bible/managers/BibleReadingManager.tsx. Update both together. -->
 
 ### Example links
 
@@ -229,14 +231,14 @@ EXAMPLES
 
 ### Apologist agents
 
-For an agent built on Apologist, add this under the "Scripture" heading of the agent's instructions (Agent → Behavior → Instructions). The `autoinstall-ext_Apologist=true` parameter installs Seed Bible's built-in Apologist extension for the reader when the link opens.
+For an agent built on Apologist, add this under the "Scripture" heading of the agent's instructions (Agent → Behavior → Instructions). The `autoinstall-ext_Apologist=true` part of the link turns on Seed Bible's Apologist extension (an optional add-on) for the reader when they open it.
 
 ```text
 When you cite scripture, include markdown-formatted links to
 `https://seedbible.org/?autoinstall-ext_Apologist=true` with these additional
 query parameters:
 
-- `book` - The USFM book ID to link to (GEN, EXO, etc.)
+- `book` - The three-letter USFM book code to link to (GEN, EXO, etc.)
 - `chapter` - The number of the chapter to link to.
 - `verse` - The verse or range of verses to link to (e.g. 5, 4-6)
 ```
