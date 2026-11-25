@@ -728,7 +728,7 @@
 
 /* The whole row selects the tab, not just its text: this layer stretches the
    button over the row's padding (the row is the positioned box). The button's
-   own content and the save and menu buttons after it sit above the layer, so
+   own content and the menu button after it sit above the layer, so
    they keep their own clicks and tooltips. */
 .sb-tab-button::before {
   content: "";
