@@ -81,19 +81,49 @@ const FONT_SIZE_OPTIONS: TextSize[] = ["XS", "S", "M", "L", "XL", "XXL"];
 // English only, like the rest of the developer tools: they're for the team,
 // not for translators.
 const DEVELOPER_VIEW_LABEL = "Developer";
+const DEVELOPER_UNAVAILABLE_TITLE = "Couldn't load the developer tools";
+const DEVELOPER_UNAVAILABLE_HINT =
+  "Check your connection, then reload the page.";
 
 // Its own chunk, fetched only when someone opens the view after unlocking the
 // developer tools (see app/devTools/devToolsUnlock.ts). The native-build test
 // is spelled out rather than using DEV_TOOLS_SUPPORTED: only a condition the
 // bundler can read here lets it leave the chunk out of the native apps.
+// A failed download (offline, or the file was removed by a deploy since the
+// page loaded) shows a note instead of crashing Settings: nothing catches the
+// error otherwise. `lazy` keeps the note until a reload.
 const DeveloperSettingsView =
   import.meta.env.MODE !== "native"
     ? lazy(() =>
-        import("./DeveloperSettingsView").then((m) => ({
-          default: m.DeveloperSettingsView,
-        }))
+        import("./DeveloperSettingsView")
+          .then((m) => ({ default: m.DeveloperSettingsView }))
+          .catch(() => ({ default: DeveloperSettingsUnavailable }))
       )
     : null;
+
+function DeveloperSettingsUnavailable(props: { state: SeedBibleState }) {
+  const { t } = useI18n();
+  return (
+    <div className="sb-settings-page">
+      <SettingsBreadcrumbs
+        onBack={() => {
+          props.state.sidebar.requestedSettingsView.value = "main";
+        }}
+        trail={[
+          t("page-settings", { defaultValue: "Page settings" }),
+          DEVELOPER_VIEW_LABEL,
+        ]}
+      />
+      <EmptyState
+        size="panel"
+        icon="cloud_off"
+        title={DEVELOPER_UNAVAILABLE_TITLE}
+      >
+        {DEVELOPER_UNAVAILABLE_HINT}
+      </EmptyState>
+    </div>
+  );
+}
 
 export function SettingsBreadcrumbs(props: {
   onBack: () => void;

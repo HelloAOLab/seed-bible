@@ -66,7 +66,11 @@ afterEach(() => {
   act(() => render(null, container));
   container.remove();
   vi.unstubAllEnvs();
+  vi.doUnmock(DEVELOPER_VIEW_MODULE);
 });
+
+const DEVELOPER_VIEW_MODULE =
+  "@packages/seed-bible/seed-bible/components/SettingsPage/DeveloperSettingsView";
 
 /** Renders Settings fresh, as the given kind of build would. */
 async function renderSettings(build: "dev" | "production") {
@@ -146,5 +150,26 @@ describe("Settings → Developer", () => {
     await renderSettings("production");
     tapVersion(1);
     expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
+  });
+
+  it("says so, with a way back, when the Developer page can't be downloaded", async () => {
+    // Offline, or the file was removed by a deploy since the page loaded.
+    vi.doMock(DEVELOPER_VIEW_MODULE, () => {
+      throw new Error("Failed to fetch dynamically imported module");
+    });
+    const state = await renderSettings("production");
+    tapVersion(7);
+
+    act(() => navButton("Developer")!.click());
+    await waitForCondition(() =>
+      container.textContent!.includes("Couldn't load the developer tools")
+    );
+
+    act(() =>
+      container
+        .querySelector<HTMLButtonElement>(".sb-settings-breadcrumbs-back")!
+        .click()
+    );
+    expect(state.sidebar.requestedSettingsView.value).toBe("main");
   });
 });

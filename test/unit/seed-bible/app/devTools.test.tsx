@@ -45,6 +45,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  vi.restoreAllMocks();
   act(() => render(null, container));
   container.remove();
   document.body.innerHTML = "";
@@ -95,6 +96,46 @@ describe("dev tools: show shared components", () => {
         .querySelector(".sb-dialog-backdrop")
         ?.hasAttribute("data-sb-component")
     ).toBe(false);
+  });
+
+  it("outlines the controls inside a dialog that was already open when it was switched on", async () => {
+    const { Button, Dialog, startDevTools, setDevToolEnabled } = await load();
+    startDevTools();
+    act(() =>
+      render(
+        <Dialog title="Hello" onClose={() => {}}>
+          <Button>Save</Button>
+        </Dialog>,
+        container
+      )
+    );
+
+    act(() => setDevToolEnabled("showSharedComponents", true));
+
+    expect(
+      document
+        .querySelector(".sb-dialog .sb-button")
+        ?.getAttribute("data-sb-component")
+    ).toBe("Button");
+  });
+
+  it("keeps the switch in step with the screen when the browser won't save it", async () => {
+    const { Button, startDevTools, setDevToolEnabled, enabledDevTools } =
+      await load();
+    startDevTools();
+    act(() => render(<Button>Save</Button>, container));
+    // What Safari does with site data blocked, or a full storage quota.
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("The operation is insecure.", "SecurityError");
+    });
+
+    act(() => setDevToolEnabled("showSharedComponents", true));
+    expect(enabledDevTools.value.has("showSharedComponents")).toBe(true);
+    expect(outlined()).toEqual({ "sb-button": "Button" });
+
+    act(() => setDevToolEnabled("showSharedComponents", false));
+    expect(enabledDevTools.value.has("showSharedComponents")).toBe(false);
+    expect(outlined()).toEqual({});
   });
 
   it("remembers being switched on at the next page load", async () => {

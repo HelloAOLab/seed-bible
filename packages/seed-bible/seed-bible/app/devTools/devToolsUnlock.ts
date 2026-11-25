@@ -21,8 +21,8 @@ const IS_DEV_BUILD = import.meta.env.DEV === true;
 
 export const DEV_TOOLS_URL_FLAG = "devTools";
 const UNLOCKED_KEY = "sb-dev-tools-unlocked";
-/** Which tools are on; written by devTools.ts. */
-export const DEV_TOOLS_ON_KEY = "sb-dev-tools";
+/** Which tools are on (see readDevToolsOn). */
+const DEV_TOOLS_ON_KEY = "sb-dev-tools";
 
 const TAPS_TO_UNLOCK = 7;
 // A pause longer than this between taps starts the count again.
@@ -31,12 +31,42 @@ const MAX_TAP_GAP_MS = 1500;
 const unlocked = signal(false);
 export const devToolsUnlocked: ReadonlySignal<boolean> = unlocked;
 
-function storage(): Storage | null {
+// Saving can fail (Safari with site data blocked throws on any access, and a
+// full quota throws on writes). The tools then still work for this page; the
+// choice just isn't remembered.
+function readSetting(key: string): string | null {
   try {
-    return window.localStorage;
+    return window.localStorage.getItem(key);
   } catch {
     return null;
   }
+}
+
+function writeSetting(key: string, value: string | null) {
+  try {
+    if (value === null) window.localStorage.removeItem(key);
+    else window.localStorage.setItem(key, value);
+  } catch {
+    // Not remembered; see above.
+  }
+}
+
+/** The ids of the tools left on. */
+export function readDevToolsOn(): Set<string> {
+  try {
+    const ids: unknown = JSON.parse(readSetting(DEV_TOOLS_ON_KEY) ?? "[]");
+    return new Set(
+      Array.isArray(ids)
+        ? ids.filter((id): id is string => typeof id === "string")
+        : []
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+export function writeDevToolsOn(ids: ReadonlySet<string>) {
+  writeSetting(DEV_TOOLS_ON_KEY, JSON.stringify([...ids]));
 }
 
 /**
@@ -50,8 +80,8 @@ export function initDevToolsUnlock(): boolean {
   const fromUrl = new URLSearchParams(window.location.search).has(
     DEV_TOOLS_URL_FLAG
   );
-  if (fromUrl) storage()?.setItem(UNLOCKED_KEY, "1");
-  unlocked.value = IS_DEV_BUILD || storage()?.getItem(UNLOCKED_KEY) === "1";
+  if (fromUrl) writeSetting(UNLOCKED_KEY, "1");
+  unlocked.value = IS_DEV_BUILD || fromUrl || readSetting(UNLOCKED_KEY) === "1";
   return fromUrl;
 }
 
@@ -70,27 +100,20 @@ export function removeDevToolsFlag(
 
 export function unlockDevTools() {
   if (!DEV_TOOLS_SUPPORTED) return;
-  storage()?.setItem(UNLOCKED_KEY, "1");
+  writeSetting(UNLOCKED_KEY, "1");
   unlocked.value = true;
 }
 
 /** Forgets the unlock and which tools were on. Dev builds stay unlocked. */
 export function lockDevTools() {
-  storage()?.removeItem(UNLOCKED_KEY);
-  storage()?.removeItem(DEV_TOOLS_ON_KEY);
+  writeSetting(UNLOCKED_KEY, null);
+  writeSetting(DEV_TOOLS_ON_KEY, null);
   unlocked.value = IS_DEV_BUILD;
 }
 
 /** Whether a tool was left on, so startup knows to fetch the tools. */
 export function hasDevToolsOn(): boolean {
-  try {
-    const ids: unknown = JSON.parse(
-      storage()?.getItem(DEV_TOOLS_ON_KEY) ?? "[]"
-    );
-    return Array.isArray(ids) && ids.length > 0;
-  } catch {
-    return false;
-  }
+  return readDevToolsOn().size > 0;
 }
 
 let taps = 0;

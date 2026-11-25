@@ -3,7 +3,11 @@ import {
   startShowSharedComponents,
   stopShowSharedComponents,
 } from "./showSharedComponents";
-import { DEV_TOOLS_ON_KEY, lockDevTools } from "./devToolsUnlock";
+import {
+  lockDevTools,
+  readDevToolsOn,
+  writeDevToolsOn,
+} from "./devToolsUnlock";
 
 // Tools for working on Seed Bible, switched on from Settings → Developer.
 // This module is only fetched once they're unlocked (see devToolsUnlock.ts).
@@ -41,26 +45,11 @@ export const DEV_TOOLS: readonly DevTool[] = ALL_DEV_TOOLS.filter(
   (tool) => import.meta.env.DEV || tool.safeInProduction
 );
 
-function readStored(): Set<string> {
-  try {
-    const ids: unknown = JSON.parse(
-      localStorage.getItem(DEV_TOOLS_ON_KEY) ?? "[]"
-    );
-    return new Set(
-      Array.isArray(ids)
-        ? ids.filter((id): id is string => typeof id === "string")
-        : []
-    );
-  } catch {
-    return new Set();
-  }
-}
-
 const enabled = signal<ReadonlySet<string>>(new Set());
 export const enabledDevTools: ReadonlySignal<ReadonlySet<string>> = enabled;
 
 export function startDevTools() {
-  const stored = readStored();
+  const stored = readDevToolsOn();
   const on = new Set<string>();
   for (const tool of DEV_TOOLS) {
     if (stored.has(tool.id)) {
@@ -75,7 +64,7 @@ export function setDevToolEnabled(id: string, on: boolean) {
   const tool = DEV_TOOLS.find((t) => t.id === id);
   if (!tool) return;
 
-  const stored = readStored();
+  const stored = readDevToolsOn();
   const next = new Set(enabled.value);
   if (on) {
     stored.add(id);
@@ -86,7 +75,7 @@ export function setDevToolEnabled(id: string, on: boolean) {
     next.delete(id);
     tool.stop();
   }
-  localStorage.setItem(DEV_TOOLS_ON_KEY, JSON.stringify([...stored]));
+  writeDevToolsOn(stored);
   enabled.value = next;
 }
 

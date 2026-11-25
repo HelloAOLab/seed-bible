@@ -38,7 +38,11 @@ if (
   devToolsUnlocked.peek() &&
   hasDevToolsOn()
 ) {
-  void import("./devTools/devTools").then((m) => m.startDevTools());
+  void import("./devTools/devTools")
+    .then((m) => m.startDevTools())
+    // Offline, or removed by a deploy since the page loaded: the tools just
+    // stay off for this page.
+    .catch(() => {});
 }
 
 // Config (base path + asset host, plus SSR-verification metadata) injected

@@ -11,12 +11,15 @@ const ATTRIBUTE = "data-sb-component";
 const SKIPPED = new Set(["TooltipTrigger"]);
 
 // Preact's mangled internal names: a vnode's DOM node, children and component
-// instance. `v` is preact/compat's name for a portal's fake container, whose
-// `childNodes` are the elements the portal drew into its target.
+// instance. `v` is preact/compat's name for a portal's fake container: its
+// `childNodes` are the elements the portal drew into its target, and its `__k`
+// the separate tree the portal rendered them from.
 type InternalVNode = VNode & {
   __e?: Node | null;
   __k?: (InternalVNode | null)[] | null;
-  __c?: { v?: { childNodes?: Node[] } | null } | null;
+  __c?: {
+    v?: { childNodes?: Node[]; __k?: InternalVNode | null } | null;
+  } | null;
 };
 
 // The top-level elements a component drew, looking through fragments and
@@ -81,6 +84,9 @@ function tagExistingTree(names: Map<unknown, string>) {
   const visit = (vnode: InternalVNode | null | undefined) => {
     if (!vnode) return;
     vnode.__k?.forEach(visit);
+    // A portal's content (a Dialog's controls) is a separate tree, outside
+    // the document, so the element search below never reaches it.
+    visit(vnode.__c?.v?.__k);
     tag(vnode, names);
   };
   for (const el of document.querySelectorAll("*")) {
@@ -89,6 +95,9 @@ function tagExistingTree(names: Map<unknown, string>) {
   }
 }
 
+// The greens, white and outline width stay fixed rather than theme colors: the
+// outline has to look the same on every theme and never blend into what it
+// marks. The label sits above everything, so it takes the highest z-index.
 const STYLES = `
 [${ATTRIBUTE}] {
   outline: 2px solid #22c55e !important;
@@ -99,10 +108,10 @@ const STYLES = `
   z-index: 2147483647;
   pointer-events: none;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--sb-radius-xs);
   background: #166534;
   color: #fff;
-  font: 600 11px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
+  font: 600 var(--sb-font-size-11) / 1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
   white-space: nowrap;
 }
 `;
@@ -130,7 +139,8 @@ function showLabelsOnHover(): () => void {
         ? rect.top - labelHeight - 2
         : rect.bottom + 2;
     label.style.top = `${top}px`;
-    label.style.left = `${Math.max(0, rect.left)}px`;
+    const maxLeft = window.innerWidth - label.offsetWidth;
+    label.style.left = `${Math.max(0, Math.min(rect.left, maxLeft))}px`;
   };
   const onScroll = () => (label.hidden = true);
   document.addEventListener("mouseover", onMouseOver);
