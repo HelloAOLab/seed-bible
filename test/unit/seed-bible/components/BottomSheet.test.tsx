@@ -153,6 +153,34 @@ describe("BottomSheet", () => {
       expect(body.querySelector(".footer-action")).toBeNull();
       expect(sheet()!.querySelector(".footer-action")).not.toBeNull();
     });
+    it("rises once, when it opens", () => {
+      renderSheet();
+      expect(sheet()!.classList).toContain("sb-bottom-sheet-rising");
+
+      act(() => {
+        sheet()!.dispatchEvent(new Event("animationend", { bubbles: true }));
+      });
+      expect(sheet()!.classList).not.toContain("sb-bottom-sheet-rising");
+    });
+
+    it("doesn't rise again after a tap or drag lets go", () => {
+      renderSheet();
+      expect(sheet()!.classList).toContain("sb-bottom-sheet-rising");
+      // A drag before the rise has finished stops it, so the sheet follows the
+      // finger; letting go mustn't restart it from below the screen.
+      drag(handle(), 500, 520);
+      expect(sheet()!.classList).not.toContain("sb-bottom-sheet-rising");
+    });
+
+    it("keeps rising when something inside it finishes animating", () => {
+      renderSheet();
+      act(() => {
+        document
+          .querySelector(".content")!
+          .dispatchEvent(new Event("animationend", { bubbles: true }));
+      });
+      expect(sheet()!.classList).toContain("sb-bottom-sheet-rising");
+    });
   });
 
   describe("closing", () => {

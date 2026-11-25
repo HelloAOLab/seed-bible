@@ -1261,10 +1261,13 @@
   cursor: default;
 }
 
-/* While dragging, the overflow height follows the pointer directly; easing
-   towards the finger would feel like lag. The animation comes back on release,
-   which is what carries the row the rest of the way to its resting height. */
-.sb-verse-toolbar-mobile.sb-verse-sheet-dragging .sb-verse-toolbar-overflow {
+/* While dragging, the overflow height and the swipe hint follow the pointer
+   directly; easing towards the finger would feel like lag. The animation comes
+   back on release, which is what carries the row the rest of the way to its
+   resting height. */
+.sb-verse-toolbar-mobile.sb-verse-sheet-dragging .sb-verse-toolbar-overflow,
+.sb-verse-toolbar-mobile.sb-verse-sheet-dragging
+  .sb-verse-toolbar-swipe-hint-collapsible {
   transition: none;
 }
 
@@ -1276,7 +1279,7 @@
 
 /* "Swipe up to see more" at the foot of the sheet — the affordance that replaced
    the "More" card, naming the handle gesture without spending a card slot on a
-   button. Only rendered while the sheet is collapsed and has an overflow row. */
+   button. */
 .sb-verse-toolbar-swipe-hint {
   display: flex;
   align-items: center;
@@ -1293,6 +1296,48 @@
      first pixel, same as the handle above it. */
   touch-action: none;
   cursor: pointer;
+}
+
+/* The sheet is pinned to the bottom of the screen, so height it loses pulls its
+   top edge down; the hint shrinks in step with the overflow row opening so that
+   edge only moves up. The single grid row's `fr` value (set inline from the
+   reveal progress) scales the hint between 0 and its content height without
+   measuring it. `visibility` is in the transition list so a tap, which jumps
+   straight to fully open, still fades the text out before hiding it. */
+.sb-verse-toolbar-swipe-hint-collapsible {
+  display: grid;
+  align-items: stretch;
+  margin-top: 0;
+  transition:
+    grid-template-rows 0.22s ease,
+    opacity 0.22s ease,
+    visibility 0.22s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-verse-toolbar-swipe-hint-collapsible {
+    transition: none;
+  }
+}
+
+.sb-verse-toolbar-swipe-hint-content {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Padding sits inside the clipped box; on the clipped box itself it would set
+   a floor the 0fr row can't shrink past. */
+.sb-verse-toolbar-swipe-hint-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding-top: 0.5rem;
+}
+
+/* Fully open: nothing left to reveal, so the hint can't be tapped. */
+.sb-verse-toolbar-swipe-hint-closed {
+  visibility: hidden;
 }
 
 .sb-verse-toolbar-swipe-hint .material-symbols-outlined {

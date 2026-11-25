@@ -1545,6 +1545,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       saves.isFilterActive.value
   );
 
+  /**
+   * How open the overflow row is, from 0 (collapsed) to 1 (fully open). Measured
+   * against the on-screen travel, not the full note, so a long annotation still
+   * reaches 1 once the drawer is open.
+   */
+  const verseSheetRevealProgress = useComputed(() =>
+    verseSheetVisibleOverflowHeight.value > 0
+      ? Math.min(
+          1,
+          verseSheetRevealHeight.value / verseSheetVisibleOverflowHeight.value
+        )
+      : 0
+  );
+
   const isBookmarksViewOpen = useComputed(
     () =>
       sidebar.isMobileOpen.value &&
@@ -1706,8 +1720,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       const overflowEl = sheet.querySelector<HTMLElement>(
         ".sb-verse-toolbar-overflow"
       );
+      // The swipe hint shrinks to nothing at full open, so counting its
+      // mid-reveal height would move the drawer's cap under the finger.
+      const hintEl = sheet.querySelector<HTMLElement>(
+        ".sb-verse-toolbar-swipe-hint-collapsible"
+      );
       const chrome = Math.round(
-        sheet.offsetHeight - (overflowEl?.offsetHeight ?? 0)
+        sheet.offsetHeight -
+          (overflowEl?.offsetHeight ?? 0) -
+          (hintEl?.offsetHeight ?? 0)
       );
       if (chrome > 0 && chrome !== verseSheetChromeHeight.peek()) {
         verseSheetChromeHeight.value = chrome;
@@ -4095,44 +4116,49 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               itself carries the accessible toggle. */}
           {isSmallScreen.value &&
             !isHighlightPickerOpen.value &&
-            verseSheetHasHiddenContent.value &&
-            !isVerseSheetExpanded.value && (
+            verseSheetHasHiddenContent.value && (
               <div
-                className="sb-verse-toolbar-swipe-hint"
+                className={`sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-collapsible${
+                  verseSheetRevealProgress.value === 1
+                    ? " sb-verse-toolbar-swipe-hint-closed"
+                    : ""
+                }`}
                 // Purely decorative: the panel itself owns the drag/tap
                 // gesture now, and the handle above remains the sole
                 // *accessible* control, so this stays out of the a11y tree.
                 aria-hidden="true"
                 style={{
-                  // Fades across the on-screen travel, not the full note, so a
-                  // long annotation still clears the hint once the drawer is open.
-                  opacity: verseSheetVisibleOverflowHeight.value
-                    ? 1 -
-                      Math.min(
-                        1,
-                        verseSheetRevealHeight.value /
-                          verseSheetVisibleOverflowHeight.value
-                      )
-                    : 1,
+                  // The sheet is pinned to the bottom of the screen, so height
+                  // it loses pulls its top edge down; shrinking the hint in
+                  // step with the reveal keeps that edge moving only up.
+                  gridTemplateRows: `${1 - verseSheetRevealProgress.value}fr`,
+                  opacity: 1 - verseSheetRevealProgress.value,
                 }}
               >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  keyboard_double_arrow_up
-                </span>
-                <span>
-                  {t("swipe-up-more", {
-                    defaultValue: "Swipe up to see more",
-                  })}
-                </span>
-                {selectionAnnotations.value.length > 0 && (
-                  <span>
-                    &#x2022;{" "}
-                    {t("x-notes", {
-                      defaultValue: "{{count}} notes",
-                      count: selectionAnnotations.value.length,
-                    })}
-                  </span>
-                )}
+                <div className="sb-verse-toolbar-swipe-hint-content">
+                  <div className="sb-verse-toolbar-swipe-hint-inner">
+                    <span
+                      className="material-symbols-outlined"
+                      aria-hidden="true"
+                    >
+                      keyboard_double_arrow_up
+                    </span>
+                    <span>
+                      {t("swipe-up-more", {
+                        defaultValue: "Swipe up to see more",
+                      })}
+                    </span>
+                    {selectionAnnotations.value.length > 0 && (
+                      <span>
+                        &#x2022;{" "}
+                        {t("x-notes", {
+                          defaultValue: "{{count}} notes",
+                          count: selectionAnnotations.value.length,
+                        })}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           {isSmallScreen.value && isHighlightPickerOpen.value && (

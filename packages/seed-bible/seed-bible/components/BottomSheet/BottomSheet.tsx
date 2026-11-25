@@ -159,6 +159,13 @@ export function BottomSheet(props: BottomSheetProps) {
   const drag = useRef<DragState | null>(null);
   const dismissOffset = useSignal(0);
   const isDragging = useSignal(false);
+  /**
+   * Still playing the opening rise. Dropped once it ends or a drag takes over,
+   * and never put back: the drag turns the animation off, and a CSS animation
+   * that comes back on replays from the start, which would drop the sheet off
+   * the bottom and rise it again after every tap or drag.
+   */
+  const isRising = useSignal(true);
   const close = () => {
     if (dismissible) onClose();
   };
@@ -234,6 +241,7 @@ export function BottomSheet(props: BottomSheetProps) {
       reveal: startReveal,
     };
     isDragging.value = true;
+    isRising.value = false;
     // Take over from the resting state so the first move continues from where
     // the sheet is now rather than jumping.
     expansion?.onDragReveal(startReveal);
@@ -363,8 +371,8 @@ export function BottomSheet(props: BottomSheetProps) {
         className={`sb-bottom-sheet${
           dragSurface === "sheet" ? " sb-bottom-sheet-drag-anywhere" : ""
         }${modal ? " sb-bottom-sheet-modal" : ""}${isDragging.value ? " sb-bottom-sheet-dragging" : ""}${
-          className ? ` ${className}` : ""
-        }`}
+          isRising.value ? " sb-bottom-sheet-rising" : ""
+        }${className ? ` ${className}` : ""}`}
         role="dialog"
         aria-modal={modal ? "true" : undefined}
         aria-label={label}
@@ -380,6 +388,9 @@ export function BottomSheet(props: BottomSheetProps) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
+        onAnimationEnd={(event) => {
+          if (event.target === event.currentTarget) isRising.value = false;
+        }}
       >
         {expansion ? (
           <div
