@@ -192,11 +192,6 @@ export function BibleSelector(props: BibleSelectorProps) {
         style={
           tourStepId && !glowing ? { background: "rgba(0,0,0,0.6)" } : undefined
         }
-        // Desktop hides the closed panel with opacity:0, which keeps it in the
-        // tab order. `inert` removes all contained controls from focus and the
-        // accessibility tree while the picker is closed. Mobile already uses
-        // display:none, so inert is a no-op there but harmless.
-        inert={!isOpen}
       >
         <div
           onClick={(event: Event) => {
