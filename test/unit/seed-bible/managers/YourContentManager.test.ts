@@ -57,6 +57,8 @@ function createManager(
     /** Answer every chapter from the synchronous cache instead of a fetch. */
     cachedChapters?: boolean;
     chapterError?: Error;
+    /** Holds every chapter fetch until this settles. */
+    chapterGate?: Promise<void>;
     /** Signed in as this account; null for signed out. */
     userId?: string | null;
     /** Starts with the device offline, so only its own copy can be read. */
@@ -114,6 +116,7 @@ function createManager(
 
   const getTranslationBookChapter = vi.fn(
     async (_translationId: string, book: string, chapter: number | string) => {
+      await options.chapterGate;
       if (options.chapterError) {
         throw options.chapterError;
       }
@@ -552,6 +555,82 @@ describe("createYourContentManager", () => {
       expect(manager.highlightVerseText.value.size).toBe(0);
       expect(manager.isReadingHighlightVerseText.value).toBe(false);
       expect(consoleError).toHaveBeenCalled();
+    });
+
+    // Every open reloads, and so do an adoption and the connection coming
+    // back; a highlight one of those brings in must be findable by its words
+    // without the search being cleared and typed again.
+    it("reads the wording of a highlight that arrives in a later load", async () => {
+      const highlights = [highlight("JHN", 1)];
+      const { manager } = createManager({
+        highlights,
+        verseWords: { "ROM/1/2": "the power of God" },
+      });
+      await manager.load();
+      await manager.readHighlightVerseText();
+
+      highlights.push(highlight("ROM", 2));
+      await manager.load({ force: true });
+
+      await vi.waitFor(() =>
+        expect([...manager.highlightVerseText.value.values()]).toContain(
+          "the power of God"
+        )
+      );
+      expect(manager.highlightVerseText.value.size).toBe(2);
+    });
+
+    it("doesn't read a chapter again for highlights it already has", async () => {
+      const { manager, getTranslationBookChapter } = createManager({
+        highlights: [highlight("JHN", 1)],
+      });
+      await manager.load();
+      await manager.readHighlightVerseText();
+
+      await manager.load({ force: true });
+      await manager.readHighlightVerseText();
+
+      expect(getTranslationBookChapter).toHaveBeenCalledTimes(1);
+    });
+
+    it("reads nothing on a later load until a search has asked for it", async () => {
+      const highlights = [highlight("JHN", 1)];
+      const { manager, getTranslationBookChapter } = createManager({
+        highlights,
+      });
+      await manager.load();
+
+      highlights.push(highlight("ROM", 2));
+      await manager.load({ force: true });
+      await flushPromises();
+
+      expect(getTranslationBookChapter).not.toHaveBeenCalled();
+    });
+
+    it("catches a highlight that arrives while a read is still running", async () => {
+      let openGate = () => {};
+      const highlights = [highlight("JHN", 1)];
+      const { manager } = createManager({
+        highlights,
+        verseWords: { "ROM/1/2": "the power of God" },
+        chapterGate: new Promise<void>((resolve) => {
+          openGate = resolve;
+        }),
+      });
+      await manager.load();
+      const reading = manager.readHighlightVerseText();
+
+      highlights.push(highlight("ROM", 2));
+      await manager.load({ force: true });
+      openGate();
+      await reading;
+
+      await vi.waitFor(() =>
+        expect([...manager.highlightVerseText.value.values()]).toContain(
+          "the power of God"
+        )
+      );
+      expect(manager.isReadingHighlightVerseText.value).toBe(false);
     });
   });
 

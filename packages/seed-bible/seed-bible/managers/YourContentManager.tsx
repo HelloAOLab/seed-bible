@@ -111,7 +111,9 @@ export interface YourContentManager {
    * are taken from cache without a request. Results land as each batch
    * arrives rather than all at the end, so a search sharpens as it goes.
    * Idempotent: a second call while the first is running joins it, and a
-   * completed run is not repeated.
+   * highlight already read is not read again. Once it has been called, every
+   * later load reads the highlights it brought that have no wording yet, so
+   * one that arrives after the first search is found by its words too.
    */
   readHighlightVerseText: () => Promise<void>;
   /** True while {@link readHighlightVerseText} is still working. */
@@ -201,6 +203,7 @@ export function createYourContentManager(
 
       annotations.value = sortAnnotationsByRecency(loadedAnnotations.items);
       highlights.value = loadedHighlights.items;
+      readNewHighlightVerseText();
       const complete = loadedAnnotations.complete && loadedHighlights.complete;
       source.value = !login.userId.peek()
         ? "device"
@@ -258,7 +261,17 @@ export function createYourContentManager(
   const verseText = signal<ReadonlyMap<string, string>>(new Map());
   const isReadingVerseText = signal(false);
   let verseTextRun: Promise<void> | null = null;
-  let verseTextDone = false;
+  /** Set by the first search; until then nobody needs the wording. */
+  let verseTextWanted = false;
+  /** A load replaced the highlights while a read was going over the old ones. */
+  let verseTextStale = false;
+
+  const highlightsWithoutText = (): StoredHighlight[] => {
+    const read = verseText.peek();
+    return highlights
+      .peek()
+      .filter((stored) => !read.has(highlightKey(stored)));
+  };
 
   /**
    * The verse numbers a highlight covers. A range is stored as its ends, and
@@ -311,11 +324,14 @@ export function createYourContentManager(
     return texts;
   };
 
-  const runVerseTextRead = async (startedIn: number): Promise<void> => {
+  const runVerseTextRead = async (
+    startedIn: number,
+    toRead: readonly StoredHighlight[]
+  ): Promise<void> => {
     // One entry per distinct chapter: several highlights in one chapter cost
     // one read between them.
     const groups = new Map<string, StoredHighlight[]>();
-    for (const stored of highlights.value) {
+    for (const stored of toRead) {
       const key = `${stored.translationId}/${stored.bookId}/${stored.chapterNumber}`;
       const group = groups.get(key);
       if (group) {
@@ -354,28 +370,39 @@ export function createYourContentManager(
   };
 
   const readHighlightVerseText = (): Promise<void> => {
-    if (verseTextDone) {
-      return Promise.resolve();
-    }
+    verseTextWanted = true;
     if (verseTextRun) {
       return verseTextRun;
     }
+    if (highlightsWithoutText().length === 0) {
+      return Promise.resolve();
+    }
     isReadingVerseText.value = true;
     const startedIn = generation;
-    const run: Promise<void> = runVerseTextRead(startedIn)
-      .then(() => {
-        if (startedIn === generation) {
-          verseTextDone = true;
-        }
-      })
-      .finally(() => {
-        if (verseTextRun === run) {
-          verseTextRun = null;
-          isReadingVerseText.value = false;
-        }
-      });
+    const run: Promise<void> = (async () => {
+      do {
+        verseTextStale = false;
+        await runVerseTextRead(startedIn, highlightsWithoutText());
+      } while (verseTextStale && startedIn === generation);
+    })().finally(() => {
+      if (verseTextRun === run) {
+        verseTextRun = null;
+        isReadingVerseText.value = false;
+      }
+    });
     verseTextRun = run;
     return run;
+  };
+
+  const readNewHighlightVerseText = () => {
+    if (!verseTextWanted) {
+      return;
+    }
+    if (verseTextRun) {
+      verseTextStale = true;
+      return;
+    }
+    void readHighlightVerseText();
   };
 
   // A different account (or none) has different content. Whatever the last
@@ -394,7 +421,7 @@ export function createYourContentManager(
     annotations.value = [];
     highlights.value = [];
     verseText.value = new Map();
-    verseTextDone = false;
+    verseTextStale = false;
     verseTextRun = null;
     isReadingVerseText.value = false;
     // Back to idle so the reload shows as loading, not as an empty list.
