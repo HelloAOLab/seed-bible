@@ -1,3 +1,5 @@
+import { EmptyState } from "../EmptyState/EmptyState";
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./SettingsPage.css";
 import { localizedThemeName } from "./localizedThemeName";
 import { useSignal } from "@preact/signals";
@@ -46,6 +48,7 @@ import { useExtensionCatalog } from "./useExtensionCatalog";
 export { AddExtensionFromLink } from "./useExtensionCatalog";
 import { ExtensionTile } from "../ExtensionConsentModal/ExtensionConsentModal";
 import { Button } from "../Button/Button";
+import { SEED_BIBLE_DOCS_URL } from "../../app/publicLinks";
 import { IconButton } from "../IconButton/IconButton";
 import { SettingRow } from "../SettingRow/SettingRow";
 import { Switch } from "../Switch/Switch";
@@ -328,9 +331,19 @@ function CustomizationSystemCard(props: {
   const { customizations } = props.state;
   const { t } = useI18n();
   const isSelected = customizations.isFollowingSystemScheme.value;
-  const halves = [LIGHT_THEME.id, DARK_THEME.id].map((presetId) => {
+
+  const halves = [
+    {
+      presetId: LIGHT_THEME.id,
+      variantId: props.customization.defaultLightVariantId,
+    },
+    {
+      presetId: DARK_THEME.id,
+      variantId: props.customization.defaultDarkVariantId,
+    },
+  ].map(({ presetId, variantId }) => {
     const variant = props.customization.variants.find(
-      (v) => v.baseTheme === presetId
+      (v) => v.id === variantId
     );
     return {
       presetId,
@@ -474,20 +487,23 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           >
             {t("scripture-settings-font-size-example", { defaultValue: "A" })}
           </button>
-          <button
-            type="button"
-            className="sb-scripture-quick-btn"
-            onClick={handleCycleLineHeight}
-            aria-label={t("change-line-spacing", {
-              defaultValue: "Change line spacing",
-            })}
-            title={t("line-spacing_lineHeight", {
+          <TooltipTrigger
+            label={t("line-spacing_lineHeight", {
               lineHeight: currentLineHeight,
               defaultValue: `Line spacing: ${currentLineHeight}`,
             })}
           >
-            <ScriptureLineHeightIcon index={lineHeightIndex} />
-          </button>
+            <button
+              type="button"
+              className="sb-scripture-quick-btn"
+              onClick={handleCycleLineHeight}
+              aria-label={t("change-line-spacing", {
+                defaultValue: "Change line spacing",
+              })}
+            >
+              <ScriptureLineHeightIcon index={lineHeightIndex} />
+            </button>
+          </TooltipTrigger>
         </div>
 
         {!isMobile && (
@@ -934,9 +950,9 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           {title}
         </h2>
         {entries.length === 0 ? (
-          <div className="sb-settings-empty-state">
-            <p>{emptyMessage}</p>
-          </div>
+          <EmptyState className="sb-settings-empty-state">
+            {emptyMessage}
+          </EmptyState>
         ) : (
           <ul className="sb-extensions-group">
             {entries.map(renderExtensionRow)}
@@ -1005,13 +1021,11 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           </p>
         )}
         {catalog.entries.length === 0 ? (
-          <div className="sb-settings-empty-state">
-            <p>
-              {t("no-extensions-available", {
-                defaultValue: "No extensions available.",
-              })}
-            </p>
-          </div>
+          <EmptyState className="sb-settings-empty-state">
+            {t("no-extensions-available", {
+              defaultValue: "No extensions available.",
+            })}
+          </EmptyState>
         ) : (
           <>
             <SearchBar
@@ -1022,13 +1036,11 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
               placeholder={t("extensions-search")}
             />
             {query && shownExtensions.length === 0 ? (
-              <div className="sb-settings-empty-state" role="status">
-                <p>
-                  {t("extensions-search-no-matches", {
-                    query: searchQuery.value.trim(),
-                  })}
-                </p>
-              </div>
+              <EmptyState className="sb-settings-empty-state" role="status">
+                {t("extensions-search-no-matches", {
+                  query: searchQuery.value.trim(),
+                })}
+              </EmptyState>
             ) : (
               <>
                 {renderSection(
@@ -1073,6 +1085,16 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
           onClick={openAddFromLink}
         >
           {t("extension-add-link-label")}
+        </Button>
+        <Button
+          size="lg"
+          shape="pill"
+          icon="menu_book"
+          className="sb-extensions-add-link-button"
+          href={SEED_BIBLE_DOCS_URL}
+          target="_blank"
+        >
+          {t("docs-link-label", { defaultValue: "Docs" })}
         </Button>
       </section>
     </div>

@@ -1,3 +1,4 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./BibleReader.inline.css";
 import "./BibleReader.css";
 import {
@@ -325,37 +326,38 @@ function ChapterNotesButton(props: ChapterNotesButtonProps) {
       : null;
 
   return (
-    <button
-      type="button"
-      className="sb-bible-reader-mobile-header-notes"
-      // Mirrors the account button below: stop the tap here so the reader
-      // pane wrapper's pointerdown handler doesn't interfere.
-      onPointerDown={(e: PointerEvent) => e.stopPropagation()}
-      onClick={(e: MouseEvent) => {
-        e.stopPropagation();
-        if (firstAnnotatedVerse === null || !bookId || !chapterNumber) {
-          state.app.openDiscover();
-          return;
-        }
-        if (!state.settings.settings.value.discoveredContent.showContent) {
-          state.discover.view.value = "discover";
-        }
-        state.discover.scrollToVerse.value = {
-          bookId,
-          chapterNumber,
-          verseNumber: firstAnnotatedVerse,
-        };
-      }}
-      aria-label={label}
-      title={label}
-    >
-      <span className="material-symbols-outlined" aria-hidden="true">
-        sticky_note_2
-      </span>
-      <span className="sb-bible-reader-mobile-header-notes-count">
-        {noteCount}
-      </span>
-    </button>
+    <TooltipTrigger>
+      <button
+        type="button"
+        className="sb-bible-reader-mobile-header-notes"
+        // Mirrors the account button below: stop the tap here so the reader
+        // pane wrapper's pointerdown handler doesn't interfere.
+        onPointerDown={(e: PointerEvent) => e.stopPropagation()}
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          if (firstAnnotatedVerse === null || !bookId || !chapterNumber) {
+            state.app.openDiscover();
+            return;
+          }
+          if (!state.settings.settings.value.discoveredContent.showContent) {
+            state.discover.view.value = "discover";
+          }
+          state.discover.scrollToVerse.value = {
+            bookId,
+            chapterNumber,
+            verseNumber: firstAnnotatedVerse,
+          };
+        }}
+        aria-label={label}
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">
+          sticky_note_2
+        </span>
+        <span className="sb-bible-reader-mobile-header-notes-count">
+          {noteCount}
+        </span>
+      </button>
+    </TooltipTrigger>
   );
 }
 
@@ -685,6 +687,31 @@ function splitVerseIntoSegments(
   return segments;
 }
 
+/** The small ⓘ after a verse that opens its footnote. */
+function FootnoteButton(props: {
+  noteId: number;
+  onOpen: (noteId: number) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <TooltipTrigger>
+      <button
+        className="sb-inline-footnote-button"
+        aria-label={t("open-footnote", {
+          noteId: props.noteId,
+          defaultValue: "Open footnote {{noteId}}",
+        })}
+        onClick={(event: MouseEvent) => {
+          event.stopPropagation();
+          props.onOpen(props.noteId);
+        }}
+      >
+        <span className="material-symbols-outlined">info</span>
+      </button>
+    </TooltipTrigger>
+  );
+}
+
 function renderInlineContent(
   part: ChapterVerse["content"][0],
   index: number,
@@ -843,17 +870,7 @@ function renderInlineContent(
     return (
       <span key={index} className="sb-inline-footnote">
         {"\u00A0"}
-        <button
-          className="sb-inline-footnote-button"
-          aria-label={`Open footnote ${part.noteId}`}
-          title={`Open footnote ${part.noteId}`}
-          onClick={(event: MouseEvent) => {
-            event.stopPropagation();
-            onOpenFootnote(part.noteId);
-          }}
-        >
-          <span className="material-symbols-outlined">info</span>
-        </button>
+        <FootnoteButton noteId={part.noteId} onOpen={onOpenFootnote} />
       </span>
     );
   }

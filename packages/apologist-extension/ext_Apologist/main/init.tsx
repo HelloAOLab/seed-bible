@@ -185,7 +185,6 @@ type ChatMessage =
 
 const PROVIDER_ID = "apologist-chat-provider";
 const DISCOVER_PROVIDER_ID = "apologist-discover-provider";
-const DEFAULT_APOLOGIST_MODEL = "openai/gpt/5-mini";
 
 // Bounds the tool-call resolution loop below so a model that never emits
 // final content (or keeps calling tools) can't hang generateResponse forever.
@@ -198,18 +197,19 @@ export default function initApologistExtension() {
       console.log("Apologist extension initialized with context:", context);
 
       const url = context.navigation.currentUrl.value;
-      const urlName = url.searchParams.get("apologistName") ?? null;
+      // A blank value (`?apologistName=`) counts as unset, so it falls back
+      // to the saved setting or default instead of overriding them with "".
+      const readLinkText = (key: string): string | null =>
+        url.searchParams.get(key)?.trim() || null;
+      const urlName = readLinkText("apologistName");
       const apologistIconUrl =
-        url.searchParams.get("apologistIconUrl") || ApologistIcon;
-      const customApologistDomain =
-        url.searchParams.get("apologistDomain") ?? null;
+        readLinkText("apologistIconUrl") ?? ApologistIcon;
+      const customApologistDomain = readLinkText("apologistDomain");
       const apologistDomain = customApologistDomain ?? DEFAULT_APOLOGIST_DOMAIN;
-      const apologistApiKey = url.searchParams.get("apologistApiKey") ?? null;
-      const apologistShareToken =
-        url.searchParams.get("apologistShareToken") ?? null;
-      const urlModel = url.searchParams.get("apologistModel") ?? null;
-      const apologistConversationId: string | null =
-        url.searchParams.get("apologistConversation") ?? null;
+      const apologistApiKey = readLinkText("apologistApiKey");
+      const apologistShareToken = readLinkText("apologistShareToken");
+      const urlModel = readLinkText("apologistModel");
+      const apologistConversationId = readLinkText("apologistConversation");
       const rawApologistTeamId = url.searchParams.get("apologistTeamID");
       const urlTeamId =
         rawApologistTeamId && /^\d+$/.test(rawApologistTeamId)
@@ -293,8 +293,7 @@ export default function initApologistExtension() {
                 method: "POST",
                 body,
               }),
-            model:
-              urlModel ?? readSavedText("model") ?? DEFAULT_APOLOGIST_MODEL,
+            model: urlModel ?? readSavedText("model") ?? undefined,
             stream: false,
             language: uiLocaleForApologist(i18n.language),
             bible: resolveApologistBible(
@@ -395,8 +394,7 @@ export default function initApologistExtension() {
                     method: "POST",
                     body,
                   }),
-                model:
-                  urlModel ?? readSavedText("model") ?? DEFAULT_APOLOGIST_MODEL,
+                model: urlModel ?? readSavedText("model") ?? undefined,
                 stream: true,
                 language: uiLanguage,
                 bible: bibleCode,

@@ -1,3 +1,4 @@
+import { TooltipTrigger } from "../TooltipTrigger/TooltipTrigger";
 import "./ColorPicker.css";
 import { signal, useSignal } from "@preact/signals";
 import type { JSX } from "preact";
@@ -478,29 +479,30 @@ export function ColorPicker(props: ColorPickerProps) {
   return (
     <>
       {showTrigger && (
-        <button
-          ref={triggerRef}
-          type="button"
-          className={`sb-color-picker-trigger${className ? ` ${className}` : ""}`}
-          aria-label={triggerLabel}
-          aria-haspopup="dialog"
-          aria-expanded={isOpen}
-          title={triggerLabel}
-          onClick={() => {
-            if (isOpen) {
-              cancel();
-            } else {
-              setOpen(true);
-            }
-          }}
-        >
-          <span
-            className={`sb-color-picker-swatch${
-              swatchClassName ? ` ${swatchClassName}` : ""
-            }`}
-            style={{ background: committed }}
-          />
-        </button>
+        <TooltipTrigger>
+          <button
+            ref={triggerRef}
+            type="button"
+            className={`sb-color-picker-trigger${className ? ` ${className}` : ""}`}
+            aria-label={triggerLabel}
+            aria-haspopup="dialog"
+            aria-expanded={isOpen}
+            onClick={() => {
+              if (isOpen) {
+                cancel();
+              } else {
+                setOpen(true);
+              }
+            }}
+          >
+            <span
+              className={`sb-color-picker-swatch${
+                swatchClassName ? ` ${swatchClassName}` : ""
+              }`}
+              style={{ background: committed }}
+            />
+          </button>
+        </TooltipTrigger>
       )}
       {dialog}
     </>

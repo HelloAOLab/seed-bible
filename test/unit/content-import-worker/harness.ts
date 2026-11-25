@@ -26,6 +26,7 @@ export function createTestD1(): D1Database & { sqlite: DatabaseSync } {
     "0001_import_jobs.sql",
     "0002_site_imports.sql",
     "0003_index_blocks.sql",
+    "0004_link_dispatch.sql",
   ]) {
     sqlite.exec(readFileSync(path.join(MIGRATIONS, file), "utf-8"));
   }
@@ -266,8 +267,8 @@ const MAX_RETRIES = 5;
 
 /**
  * The worker with its bindings: D1 on SQLite, a queue that delivers
- * when told to (applying Cloudflare's retry and dead-letter rules), and one
- * LibraryWriter per library.
+ * when told to (applying Cloudflare's delays, retry and dead-letter rules),
+ * and one LibraryWriter per library.
  */
 export function createTestWorker(
   casualos: FakeCasualOS,
@@ -287,8 +288,10 @@ export function createTestWorker(
     now: () => clock.now,
   };
   const db = createTestD1();
-  const pending: { body: ImportMessage; attempts: number }[] = [];
-  const deadLetters: { body: ImportMessage; attempts: number }[] = [];
+  /** `at`: the clock time a message's delay ends and it can be delivered. */
+  const pending: { body: ImportMessage; attempts: number; at: number }[] = [];
+  const deadLetters: { body: ImportMessage; attempts: number; at: number }[] =
+    [];
   const sent: ImportMessage[] = [];
   /** How many of the next sends the queue refuses, as if it were down. */
   const queue = { failSends: 0 };
@@ -303,16 +306,24 @@ export function createTestWorker(
   const env: Env = {
     DB: db,
     IMPORT_QUEUE: {
-      send: async (body) => {
+      send: async (body, options) => {
         refuseIfDown();
         sent.push(body);
-        pending.push({ body, attempts: 1 });
+        pending.push({
+          body,
+          attempts: 1,
+          at: clock.now + (options?.delaySeconds ?? 0) * 1000,
+        });
       },
       sendBatch: async (messages) => {
         refuseIfDown();
         for (const message of messages) {
           sent.push(message.body);
-          pending.push({ body: message.body, attempts: 1 });
+          pending.push({
+            body: message.body,
+            attempts: 1,
+            at: clock.now + (message.delaySeconds ?? 0) * 1000,
+          });
         }
       },
     },
@@ -333,27 +344,53 @@ export function createTestWorker(
     DEAD_LETTER_QUEUE: "dlq",
   };
 
-  /** Delivers everything queued (and anything re-queued), batch by batch, until the queue is empty. */
+  /**
+   * Delivers everything queued (and anything re-queued), batch by batch,
+   * until the queue is empty. When every message left is delayed, the clock
+   * moves on to the first one's delivery time, as time would pass.
+   */
   const drain = async (options: { batchSize?: number } = {}) => {
     const batchSize = options.batchSize ?? 10;
+    const takeReady = (source: typeof pending) => {
+      const ready = source.filter((entry) => entry.at <= clock.now);
+      const taken = ready.slice(0, batchSize);
+      for (const entry of taken) {
+        source.splice(source.indexOf(entry), 1);
+      }
+      return taken;
+    };
     for (
       let round = 0;
       round < 1000 && (pending.length || deadLetters.length);
       round++
     ) {
-      const fromDeadLetters = pending.length === 0;
-      const source = fromDeadLetters ? deadLetters : pending;
-      const taken = source.splice(0, batchSize);
+      let fromDeadLetters = false;
+      let taken = takeReady(pending);
+      if (taken.length === 0) {
+        taken = takeReady(deadLetters);
+        fromDeadLetters = taken.length > 0;
+      }
+      if (taken.length === 0) {
+        clock.now = Math.min(
+          ...[...pending, ...deadLetters].map((entry) => entry.at)
+        );
+        continue;
+      }
       const messages = taken.map(
         (entry): QueueMessage<ImportMessage> => ({
           body: entry.body,
           attempts: entry.attempts,
           ack: () => undefined,
-          retry: () => {
+          retry: (options) => {
+            const next = {
+              body: entry.body,
+              attempts: entry.attempts + 1,
+              at: clock.now + (options?.delaySeconds ?? 0) * 1000,
+            };
             if (entry.attempts >= MAX_RETRIES) {
-              deadLetters.push({ body: entry.body, attempts: entry.attempts });
+              deadLetters.push({ ...next, at: clock.now });
             } else {
-              pending.push({ body: entry.body, attempts: entry.attempts + 1 });
+              pending.push(next);
             }
           },
         })

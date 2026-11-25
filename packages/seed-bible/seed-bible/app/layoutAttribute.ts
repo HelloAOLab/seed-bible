@@ -8,11 +8,11 @@
  * `[data-layout]` lookup never finds this one by mistake.
  *
  * Written by the server into its HTML (`standalone/entry-ssr.tsx`), by the
- * native build (`script/lib/nativeShell.ts`), by the app as `isMobile`
- * changes (`SeedBibleStateManager.tsx`), and into each sandboxed extension
- * frame (`extensions/index.tsx`). When none of those has filled it in, an
- * inline script in `index.html` sets it from the window width before the
- * first paint.
+ * app as `isMobile` changes (`SeedBibleStateManager.tsx`), and into each
+ * sandboxed extension frame (`extensions/index.tsx`). When the server hasn't
+ * filled it in, an inline script in `index.html` sets it with the same rule
+ * as `isMobile` before the first paint. The native apps always take that path:
+ * their build (`script/lib/nativeShell.ts`) leaves it empty.
  */
 export const LAYOUT_ATTRIBUTE = "data-sb-app-layout";
 

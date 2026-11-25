@@ -39,6 +39,10 @@
   color: color-mix(in srgb, var(--sb-icon-button-color), transparent 25%);
   cursor: pointer;
   transition: color var(--sb-duration-fast) ease;
+  /* A held finger shows the tooltip, so keep Android from selecting the
+     icon's text or offering its own menu first. */
+  user-select: none;
+  -webkit-touch-callout: none;
 
   /* Keeps the circle's negative z-index inside the button. */
   position: relative;

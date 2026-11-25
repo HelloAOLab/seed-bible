@@ -85,7 +85,9 @@
       "download-done-with-translation": "Kruisverwysings en {{name}} is nou vanlyn beskikbaar",
       "download-partial": "Het {{downloaded}} van {{total}} hoofstukke gestoor. {{failed}} kon nie afgelaai word nie.",
       "download-translation-failed": "Die kruisverwysings is gestoor, maar {{name}} kon nie afgelaai word nie.",
-      "download-failed": "Kon nie die kruisverwysings aflaai nie. Kontroleer jou verbinding en probeer weer."
+      "download-failed": "Kon nie die kruisverwysings aflaai nie. Kontroleer jou verbinding en probeer weer.",
+      "dock-pane": "Dok aan die kant",
+      "float-pane": "Sweef oor die leser"
     },
     "am": {
       "title": "ማጣቀሻዎች",
@@ -127,7 +129,9 @@
       "download-done-with-translation": "ማጣቀሻዎች እና {{name}} አሁን ከመስመር ውጭ ይገኛሉ",
       "download-partial": "ከ {{total}} ምዕራፎች ውስጥ {{downloaded}} ተቀምጧል። {{failed}} ሊወርድ አልቻለም።",
       "download-translation-failed": "የመስቀለኛ ማጣቀሻዎቹን አስቀምጧል፣ ነገር ግን {{name}} ሊወርድ አልቻለም።",
-      "download-failed": "የማጣቀሻዎቹን ማውረድ አልተቻለም። ግንኙነትዎን ያረጋግጡ እና እንደገና ይሞክሩ።"
+      "download-failed": "የማጣቀሻዎቹን ማውረድ አልተቻለም። ግንኙነትዎን ያረጋግጡ እና እንደገና ይሞክሩ።",
+      "dock-pane": "ወደ ጎን ትከል",
+      "float-pane": "በአንባቢው ላይ ተንሳፋፊ"
     },
     "ar": {
       "title": "مراجع",
@@ -169,7 +173,9 @@
       "download-done-with-translation": "تتوفر الآن المراجع المتبادلة و {{name}} دون اتصال بالإنترنت",
       "download-partial": "تم حفظ {{downloaded}} من أصل {{total}} فصلاً. لم يتم تنزيل {{failed}} فصلاً.",
       "download-translation-failed": "تم حفظ المراجع المتبادلة، ولكن تعذر تنزيل {{name}} .",
-      "download-failed": "تعذر تنزيل المراجع المتبادلة. تحقق من اتصالك وحاول مرة أخرى."
+      "download-failed": "تعذر تنزيل المراجع المتبادلة. تحقق من اتصالك وحاول مرة أخرى.",
+      "dock-pane": "رصيف جانبي",
+      "float-pane": "يطفو فوق القارئ"
     },
     "az": {
       "title": "İstinadlar",
@@ -211,7 +217,9 @@
       "download-done-with-translation": "Çarpaz istinadlar və {{name}} artıq oflayn rejimdə mövcuddur",
       "download-partial": "{{total}} fəsildən {{downloaded}} si yadda saxlanıldı. {{failed}} fəsil yüklənə bilmədi.",
       "download-translation-failed": "Çarpaz istinadlar yadda saxlanıldı, lakin {{name}} yüklənə bilmədi.",
-      "download-failed": "Çarpaz istinadları yükləmək mümkün olmadı. Bağlantınızı yoxlayın və yenidən cəhd edin."
+      "download-failed": "Çarpaz istinadları yükləmək mümkün olmadı. Bağlantınızı yoxlayın və yenidən cəhd edin.",
+      "dock-pane": "Yan tərəfə doklayın",
+      "float-pane": "Oxucu üzərində üzün"
     },
     "be": {
       "title": "Спасылкі",
@@ -253,7 +261,9 @@
       "download-done-with-translation": "Перакрыжаваныя спасылкі і {{name}} цяпер даступныя ў аўтаномным рэжыме",
       "download-partial": "Захавана {{downloaded}} з {{total}} раздзелаў. Не ўдалося загрузіць {{failed}} раздзел.",
       "download-translation-failed": "Спасылкі захаваны, але {{name}} не ўдалося загрузіць.",
-      "download-failed": "Не атрымалася загрузіць перакрыжаваныя спасылкі. Праверце падключэнне і паспрабуйце яшчэ раз."
+      "download-failed": "Не атрымалася загрузіць перакрыжаваныя спасылкі. Праверце падключэнне і паспрабуйце яшчэ раз.",
+      "dock-pane": "Прыстыкаваць да боку",
+      "float-pane": "Павесьце над чытачом"
     },
     "bg": {
       "title": "Референции",
@@ -295,7 +305,9 @@
       "download-done-with-translation": "Кръстосаните препратки и {{name}} вече са достъпни офлайн",
       "download-partial": "Запазени са {{downloaded}} от {{total}} глави. {{failed}} не можа да бъде изтеглена.",
       "download-translation-failed": "Запазих кръстосаните препратки, но {{name}} не можа да бъде изтеглен.",
-      "download-failed": "Не можах да изтегля препратките. Проверете връзката си и опитайте отново."
+      "download-failed": "Не можах да изтегля препратките. Проверете връзката си и опитайте отново.",
+      "dock-pane": "Докинг отстрани",
+      "float-pane": "Плаващ над четеца"
     },
     "bn": {
       "title": "তথ্যসূত্র",
@@ -337,7 +349,9 @@
       "download-done-with-translation": "ক্রস-রেফারেন্স এবং {{name}} এখন অফলাইনে উপলব্ধ।",
       "download-partial": "{{total}} টি অধ্যায়ের মধ্যে {{downloaded}} টি সংরক্ষণ করা হয়েছে। {{failed}} টি ডাউনলোড করা যায়নি।",
       "download-translation-failed": "ক্রস-রেফারেন্সগুলো সংরক্ষণ করা হয়েছে, কিন্তু {{name}} ডাউনলোড করা যায়নি।",
-      "download-failed": "ক্রস-রেফারেন্সগুলো ডাউনলোড করা যায়নি। আপনার সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।"
+      "download-failed": "ক্রস-রেফারেন্সগুলো ডাউনলোড করা যায়নি। আপনার সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।",
+      "dock-pane": "পাশে ডক করুন",
+      "float-pane": "পাঠকের উপর ভাসুন"
     },
     "bs": {
       "title": "Reference",
@@ -379,7 +393,9 @@
       "download-done-with-translation": "Unakrsne reference i {{name}} su sada dostupni van mreže",
       "download-partial": "Sačuvano je {{downloaded}} od {{total}} poglavlja. {{failed}} nije moguće preuzeti.",
       "download-translation-failed": "Unakrsne reference su sačuvane, ali {{name}} nije moguće preuzeti.",
-      "download-failed": "Preuzimanje unakrsnih referenci nije uspjelo. Provjerite vezu i pokušajte ponovo."
+      "download-failed": "Preuzimanje unakrsnih referenci nije uspjelo. Provjerite vezu i pokušajte ponovo.",
+      "dock-pane": "Prikači sa strane",
+      "float-pane": "Lebdi iznad čitača"
     },
     "ca": {
       "title": "Referències",
@@ -421,7 +437,9 @@
       "download-done-with-translation": "Les referències creuades i {{name}} ara estan disponibles fora de línia",
       "download-partial": "S'han desat {{downloaded}} de {{total}} capítols. No s'han pogut descarregar {{failed}} .",
       "download-translation-failed": "S'han desat les referències creuades, però no s'ha pogut descarregar {{name}} .",
-      "download-failed": "No s'han pogut descarregar les referències creuades. Comproveu la connexió i torneu-ho a provar."
+      "download-failed": "No s'han pogut descarregar les referències creuades. Comproveu la connexió i torneu-ho a provar.",
+      "dock-pane": "Acoblar al costat",
+      "float-pane": "Sura sobre el lector"
     },
     "cs": {
       "title": "Reference",
@@ -463,7 +481,9 @@
       "download-done-with-translation": "Křížové odkazy a {{name}} jsou nyní k dispozici offline",
       "download-partial": "Uloženo {{downloaded}} z {{total}} kapitol. {{failed}} se nepodařilo stáhnout.",
       "download-translation-failed": "Křížové odkazy byly uloženy, ale soubor {{name}} se nepodařilo stáhnout.",
-      "download-failed": "Nepodařilo se stáhnout křížové odkazy. Zkontrolujte připojení a zkuste to znovu."
+      "download-failed": "Nepodařilo se stáhnout křížové odkazy. Zkontrolujte připojení a zkuste to znovu.",
+      "dock-pane": "Ukotvit na stranu",
+      "float-pane": "Vznášet se nad čtečkou"
     },
     "cy": {
       "title": "Cyfeiriadau",
@@ -505,7 +525,9 @@
       "download-done-with-translation": "Mae croesgyfeiriadau a {{name}} bellach ar gael all-lein",
       "download-partial": "Arbedwyd {{downloaded}} o {{total}} penodau. Ni ellid lawrlwytho {{failed}} .",
       "download-translation-failed": "Wedi cadw'r croesgyfeiriadau, ond ni ellid lawrlwytho {{name}} .",
-      "download-failed": "Methwyd lawrlwytho'r croesgyfeiriadau. Gwiriwch eich cysylltiad a cheisiwch eto."
+      "download-failed": "Methwyd lawrlwytho'r croesgyfeiriadau. Gwiriwch eich cysylltiad a cheisiwch eto.",
+      "dock-pane": "Dociwch i'r ochr",
+      "float-pane": "Arnofio dros y darllenydd"
     },
     "da": {
       "title": "Referencer",
@@ -547,7 +569,9 @@
       "download-done-with-translation": "Krydsreferencer og {{name}} er nu tilgængelige offline",
       "download-partial": "Gemte {{downloaded}} af {{total}} kapitler. {{failed}} kunne ikke downloades.",
       "download-translation-failed": "Krydsreferencerne blev gemt, men {{name}} kunne ikke downloades.",
-      "download-failed": "Krydsreferencerne kunne ikke downloades. Tjek din forbindelse, og prøv igen."
+      "download-failed": "Krydsreferencerne kunne ikke downloades. Tjek din forbindelse, og prøv igen.",
+      "dock-pane": "Dok til siden",
+      "float-pane": "Flyd over læseren"
     },
     "de": {
       "title": "Referenzen",
@@ -589,7 +613,9 @@
       "download-done-with-translation": "Querverweise und {{name}} sind jetzt offline verfügbar.",
       "download-partial": "{{downloaded}} von {{total}} Kapiteln gespeichert. {{failed}} konnte nicht heruntergeladen werden.",
       "download-translation-failed": "Die Querverweise wurden gespeichert, aber {{name}} konnte nicht heruntergeladen werden.",
-      "download-failed": "Die Querverweise konnten nicht heruntergeladen werden. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+      "download-failed": "Die Querverweise konnten nicht heruntergeladen werden. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      "dock-pane": "Anlegen an der Seite",
+      "float-pane": "Schwebe über dem Leser"
     },
     "el": {
       "title": "Αναφορές",
@@ -631,7 +657,9 @@
       "download-done-with-translation": "Οι διασταυρούμενες αναφορές και {{name}} είναι πλέον διαθέσιμα εκτός σύνδεσης",
       "download-partial": "Αποθηκεύτηκαν {{downloaded}} από {{total}} κεφάλαια. Δεν ήταν δυνατή η λήψη {{failed}} .",
       "download-translation-failed": "Οι παραπομπές αποθηκεύτηκαν, αλλά δεν ήταν δυνατή η λήψη {{name}} .",
-      "download-failed": "Δεν ήταν δυνατή η λήψη των παραπομπών. Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά."
+      "download-failed": "Δεν ήταν δυνατή η λήψη των παραπομπών. Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά.",
+      "dock-pane": "Αγκυρώστε στο πλάι",
+      "float-pane": "Αιωρηθείτε πάνω από τον αναγνώστη"
     },
     "es": {
       "title": "Referencias",
@@ -673,7 +701,9 @@
       "download-done-with-translation": "Las referencias cruzadas y {{name}} ya están disponibles sin conexión.",
       "download-partial": "Se guardaron {{downloaded}} de {{total}} capítulos. {{failed}} no se pudo descargar.",
       "download-translation-failed": "Se guardaron las referencias cruzadas, pero {{name}} no se pudo descargar.",
-      "download-failed": "No se pudieron descargar las referencias cruzadas. Compruebe su conexión e inténtelo de nuevo."
+      "download-failed": "No se pudieron descargar las referencias cruzadas. Compruebe su conexión e inténtelo de nuevo.",
+      "dock-pane": "Muelle al lado",
+      "float-pane": "Flotar sobre el lector"
     },
     "et": {
       "title": "Viited",
@@ -715,7 +745,9 @@
       "download-done-with-translation": "Ristviited ja {{name}} on nüüd võrguühenduseta saadaval",
       "download-partial": "Salvestatud on {{downloaded}} peatükki {{total}} st. {{failed}} peatükki ei saanud alla laadida.",
       "download-translation-failed": "Ristviited salvestati, aga {{name}} ei saanud alla laadida.",
-      "download-failed": "Ristviiteid ei õnnestunud alla laadida. Kontrollige ühendust ja proovige uuesti."
+      "download-failed": "Ristviiteid ei õnnestunud alla laadida. Kontrollige ühendust ja proovige uuesti.",
+      "dock-pane": "Dokkige küljele",
+      "float-pane": "Hõlju lugeja kohal"
     },
     "fa": {
       "title": "منابع",
@@ -757,7 +789,9 @@
       "download-done-with-translation": "ارجاعات متقابل و {{name}} اکنون به صورت آفلاین در دسترس هستند",
       "download-partial": "از {{total}} فصل‌ها {{downloaded}} ذخیره شد. {{failed}} دانلود نشد.",
       "download-translation-failed": "ارجاعات متقابل را ذخیره کردم، اما {{name}} قابل دانلود نبود.",
-      "download-failed": "نتوانستم منابع متقابل را دانلود کنم. اتصال خود را بررسی کنید و دوباره امتحان کنید."
+      "download-failed": "نتوانستم منابع متقابل را دانلود کنم. اتصال خود را بررسی کنید و دوباره امتحان کنید.",
+      "dock-pane": "به پهلو متصل کنید",
+      "float-pane": "روی خواننده شناور شوید"
     },
     "fi": {
       "title": "Viitteet",
@@ -799,7 +833,9 @@
       "download-done-with-translation": "Ristiviittaukset ja {{name}} ovat nyt saatavilla offline-tilassa",
       "download-partial": "Tallennettu {{downloaded}} {{total}} luvusta. {{failed}} ei voitu ladata.",
       "download-translation-failed": "Ristiviittaukset tallennettiin, mutta tiedostoa {{name}} ei voitu ladata.",
-      "download-failed": "Ristiviittausten lataaminen epäonnistui. Tarkista yhteytesi ja yritä uudelleen."
+      "download-failed": "Ristiviittausten lataaminen epäonnistui. Tarkista yhteytesi ja yritä uudelleen.",
+      "dock-pane": "Telakointi sivulle",
+      "float-pane": "Leiju lukijan päällä"
     },
     "fil": {
       "title": "Mga Sanggunian",
@@ -841,7 +877,9 @@
       "download-done-with-translation": "Ang mga cross-reference at {{name}} ay available na ngayon offline",
       "download-partial": "Na-save ang {{downloaded}} sa {{total}} na mga kabanata. Hindi ma-download {{failed}} .",
       "download-translation-failed": "Na-save ang mga cross-reference, ngunit hindi ma-download {{name}} .",
-      "download-failed": "Hindi ma-download ang mga cross-reference. Suriin ang iyong koneksyon at subukang muli."
+      "download-failed": "Hindi ma-download ang mga cross-reference. Suriin ang iyong koneksyon at subukang muli.",
+      "dock-pane": "Pantalan sa gilid",
+      "float-pane": "Lumutang sa ibabaw ng mambabasa"
     },
     "fr": {
       "title": "Références",
@@ -883,7 +921,9 @@
       "download-done-with-translation": "Les références croisées et {{name}} sont désormais disponibles hors ligne",
       "download-partial": "{{downloaded}} chapitres sur {{total}} enregistrés. {{failed}} n'a pas pu être téléchargé.",
       "download-translation-failed": "Les références croisées ont été enregistrées, mais {{name}} n'a pas pu être téléchargé.",
-      "download-failed": "Impossible de télécharger les références croisées. Veuillez vérifier votre connexion et réessayer."
+      "download-failed": "Impossible de télécharger les références croisées. Veuillez vérifier votre connexion et réessayer.",
+      "dock-pane": "Amarrez-vous sur le côté",
+      "float-pane": "Planez au-dessus du lecteur"
     },
     "fy": {
       "title": "Referinsjes",
@@ -925,7 +965,9 @@
       "download-done-with-translation": "Krúsferwizings en {{name}} binne no offline beskikber",
       "download-partial": "Haadstikken {{downloaded}} fan {{total}} bewarre. {{failed}} koe net ynladen wurde.",
       "download-translation-failed": "De krúsreferinsjes binne bewarre, mar {{name}} koe net ynladen wurde.",
-      "download-failed": "Koe de krúsreferinsjes net downloade. Kontrolearje jo ferbining en besykje it opnij."
+      "download-failed": "Koe de krúsreferinsjes net downloade. Kontrolearje jo ferbining en besykje it opnij.",
+      "dock-pane": "Oan 'e kant oanlizze",
+      "float-pane": "Sweef oer de lêzer"
     },
     "gl": {
       "title": "Referencias",
@@ -967,7 +1009,9 @@
       "download-done-with-translation": "As referencias cruzadas e {{name}} xa están dispoñibles sen conexión",
       "download-partial": "Gardáronse {{downloaded}} de {{total}} capítulos. Non se puido descargar {{failed}} .",
       "download-translation-failed": "Gardáronse as referencias cruzadas, pero non se puido descargar {{name}} .",
-      "download-failed": "Non se puideron descargar as referencias cruzadas. Comproba a túa conexión e téntao de novo."
+      "download-failed": "Non se puideron descargar as referencias cruzadas. Comproba a túa conexión e téntao de novo.",
+      "dock-pane": "Acoplar ao lado",
+      "float-pane": "Flota sobre o lector"
     },
     "gn": {
       "title": "Umi mba’e oje’éva",
@@ -1009,7 +1053,9 @@
       "download-done-with-translation": "Umi ñe’ẽmondo kurusu ha {{name}} ko’áĝa ojeguereko línea’ỹre",
       "download-partial": "Oñongatu {{downloaded}} {{total}} kapítulo-gui. {{failed}} ndaikatúi ojegueru.",
       "download-translation-failed": "Oñongatu umi ñe’ẽmondo kurusu, ha katu {{name}} ndaikatúi oñemboguejy.",
-      "download-failed": "Ndaikatúi omboguejy umi referencia cruzada. Ehecháke ne joaju ha eñeha’ã jey."
+      "download-failed": "Ndaikatúi omboguejy umi referencia cruzada. Ehecháke ne joaju ha eñeha’ã jey.",
+      "dock-pane": "Muelle lado gotyo",
+      "float-pane": "Ojepyso pe moñe’ẽhára ári"
     },
     "gu": {
       "title": "સંદર્ભ",
@@ -1051,7 +1097,9 @@
       "download-done-with-translation": "ક્રોસ-રેફરન્સ અને {{name}} હવે ઑફલાઇન ઉપલબ્ધ છે.",
       "download-partial": "{{total}} પ્રકરણોમાંથી {{downloaded}} સાચવ્યા. {{failed}} ડાઉનલોડ કરી શકાયા નહીં.",
       "download-translation-failed": "ક્રોસ-રેફરન્સ સાચવ્યા, પણ {{name}} ડાઉનલોડ કરી શકાયું નહીં.",
-      "download-failed": "ક્રોસ-રેફરન્સ ડાઉનલોડ કરી શકાયા નથી. તમારું કનેક્શન તપાસો અને ફરી પ્રયાસ કરો."
+      "download-failed": "ક્રોસ-રેફરન્સ ડાઉનલોડ કરી શકાયા નથી. તમારું કનેક્શન તપાસો અને ફરી પ્રયાસ કરો.",
+      "dock-pane": "બાજુ પર ડોક કરો",
+      "float-pane": "વાચક ઉપર તરતા રહો"
     },
     "he": {
       "title": "הפניות",
@@ -1093,7 +1141,9 @@
       "download-done-with-translation": "הפניות צולבות ו {{name}} זמינים כעת במצב לא מקוון",
       "download-partial": "נשמרו {{downloaded}} מתוך {{total}} פרקים. הורדת {{failed}} לא הצליחה.",
       "download-translation-failed": "ההפניות המקושרות נשמרו, אך לא ניתן היה להוריד {{name}} .",
-      "download-failed": "לא ניתן היה להוריד את ההפניות המקושרות. בדוק את החיבור ונסה שוב."
+      "download-failed": "לא ניתן היה להוריד את ההפניות המקושרות. בדוק את החיבור ונסה שוב.",
+      "dock-pane": "עגינה בצד",
+      "float-pane": "רחף מעל הקורא"
     },
     "hi": {
       "title": "संदर्भ",
@@ -1135,7 +1185,9 @@
       "download-done-with-translation": "क्रॉस-रेफरेंस और {{name}} अब ऑफ़लाइन उपलब्ध हैं",
       "download-partial": "{{total}} अध्यायों में से {{downloaded}} } अध्याय सहेजे गए। {{failed}} डाउनलोड नहीं हो सका।",
       "download-translation-failed": "क्रॉस-रेफरेंस सहेज लिए गए, लेकिन {{name}} डाउनलोड नहीं हो सका।",
-      "download-failed": "संदर्भ फ़ाइलें डाउनलोड नहीं हो सकीं। कृपया अपना इंटरनेट कनेक्शन जांचें और पुनः प्रयास करें।"
+      "download-failed": "संदर्भ फ़ाइलें डाउनलोड नहीं हो सकीं। कृपया अपना इंटरनेट कनेक्शन जांचें और पुनः प्रयास करें।",
+      "dock-pane": "किनारे पर गोदी",
+      "float-pane": "पाठक के ऊपर तैरें"
     },
     "hr": {
       "title": "Reference",
@@ -1177,7 +1229,9 @@
       "download-done-with-translation": "Unakrsne reference i {{name}} sada su dostupni izvan mreže",
       "download-partial": "Spremljeno je {{downloaded}} od {{total}} poglavlja. {{failed}} nije moguće preuzeti.",
       "download-translation-failed": "Spremljene su unakrsne reference, ali {{name}} nije moguće preuzeti.",
-      "download-failed": "Nije moguće preuzeti unakrsne reference. Provjerite vezu i pokušajte ponovno."
+      "download-failed": "Nije moguće preuzeti unakrsne reference. Provjerite vezu i pokušajte ponovno.",
+      "dock-pane": "Pričvrsti se sa strane",
+      "float-pane": "Lebdite iznad čitača"
     },
     "hu": {
       "title": "Referenciák",
@@ -1219,7 +1273,9 @@
       "download-done-with-translation": "Kereszthivatkozások és {{name}} mostantól offline is elérhető",
       "download-partial": "{{total}} {{downloaded}} -t mentettem. {{failed}} t nem sikerült letölteni.",
       "download-translation-failed": "A kereszthivatkozások mentésre kerültek, de {{name}} fájl letöltése sikertelen volt.",
-      "download-failed": "Nem sikerült letölteni a kereszthivatkozásokat. Ellenőrizd a kapcsolatot, és próbáld újra."
+      "download-failed": "Nem sikerült letölteni a kereszthivatkozásokat. Ellenőrizd a kapcsolatot, és próbáld újra.",
+      "dock-pane": "Oldalra dokkolni",
+      "float-pane": "Lebegjen az olvasó felett"
     },
     "ind": {
       "title": "Referensi",
@@ -1261,7 +1317,9 @@
       "download-done-with-translation": "Referensi silang dan {{name}} sekarang tersedia secara offline.",
       "download-partial": "Tersimpan {{downloaded}} dari {{total}} bab. {{failed}} tidak dapat diunduh.",
       "download-translation-failed": "Referensi silang telah disimpan, tetapi {{name}} tidak dapat diunduh.",
-      "download-failed": "Referensi silang tidak dapat diunduh. Periksa koneksi Anda dan coba lagi."
+      "download-failed": "Referensi silang tidak dapat diunduh. Periksa koneksi Anda dan coba lagi.",
+      "dock-pane": "Dermaga di samping",
+      "float-pane": "Melayang di atas pembaca"
     },
     "is": {
       "title": "Heimildir",
@@ -1303,7 +1361,9 @@
       "download-done-with-translation": "Krossvísanir og {{name}} eru nú aðgengileg án nettengingar",
       "download-partial": "Vistað {{downloaded}} af {{total}} köflum. Ekki tókst að sækja {{failed}} .",
       "download-translation-failed": "Vistaði krossvísanirnar en ekki var hægt að sækja {{name}} .",
-      "download-failed": "Ekki tókst að sækja krossvísanirnar. Athugaðu tenginguna þína og reyndu aftur."
+      "download-failed": "Ekki tókst að sækja krossvísanirnar. Athugaðu tenginguna þína og reyndu aftur.",
+      "dock-pane": "Leggjast til hliðar",
+      "float-pane": "Svífa yfir lesandanum"
     },
     "it": {
       "title": "Riferimenti",
@@ -1345,7 +1405,9 @@
       "download-done-with-translation": "I riferimenti incrociati e {{name}} sono ora disponibili offline",
       "download-partial": "Salvati {{downloaded}} di {{total}} capitoli. {{failed}} non è stato possibile scaricare.",
       "download-translation-failed": "I riferimenti incrociati sono stati salvati, ma {{name}} non è stato possibile scaricarlo.",
-      "download-failed": "Impossibile scaricare i riferimenti incrociati. Verifica la connessione e riprova."
+      "download-failed": "Impossibile scaricare i riferimenti incrociati. Verifica la connessione e riprova.",
+      "dock-pane": "Molo laterale",
+      "float-pane": "Fluttua sopra il lettore"
     },
     "iw": {
       "title": "הפניות",
@@ -1387,7 +1449,9 @@
       "download-done-with-translation": "הפניות צולבות ו {{name}} זמינים כעת במצב לא מקוון",
       "download-partial": "נשמרו {{downloaded}} מתוך {{total}} פרקים. הורדת {{failed}} לא הצליחה.",
       "download-translation-failed": "ההפניות המקושרות נשמרו, אך לא ניתן היה להוריד {{name}} .",
-      "download-failed": "לא ניתן היה להוריד את ההפניות המקושרות. בדוק את החיבור ונסה שוב."
+      "download-failed": "לא ניתן היה להוריד את ההפניות המקושרות. בדוק את החיבור ונסה שוב.",
+      "dock-pane": "עגינה בצד",
+      "float-pane": "רחף מעל הקורא"
     },
     "ja": {
       "title": "参考文献",
@@ -1429,7 +1493,9 @@
       "download-done-with-translation": "相互参照と{{name}}はオフラインでも利用できるようになりました",
       "download-partial": "{{total}}章のうち{{downloaded}}章を保存しました。 {{failed}}はダウンロードできませんでした。",
       "download-translation-failed": "相互参照は保存しましたが、 {{name}}ダウンロードできませんでした。",
-      "download-failed": "相互参照をダウンロードできませんでした。接続を確認して、もう一度お試しください。"
+      "download-failed": "相互参照をダウンロードできませんでした。接続を確認して、もう一度お試しください。",
+      "dock-pane": "横にドックを停める",
+      "float-pane": "読者の上を漂う"
     },
     "ka": {
       "title": "ცნობები",
@@ -1471,7 +1537,9 @@
       "download-done-with-translation": "ჯვარედინი მითითებები და {{name}} ახლა ხელმისაწვდომია ოფლაინში",
       "download-partial": "შენახულია {{downloaded}} {{total}} თავიდან. {{failed}} -ის ჩამოტვირთვა.",
       "download-translation-failed": "ჯვარედინი მითითებები შენახულია, მაგრამ {{name}} ის ჩამოტვირთვა შეუძლებელია.",
-      "download-failed": "ჯვარედინი მითითებების ჩამოტვირთვა ვერ მოხერხდა. შეამოწმეთ თქვენი კავშირი და სცადეთ ხელახლა."
+      "download-failed": "ჯვარედინი მითითებების ჩამოტვირთვა ვერ მოხერხდა. შეამოწმეთ თქვენი კავშირი და სცადეთ ხელახლა.",
+      "dock-pane": "გვერდზე მიმაგრება",
+      "float-pane": "მკითხველზე გადაცურვა"
     },
     "km": {
       "title": "ឯកសារយោង",
@@ -1513,7 +1581,9 @@
       "download-done-with-translation": "ឯកសារយោងឆ្លង និង {{name}} ឥឡូវនេះអាចរកបានក្រៅបណ្តាញ",
       "download-partial": "បានរក្សាទុក {{downloaded}} ក្នុងចំណោម {{total}} ជំពូក។ មិនអាចទាញយក {{failed}} បានទេ។",
       "download-translation-failed": "បានរក្សាទុកឯកសារយោងឆ្លង ប៉ុន្តែមិនអាចទាញយក {{name}} បានទេ។",
-      "download-failed": "មិនអាចទាញយកឯកសារយោងឆ្លងបានទេ។ សូមពិនិត្យមើលការតភ្ជាប់របស់អ្នក ហើយព្យាយាមម្តងទៀត។"
+      "download-failed": "មិនអាចទាញយកឯកសារយោងឆ្លងបានទេ។ សូមពិនិត្យមើលការតភ្ជាប់របស់អ្នក ហើយព្យាយាមម្តងទៀត។",
+      "dock-pane": "ចតទៅចំហៀង",
+      "float-pane": "អណ្តែតលើអ្នកអាន"
     },
     "kn": {
       "title": "ಉಲ್ಲೇಖಗಳು",
@@ -1555,7 +1625,9 @@
       "download-done-with-translation": "ಅಡ್ಡ-ಉಲ್ಲೇಖಗಳು ಮತ್ತು {{name}} ಈಗ ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಲಭ್ಯವಿದೆ.",
       "download-partial": "{ {{total}} {{downloaded}} ಉಳಿಸಲಾಗಿದೆ. {{failed}} ಡೌನ್‌ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
       "download-translation-failed": "ಅಡ್ಡ-ಉಲ್ಲೇಖಗಳನ್ನು ಉಳಿಸಲಾಗಿದೆ, ಆದರೆ {{name}} ಡೌನ್‌ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
-      "download-failed": "ಅಡ್ಡ-ಉಲ್ಲೇಖಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಹಾಗೂ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+      "download-failed": "ಅಡ್ಡ-ಉಲ್ಲೇಖಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಹಾಗೂ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+      "dock-pane": "ಪಕ್ಕಕ್ಕೆ ಡಾಕ್ ಮಾಡಿ",
+      "float-pane": "ಓದುಗರ ಮೇಲೆ ತೇಲುತ್ತದೆ"
     },
     "ko": {
       "title": "참고 자료",
@@ -1597,7 +1669,9 @@
       "download-done-with-translation": "상호 참조 및 {{name}} 이제 오프라인에서 사용할 수 있습니다.",
       "download-partial": "{{total}} 챕터 중 {{downloaded}} 개를 저장했습니다. {{failed}} 개는 다운로드할 수 없었습니다.",
       "download-translation-failed": "상호 참조는 저장했지만 {{name}} 다운로드할 수 없습니다.",
-      "download-failed": "상호 참조 자료를 다운로드할 수 없습니다. 연결 상태를 확인하고 다시 시도해 주세요."
+      "download-failed": "상호 참조 자료를 다운로드할 수 없습니다. 연결 상태를 확인하고 다시 시도해 주세요.",
+      "dock-pane": "측면에 도킹하세요",
+      "float-pane": "독자 위로 떠다니다"
     },
     "ky": {
       "title": "Шилтемелер",
@@ -1639,7 +1713,9 @@
       "download-done-with-translation": "Кайчылаш шилтемелер жана {{name}} эми оффлайн режиминде жеткиликтүү",
       "download-partial": "{ {{total}} бөлүмдүн {{downloaded}} сакталды. {{failed}} жүктөлүп алынган жок.",
       "download-translation-failed": "Кайчылаш шилтемелер сакталды, бирок {{name}} жүктөлүп алынган жок.",
-      "download-failed": "Кайчылаш шилтемелерди жүктөп алуу мүмкүн болгон жок. Туташууңузду текшерип, кайра аракет кылыңыз."
+      "download-failed": "Кайчылаш шилтемелерди жүктөп алуу мүмкүн болгон жок. Туташууңузду текшерип, кайра аракет кылыңыз.",
+      "dock-pane": "Капталга докко коюңуз",
+      "float-pane": "Окурмандын үстүнөн калкып өтүңүз"
     },
     "ln": {
       "title": "Ba références",
@@ -1681,7 +1757,9 @@
       "download-done-with-translation": "Ba références croisées na {{name}} ezali sikoyo na nzela ya internet te",
       "download-partial": "Ebombami {{downloaded}} ya {{total}} mikapo. {{failed}} ekokaki kozwama te.",
       "download-translation-failed": "Ebombaki ba références croisées, kasi {{name}} ekokaki kozwama te.",
-      "download-failed": "Ekoki te ko télécharger ba références croisées. Tala connexion na yo pe meka lisusu."
+      "download-failed": "Ekoki te ko télécharger ba références croisées. Tala connexion na yo pe meka lisusu.",
+      "dock-pane": "Dock na ngambo",
+      "float-pane": "Kopumbwa likoló ya motángi"
     },
     "lo": {
       "title": "ເອກະສານອ້າງອີງ",
@@ -1723,7 +1801,9 @@
       "download-done-with-translation": "ການອ້າງອີງຂ້າມ ແລະ {{name}} ສາມາດໃຊ້ໄດ້ແບບອອບລາຍແລ້ວ",
       "download-partial": "ບັນທຶກແລ້ວ {{downloaded}} ຈາກທັງໝົດ {{total}} ບົດ. ບໍ່ສາມາດດາວໂຫຼດໄດ້ {{failed}} .",
       "download-translation-failed": "ບັນທຶກການອ້າງອີງຂ້າມແລ້ວ, ແຕ່ບໍ່ສາມາດດາວໂຫຼດ {{name}} ໄດ້.",
-      "download-failed": "ບໍ່ສາມາດດາວໂຫຼດການອ້າງອີງຂ້າມໄດ້. ກະລຸນາກວດສອບການເຊື່ອມຕໍ່ຂອງທ່ານ ແລະ ລອງອີກຄັ້ງ."
+      "download-failed": "ບໍ່ສາມາດດາວໂຫຼດການອ້າງອີງຂ້າມໄດ້. ກະລຸນາກວດສອບການເຊື່ອມຕໍ່ຂອງທ່ານ ແລະ ລອງອີກຄັ້ງ.",
+      "dock-pane": "ຈອດຢູ່ຂ້າງ",
+      "float-pane": "ລອຍຢູ່ເທິງຕົວອ່ານ"
     },
     "lt": {
       "title": "Nuorodos",
@@ -1765,7 +1845,9 @@
       "download-done-with-translation": "Kryžminės nuorodos ir {{name}} dabar pasiekiami neprisijungus",
       "download-partial": "Išsaugota {{downloaded}} iš {{total}} skyrių. Nepavyko atsisiųsti {{failed}} .",
       "download-translation-failed": "Kryžminės nuorodos išsaugotos, bet {{name}} nepavyko atsisiųsti.",
-      "download-failed": "Nepavyko atsisiųsti kryžminių nuorodų. Patikrinkite ryšį ir bandykite dar kartą."
+      "download-failed": "Nepavyko atsisiųsti kryžminių nuorodų. Patikrinkite ryšį ir bandykite dar kartą.",
+      "dock-pane": "Pritvirtinkite prie šono",
+      "float-pane": "Sklandykite virš skaitytojo"
     },
     "lv": {
       "title": "Atsauces",
@@ -1807,7 +1889,9 @@
       "download-done-with-translation": "Savstarpējās atsauces un {{name}} tagad ir pieejami bezsaistē",
       "download-partial": "Saglabātas {{downloaded}} no {{total}} nodaļām. {{failed}} nevarēja lejupielādēt.",
       "download-translation-failed": "Saglabātas savstarpējās atsauces, bet {{name}} nevarēja lejupielādēt.",
-      "download-failed": "Nevarēja lejupielādēt savstarpējās atsauces. Pārbaudiet savienojumu un mēģiniet vēlreiz."
+      "download-failed": "Nevarēja lejupielādēt savstarpējās atsauces. Pārbaudiet savienojumu un mēģiniet vēlreiz.",
+      "dock-pane": "Pieslēgties sāniem",
+      "float-pane": "Pārvietojieties virs lasītāja"
     },
     "mk": {
       "title": "Референци",
@@ -1849,7 +1933,9 @@
       "download-done-with-translation": "Вкрстените референци и {{name}} сега се достапни офлајн",
       "download-partial": "Зачувани се {{downloaded}} од {{total}} поглавја. {{failed}} не можеше да се преземе.",
       "download-translation-failed": "Вкрстените референци се зачувани, но {{name}} не можеше да се преземе.",
-      "download-failed": "Не може да се преземат вкрстените референци. Проверете ја вашата врска и обидете се повторно."
+      "download-failed": "Не може да се преземат вкрстените референци. Проверете ја вашата врска и обидете се повторно.",
+      "dock-pane": "Прикачи на страна",
+      "float-pane": "Лебди над читачот"
     },
     "ml": {
       "title": "അവലംബം",
@@ -1891,7 +1977,9 @@
       "download-done-with-translation": "ക്രോസ്-റഫറൻസുകളും {{name}} ഉം ഇപ്പോൾ ഓഫ്‌ലൈനിൽ ലഭ്യമാണ്.",
       "download-partial": "{{total}} അധ്യായങ്ങളിൽ {{downloaded}} സംരക്ഷിച്ചു. {{failed}} ഡൗൺലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.",
       "download-translation-failed": "ക്രോസ്-റെഫറൻസുകൾ സേവ് ചെയ്തു, പക്ഷേ {{name}} ഡൗൺലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.",
-      "download-failed": "ക്രോസ്-റഫറൻസുകൾ ഡൗൺലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല. കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക."
+      "download-failed": "ക്രോസ്-റഫറൻസുകൾ ഡൗൺലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല. കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.",
+      "dock-pane": "വശത്തേക്ക് ഡോക്ക് ചെയ്യുക",
+      "float-pane": "വായനക്കാരന് മുകളിലൂടെ ഒഴുകുക"
     },
     "mn": {
       "title": "Лавлагаа",
@@ -1933,7 +2021,9 @@
       "download-done-with-translation": "Хөндлөн лавлагаа болон {{name}} одоо офлайнаар ашиглах боломжтой боллоо",
       "download-partial": "{ {{total}} бүлгээс {{downloaded}} г хадгалсан. {{failed}} г татаж авч чадсангүй.",
       "download-translation-failed": "Хөндлөн лавлагааг хадгалсан боловч {{name}} татаж авч чадсангүй.",
-      "download-failed": "Хөндлөн лавлагааг татаж авч чадсангүй. Холболтоо шалгаад дахин оролдоно уу."
+      "download-failed": "Хөндлөн лавлагааг татаж авч чадсангүй. Холболтоо шалгаад дахин оролдоно уу.",
+      "dock-pane": "Хажуу тийш нь тавь",
+      "float-pane": "Уншигч дээгүүр хөвөх"
     },
     "mr": {
       "title": "संदर्भ",
@@ -1975,7 +2065,9 @@
       "download-done-with-translation": "क्रॉस-रेफरन्स आणि {{name}} आता ऑफलाइन उपलब्ध आहेत.",
       "download-partial": "{ {{total}} {{downloaded}} जतन केले. {{failed}} डाउनलोड होऊ शकले नाही.",
       "download-translation-failed": "क्रॉस-रेफरन्स सेव्ह केले, पण {{name}} डाउनलोड करता आले नाही.",
-      "download-failed": "क्रॉस-रेफरन्स डाउनलोड करता आले नाहीत. कृपया तुमचे कनेक्शन तपासा आणि पुन्हा प्रयत्न करा."
+      "download-failed": "क्रॉस-रेफरन्स डाउनलोड करता आले नाहीत. कृपया तुमचे कनेक्शन तपासा आणि पुन्हा प्रयत्न करा.",
+      "dock-pane": "बाजूला डॉक करा",
+      "float-pane": "वाचकाच्या वरून तरंगत जा"
     },
     "ms": {
       "title": "Rujukan",
@@ -2017,7 +2109,9 @@
       "download-done-with-translation": "Rujukan silang dan {{name}} kini tersedia di luar talian",
       "download-partial": "Menyimpan {{downloaded}} daripada {{total}} bab. {{failed}} tidak dapat dimuat turun.",
       "download-translation-failed": "Rujukan silang telah disimpan, tetapi {{name}} tidak dapat dimuat turun.",
-      "download-failed": "Tidak dapat memuat turun rujukan silang. Semak sambungan anda dan cuba lagi."
+      "download-failed": "Tidak dapat memuat turun rujukan silang. Semak sambungan anda dan cuba lagi.",
+      "dock-pane": "Dok ke tepi",
+      "float-pane": "Terapung di atas pembaca"
     },
     "my": {
       "title": "ကိုးကားချက်များ",
@@ -2059,7 +2153,9 @@
       "download-done-with-translation": "ကိုးကားချက်များနှင့် {{name}} ကို အော့ဖ်လိုင်းတွင် ရရှိနိုင်ပါပြီ",
       "download-partial": "အခန်း {{total}} မှ {{downloaded}} ကို သိမ်းဆည်းထားသည်။ {{failed}} ကို ဒေါင်းလုဒ်လုပ်၍မရပါ။",
       "download-translation-failed": "ကိုးကားချက်များကို သိမ်းဆည်းပြီးပါပြီ၊ သို့သော် {{name}} ဒေါင်းလုဒ်လုပ်၍မရပါ။",
-      "download-failed": "ကိုးကားချက်များကို ဒေါင်းလုဒ်လုပ်၍မရပါ။ သင့်ချိတ်ဆက်မှုကို စစ်ဆေးပြီး ထပ်မံကြိုးစားပါ။"
+      "download-failed": "ကိုးကားချက်များကို ဒေါင်းလုဒ်လုပ်၍မရပါ။ သင့်ချိတ်ဆက်မှုကို စစ်ဆေးပြီး ထပ်မံကြိုးစားပါ။",
+      "dock-pane": "ဘေးတွင် ဆိုက်ကပ်ပါ",
+      "float-pane": "စာဖတ်သူအပေါ်တွင် ပျံဝဲပါ"
     },
     "nb": {
       "title": "Referanser",
@@ -2101,7 +2197,9 @@
       "download-done-with-translation": "Kryssreferanser og {{name}} er nå tilgjengelige offline",
       "download-partial": "Lagret {{downloaded}} av {{total}} kapitler. {{failed}} kunne ikke lastes ned.",
       "download-translation-failed": "Lagret kryssreferansene, men {{name}} kunne ikke lastes ned.",
-      "download-failed": "Kunne ikke laste ned kryssreferansene. Sjekk tilkoblingen din og prøv på nytt."
+      "download-failed": "Kunne ikke laste ned kryssreferansene. Sjekk tilkoblingen din og prøv på nytt.",
+      "dock-pane": "Dokk til siden",
+      "float-pane": "Fly over leseren"
     },
     "ne": {
       "title": "सन्दर्भ सामग्रीहरू",
@@ -2143,7 +2241,9 @@
       "download-done-with-translation": "क्रस-रेफरेन्स र {{name}} अब अफलाइन उपलब्ध छन्।",
       "download-partial": "{ {{total}} अध्यायहरू मध्ये {{downloaded}} सुरक्षित गरियो। {{failed}} डाउनलोड गर्न सकिएन।",
       "download-translation-failed": "क्रस-रेफरेन्सहरू सुरक्षित गरियो, तर {{name}} डाउनलोड गर्न सकिएन।",
-      "download-failed": "क्रस-रेफरेन्सहरू डाउनलोड गर्न सकिएन। आफ्नो जडान जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।"
+      "download-failed": "क्रस-रेफरेन्सहरू डाउनलोड गर्न सकिएन। आफ्नो जडान जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।",
+      "dock-pane": "छेउमा डक गर्नुहोस्",
+      "float-pane": "पाठकमाथि तैरनुहोस्"
     },
     "nl": {
       "title": "Referenties",
@@ -2185,7 +2285,9 @@
       "download-done-with-translation": "Kruisverwijzingen en {{name}} zijn nu offline beschikbaar.",
       "download-partial": "Er zijn {{downloaded}} van de {{total}} hoofdstukken opgeslagen. {{failed}} kon niet worden gedownload.",
       "download-translation-failed": "De kruisverwijzingen zijn opgeslagen, maar {{name}} kon niet worden gedownload.",
-      "download-failed": "Het downloaden van de kruisverwijzingen is niet gelukt. Controleer uw internetverbinding en probeer het opnieuw."
+      "download-failed": "Het downloaden van de kruisverwijzingen is niet gelukt. Controleer uw internetverbinding en probeer het opnieuw.",
+      "dock-pane": "Leg aan de zijkant aan",
+      "float-pane": "Zweef boven de lezer"
     },
     "no": {
       "title": "Referanser",
@@ -2227,7 +2329,9 @@
       "download-done-with-translation": "Kryssreferanser og {{name}} er nå tilgjengelige offline",
       "download-partial": "Lagret {{downloaded}} av {{total}} kapitler. {{failed}} kunne ikke lastes ned.",
       "download-translation-failed": "Lagret kryssreferansene, men {{name}} kunne ikke lastes ned.",
-      "download-failed": "Kunne ikke laste ned kryssreferansene. Sjekk tilkoblingen din og prøv på nytt."
+      "download-failed": "Kunne ikke laste ned kryssreferansene. Sjekk tilkoblingen din og prøv på nytt.",
+      "dock-pane": "Dokk til siden",
+      "float-pane": "Fly over leseren"
     },
     "pa": {
       "title": "ਹਵਾਲੇ",
@@ -2269,7 +2373,9 @@
       "download-done-with-translation": "ਕਰਾਸ-ਰੈਫਰੈਂਸ ਅਤੇ {{name}} ਹੁਣ ਔਫਲਾਈਨ ਉਪਲਬਧ ਹਨ।",
       "download-partial": "{{total}} ਅਧਿਆਇਆਂ ਵਿੱਚੋਂ {{downloaded}} ਸੁਰੱਖਿਅਤ ਕੀਤੇ ਗਏ। {{failed}} ਡਾਊਨਲੋਡ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।",
       "download-translation-failed": "ਕਰਾਸ-ਰੈਫਰੈਂਸ ਸੇਵ ਕੀਤੇ, ਪਰ {{name}} ਡਾਊਨਲੋਡ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।",
-      "download-failed": "ਕਰਾਸ-ਰੈਫਰੈਂਸ ਡਾਊਨਲੋਡ ਨਹੀਂ ਕੀਤੇ ਜਾ ਸਕੇ। ਆਪਣੇ ਕਨੈਕਸ਼ਨ ਦੀ ਜਾਂਚ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
+      "download-failed": "ਕਰਾਸ-ਰੈਫਰੈਂਸ ਡਾਊਨਲੋਡ ਨਹੀਂ ਕੀਤੇ ਜਾ ਸਕੇ। ਆਪਣੇ ਕਨੈਕਸ਼ਨ ਦੀ ਜਾਂਚ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+      "dock-pane": "ਪਾਸੇ ਡੌਕ ਕਰੋ",
+      "float-pane": "ਪਾਠਕ ਦੇ ਉੱਪਰ ਤੈਰੋ"
     },
     "pl": {
       "title": "Odniesienia",
@@ -2311,7 +2417,9 @@
       "download-done-with-translation": "Odnośniki krzyżowe i {{name}} są teraz dostępne offline",
       "download-partial": "Zapisano {{downloaded}} z {{total}} rozdziałów. Nie udało się pobrać {{failed}} .",
       "download-translation-failed": "Zapisano odnośniki, ale nie udało się pobrać {{name}} .",
-      "download-failed": "Nie udało się pobrać odsyłaczy. Sprawdź połączenie i spróbuj ponownie."
+      "download-failed": "Nie udało się pobrać odsyłaczy. Sprawdź połączenie i spróbuj ponownie.",
+      "dock-pane": "Dok z boku",
+      "float-pane": "Przesuń nad czytnik"
     },
     "ps": {
       "title": "ماخذونه",
@@ -2353,7 +2461,9 @@
       "download-done-with-translation": "متقابل حوالې او {{name}} اوس آفلاین شتون لري",
       "download-partial": "د {{total}} فصلونو څخه {{downloaded}} خوندي شوي. {{failed}} ډاونلوډ نشو کولی.",
       "download-translation-failed": "د متقابلو حوالو خوندي کول، مګر {{name}} ډاونلوډ نشو کولی.",
-      "download-failed": "متقابل حوالې ډاونلوډ نشوې کړای. خپل اړیکه وګورئ او بیا هڅه وکړئ."
+      "download-failed": "متقابل حوالې ډاونلوډ نشوې کړای. خپل اړیکه وګورئ او بیا هڅه وکړئ.",
+      "dock-pane": "اړخ ته وصل کړئ",
+      "float-pane": "د لوستونکي په سر لامبو وهل"
     },
     "pt": {
       "title": "Referências",
@@ -2395,7 +2505,9 @@
       "download-done-with-translation": "As referências cruzadas e {{name}} agora estão disponíveis offline.",
       "download-partial": "Salvo {{downloaded}} de {{total}} capítulos. {{failed}} não pôde ser baixado.",
       "download-translation-failed": "As referências cruzadas foram salvas, mas {{name}} não pôde ser baixado.",
-      "download-failed": "Não foi possível baixar as referências cruzadas. Verifique sua conexão e tente novamente."
+      "download-failed": "Não foi possível baixar as referências cruzadas. Verifique sua conexão e tente novamente.",
+      "dock-pane": "Doca lateral",
+      "float-pane": "Flutue sobre o leitor"
     },
     "ro": {
       "title": "Referințe",
@@ -2437,7 +2549,9 @@
       "download-done-with-translation": "Referințele încrucișate și {{name}} sunt acum disponibile offline",
       "download-partial": "{{downloaded}} din {{total}} capitole salvate. {{failed}} nu a putut fi descărcat.",
       "download-translation-failed": "Referințele încrucișate au fost salvate, dar {{name}} nu a putut fi descărcat.",
-      "download-failed": "Nu s-au putut descărca referințele încrucișate. Verificați conexiunea și încercați din nou."
+      "download-failed": "Nu s-au putut descărca referințele încrucișate. Verificați conexiunea și încercați din nou.",
+      "dock-pane": "Andocați în lateral",
+      "float-pane": "Plutește peste cititor"
     },
     "ru": {
       "title": "Ссылки",
@@ -2479,7 +2593,9 @@
       "download-done-with-translation": "Перекрестные ссылки и {{name}} теперь доступны в автономном режиме.",
       "download-partial": "Сохранено {{downloaded}} из {{total}} глав. {{failed}} не удалось загрузить.",
       "download-translation-failed": "Сохранил перекрестные ссылки, но {{name}} не удалось загрузить.",
-      "download-failed": "Не удалось загрузить перекрестные ссылки. Проверьте подключение и попробуйте снова."
+      "download-failed": "Не удалось загрузить перекрестные ссылки. Проверьте подключение и попробуйте снова.",
+      "dock-pane": "Пришвартуйтесь сбоку",
+      "float-pane": "Парить над читателем"
     },
     "sk": {
       "title": "Referencie",
@@ -2521,7 +2637,9 @@
       "download-done-with-translation": "Krížové odkazy a {{name}} sú teraz k dispozícii offline",
       "download-partial": "Uložené kapitoly: {{downloaded}} z {{total}} . Kapitoly {{failed}} sa nepodarilo stiahnuť.",
       "download-translation-failed": "Krížové odkazy boli uložené, ale súbor {{name}} sa nepodarilo stiahnuť.",
-      "download-failed": "Nepodarilo sa stiahnuť krížové odkazy. Skontrolujte pripojenie a skúste to znova."
+      "download-failed": "Nepodarilo sa stiahnuť krížové odkazy. Skontrolujte pripojenie a skúste to znova.",
+      "dock-pane": "Pripojiť k boku",
+      "float-pane": "Vznášajte sa nad čítačkou"
     },
     "sl": {
       "title": "Reference",
@@ -2563,7 +2681,9 @@
       "download-done-with-translation": "Navzkrižne reference in {{name}} so zdaj na voljo brez povezave",
       "download-partial": "Shranjenih je bilo {{downloaded}} od {{total}} poglavij. {{failed}} poglavij ni bilo mogoče prenesti.",
       "download-translation-failed": "Navzkrižne reference so shranjene, vendar datoteke {{name}} ni bilo mogoče prenesti.",
-      "download-failed": "Navzkrižnih referenc ni bilo mogoče prenesti. Preverite povezavo in poskusite znova."
+      "download-failed": "Navzkrižnih referenc ni bilo mogoče prenesti. Preverite povezavo in poskusite znova.",
+      "dock-pane": "Priklopi ob strani",
+      "float-pane": "Lebdite nad bralnikom"
     },
     "sq": {
       "title": "Referencat",
@@ -2605,7 +2725,9 @@
       "download-done-with-translation": "Referencat kryq dhe {{name}} tani janë të disponueshme jashtë linje",
       "download-partial": "{{downloaded}} nga {{total}} kapituj u ruajtën. {{failed}} nuk mund të shkarkohej.",
       "download-translation-failed": "Referencat kryq u ruajtën, por {{name}} nuk mund të shkarkohej.",
-      "download-failed": "Nuk mund të shkarkoheshin referencat kryq. Kontrolloni lidhjen tuaj dhe provoni përsëri."
+      "download-failed": "Nuk mund të shkarkoheshin referencat kryq. Kontrolloni lidhjen tuaj dhe provoni përsëri.",
+      "dock-pane": "Ankoro në anë",
+      "float-pane": "Lundroni mbi lexuesin"
     },
     "sv": {
       "title": "Referenser",
@@ -2647,7 +2769,9 @@
       "download-done-with-translation": "Korsreferenser och {{name}} är nu tillgängliga offline",
       "download-partial": "Sparade {{downloaded}} av {{total}} kapitel. {{failed}} kunde inte laddas ner.",
       "download-translation-failed": "Sparade korsreferenserna, men {{name}} kunde inte laddas ner.",
-      "download-failed": "Det gick inte att ladda ner korsreferenserna. Kontrollera din anslutning och försök igen."
+      "download-failed": "Det gick inte att ladda ner korsreferenserna. Kontrollera din anslutning och försök igen.",
+      "dock-pane": "Docka åt sidan",
+      "float-pane": "Flyta över läsaren"
     },
     "sw": {
       "title": "Marejeleo",
@@ -2689,7 +2813,9 @@
       "download-done-with-translation": "Marejeleo mtambuka na {{name}} sasa yanapatikana nje ya mtandao",
       "download-partial": "Imehifadhi sura {{downloaded}} kati ya {{total}} . {{failed}} hazikuweza kupakuliwa.",
       "download-translation-failed": "Imehifadhi marejeleo mtambuka, lakini {{name}} haikuweza kupakuliwa.",
-      "download-failed": "Haikuweza kupakua marejeleo mtambuka. Angalia muunganisho wako na ujaribu tena."
+      "download-failed": "Haikuweza kupakua marejeleo mtambuka. Angalia muunganisho wako na ujaribu tena.",
+      "dock-pane": "Kizimbani pembeni",
+      "float-pane": "Elea juu ya msomaji"
     },
     "ta": {
       "title": "குறிப்புகள்",
@@ -2731,7 +2857,9 @@
       "download-done-with-translation": "குறுக்குக் குறிப்புகளும் {{name}} இப்போது ஆஃப்லைனில் கிடைக்கின்றன.",
       "download-partial": "{{total}} அத்தியாயங்களில் {{downloaded}} சேமிக்கப்பட்டது. {{failed}} பதிவிறக்கம் செய்ய முடியவில்லை.",
       "download-translation-failed": "குறுக்குக் குறிப்புகளைச் சேமித்தேன், ஆனால் {{name}} ஐப் பதிவிறக்க முடியவில்லை.",
-      "download-failed": "குறுக்குக் குறிப்புகளைப் பதிவிறக்க முடியவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்."
+      "download-failed": "குறுக்குக் குறிப்புகளைப் பதிவிறக்க முடியவில்லை. உங்கள் இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.",
+      "dock-pane": "பக்கவாட்டில் கப்பல்துறை",
+      "float-pane": "வாசகரின் மீது மிதக்கவும்"
     },
     "te": {
       "title": "సూచనలు",
@@ -2773,7 +2901,9 @@
       "download-done-with-translation": "క్రాస్-రిఫరెన్సులు మరియు {{name}} ఇప్పుడు ఆఫ్‌లైన్‌లో అందుబాటులో ఉన్నాయి",
       "download-partial": "{{total}} అధ్యాయాలలో {{downloaded}} సేవ్ చేయబడ్డాయి. {{failed}} డౌన్‌లోడ్ చేయబడలేదు.",
       "download-translation-failed": "క్రాస్-రిఫరెన్సులు సేవ్ చేయబడ్డాయి, కానీ {{name}} డౌన్‌లోడ్ కాలేదు.",
-      "download-failed": "క్రాస్-రిఫరెన్స్‌లను డౌన్‌లోడ్ చేయలేకపోయాము. మీ కనెక్షన్‌ను తనిఖీ చేసి, మళ్లీ ప్రయత్నించండి."
+      "download-failed": "క్రాస్-రిఫరెన్స్‌లను డౌన్‌లోడ్ చేయలేకపోయాము. మీ కనెక్షన్‌ను తనిఖీ చేసి, మళ్లీ ప్రయత్నించండి.",
+      "dock-pane": "పక్కకు డాక్ చేయండి",
+      "float-pane": "రీడర్‌పై తేలండి"
     },
     "th": {
       "title": "เอกสารอ้างอิง",
@@ -2815,7 +2945,9 @@
       "download-done-with-translation": "การอ้างอิงโยงและ {{name}} พร้อมใช้งานแบบออฟไลน์แล้ว",
       "download-partial": "บันทึก {{downloaded}} บทจาก {{total}} บท ไม่สามารถดาวน์โหลด {{failed}} ได้",
       "download-translation-failed": "บันทึกการอ้างอิงโยงแล้ว แต่ไม่สามารถดาวน์โหลด {{name}} ได้",
-      "download-failed": "ไม่สามารถดาวน์โหลดข้อมูลอ้างอิงได้ โปรดตรวจสอบการเชื่อมต่อของคุณแล้วลองใหม่อีกครั้ง"
+      "download-failed": "ไม่สามารถดาวน์โหลดข้อมูลอ้างอิงได้ โปรดตรวจสอบการเชื่อมต่อของคุณแล้วลองใหม่อีกครั้ง",
+      "dock-pane": "จอดเทียบท่าด้านข้าง",
+      "float-pane": "ลอยอยู่เหนือผู้อ่าน"
     },
     "ti": {
       "title": "መወከሲታት",
@@ -2857,7 +2989,9 @@
       "download-done-with-translation": "መስቀላዊ መወከሲታትን {{name}} ን ሕጂ ካብ መስመር ወጻኢ ይርከብ።",
       "download-partial": "{{downloaded}} ካብ {{total}} ምዕራፋት ተዓቂቡ። {{failed}} ክወርድ ኣይከኣለን።",
       "download-translation-failed": "እቶም መስቀላዊ መወከሲታት ተዓቂቦም፣ {{name}} ግን ክወርድ ኣይከኣለን።",
-      "download-failed": "እቶም መስቀላዊ መወከሲታት ከውርድ ኣይከኣለን። ርክብካ መርምር እሞ እንደገና ፈትን።"
+      "download-failed": "እቶም መስቀላዊ መወከሲታት ከውርድ ኣይከኣለን። ርክብካ መርምር እሞ እንደገና ፈትን።",
+      "dock-pane": "ናብ ጎኒ ዶክ",
+      "float-pane": "ኣብ ልዕሊ ኣንባቢ ይንሳፈፍ"
     },
     "tl": {
       "title": "Mga Sanggunian",
@@ -2899,7 +3033,9 @@
       "download-done-with-translation": "Ang mga cross-reference at {{name}} ay available na ngayon offline",
       "download-partial": "Na-save ang {{downloaded}} sa {{total}} na mga kabanata. Hindi ma-download {{failed}} .",
       "download-translation-failed": "Na-save ang mga cross-reference, ngunit hindi ma-download {{name}} .",
-      "download-failed": "Hindi ma-download ang mga cross-reference. Suriin ang iyong koneksyon at subukang muli."
+      "download-failed": "Hindi ma-download ang mga cross-reference. Suriin ang iyong koneksyon at subukang muli.",
+      "dock-pane": "Pantalan sa gilid",
+      "float-pane": "Lumutang sa ibabaw ng mambabasa"
     },
     "tr": {
       "title": "Referanslar",
@@ -2941,7 +3077,9 @@
       "download-done-with-translation": "Çapraz referanslar ve {{name}} artık çevrimdışı olarak kullanılabilir.",
       "download-partial": "{{downloaded}} {{total}} bölüm kaydedildi. {{failed}} indirilemedi.",
       "download-translation-failed": "Çapraz referanslar kaydedildi, ancak {{name}} indirilemedi.",
-      "download-failed": "Çapraz referansları indiremedim. Bağlantınızı kontrol edin ve tekrar deneyin."
+      "download-failed": "Çapraz referansları indiremedim. Bağlantınızı kontrol edin ve tekrar deneyin.",
+      "dock-pane": "Yan tarafa yanaşın",
+      "float-pane": "Okuyucunun üzerinde süzülün"
     },
     "ug": {
       "title": "پايدىلانغان ماتېرىياللار",
@@ -2983,7 +3121,9 @@
       "download-done-with-translation": "كرېست پايدىلىنىش ۋە {{name}} ھازىر تورسىز ئىشلىتىشكە بولىدۇ",
       "download-partial": "{ {{total}} {{downloaded}} }} قىسمى ساقلاندى. {{failed}} نى چۈشۈرگىلى بولمىدى.",
       "download-translation-failed": "ئۆزئارا پايدىلىنىش ماتېرىياللىرىنى ساقلىدى، ئەمما {{name}} چۈشۈرەلمىدى.",
-      "download-failed": "ئۆزئارا پايدىلىنىش ماتېرىياللىرىنى چۈشۈرەلمىدى. ئۇلىنىشىڭىزنى تەكشۈرۈپ قايتا سىناپ بېقىڭ."
+      "download-failed": "ئۆزئارا پايدىلىنىش ماتېرىياللىرىنى چۈشۈرەلمىدى. ئۇلىنىشىڭىزنى تەكشۈرۈپ قايتا سىناپ بېقىڭ.",
+      "dock-pane": "يان تەرەپكە دوكلاڭ",
+      "float-pane": "ئوقۇرمەننىڭ ئۈستىدە لەيلەپ يۈرۈڭ"
     },
     "uk": {
       "title": "Посилання",
@@ -3025,7 +3165,9 @@
       "download-done-with-translation": "Перехресні посилання та {{name}} тепер доступні офлайн",
       "download-partial": "Збережено розділів {{downloaded}} з {{total}} . Не вдалося завантажити розділи {{failed}} .",
       "download-translation-failed": "Збережено перехресні посилання, але {{name}} не вдалося завантажити.",
-      "download-failed": "Не вдалося завантажити перехресні посилання. Перевірте з’єднання та повторіть спробу."
+      "download-failed": "Не вдалося завантажити перехресні посилання. Перевірте з’єднання та повторіть спробу.",
+      "dock-pane": "Пристикувати збоку",
+      "float-pane": "Плаваючий над зчитувачем"
     },
     "ur": {
       "title": "حوالہ جات",
@@ -3067,7 +3209,9 @@
       "download-done-with-translation": "کراس حوالہ جات اور {{name}} اب آف لائن دستیاب ہیں۔",
       "download-partial": "{ {{total}} ابواب میں سے {{downloaded}} محفوظ کیے گئے۔ {{failed}} کو ڈاؤن لوڈ نہیں کیا جا سکا۔",
       "download-translation-failed": "کراس حوالہ جات کو محفوظ کیا، لیکن {{name}} کو ڈاؤن لوڈ نہیں کیا جا سکا۔",
-      "download-failed": "کراس حوالہ جات کو ڈاؤن لوڈ نہیں کیا جا سکا۔ اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔"
+      "download-failed": "کراس حوالہ جات کو ڈاؤن لوڈ نہیں کیا جا سکا۔ اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔",
+      "dock-pane": "طرف گودی",
+      "float-pane": "قاری کے اوپر تیرنا"
     },
     "uz": {
       "title": "Manbalar",
@@ -3109,7 +3253,9 @@
       "download-done-with-translation": "O'zaro havolalar va {{name}} endi oflayn rejimda mavjud",
       "download-partial": "{ {{total}} ta bobdan {{downloaded}} saqlandi. {{failed}} yuklab olinmadi.",
       "download-translation-failed": "O'zaro havolalar saqlandi, ammo {{name}} yuklab olinmadi.",
-      "download-failed": "O'zaro havolalarni yuklab olib bo'lmadi. Ulanishni tekshiring va qaytadan urinib ko'ring."
+      "download-failed": "O'zaro havolalarni yuklab olib bo'lmadi. Ulanishni tekshiring va qaytadan urinib ko'ring.",
+      "dock-pane": "Yon tomonga o'rnating",
+      "float-pane": "O'quvchi ustida suzib yuring"
     },
     "vi": {
       "title": "Tài liệu tham khảo",
@@ -3151,7 +3297,9 @@
       "download-done-with-translation": "Các liên kết tham chiếu chéo và {{name}} hiện đã có sẵn ngoại tuyến.",
       "download-partial": "Đã lưu {{downloaded}} trong tổng {{total}} chương. {{failed}} không thể tải xuống.",
       "download-translation-failed": "Đã lưu các liên kết tham chiếu chéo, nhưng không thể tải xuống {{name}} .",
-      "download-failed": "Không thể tải xuống các tài liệu tham khảo chéo. Vui lòng kiểm tra kết nối và thử lại."
+      "download-failed": "Không thể tải xuống các tài liệu tham khảo chéo. Vui lòng kiểm tra kết nối và thử lại.",
+      "dock-pane": "Neo đậu vào bên",
+      "float-pane": "Lướt qua người đọc"
     },
     "zh": {
       "title": "参考",
@@ -3193,7 +3341,9 @@
       "download-done-with-translation": "交叉引用和{{name}}现在可离线使用",
       "download-partial": "已保存{{downloaded}}个章节，共{{total}}个章节。 {{failed}}章节下载失败。",
       "download-translation-failed": "交叉引用已保存，但{{name}}无法下载。",
-      "download-failed": "交叉引用文件下载失败。请检查您的网络连接并重试。"
+      "download-failed": "交叉引用文件下载失败。请检查您的网络连接并重试。",
+      "dock-pane": "靠岸",
+      "float-pane": "漂浮在读者上方"
     },
     "zu": {
       "title": "Izinkomba",
@@ -3235,7 +3385,9 @@
       "download-done-with-translation": "Izinkomba eziphambene kanye ne {{name}} manje sezitholakala ungaxhunyiwe ku-inthanethi",
       "download-partial": "Kugcinwe izahluko ezingu {{downloaded}} kwezingu {{total}} . {{failed}} ayikwazanga ukulandwa.",
       "download-translation-failed": "Kugcinwe izinkomba eziphambene, kodwa {{name}} akakwazanga ukulandwa.",
-      "download-failed": "Ayikwazanga ukulanda izinkomba eziphambene. Hlola uxhumano lwakho bese uzama futhi."
+      "download-failed": "Ayikwazanga ukulanda izinkomba eziphambene. Hlola uxhumano lwakho bese uzama futhi.",
+      "dock-pane": "Idokhi eceleni",
+      "float-pane": "Thanda phezu komfundi"
     }
   }
 }

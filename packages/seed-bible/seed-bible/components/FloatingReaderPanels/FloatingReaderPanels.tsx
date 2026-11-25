@@ -1,3 +1,4 @@
+import { LoadingStatus } from "../LoadingStatus/LoadingStatus";
 import "./FloatingReaderPanels.css";
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
@@ -31,6 +32,7 @@ import { Avatar } from "../Avatar/Avatar";
 import { ChatParticipantsIcon, MaterialIcon } from "../icons";
 import { SearchBar } from "../SearchBar/SearchBar";
 import { CloseButton } from "../CloseButton/CloseButton";
+import { EmptyState } from "../EmptyState/EmptyState";
 import { IconButton } from "../IconButton/IconButton";
 import { Button } from "../Button/Button";
 
@@ -488,11 +490,15 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
       searchResults.value.length > 0 ||
       (!searchLoading.value && searchResults.value.length === 0));
 
+  // A bottom sheet in the mobile layout and in narrow desktop windows; a
+  // floating panel otherwise.
+  const asSheet = state.app.isMobile.value || state.app.isCompactDesktop.value;
+
   return (
     <div
       className={`sb-floating-search-panel${
-        showResultsArea ? " sb-floating-search-panel-expanded" : ""
-      }`}
+        asSheet ? " sb-floating-search-panel-sheet" : ""
+      }${showResultsArea ? " sb-floating-search-panel-expanded" : ""}`}
       role="dialog"
       aria-label={t("search", { defaultValue: "Search" })}
     >
@@ -582,7 +588,9 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
 
           {searchLoading.value && (
             <div className="sb-floating-search-status">
-              {t("searching", { defaultValue: "Searching..." })}
+              <LoadingStatus>
+                {t("searching", { defaultValue: "Searching..." })}
+              </LoadingStatus>
             </div>
           )}
 
@@ -1001,40 +1009,29 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
 function NoChatsAvailable() {
   const { t } = useI18n();
   return (
-    <div className="sb-floating-chat-empty">
-      <span
-        className="material-symbols-outlined sb-floating-chat-empty-icon"
-        aria-hidden="true"
-      >
-        chat_bubble_outline
-      </span>
-      <p className="sb-floating-chat-empty-title">
-        {t("you-have-no-chats", {
-          defaultValue:
-            "You have no chats. Create one using the + button below.",
-        })}
-      </p>
-    </div>
+    <EmptyState
+      className="sb-floating-chat-empty"
+      size="panel"
+      icon="chat_bubble_outline"
+      title={t("you-have-no-chats", {
+        defaultValue: "You have no chats. Create one using the + button below.",
+      })}
+    />
   );
 }
 
 function NoProvidersAvailable() {
   const { t } = useI18n();
   return (
-    <div className="sb-floating-chat-empty">
-      <span
-        className="material-symbols-outlined sb-floating-chat-empty-icon"
-        aria-hidden="true"
-      >
-        chat_bubble_outline
-      </span>
-      <p className="sb-floating-chat-empty-title">
-        {t("no-chat-providers", {
-          defaultValue:
-            "No chat providers are available. Connect an AI or messaging provider to start chatting.",
-        })}
-      </p>
-    </div>
+    <EmptyState
+      className="sb-floating-chat-empty"
+      size="panel"
+      icon="chat_bubble_outline"
+      title={t("no-chat-providers", {
+        defaultValue:
+          "No chat providers are available. Connect an AI or messaging provider to start chatting.",
+      })}
+    />
   );
 }
 

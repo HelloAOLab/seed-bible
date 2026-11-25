@@ -37,6 +37,9 @@
 .sb-item-inline-preview-status {
   margin: 0;
   opacity: 0.7;
+  /* The box already fades its text; don't fade a loading line twice. */
+  --sb-loading-status-color: var(--sb-font-color);
+  --sb-loading-status-font-size: inherit;
 }
 
 .sb-item-inline-preview-link {

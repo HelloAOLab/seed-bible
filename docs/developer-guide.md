@@ -410,6 +410,7 @@ A user pastes your link into **Settings → Extensions → Add extensions from a
 - Keep the [API reference](./extension-api.md) open while you work: it lists every `sb` call, `extension.json` field, error and limit. Your editor shows the same documentation when you hover over an `sb` call.
 - Read `packages/sandboxed-example-extension/` for a fuller example than the starter project.
 - Read the [security model](./extension-security.md) to understand what the sandbox protects users from, and what it doesn't.
+- Only need to link to a passage or embed the reader, not build an extension? See the [integration reference](./integration-reference.md).
 - Found something the API can't do? [Open an issue](https://github.com/HelloAOLab/seed-bible/issues) describing what you're trying to build.
 
 ---

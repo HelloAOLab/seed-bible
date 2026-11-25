@@ -36,9 +36,10 @@
    the reader beside it) rather than jumping; `-resizing` is only set for
    those, so changes made on load snap. While it runs, the contents are
    clipped and held at the expanded width, so expanding reveals the list
-   instead of squeezing it into the narrow rail first. */
+   instead of squeezing it into the narrow rail first. Not in the mobile
+   layout, where a phone held sideways can be this wide too. */
 @media (min-width: 769px) and (prefers-reduced-motion: no-preference) {
-  .sb-tabs-sidebar-resizing {
+  :where(html:not([data-sb-app-layout="mobile"])) .sb-tabs-sidebar-resizing {
     transition:
       width var(--sb-duration-slow) ease,
       padding var(--sb-duration-slow) ease,
@@ -312,11 +313,9 @@
   gap: 0.25rem;
   padding-inline-start: 1.5rem;
 }
-
 .sb-save-category-empty {
-  padding: 0.375rem 0.5rem;
-  font-size: var(--sb-font-size-12);
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  --sb-empty-state-padding: 0.375rem 0.5rem;
+  --sb-empty-state-font-size: var(--sb-font-size-12);
 }
 
 .sb-save-item {

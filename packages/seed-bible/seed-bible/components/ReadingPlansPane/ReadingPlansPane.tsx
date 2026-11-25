@@ -1,3 +1,5 @@
+import { Spinner } from "../Spinner/Spinner";
+import { EmptyState } from "../EmptyState/EmptyState";
 import "./ReadingPlansPane.css";
 import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
@@ -629,12 +631,12 @@ function ReadingPlansList(props: ReadingPlansListProps) {
     <div className="sb-reading-plans-pane">
       <div className="sb-reading-plans-scroll">
         {rows.length === 0 && drafts.length === 0 ? (
-          <div className="sb-reading-plans-empty">
+          <EmptyState className="sb-reading-plans-empty" size="panel">
             {t("reading-plans-empty", {
               defaultValue:
                 "You don't have any reading plans yet. Create one to get started.",
             })}
-          </div>
+          </EmptyState>
         ) : (
           <>
             {hero && hero.summary?.next ? (
@@ -667,11 +669,11 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                   </span>
                 </div>
                 <span className="sb-rp-today-go" aria-hidden="true">
-                  <MaterialIcon>
-                    {openingId === hero.planId
-                      ? "hourglass_top"
-                      : "arrow_forward"}
-                  </MaterialIcon>
+                  {openingId === hero.planId ? (
+                    <Spinner size="1.5rem" />
+                  ) : (
+                    <MaterialIcon>arrow_forward</MaterialIcon>
+                  )}
                 </span>
               </button>
             ) : null}
@@ -823,9 +825,16 @@ function ReadingPlansList(props: ReadingPlansListProps) {
                             </span>
                           </span>
                         </button>
-                        <MaterialIcon className="sb-rp-card-chevron">
-                          {opening ? "hourglass_top" : "arrow_forward"}
-                        </MaterialIcon>
+                        {opening ? (
+                          <Spinner
+                            size="1.5rem"
+                            className="sb-rp-card-chevron"
+                          />
+                        ) : (
+                          <MaterialIcon className="sb-rp-card-chevron">
+                            arrow_forward
+                          </MaterialIcon>
+                        )}
                         {optionsMenu(row)}
                       </div>
                       <PlanLoadError planId={row.planId} />
@@ -1159,9 +1168,13 @@ function ActivePlanCard(props: {
         {props.openLabel ? (
           <span className="sb-rp-card-open-label">{props.openLabel}</span>
         ) : null}
-        <MaterialIcon className="sb-rp-card-chevron">
-          {opening ? "hourglass_top" : "arrow_forward"}
-        </MaterialIcon>
+        {opening ? (
+          <Spinner size="1.5rem" className="sb-rp-card-chevron" />
+        ) : (
+          <MaterialIcon className="sb-rp-card-chevron">
+            arrow_forward
+          </MaterialIcon>
+        )}
         {menu}
       </div>
 

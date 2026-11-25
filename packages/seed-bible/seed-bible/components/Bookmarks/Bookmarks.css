@@ -70,21 +70,28 @@
 }
 
 /* The swatch paints itself from `color`, which the component sets to the
- * bookmark color's theme variable. */
+ * bookmark color's theme variable. Gradient + 1px inside outline match the
+ * ribbon glyphs; the 2px background inset leaves room for the selected ring. */
 .sb-bookmark-form-color {
   width: 1.75rem;
   height: 1.75rem;
   padding: 0;
   border: 2px solid transparent;
   border-radius: 50%;
-  background: currentColor;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, currentColor 95%, white),
+    color-mix(in srgb, currentColor 95%, black)
+  );
   background-clip: content-box;
-  box-shadow: inset 0 0 0 2px var(--sb-background);
+  box-shadow:
+    inset 0 0 0 2px var(--sb-background),
+    inset 0 0 0 3px color-mix(in srgb, currentColor 65%, var(--sb-font-color));
   cursor: pointer;
 }
 
 .sb-bookmark-form-color-selected {
-  border-color: currentColor;
+  border-color: color-mix(in srgb, currentColor 65%, var(--sb-font-color));
 }
 
 .sb-bookmark-form-color:focus-visible {
@@ -260,12 +267,9 @@
   gap: 0.25rem;
   margin-bottom: 0.25rem;
 }
-
 .sb-bookmarks-panel-empty {
-  margin: 0;
-  padding: 0.5rem;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  font-size: var(--sb-font-size-13);
+  --sb-empty-state-padding: 0.5rem;
+  --sb-empty-state-font-size: var(--sb-font-size-13);
 }
 
 .sb-bookmarks-panel-row {
