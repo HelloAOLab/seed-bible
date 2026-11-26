@@ -205,7 +205,16 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
             {verseReference}
           </p>
           {verseQuoteText ? (
-            <p className="sb-annotation-verse-quote-text">{verseQuoteText}</p>
+            // Focusable so a long passage can be scrolled from the keyboard;
+            // named so a screen reader says what the stop is.
+            <p
+              className="sb-annotation-verse-quote-text"
+              tabIndex={0}
+              role="region"
+              aria-label={verseReference}
+            >
+              {verseQuoteText}
+            </p>
           ) : null}
         </div>
       ) : null}
@@ -213,7 +222,7 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
       <Suspense
         fallback={
           <div
-            className="sb-text-input sb-annotation-editor sb-annotation-editor--loading"
+            className="sb-text-input sb-annotation-editor"
             aria-busy="true"
           />
         }
@@ -234,11 +243,8 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
 
       {error ? <p className="sb-playlist-add-error">{error}</p> : null}
 
-      <div>
-        <Button
-          className="sb-reading-plans-back"
-          onClick={() => annotations.cancelEditingAnnotation()}
-        >
+      <div className="sb-discover-actions">
+        <Button onClick={() => annotations.cancelEditingAnnotation()}>
           {t("cancel", { defaultValue: "Cancel" })}
         </Button>
         <Button

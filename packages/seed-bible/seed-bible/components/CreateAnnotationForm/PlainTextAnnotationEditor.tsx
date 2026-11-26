@@ -171,6 +171,12 @@ export function PlainTextAnnotationEditor(props: AnnotationEditorProps) {
       textarea.focus({ preventScroll: true });
       const end = autofocus === "start" ? 0 : textarea.value.length;
       textarea.setSelectionRange(end, end);
+      // `preventScroll` stops the pane jumping, but also leaves a long note
+      // showing its top lines with the cursor hidden below; this scrolls only
+      // the textarea itself.
+      if (autofocus !== "start") {
+        textarea.scrollTop = textarea.scrollHeight;
+      }
     }
     return () => onEditorRef.current(null);
   }, []);

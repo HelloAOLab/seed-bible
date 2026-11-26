@@ -1,8 +1,17 @@
+import { h, render } from "preact";
+import { act } from "preact/test-utils";
 import {
+  PlainTextAnnotationEditor,
   htmlToPlainText,
   isPlainTextHtml,
   plainTextToHtml,
 } from "@packages/seed-bible/seed-bible/components/CreateAnnotationForm/PlainTextAnnotationEditor";
+import type { FocusPosition } from "@tiptap/core";
+
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const { mockI18nManager } = await import("../testUtils/mockI18n");
+  return mockI18nManager();
+});
 
 describe("htmlToPlainText", () => {
   it("puts each paragraph on its own line, keeping blank paragraphs", () => {
@@ -72,5 +81,60 @@ describe("isPlainTextHtml", () => {
     ["a link", '<p><a href="https://example.com">link</a></p>'],
   ])("rejects a note with %s", (_label, html) => {
     expect(isPlainTextHtml(html)).toBe(false);
+  });
+});
+
+describe("PlainTextAnnotationEditor", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    // jsdom does no layout, so stand in a note taller than its box.
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(900);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    vi.restoreAllMocks();
+  });
+
+  function mountEditor(autofocus: FocusPosition): HTMLTextAreaElement {
+    const longNote = Array.from(
+      { length: 30 },
+      (_, i) => `<p>Line ${i + 1}</p>`
+    ).join("");
+    act(() => {
+      render(
+        h(PlainTextAnnotationEditor, {
+          initialContent: longNote,
+          autofocus,
+          onEditor: () => {},
+          onEmptyChange: () => {},
+        }),
+        container
+      );
+    });
+    const textarea = container.querySelector("textarea");
+    if (!textarea) {
+      throw new Error("Textarea not rendered");
+    }
+    return textarea;
+  }
+
+  it("scrolls a long note to the cursor when autofocusing at the end", () => {
+    const textarea = mountEditor("end");
+
+    expect(document.activeElement).toBe(textarea);
+    expect(textarea.selectionStart).toBe(textarea.value.length);
+    expect(textarea.scrollTop).toBe(900);
+  });
+
+  it("leaves a long note at the top when autofocusing at the start", () => {
+    const textarea = mountEditor("start");
+
+    expect(textarea.selectionStart).toBe(0);
+    expect(textarea.scrollTop).toBe(0);
   });
 });

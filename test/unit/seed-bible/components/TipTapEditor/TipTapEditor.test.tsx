@@ -138,4 +138,36 @@ describe("TipTapEditor", () => {
     expect(editor.isFocused).toBe(false);
     expect(document.activeElement).not.toBe(editor.view.dom);
   });
+
+  describe("in a height-capped content area", () => {
+    // jsdom does no layout, so stand in a note taller than its box. The
+    // toolbar renders after the editor mounts and shortens the box, which in
+    // a browser moves the bottom of the note further down; the larger height
+    // once it's there stands in for that.
+    beforeEach(() => {
+      vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockImplementation(
+        () => (document.querySelector(".sb-editor-toolbar") ? 900 : 700)
+      );
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("scrolls the content area to the cursor when autofocusing at the end", async () => {
+      await mountEditor({ autofocus: "end" });
+      await flushAutofocus();
+
+      const content = container.querySelector(".sb-editor-content");
+      expect(content?.scrollTop).toBe(900);
+    });
+
+    it("leaves the content area at the top when autofocusing at the start", async () => {
+      await mountEditor({ autofocus: "start" });
+      await flushAutofocus();
+
+      const content = container.querySelector(".sb-editor-content");
+      expect(content?.scrollTop).toBe(0);
+    });
+  });
 });
