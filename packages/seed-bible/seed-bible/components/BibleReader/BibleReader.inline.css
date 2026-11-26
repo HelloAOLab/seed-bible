@@ -782,13 +782,21 @@
    The margins can go negative at the smallest reader sizes; that lets the box
    overlap its neighbours by under a pixel rather than push the text. */
 .sb-verse-number-annotated {
-  border: 1px solid var(--sb-verse-font-color);
-  /* stylelint-disable-next-line seed-bible/use-design-tokens -- reader box, sized in px on purpose (see above) */
-  border-radius: 4px;
-  padding: 2px;
-  margin-inline-start: calc(0.625em - 3px);
-  margin-inline-end: calc(0.3125em - 3px);
+  position: relative;
+  border: none;
+  padding: 0;
+  margin-inline-start: 0.625em;
+  margin-inline-end: 0.3125em;
   cursor: pointer;
+}
+
+.sb-verse-number-annotated::after {
+  content: "";
+  position: absolute;
+  inset: -2px -2px;
+  border: 1px solid var(--sb-verse-font-color);
+  border-radius: 4px;
+  pointer-events: none;
 }
 
 /* Poetry lines pull the number into the gutter with a more specific rule
