@@ -182,9 +182,19 @@ export interface AnnotationsManager {
    */
   sync: RecordSyncManager<Annotation>;
 
+  /**
+   * Why a note saved right now would stay on this device instead of reaching
+   * the account, or null when it would reach it. Always null under a record
+   * override and without a local store, since neither keeps notes on the
+   * device.
+   */
+  localSaveReason: ReadonlySignal<LocalSaveReason | null>;
+
   /** How many of a chapter's notes are still waiting to reach the server. */
   pendingCountForChapter(bookId: string, chapterNumber: number): number;
 }
+
+export type LocalSaveReason = "signed-out" | "offline" | "signed-out-offline";
 
 export const commentAnnotationSchema = z.object({
   type: z.literal("comment"),
@@ -623,8 +633,8 @@ export function createAnnotationsManager(
    *
    * Deliberately does not prompt for login. Prompting mid-save would be wrong
    * offline (the request cannot succeed) and wrong for a signed-out draft (there
-   * is a local bucket to write to instead). The prompt lives in
-   * `createNewAnnotation`, where the user is present and expecting it.
+   * is a local bucket to write to instead). The only prompt lives in
+   * `createNewAnnotation`, for when there is no local store to fall back on.
    *
    * `recordOverride` wins over the signed-in account whenever the query
    * itself doesn't name a record, since it means every annotation for this
@@ -1405,8 +1415,12 @@ export function createAnnotationsManager(
   // drafted, so the user can navigate and select verses before, during, or
   // after opening the composer and always see (and save) where they are - no
   // manual verse-range controls needed.
+  let lastReadingState: ReaderTab["readingState"] | null = null;
+  let lastTranslationId: string | null = null;
   effect(() => {
     if (!isDraftingNewAnnotation.value) {
+      lastReadingState = null;
+      lastTranslationId = null;
       return;
     }
     const current = editingAnnotation.value;
@@ -1426,6 +1440,22 @@ export function createAnnotationsManager(
     const chapterNumber =
       readingState.chapterNumber.value || current.chapterNumber;
     const targeting = deriveVerseTargeting(readingState, bookId, chapterNumber);
+    const translationId = readingState.translationId.value;
+    const switchedTranslation =
+      readingState === lastReadingState && translationId !== lastTranslationId;
+    lastReadingState = readingState;
+    lastTranslationId = translationId;
+    // Switching translation clears the reader's selection, but the passage is
+    // still the same one, so the draft keeps its verses. Signing in mid-draft
+    // does this when the account prefers another translation.
+    if (
+      switchedTranslation &&
+      targeting.verseNumbers === null &&
+      current.bookId === bookId &&
+      current.chapterNumber === chapterNumber
+    ) {
+      return;
+    }
     if (
       current.bookId === bookId &&
       current.chapterNumber === chapterNumber &&
@@ -1456,12 +1486,12 @@ export function createAnnotationsManager(
   const createNewAnnotation = async (): Promise<void> => {
     let userId = login.userId.value;
 
-    // Offer a sign-in, but don't insist on one: with a local store the note is
-    // kept on the device and adopted when the user does sign in. Skipped when
-    // a record override is set (no sign-in needed at all) and while offline,
-    // where signing in cannot succeed — including when there is no local
-    // store, since a prompt that can only fail is worse than saying so.
-    if (!userId && !recordOverride && sync.isOnline.value) {
+    // With a local store a signed-out note is kept on the device and adopted
+    // when the user signs in, so the editor opens straight away and says so
+    // itself; prompting on every note only got in the way. A sign-in is asked
+    // for only when there is nowhere local to put the note, and never offline,
+    // where it could only fail.
+    if (!userId && !recordOverride && !store && sync.isOnline.value) {
       const userInfo = await login.login();
       userId = userInfo?.id ?? null;
     }
@@ -1515,10 +1545,18 @@ export function createAnnotationsManager(
   };
 
   const saveEditingAnnotation = async (): Promise<void> => {
-    const current = editingAnnotation.value;
-    if (!current) {
+    const editing = editingAnnotation.value;
+    if (!editing) {
       return;
     }
+
+    // A draft started signed out has no author. Signing in from the editor
+    // before saving puts the note in that account, so it gets them as author.
+    const signedInAs = recordOverride ? null : login.userId.value;
+    const current =
+      editing.data.userId == null && signedInAs
+        ? { ...editing, data: { ...editing.data, userId: signedInAs } }
+        : editing;
 
     // Capture the owner before awaiting the save, since the account may change
     // while IndexedDB operations are in progress.
@@ -1569,6 +1607,21 @@ export function createAnnotationsManager(
     }
   };
 
+  const localSaveReason = computed((): LocalSaveReason | null => {
+    if (recordOverride || !store) {
+      return null;
+    }
+    const signedOut = !login.userId.value;
+    const offline = !sync.isOnline.value;
+    if (signedOut && offline) {
+      return "signed-out-offline";
+    }
+    if (signedOut) {
+      return "signed-out";
+    }
+    return offline ? "offline" : null;
+  });
+
   const manager: AnnotationsManager = {
     saveAnnotation,
     saveAnnotationAndRefresh,
@@ -1594,6 +1647,7 @@ export function createAnnotationsManager(
     isDraftingNewAnnotation: computed(() => isDraftingNewAnnotation.value),
     hasRecordOverride: !!recordOverride,
     sync,
+    localSaveReason,
     pendingCountForChapter: (bookId, chapterNumber) =>
       sync.pendingCountForCollection(
         annotationCollection(bookId, chapterNumber)

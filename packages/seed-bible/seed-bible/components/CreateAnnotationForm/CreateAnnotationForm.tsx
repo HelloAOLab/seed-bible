@@ -17,6 +17,7 @@ import {
 import { DiscoverPanelLayout } from "../Discover/DiscoverPanelHeader";
 import type { ChapterVerse } from "../../managers/FreeUseBibleAPI";
 import type { TabsManager } from "../../managers/TabsManager";
+import type { LoginManager } from "../../managers/LoginManager";
 import { sanitize } from "../../managers/Sanitization";
 import { captureEvent, isApplePlatform } from "../../managers/Utils";
 import {
@@ -25,6 +26,7 @@ import {
   type AnnotationEditorProps,
 } from "./PlainTextAnnotationEditor";
 import { retryChunkImport } from "./retryChunkImport";
+import { LocalSaveNotice } from "./LocalSaveNotice";
 import { Button } from "../Button/Button";
 import { IconButton } from "../IconButton/IconButton";
 import "../TextField/TextField.css";
@@ -83,6 +85,7 @@ function useAnnotationEditor(): ComponentType<AnnotationEditorProps> {
 
 interface CreateAnnotationFormProps {
   annotations: AnnotationsManager;
+  login: LoginManager;
   tabs: TabsManager;
   toast: (message: string) => void;
   onClose: () => void;
@@ -116,7 +119,7 @@ function CreateAnnotationTitle(props: {
 
 /** Create/edit-annotation screen shown inside the discover pane. */
 export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
-  const { annotations, tabs, toast, onClose } = props;
+  const { annotations, login, tabs, toast, onClose } = props;
   const { t } = useI18n();
   const EditorComponent = useAnnotationEditor();
   const editorRef = useRef<AnnotationEditorHandle | null>(null);
@@ -209,6 +212,8 @@ export function CreateAnnotationForm(props: CreateAnnotationFormProps) {
           ) : null}
         </div>
       ) : null}
+
+      <LocalSaveNotice annotations={annotations} login={login} />
 
       <Suspense
         fallback={

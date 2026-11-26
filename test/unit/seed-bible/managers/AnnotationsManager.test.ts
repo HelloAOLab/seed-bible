@@ -25,7 +25,7 @@ import {
   type ReaderTab,
   type TabsManager,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
-import { computed, effect, signal, type Signal } from "@preact/signals";
+import { batch, computed, effect, signal, type Signal } from "@preact/signals";
 import { stubPageVisibility } from "../testUtils/pageVisibility";
 import {
   createFriendReadLimiter,
@@ -66,6 +66,7 @@ function createMockTab(
   return {
     id: overrides.id ?? "tab-1",
     readingState: {
+      translationId: signal("BSB"),
       bookId: signal(overrides.bookId === undefined ? "GEN" : overrides.bookId),
       chapterNumber: signal(overrides.chapterNumber ?? 1),
       selectedVerses,
@@ -1493,6 +1494,40 @@ describe("AnnotationsManager", () => {
       expect(manager.editingAnnotation.value?.verseNumbers).toBeNull();
     });
 
+    it("keeps a new draft's verses when the reader switches translation on the same chapter", async () => {
+      // Signing in mid-draft does this when the account prefers another
+      // translation: the reader moves to it and clears its selection in one
+      // go, the same way `BibleReadingManager` applies a new position.
+      tab = createMockTab({
+        bookId: "GEN",
+        chapterNumber: 1,
+        selectedVerses: [
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 3 } },
+        ],
+      });
+      tabs = createMockTabsManager(tab);
+      const manager = createManager();
+      await manager.createNewAnnotation();
+
+      batch(() => {
+        tab.readingState.translationId.value = "KJV";
+        tab.readingState.clearSelectedVerses();
+      });
+
+      expect(manager.editingAnnotation.value).toMatchObject({
+        bookId: "GEN",
+        chapterNumber: 1,
+        verseNumber: 3,
+        verseNumbers: [3],
+      });
+
+      // A selection made afterwards in the new translation still moves it.
+      tab.readingState.selectedVerses.value = [
+        { bookId: "GEN", chapterNumber: 1, verse: { number: 8 } },
+      ] as never;
+      expect(manager.editingAnnotation.value?.verseNumber).toBe(8);
+    });
+
     it("keeps syncing against the tab the draft was started on after switching the active tab", async () => {
       const tabA = createMockTab({
         id: "tab-1",
@@ -2150,15 +2185,11 @@ describe("AnnotationsManager", () => {
       expect(manager.editingAnnotation.value).not.toBeNull();
     });
 
-    it("starts a signed-out draft when the user dismisses the real sign-in prompt", async () => {
-      // Deliberately driven through a real `LoginManager` rather than the mock
-      // this file uses elsewhere. The bug being guarded here lived in the
-      // boundary between the two: `cancelLogin()` rejected the pending
-      // `login()` promise, so the dismissal threw out of `createNewAnnotation`
-      // before it could open the editor, and the user was simply stuck with
-      // nothing on screen and nothing explaining why. A mocked `login()`
-      // resolving `null` cannot catch that — it agrees with the caller while
-      // disagreeing with the manager, which is why the original bug shipped.
+    it("starts a signed-out draft online without opening the sign-in prompt", async () => {
+      // Driven through a real `LoginManager`, so "no prompt" means the prompt
+      // genuinely never opened, not that a mock happened to agree. Signing in
+      // is offered inside the editor instead; asking on every note got in the
+      // way of people who just wanted to write one.
       const realLogin = createLoginManager({ os });
       const manager = createAnnotationsManager(
         os,
@@ -2169,15 +2200,11 @@ describe("AnnotationsManager", () => {
         { store }
       );
       offlineManagers.push(manager);
+      expect(manager.sync.isOnline.value).toBe(true);
 
-      // Not awaited yet: `createNewAnnotation` is parked on the prompt until it
-      // is answered, which is the state a dismissal has to be delivered into.
-      const drafting = manager.createNewAnnotation();
-      await waitForCondition(() => realLogin.isLoginOpen.value);
+      await manager.createNewAnnotation();
 
-      await realLogin.cancelLogin();
-      await drafting;
-
+      expect(realLogin.isLoginOpen.value).toBe(false);
       const draft = manager.editingAnnotation.value;
       expect(draft).not.toBeNull();
       expect(discover.view.value).toBe("create_annotation");
@@ -2188,6 +2215,89 @@ describe("AnnotationsManager", () => {
 
       expect(await store.get(LOCAL_OWNER, draft!.id)).not.toBeNull();
       expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("credits a draft started signed out to the account signed in before saving it", async () => {
+      login.userId.value = null;
+      const manager = createOfflineManager();
+      await manager.createNewAnnotation();
+      const draftId = manager.editingAnnotation.value!.id;
+
+      login.userId.value = "user-1";
+      await manager.saveEditingAnnotation();
+
+      const saved = await store.get("user-1", draftId);
+      expect(saved?.payload?.data.userId).toBe("user-1");
+    });
+
+    describe("localSaveReason", () => {
+      it("is null while signed in and online, where a note reaches the account", () => {
+        const manager = createOfflineManager();
+
+        expect(manager.localSaveReason.value).toBeNull();
+      });
+
+      it("names being signed out, and clears once the user signs in", () => {
+        login.userId.value = null;
+        const manager = createOfflineManager();
+
+        expect(manager.localSaveReason.value).toBe("signed-out");
+
+        login.userId.value = "user-1";
+        expect(manager.localSaveReason.value).toBeNull();
+      });
+
+      it("names being offline, and clears once the connection returns", () => {
+        const manager = createOfflineManager();
+        goOffline();
+
+        expect(manager.localSaveReason.value).toBe("offline");
+
+        window.dispatchEvent(new Event("online"));
+        expect(manager.localSaveReason.value).toBeNull();
+      });
+
+      it("names both when signed out and offline", () => {
+        login.userId.value = null;
+        const manager = createOfflineManager();
+        goOffline();
+
+        expect(manager.localSaveReason.value).toBe("signed-out-offline");
+
+        window.dispatchEvent(new Event("online"));
+        expect(manager.localSaveReason.value).toBe("signed-out");
+      });
+
+      it("is null under a record override, whose notes are never kept on the device", () => {
+        login.userId.value = null;
+        const manager = createAnnotationsManager(
+          os,
+          login,
+          tabs,
+          discover,
+          "team-record",
+          { store }
+        );
+        offlineManagers.push(manager);
+        goOffline();
+
+        expect(manager.localSaveReason.value).toBeNull();
+      });
+
+      it("is null without a local store, where nothing is kept on the device", () => {
+        login.userId.value = null;
+        const manager = createAnnotationsManager(
+          os,
+          login,
+          tabs,
+          discover,
+          undefined,
+          { store: null }
+        );
+        offlineManagers.push(manager);
+
+        expect(manager.localSaveReason.value).toBeNull();
+      });
     });
 
     it("shows signed-out drafts in the chapter listing", async () => {

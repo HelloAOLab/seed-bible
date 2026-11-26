@@ -5,8 +5,10 @@ import { CreateAnnotationForm } from "@packages/seed-bible/seed-bible/components
 import type {
   Annotation,
   AnnotationsManager,
+  LocalSaveReason,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { TabsManager } from "@packages/seed-bible/seed-bible/managers/TabsManager";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -81,6 +83,7 @@ function createMockAnnotationsManager(editing: Annotation | null) {
   const saveEditingAnnotation = vi.fn().mockResolvedValue(undefined);
   const annotations = {
     editingAnnotation,
+    localSaveReason: signal<LocalSaveReason | null>(null),
     saveEditingAnnotation,
     cancelEditingAnnotation: vi.fn(),
   } as unknown as AnnotationsManager;
@@ -102,6 +105,15 @@ function typeInto(textarea: HTMLTextAreaElement, value: string) {
 async function flushSave() {
   await Promise.resolve();
   await Promise.resolve();
+}
+
+/** A `LoginManager` stand-in, signed in. */
+function createMockLogin() {
+  const login = {
+    userId: signal<string | null>("user-1"),
+    login: vi.fn().mockResolvedValue(null),
+  };
+  return login as typeof login & LoginManager;
 }
 
 describe("CreateAnnotationForm when the rich text editor can't load", () => {
@@ -128,6 +140,7 @@ describe("CreateAnnotationForm when the rich text editor can't load", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={createMockTabsManager()}
           toast={toast}
         />,

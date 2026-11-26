@@ -5,8 +5,10 @@ import { CreateAnnotationForm } from "@packages/seed-bible/seed-bible/components
 import type {
   Annotation,
   AnnotationsManager,
+  LocalSaveReason,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { TabsManager } from "@packages/seed-bible/seed-bible/managers/TabsManager";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -111,6 +113,7 @@ function createMockAnnotationsManager(editing: Annotation | null) {
   const cancelEditingAnnotation = vi.fn();
   const annotations = {
     editingAnnotation,
+    localSaveReason: signal<LocalSaveReason | null>(null),
     saveEditingAnnotation,
     cancelEditingAnnotation,
   } as unknown as AnnotationsManager;
@@ -158,6 +161,15 @@ function createMockTabsManager(
   } as unknown as TabsManager;
 }
 
+/** A `LoginManager` stand-in, signed in. */
+function createMockLogin() {
+  const login = {
+    userId: signal<string | null>("user-1"),
+    login: vi.fn().mockResolvedValue(null),
+  };
+  return login as typeof login & LoginManager;
+}
+
 describe("CreateAnnotationForm", () => {
   let container: HTMLDivElement;
 
@@ -185,6 +197,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={vi.fn()}
         />,
@@ -209,6 +222,7 @@ describe("CreateAnnotationForm", () => {
         render(
           <CreateAnnotationForm
             annotations={mock.annotations}
+            login={createMockLogin()}
             tabs={tabs}
             toast={vi.fn()}
             onClose={onClose}
@@ -311,6 +325,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={vi.fn()}
         />,
@@ -341,6 +356,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={toast}
         />,
@@ -378,6 +394,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={vi.fn()}
         />,
@@ -407,6 +424,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={vi.fn()}
         />,
@@ -434,6 +452,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={vi.fn()}
         />,
@@ -459,6 +478,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={vi.fn()}
         />,
@@ -481,6 +501,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={toast}
         />,
@@ -517,6 +538,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={toast}
         />,
@@ -545,6 +567,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={toast}
         />,
@@ -582,6 +605,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={toast}
         />,
@@ -619,6 +643,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={vi.fn()}
         />,
@@ -648,6 +673,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={vi.fn()}
         />,
@@ -672,6 +698,7 @@ describe("CreateAnnotationForm", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={vi.fn()}
         />,
@@ -681,5 +708,73 @@ describe("CreateAnnotationForm", () => {
     });
 
     expect(latestAutofocus).toBe("end");
+  });
+
+  describe("local save notice", () => {
+    async function renderForm(reason: LocalSaveReason | null) {
+      const { annotations } = createMockAnnotationsManager(createAnnotation());
+      annotations.localSaveReason = signal(reason);
+      const login = createMockLogin();
+      await act(async () => {
+        render(
+          <CreateAnnotationForm
+            onClose={vi.fn()}
+            annotations={annotations}
+            login={login}
+            tabs={createMockTabsManager()}
+            toast={vi.fn()}
+          />,
+          container
+        );
+        await flushLazyLoad();
+      });
+      return { login };
+    }
+
+    function notice(): string | null {
+      return (
+        container.querySelector(".sb-annotation-local-save-notice")
+          ?.textContent ?? null
+      );
+    }
+
+    function signInButton(): HTMLButtonElement | undefined {
+      return Array.from(container.querySelectorAll("button")).find(
+        (button) => button.textContent === "Log in"
+      );
+    }
+
+    it("explains a signed-out save and offers a sign-in", async () => {
+      const { login } = await renderForm("signed-out");
+
+      expect(notice()).toContain("You're not signed in");
+      expect(notice()).not.toContain("offline");
+      await act(async () => {
+        signInButton()!.click();
+      });
+      expect(login.login).toHaveBeenCalledTimes(1);
+    });
+
+    it("explains an offline save without mentioning signing in", async () => {
+      await renderForm("offline");
+
+      expect(notice()).toContain("You're offline");
+      expect(notice()).not.toMatch(/sign/i);
+      expect(signInButton()).toBeUndefined();
+    });
+
+    it("gives both reasons when offline and signed out, without a sign-in button that couldn't work", async () => {
+      await renderForm("signed-out-offline");
+
+      expect(notice()).toContain("You're offline and not signed in");
+      expect(signInButton()).toBeUndefined();
+    });
+
+    it("is not shown when the note goes straight to the account", async () => {
+      await renderForm(null);
+
+      expect(notice()).toBeNull();
+      expect(signInButton()).toBeUndefined();
+    });
   });
 });
