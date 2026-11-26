@@ -3052,6 +3052,7 @@ export function createReadingPlansManager(
     retryReadingPlanPage: readingPlanPageLoader.retry,
     initialReadingPlanPageLoadPromise: readingPlanPageLoader.initialLoadPromise,
     getReadingPlanPageSeed: readingPlanPageLoader.getSeed,
+    reloadReadingPlanProgresses: syncReadingPlanProgresses,
   };
 }
 
