@@ -111,6 +111,23 @@ export default function TipTapEditor(props: TipTapEditorProps) {
     };
   }, []);
 
+  // Focusing with `scrollIntoView: false` keeps the surrounding page still,
+  // but where the content area scrolls on its own (a height-capped box) a long
+  // note would open on its top lines with the cursor out of sight below, so
+  // that box alone is scrolled to the end. Not at mount: the toolbar renders
+  // only once `editor` is set and shortens the box, which would push the last
+  // lines back out of view, and TipTap places the caret on the next frame.
+  useEffect(() => {
+    const scroller = elementRef.current;
+    if (!editor || autofocusRef.current !== "end" || !scroller) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      scroller.scrollTop = scroller.scrollHeight;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [editor]);
+
   return (
     <div className={className}>
       <EditorMenuBar editor={editor} />

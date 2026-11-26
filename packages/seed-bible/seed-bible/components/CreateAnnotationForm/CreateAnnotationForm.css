@@ -1,4 +1,7 @@
-.sb-annotation-editor {
+/* Doubled up with `.sb-text-input` (which the box also wears) so these win
+   over its `display: block` and `margin: 0` whichever stylesheet loads last;
+   losing `display: flex` would leave long notes cut off with no scroll bar. */
+.sb-text-input.sb-annotation-editor {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -7,10 +10,6 @@
   max-width: 100%;
   margin-bottom: 8px;
   overflow: hidden;
-}
-
-.sb-annotation-editor > .sb-editor-toolbar {
-  flex-shrink: 0;
 }
 
 .sb-annotation-editor > .sb-editor-content {
@@ -38,7 +37,6 @@
 /* Matches the info banner in `AnnotationOverrideBanner.css` so it reads as a
    notice about the form, not as text inside the textarea below it. */
 .sb-annotation-editor-offline-notice {
-  flex-shrink: 0;
   margin: 0 0 8px;
   padding: 10px 12px;
   border-radius: var(--sb-radius-md);
@@ -74,7 +72,6 @@
    verse(s) being annotated) behind a fullscreen pane. */
 .sb-annotation-verse-quote {
   display: none;
-  flex-shrink: 0;
   min-width: 0;
   margin-bottom: 8px;
   padding: 0.5rem 0.625rem;
@@ -108,11 +105,4 @@
   .sb-annotation-verse-quote {
     display: block;
   }
-}
-
-.sb-annotation-form-actions {
-  display: flex;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  gap: 8px;
 }

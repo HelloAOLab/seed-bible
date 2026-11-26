@@ -424,6 +424,9 @@ describe("CreateAnnotationForm", () => {
     const text = container.querySelector(".sb-annotation-verse-quote-text");
     expect(reference?.textContent).toBe("Genesis 1:2-3");
     expect(text?.textContent).toBe("Verse 2 text. Verse 3 text.");
+    // A keyboard stop, so it needs a name for screen readers.
+    expect(text?.getAttribute("role")).toBe("region");
+    expect(text?.getAttribute("aria-label")).toBe("Genesis 1:2-3");
   });
 
   it("shows the reference only when no open tab has the annotated chapter loaded", async () => {
