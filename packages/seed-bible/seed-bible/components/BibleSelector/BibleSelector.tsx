@@ -44,7 +44,14 @@ import {
 } from "../../managers/OfflineTranslationsManager";
 import { downloadTranslationWithToast } from "../OfflineDownloadPrompt/downloadTranslationWithToast";
 import type { TutorialManager } from "../../managers/TutorialManager";
-import { useEffect, useRef, useState, useCallback } from "preact/hooks";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "preact/hooks";
+import { handleGridKeyNav } from "../../app/keyboardNav";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { toShareableUrl } from "../../app/publicLinks";
 import { SearchBar as SearchField } from "../SearchBar/SearchBar";
@@ -135,6 +142,24 @@ export function BibleSelector(props: BibleSelectorProps) {
   const glowing = tourStep?.highlight === "glow";
   const anchor = glowing ? tourAnchorRect.value : null;
 
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  // Move focus into the panel when the picker opens from the keyboard.
+  // The search field is the most useful landing spot — it's always visible
+  // and lets the user type a book name immediately.
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const search = panel.querySelector<HTMLElement>(
+      ".sb-selector-book-search input"
+    );
+    const first = panel.querySelector<HTMLElement>(
+      "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"
+    );
+    (search ?? first)?.focus({ preventScroll: true });
+  }, [isOpen]);
+
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const [popoverSize, setPopoverSize] = useState<{
     w: number;
@@ -194,8 +219,38 @@ export function BibleSelector(props: BibleSelectorProps) {
         }
       >
         <div
+          ref={panelRef}
           onClick={(event: Event) => {
             event.stopPropagation();
+          }}
+          onKeyDown={(event: KeyboardEvent) => {
+            if (event.key === "Tab") {
+              // Trap focus inside the panel so Tab never reaches background content.
+              const panel = event.currentTarget as HTMLElement;
+              const focusable = Array.from(
+                panel.querySelectorAll<HTMLElement>(
+                  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                )
+              ).filter((el) => el.offsetParent !== null);
+              if (focusable.length === 0) return;
+              const first = focusable[0]!;
+              const last = focusable[focusable.length - 1]!;
+              const active = document.activeElement as HTMLElement;
+              if (event.shiftKey) {
+                if (active === first || !panel.contains(active)) {
+                  event.preventDefault();
+                  last.focus();
+                }
+              } else {
+                if (active === last || !panel.contains(active)) {
+                  event.preventDefault();
+                  first.focus();
+                }
+              }
+            } else if (event.key === "Escape" && !event.defaultPrevented) {
+              event.preventDefault();
+              onClose();
+            }
           }}
           className="sb-selector-panel"
         >
@@ -280,6 +335,9 @@ const SearchBar = (props: {
     booksStatus,
   } = bibleSelectorState;
 
+  // Ref kept so Escape inside TranslationModal can return focus here.
+  const translationChipRef = useRef<HTMLButtonElement>(null);
+
   const selectedTestament = bibleSelectorState.selectedTestament;
   const apocryphaAvailable = bibleSelectorState.apocryphaAvailable;
   const selectingTranslation = bibleSelectorState.selectingTranslation;
@@ -295,8 +353,15 @@ const SearchBar = (props: {
           {!isMobile.value && (
             <>
               {!bibleSelectorState.picking.value && (
-                <div
+                <button
+                  ref={translationChipRef}
+                  type="button"
                   class="sidebar-translation-selector flex-between-center"
+                  aria-expanded={selectingTranslation.value}
+                  aria-label={t("change-translation", {
+                    defaultValue: "Change translation ({{name}})",
+                    name: selectedTranslation?.value?.shortName ?? "",
+                  })}
                   style={
                     tourStepId === "selector-translation"
                       ? SPOTLIGHT_STYLE
@@ -319,7 +384,7 @@ const SearchBar = (props: {
                   >
                     expand_more
                   </span>
-                </div>
+                </button>
               )}
 
               <div
@@ -423,6 +488,7 @@ const SearchBar = (props: {
             bibleDataManager={bibleDataManager}
             tourStepId={tourStepId}
             tutorial={tutorial}
+            onEscape={() => translationChipRef.current?.focus()}
           />
         )}
       </div>
@@ -681,12 +747,47 @@ const SideBarBooks = (props: {
       return (
         <>
           {isBook(book) ? (
-            <div
+            <button
+              type="button"
               class={`sidebar-itm flex-between-center ${isSelected ? "sidebar-selected-itm" : ""}`}
-              tabIndex={index + 1}
               aria-current={isSelected ? "true" : undefined}
               aria-expanded={isSelected}
-              onClick={() => handleClick({ book })}
+              onClick={() => {
+                const isOpening = !isSelected;
+                handleClick({ book });
+                if (isOpening) {
+                  // After the chapter panel renders, move keyboard focus into it
+                  // so arrow keys work immediately without an extra Tab press.
+                  // setTimeout(0) lets Preact commit the signal-driven render first.
+                  window.setTimeout(() => {
+                    const booksItemEl = document
+                      .getElementById(`booktab-${book.id}`)
+                      ?.closest<HTMLElement>(".books-item");
+                    const firstChapter =
+                      booksItemEl?.querySelector<HTMLElement>(
+                        ".show-sidebar-chapter button.chapter-btn:not([disabled])"
+                      );
+                    firstChapter?.focus({ preventScroll: true });
+                  }, 0);
+                }
+              }}
+              onKeyDown={(event) => {
+                // ArrowRight enters the chapter panel when this book is already
+                // open. Enter/Space still toggle close (default button behavior).
+                // stopPropagation prevents the parent books-item handler from
+                // moving focus to the next column instead.
+                if (event.key === "ArrowRight" && isSelected) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  const booksItemEl = (
+                    event.currentTarget as HTMLElement
+                  ).closest<HTMLElement>(".books-item");
+                  const firstChapter = booksItemEl?.querySelector<HTMLElement>(
+                    ".show-sidebar-chapter button.chapter-btn:not([disabled])"
+                  );
+                  firstChapter?.focus({ preventScroll: true });
+                }
+              }}
               // find-the-verse-extension greys ruled-out books with #booktab-${id}.sidebar-itm. Renaming this id or class stops that grey with no type error.
               id={`booktab-${book.id}`}
               style={itemGridStyle}
@@ -712,11 +813,11 @@ const SideBarBooks = (props: {
               >
                 expand_more
               </span>
-            </div>
+            </button>
           ) : (
             <div
               class="sidebar-ghost-itm"
-              tabIndex={index + 1}
+              aria-hidden="true"
               style={itemGridStyle}
             />
           )}
@@ -736,6 +837,35 @@ const SideBarBooks = (props: {
                           ? "center"
                           : "flex-start"
                       : "space-between",
+                }}
+                onKeyDown={(event) => {
+                  if (
+                    event.key === "ArrowUp" ||
+                    event.key === "ArrowDown" ||
+                    event.key === "ArrowLeft" ||
+                    event.key === "ArrowRight" ||
+                    event.key === "Home" ||
+                    event.key === "End"
+                  ) {
+                    // Prevent bubbling to the book-grid handler above, which
+                    // would snap focus back to the first book tile because a
+                    // chapter button is not a .sidebar-itm.
+                    event.stopPropagation();
+                    event.preventDefault();
+                    handleGridKeyNav(
+                      event,
+                      event.currentTarget as HTMLElement,
+                      { itemSelector: "button.chapter-btn:not([disabled])" }
+                    );
+                  } else if (event.key === "Escape") {
+                    // Return focus to the book tile so the user can collapse
+                    // it or move to another book with arrow keys.
+                    event.stopPropagation();
+                    event.preventDefault();
+                    document
+                      .getElementById(`booktab-${bd.id}`)
+                      ?.focus({ preventScroll: true });
+                  }
                 }}
               >
                 {narrowChapterStyle && ntColumns === 2 && (
@@ -780,6 +910,24 @@ const SideBarBooks = (props: {
         <div
           class={`books-item ${getBooksGridClass(columns)}`}
           style={getBooksGridStyle(columns, rows, chaptersOpen && columns > 1)}
+          onKeyDown={(event) => {
+            if (
+              event.key === "ArrowUp" ||
+              event.key === "ArrowDown" ||
+              event.key === "ArrowLeft" ||
+              event.key === "ArrowRight" ||
+              event.key === "Home" ||
+              event.key === "End"
+            ) {
+              // Always consume arrow/home/end keys so they don't bubble to the
+              // global TabsLayout handler (ArrowUp → open search, ArrowLeft/Right
+              // → chapter navigation) while focus is inside the book grid.
+              event.preventDefault();
+              handleGridKeyNav(event, event.currentTarget as HTMLElement, {
+                itemSelector: "button.sidebar-itm",
+              });
+            }
+          }}
         >
           {books.map((book: BibleSelectorBookItem, index: number) =>
             renderBook(
@@ -999,12 +1147,7 @@ const SideBarChapters = (props: {
       const booksItem = bookTab?.closest(".books-item");
       if (!bookTab || !booksItem) return;
 
-      // Don't yank focus off the search field while the user is typing.
-      // openBookId also changes when search narrows to a single book.
       const active = document.activeElement as HTMLElement | null;
-      if (!active?.closest(".sb-search-bar")) {
-        bookTab.focus({ preventScroll: true });
-      }
 
       const chapterPanel = booksItem.querySelector(".show-sidebar-chapter");
       const currentChapterButton =
@@ -1023,6 +1166,33 @@ const SideBarChapters = (props: {
           : null;
       const target =
         visibleChapterButton ?? (chapterPanel as HTMLElement | null) ?? bookTab;
+
+      // Focus management:
+      // - Search bar focused → don't steal focus (user is typing to filter books).
+      // - Focus is on or inside the books grid (keyboard Enter on book tile, or
+      //   mouse click on the tile) → move focus into the chapter panel so arrow
+      //   keys work immediately without an extra Tab.
+      // - Focus is elsewhere → put it on the book tab (original behavior, e.g.
+      //   programmatic open on first selector load).
+      const focusIsInsideGrid =
+        active &&
+        booksItem.closest(".books-item") !== null &&
+        (booksItem.contains(active) || active.id === `booktab-${openBookId}`);
+      if (active?.closest(".sb-search-bar")) {
+        // keep focus in search
+      } else if (focusIsInsideGrid || active === bookTab) {
+        // Move focus into the chapter grid: current chapter, or first visible one.
+        const firstVisibleChapter = Array.from(
+          booksItem.querySelectorAll<HTMLElement>(
+            ".show-sidebar-chapter button.chapter-btn"
+          )
+        ).find((el) => el.offsetParent !== null);
+        (visibleChapterButton ?? firstVisibleChapter ?? bookTab).focus({
+          preventScroll: true,
+        });
+      } else {
+        bookTab.focus({ preventScroll: true });
+      }
 
       // Scroll every overflow-y ancestor through the selector panel.
       // Desktop usually only needs `.books-item`. On mobile both
@@ -1094,6 +1264,7 @@ const SideBarChapters = (props: {
     const renderPsalmPartToggle = (partName: BibleSelectorPsalmsGroups) => (
       <button
         style={{ width: "100%" }}
+        tabIndex={-1}
         onClick={() => togglePsalmPart(partName)}
         class={`psalms-btn flex-start-start ${cp.includes(partName) ? "sidebar-selected-itm" : ""}`}
       >
@@ -1122,6 +1293,7 @@ const SideBarChapters = (props: {
         <button
           // find-the-verse-extension greys ruled-out chapters with #chapter-btn-${n}.chapter-btn.
           id={`chapter-btn-${chapterNumber}`}
+          tabIndex={-1}
           style={
             isVisible === undefined
               ? undefined
@@ -1503,6 +1675,8 @@ const TranslationModal = (props: {
   /** Active selector-group tour step id, or null when no step is active. */
   tourStepId?: string | null;
   tutorial?: TutorialManager;
+  /** Called when Escape is pressed to return focus to the chip that opened this. */
+  onEscape?: () => void;
 }) => {
   const { app, bibleSelectorState, bibleDataManager, tourStepId, tutorial } =
     props;
@@ -1621,14 +1795,26 @@ const TranslationModal = (props: {
             showTranslationInfo.value = null;
             pendingOfflineDelete.value = null;
           }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && !e.defaultPrevented) {
+              e.preventDefault();
+              e.stopPropagation();
+              selectingTranslation.value = false;
+              showTranslationSettings.value = false;
+              showTranslationInfo.value = null;
+              props.onEscape?.();
+            }
+          }}
         >
           <div
             class="sidebar-book-selector flex-between-center-gap-md"
             style={{ padding: "0.9375rem 0.3125rem" }}
           >
             {isMobile.value && (
-              <span
+              <button
+                type="button"
                 class="close-icon material-symbols-outlined"
+                aria-label={t("close", { defaultValue: "Close" })}
                 onClick={() => {
                   selectingTranslation.value = false;
                   showTranslationSettings.value = false;
@@ -1637,7 +1823,7 @@ const TranslationModal = (props: {
                 }}
               >
                 close
-              </span>
+              </button>
             )}
             <SearchField
               id="translation-search-input"
@@ -1650,19 +1836,24 @@ const TranslationModal = (props: {
                 defaultValue: "Search Translation",
               })}
             />
-            <span
+            <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 showTranslationSettings.value = !showTranslationSettings.value;
                 showTranslationInfo.value = null;
               }}
               className="filters-icon"
+              aria-label={t("filters", { defaultValue: "Filters" })}
+              aria-expanded={showTranslationSettings.value}
             >
               <FiltersIcon />
-            </span>
+            </button>
             {!isMobile.value && (
-              <span
+              <button
+                type="button"
                 class="close-icon material-symbols-outlined"
+                aria-label={t("close", { defaultValue: "Close" })}
                 onClick={() => {
                   selectingTranslation.value = false;
                   showTranslationSettings.value = false;
@@ -1671,7 +1862,7 @@ const TranslationModal = (props: {
                 }}
               >
                 close
-              </span>
+              </button>
             )}
           </div>
           {downloadedOnly.value && (
@@ -1700,10 +1891,11 @@ const TranslationModal = (props: {
           <TranslationListStatus bibleSelectorState={bibleSelectorState} />
           {LanguageList}
           <div className="footer">
-            <div
+            <button
+              type="button"
               className="custom-translation-header flex-between"
+              aria-expanded={showCustomTranslation.value}
               onClick={() => {
-                console.log("clicked", showCustomTranslation.value);
                 showCustomTranslation.value = !showCustomTranslation.value;
               }}
             >
@@ -1712,18 +1904,14 @@ const TranslationModal = (props: {
                   defaultValue: "Custom Translations",
                 })}
               </span>
-              <span
-                style={{
-                  cursor: "pointer",
-                }}
-              >
+              <span aria-hidden="true">
                 {!showCustomTranslation.value ? (
                   <AddIcon height={20} width={20} />
                 ) : (
                   <MinusIcon height={20} width={20} />
                 )}
               </span>
-            </div>
+            </button>
             {showCustomTranslation.value && (
               <CustomTranslation bibleSelectorState={bibleSelectorState} />
             )}

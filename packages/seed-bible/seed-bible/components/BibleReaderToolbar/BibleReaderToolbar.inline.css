@@ -69,6 +69,17 @@
     transform var(--sb-duration-slow) ease;
 }
 
+/* Show a keyboard focus ring so Tab navigation is visible. Mouse clicks still
+   get no ring because :focus-visible fires only for keyboard focus. */
+.sb-reader-toolbar-button:focus-visible {
+  outline: 2px solid var(--sb-primary-color);
+  outline-offset: 2px;
+  border-radius: var(
+    --sb-reader-toolbar-button-border-radius,
+    var(--sb-radius-sm)
+  );
+}
+
 /* The chapter controls render as real `<a>` elements, which pulls in the
    global anchor styling from base.css. `a:visited` outspecifies the class
    rule above, so without this the chevron takes the visited-link colour as

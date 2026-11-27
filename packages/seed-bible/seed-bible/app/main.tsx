@@ -294,6 +294,13 @@ function MainContent(props: {
         />
         {!isMinimalEmbed && <Sidebar state={state} />}
 
+        {/* The toolbar is position:fixed so it stays visually at the bottom,
+            but placing it before the Bible text in DOM order means Tab reaches
+            Today/Books/Search/More right after the sidebar — before any verse. */}
+        <Suspense fallback={null}>
+          <BibleReaderToolbar state={state} />
+        </Suspense>
+
         <div className="sb-content-row">
           <main className="sb-main-content">
             <TabsLayout state={state} />
@@ -324,13 +331,6 @@ function MainContent(props: {
         />
 
         <FloatingReaderPanels state={state} />
-
-        {/* The toolbar suspends during SSR until the reading position is
-            known, so its chapter links land in the server-rendered HTML.
-            Nothing suspends here on the client. */}
-        <Suspense fallback={null}>
-          <BibleReaderToolbar state={state} />
-        </Suspense>
 
         <SharedSessionsToasts state={state} />
 
