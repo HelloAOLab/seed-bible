@@ -25,7 +25,10 @@ import {
 } from "../../managers/SettingsManager";
 import { highlightContainsVerse } from "../../managers/HighlightsManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
-import type { BibleReadingState } from "../../managers/BibleReadingManager";
+import type {
+  BibleReadingState,
+  BibleSelectedVerse,
+} from "../../managers/BibleReadingManager";
 import type { BibleReaderToolbarTool } from "../../managers/BibleToolsManager";
 import { ToolActionElement } from "../ToolActionElement";
 import { BottomSheet, type BottomSheetProps } from "../BottomSheet/BottomSheet";
@@ -1011,6 +1014,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const selectionState = useComputed(() =>
     selectedTab.value ? tabs.activeReadingState(selectedTab.value) : null
   );
+  /**
+   * What the verse sheet is closing on while it slides out. The chapter stays
+   * tappable then, so a verse picked mid-slide isn't one the close clears.
+   */
+  const closingSelection = useRef<{
+    state: BibleReadingState;
+    verses: BibleSelectedVerse[];
+  } | null>(null);
   const sessionState = useComputed(
     () => selectedTab.value?.sharedSession ?? null
   );
@@ -1548,6 +1559,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       saves.isFilterActive.value
   );
 
+  /**
+   * How open the overflow row is, from 0 (collapsed) to 1 (fully open). Measured
+   * against the on-screen travel, not the full note, so a long annotation still
+   * reaches 1 once the drawer is open.
+   */
+  const verseSheetRevealProgress = useComputed(() =>
+    verseSheetVisibleOverflowHeight.value > 0
+      ? Math.min(
+          1,
+          verseSheetRevealHeight.value / verseSheetVisibleOverflowHeight.value
+        )
+      : 0
+  );
+
   const isBookmarksViewOpen = useComputed(
     () =>
       sidebar.isMobileOpen.value &&
@@ -1709,8 +1734,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       const overflowEl = sheet.querySelector<HTMLElement>(
         ".sb-verse-toolbar-overflow"
       );
+      // The swipe hint shrinks to nothing at full open, so counting its
+      // mid-reveal height would move the drawer's cap under the finger.
+      const hintEl = sheet.querySelector<HTMLElement>(
+        ".sb-verse-toolbar-swipe-hint-collapsible"
+      );
       const chrome = Math.round(
-        sheet.offsetHeight - (overflowEl?.offsetHeight ?? 0)
+        sheet.offsetHeight -
+          (overflowEl?.offsetHeight ?? 0) -
+          (hintEl?.offsetHeight ?? 0)
       );
       if (chrome > 0 && chrome !== verseSheetChromeHeight.peek()) {
         verseSheetChromeHeight.value = chrome;
@@ -1953,15 +1985,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     ".sb-verse-toolbar-swatches, .sb-verse-toolbar-discovered, .sb-verse-toolbar-overflow-scrollable";
 
   /**
-   * The phone verse sheet's ✕ and Escape: in the highlight colors they go back
-   * to the verse actions, keeping the selection; otherwise they clear it.
+   * The phone verse sheet's ✕ and Escape while the highlight colors are open:
+   * back to the verse actions, keeping the selection.
    */
-  const leaveVerseSheetStep = () => {
-    if (isHighlightPickerOpen.value) {
-      isHighlightPickerOpen.value = false;
-      return;
-    }
-    selectionState.value?.clearSelectedVerses();
+  const leaveHighlightPicker = () => {
+    isHighlightPickerOpen.value = false;
   };
 
   // Verse toolbar highlight picker state
@@ -3419,9 +3447,32 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 : ""
             }`,
             label: t("verse-actions", { defaultValue: "Verse actions" }),
-            onClose: () => selectionState.value?.clearSelectedVerses(),
-            onCloseButton: leaveVerseSheetStep,
-            onEscape: leaveVerseSheetStep,
+            onCloseStart: () => {
+              const state = selectionState.value;
+              closingSelection.current = state
+                ? { state, verses: state.selectedVerses.peek() }
+                : null;
+            },
+            onClose: () => {
+              const closing = closingSelection.current;
+              closingSelection.current = null;
+              if (!closing) {
+                selectionState.value?.clearSelectedVerses();
+                return;
+              }
+              const { state, verses } = closing;
+              state.selectedVerses.value = state.selectedVerses.value.filter(
+                (verse) => !verses.includes(verse)
+              );
+            },
+            // Only in the picker, where ✕ and Escape go back a step. Otherwise
+            // they're left to the sheet, which slides out before `onClose`.
+            onCloseButton: isHighlightPickerOpen.value
+              ? leaveHighlightPicker
+              : undefined,
+            onEscape: isHighlightPickerOpen.value
+              ? leaveHighlightPicker
+              : undefined,
             closeLabel: isHighlightPickerOpen.value
               ? t("back", { defaultValue: "Back" })
               : t("close", { defaultValue: "Close" }),
@@ -4104,44 +4155,49 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               itself carries the accessible toggle. */}
           {isSmallScreen.value &&
             !isHighlightPickerOpen.value &&
-            verseSheetHasHiddenContent.value &&
-            !isVerseSheetExpanded.value && (
+            verseSheetHasHiddenContent.value && (
               <div
-                className="sb-verse-toolbar-swipe-hint"
+                className={`sb-verse-toolbar-swipe-hint sb-verse-toolbar-swipe-hint-collapsible${
+                  verseSheetRevealProgress.value === 1
+                    ? " sb-verse-toolbar-swipe-hint-closed"
+                    : ""
+                }`}
                 // Purely decorative: the panel itself owns the drag/tap
                 // gesture now, and the handle above remains the sole
                 // *accessible* control, so this stays out of the a11y tree.
                 aria-hidden="true"
                 style={{
-                  // Fades across the on-screen travel, not the full note, so a
-                  // long annotation still clears the hint once the drawer is open.
-                  opacity: verseSheetVisibleOverflowHeight.value
-                    ? 1 -
-                      Math.min(
-                        1,
-                        verseSheetRevealHeight.value /
-                          verseSheetVisibleOverflowHeight.value
-                      )
-                    : 1,
+                  // The sheet is pinned to the bottom of the screen, so height
+                  // it loses pulls its top edge down; shrinking the hint in
+                  // step with the reveal keeps that edge moving only up.
+                  gridTemplateRows: `${1 - verseSheetRevealProgress.value}fr`,
+                  opacity: 1 - verseSheetRevealProgress.value,
                 }}
               >
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  keyboard_double_arrow_up
-                </span>
-                <span>
-                  {t("swipe-up-more", {
-                    defaultValue: "Swipe up to see more",
-                  })}
-                </span>
-                {selectionAnnotations.value.length > 0 && (
-                  <span>
-                    &#x2022;{" "}
-                    {t("x-notes", {
-                      defaultValue: "{{count}} notes",
-                      count: selectionAnnotations.value.length,
-                    })}
-                  </span>
-                )}
+                <div className="sb-verse-toolbar-swipe-hint-content">
+                  <div className="sb-verse-toolbar-swipe-hint-inner">
+                    <span
+                      className="material-symbols-outlined"
+                      aria-hidden="true"
+                    >
+                      keyboard_double_arrow_up
+                    </span>
+                    <span>
+                      {t("swipe-up-more", {
+                        defaultValue: "Swipe up to see more",
+                      })}
+                    </span>
+                    {selectionAnnotations.value.length > 0 && (
+                      <span>
+                        &#x2022;{" "}
+                        {t("x-notes", {
+                          defaultValue: "{{count}} notes",
+                          count: selectionAnnotations.value.length,
+                        })}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           {isSmallScreen.value && isHighlightPickerOpen.value && (

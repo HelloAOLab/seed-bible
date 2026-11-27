@@ -2984,7 +2984,24 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     await release(hintEl, 500);
 
     expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
-    expect(hint()).toBeNull();
+    // Collapsed in place rather than unmounted, so the sheet doesn't lose its
+    // height all at once and drop before the overflow row grows back past it.
+    expect(hint()?.style.gridTemplateRows).toBe("0fr");
+    expect(hint()?.className).toContain("sb-verse-toolbar-swipe-hint-closed");
+  });
+
+  it("shrinks the swipe-up hint in step with the drawer opening", async () => {
+    const handle = await renderSheet();
+
+    expect(hint()?.style.gridTemplateRows).toBe("1fr");
+
+    await press(handle, 500);
+    await moveTo(handle, 500 - OVERFLOW_HEIGHT / 4);
+
+    expect(hint()?.style.gridTemplateRows).toBe("0.75fr");
+    expect(hint()?.className).not.toContain(
+      "sb-verse-toolbar-swipe-hint-closed"
+    );
   });
 
   it("opens the drawer by the distance the finger has travelled when dragging the swipe-up hint", async () => {
@@ -3095,8 +3112,9 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
 
     expect(overflow()?.style.height).toBe(`${OVERFLOW_HEIGHT}px`);
     expect(sheet()?.className).not.toContain("sb-verse-sheet-dragging");
-    // Nothing left to reveal, so the hint stands down.
-    expect(hint()).toBeNull();
+    // Nothing left to reveal, so the hint is collapsed out of the way.
+    expect(hint()?.style.gridTemplateRows).toBe("0fr");
+    expect(hint()?.className).toContain("sb-verse-toolbar-swipe-hint-closed");
   });
 
   it("falls back closed when released short of that drag", async () => {
@@ -3107,7 +3125,7 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     await release(handle, 500 - 49);
 
     expect(overflow()?.style.height).toBe("0px");
-    expect(hint()).not.toBeNull();
+    expect(hint()?.style.gridTemplateRows).toBe("1fr");
   });
 
   it("closes an open drawer when dragged back down", async () => {
@@ -3198,6 +3216,72 @@ describe("BibleReaderToolbar — mobile verse sheet drag", () => {
     await release(handle, 600);
 
     expect(readingState.selectedVerses.value).toHaveLength(0);
+  });
+
+  it("slides the sheet out before ✕ clears the selection", async () => {
+    await renderSheet();
+    // The stylesheet sets this outside reduced motion; tests don't load it.
+    sheet()!.style.setProperty("--sb-bottom-sheet-exit-duration", "200ms");
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-bottom-sheet-close")!
+        .click();
+    });
+
+    expect(sheet()?.style.transform).toBe("translateY(100%)");
+    expect(readingState.selectedVerses.value).toHaveLength(1);
+
+    await act(async () => {
+      const slid = new Event("transitionend", { bubbles: true });
+      Object.defineProperty(slid, "propertyName", { value: "transform" });
+      sheet()!.dispatchEvent(slid);
+    });
+
+    expect(readingState.selectedVerses.value).toHaveLength(0);
+  });
+
+  it("keeps a verse picked while the sheet slides out", async () => {
+    await renderSheet();
+    sheet()!.style.setProperty("--sb-bottom-sheet-exit-duration", "200ms");
+    const chapter = readingState.chapterData.value!;
+    // renderSheet selected the first verse; pick the second mid-slide.
+    const second = chapter.chapter.content.filter(
+      (entry): entry is ChapterVerse =>
+        !!entry &&
+        typeof entry === "object" &&
+        (entry as { type?: string }).type === "verse"
+    )[1]!;
+
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>(".sb-bottom-sheet-close")!
+        .click();
+    });
+    // The chapter stays tappable during the slide.
+    await act(async () => {
+      readingState.selectVerse(
+        {
+          bookId: chapter.book.id,
+          chapterNumber: chapter.chapter.number,
+          verse: second,
+          translationId: chapter.translation.id,
+        },
+        10,
+        10
+      );
+    });
+    await act(async () => {
+      const slid = new Event("transitionend", { bubbles: true });
+      Object.defineProperty(slid, "propertyName", { value: "transform" });
+      sheet()!.dispatchEvent(slid);
+    });
+
+    expect(
+      readingState.selectedVerses.value.map((v) => v.verse.number)
+    ).toEqual([second.number]);
+    // Back up, showing the verse just picked.
+    expect(sheet()!.classList).not.toContain("sb-bottom-sheet-closing");
   });
 
   it("springs back and keeps the selection when the drag stops short", async () => {

@@ -69,8 +69,17 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .sb-bottom-sheet {
+  /* Only while opening (see `isRising` in BottomSheet.tsx), so the rise plays
+   * once rather than again whenever a drag lets go. */
+  .sb-bottom-sheet-rising {
     animation: sb-bottom-sheet-rise var(--sb-duration-slow) ease-out;
+  }
+
+  .sb-bottom-sheet {
+    /* How long closing slides the sheet out. BottomSheet.tsx reads it to know
+     * when to tell the caller to close; left unset under reduced motion, which
+     * closes at once. */
+    --sb-bottom-sheet-exit-duration: var(--sb-duration-base);
   }
 }
 
@@ -90,6 +99,21 @@
 .sb-bottom-sheet-dragging {
   transition: none;
   animation: none;
+}
+
+/* Sliding out after ✕, Escape, the backdrop, or a dismiss drag. It starts from
+ * wherever the sheet is, so a rise still running stops first. The sheet ignores
+ * taps on its way out, which go through to the page instead. */
+.sb-bottom-sheet-closing {
+  transition: transform var(--sb-bottom-sheet-exit-duration) ease-in;
+  animation: none;
+  pointer-events: none;
+}
+
+.sb-bottom-sheet-backdrop-closing {
+  opacity: 0;
+  transition: opacity var(--sb-duration-base) ease-in;
+  pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
