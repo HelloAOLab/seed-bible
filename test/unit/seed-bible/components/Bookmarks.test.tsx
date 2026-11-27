@@ -66,7 +66,7 @@ describe("bookmarks", () => {
     );
     recordData = vi
       .spyOn(state.os, "recordData")
-      .mockResolvedValue(undefined as never) as unknown as Mock;
+      .mockResolvedValue({ success: true } as never) as unknown as Mock;
   });
 
   afterEach(() => {
@@ -150,9 +150,12 @@ describe("bookmarks", () => {
     row.querySelector(".sb-bookmark-label-name")!.textContent;
   const button = (root: ParentNode, selector: string) =>
     root.querySelector<HTMLButtonElement>(selector)!;
+  // The zero-delay timer lets a change pass through the on-device store
+  // before the screen is checked.
   const click = async (element: HTMLElement) => {
     await act(async () => {
       element.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
   };
   const type = async (input: HTMLInputElement, value: string) => {
@@ -406,8 +409,11 @@ describe("bookmarks", () => {
     it("disables a row's options while a move is being saved", async () => {
       await signIn([aBookmark({ id: "a" }), aBookmark({ id: "b" })]);
       const modal = await openModal();
-      // The record write never settles, so the move stays in progress.
-      recordData.mockReturnValue(new Promise(() => {}));
+      // A save finishes once it's on the device, whatever the server does, so
+      // holding the save itself is what keeps the move in progress.
+      vi.spyOn(state.bookmarks, "moveBookmark").mockReturnValue(
+        new Promise(() => {})
+      );
 
       await click(
         rows(modal)[0]!.querySelector<HTMLElement>(
@@ -820,8 +826,10 @@ describe("bookmarks", () => {
       const openModalSpy = vi.spyOn(state.modals, "openModal");
       const toast = vi.spyOn(state.app, "toast");
       vi.spyOn(console, "warn").mockImplementation(() => {});
+      // Saving to the device can fail (storage full, blocked); the server can
+      // no longer fail a save, since changes queue for it.
       let failWrite!: (error: Error) => void;
-      recordData.mockReturnValue(
+      vi.spyOn(state.bookmarks, "updateBookmark").mockReturnValue(
         new Promise((_resolve, reject) => {
           failWrite = reject;
         })
@@ -847,7 +855,7 @@ describe("bookmarks", () => {
       expect(isOpen()).toBe(true);
 
       await act(async () => {
-        failWrite(new Error("offline"));
+        failWrite(new Error("QuotaExceededError"));
       });
 
       await vi.waitFor(() =>
@@ -866,6 +874,40 @@ describe("bookmarks", () => {
         state.modals.dismissModal(modalId);
       });
       expect(isOpen()).toBe(false);
+    });
+
+    it("saves an edit while the server can't be reached, and sends it later", async () => {
+      await signIn([aBookmark()]);
+      await act(async () => {
+        state.bookmarks.isPanelOpen.value = true;
+      });
+      await renderSidebar();
+      const openModalSpy = vi.spyOn(state.modals, "openModal");
+      const closeModal = vi.spyOn(state.modals, "closeModal");
+      const toast = vi.spyOn(state.app, "toast");
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      recordData.mockRejectedValue(new Error("offline"));
+
+      await chooseOption("Reading plan", "Edit bookmark");
+      const modal = renderModal(openModalSpy.mock.calls[0]![0]);
+      await type(
+        modal.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!,
+        "Sermon prep"
+      );
+      await click(button(modal, ".sb-bookmark-picker-save"));
+
+      await vi.waitFor(() =>
+        expect(closeModal).toHaveBeenCalledWith(
+          openModalSpy.mock.calls[0]![0].id
+        )
+      );
+      expect(toast).not.toHaveBeenCalled();
+      expect(state.bookmarks.bookmarks.value).toEqual([
+        aBookmark({ name: "Sermon prep" }),
+      ]);
+      expect(state.bookmarks.sync.pendingCount.value).toBe(1);
     });
 
     describe("deleting from the panel", () => {
