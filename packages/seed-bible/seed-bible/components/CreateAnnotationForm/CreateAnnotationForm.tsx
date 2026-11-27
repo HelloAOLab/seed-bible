@@ -13,6 +13,7 @@ import { extractContentText } from "../../managers/ChapterText";
 import {
   annotationBookName,
   annotationLocationLabel,
+  findAnnotationBookName,
 } from "../Discover/AnnotationsSection";
 import { DiscoverPanelLayout } from "../Discover/DiscoverPanelHeader";
 import type { ChapterVerse } from "../../managers/FreeUseBibleAPI";
@@ -91,6 +92,25 @@ interface CreateAnnotationFormProps {
   onClose: () => void;
 }
 
+/**
+ * The draft's book name, kept when no open tab knows the book any more. A
+ * translation switch can leave the draft on a book the reader's new
+ * translation lacks (an NT-only one has no Leviticus), and the title would
+ * otherwise drop to the raw id. Only reused for the same book id, and only
+ * while nothing current can name it.
+ */
+function useDraftBookName(editing: Annotation, tabs: TabsManager): string {
+  const remembered = useRef<{ bookId: string; name: string } | null>(null);
+  const found = findAnnotationBookName(editing, tabs);
+  if (found) {
+    remembered.current = { bookId: editing.bookId, name: found };
+    return found;
+  }
+  return remembered.current?.bookId === editing.bookId
+    ? remembered.current.name
+    : editing.bookId;
+}
+
 /** Back button plus "Annotate {location}", for the form's header. */
 function CreateAnnotationTitle(props: {
   annotations: AnnotationsManager;
@@ -99,6 +119,7 @@ function CreateAnnotationTitle(props: {
 }) {
   const { annotations, editing, tabs } = props;
   const { t } = useI18n();
+  const bookName = useDraftBookName(editing, tabs);
 
   return (
     <div className="sb-discover-title-row">
@@ -109,7 +130,7 @@ function CreateAnnotationTitle(props: {
       />
       <span className="sb-discover-title" dir="auto">
         {t("annotate-title", {
-          location: annotationLocationLabel(editing, tabs),
+          location: annotationLocationLabel(editing, tabs, bookName),
           defaultValue: "Annotate {{location}}",
         })}
       </span>

@@ -1498,7 +1498,12 @@ describe("AnnotationsManager", () => {
       // Signing in mid-draft does this when the account prefers another
       // translation: the reader moves to it and clears its selection in one
       // go, the same way `BibleReadingManager` applies a new position.
-      async function draftOnVerse3ThenSwitchTranslation() {
+      async function draftOnVerse3ThenSwitchTranslation(
+        landsOn: { bookId: string; chapterNumber: number } = {
+          bookId: "GEN",
+          chapterNumber: 1,
+        }
+      ) {
         tab = createMockTab({
           bookId: "GEN",
           chapterNumber: 1,
@@ -1512,21 +1517,30 @@ describe("AnnotationsManager", () => {
 
         batch(() => {
           tab.readingState.translationId.value = "KJV";
+          tab.readingState.bookId.value = landsOn.bookId;
+          tab.readingState.chapterNumber.value = landsOn.chapterNumber;
           tab.readingState.clearSelectedVerses();
         });
         return manager;
       }
 
-      it("saves the note on the verse it was started on", async () => {
-        const manager = await draftOnVerse3ThenSwitchTranslation();
-
-        // What the form's Save does: write the text into the draft, then save.
+      /** What the form's Save does: write the text into the draft, then save. */
+      async function writeAndSave(
+        manager: ReturnType<typeof createManager>,
+        html: string
+      ) {
         const draft = manager.editingAnnotation.value!;
         manager.editingAnnotation.value = {
           ...draft,
-          data: { ...draft.data, html: "<p>Let there be light</p>" },
+          data: { ...draft.data, html },
         };
         await manager.saveEditingAnnotation();
+      }
+
+      it("saves the note on the verse it was started on", async () => {
+        const manager = await draftOnVerse3ThenSwitchTranslation();
+
+        await writeAndSave(manager, "<p>Let there be light</p>");
 
         const [saved] = manager.getAnnotationsForChapter("GEN", 1).value;
         expect(saved).toMatchObject({
@@ -1535,6 +1549,45 @@ describe("AnnotationsManager", () => {
           verseNumber: 3,
           verseNumbers: [3],
           data: { html: "<p>Let there be light</p>" },
+        });
+      });
+
+      it("stays on its passage when the new translation lacks the book and the reader falls back to another", async () => {
+        // A New Testament-only translation has no Genesis, so the reader lands
+        // on its first book instead.
+        const manager = await draftOnVerse3ThenSwitchTranslation({
+          bookId: "MAT",
+          chapterNumber: 1,
+        });
+
+        expect(manager.editingAnnotation.value).toMatchObject({
+          bookId: "GEN",
+          chapterNumber: 1,
+          verseNumbers: [3],
+        });
+
+        await writeAndSave(manager, "<p>Let there be light</p>");
+
+        expect(manager.getAnnotationsForChapter("GEN", 1).value).toMatchObject([
+          { verseNumber: 3, verseNumbers: [3] },
+        ]);
+        expect(manager.getAnnotationsForChapter("MAT", 1).value).toEqual([]);
+      });
+
+      it("moves to a verse selected in the book the reader fell back to", async () => {
+        const manager = await draftOnVerse3ThenSwitchTranslation({
+          bookId: "MAT",
+          chapterNumber: 1,
+        });
+
+        tab.readingState.selectedVerses.value = [
+          { bookId: "MAT", chapterNumber: 1, verse: { number: 5 } },
+        ] as never;
+
+        expect(manager.editingAnnotation.value).toMatchObject({
+          bookId: "MAT",
+          chapterNumber: 1,
+          verseNumbers: [5],
         });
       });
 

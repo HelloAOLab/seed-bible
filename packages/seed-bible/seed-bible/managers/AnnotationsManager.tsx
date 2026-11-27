@@ -1417,12 +1417,16 @@ export function createAnnotationsManager(
   // manual verse-range controls needed.
   let lastReadingState: ReaderTab["readingState"] | null = null;
   let lastTranslationId: string | null = null;
-  let keepVersesUntilSelectionChanges = false;
+  let lastBookId: string | null = null;
+  let lastChapterNumber: number | null = null;
+  let keepDraftUntilSelectionChanges = false;
   effect(() => {
     if (!isDraftingNewAnnotation.value) {
       lastReadingState = null;
       lastTranslationId = null;
-      keepVersesUntilSelectionChanges = false;
+      lastBookId = null;
+      lastChapterNumber = null;
+      keepDraftUntilSelectionChanges = false;
       return;
     }
     const current = editingAnnotation.value;
@@ -1443,24 +1447,32 @@ export function createAnnotationsManager(
       readingState.chapterNumber.value || current.chapterNumber;
     const targeting = deriveVerseTargeting(readingState, bookId, chapterNumber);
     const translationId = readingState.translationId.value;
+    const sameReader = readingState === lastReadingState;
     const switchedTranslation =
-      readingState === lastReadingState && translationId !== lastTranslationId;
+      sameReader && translationId !== lastTranslationId;
+    const readerMoved =
+      sameReader &&
+      (bookId !== lastBookId || chapterNumber !== lastChapterNumber);
     lastReadingState = readingState;
     lastTranslationId = translationId;
-    // Switching translation clears the reader's selection, but the passage is
-    // still the same one, so the draft keeps its verses. Signing in mid-draft
-    // does this when the account prefers another translation. The empty
-    // selection outlives that one run (the effect re-runs on every draft
-    // edit, including the text written in just before saving), so the verses
-    // are kept until the user selects something or the passage changes.
-    const samePassage =
-      current.bookId === bookId && current.chapterNumber === chapterNumber;
-    if (targeting.verseNumbers !== null || !samePassage) {
-      keepVersesUntilSelectionChanges = false;
+    lastBookId = bookId;
+    lastChapterNumber = chapterNumber;
+    // A translation switch is not the user choosing another passage, so it
+    // never moves the draft. It clears the reader's selection, and it can
+    // also change the book or chapter: a translation without the current book
+    // falls back to its first one, and a missing chapter is clamped. Signing
+    // in mid-draft does this when the account prefers another translation.
+    // The draft stays put until the user selects verses, navigates, or
+    // switches reader; the effect re-runs on every draft edit (including the
+    // text written in just before saving), so one run's guard isn't enough.
+    if (targeting.verseNumbers !== null || !sameReader) {
+      keepDraftUntilSelectionChanges = false;
     } else if (switchedTranslation) {
-      keepVersesUntilSelectionChanges = true;
+      keepDraftUntilSelectionChanges = true;
+    } else if (readerMoved) {
+      keepDraftUntilSelectionChanges = false;
     }
-    if (keepVersesUntilSelectionChanges) {
+    if (keepDraftUntilSelectionChanges) {
       return;
     }
     if (

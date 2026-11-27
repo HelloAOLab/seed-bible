@@ -57,13 +57,13 @@ const HIGHLIGHT_DURATION_MS = 2000;
  * whichever open tab currently has that chapter loaded, then any open tab's
  * translation book list. The book list matters while a new note follows the
  * reader to another chapter: the loaded chapter lags a download behind, and
- * without it the raw book id flashes up in the meantime. Falls back to the
- * raw book id when neither knows the book.
+ * without it the raw book id flashes up in the meantime. Null when neither
+ * knows the book.
  */
-export function annotationBookName(
+export function findAnnotationBookName(
   annotation: Pick<Annotation, "bookId" | "chapterNumber">,
   tabs: TabsManager
-): string {
+): string | null {
   const chapter = findAnnotationChapterData(annotation, tabs);
   if (chapter) {
     return chapter.book.name ?? chapter.book.commonName;
@@ -75,16 +75,30 @@ export function annotationBookName(
       )
     )
     .find((b) => b !== undefined);
-  return catalogBook?.name ?? catalogBook?.commonName ?? annotation.bookId;
+  return catalogBook?.name ?? catalogBook?.commonName ?? null;
 }
 
-/** Formats an annotation's book/chapter/verse targeting, e.g. "Genesis 3:3-5,7". */
-export function annotationLocationLabel(
-  annotation: Annotation,
+/**
+ * {@link findAnnotationBookName}, falling back to the raw book id when no open
+ * tab knows the book.
+ */
+export function annotationBookName(
+  annotation: Pick<Annotation, "bookId" | "chapterNumber">,
   tabs: TabsManager
 ): string {
-  const book = annotationBookName(annotation, tabs);
-  const base = `${book} ${annotation.chapterNumber}`;
+  return findAnnotationBookName(annotation, tabs) ?? annotation.bookId;
+}
+
+/**
+ * Formats an annotation's book/chapter/verse targeting, e.g. "Genesis 3:3-5,7".
+ * `bookName` overrides the name looked up from the open tabs.
+ */
+export function annotationLocationLabel(
+  annotation: Annotation,
+  tabs: TabsManager,
+  bookName: string = annotationBookName(annotation, tabs)
+): string {
+  const base = `${bookName} ${annotation.chapterNumber}`;
   const verseNumbers = annotationVerseNumbers(annotation);
   if (verseNumbers.length === 0) {
     return base;

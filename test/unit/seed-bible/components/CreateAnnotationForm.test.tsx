@@ -290,6 +290,64 @@ describe("CreateAnnotationForm", () => {
       expect(headerTitle()).toBe("Annotate John 5");
     });
 
+    describe("when the reader switches to a translation without the draft's book", () => {
+      /**
+       * Starts a draft on Genesis 3:2, then moves the reader to an NT-only
+       * translation: it lands on Matthew, and no open tab knows Genesis.
+       */
+      async function draftThenLoseTheBook() {
+        const tabs = createMockTabsManager(
+          createChapterData({ chapterNumber: 3 })
+        );
+        const mock = await renderForm(
+          createAnnotation({ chapterNumber: 3, verseNumber: 2 }),
+          tabs
+        );
+        expect(headerTitle()).toBe("Annotate Genesis 3:2");
+
+        await act(async () => {
+          tabs.tabs.value = createMockTabsManager(
+            createChapterData({ bookId: "MAT", chapterNumber: 1 }),
+            { books: [{ id: "MAT", name: "Matthew" }] }
+          ).tabs.value;
+        });
+        return { tabs, mock };
+      }
+
+      it("keeps the book's name instead of dropping to its id", async () => {
+        await draftThenLoseTheBook();
+
+        expect(headerTitle()).toBe("Annotate Genesis 3:2");
+      });
+
+      it("never lends that name to a different book", async () => {
+        const { mock } = await draftThenLoseTheBook();
+
+        await act(async () => {
+          mock.annotations.editingAnnotation.value = createAnnotation({
+            bookId: "LEV",
+            chapterNumber: 3,
+            verseNumber: 2,
+          });
+        });
+
+        expect(headerTitle()).toBe("Annotate LEV 3:2");
+      });
+
+      it("uses the current name again as soon as an open tab knows the book", async () => {
+        const { tabs } = await draftThenLoseTheBook();
+
+        await act(async () => {
+          tabs.tabs.value = createMockTabsManager(
+            createChapterData({ bookId: "MAT", chapterNumber: 1 }),
+            { books: [{ id: "GEN", name: "Génesis" }] }
+          ).tabs.value;
+        });
+
+        expect(headerTitle()).toBe("Annotate Génesis 3:2");
+      });
+    });
+
     it("goes back from the back button", async () => {
       const { cancelEditingAnnotation } = await renderForm(createAnnotation());
 
