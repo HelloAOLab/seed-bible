@@ -1417,10 +1417,12 @@ export function createAnnotationsManager(
   // manual verse-range controls needed.
   let lastReadingState: ReaderTab["readingState"] | null = null;
   let lastTranslationId: string | null = null;
+  let keepVersesUntilSelectionChanges = false;
   effect(() => {
     if (!isDraftingNewAnnotation.value) {
       lastReadingState = null;
       lastTranslationId = null;
+      keepVersesUntilSelectionChanges = false;
       return;
     }
     const current = editingAnnotation.value;
@@ -1447,13 +1449,18 @@ export function createAnnotationsManager(
     lastTranslationId = translationId;
     // Switching translation clears the reader's selection, but the passage is
     // still the same one, so the draft keeps its verses. Signing in mid-draft
-    // does this when the account prefers another translation.
-    if (
-      switchedTranslation &&
-      targeting.verseNumbers === null &&
-      current.bookId === bookId &&
-      current.chapterNumber === chapterNumber
-    ) {
+    // does this when the account prefers another translation. The empty
+    // selection outlives that one run (the effect re-runs on every draft
+    // edit, including the text written in just before saving), so the verses
+    // are kept until the user selects something or the passage changes.
+    const samePassage =
+      current.bookId === bookId && current.chapterNumber === chapterNumber;
+    if (targeting.verseNumbers !== null || !samePassage) {
+      keepVersesUntilSelectionChanges = false;
+    } else if (switchedTranslation) {
+      keepVersesUntilSelectionChanges = true;
+    }
+    if (keepVersesUntilSelectionChanges) {
       return;
     }
     if (

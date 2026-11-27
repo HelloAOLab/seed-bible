@@ -1494,38 +1494,74 @@ describe("AnnotationsManager", () => {
       expect(manager.editingAnnotation.value?.verseNumbers).toBeNull();
     });
 
-    it("keeps a new draft's verses when the reader switches translation on the same chapter", async () => {
+    describe("when the reader switches translation mid-draft", () => {
       // Signing in mid-draft does this when the account prefers another
       // translation: the reader moves to it and clears its selection in one
       // go, the same way `BibleReadingManager` applies a new position.
-      tab = createMockTab({
-        bookId: "GEN",
-        chapterNumber: 1,
-        selectedVerses: [
-          { bookId: "GEN", chapterNumber: 1, verse: { number: 3 } },
-        ],
-      });
-      tabs = createMockTabsManager(tab);
-      const manager = createManager();
-      await manager.createNewAnnotation();
+      async function draftOnVerse3ThenSwitchTranslation() {
+        tab = createMockTab({
+          bookId: "GEN",
+          chapterNumber: 1,
+          selectedVerses: [
+            { bookId: "GEN", chapterNumber: 1, verse: { number: 3 } },
+          ],
+        });
+        tabs = createMockTabsManager(tab);
+        const manager = createManager();
+        await manager.createNewAnnotation();
 
-      batch(() => {
-        tab.readingState.translationId.value = "KJV";
+        batch(() => {
+          tab.readingState.translationId.value = "KJV";
+          tab.readingState.clearSelectedVerses();
+        });
+        return manager;
+      }
+
+      it("saves the note on the verse it was started on", async () => {
+        const manager = await draftOnVerse3ThenSwitchTranslation();
+
+        // What the form's Save does: write the text into the draft, then save.
+        const draft = manager.editingAnnotation.value!;
+        manager.editingAnnotation.value = {
+          ...draft,
+          data: { ...draft.data, html: "<p>Let there be light</p>" },
+        };
+        await manager.saveEditingAnnotation();
+
+        const [saved] = manager.getAnnotationsForChapter("GEN", 1).value;
+        expect(saved).toMatchObject({
+          bookId: "GEN",
+          chapterNumber: 1,
+          verseNumber: 3,
+          verseNumbers: [3],
+          data: { html: "<p>Let there be light</p>" },
+        });
+      });
+
+      it("still follows a verse selected afterwards", async () => {
+        const manager = await draftOnVerse3ThenSwitchTranslation();
+
+        tab.readingState.selectedVerses.value = [
+          { bookId: "GEN", chapterNumber: 1, verse: { number: 8 } },
+        ] as never;
+        expect(manager.editingAnnotation.value?.verseNumbers).toEqual([8]);
+
+        // Deselecting by hand from there makes it a whole-chapter note again.
         tab.readingState.clearSelectedVerses();
+        expect(manager.editingAnnotation.value?.verseNumbers).toBeNull();
       });
 
-      expect(manager.editingAnnotation.value).toMatchObject({
-        bookId: "GEN",
-        chapterNumber: 1,
-        verseNumber: 3,
-        verseNumbers: [3],
-      });
+      it("still follows the reader to another chapter", async () => {
+        const manager = await draftOnVerse3ThenSwitchTranslation();
 
-      // A selection made afterwards in the new translation still moves it.
-      tab.readingState.selectedVerses.value = [
-        { bookId: "GEN", chapterNumber: 1, verse: { number: 8 } },
-      ] as never;
-      expect(manager.editingAnnotation.value?.verseNumber).toBe(8);
+        tab.readingState.chapterNumber.value = 2;
+
+        expect(manager.editingAnnotation.value).toMatchObject({
+          bookId: "GEN",
+          chapterNumber: 2,
+          verseNumbers: null,
+        });
+      });
     });
 
     it("keeps syncing against the tab the draft was started on after switching the active tab", async () => {
