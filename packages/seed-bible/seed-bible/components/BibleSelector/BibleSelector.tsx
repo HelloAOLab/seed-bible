@@ -52,6 +52,7 @@ import {
   useCallback,
 } from "preact/hooks";
 import { handleGridKeyNav } from "../../app/keyboardNav";
+import { useModalLayer } from "../useModalFocus";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { toShareableUrl } from "../../app/publicLinks";
 import { SearchBar as SearchField } from "../SearchBar/SearchBar";
@@ -144,9 +145,19 @@ export function BibleSelector(props: BibleSelectorProps) {
 
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  // Move focus into the panel when the picker opens from the keyboard.
-  // The search field is the most useful landing spot — it's always visible
-  // and lets the user type a book name immediately.
+  // useModalLayer handles three things in one:
+  //   1. Records document.activeElement when the picker opens so it can be
+  //      restored (e.g. Books button) when it closes — fixes the Escape
+  //      focus-return bug (issue 1).
+  //   2. Traps Tab inside the panel using FOCUSABLE_SELECTOR which already
+  //      excludes tabindex="-1", so chapter/psalms buttons don't confuse the
+  //      last-stop detection (issue 4).
+  //   3. Calls onClose() on Escape from the panel (replaces the hand-written
+  //      Escape handler below).
+  useModalLayer(panelRef, { enabled: isOpen, onEscape: onClose });
+
+  // Focus the search field when the picker opens — runs after useModalLayer's
+  // layoutEffect (hooks fire in declaration order), so this wins.
   useLayoutEffect(() => {
     if (!isOpen) return;
     const panel = panelRef.current;
@@ -220,37 +231,36 @@ export function BibleSelector(props: BibleSelectorProps) {
       >
         <div
           ref={panelRef}
+          // tabIndex={-1} lets panelRef.current.focus() work as a focus
+          // recovery target (e.g. when TranslationModal closes on mobile and
+          // there is no translation chip to return to — issue 6).
+          tabIndex={-1}
           onClick={(event: Event) => {
             event.stopPropagation();
           }}
           onKeyDown={(event: KeyboardEvent) => {
-            if (event.key === "Tab") {
-              // Trap focus inside the panel so Tab never reaches background content.
-              const panel = event.currentTarget as HTMLElement;
-              const focusable = Array.from(
-                panel.querySelectorAll<HTMLElement>(
-                  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-                )
-              ).filter((el) => el.offsetParent !== null);
-              if (focusable.length === 0) return;
-              const first = focusable[0]!;
-              const last = focusable[focusable.length - 1]!;
-              const active = document.activeElement as HTMLElement;
-              if (event.shiftKey) {
-                if (active === first || !panel.contains(active)) {
-                  event.preventDefault();
-                  last.focus();
-                }
-              } else {
-                if (active === last || !panel.contains(active)) {
-                  event.preventDefault();
-                  first.focus();
-                }
+            // Block arrow keys from reaching the reader behind the overlay.
+            // The book grid and chapter panel already preventDefault on their
+            // own arrow keys; this catches any that escape those handlers
+            // (translation chip, filters icon, close X, etc.) — issue 2.
+            if (
+              !event.defaultPrevented &&
+              (event.key === "ArrowLeft" ||
+                event.key === "ArrowRight" ||
+                event.key === "ArrowUp" ||
+                event.key === "ArrowDown")
+            ) {
+              const target = event.target as HTMLElement;
+              if (
+                target.tagName !== "INPUT" &&
+                target.tagName !== "TEXTAREA" &&
+                !target.isContentEditable
+              ) {
+                event.preventDefault();
               }
-            } else if (event.key === "Escape" && !event.defaultPrevented) {
-              event.preventDefault();
-              onClose();
             }
+            // Tab containment and Escape are handled by useModalLayer's
+            // DOM listener (registered in its useLayoutEffect above).
           }}
           className="sb-selector-panel"
         >
@@ -260,6 +270,7 @@ export function BibleSelector(props: BibleSelectorProps) {
             bibleDataManager={bibleDataManager}
             tourStepId={tourStepId}
             tutorial={tutorial}
+            panelRef={panelRef}
           />
         </div>
       </div>
@@ -322,9 +333,18 @@ const SearchBar = (props: {
   /** Active selector-group tour step id, or null when no step is active. */
   tourStepId?: string | null;
   tutorial?: TutorialManager;
+  /** Panel root — used as focus-recovery fallback when the translation chip
+   *  isn't rendered (mobile layout or picking mode). */
+  panelRef: { current: HTMLDivElement | null };
 }) => {
-  const { app, bibleSelectorState, bibleDataManager, tourStepId, tutorial } =
-    props;
+  const {
+    app,
+    bibleSelectorState,
+    bibleDataManager,
+    tourStepId,
+    tutorial,
+    panelRef,
+  } = props;
   const { t } = useI18n();
   const {
     search,
@@ -488,7 +508,14 @@ const SearchBar = (props: {
             bibleDataManager={bibleDataManager}
             tourStepId={tourStepId}
             tutorial={tutorial}
-            onEscape={() => translationChipRef.current?.focus()}
+            onEscape={() =>
+              // On desktop the chip is always rendered; on mobile/picking mode
+              // it isn't, so fall back to the panel itself (tabIndex={-1})
+              // so focus stays inside the picker rather than dropping to body.
+              (translationChipRef.current ?? panelRef.current)?.focus({
+                preventScroll: true,
+              })
+            }
           />
         )}
       </div>
@@ -855,7 +882,10 @@ const SideBarBooks = (props: {
                     handleGridKeyNav(
                       event,
                       event.currentTarget as HTMLElement,
-                      { itemSelector: "button.chapter-btn:not([disabled])" }
+                      {
+                        itemSelector:
+                          "button.chapter-btn:not([disabled]), button.psalms-btn",
+                      }
                     );
                   } else if (event.key === "Escape") {
                     // Return focus to the book tile so the user can collapse

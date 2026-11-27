@@ -1064,6 +1064,7 @@
   border-radius: var(--sb-radius-sm);
   padding: 0.125rem;
   cursor: pointer;
+  color: var(--sb-font-color);
   /* button reset */
   border: none;
   appearance: none;
@@ -1073,6 +1074,8 @@
 }
 .close-icon {
   cursor: pointer;
+  color: var(--sb-font-color);
+  padding: 0;
   /* button reset */
   border: none;
   background: none;
