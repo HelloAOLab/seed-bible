@@ -5,8 +5,10 @@ import { CreateAnnotationForm } from "@packages/seed-bible/seed-bible/components
 import type {
   Annotation,
   AnnotationsManager,
+  LocalSaveReason,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { TabsManager } from "@packages/seed-bible/seed-bible/managers/TabsManager";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -82,6 +84,15 @@ function setOnline(online: boolean) {
   vi.spyOn(navigator, "onLine", "get").mockReturnValue(online);
 }
 
+/** A `LoginManager` stand-in, signed in. */
+function createMockLogin() {
+  const login = {
+    userId: signal<string | null>("user-1"),
+    login: vi.fn().mockResolvedValue(null),
+  };
+  return login as typeof login & LoginManager;
+}
+
 describe("CreateAnnotationForm retrying the rich text editor", () => {
   let container: HTMLDivElement;
 
@@ -101,6 +112,8 @@ describe("CreateAnnotationForm retrying the rich text editor", () => {
   async function openForm() {
     const annotations = {
       editingAnnotation: signal(createAnnotation()),
+
+      localSaveReason: signal<LocalSaveReason | null>(null),
       saveEditingAnnotation: vi.fn(),
       cancelEditingAnnotation: vi.fn(),
     } as unknown as AnnotationsManager;
@@ -113,6 +126,7 @@ describe("CreateAnnotationForm retrying the rich text editor", () => {
         <CreateAnnotationForm
           onClose={vi.fn()}
           annotations={annotations}
+          login={createMockLogin()}
           tabs={tabs}
           toast={vi.fn()}
         />,

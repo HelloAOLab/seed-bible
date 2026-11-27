@@ -68,6 +68,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
       <CreateAnnotationForm
         key={annotations.editingAnnotation.value.id}
         annotations={annotations}
+        login={state.login}
         tabs={tabs}
         toast={props.toast}
         onClose={close}

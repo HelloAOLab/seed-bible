@@ -18,6 +18,29 @@
   font-size: var(--sb-font-size-13);
 }
 
+/* Same look as the offline notice above, with room for a sign-in button. */
+.sb-annotation-local-save-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border-radius: var(--sb-radius-md);
+  background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+  font-size: var(--sb-font-size-13);
+}
+
+.sb-annotation-local-save-notice-text {
+  flex: 1;
+  margin: 0;
+}
+
+.sb-annotation-local-save-notice-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .sb-annotation-editor-textarea {
   display: block;
   width: 100%;
