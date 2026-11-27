@@ -432,6 +432,15 @@ export interface BibleReadingState {
   clearSelectedVerses: () => void;
 
   /**
+   * The verse span that was last selected by keyboard (Enter/Space). Set by
+   * ChapterContent when the user presses Enter on a verse, cleared when the
+   * selection is cleared. Used by BibleReaderToolbar to return focus to the
+   * right verse span after the toolbar closes, without needing a DOM search
+   * that breaks in compare/split-screen where the toolbar lives outside panes.
+   */
+  selectedVerseEl: Signal<HTMLElement | null>;
+
+  /**
    * Selects a translation and loads its first available chapter.
    * Accepts either a translation ID or an endpoint URL that resolves translations.
    */
@@ -2138,8 +2147,11 @@ export function createBibleReadingState(
     );
   };
 
+  const selectedVerseEl = signal<HTMLElement | null>(null);
+
   const clearSelectedVerses = () => {
     selectedVerses.value = [];
+    selectedVerseEl.value = null;
   };
 
   const getActiveEndpoint = () => endpointOverride.value ?? undefined;
@@ -3796,6 +3808,7 @@ export function createBibleReadingState(
     decorateVerses,
     removeDecoration,
     clearSelectedVerses,
+    selectedVerseEl,
     selectTranslation,
     selectTranslationAndChapter,
     selectBook,

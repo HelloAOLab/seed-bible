@@ -726,9 +726,15 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     };
   }, [isCompactReader, readingState]);
 
-  // Keyboard chapter navigation for the selected slot. Left/Right move between
-  // chapters (respecting text direction, like the swipe gesture and toolbar
-  // chevrons), and Up surfaces the search panel. Down is intentionally unbound.
+  // Keyboard shortcuts for the selected slot:
+  //   Up          — open the search panel
+  //   Left/Right  — move between chapters (respects RTL, matches swipe/chevrons)
+  //   Down        — intentionally unbound
+  // These shortcuts must not fire when the user is interacting with a widget
+  // that owns arrow-key semantics (menus, dialogs, the tutorial, toolbars,
+  // sliders). Those widgets either call event.preventDefault() themselves (so
+  // the defaultPrevented guard below catches them) or carry an ARIA role that
+  // the explicit closest() guard catches.
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -753,9 +759,31 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
-      if (event.key === "ArrowUp") {
-        event.preventDefault();
-        state.sidebar.openSearch();
+      // Don't fire when focus is inside a widget that uses arrow keys for its
+      // own navigation — dialogs (including the tutorial and floating panels),
+      // menus, toolbars, and sliders. Widgets that call event.preventDefault()
+      // are already stopped by the defaultPrevented check above; this guard
+      // covers the rest (e.g. the tutorial which has no arrow handler of its own).
+      if (
+        target?.closest(
+          '[role="dialog"], [role="menu"], [role="toolbar"], [role="slider"]'
+        )
+      ) {
+        return;
+      }
+
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+        // When focus is on a verse span the chapter key handler in BibleReader
+        // owns ArrowUp/Down (verse navigation). Don't compete with it here —
+        // the explicit check is more reliable than depending on defaultPrevented
+        // across Preact's delegated event dispatch.
+        if (target?.closest(".sb-verse[data-verse-number]")) return;
+
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          state.sidebar.openSearch();
+        }
+        // ArrowDown is intentionally unbound when focus is not on a verse.
         return;
       }
 

@@ -1955,16 +1955,31 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   /**
    * The phone verse sheet's ✕ and Escape: in the highlight colors they go back
    * to the verse actions, keeping the selection; otherwise they clear it.
+   * Returns true if the selection was cleared, false if only the picker closed.
    */
-  const leaveVerseSheetStep = () => {
+  const leaveVerseSheetStep = (): boolean => {
     if (isHighlightPickerOpen.value) {
-      isHighlightPickerOpen.value = false;
-      return;
+      closeHighlightPicker();
+      return false;
     }
     selectionState.value?.clearSelectedVerses();
+    return true;
   };
 
   // Verse toolbar highlight picker state
+  // Ref to the Highlight trigger button so closing the picker returns focus to
+  // it, keeping the user inside the toolbar rather than landing on page body.
+  const highlightTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  // Closes the highlight picker and returns focus to the Highlight button.
+  // Used by the picker's Escape, the Back arrow, and the VerseToolbarFrame
+  // onEscape when the picker is open — all three paths where the picker closes
+  // without clearing the selection.
+  const closeHighlightPicker = () => {
+    isHighlightPickerOpen.value = false;
+    requestAnimationFrame(() => highlightTriggerRef.current?.focus());
+  };
+
   const customColorAnchorRef = useRef<HTMLButtonElement | null>(null);
   const customColorPickerOpen = useSignal(false);
   const customHighlightColors = useComputed(
@@ -3390,6 +3405,19 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       {isVerseToolbarVisible.value && verseToolbarTools.value.length > 0 && (
         <VerseToolbarFrame
           mobile={isSmallScreen.value}
+          onEscape={() => {
+            // Capture the element before leaveVerseSheetStep clears it.
+            // leaveVerseSheetStep returns true when it cleared the selection
+            // (toolbar will close) and false when it only closed the highlight
+            // picker (toolbar stays open, focus returns to Highlight button via
+            // the picker's own Escape handler). Only return focus to the verse
+            // when the whole toolbar is dismissed.
+            const el = selectionState.value?.selectedVerseEl.value ?? null;
+            const selectionCleared = leaveVerseSheetStep();
+            if (selectionCleared && el) {
+              el.focus({ preventScroll: true });
+            }
+          }}
           floating={{
             ref: verseToolbarRef,
             className:
@@ -3473,9 +3501,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   className="sb-verse-toolbar-back"
                   icon="chevron_left"
                   label={t("back", { defaultValue: "Back" })}
-                  onClick={() => {
-                    isHighlightPickerOpen.value = false;
-                  }}
+                  onClick={closeHighlightPicker}
                 />
               )}
               <span
@@ -3494,7 +3520,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               onKeyDown={(event) => {
                 if (event.key === "Escape") {
                   event.preventDefault();
-                  isHighlightPickerOpen.value = false;
+                  closeHighlightPicker();
                   return;
                 }
                 if (isSmallScreen.value) {
@@ -3735,7 +3761,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               {(() => {
                 const renderTool = (
                   tool: (typeof verseToolbarTools.value)[number],
-                  floatingMenu = false
+                  floatingMenu = false,
+                  // Called just before the tool's onSelect fires. Use it to
+                  // capture state (e.g. selected verse) that the action will
+                  // clear, or to schedule post-action focus.
+                  beforeAction?: () => void
                 ) => {
                   const ToolIcon = tool.icon;
                   const menuItems =
@@ -3793,6 +3823,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           }
 
                           selectedVerseToolId.value = null;
+                          beforeAction?.();
                           void handleVerseAction(
                             tool.onSelect,
                             tool.preserveSelection
@@ -3884,6 +3915,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 const highlightCard = showHighlightCard.value ? (
                   <div key="highlight" className="sb-verse-toolbar-action-item">
                     <button
+                      ref={highlightTriggerRef}
                       type="button"
                       className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
                       onClick={() => {
@@ -3958,7 +3990,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       {highlightCard}
                       {saveCard}
                       {nonCancel.map((tool) => renderTool(tool))}
-                      {cancelTools.map((tool) => renderTool(tool))}
+                      {cancelTools.map((tool) =>
+                        renderTool(tool, false, () => {
+                          // Capture the element now — clearSelectedVerses runs
+                          // immediately after and nulls selectedVerseEl. The
+                          // rAF waits one frame so the toolbar has unmounted
+                          // before we try to focus the verse.
+                          const el =
+                            selectionState.value?.selectedVerseEl.value ?? null;
+                          if (el) {
+                            requestAnimationFrame(() => {
+                              el.focus({ preventScroll: true });
+                            });
+                          }
+                        })
+                      )}
                     </>
                   );
                 }
@@ -4179,9 +4225,89 @@ function VerseToolbarFrame(props: {
     ref: Ref<HTMLDivElement>;
   };
   sheet: Omit<BottomSheetProps, "children">;
+  /** Called when the user presses Escape on the floating toolbar (desktop). */
+  onEscape: () => void;
   children: ComponentChildren;
 }) {
-  const { mobile, floating, sheet, children } = props;
+  const { mobile, floating, sheet, onEscape, children } = props;
+
+  // On desktop the toolbar is a plain floating div — nothing moves focus into
+  // it automatically. Focus the first button on mount so keyboard users (and
+  // mouse users whose focus landed outside) don't get stranded in the sidebar.
+  useLayoutEffect(() => {
+    if (mobile) return;
+    const toolbar = (floating.ref as { current: HTMLElement | null }).current;
+    if (!toolbar) return;
+    toolbar
+      .querySelector<HTMLElement>(
+        "button:not([disabled]), [href], input:not([disabled])"
+      )
+      ?.focus({ preventScroll: true });
+  }, []);
+
   if (mobile) return <BottomSheet {...sheet}>{children}</BottomSheet>;
-  return <div {...floating}>{children}</div>;
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    // A child (the highlight color picker, an inline tool menu) may have
+    // already handled this key and called preventDefault(). Don't double-fire:
+    // one Escape should close the picker, not close the picker AND the toolbar.
+    if (event.defaultPrevented) return;
+
+    // ArrowLeft/Right navigate between the toolbar's buttons. This also
+    // blocks the global chapter-navigation shortcut in TabsLayout (which
+    // checks event.defaultPrevented). ArrowUp/Down are swallowed so the
+    // global "open search" shortcut doesn't fire while focus is here.
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      handleHorizontalListKeyNav(event, event.currentTarget as HTMLElement);
+      // handleHorizontalListKeyNav calls preventDefault when it moves focus;
+      // call it here too so the global handler is blocked even on the edges.
+      event.preventDefault();
+      return;
+    }
+    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+      event.preventDefault();
+      return;
+    }
+
+    // Close the toolbar on Escape, same as the mobile sheet.
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onEscape();
+      return;
+    }
+
+    // Focus trap: Tab and Shift+Tab cycle within the toolbar so the
+    // background Bible text and app chrome are unreachable by keyboard
+    // while the toolbar is open. Always intercept Tab so the browser's
+    // natural DOM order (which may lead outside the floating toolbar) is
+    // never used while the toolbar is open.
+    if (event.key === "Tab") {
+      const toolbar = event.currentTarget as HTMLElement;
+      const focusable = Array.from(
+        toolbar.querySelectorAll<HTMLElement>(
+          "button:not([disabled]), [href], input:not([disabled])"
+        )
+      );
+      if (focusable.length === 0) return;
+      event.preventDefault();
+      const currentIndex = focusable.indexOf(
+        document.activeElement as HTMLElement
+      );
+      if (event.shiftKey) {
+        const prevIndex =
+          currentIndex <= 0 ? focusable.length - 1 : currentIndex - 1;
+        focusable[prevIndex]!.focus();
+      } else {
+        const nextIndex =
+          currentIndex >= focusable.length - 1 ? 0 : currentIndex + 1;
+        focusable[nextIndex]!.focus();
+      }
+    }
+  };
+
+  return (
+    <div {...floating} onKeyDown={handleKeyDown}>
+      {children}
+    </div>
+  );
 }

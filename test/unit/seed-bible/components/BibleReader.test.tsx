@@ -342,6 +342,7 @@ function createFixture(): ReaderFixture {
     pendingAnnotationScrollVerse: signal<number | null>(null),
     visibleVerseRange: signal<VisibleVerseRange | null>(null),
     visibleAreas: signal<ReadonlyMap<string, VisibleVerseRange>>(new Map()),
+    selectedVerseEl: signal<HTMLElement | null>(null),
   } as BibleReadingState;
 
   const selectorState = {
@@ -1547,6 +1548,488 @@ describe("BibleReader", () => {
       expect.anything(),
       expect.anything()
     );
+  });
+
+  // --- keyboard verse selection ---
+
+  function renderReader(
+    fixture: Pick<ReaderFixture, "slot" | "selectorState" | "readingState">
+  ) {
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={fixture.slot}
+          selectorState={fixture.selectorState}
+          readingState={fixture.readingState}
+        />,
+        container
+      );
+    });
+  }
+
+  function getVerseEl(num: number, root: HTMLElement = container): HTMLElement {
+    const el = root.querySelector<HTMLElement>(
+      `.sb-verse[data-verse-number="${num}"]`
+    );
+    if (!el) throw new Error(`verse ${num} not found`);
+    return el;
+  }
+
+  it("pressing Enter on a prose verse selects it", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const verseEl = getVerseEl(1);
+    act(() => {
+      verseEl.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(selectVerse).toHaveBeenCalledTimes(1);
+    expect(selectVerse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookId: "GEN",
+        chapterNumber: 1,
+        verse: expect.objectContaining({ number: 1 }),
+      }),
+      expect.any(Number),
+      expect.any(Number)
+    );
+  });
+
+  it("pressing Space on a prose verse selects it", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const verseEl = getVerseEl(1);
+    act(() => {
+      verseEl.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: " ",
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(selectVerse).toHaveBeenCalledTimes(1);
+    expect(selectVerse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        verse: expect.objectContaining({ number: 1 }),
+      }),
+      expect.any(Number),
+      expect.any(Number)
+    );
+  });
+
+  it("pressing Enter on a poetry verse selects it (bypasses the click guard)", () => {
+    // A poetry verse's click guard rejects mouse clicks that land in the
+    // verse's blank margin (outside `.sb-verse-decorator`). The keyboard
+    // handler bypasses the guard entirely and always selects the verse.
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const poetryVerse = getVerseEl(2); // verse 2 has poetry content in the fixture
+    act(() => {
+      poetryVerse.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(selectVerse).toHaveBeenCalledTimes(1);
+    expect(selectVerse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        verse: expect.objectContaining({ number: 2 }),
+      }),
+      expect.any(Number),
+      expect.any(Number)
+    );
+  });
+
+  it("pressing Escape clears the verse selection", () => {
+    const { slot, selectorState, readingState, selectedVerses } =
+      createFixture();
+    // Pre-select verse 1 so there is something to clear.
+    selectedVerses.value = [
+      {
+        bookId: "GEN",
+        chapterNumber: 1,
+        translationId: "BSB",
+        verse: { type: "verse", number: 1, content: [] },
+      },
+    ];
+    renderReader({ slot, selectorState, readingState });
+
+    const verseEl = getVerseEl(1);
+    act(() => {
+      verseEl.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Escape",
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(selectedVerses.value).toHaveLength(0);
+  });
+
+  it("only the first verse has tabIndex=0 on mount (roving tabindex)", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const verse1 = getVerseEl(1);
+    const verse2 = getVerseEl(2);
+    expect(verse1.tabIndex).toBe(0);
+    expect(verse2.tabIndex).toBe(-1);
+  });
+
+  it("ArrowDown moves focus to the next verse and updates the Tab stop", () => {
+    // jsdom has no layout, so offsetParent is always null. The arrow-key
+    // handler uses querySelectorAll (not offsetParent), so no spy is needed.
+    const { slot, selectorState, readingState } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const verse1 = getVerseEl(1);
+    act(() => {
+      verse1.focus();
+    });
+
+    act(() => {
+      verse1.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(document.activeElement).toBe(getVerseEl(2));
+    // After focus moves, the Tab stop updates on the next render.
+    expect(getVerseEl(2).tabIndex).toBe(0);
+    expect(getVerseEl(1).tabIndex).toBe(-1);
+  });
+
+  it("Shift+ArrowDown stages verses visually without calling selectVerse", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const verse1 = getVerseEl(1);
+    act(() => {
+      verse1.focus();
+    });
+
+    act(() => {
+      verse1.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    // Focus moved to verse 2 but the toolbar stays hidden — no selectVerse yet.
+    expect(document.activeElement).toBe(getVerseEl(2));
+    expect(selectVerse).not.toHaveBeenCalled();
+    // Both staged verses appear selected in the DOM.
+    expect(getVerseEl(1).className).toContain("sb-verse-selected");
+    expect(getVerseEl(2).className).toContain("sb-verse-selected");
+  });
+
+  it("Shift+ArrowUp stages verses without calling selectVerse", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const verse2 = getVerseEl(2);
+    act(() => {
+      verse2.focus();
+    });
+
+    act(() => {
+      verse2.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowUp",
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(document.activeElement).toBe(getVerseEl(1));
+    expect(selectVerse).not.toHaveBeenCalled();
+    expect(getVerseEl(1).className).toContain("sb-verse-selected");
+    expect(getVerseEl(2).className).toContain("sb-verse-selected");
+  });
+
+  it("Enter after Shift+ArrowDown commits staged verses and opens the toolbar", async () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const fakeToolbar = document.createElement("div");
+    fakeToolbar.className = "sb-verse-toolbar";
+    const fakeBtn = document.createElement("button");
+    fakeToolbar.appendChild(fakeBtn);
+    document.body.appendChild(fakeToolbar);
+
+    try {
+      const verse1 = getVerseEl(1);
+      act(() => {
+        verse1.focus();
+      });
+
+      // Build a staged selection: verses 1 and 2.
+      act(() => {
+        verse1.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "ArrowDown",
+            shiftKey: true,
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      });
+
+      // Confirm with Enter — focus is now on verse 2.
+      act(() => {
+        getVerseEl(2).dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "Enter",
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      });
+
+      // Both staged verses are now committed.
+      expect(selectVerse).toHaveBeenCalledTimes(2);
+      expect(selectVerse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          verse: expect.objectContaining({ number: 1 }),
+        }),
+        expect.any(Number),
+        expect.any(Number)
+      );
+      expect(selectVerse).toHaveBeenCalledWith(
+        expect.objectContaining({
+          verse: expect.objectContaining({ number: 2 }),
+        }),
+        expect.any(Number),
+        expect.any(Number)
+      );
+
+      // After commit, focus moves to the toolbar.
+      await act(async () => {
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => resolve())
+        );
+      });
+      expect(document.activeElement).toBe(fakeBtn);
+    } finally {
+      fakeToolbar.remove();
+    }
+  });
+
+  it("Enter after Shift+ArrowDown skips verses already in selectedVerses", () => {
+    const { slot, selectorState, readingState, selectVerse, selectedVerses } =
+      createFixture();
+    // Verse 1 is already selected before the keyboard operation.
+    selectedVerses.value = [
+      {
+        bookId: "GEN",
+        chapterNumber: 1,
+        translationId: "BSB",
+        verse: { type: "verse", number: 1, content: [] },
+      },
+    ];
+    renderReader({ slot, selectorState, readingState });
+
+    const verse1 = getVerseEl(1);
+    act(() => {
+      verse1.focus();
+    });
+    act(() => {
+      verse1.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+    act(() => {
+      getVerseEl(2).dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    // Only verse 2 is newly committed; verse 1 was already selected.
+    expect(selectVerse).toHaveBeenCalledTimes(1);
+    expect(selectVerse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        verse: expect.objectContaining({ number: 2 }),
+      }),
+      expect.any(Number),
+      expect.any(Number)
+    );
+  });
+
+  it("ArrowUp and ArrowDown prevent default so chapter navigation doesn't fire", () => {
+    const { slot, selectorState, readingState } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const verse1 = getVerseEl(1);
+    act(() => {
+      verse1.focus();
+    });
+
+    for (const key of ["ArrowUp", "ArrowDown"]) {
+      const event = new KeyboardEvent("keydown", {
+        key,
+        bubbles: true,
+        cancelable: true,
+      });
+      let prevented = false;
+      event.preventDefault = () => {
+        prevented = true;
+      };
+      act(() => {
+        verse1.dispatchEvent(event);
+      });
+      expect(prevented).toBe(true);
+    }
+  });
+
+  it("Shift+ArrowUp after Shift+ArrowDown shrinks the staged selection", () => {
+    // Shift+Down from verse 1 stages {1,2}; Shift+Up back stages only {1}.
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const verse1 = getVerseEl(1);
+    act(() => {
+      verse1.focus();
+    });
+
+    // Extend: anchor=1, focus moves to 2, staged={1,2}
+    act(() => {
+      verse1.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(getVerseEl(1).className).toContain("sb-verse-selected");
+    expect(getVerseEl(2).className).toContain("sb-verse-selected");
+
+    // Shrink: anchor still 1, focus moves back to 1, staged={1}
+    act(() => {
+      getVerseEl(2).dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowUp",
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(getVerseEl(1).className).toContain("sb-verse-selected");
+    // Verse 2 is no longer in the staged range after shrinking.
+    expect(getVerseEl(2).className).not.toContain("sb-verse-selected");
+    // Still no selectVerse calls — toolbar still hidden.
+    expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("staged selection is cleared when focus leaves the chapter content", () => {
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const verse1 = getVerseEl(1);
+    act(() => {
+      verse1.focus();
+    });
+    act(() => {
+      verse1.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
+
+    expect(getVerseEl(1).className).toContain("sb-verse-selected");
+
+    // Simulate focus moving outside the chapter (relatedTarget = null ≡ outside).
+    const contentDiv = verse1.closest<HTMLElement>(".sb-chapter-content")!;
+    act(() => {
+      contentDiv.dispatchEvent(
+        new FocusEvent("focusout", { bubbles: true, relatedTarget: null })
+      );
+    });
+
+    expect(getVerseEl(1).className).not.toContain("sb-verse-selected");
+    expect(selectVerse).not.toHaveBeenCalled();
+  });
+
+  it("Enter on a verse focuses the first verse-toolbar button after it renders", async () => {
+    // The verse toolbar lives outside ChapterContent, so simulate it by
+    // injecting a fake toolbar button into the document. After Enter the
+    // handler schedules a requestAnimationFrame to move focus there.
+    const { slot, selectorState, readingState } = createFixture();
+    renderReader({ slot, selectorState, readingState });
+
+    const fakeToolbar = document.createElement("div");
+    fakeToolbar.className = "sb-verse-toolbar";
+    const fakeBtn = document.createElement("button");
+    fakeToolbar.appendChild(fakeBtn);
+    document.body.appendChild(fakeToolbar);
+
+    try {
+      const verseEl = getVerseEl(1);
+      act(() => {
+        verseEl.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "Enter",
+            bubbles: true,
+            cancelable: true,
+          })
+        );
+      });
+
+      // Flush the requestAnimationFrame.
+      await act(async () => {
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => resolve())
+        );
+      });
+
+      expect(document.activeElement).toBe(fakeBtn);
+    } finally {
+      fakeToolbar.remove();
+    }
   });
 
   it("clicking a footnote button opens the matching note", () => {
