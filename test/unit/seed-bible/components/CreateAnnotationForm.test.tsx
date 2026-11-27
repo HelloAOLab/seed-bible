@@ -107,12 +107,16 @@ function createAnnotation(overrides: Partial<Annotation> = {}): Annotation {
   };
 }
 
-function createMockAnnotationsManager(editing: Annotation | null) {
+function createMockAnnotationsManager(
+  editing: Annotation | null,
+  { drafting = true } = {}
+) {
   const editingAnnotation = signal(editing);
   const saveEditingAnnotation = vi.fn().mockResolvedValue(undefined);
   const cancelEditingAnnotation = vi.fn();
   const annotations = {
     editingAnnotation,
+    isDraftingNewAnnotation: signal(drafting),
     localSaveReason: signal<LocalSaveReason | null>(null),
     saveEditingAnnotation,
     cancelEditingAnnotation,
@@ -769,8 +773,13 @@ describe("CreateAnnotationForm", () => {
   });
 
   describe("local save notice", () => {
-    async function renderForm(reason: LocalSaveReason | null) {
-      const { annotations } = createMockAnnotationsManager(createAnnotation());
+    async function renderForm(
+      reason: LocalSaveReason | null,
+      { editingSavedNote = false } = {}
+    ) {
+      const { annotations } = createMockAnnotationsManager(createAnnotation(), {
+        drafting: !editingSavedNote,
+      });
       annotations.localSaveReason = signal(reason);
       const login = createMockLogin();
       await act(async () => {
@@ -817,6 +826,16 @@ describe("CreateAnnotationForm", () => {
       await renderForm("offline");
 
       expect(notice()).toContain("You're offline");
+      expect(notice()).toContain("added to your account");
+      expect(notice()).not.toMatch(/sign/i);
+      expect(signInButton()).toBeUndefined();
+    });
+
+    it("tells an offline edit that the changes will sync, not that the note will be added", async () => {
+      await renderForm("offline", { editingSavedNote: true });
+
+      expect(notice()).toContain("your changes are saved on this device");
+      expect(notice()).not.toContain("added to your account");
       expect(notice()).not.toMatch(/sign/i);
       expect(signInButton()).toBeUndefined();
     });

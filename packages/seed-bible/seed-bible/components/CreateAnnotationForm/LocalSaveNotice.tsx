@@ -29,10 +29,15 @@ export function LocalSaveNotice(props: LocalSaveNoticeProps) {
             "You're not signed in, so this note is only saved on this device. Sign in to keep it in your account and on your other devices.",
         })
       : reason === "offline"
-        ? t("annotation-local-save-offline", {
-            defaultValue:
-              "You're offline, so this note is saved on this device for now. It will be added to your account when you're back online.",
-          })
+        ? annotations.isDraftingNewAnnotation.value
+          ? t("annotation-local-save-offline", {
+              defaultValue:
+                "You're offline, so this note is saved on this device for now. It will be added to your account when you're back online.",
+            })
+          : t("annotation-local-save-offline-edit", {
+              defaultValue:
+                "You're offline, so your changes are saved on this device for now. They'll sync to your account when you're back online.",
+            })
         : t("annotation-local-save-signed-out-offline", {
             defaultValue:
               "You're offline and not signed in, so this note is only saved on this device. Once you're back online, you can sign in to keep it in your account.",
