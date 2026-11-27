@@ -814,7 +814,8 @@ describe("CreateAnnotationForm", () => {
     it("explains a signed-out save and offers a sign-in", async () => {
       const { login } = await renderForm("signed-out");
 
-      expect(notice()).toContain("You're not signed in");
+      expect(notice()).toContain("You're not logged in");
+      expect(notice()).not.toMatch(/sign/i);
       expect(notice()).not.toContain("offline");
       await act(async () => {
         signInButton()!.click();
@@ -827,7 +828,7 @@ describe("CreateAnnotationForm", () => {
 
       expect(notice()).toContain("You're offline");
       expect(notice()).toContain("added to your account");
-      expect(notice()).not.toMatch(/sign/i);
+      expect(notice()).not.toMatch(/sign|log/i);
       expect(signInButton()).toBeUndefined();
     });
 
@@ -836,14 +837,15 @@ describe("CreateAnnotationForm", () => {
 
       expect(notice()).toContain("your changes are saved on this device");
       expect(notice()).not.toContain("added to your account");
-      expect(notice()).not.toMatch(/sign/i);
+      expect(notice()).not.toMatch(/sign|log/i);
       expect(signInButton()).toBeUndefined();
     });
 
     it("gives both reasons when offline and signed out, without a sign-in button that couldn't work", async () => {
       await renderForm("signed-out-offline");
 
-      expect(notice()).toContain("You're offline and not signed in");
+      expect(notice()).toContain("You're offline and not logged in");
+      expect(notice()).not.toMatch(/sign/i);
       expect(signInButton()).toBeUndefined();
     });
 

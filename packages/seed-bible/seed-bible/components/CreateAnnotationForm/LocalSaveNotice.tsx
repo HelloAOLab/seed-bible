@@ -26,7 +26,7 @@ export function LocalSaveNotice(props: LocalSaveNoticeProps) {
     reason === "signed-out"
       ? t("annotation-local-save-signed-out", {
           defaultValue:
-            "You're not signed in, so this note is only saved on this device. Sign in to keep it in your account and on your other devices.",
+            "You're not logged in, so this note is only saved on this device. Log in to keep it in your account and on your other devices.",
         })
       : reason === "offline"
         ? annotations.isDraftingNewAnnotation.value
@@ -40,7 +40,7 @@ export function LocalSaveNotice(props: LocalSaveNoticeProps) {
             })
         : t("annotation-local-save-signed-out-offline", {
             defaultValue:
-              "You're offline and not signed in, so this note is only saved on this device. Once you're back online, you can sign in to keep it in your account.",
+              "You're offline and not logged in, so this note is only saved on this device. Once you're back online, you can log in to keep it in your account.",
           });
 
   return (
