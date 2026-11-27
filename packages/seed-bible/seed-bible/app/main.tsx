@@ -295,7 +295,11 @@ function MainContent(props: {
         {!isMinimalEmbed && <Sidebar state={state} />}
 
         <div className="sb-content-row">
-          <main className="sb-main-content">
+          {/* When a fullscreen pane (Today, Profile, Reading Plans…) covers the
+              reader area, the reader's tab order must be unreachable. `inert`
+              removes all descendant controls from focus and the accessibility
+              tree while the pane is open, the same as if they were display:none. */}
+          <main className="sb-main-content" inert={fullscreenPane !== null}>
             <TabsLayout state={state} />
           </main>
           {sidePane && <SidePane state={state} pane={sidePane} />}
