@@ -363,40 +363,44 @@ export function createRecordSyncManager<T>(
       return;
     }
 
-    const current = await store.get(owner, started.address);
-    const unchanged = isUnchangedSince(started, current);
+    // One atomic read-and-write: a save landing between a separate read and
+    // write would be overwritten by the synced row decided from the older read.
+    let outcome = null as "synced" | "removed" | null;
+    await store.update(owner, started.address, (current) => {
+      const unchanged = isUnchangedSince(started, current);
 
-    if (login.userId.peek() !== owner) {
-      // Signed out mid-push. The content is safely on the server, so the local
-      // copy is now a synced row for an account that has left — drop it. A newer
-      // unsent edit is kept, matching sign-out's "keep unsent writing" rule.
-      if (unchanged) {
-        await store.delete(owner, started.address);
+      if (login.userId.peek() !== owner) {
+        // Signed out mid-push. The content is safely on the server, so the
+        // local copy is now a synced row for an account that has left — drop
+        // it. A newer unsent edit is kept, matching sign-out's "keep unsent
+        // writing" rule.
+        return unchanged ? null : undefined;
       }
-      return;
-    }
 
-    if (!current) {
-      // Removed outright while we pushed (a create-then-delete collapse); there
-      // is nothing left to record against.
-      return;
-    }
+      if (!current) {
+        // Removed outright while we pushed (a create-then-delete collapse);
+        // there is nothing left to record against.
+        return undefined;
+      }
 
-    if (!unchanged) {
-      await store.put({ ...current, base });
-      return;
-    }
+      if (!unchanged) {
+        return { ...current, base };
+      }
 
-    if (!base) {
-      await store.delete(owner, started.address);
+      if (!base) {
+        outcome = "removed";
+        return null;
+      }
+
+      outcome = "synced";
+      return syncedRow(owner, started.address, started.collection, base);
+    });
+
+    if (outcome === "removed") {
       onRemoved?.(started.address, owner);
-      return;
+    } else if (outcome === "synced" && base) {
+      onSynced?.(started.address, base, owner);
     }
-
-    await store.put(
-      syncedRow(owner, started.address, started.collection, base)
-    );
-    onSynced?.(started.address, base, owner);
   };
 
   /** Writes a record to the server and mirrors the result locally. */
@@ -527,21 +531,19 @@ export function createRecordSyncManager<T>(
     // bookkeeping write is a blind overwrite by key, so spreading a stale row
     // would revert content the user saved during the failed round trip. A newer
     // edit deserves its own attempt count anyway.
-    const current = await store.get(owner, row.address);
-    if (!current || !isUnchangedSince(row, current)) {
-      return;
-    }
-
-    if (outcome.status === "permanent") {
-      await store.put({ ...current, pendingOp: null });
-      return;
-    }
-
-    const attempts = current.attempts + 1;
-    await store.put({
-      ...current,
-      attempts,
-      pendingOp: attempts >= MAX_SYNC_ATTEMPTS ? null : current.pendingOp,
+    await store.update(owner, row.address, (current) => {
+      if (!current || !isUnchangedSince(row, current)) {
+        return undefined;
+      }
+      if (outcome.status === "permanent") {
+        return { ...current, pendingOp: null };
+      }
+      const attempts = current.attempts + 1;
+      return {
+        ...current,
+        attempts,
+        pendingOp: attempts >= MAX_SYNC_ATTEMPTS ? null : current.pendingOp,
+      };
     });
   };
 

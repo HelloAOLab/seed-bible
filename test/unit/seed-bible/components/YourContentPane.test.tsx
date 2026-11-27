@@ -1109,8 +1109,10 @@ describe("YourContentPane", () => {
 
       await confirmDelete(dialog);
 
-      expect(names()).toEqual(["Morning"]);
-      expect(savedBookmarks()!.map((b) => b.name)).toEqual(["Morning"]);
+      await vi.waitFor(() => expect(names()).toEqual(["Morning"]));
+      await vi.waitFor(() =>
+        expect(savedBookmarks()!.map((b) => b.name)).toEqual(["Morning"])
+      );
     });
 
     it("does not open the chapter when the options menu is used", async () => {
@@ -1160,13 +1162,47 @@ describe("YourContentPane", () => {
       ]);
     });
 
-    it("keeps the editor open and says so when an edit can't be saved", async () => {
+    it("keeps an edit made while the server can't be reached, for sending later", async () => {
       const { state, openModal, closeModal, toast, savedBookmarks } =
         createState({
           bookmarks: [bookmark("bm1", "Sermon prep")],
           bookmarkWriteError: new Error("offline"),
         });
       vi.spyOn(console, "warn").mockImplementation(() => {});
+      await renderWithBookmarks(state);
+
+      choose(rows()[0]!, "Edit");
+      const dialog = renderOpenedModal(openModal);
+      type(
+        dialog.querySelector<HTMLInputElement>(
+          'input[aria-label="Bookmark name"]'
+        )!,
+        "Advent"
+      );
+      await act(async () => {
+        dialog
+          .querySelector<HTMLButtonElement>(".sb-bookmark-picker-save")!
+          .click();
+      });
+
+      await vi.waitFor(() =>
+        expect(closeModal).toHaveBeenCalledWith("edit-bookmark-bm1")
+      );
+      expect(toast).not.toHaveBeenCalled();
+      expect(names()).toEqual(["Advent"]);
+      expect(savedBookmarks()!.map((b) => b.name)).toEqual(["Sermon prep"]);
+    });
+
+    it("keeps the editor open and says so when an edit can't be saved on the device", async () => {
+      const { state, openModal, closeModal, toast } = createState({
+        bookmarks: [bookmark("bm1", "Sermon prep")],
+      });
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      // Saving to the device can fail (storage full, blocked); the server
+      // can't fail a save any more, since changes queue for it.
+      vi.spyOn(state.bookmarks, "updateBookmark").mockRejectedValue(
+        new Error("QuotaExceededError")
+      );
       await renderWithBookmarks(state);
 
       choose(rows()[0]!, "Edit");
@@ -1194,9 +1230,7 @@ describe("YourContentPane", () => {
           'input[aria-label="Bookmark name"]'
         )!.value
       ).toBe("Advent");
-      // The manager put the old name back when the write failed.
       expect(names()).toEqual(["Sermon prep"]);
-      expect(savedBookmarks()!.map((b) => b.name)).toEqual(["Sermon prep"]);
     });
   });
 

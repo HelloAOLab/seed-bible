@@ -163,6 +163,22 @@ export interface OfflineRecordStore<T> {
   /** Removes a row entirely — not a tombstone, no trace left. */
   delete(owner: string, address: string): Promise<void>;
 
+  /**
+   * Reads one row and writes back what `change` returns, with no other write
+   * able to land in between. `change` returns undefined to leave the row as it
+   * is, or null to remove it.
+   *
+   * A separate `get` then `put` leaves a gap: a save made during it is
+   * overwritten by a decision made from the row before that save.
+   */
+  update(
+    owner: string,
+    address: string,
+    change: (
+      current: StoredRecord<T> | null
+    ) => StoredRecord<T> | null | undefined
+  ): Promise<void>;
+
   /** Every row still waiting to be pushed, oldest change first. */
   listPending(owner: string): Promise<StoredRecord<T>[]>;
 
@@ -498,6 +514,31 @@ export function createIndexedDbRecordStore<T>(
     await transactionToPromise(transaction);
   };
 
+  const update: OfflineRecordStore<T>["update"] = async (
+    owner,
+    address,
+    change
+  ) => {
+    const transaction = await connection.transaction(
+      RECORDS_STORE,
+      "readwrite"
+    );
+    const store = transaction.objectStore(RECORDS_STORE);
+    const key = recordKey(owner, address);
+    // The transaction stays alive across the await of its own request, so the
+    // read and the write below are one atomic unit.
+    const current = (await requestToPromise(store.get(key))) as
+      | StoredRecord<T>
+      | undefined;
+    const next = change(current ?? null);
+    if (next === null) {
+      store.delete(key);
+    } else if (next !== undefined) {
+      store.put(next);
+    }
+    await transactionToPromise(transaction);
+  };
+
   const listPending = async (owner: string): Promise<StoredRecord<T>[]> => {
     const transaction = await connection.transaction(RECORDS_STORE, "readonly");
     const store = transaction.objectStore(RECORDS_STORE).index(PENDING_INDEX);
@@ -625,6 +666,7 @@ export function createIndexedDbRecordStore<T>(
     get,
     put,
     delete: deleteRow,
+    update,
     listPending,
     getListed,
     reconcileCollection,
@@ -819,6 +861,18 @@ export function createInMemoryRecordStore<T>(): OfflineRecordStore<T> {
 
     async delete(owner, address) {
       rows.delete(recordKey(owner, address));
+    },
+
+    // No await between the read and the write, matching the IndexedDB
+    // transaction's atomicity.
+    async update(owner, address, change) {
+      const key = recordKey(owner, address);
+      const next = change(rows.get(key) ?? null);
+      if (next === null) {
+        rows.delete(key);
+      } else if (next !== undefined) {
+        rows.set(key, next);
+      }
     },
 
     async listPending(owner) {
